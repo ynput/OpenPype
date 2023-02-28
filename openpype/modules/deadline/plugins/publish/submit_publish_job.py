@@ -20,6 +20,7 @@ from openpype.pipeline import (
 )
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
+from openpype.lib import is_running_from_build
 
 
 def get_resources(project_name, version, extension=None):
@@ -117,15 +118,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_plugin = "OpenPype"
     targets = ["local"]
 
-    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
+    hosts = ["fusion", "max", "maya", "nuke",
+             "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "vrayscene"]
+                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
-                  "celaction": [r".*"]}
+                  "celaction": [r".*"],
+                  "max": [r".*"]}
 
     environ_job_filter = [
         "OPENPYPE_METADATA_FILE"
@@ -138,8 +141,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_SG_USER",
     ]
+
+    # Add OpenPype version if we are running from build.
+    if is_running_from_build():
+        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -293,8 +300,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Group": self.deadline_group,
                 "Pool": instance.data.get("primaryPool"),
                 "SecondaryPool": instance.data.get("secondaryPool"),
-
-                "OutputDirectory0": output_dir
+                # ensure the outputdirectory with correct slashes
+                "OutputDirectory0": output_dir.replace("\\", "/")
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,
@@ -428,7 +435,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info(
             "Finished copying %i files" % len(resource_files))
 
-    def _create_instances_for_aov(self, instance_data, exp_files):
+    def _create_instances_for_aov(
+        self, instance_data, exp_files, additional_data
+    ):
         """Create instance for each AOV found.
 
         This will create new instance for every aov it can detect in expected
@@ -515,6 +524,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # toggle preview on if multipart is on
 
             if instance_data.get("multipartExr"):
+                self.log.debug("Adding preview tag because its multipartExr")
                 preview = True
             self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
@@ -529,6 +539,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 files = os.path.basename(col)
 
+            # Copy render product "colorspace" data to representation.
+            colorspace = ""
+            products = additional_data["renderProducts"].layer_data.products
+            for product in products:
+                if product.productName == aov:
+                    colorspace = product.colorspace
+                    break
+
             rep = {
                 "name": ext,
                 "ext": ext,
@@ -538,7 +556,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "fps": new_instance.get("fps"),
-                "tags": ["review"] if preview else []
+                "tags": ["review"] if preview else [],
+                "colorspaceData": {
+                    "colorspace": colorspace,
+                    "config": {
+                        "path": additional_data["colorspaceConfig"],
+                        "template": additional_data["colorspaceTemplate"]
+                    },
+                    "display": additional_data["display"],
+                    "view": additional_data["view"]
+                }
             }
 
             # support conversion from tiled to scanline
@@ -562,7 +589,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files):
+    def _get_representations(self, instance, exp_files, additional_data):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
@@ -594,6 +621,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance["useSequenceForReview"]:
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
+                    self.log.debug(
+                        "Adding preview tag because its multipartExr"
+                    )
                     preview = True
                 else:
                     render_file_name = list(collection)[0]
@@ -701,8 +731,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if preview:
             if "ftrack" not in families:
                 if os.environ.get("FTRACK_SERVER"):
+                    self.log.debug(
+                        "Adding \"ftrack\" to families because of preview tag."
+                    )
                     families.append("ftrack")
             if "review" not in families:
+                self.log.debug(
+                    "Adding \"review\" to families because of preview tag."
+                )
                 families.append("review")
             instance["families"] = families
 
@@ -898,6 +934,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         self.log.info(data.get("expectedFiles"))
 
+        additional_data = {
+            "renderProducts": instance.data["renderProducts"],
+            "colorspaceConfig": instance.data["colorspaceConfig"],
+            "display": instance.data["colorspaceDisplay"],
+            "view": instance.data["colorspaceView"],
+            "colorspaceTemplate": instance.data["colorspaceConfig"].replace(
+                str(context.data["anatomy"].roots["work"]), "{root[work]}"
+            )
+        }
+
         if isinstance(data.get("expectedFiles")[0], dict):
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
@@ -912,7 +958,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #       there are multiple renderable cameras in scene)
             instances = self._create_instances_for_aov(
                 instance_skeleton_data,
-                data.get("expectedFiles"))
+                data.get("expectedFiles"),
+                additional_data
+            )
             self.log.info("got {} instance{}".format(
                 len(instances),
                 "s" if len(instances) > 1 else ""))
@@ -961,6 +1009,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         '''
 
         render_job = None
+        submission_type = ""
         if instance.data.get("toBeRenderedOn") == "deadline":
             render_job = data.pop("deadlineSubmissionJob", None)
             submission_type = "deadline"
