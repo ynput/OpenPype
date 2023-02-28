@@ -1088,7 +1088,7 @@ class AyonSettingsCache:
             cls._production_settings is None
             or cls._production_settings.is_outdated
         ):
-            value = ayon_api.get_full_production_settings()
+            value = ayon_api.get_addons_settings(only_values=False)
             if cls._production_settings is None:
                 cls._production_settings = CacheItem(value)
             else:
@@ -1104,7 +1104,7 @@ class AyonSettingsCache:
 
         cache_item = cls._cache_by_project_name.get(project_name)
         if cache_item is None or cache_item.is_outdated:
-            value = ayon_api.get_project_settings(project_name)
+            value = ayon_api.get_addons_settings(project_name)
             if cache_item is None:
                 cache_item = CacheItem(value)
                 cls._cache_by_project_name[project_name] = cache_item
