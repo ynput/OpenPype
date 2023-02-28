@@ -4,7 +4,7 @@ import shutil
 import pyblish.api
 import clique
 import nuke
-
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import publish
 from openpype.lib import collect_frames
 
@@ -86,7 +86,7 @@ class NukeRenderLocal(publish.Extractor,
             )
 
         ext = node["file_type"].value()
-        colorspace = node["colorspace"].value()
+        colorspace = napi.get_colorspace_from_node(node)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
