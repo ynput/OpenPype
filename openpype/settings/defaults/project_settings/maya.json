@@ -179,6 +179,13 @@
                 "Main"
             ]
         },
+        "CreateReview": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "useMayaTimeline": true
+        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
@@ -242,12 +249,6 @@
             ]
         },
         "CreateRenderSetup": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateReview": {
             "enabled": true,
             "defaults": [
                 "Main"
