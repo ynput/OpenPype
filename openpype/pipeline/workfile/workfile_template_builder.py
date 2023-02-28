@@ -28,6 +28,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.host import IWorkfileHost
 from openpype.host import HostBase
 from openpype.lib import (
     Logger,
@@ -416,7 +417,8 @@ class AbstractTemplateBuilder(object):
         self,
         template_path=None,
         level_limit=None,
-        keep_placeholders=None
+        keep_placeholders=None,
+        create_first_version=None
     ):
         """Main callback for building workfile from template path.
 
@@ -433,6 +435,7 @@ class AbstractTemplateBuilder(object):
             keep_placeholders (bool): Add flag to placeholder data for
                 hosts to decide if they want to remove
                 placeholder after it is used.
+            create_first_version (bool): create first version of a workfile
         """
         template_preset = self.get_template_preset()
 
@@ -441,6 +444,11 @@ class AbstractTemplateBuilder(object):
 
         if keep_placeholders is None:
             keep_placeholders = template_preset["keep_placeholder"]
+        if create_first_version is None:
+            create_first_version = template_preset["create_first_version"]
+
+        if create_first_version:
+            self.create_first_workfile_version()
 
         self.import_template(template_path)
         self.populate_scene_placeholders(
@@ -491,6 +499,25 @@ class AbstractTemplateBuilder(object):
         """
 
         pass
+
+    @abstractmethod
+    def create_first_workfile_version(self):
+        """
+        Create first version of workfile.
+
+        Should load the content of template into scene so
+        'populate_scene_placeholders' can be started.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        # Save current scene, continue to open file
+        if isinstance(self.host, IWorkfileHost):
+            self.host.save_workfile(last_workfile_path)
+        else:
+            self.host.save_file(last_workfile_path)
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.

@@ -1,3 +1,4 @@
+import os
 import collections
 
 import nuke
@@ -45,7 +46,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was succesfully imported or not
+            bool: Wether the template was successfully imported or not
         """
 
         # TODO check if the template is already imported
