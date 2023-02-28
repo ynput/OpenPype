@@ -176,17 +176,18 @@ class Listener:
         self._update_asset(data)
 
         # Print message
-        episode = None
+        ep = None
         ep_id = asset.get("episode_id")
         if ep_id and ep_id != "":
-            episode = gazu.asset.get_episode(ep_id)
+            ep = gazu.asset.get_episode(ep_id)
 
-        msg = "Asset created: "
-        msg = msg + f"{asset['project_name']} - "
-        if episode is not None:
-            msg = msg + f"{episode['name']}_"
-        msg = msg + f"{asset['asset_type_name']}_"
-        msg = msg + f"{asset['name']}"
+        msg = "Asset created: {proj_name} - {ep_name}" \
+            "{asset_type_name} - {asset_name}".format(
+                proj_name=asset["project_name"],
+                ep_name=ep["name"] + " - " if ep is not None else "",
+                asset_type_name=asset["asset_type_name"],
+                asset_name=asset["name"]
+            )
         log.info(msg)
 
     def _update_asset(self, data):
@@ -229,17 +230,18 @@ class Listener:
             )
 
             # Print message
-            episode = None
+            ep = None
             ep_id = asset["data"]["zou"].get("episode_id")
             if ep_id and ep_id != "":
-                episode = gazu.asset.get_episode(ep_id)
+                ep = gazu.asset.get_episode(ep_id)
 
-            msg = "Asset deleted: "
-            msg = msg + f"{asset['data']['zou']['project_name']} - "
-            if episode is not None:
-                msg = msg + f"{episode['name']}_"
-            msg = msg + f"{asset['data']['zou']['asset_type_name']}_"
-            msg = msg + f"'{asset['name']}"
+            msg = "Asset deleted: {proj_name} - {ep_name}" \
+                "{asset_type_name} - {asset_name}".format(
+                    proj_name=asset["data"]["zou"]["project_name"],
+                    ep_name=ep["name"] + " - " if ep is not None else "",
+                    asset_type_name=asset["data"]["zou"]["asset_type_name"],
+                    asset_name=asset["name"]
+                )
             log.info(msg)
 
     # == Episode ==
@@ -252,15 +254,17 @@ class Listener:
         ep = gazu.shot.get_episode(data["episode_id"])
 
         # Insert doc in DB
-        self.dbcon.insert_one(create_op_asset(episode))
+        self.dbcon.insert_one(create_op_asset(ep))
 
         # Update
         self._update_episode(data)
 
         # Print message
-        msg = "Episode created: "
-        msg = msg + f"{episode['project_name']} - "
-        msg = msg + f"{episode['name']}"
+        msg = "Episode created: {proj_name} - {ep_name}".format(
+            proj_name=ep["project_name"],
+            ep_name=ep["name"]
+        )
+        log.info(msg)
 
     def _update_episode(self, data):
         """Update episode into OP DB."""
@@ -283,8 +287,8 @@ class Listener:
 
         # Update
         update_op_result = update_op_assets(
-            self.dbcon, gazu_project, project_doc, [
-                episode], zou_ids_and_asset_docs
+            self.dbcon, gazu_project, project_doc,
+            [ep], zou_ids_and_asset_docs
         )
         if update_op_result:
             asset_doc_id, asset_update = update_op_result[0]
@@ -294,20 +298,22 @@ class Listener:
         """Delete shot of OP DB."""
         set_op_project(self.dbcon, data["project_id"])
 
-        episode = self.dbcon.find_one({"data.zou.id": data['episode_id']})
-        if episode:
+        ep = self.dbcon.find_one({"data.zou.id": data["episode_id"]})
+        if ep:
             # Delete
             self.dbcon.delete_one(
-                {"type": "asset", "data.zou.id": data['episode_id']}
+                {"type": "asset", "data.zou.id": data["episode_id"]}
             )
 
             # Print message
             project = gazu.project.get_project(
-                episode['data']['zou']['project_id'])
+                ep["data"]["zou"]["project_id"])
 
-            msg = "Episode deleted: "
-            msg = msg + f"{project['name']} - "
-            msg = msg + f"{episode['name']}"
+            msg = "Episode deleted: {proj_name} - {ep_name}".format(
+                proj_name=project["name"],
+                ep_name=ep["name"]
+            )
+            log.info(msg)
 
     # == Sequence ==
     def _new_sequence(self, data):
@@ -325,17 +331,17 @@ class Listener:
         self._update_sequence(data)
 
         # Print message
-
-        episode = None
+        ep = None
         ep_id = sequence.get("episode_id")
         if ep_id and ep_id != "":
-            episode = gazu.asset.get_episode(ep_id)
+            ep = gazu.asset.get_episode(ep_id)
 
-        msg = "Sequence created: "
-        msg = msg + f"{sequence['project_name']} - "
-        if episode is not None:
-            msg = msg + f"{episode['name']}_"
-        msg = msg + f"{sequence['name']}"
+        msg = "Sequence created: {proj_name} - {ep_name}" \
+            "{sequence_name}".format(
+                proj_name=sequence["project_name"],
+                ep_name=ep["name"] + " - " if ep is not None else "",
+                sequence_name=sequence["name"]
+            )
         log.info(msg)
 
     def _update_sequence(self, data):
@@ -377,12 +383,20 @@ class Listener:
             )
 
             # Print message
+            ep = None
             ep_id = sequence["data"]["zou"].get("episode_id")
+            if ep_id and ep_id != "":
+                ep = gazu.asset.get_episode(ep_id)
+
             gazu_project = gazu.project.get_project(
-                sequence['data']['zou']['project_id'])
-            msg = f"Sequence deleted: "
-            msg = msg + f"{gazu_project['name']} - "
-            msg = msg + f"{sequence['name']}"
+                sequence["data"]["zou"]["project_id"])
+
+            msg = "Sequence created: {proj_name} - {ep_name}" \
+                "{sequence_name}".format(
+                    proj_name=gazu_project["name"],
+                    ep_name=ep["name"] + " - " if ep is not None else "",
+                    sequence_name=sequence["name"]
+                )
             log.info(msg)
 
     # == Shot ==
@@ -401,16 +415,17 @@ class Listener:
         self._update_shot(data)
 
         # Print message
-        episode = None
+        ep = None
         if shot["episode_id"] and shot["episode_id"] != "":
-            episode = gazu.asset.get_episode(shot['episode_id'])
+            ep = gazu.asset.get_episode(shot["episode_id"])
 
-        msg = "Shot created: "
-        msg = msg + f"{shot['project_name']} - "
-        if episode is not None:
-            msg = msg + f"{episode['name']}_"
-        msg = msg + f"{shot['sequence_name']}_"
-        msg = msg + f"{shot['name']}"
+        msg = "Shot created: {proj_name} - {ep_name}" \
+            "{sequence_name} - {shot_name}".format(
+                proj_name=shot["project_name"],
+                ep_name=ep["name"] + " - " if ep is not None else "",
+                sequence_name=shot["sequence_name"],
+                shot_name=shot["name"]
+            )
         log.info(msg)
 
     def _update_shot(self, data):
@@ -430,7 +445,6 @@ class Listener:
             if asset_doc["data"].get("zou", {}).get("id")}
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
         gazu_project = gazu.project.get_project(shot["project_id"])
-        gazu_project = gazu.project.get_project(shot['project_id'])
 
         # Update
         update_op_result = update_op_assets(
@@ -454,12 +468,18 @@ class Listener:
             )
 
             # Print message
-            gazu_project = gazu.project.get_project(
+            ep = None
             ep_id = shot["data"]["zou"].get("episode_id")
+            if ep_id and ep_id != "":
+                ep = gazu.asset.get_episode(ep_id)
 
-            msg = "Shot deleted: "
-            msg = msg + f"{gazu_project['name']} - "
-            msg = msg + f"{shot['name']}"
+            msg = "Shot deleted: {proj_name} - {ep_name}" \
+                "{sequence_name} - {shot_name}".format(
+                    proj_name=shot["data"]["zou"]["project_name"],
+                    ep_name=ep["name"] + " - " if ep is not None else "",
+                    sequence_name=shot["data"]["zou"]["sequence_name"],
+                    shot_name=shot["name"]
+                )
             log.info(msg)
 
     # == Task ==
@@ -472,14 +492,14 @@ class Listener:
         # Get gazu entity
         task = gazu.task.get_task(data["task_id"])
 
-        # Find asset doc
-        episode = None
+        # Print message
+        ep = None
         ep_id = task.get("episode_id")
         if ep_id and ep_id != "":
-            episode = gazu.asset.get_episode(ep_id)
+            ep = gazu.asset.get_episode(ep_id)
 
-        parent_name = ""
-        if episode is not None:
+        parent_name = None
+        entity_type = None
             parent_name = episode['name'] + "_"
         parent_name = parent_name + \
             task['sequence']['name'] + "_" + task['entity']['name']
@@ -496,13 +516,13 @@ class Listener:
             )
 
             # Print message
-            msg = "Task created: "
-            msg = msg + f"{task['project']['name']} - "
-            if episode is not None:
-                msg = msg + f"{episode['name']}_"
-            msg = msg + f"{task['sequence']['name']}_"
-            msg = msg + f"{task['entity']['name']} - "
-            msg = msg + f"{task['task_type']['name']}"
+            msg = "Task created: {proj_name} - {entity_type}{parent_name}" \
+                " - {task_name}".format(
+                    proj_name=task["project"]["name"],
+                    entity_type=entity_type + " - " if entity_type is not None else "",
+                    parent_name=parent_name,
+                    task_name=task["task_type"]["name"]
+                )
             log.info(msg)
 
     def _update_task(self, data):
@@ -533,19 +553,20 @@ class Listener:
                     # Print message
                     entity = gazu.entity.get_entity(task["zou"]["entity_id"])
 
-                    episode = None
+                    ep = None
                     ep_id = entity.get("episode_id")
                     if ep_id and ep_id != "":
-                        episode = gazu.asset.get_episode(ep_id)
+                        ep = gazu.asset.get_episode(ep_id)
 
-                    msg = "Task deleted: "
-                    msg = msg + f"{shot['project_name']} - "
-                    if episode is not None:
-                        msg = msg + f"{episode['name']}_"
-                    msg = msg + f"{shot['sequence_name']}_"
-                    msg = msg + f"{shot['name']} - "
-                    msg = msg + f"{task['type']}"
+                    msg = "Task deleted: {proj_name} - {entity_type}{parent_name}" \
+                        " - {task_name}".format(
+                            proj_name=task["zou"]["project"]["name"],
+                            entity_type=entity_type + " - " if entity_type is not None else "",
+                            parent_name=parent_name,
+                            task_name=task["type"]
+                        )
                     log.info(msg)
+
                     return
 
 
