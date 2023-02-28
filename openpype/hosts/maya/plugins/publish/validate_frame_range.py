@@ -75,7 +75,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             return
         if (inst_start != frame_start_handle):
             errors.append("Instance start frame [ {} ] doesn't "
-                          "match the one set on instance [ {} ]: "
+                          "match the one set on asset [ {} ]: "
                           "{}/{}/{}/{} (handle/start/end/handle)".format(
                               inst_start,
                               frame_start_handle,
@@ -84,7 +84,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         if (inst_end != frame_end_handle):
             errors.append("Instance end frame [ {} ] doesn't "
-                          "match the one set on instance [ {} ]: "
+                          "match the one set on asset [ {} ]: "
                           "{}/{}/{}/{} (handle/start/end/handle)".format(
                               inst_end,
                               frame_end_handle,
