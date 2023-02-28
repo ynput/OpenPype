@@ -96,6 +96,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rendersetup",
                 "rig",
                 "plate",
+                "reference",
                 "look",
                 "audio",
                 "yetiRig",

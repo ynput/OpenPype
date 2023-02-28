@@ -7,7 +7,7 @@ class IntegrateResourcesPath(pyblish.api.InstancePlugin):
 
     label = "Integrate Resources Path"
     order = pyblish.api.IntegratorOrder - 0.05
-    families = ["clip",  "projectfile", "plate"]
+    families = ["clip",  "projectfile", "plate", "reference"]
 
     def process(self, instance):
         resources = instance.data.get("resources") or []
