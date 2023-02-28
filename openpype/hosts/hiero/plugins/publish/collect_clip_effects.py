@@ -124,7 +124,6 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
         node_name = sitem.name()
         node_class = node.Class()
 
-
         # collect timelineIn/Out
         effect_t_in = int(sitem.timelineIn())
         effect_t_out = int(sitem.timelineOut())
