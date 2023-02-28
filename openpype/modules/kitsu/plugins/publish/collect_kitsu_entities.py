@@ -16,7 +16,6 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
         kitsu_entities_by_id = {}
         for instance in context:
             asset_doc = instance.data.get("assetEntity")
-            task_name = instance.data.get("task")
             if not asset_doc:
                 continue
 
@@ -24,27 +23,24 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
             if not zou_asset_data:
                 raise ValueError("Zou asset data not found in OpenPype!")
 
-            if kitsu_project is None:
-                kitsu_project = gazu.project.get_project(
-                    zou_asset_data["project_id"])
-                if not kitsu_project:
-                    raise ValueError("Project not found in kitsu!")
+            kitsu_project = gazu.project.get_project(
+                zou_asset_data["project_id"])
+            if not kitsu_project:
+                raise ValueError("Project not found in kitsu!")
 
-            entity_type = zou_asset_data["type"]
-            kitsu_id = zou_asset_data["id"]
-            kitsu_entity = kitsu_entities_by_id.get(kitsu_id)
-            if not kitsu_entity:
-                if entity_type == "Shot":
-                    kitsu_entity = gazu.shot.get_shot(kitsu_id)
-                else:
-                    kitsu_entity = gazu.asset.get_asset(kitsu_id)
-                kitsu_entities_by_id[kitsu_id] = kitsu_entity
+            entity_id = zou_asset_data["id"]
+            entity = kitsu_entities_by_id.get(entity_id)
+            if not entity:
+                entity = gazu.entity.get_entity(entity_id)
+                if not entity:
+                    raise ValueError(
+                        "{} was not found in kitsu!".format(
+                            zou_asset_data["name"]))
 
-            if not kitsu_entity:
-                raise ValueError(
-                    "{} not found in kitsu!".format(entity_type))
-            instance.data["kitsu_entity"] = kitsu_entity
+            kitsu_entities_by_id[entity_id] = entity
+            instance.data["entity"] = entity
 
+            task_name = instance.data.get("task")
             if not task_name:
                 continue
             zou_task_data = asset_doc["data"]["tasks"][task_name].get("zou")
