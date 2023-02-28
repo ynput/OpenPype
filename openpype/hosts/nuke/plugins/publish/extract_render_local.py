@@ -9,7 +9,8 @@ from openpype.pipeline import publish
 from openpype.lib import collect_frames
 
 
-class NukeRenderLocal(publish.ExtractorColormanaged):
+class NukeRenderLocal(publish.Extractor,
+                      publish.ColormanagedPyblishPluginMixin):
     """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
