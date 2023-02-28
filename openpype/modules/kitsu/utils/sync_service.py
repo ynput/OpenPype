@@ -48,16 +48,16 @@ class Listener:
         self.dbcon = AvalonMongoDB()
         self.dbcon.install()
 
-        gazu.client.set_host(os.environ['KITSU_SERVER'])
+        gazu.client.set_host(os.environ["KITSU_SERVER"])
 
         # Authenticate
         if not validate_credentials(login, password):
             raise gazu.exception.AuthFailedException(
-                f"Kitsu authentication failed for login: '{login}'..."
+                'Kitsu authentication failed for login: "{}"...'.format(login)
             )
 
         gazu.set_event_host(
-            os.environ['KITSU_SERVER'].replace("api", "socket.io")
+            os.environ["KITSU_SERVER"].replace("api", "socket.io")
         )
         self.event_client = gazu.events.init()
 
@@ -135,14 +135,14 @@ class Listener:
     def _update_project(self, data):
         """Update project into OP DB."""
         # Get project entity
-        project = gazu.project.get_project(data['project_id'])
+        project = gazu.project.get_project(data["project_id"])
 
         update_project = write_project_to_op(project, self.dbcon)
 
         # Write into DB
         if update_project:
-            self.dbcon.Session['AVALON_PROJECT'] = get_kitsu_project_name(
-                data['project_id'])
+            self.dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(
+                data["project_id"])
             self.dbcon.bulk_write([update_project])
 
     def _delete_project(self, data):
@@ -168,10 +168,10 @@ class Listener:
     def _new_asset(self, data):
         """Create new asset into OP DB."""
         # Get project entity
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
         # Get asset entity
-        asset = gazu.asset.get_asset(data['asset_id'])
+        asset = gazu.asset.get_asset(data["asset_id"])
 
         # Insert doc in DB
         self.dbcon.insert_one(create_op_asset(asset))
@@ -181,7 +181,7 @@ class Listener:
 
         # Print message
         episode = None
-        ep_id = asset['episode_id']
+        ep_id = asset.get("episode_id")
         if ep_id and ep_id != "":
             episode = gazu.asset.get_episode(ep_id)
 
@@ -195,22 +195,22 @@ class Listener:
 
     def _update_asset(self, data):
         """Update asset into OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name)
 
         # Get gazu entity
-        asset = gazu.asset.get_asset(data['asset_id'])
+        asset = gazu.asset.get_asset(data["asset_id"])
 
         # Find asset doc
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
-            asset_doc['data']['zou']['id']: asset_doc
+            asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in get_assets(project_name)
-            if asset_doc['data'].get("zou", {}).get("id")
+            if asset_doc["data"].get("zou", {}).get("id")
         }
-        zou_ids_and_asset_docs[asset['project_id']] = project_doc
-        gazu_project = gazu.project.get_project(asset['project_id'])
+        zou_ids_and_asset_docs[asset["project_id"]] = project_doc
+        gazu_project = gazu.project.get_project(asset["project_id"])
 
         # Update
         update_op_result = update_op_assets(
@@ -223,18 +223,18 @@ class Listener:
 
     def _delete_asset(self, data):
         """Delete asset of OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
-        asset = self.dbcon.find_one({"data.zou.id": data['asset_id']})
+        asset = self.dbcon.find_one({"data.zou.id": data["asset_id"]})
         if asset:
             # Delete
             self.dbcon.delete_one(
-                {"type": "asset", "data.zou.id": data['asset_id']}
+                {"type": "asset", "data.zou.id": data["asset_id"]}
             )
 
             # Print message
             episode = None
-            ep_id = asset['data']['zou']['episode_id']
+            ep_id = asset["data"]["zou"].get("episode_id")
             if ep_id and ep_id != "":
                 episode = gazu.asset.get_episode(ep_id)
 
@@ -250,10 +250,10 @@ class Listener:
     def _new_episode(self, data):
         """Create new episode into OP DB."""
         # Get project entity
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
-        episode = gazu.shot.get_episode(data['episode_id'])
+        ep = gazu.shot.get_episode(data["episode_id"])
 
         # Insert doc in DB
         self.dbcon.insert_one(create_op_asset(episode))
@@ -268,22 +268,22 @@ class Listener:
 
     def _update_episode(self, data):
         """Update episode into OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name)
 
         # Get gazu entity
-        episode = gazu.shot.get_episode(data['episode_id'])
+        ep = gazu.shot.get_episode(data["episode_id"])
 
         # Find asset doc
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
-            asset_doc['data']['zou']['id']: asset_doc
+            asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in get_assets(project_name)
-            if asset_doc['data'].get("zou", {}).get("id")
+            if asset_doc["data"].get("zou", {}).get("id")
         }
-        zou_ids_and_asset_docs[episode['project_id']] = project_doc
-        gazu_project = gazu.project.get_project(episode['project_id'])
+        zou_ids_and_asset_docs[ep["project_id"]] = project_doc
+        gazu_project = gazu.project.get_project(ep["project_id"])
 
         # Update
         update_op_result = update_op_assets(
@@ -296,7 +296,7 @@ class Listener:
 
     def _delete_episode(self, data):
         """Delete shot of OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
         episode = self.dbcon.find_one({"data.zou.id": data['episode_id']})
         if episode:
@@ -317,10 +317,10 @@ class Listener:
     def _new_sequence(self, data):
         """Create new sequnce into OP DB."""
         # Get project entity
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
-        sequence = gazu.shot.get_sequence(data['sequence_id'])
+        sequence = gazu.shot.get_sequence(data["sequence_id"])
 
         # Insert doc in DB
         self.dbcon.insert_one(create_op_asset(sequence))
@@ -331,7 +331,7 @@ class Listener:
         # Print message
 
         episode = None
-        ep_id = sequence['episode_id']
+        ep_id = sequence.get("episode_id")
         if ep_id and ep_id != "":
             episode = gazu.asset.get_episode(ep_id)
 
@@ -344,22 +344,22 @@ class Listener:
 
     def _update_sequence(self, data):
         """Update sequence into OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name)
 
         # Get gazu entity
-        sequence = gazu.shot.get_sequence(data['sequence_id'])
+        sequence = gazu.shot.get_sequence(data["sequence_id"])
 
         # Find asset doc
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
-            asset_doc['data']['zou']['id']: asset_doc
+            asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in get_assets(project_name)
-            if asset_doc['data'].get("zou", {}).get("id")
+            if asset_doc["data"].get("zou", {}).get("id")
         }
-        zou_ids_and_asset_docs[sequence['project_id']] = project_doc
-        gazu_project = gazu.project.get_project(sequence['project_id'])
+        zou_ids_and_asset_docs[sequence["project_id"]] = project_doc
+        gazu_project = gazu.project.get_project(sequence["project_id"])
 
         # Update
         update_op_result = update_op_assets(
@@ -372,15 +372,16 @@ class Listener:
 
     def _delete_sequence(self, data):
         """Delete sequence of OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
-        sequence = self.dbcon.find_one({"data.zou.id": data['sequence_id']})
+        set_op_project(self.dbcon, data["project_id"])
+        sequence = self.dbcon.find_one({"data.zou.id": data["sequence_id"]})
         if sequence:
             # Delete
             self.dbcon.delete_one(
-                {"type": "asset", "data.zou.id": data['sequence_id']}
+                {"type": "asset", "data.zou.id": data["sequence_id"]}
             )
 
             # Print message
+            ep_id = sequence["data"]["zou"].get("episode_id")
             gazu_project = gazu.project.get_project(
                 sequence['data']['zou']['project_id'])
             msg = f"Sequence deleted: "
@@ -392,10 +393,10 @@ class Listener:
     def _new_shot(self, data):
         """Create new shot into OP DB."""
         # Get project entity
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
 
         # Get gazu entity
-        shot = gazu.shot.get_shot(data['shot_id'])
+        shot = gazu.shot.get_shot(data["shot_id"])
 
         # Insert doc in DB
         self.dbcon.insert_one(create_op_asset(shot))
@@ -405,7 +406,7 @@ class Listener:
 
         # Print message
         episode = None
-        if shot['episode_id'] and shot['episode_id'] != "":
+        if shot["episode_id"] and shot["episode_id"] != "":
             episode = gazu.asset.get_episode(shot['episode_id'])
 
         msg = "Shot created: "
@@ -418,21 +419,21 @@ class Listener:
 
     def _update_shot(self, data):
         """Update shot into OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name)
 
         # Get gazu entity
-        shot = gazu.shot.get_shot(data['shot_id'])
+        shot = gazu.shot.get_shot(data["shot_id"])
 
         # Find asset doc
         # Query all assets of the local project
         zou_ids_and_asset_docs = {
-            asset_doc['data']['zou']['id']: asset_doc
+            asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in get_assets(project_name)
-            if asset_doc['data'].get("zou", {}).get("id")
-        }
-        zou_ids_and_asset_docs[shot['project_id']] = project_doc
+            if asset_doc["data"].get("zou", {}).get("id")}
+        zou_ids_and_asset_docs[shot["project_id"]] = project_doc
+        gazu_project = gazu.project.get_project(shot["project_id"])
         gazu_project = gazu.project.get_project(shot['project_id'])
 
         # Update
@@ -447,18 +448,18 @@ class Listener:
 
     def _delete_shot(self, data):
         """Delete shot of OP DB."""
-        set_op_project(self.dbcon, data['project_id'])
-        shot = self.dbcon.find_one({"data.zou.id": data['shot_id']})
+        set_op_project(self.dbcon, data["project_id"])
+        shot = self.dbcon.find_one({"data.zou.id": data["shot_id"]})
 
         if shot:
             # Delete
             self.dbcon.delete_one(
-                {"type": "asset", "data.zou.id": data['shot_id']}
+                {"type": "asset", "data.zou.id": data["shot_id"]}
             )
 
             # Print message
             gazu_project = gazu.project.get_project(
-                shot['data']['zou']['project_id'])
+            ep_id = shot["data"]["zou"].get("episode_id")
 
             msg = "Shot deleted: "
             msg = msg + f"{gazu_project['name']} - "
@@ -469,15 +470,15 @@ class Listener:
     def _new_task(self, data):
         """Create new task into OP DB."""
         # Get project entity
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
 
         # Get gazu entity
-        task = gazu.task.get_task(data['task_id'])
+        task = gazu.task.get_task(data["task_id"])
 
         # Find asset doc
         episode = None
-        ep_id = task.get('episode_id')
+        ep_id = task.get("episode_id")
         if ep_id and ep_id != "":
             episode = gazu.asset.get_episode(ep_id)
 
@@ -490,11 +491,11 @@ class Listener:
         # Update asset tasks with new one
         asset_doc = get_asset_by_name(project_name, parent_name)
         if asset_doc:
-            asset_tasks = asset_doc['data'].get("tasks")
-            task_type_name = task['task_type']['name']
+            asset_tasks = asset_doc["data"].get("tasks")
+            task_type_name = task["task_type"]["name"]
             asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
             self.dbcon.update_one(
-                {"_id": asset_doc['_id']},
+                {"_id": asset_doc["_id"]},
                 {"$set": {"data.tasks": asset_tasks}}
             )
 
@@ -515,29 +516,29 @@ class Listener:
     def _delete_task(self, data):
         """Delete task of OP DB."""
 
-        set_op_project(self.dbcon, data['project_id'])
+        set_op_project(self.dbcon, data["project_id"])
         project_name = self.dbcon.active_project()
         # Find asset doc
         asset_docs = list(get_assets(project_name))
         for doc in asset_docs:
             # Match task
-            for name, task in doc['data']['tasks'].items():
-                if task.get("zou") and data['task_id'] == task['zou']['id']:
+            for name, task in doc["data"]["tasks"].items():
+                if task.get("zou") and data["task_id"] == task["zou"]["id"]:
                     # Pop task
-                    asset_tasks = doc['data'].get("tasks", {})
+                    asset_tasks = doc["data"].get("tasks", {})
                     asset_tasks.pop(name)
 
                     # Delete task in DB
                     self.dbcon.update_one(
-                        {"_id": doc['_id']},
+                        {"_id": doc["_id"]},
                         {"$set": {"data.tasks": asset_tasks}},
                     )
 
                     # Print message
-                    shot = gazu.shot.get_shot(task['zou']['entity_id'])
+                    entity = gazu.entity.get_entity(task["zou"]["entity_id"])
 
                     episode = None
-                    ep_id = shot['episode_id']
+                    ep_id = entity.get("episode_id")
                     if ep_id and ep_id != "":
                         episode = gazu.asset.get_episode(ep_id)
 
