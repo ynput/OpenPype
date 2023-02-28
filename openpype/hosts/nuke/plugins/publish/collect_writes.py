@@ -3,9 +3,10 @@ from pprint import pformat
 import nuke
 import pyblish.api
 from openpype.hosts.nuke import api as napi
+from openpype.pipeline import publish
 
-
-class CollectNukeWrites(pyblish.api.InstancePlugin):
+class CollectNukeWrites(pyblish.api.InstancePlugin,
+                        publish.ColormanagedPyblishPluginMixin):
     """Collect all write nodes."""
 
     order = pyblish.api.CollectorOrder - 0.48
@@ -128,6 +129,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 else:
                     representation['files'] = collected_frames
 
+            # inject colorspace data
+            self.set_representation_colorspace(
+                representation, instance.context,
+                colorspace=colorspace
+            )
+
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
@@ -147,6 +154,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # get colorspace and add to version data
         colorspace = napi.get_colorspace_from_node(write_node)
+
+        # TODO: remove this when we have proper colorspace support
         version_data = {
             "colorspace": colorspace
         }
