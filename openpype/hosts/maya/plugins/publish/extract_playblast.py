@@ -118,7 +118,7 @@ class ExtractPlayblast(publish.Extractor):
 
         # Need to explicitly enable some viewport changes so the viewport is
         # refreshed ahead of playblasting.
-        panel = cmds.getPanel(withFocus=True)
+        panel = cmds.getPanel(withFocus=True) or ""
         keys = [
             "useDefaultMaterial",
             "wireframeOnShaded",
@@ -127,12 +127,13 @@ class ExtractPlayblast(publish.Extractor):
             "backfaceCulling"
         ]
         viewport_defaults = {}
-        for key in keys:
-            viewport_defaults[key] = cmds.modelEditor(
-                panel, query=True, **{key: True}
-            )
-            if preset["viewport_options"][key]:
-                cmds.modelEditor(panel, edit=True, **{key: True})
+        if panel and "modelPanel" in panel:
+            for key in keys:
+                viewport_defaults[key] = cmds.modelEditor(
+                    panel, query=True, **{key: True}
+                )
+                if preset["viewport_options"][key]:
+                    cmds.modelEditor(panel, edit=True, **{key: True})
 
         override_viewport_options = (
             capture_presets['Viewport Options']['override_viewport_options']
@@ -163,7 +164,8 @@ class ExtractPlayblast(publish.Extractor):
             path = capture.capture(log=self.log, **preset)
 
         # Restoring viewport options.
-        cmds.modelEditor(panel, edit=True, **viewport_defaults)
+        if viewport_defaults:
+            cmds.modelEditor(panel, edit=True, **viewport_defaults)
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
