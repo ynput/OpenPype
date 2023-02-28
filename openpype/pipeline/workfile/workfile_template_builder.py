@@ -1653,7 +1653,7 @@ class PlaceholderCreateMixin(object):
                     asset_name
                 ).process()
             else:
-                creator_instance =  creator_plugin.create(
+                creator_instance = creator_plugin.create(
                     subset_name,
                     {
                         "asset": asset_doc["name"],
