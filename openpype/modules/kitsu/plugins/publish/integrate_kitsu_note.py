@@ -25,16 +25,16 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         # Get note status, by default uses the task status for the note
         # if it is not specified in the configuration
         kitsu_task = context.data["kitsu_task"]
-        shortname = kitsu_task["task_status"]["short_name"]
+        shortname = kitsu_task["task_status"]["short_name"].upper()
         note_status = kitsu_task["task_status_id"]
         if self.set_status_note and next(
             (
                 False
                 for status_except in self.status_exceptions
-                if shortname == status_except["short_name"]
+                if shortname == status_except["short_name"].upper()
                 and status_except["equality"] == "equal"
                 or
-                shortname != status_except["short_name"]
+                shortname != status_except["short_name"].upper()
                 and status_except["equality"] == "not_equal"
             ),
             True
