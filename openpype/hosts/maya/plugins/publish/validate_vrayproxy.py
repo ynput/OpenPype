@@ -12,8 +12,6 @@ class ValidateVrayProxy(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         data = instance.data
-        self.log.info(data["family"])
-        self.log.info(data["families"])
 
         if not data["setMembers"]:
             raise KnownPublishError(
