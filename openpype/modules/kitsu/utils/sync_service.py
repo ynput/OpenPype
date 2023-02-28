@@ -149,20 +149,16 @@ class Listener:
         """Delete project."""
 
         collections = self.dbcon.database.list_collection_names()
-        project_name = None
         for collection in collections:
-            post = self.dbcon.database[collection].find_one(
-                {"data.zou_id": data['project_id']})
-            if post:
-                project_name = post['name']
-                break
+            project = self.dbcon.database[collection].find_one(
+                {"data.zou_id": data["project_id"]})
+            if project:
+                # Delete project collection
+                self.dbcon.database[project["name"]].drop()
 
-        if project_name:
-            # Delete project collection
-            self.dbcon.database[project_name].drop()
-
-            # Print message
-            log.info("Project deleted: {}".format(project_name))
+                # Print message
+                log.info("Project deleted: {}".format(project["name"]))
+                return
 
     # == Asset ==
     def _new_asset(self, data):
