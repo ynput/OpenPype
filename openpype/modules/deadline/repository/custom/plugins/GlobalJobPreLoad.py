@@ -1,3 +1,4 @@
+# /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import tempfile
@@ -201,19 +202,21 @@ def get_openpype_versions(dir_list):
     print(">>> Getting OpenPype executable ...")
     openpype_versions = []
 
-    install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-    if install_dir:
-        print("--- Looking for OpenPype at: {}".format(install_dir))
-        sub_dirs = [
-            f.path for f in os.scandir(install_dir)
-            if f.is_dir()
-        ]
-        for subdir in sub_dirs:
-            version = get_openpype_version_from_path(subdir)
-            if not version:
-                continue
-            print("  - found: {} - {}".format(version, subdir))
-            openpype_versions.append((version, subdir))
+    # special case of multiple install dirs
+    for dir_list in dir_list.split(","):
+        install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
+        if install_dir:
+            print("--- Looking for OpenPype at: {}".format(install_dir))
+            sub_dirs = [
+                f.path for f in os.scandir(install_dir)
+                if f.is_dir()
+            ]
+            for subdir in sub_dirs:
+                version = get_openpype_version_from_path(subdir)
+                if not version:
+                    continue
+                print("  - found: {} - {}".format(version, subdir))
+                openpype_versions.append((version, subdir))
     return openpype_versions
 
 
@@ -339,7 +342,7 @@ def inject_openpype_environment(deadlinePlugin):
             "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
             "envgroup": "farm"
         }
-        
+
         if job.GetJobEnvironmentKeyValue('IS_TEST'):
             args.append("--automatic-tests")
 
