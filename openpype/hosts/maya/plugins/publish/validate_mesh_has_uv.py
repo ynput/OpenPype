@@ -27,6 +27,15 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
         invalid = []
 
         for node in cmds.ls(instance, type='mesh'):
+            num_vertices = cmds.polyEvaluate(node, vertex=True)
+
+            if num_vertices == 0:
+                cls.log.warning(
+                    "Skipping \"{}\", cause it does not have any "
+                    "vertices.".format(node)
+                )
+                continue
+
             uv = cmds.polyEvaluate(node, uv=True)
 
             if uv == 0:

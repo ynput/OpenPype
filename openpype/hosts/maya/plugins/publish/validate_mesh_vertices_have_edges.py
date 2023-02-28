@@ -55,6 +55,13 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
         for mesh in meshes:
             num_vertices = cmds.polyEvaluate(mesh, vertex=True)
 
+            if num_vertices == 0:
+                cls.log.warning(
+                    "Skipping \"{}\", cause it does not have any "
+                    "vertices.".format(mesh)
+                )
+                continue
+
             # Vertices from all edges
             edges = "%s.e[*]" % mesh
             vertices = cmds.polyListComponentConversion(edges, toVertex=True)
