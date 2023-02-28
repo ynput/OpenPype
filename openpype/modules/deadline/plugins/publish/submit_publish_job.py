@@ -141,7 +141,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
-        "OPENPYPE_SG_USER",
     ]
 
     # Add OpenPype version if we are running from build.
