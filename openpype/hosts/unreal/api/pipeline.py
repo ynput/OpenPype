@@ -114,6 +114,7 @@ def install():
     register_creator_plugin_path(str(CREATE_PATH))
     _register_callbacks()
     _register_events()
+    _init_perforce()
 
 
 def uninstall():
@@ -135,6 +136,13 @@ def _register_events():
     TODO: Implement callbacks if supported by UE4
     """
     pass
+
+
+def _init_perforce():
+    from openpype.hosts.unreal.api.p4_integrate import P4Integrate
+    p4Connector = P4Integrate()
+
+    p4Connector.P4VCreateDefaultChangelist("PLACE DEFAULT COMMENT FOR OPENPYPE CHANGELIST")
 
 
 def ls():
