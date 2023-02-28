@@ -178,7 +178,9 @@ class AbstractTemplateBuilder(object):
     def create_context(self):
         if self._create_context is None:
             self._create_context = CreateContext(
-                self.host, discover_publish_plugins=False
+                self.host,
+                discover_publish_plugins=False,
+                headless=True
             )
         return self._create_context
 
@@ -1660,7 +1662,7 @@ class PlaceholderCreateMixin(object):
                     task_name=task_name
                 )
 
-        except Exception:
+        except:
             failed = True
             self.create_failed(placeholder, creator_data)
 
