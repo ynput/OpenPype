@@ -17,8 +17,8 @@ class PointCloudLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
-
         from pymxs import runtime as rt
+
         filepath = os.path.normpath(self.fname)
         obj = rt.tyCache()
         obj.filename = filepath
@@ -30,8 +30,8 @@ class PointCloudLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
         """update the container"""
-
         from pymxs import runtime as rt
+
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
