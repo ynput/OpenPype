@@ -500,9 +500,15 @@ class Listener:
 
         parent_name = None
         entity_type = None
-            parent_name = episode['name'] + "_"
-        parent_name = parent_name + \
-            task['sequence']['name'] + "_" + task['entity']['name']
+        if task["task_type"]["for_entity"] == "Asset":
+            parent_name = task["entity"]["name"]
+            entity_type = task["entity_type"]["name"]
+        elif task["task_type"]["for_entity"] == "Shot":
+            parent_name = "{ep_name}{sequence_name} - {shot_name}".format(
+                ep_name=ep["name"] + " - " if ep is not None else "",
+                sequence_name=task["sequence"]["name"],
+                shot_name=task["entity"]["name"]
+            )
 
         # Update asset tasks with new one
         asset_doc = get_asset_by_name(project_name, parent_name)
@@ -557,6 +563,18 @@ class Listener:
                     ep_id = entity.get("episode_id")
                     if ep_id and ep_id != "":
                         ep = gazu.asset.get_episode(ep_id)
+
+                    parent_name = None
+                    entity_type = None
+                    if task["task_type"]["for_entity"] == "Asset":
+                        parent_name = task["entity"]["name"]
+                        entity_type = task["entity_type"]["name"]
+                    elif task["task_type"]["for_entity"] == "Shot":
+                        parent_name = "{ep_name}{sequence_name} - {shot_name}".format(
+                            ep_name=ep["name"] + " - " if ep is not None else "",
+                            sequence_name=task["sequence"]["name"],
+                            shot_name=task["entity"]["name"]
+                        )
 
                     msg = "Task deleted: {proj_name} - {entity_type}{parent_name}" \
                         " - {task_name}".format(
