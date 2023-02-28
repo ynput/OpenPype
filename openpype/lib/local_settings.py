@@ -554,7 +554,7 @@ def get_local_site_id():
     """
 
     if AYON_SERVER_ENABLED:
-        return _get_ayon_local_site_id(0)
+        return _get_ayon_local_site_id()
 
     # override local id from environment
     # used for background syncing
