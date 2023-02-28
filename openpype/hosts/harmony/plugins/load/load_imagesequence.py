@@ -22,7 +22,7 @@ class ImageSequenceLoader(load.LoaderPlugin):
 
     families = ["shot", "render", "image", "plate", "reference", "review"]
     representations = ["*"]
-    extensions = set(["jpeg", "png", "jpg"])
+    extensions = {"jpeg", "png", "jpg"}
 
     def load(self, context, name=None, namespace=None, data=None):
         """Plugin entry point.
