@@ -442,7 +442,8 @@ class AbstractTemplateBuilder(object):
         template_path=None,
         level_limit=None,
         keep_placeholders=None,
-        create_first_version=None
+        create_first_version=None,
+        run_from_callback=False
     ):
         """Main callback for building workfile from template path.
 
@@ -460,6 +461,9 @@ class AbstractTemplateBuilder(object):
                 hosts to decide if they want to remove
                 placeholder after it is used.
             create_first_version (bool): create first version of a workfile
+            run_from_callback (bool): If True, it might create first version
+                                      but ignore process if version is created
+
         """
         template_preset = self.get_template_preset()
 
@@ -471,8 +475,14 @@ class AbstractTemplateBuilder(object):
         if create_first_version is None:
             create_first_version = template_preset["create_first_version"]
 
-        if create_first_version:
-            self.create_first_workfile_version()
+        # run creation of first version only if it is
+        # run from callback and no new version is created
+        first_creation = False
+        if create_first_version and run_from_callback:
+            first_creation = not self.create_first_workfile_version()
+
+        if first_creation:
+            return
 
         self.import_template(template_path)
         self.populate_scene_placeholders(
@@ -524,13 +534,32 @@ class AbstractTemplateBuilder(object):
 
         pass
 
-    @abstractmethod
     def create_first_workfile_version(self):
         """
         Create first version of workfile.
 
+        Should load the content of template into scene so
+        'populate_scene_placeholders' can be started.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
         """
-        pass
+        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        if os.path.exists(last_workfile_path):
+            # ignore in case workfile existence
+            self.log.info("Workfile already exists, skipping creation.")
+            return False
+
+        # Save current scene, continue to open file
+        if isinstance(self.host, IWorkfileHost):
+            self.host.save_workfile(last_workfile_path)
+        else:
+            self.host.save_file(last_workfile_path)
+
+        # Confirm creation of first version
+        return True
+
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.

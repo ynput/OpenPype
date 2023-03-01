@@ -56,24 +56,6 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
 
         return True
 
-    def create_first_workfile_version(self):
-        """
-        Create first version of workfile.
-
-        Should load the content of template into scene so
-        'populate_scene_placeholders' can be started.
-
-        Args:
-            template_path (str): Fullpath for current task and
-                host's template file.
-        """
-        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
-        # Save current scene, continue to open file
-        if isinstance(self.host, IWorkfileHost):
-            self.host.save_workfile(last_workfile_path)
-        else:
-            self.host.save_file(last_workfile_path)
-
 
 class NukePlaceholderPlugin(PlaceholderPlugin):
     node_color = 4278190335
@@ -966,9 +948,9 @@ class NukePlaceholderCreatePlugin(
         siblings_input.setInput(0, copy_output)
 
 
-def build_workfile_template(*args):
+def build_workfile_template(*args, **kwargs):
     builder = NukeTemplateBuilder(registered_host())
-    builder.build_template()
+    builder.build_template(*args, **kwargs)
 
 
 def update_workfile_template(*args):
