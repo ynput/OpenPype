@@ -68,6 +68,10 @@
                 "output": []
             }
         },
+        "ExtractOIIOTranscode": {
+            "enabled": true,
+            "profiles": []
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [

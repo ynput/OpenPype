@@ -1,6 +1,5 @@
 """Should be used only inside of hosts."""
-import os
-import copy
+
 import platform
 import logging
 import functools
@@ -10,17 +9,12 @@ import six
 
 from openpype.client import (
     get_project,
-    get_assets,
     get_asset_by_name,
-    get_last_version_by_subset_name,
-    get_workfile_info,
 )
 from openpype.client.operations import (
     CURRENT_ASSET_DOC_SCHEMA,
     CURRENT_PROJECT_SCHEMA,
     CURRENT_PROJECT_CONFIG_SCHEMA,
-    PROJECT_NAME_ALLOWED_SYMBOLS,
-    PROJECT_NAME_REGEX,
 )
 from .profiles_filtering import filter_profiles
 from .path_templates import StringTemplate
@@ -128,70 +122,6 @@ def with_pipeline_io(func):
     return wrapped
 
 
-@deprecated("openpype.pipeline.context_tools.is_representation_from_latest")
-def is_latest(representation):
-    """Return whether the representation is from latest version
-
-    Args:
-        representation (dict): The representation document from the database.
-
-    Returns:
-        bool: Whether the representation is of latest version.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.context_tools import is_representation_from_latest
-
-    return is_representation_from_latest(representation)
-
-
-@deprecated("openpype.pipeline.load.any_outdated_containers")
-def any_outdated():
-    """Return whether the current scene has any outdated content.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.load import any_outdated_containers
-
-    return any_outdated_containers()
-
-
-@deprecated("openpype.pipeline.context_tools.get_current_project_asset")
-def get_asset(asset_name=None):
-    """ Returning asset document from database by its name.
-
-    Doesn't count with duplicities on asset names!
-
-    Args:
-        asset_name (str)
-
-    Returns:
-        (MongoDB document)
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.context_tools import get_current_project_asset
-
-    return get_current_project_asset(asset_name=asset_name)
-
-
-@deprecated("openpype.pipeline.template_data.get_general_template_data")
-def get_system_general_anatomy_data(system_settings=None):
-    """
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-    from openpype.pipeline.template_data import get_general_template_data
-
-    return get_general_template_data(system_settings)
-
-
 @deprecated("openpype.client.get_linked_asset_ids")
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
@@ -212,66 +142,6 @@ def get_linked_asset_ids(asset_doc):
     project_name = legacy_io.active_project()
 
     return get_linked_asset_ids(project_name, asset_doc=asset_doc)
-
-
-@deprecated("openpype.client.get_linked_assets")
-def get_linked_assets(asset_doc):
-    """Return linked assets for `asset_doc` from DB
-
-    Args:
-        asset_doc (dict): Asset document from DB
-
-    Returns:
-        (list) Asset documents of input links for passed asset doc.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline import legacy_io
-    from openpype.client import get_linked_assets
-
-    project_name = legacy_io.active_project()
-
-    return get_linked_assets(project_name, asset_doc=asset_doc)
-
-
-@deprecated("openpype.client.get_last_version_by_subset_name")
-def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
-    """Retrieve latest version from `asset_name`, and `subset_name`.
-
-    Do not use if you want to query more than 5 latest versions as this method
-    query 3 times to mongo for each call. For those cases is better to use
-    more efficient way, e.g. with help of aggregations.
-
-    Args:
-        asset_name (str): Name of asset.
-        subset_name (str): Name of subset.
-        dbcon (AvalonMongoDB, optional): Avalon Mongo connection with Session.
-        project_name (str, optional): Find latest version in specific project.
-
-    Returns:
-        None: If asset, subset or version were not found.
-        dict: Last version document for entered.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    if not project_name:
-        if not dbcon:
-            from openpype.pipeline import legacy_io
-
-            log.debug("Using `legacy_io` for query.")
-            dbcon = legacy_io
-            # Make sure is installed
-            dbcon.install()
-
-        project_name = dbcon.active_project()
-
-    return get_last_version_by_subset_name(
-        project_name, subset_name, asset_name=asset_name
-    )
 
 
 @deprecated(
@@ -359,142 +229,6 @@ def get_workfile_template_key(
     return get_workfile_template_key(
         task_type, host_name, project_name, project_settings
     )
-
-
-@deprecated("openpype.pipeline.template_data.get_template_data")
-def get_workdir_data(project_doc, asset_doc, task_name, host_name):
-    """Prepare data for workdir template filling from entered information.
-
-    Args:
-        project_doc (dict): Mongo document of project from MongoDB.
-        asset_doc (dict): Mongo document of asset from MongoDB.
-        task_name (str): Task name for which are workdir data preapred.
-        host_name (str): Host which is used to workdir. This is required
-            because workdir template may contain `{app}` key.
-
-    Returns:
-        dict: Data prepared for filling workdir template.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.template_data import get_template_data
-
-    return get_template_data(
-        project_doc, asset_doc, task_name, host_name
-    )
-
-
-@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
-def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None, template_key=None
-):
-    """Fill workdir path from entered data and project's anatomy.
-
-    It is possible to pass only project's name instead of project's anatomy but
-    one of them **must** be entered. It is preferred to enter anatomy if is
-    available as initialization of a new Anatomy object may be time consuming.
-
-    Args:
-        workdir_data (dict): Data to fill workdir template.
-        anatomy (Anatomy): Anatomy object for specific project. Optional if
-            `project_name` is entered.
-        project_name (str): Project's name. Optional if `anatomy` is entered
-            otherwise Anatomy object is created with using the project name.
-        template_key (str): Key of work templates in anatomy templates. If not
-            passed `get_workfile_template_key_from_context` is used to get it.
-        dbcon(AvalonMongoDB): Mongo connection. Required only if 'template_key'
-            and 'project_name' are not passed.
-
-    Returns:
-        TemplateResult: Workdir path.
-
-    Raises:
-        ValueError: When both `anatomy` and `project_name` are set to None.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    if not anatomy and not project_name:
-        raise ValueError((
-            "Missing required arguments one of `project_name` or `anatomy`"
-            " must be entered."
-        ))
-
-    if not project_name:
-        project_name = anatomy.project_name
-
-    from openpype.pipeline.workfile import get_workdir_with_workdir_data
-
-    return get_workdir_with_workdir_data(
-        workdir_data, project_name, anatomy, template_key
-    )
-
-
-@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
-def get_workdir(
-    project_doc,
-    asset_doc,
-    task_name,
-    host_name,
-    anatomy=None,
-    template_key=None
-):
-    """Fill workdir path from entered data and project's anatomy.
-
-    Args:
-        project_doc (dict): Mongo document of project from MongoDB.
-        asset_doc (dict): Mongo document of asset from MongoDB.
-        task_name (str): Task name for which are workdir data preapred.
-        host_name (str): Host which is used to workdir. This is required
-            because workdir template may contain `{app}` key. In `Session`
-            is stored under `AVALON_APP` key.
-        anatomy (Anatomy): Optional argument. Anatomy object is created using
-            project name from `project_doc`. It is preferred to pass this
-            argument as initialization of a new Anatomy object may be time
-            consuming.
-        template_key (str): Key of work templates in anatomy templates. Default
-            value is defined in `get_workdir_with_workdir_data`.
-
-    Returns:
-        TemplateResult: Workdir path.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.workfile import get_workdir
-    # Output is TemplateResult object which contain useful data
-    return get_workdir(
-        project_doc,
-        asset_doc,
-        task_name,
-        host_name,
-        anatomy,
-        template_key
-    )
-
-
-@deprecated("openpype.pipeline.context_tools.get_template_data_from_session")
-def template_data_from_session(session=None):
-    """ Return dictionary with template from session keys.
-
-    Args:
-        session (dict, Optional): The Session to use. If not provided use the
-            currently active global Session.
-
-    Returns:
-        dict: All available data from session.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.context_tools import get_template_data_from_session
-
-    return get_template_data_from_session(session)
 
 
 @deprecated("openpype.pipeline.context_tools.compute_session_changes")
@@ -588,133 +322,6 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
     return change_current_context(asset, task, template_key)
 
 
-@deprecated("openpype.client.get_workfile_info")
-def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
-    """Return workfile document for entered context.
-
-    Do not use this method to get more than one document. In that cases use
-    custom query as this will return documents from database one by one.
-
-    Args:
-        asset_id (ObjectId): Mongo ID of an asset under which workfile belongs.
-        task_name (str): Name of task under which the workfile belongs.
-        filename (str): Name of a workfile.
-        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `legacy_io` is used if not entered.
-
-    Returns:
-        dict: Workfile document or None.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    # Use legacy_io if dbcon is not entered
-    if not dbcon:
-        from openpype.pipeline import legacy_io
-        dbcon = legacy_io
-
-    project_name = dbcon.active_project()
-    return get_workfile_info(project_name, asset_id, task_name, filename)
-
-
-@deprecated
-def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
-    """Creates or replace workfile document in mongo.
-
-    Do not use this method to update data. This method will remove all
-    additional data from existing document.
-
-    Args:
-        asset_doc (dict): Document of asset under which workfile belongs.
-        task_name (str): Name of task for which is workfile related to.
-        filename (str): Filename of workfile.
-        workdir (str): Path to directory where `filename` is located.
-        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
-            `legacy_io` is used if not entered.
-    """
-
-    from openpype.pipeline import Anatomy
-    from openpype.pipeline.template_data import get_template_data
-
-    # Use legacy_io if dbcon is not entered
-    if not dbcon:
-        from openpype.pipeline import legacy_io
-        dbcon = legacy_io
-
-    # Filter of workfile document
-    doc_filter = {
-        "type": "workfile",
-        "parent": asset_doc["_id"],
-        "task_name": task_name,
-        "filename": filename
-    }
-    # Document data are copy of filter
-    doc_data = copy.deepcopy(doc_filter)
-
-    # Prepare project for workdir data
-    project_name = dbcon.active_project()
-    project_doc = get_project(project_name)
-    workdir_data = get_template_data(
-        project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
-    )
-    # Prepare anatomy
-    anatomy = Anatomy(project_name)
-    # Get workdir path (result is anatomy.TemplateResult)
-    template_workdir = get_workdir_with_workdir_data(
-        workdir_data, anatomy
-    )
-    template_workdir_path = str(template_workdir).replace("\\", "/")
-
-    # Replace slashses in workdir path where workfile is located
-    mod_workdir = workdir.replace("\\", "/")
-
-    # Replace workdir from templates with rootless workdir
-    rootles_workdir = mod_workdir.replace(
-        template_workdir_path,
-        template_workdir.rootless.replace("\\", "/")
-    )
-
-    doc_data["schema"] = "pype:workfile-1.0"
-    doc_data["files"] = ["/".join([rootles_workdir, filename])]
-    doc_data["data"] = {}
-
-    dbcon.replace_one(
-        doc_filter,
-        doc_data,
-        upsert=True
-    )
-
-
-@deprecated
-def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
-    if not workfile_doc:
-        # TODO add log message
-        return
-
-    if not data:
-        return
-
-    # Use legacy_io if dbcon is not entered
-    if not dbcon:
-        from openpype.pipeline import legacy_io
-        dbcon = legacy_io
-
-    # Convert data to mongo modification keys/values
-    # - this is naive implementation which does not expect nested
-    #   dictionaries
-    set_data = {}
-    for key, value in data.items():
-        new_key = "data.{}".format(key)
-        set_data[new_key] = value
-
-    # Update workfile document with data
-    dbcon.update_one(
-        {"_id": workfile_doc["_id"]},
-        {"$set": set_data}
-    )
-
-
 @deprecated("openpype.pipeline.workfile.BuildWorkfile")
 def BuildWorkfile():
     """Build workfile class was moved to workfile pipeline.
@@ -747,38 +354,6 @@ def get_creator_by_name(creator_name, case_sensitive=False):
     return get_legacy_creator_by_name(creator_name, case_sensitive)
 
 
-@deprecated
-def change_timer_to_current_context():
-    """Called after context change to change timers.
-
-    Deprecated:
-        This method is specific for TimersManager module so please use the
-        functionality from there. Function will be removed after release
-        version 3.15.*
-    """
-
-    from openpype.pipeline import legacy_io
-
-    webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
-    if not webserver_url:
-        log.warning("Couldn't find webserver url")
-        return
-
-    rest_api_url = "{}/timers_manager/start_timer".format(webserver_url)
-    try:
-        import requests
-    except Exception:
-        log.warning("Couldn't start timer")
-        return
-    data = {
-        "project_name": legacy_io.Session["AVALON_PROJECT"],
-        "asset_name": legacy_io.Session["AVALON_ASSET"],
-        "task_name": legacy_io.Session["AVALON_TASK"]
-    }
-
-    requests.post(rest_api_url, json=data)
-
-
 def _get_task_context_data_for_anatomy(
     project_doc, asset_doc, task_name, anatomy=None
 ):
@@ -799,6 +374,8 @@ def _get_task_context_data_for_anatomy(
     Returns:
         dict: With Anatomy context data.
     """
+
+    from openpype.pipeline.template_data import get_general_template_data
 
     if anatomy is None:
         from openpype.pipeline import Anatomy
@@ -840,7 +417,7 @@ def _get_task_context_data_for_anatomy(
         }
     }
 
-    system_general_data = get_system_general_anatomy_data()
+    system_general_data = get_general_template_data()
     data.update(system_general_data)
 
     return data
