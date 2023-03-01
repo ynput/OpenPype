@@ -12,6 +12,10 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk
 )
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS,
+    VIDEO_EXTENSIONS
+)
 
 comp = get_current_comp()
 
@@ -129,6 +133,9 @@ class FusionLoadSequence(load.LoaderPlugin):
 
     families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load sequence"
     order = -10
