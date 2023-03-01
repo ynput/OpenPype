@@ -501,10 +501,10 @@ class Listener:
             ep = gazu.asset.get_episode(ep_id)
 
         parent_name = None
-        entity_type = None
+        ent_type = None
         if task["task_type"]["for_entity"] == "Asset":
             parent_name = task["entity"]["name"]
-            entity_type = task["entity_type"]["name"]
+            ent_type = task["entity_type"]["name"]
         elif task["task_type"]["for_entity"] == "Shot":
             parent_name = "{ep_name}{sequence_name} - {shot_name}".format(
                 ep_name=ep["name"] + " - " if ep is not None else "",
@@ -525,12 +525,12 @@ class Listener:
             )
 
             # Print message
-            msg = "Task created: {proj_name} - {entity_type}{parent_name}" \
-                " - {task_name}".format(
-                    proj_name=task["project"]["name"],
-                    entity_type=entity_type + " - " if entity_type is not None else "",
-                    parent_name=parent_name,
-                    task_name=task["task_type"]["name"]
+            msg = "Task created: {proj} - {ent_type}{parent}" \
+                " - {task}".format(
+                    proj=task["project"]["name"],
+                    ent_type=ent_type + " - " if ent_type is not None else "",
+                    parent=parent_name,
+                    task=task["task_type"]["name"]
                 )
             log.info(msg)
 
@@ -568,23 +568,24 @@ class Listener:
                         ep = gazu.asset.get_episode(ep_id)
 
                     parent_name = None
-                    entity_type = None
+                    ent_type = None
                     if task["task_type"]["for_entity"] == "Asset":
                         parent_name = task["entity"]["name"]
-                        entity_type = task["entity_type"]["name"]
+                        ent_type = task["entity_type"]["name"]
                     elif task["task_type"]["for_entity"] == "Shot":
-                        parent_name = "{ep_name}{sequence_name} - {shot_name}".format(
-                            ep_name=ep["name"] + " - " if ep is not None else "",
-                            sequence_name=task["sequence"]["name"],
-                            shot_name=task["entity"]["name"]
+                        parent_name = "{ep}{sequence} - {shot}".format(
+                            ep=ep["name"] + " - " if ep is not None else "",
+                            sequence=task["sequence"]["name"],
+                            shot=task["entity"]["name"]
                         )
 
-                    msg = "Task deleted: {proj_name} - {entity_type}{parent_name}" \
-                        " - {task_name}".format(
-                            proj_name=task["zou"]["project"]["name"],
-                            entity_type=entity_type + " - " if entity_type is not None else "",
-                            parent_name=parent_name,
-                            task_name=task["type"]
+                    ent_type=ent_type + " - " if ent_type is not None else "",
+                    msg = "Task deleted: {proj} - {ent_type}{parent}" \
+                        " - {task}".format(
+                            proj=task["zou"]["project"]["name"],
+                            ent_type=ent_type,
+                            parent=parent_name,
+                            task=task["type"]
                         )
                     log.info(msg)
 
