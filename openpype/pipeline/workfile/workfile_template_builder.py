@@ -44,7 +44,8 @@ from openpype.pipeline.load import (
     load_with_repre_context,
 )
 from openpype.pipeline.create import (
-    discover_legacy_creator_plugins
+    discover_legacy_creator_plugins,
+    CreateContext,
 )
 
 
@@ -92,6 +93,7 @@ class AbstractTemplateBuilder(object):
     """
 
     _log = None
+    use_legacy_creators = False
 
     def __init__(self, host):
         # Get host name
@@ -111,6 +113,7 @@ class AbstractTemplateBuilder(object):
         self._placeholder_plugins = None
         self._loaders_by_name = None
         self._creators_by_name = None
+        self._create_context = None
 
         self._system_settings = None
         self._project_settings = None
@@ -171,6 +174,16 @@ class AbstractTemplateBuilder(object):
             .get(self.current_task_name, {})
             .get("type")
         )
+
+    @property
+    def create_context(self):
+        if self._create_context is None:
+            self._create_context = CreateContext(
+                self.host,
+                discover_publish_plugins=False,
+                headless=True
+            )
+        return self._create_context
 
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
@@ -236,18 +249,29 @@ class AbstractTemplateBuilder(object):
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
 
+    def _collect_legacy_creators(self):
+        creators_by_name = {}
+        for creator in discover_legacy_creator_plugins():
+            if not creator.enabled:
+                continue
+            creator_name = creator.__name__
+            if creator_name in creators_by_name:
+                raise KeyError(
+                    "Duplicated creator name {} !".format(creator_name)
+                )
+            creators_by_name[creator_name] = creator
+        self._creators_by_name = creators_by_name
+
+    def _collect_creators(self):
+        self._creators_by_name = dict(self.create_context.creators)
+
     def get_creators_by_name(self):
         if self._creators_by_name is None:
-            self._creators_by_name = {}
-            for creator in discover_legacy_creator_plugins():
-                if not creator.enabled:
-                    continue
-                creator_name = creator.__name__
-                if creator_name in self._creators_by_name:
-                    raise KeyError(
-                        "Duplicated creator name {} !".format(creator_name)
-                    )
-                self._creators_by_name[creator_name] = creator
+            if self.use_legacy_creators:
+                self._collect_legacy_creators()
+            else:
+                self._collect_creators()
+
         return self._creators_by_name
 
     def get_shared_data(self, key):
@@ -1599,6 +1623,8 @@ class PlaceholderCreateMixin(object):
             placeholder (PlaceholderItem): Placeholder item with information
                 about requested publishable instance.
         """
+
+        legacy_create = self.builder.use_legacy_creators
         creator_name = placeholder.data["creator"]
         create_variant = placeholder.data["create_variant"]
 
@@ -1609,17 +1635,28 @@ class PlaceholderCreateMixin(object):
         task_name = legacy_io.Session["AVALON_TASK"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
 
-        # get asset id
-        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
-        assert asset_doc, "No current asset found in Session"
-        asset_id = asset_doc['_id']
+        if legacy_create:
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
+            )
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc["_id"],
+                project_name
+            )
 
-        subset_name = creator_plugin.get_subset_name(
-            create_variant,
-            task_name,
-            asset_id,
-            project_name
-        )
+        else:
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc,
+                project_name,
+                self.builder.host_name
+            )
 
         creator_data = {
             "creator_name": creator_name,
@@ -1632,12 +1669,20 @@ class PlaceholderCreateMixin(object):
 
         # compile subset name from variant
         try:
-            creator_instance = creator_plugin(
-                subset_name,
-                asset_name
-            ).process()
+            if legacy_create:
+                creator_instance = creator_plugin(
+                    subset_name,
+                    asset_name
+                ).process()
+            else:
+                creator_instance = self.builder.create_context.create(
+                    creator_plugin.identifier,
+                    create_variant,
+                    asset_doc,
+                    task_name=task_name
+                )
 
-        except Exception:
+        except:
             failed = True
             self.create_failed(placeholder, creator_data)
 
