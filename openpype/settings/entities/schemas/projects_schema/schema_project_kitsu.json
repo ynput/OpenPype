@@ -80,6 +80,31 @@
                             "label": "Status shortname"
                         },
                         {
+                            "type": "list",
+                            "key": "family_requirements",
+                            "label": "Family requirements",
+                            "object_type": {
+                                "type": "dict",
+                                "key": "requirement_dict",
+                                "children": [
+                                    {
+                                        "type": "enum",
+                                        "key": "equality",
+                                        "label": "Equality",
+                                        "enum_items": [
+                                            {"equal": "Equal"},
+                                            {"not_equal": "Not equal"}
+                                        ]
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "family",
+                                        "label": "Family"
+                                    }
+                                ]
+                            }
+                        },
+                        {
                             "type": "dict",
                             "collapsible": true,
                             "checkbox_key": "enabled",
@@ -102,6 +127,7 @@
                                     "label": "Custom comment"
                                 }
                             ]
+                            }
                         }
                     ]
                 }
