@@ -15,7 +15,7 @@ from math import ceil
 from six import string_types
 
 from maya import cmds, mel
-import maya.api.OpenMaya as om
+from maya.api import OpenMaya
 
 from openpype.client import (
     get_project,
@@ -34,7 +34,6 @@ from openpype.pipeline import (
     registered_host,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
-from .commands import reset_frame_range
 
 
 self = sys.modules[__name__]
@@ -404,9 +403,9 @@ def lsattrs(attrs):
 
     """
 
-    dep_fn = om.MFnDependencyNode()
-    dag_fn = om.MFnDagNode()
-    selection_list = om.MSelectionList()
+    dep_fn = OpenMaya.MFnDependencyNode()
+    dag_fn = OpenMaya.MFnDagNode()
+    selection_list = OpenMaya.MSelectionList()
 
     first_attr = next(iter(attrs))
 
@@ -420,7 +419,7 @@ def lsattrs(attrs):
     matches = set()
     for i in range(selection_list.length()):
         node = selection_list.getDependNode(i)
-        if node.hasFn(om.MFn.kDagNode):
+        if node.hasFn(OpenMaya.MFn.kDagNode):
             fn_node = dag_fn.setObject(node)
             full_path_names = [path.fullPathName()
                                for path in fn_node.getAllPaths()]
@@ -869,11 +868,11 @@ def maintained_selection_api():
     Warning: This is *not* added to the undo stack.
 
     """
-    original = om.MGlobal.getActiveSelectionList()
+    original = OpenMaya.MGlobal.getActiveSelectionList()
     try:
         yield
     finally:
-        om.MGlobal.setActiveSelectionList(original)
+        OpenMaya.MGlobal.setActiveSelectionList(original)
 
 
 @contextlib.contextmanager
@@ -1283,11 +1282,11 @@ def get_id(node):
     if node is None:
         return
 
-    sel = om.MSelectionList()
+    sel = OpenMaya.MSelectionList()
     sel.add(node)
 
     api_node = sel.getDependNode(0)
-    fn = om.MFnDependencyNode(api_node)
+    fn = OpenMaya.MFnDependencyNode(api_node)
 
     if not fn.hasAttribute("cbId"):
         return
@@ -1970,8 +1969,6 @@ def get_id_from_sibling(node, history_only=True):
             return first_id
 
 
-
-# Project settings
 def set_scene_fps(fps, update=True):
     """Set FPS from project configuration
 
@@ -1984,30 +1981,23 @@ def set_scene_fps(fps, update=True):
 
     """
 
-    fps_mapping = {'15': 'game',
-                   '24': 'film',
-                   '25': 'pal',
-                   '30': 'ntsc',
-                   '48': 'show',
-                   '50': 'palf',
-                   '60': 'ntscf',
-                   '23.98': '23.976fps',
-                   '23.976': '23.976fps',
-                   '29.97': '29.97fps',
-                   '47.952': '47.952fps',
-                   '47.95': '47.952fps',
-                   '59.94': '59.94fps',
-                   '44100': '44100fps',
-                   '48000': '48000fps'}
+    fps_mapping = {
+        '15': 'game',
+        '24': 'film',
+        '25': 'pal',
+        '30': 'ntsc',
+        '48': 'show',
+        '50': 'palf',
+        '60': 'ntscf',
+        '23.976023976023978': '23.976fps',
+        '29.97002997002997': '29.97fps',
+        '47.952047952047955': '47.952fps',
+        '59.94005994005994': '59.94fps',
+        '44100': '44100fps',
+        '48000': '48000fps'
+    }
 
-    # pull from mapping
-    # this should convert float string to float and int to int
-    # so 25.0 is converted to 25, but 23.98 will be still float.
-    dec, ipart = math.modf(fps)
-    if dec == 0.0:
-        fps = int(ipart)
-
-    unit = fps_mapping.get(str(fps), None)
+    unit = fps_mapping.get(str(convert_to_maya_fps(fps)), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
 
@@ -2074,6 +2064,54 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def reset_frame_range():
+    """Set frame range to current asset"""
+
+    fps = convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    set_scene_fps(fps)
+
+    # Set frame start/end
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = get_asset_by_name(project_name, asset_name)
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        cmds.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    cmds.playbackOptions(minTime=frame_start)
+    cmds.playbackOptions(maxTime=frame_end)
+    cmds.playbackOptions(animationStartTime=frame_start)
+    cmds.playbackOptions(animationEndTime=frame_end)
+    cmds.playbackOptions(minTime=frame_start)
+    cmds.playbackOptions(maxTime=frame_end)
+    cmds.currentTime(frame_start)
+
+    cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
+    cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+
+
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition
 
@@ -2125,7 +2163,9 @@ def set_context_settings():
     asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = asset_data.get("fps", project_data.get("fps", 25))
+    fps = convert_to_maya_fps(
+        asset_data.get("fps", project_data.get("fps", 25))
+    )
     legacy_io.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
@@ -2147,15 +2187,12 @@ def validate_fps():
 
     """
 
-    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    # TODO(antirotor): This is hack as for framerates having multiple
-    # decimal places. FTrack is ceiling decimal values on
-    # fps to two decimal places but Maya 2019+ is reporting those fps
-    # with much higher resolution. As we currently cannot fix Ftrack
-    # rounding, we have to round those numbers coming from Maya.
-    current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
+    expected_fps = convert_to_maya_fps(
+        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
+    )
+    current_fps = mel.eval('currentTimeUnitToFPS()')
 
-    fps_match = current_fps == fps
+    fps_match = current_fps == expected_fps
     if not fps_match and not IS_HEADLESS:
         from openpype.widgets import popup
 
@@ -2164,14 +2201,19 @@ def validate_fps():
         dialog = popup.PopupUpdateKeys(parent=parent)
         dialog.setModal(True)
         dialog.setWindowTitle("Maya scene does not match project FPS")
-        dialog.setMessage("Scene %i FPS does not match project %i FPS" %
-                          (current_fps, fps))
+        dialog.setMessage(
+            "Scene {} FPS does not match project {} FPS".format(
+                current_fps, expected_fps
+            )
+        )
         dialog.setButtonText("Fix")
 
         # Set new text for button (add optional argument for the popup?)
         toggle = dialog.widgets["toggle"]
         update = toggle.isChecked()
-        dialog.on_clicked_state.connect(lambda: set_scene_fps(fps, update))
+        dialog.on_clicked_state.connect(
+            lambda: set_scene_fps(expected_fps, update)
+        )
 
         dialog.show()
 
@@ -3299,15 +3341,15 @@ def iter_visible_nodes_in_range(nodes, start, end):
     @memodict
     def get_visibility_mplug(node):
         """Return api 2.0 MPlug with cached memoize decorator"""
-        sel = om.MSelectionList()
+        sel = OpenMaya.MSelectionList()
         sel.add(node)
         dag = sel.getDagPath(0)
-        return om.MFnDagNode(dag).findPlug("visibility", True)
+        return OpenMaya.MFnDagNode(dag).findPlug("visibility", True)
 
     @contextlib.contextmanager
     def dgcontext(mtime):
         """MDGContext context manager"""
-        context = om.MDGContext(mtime)
+        context = OpenMaya.MDGContext(mtime)
         try:
             previous = context.makeCurrent()
             yield context
@@ -3316,9 +3358,9 @@ def iter_visible_nodes_in_range(nodes, start, end):
 
     # We skip the first frame as we already used that frame to check for
     # overall visibilities. And end+1 to include the end frame.
-    scene_units = om.MTime.uiUnit()
+    scene_units = OpenMaya.MTime.uiUnit()
     for frame in range(start + 1, end + 1):
-        mtime = om.MTime(frame, unit=scene_units)
+        mtime = OpenMaya.MTime(frame, unit=scene_units)
 
         # Build little cache so we don't query the same MPlug's value
         # again if it was checked on this frame and also is a dependency
@@ -3356,6 +3398,88 @@ def get_attribute_input(attr):
     return connections[0] if connections else None
 
 
+def convert_to_maya_fps(fps):
+    """Convert any fps to supported Maya framerates."""
+    float_framerates = [
+        23.976023976023978,
+        # WTF is 29.97 df vs fps?
+        29.97002997002997,
+        47.952047952047955,
+        59.94005994005994
+    ]
+    # 44100 fps evaluates as 41000.0. Why? Omitting for now.
+    int_framerates = [
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        10,
+        12,
+        15,
+        16,
+        20,
+        24,
+        25,
+        30,
+        40,
+        48,
+        50,
+        60,
+        75,
+        80,
+        90,
+        100,
+        120,
+        125,
+        150,
+        200,
+        240,
+        250,
+        300,
+        375,
+        400,
+        500,
+        600,
+        750,
+        1200,
+        1500,
+        2000,
+        3000,
+        6000,
+        48000
+    ]
+
+    # If input fps is a whole number we'll return.
+    if float(fps).is_integer():
+        # Validate fps is part of Maya's fps selection.
+        if int(fps) not in int_framerates:
+            raise ValueError(
+                "Framerate \"{}\" is not supported in Maya".format(fps)
+            )
+        return int(fps)
+    else:
+        # Differences to supported float frame rates.
+        differences = []
+        for i in float_framerates:
+            differences.append(abs(i - fps))
+
+        # Validate difference does not stray too far from supported framerates.
+        min_difference = min(differences)
+        min_index = differences.index(min_difference)
+        supported_framerate = float_framerates[min_index]
+        if min_difference > 0.1:
+            raise ValueError(
+                "Framerate \"{}\" strays too far from any supported framerate"
+                " in Maya. Closest supported framerate is \"{}\"".format(
+                    fps, supported_framerate
+                )
+            )
+
+        return supported_framerate
+
+
 def write_xgen_file(data, filepath):
     """Overwrites data in .xgen files.
 
@@ -3385,3 +3509,56 @@ def write_xgen_file(data, filepath):
 
     with open(filepath, "w") as f:
         f.writelines(lines)
+
+
+def get_color_management_preferences():
+    """Get and resolve OCIO preferences."""
+    data = {
+        # Is color management enabled.
+        "enabled": cmds.colorManagementPrefs(
+            query=True, cmEnabled=True
+        ),
+        "rendering_space": cmds.colorManagementPrefs(
+            query=True, renderingSpaceName=True
+        ),
+        "output_transform": cmds.colorManagementPrefs(
+            query=True, outputTransformName=True
+        ),
+        "output_transform_enabled": cmds.colorManagementPrefs(
+            query=True, outputTransformEnabled=True
+        ),
+        "view_transform": cmds.colorManagementPrefs(
+            query=True, viewTransformName=True
+        )
+    }
+
+    # Split view and display from view_transform. view_transform comes in
+    # format of "{view} ({display})".
+    regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    match = regex.match(data["view_transform"])
+    data.update({
+        "display": match.group("display"),
+        "view": match.group("view")
+    })
+
+    # Get config absolute path.
+    path = cmds.colorManagementPrefs(
+        query=True, configFilePath=True
+    )
+
+    # The OCIO config supports a custom <MAYA_RESOURCES> token.
+    maya_resources_token = "<MAYA_RESOURCES>"
+    maya_resources_path = OpenMaya.MGlobal.getAbsolutePathToResources()
+    path = path.replace(maya_resources_token, maya_resources_path)
+
+    data["config"] = path
+
+    return data
+
+
+def get_color_management_output_transform():
+    preferences = get_color_management_preferences()
+    colorspace = preferences["rendering_space"]
+    if preferences["output_transform_enabled"]:
+        colorspace = preferences["output_transform"]
+    return colorspace

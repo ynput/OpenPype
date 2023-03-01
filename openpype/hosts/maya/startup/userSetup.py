@@ -7,11 +7,12 @@ from openpype.hosts.maya.api import MayaHost
 
 from maya import cmds
 
+
 host = MayaHost()
 install_host(host)
 
-
 print("Starting OpenPype usersetup...")
+
 
 # Open Workfile Post Initialization.
 key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
