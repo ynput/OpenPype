@@ -114,17 +114,6 @@
                 "render",
                 "review"
             ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
-            ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
             "clip_name_template": "{asset}_{subset}<_{output}>",
@@ -142,17 +131,6 @@
                 "plate",
                 "render",
                 "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
             ],
             "reel_name": "OP_LoadedReel",
             "clip_name_template": "{batch}_{asset}_{subset}<_{output}>",
