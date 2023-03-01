@@ -32,10 +32,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 False
                 for status_except in self.status_exceptions
                 if shortname == status_except["short_name"].upper()
-                and status_except["equality"] == "equal"
+                and status_except["condition"] == "equal"
                 or
                 shortname != status_except["short_name"].upper()
-                and status_except["equality"] == "not_equal"
+                and status_except["condition"] == "not_equal"
             ),
             True,
         ):
