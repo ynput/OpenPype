@@ -94,7 +94,8 @@ def update_op_assets(
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
-            item_doc = get_asset_by_id(project_name, insert_result.inserted_id)
+            item_doc = get_asset_by_id(
+                project_name, insert_result.inserted_id)
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -339,7 +340,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str, ignore_projects: list = None):
+def sync_all_projects(
+        login: str, password: str, ignore_projects: list = None):
     """Update all OP projects in DB with Zou data.
 
     Args:

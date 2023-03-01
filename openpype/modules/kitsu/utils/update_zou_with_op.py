@@ -82,7 +82,8 @@ def sync_zou_from_op_project(
                 f"x{project_doc['data']['resolutionHeight']}",
             }
         )
-        gazu.project.update_project_data(zou_project, data=project_doc["data"])
+        gazu.project.update_project_data(
+            zou_project, data=project_doc["data"])
     gazu.project.update_project(zou_project)
 
     asset_types = gazu.asset.all_asset_types()

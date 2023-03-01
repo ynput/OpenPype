@@ -101,7 +101,8 @@ class Listener:
             self.event_client, "sequence:delete", self._delete_sequence
         )
 
-        gazu.events.add_listener(self.event_client, "shot:new", self._new_shot)
+        gazu.events.add_listener(
+            self.event_client, "shot:new", self._new_shot)
         gazu.events.add_listener(
             self.event_client, "shot:update", self._update_shot
         )
@@ -109,7 +110,8 @@ class Listener:
             self.event_client, "shot:delete", self._delete_shot
         )
 
-        gazu.events.add_listener(self.event_client, "task:new", self._new_task)
+        gazu.events.add_listener(
+            self.event_client, "task:new", self._new_task)
         gazu.events.add_listener(
             self.event_client, "task:update", self._update_task
         )
@@ -515,7 +517,8 @@ class Listener:
         if asset_doc:
             asset_tasks = asset_doc["data"].get("tasks")
             task_type_name = task["task_type"]["name"]
-            asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
+            asset_tasks[task_type_name] = {
+                "type": task_type_name, "zou": task}
             self.dbcon.update_one(
                 {"_id": asset_doc["_id"]},
                 {"$set": {"data.tasks": asset_tasks}}
