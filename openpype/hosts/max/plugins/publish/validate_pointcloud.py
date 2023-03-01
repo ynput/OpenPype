@@ -185,7 +185,7 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                     opt = "${0}.{1}.export_particles".format(sel.name,
                                                              event_name)
                     export_mode = rt.execute(f'{opt}.exportMode')
-                    if export_mode != 2:
+                    if export_mode != 1:
                         invalid.append(export_mode)
 
         return invalid
