@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.lib import get_all_children
 
 
 SETTINGS = {"renderDensity",
@@ -30,6 +31,9 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             "Yeti Rig must have an input_SET")
 
         input_connections = self.collect_input_connections(instance)
+
+        instance.extend(cmds.sets("input_SET", query=True))
+        instance.extend(get_all_children(cmds.sets("input_SET", query=True)))
 
         # Collect any textures if used
         yeti_resources = []
