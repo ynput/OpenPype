@@ -92,7 +92,9 @@ class FileTransaction(object):
     def process(self):
         # Backup any existing files
         for dst, (src, _) in self._transfers.items():
-            if dst == src or not os.path.exists(dst):
+            self.log.debug("Checking file ... {} -> {}".format(src, dst))
+            path_same = self._same_paths(src, dst)
+            if path_same or not os.path.exists(dst):
                 continue
 
             # Backup original file
@@ -105,7 +107,8 @@ class FileTransaction(object):
 
         # Copy the files to transfer
         for dst, (src, opts) in self._transfers.items():
-            if dst == src:
+            path_same = self._same_paths(src, dst)
+            if path_same:
                 self.log.debug(
                     "Source and destionation are same files {} -> {}".format(
                         src, dst))
@@ -182,3 +185,10 @@ class FileTransaction(object):
             else:
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
+
+    def _same_paths(self, src, dst):
+        # handles same paths but with C:/project vs c:/project
+        if os.path.exists(src) and os.path.exists(dst):
+            return os.stat(src) == os.stat(dst)
+
+        return src == dst

@@ -38,9 +38,7 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
-    category = 'cleanup'
     optional = True
-    version = (0, 1, 0)
     label = "Shape Default Naming"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]

@@ -1,6 +1,6 @@
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qargparse
 import qtawesome
 
@@ -8,9 +8,37 @@ from openpype.style import (
     get_objected_colors,
     get_style_image_path
 )
-from openpype.lib.attribute_definitions import AbtractAttrDef
+from openpype.lib.attribute_definitions import AbstractAttrDef
 
 log = logging.getLogger(__name__)
+
+
+class FocusSpinBox(QtWidgets.QSpinBox):
+    """QSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusSpinBox, self).wheelEvent(event)
+
+
+class FocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+    """QDoubleSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusDoubleSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusDoubleSpinBox, self).wheelEvent(event)
 
 
 class CustomTextComboBox(QtWidgets.QComboBox):
@@ -283,11 +311,14 @@ class PixmapButtonPainter(QtWidgets.QWidget):
             painter.end()
             return
 
-        painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.HighQualityAntialiasing
+        render_hints = (
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+        if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+            render_hints |= QtGui.QPainter.HighQualityAntialiasing
+
+        painter.setRenderHints(render_hints)
         if self._cached_pixmap is None:
             self._cache_pixmap()
 
@@ -403,7 +434,7 @@ class OptionalAction(QtWidgets.QWidgetAction):
 
     def set_option_tip(self, options):
         sep = "\n\n"
-        if not options or not isinstance(options[0], AbtractAttrDef):
+        if not options or not isinstance(options[0], AbstractAttrDef):
             mak = (lambda opt: opt["name"] + " :\n    " + opt["help"])
             self.option_tip = sep.join(mak(opt) for opt in options)
             return

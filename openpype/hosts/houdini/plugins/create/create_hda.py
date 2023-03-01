@@ -34,7 +34,7 @@ class CreateHDA(plugin.HoudiniCreator):
         }
         return subset_name.lower() in existing_subset_names_low
 
-    def _create_instance_node(
+    def create_instance_node(
             self, node_name, parent, node_type="geometry"):
         import hou
 

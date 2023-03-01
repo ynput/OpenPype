@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import resources
 from openpype.style import load_stylesheet
@@ -248,12 +248,13 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         if not project_name:
             return
 
-        qm = QtWidgets.QMessageBox
-        ans = qm.question(self,
-                          "OpenPype Project Manager",
-                          "Confirm to create starting project folders?",
-                          qm.Yes | qm.No)
-        if ans == qm.Yes:
+        result = QtWidgets.QMessageBox.question(
+            self,
+            "OpenPype Project Manager",
+            "Confirm to create starting project folders?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        if result == QtWidgets.QMessageBox.Yes:
             try:
                 # Invoking OpenPype API to create the project folders
                 create_project_folders(project_name)

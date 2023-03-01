@@ -4,7 +4,10 @@ import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
-
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 class LoadClipBatch(opfapi.ClipLoader):
     """Load a subset to timeline as clip
@@ -14,7 +17,10 @@ class LoadClipBatch(opfapi.ClipLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip to current batch"
     order = -10
@@ -24,6 +30,14 @@ class LoadClipBatch(opfapi.ClipLoader):
     # settings
     reel_name = "OP_LoadedReel"
     clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
+
+    """ Anatomy keys from version context data and dynamically added:
+        - {layerName} - original layer name token
+        - {layerUID} - original layer UID token
+        - {originalBasename} - original clip name taken from file
+    """
+    layer_rename_template = "{asset}_{subset}<_{output}>"
+    layer_rename_patterns = []
 
     def load(self, context, name, namespace, options):
 
@@ -39,7 +53,10 @@ class LoadClipBatch(opfapi.ClipLoader):
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
-            self.clip_name_template.replace("output", "representation")
+            self.clip_name_template = self.clip_name_template.replace(
+                "output", "representation")
+            self.layer_rename_template = self.layer_rename_template.replace(
+                "output", "representation")
 
         formating_data = deepcopy(context["representation"]["context"])
         formating_data["batch"] = self.batch.name.get_value()
@@ -69,6 +86,9 @@ class LoadClipBatch(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
+            "layer_rename_template": self.layer_rename_template,
+            "layer_rename_patterns": self.layer_rename_patterns,
+            "context_data": formating_data
         }
         self.log.debug(pformat(
             loading_context

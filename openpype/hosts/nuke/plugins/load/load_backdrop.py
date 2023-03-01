@@ -25,10 +25,11 @@ from openpype.hosts.nuke.api import containerise, update_container
 class LoadBackdropNodes(load.LoaderPlugin):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
 
-    representations = ["nk"]
     families = ["workfile", "nukenodes"]
+    representations = ["*"]
+    extension = {"nk"}
 
-    label = "Iport Nuke Nodes"
+    label = "Import Nuke Nodes"
     order = 0
     icon = "eye"
     color = "white"

@@ -93,7 +93,20 @@ class ImportMayaLoader(load.LoaderPlugin):
 
     """
     representations = ["ma", "mb", "obj"]
-    families = ["*"]
+    families = [
+        "model",
+        "pointcache",
+        "proxyAbc",
+        "animation",
+        "mayaAscii",
+        "mayaScene",
+        "setdress",
+        "layout",
+        "camera",
+        "rig",
+        "camerarig",
+        "staticMesh"
+    ]
 
     label = "Import"
     order = 10
@@ -153,7 +166,7 @@ class ImportMayaLoader(load.LoaderPlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel
