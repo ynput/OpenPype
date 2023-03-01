@@ -129,11 +129,14 @@ class ExtractOIIOTranscode(publish.Extractor):
                                colorspace_data.get("display"))
 
                 # both could be already collected by DCC,
-                # but could be overwritten
+                # but could be overwritten when transcoding
                 if view:
                     new_repre["colorspaceData"]["view"] = view
                 if display:
                     new_repre["colorspaceData"]["display"] = display
+                if target_colorspace:
+                    new_repre["colorspaceData"]["colorspace"] = \
+                        target_colorspace
 
                 additional_command_args = (output_def["oiiotool_args"]
                                            ["additional_command_args"])
