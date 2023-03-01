@@ -37,7 +37,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 shortname != status_except["short_name"].upper()
                 and status_except["equality"] == "not_equal"
             ),
-            True
+            True,
         ):
             kitsu_status = gazu.task.get_task_status_by_short_name(
                 self.note_status_shortname
