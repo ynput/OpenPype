@@ -33,6 +33,9 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
             if not task_name:
                 continue
 
+            zou_task_data = asset_doc["data"]["tasks"][task_name].get("zou")
+            self.log.debug(
+                "Collected zou task data: {}".format(zou_task_data))
 
             entity_id = zou_asset_data["id"]
             entity = kitsu_entities_by_id.get(entity_id)
@@ -45,25 +48,26 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
             kitsu_entities_by_id[entity_id] = entity
             instance.data["entity"] = entity
-
-            task_name = instance.data.get("task")
-            if not task_name:
-                continue
-            zou_task_data = asset_doc["data"]["tasks"][task_name].get("zou")
             self.log.debug(
-                "Collected zou task data: {}".format(zou_task_data))
-            if not zou_task_data:
+                "Collect kitsu {}: {}".format(zou_asset_data["type"], entity)
+            )
+
+            if zou_task_data:
+                kitsu_task_id = zou_task_data["id"]
+                kitsu_task = kitsu_entities_by_id.get(kitsu_task_id)
+                if not kitsu_task:
+                    kitsu_task = gazu.task.get_task(zou_task_data["id"])
+                    kitsu_entities_by_id[kitsu_task_id] = kitsu_task
+            else:
                 kitsu_task_type = gazu.task.get_task_type_by_name(task_name)
                 if not kitsu_task_type:
                     raise ValueError(
                         "Task type {} not found in Kitsu!".format(task_name)
                     )
-                continue
-            kitsu_task_id = zou_task_data["id"]
-            kitsu_task = kitsu_entities_by_id.get(kitsu_task_id)
-            if not kitsu_task:
-                kitsu_task = gazu.task.get_task(zou_task_data["id"])
-                kitsu_entities_by_id[kitsu_task_id] = kitsu_task
+                    
+                kitsu_task = gazu.task.get_task_by_name(
+                    entity, kitsu_task_type
+                )
 
             if not kitsu_task:
                 raise ValueError("Task not found in kitsu!")
