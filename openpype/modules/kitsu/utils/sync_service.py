@@ -579,7 +579,7 @@ class Listener:
                             shot=task["entity"]["name"]
                         )
 
-                    ent_type=ent_type + " - " if ent_type is not None else "",
+                    ent_type=ent_type + " - " if ent_type is not None else ""
                     msg = "Task deleted: {proj} - {ent_type}{parent}" \
                         " - {task}".format(
                             proj=task["zou"]["project"]["name"],
