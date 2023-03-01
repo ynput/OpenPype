@@ -18,15 +18,31 @@ def get_setting(project_setting=None):
 
 class ExtractPointCloud(publish.Extractor):
     """
-    Extract PTF format with tyFlow operators
+    Extract PRT format with tyFlow operators
+
+    Notes:
+        Currently only works for the default partition setting
+
+    Args:
+        export_particle(): sets up all job arguments for attributes
+        to be exported in MAXscript
+
+        get_operators(): get the export_particle operator
+
+        get_custom_attr(): get all custom channel attributes from the Openpype
+        setting and sets it as job arguments before exporting
+
+        get_files(): get the files with tyFlow naming convention before publishing
+
+        partition_output_name(): get the naming with partition settings.
+        get_partition(): get partition value
+
     """
 
     order = pyblish.api.ExtractorOrder - 0.2
     label = "Extract Point Cloud"
     hosts = ["max"]
     families = ["pointcloud"]
-    partition_start = 1
-    partition_count = 100
 
     def process(self, instance):
         start = str(instance.data.get("frameStartHandle", 1))
@@ -52,13 +68,17 @@ class ExtractPointCloud(publish.Extractor):
             instance.data["representations"] = []
 
         self.log.info("Writing PRT with TyFlow Plugin...")
-        filenames = self.get_files(path, start, end)
-        self.log.info("filename: {0}".format(filenames))
+        filenames = self.get_files(container, path, start, end)
+        self.log.debug("filenames: {0}".format(filenames))
+
+        partition = self.partition_output_name(container)
+
         representation = {
             'name': 'prt',
             'ext': 'prt',
             'files': filenames if len(filenames) > 1 else filenames[0],
             "stagingDir": stagingdir,
+            "outputName": partition # partition value
         }
         instance.data["representations"].append(representation)
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
@@ -133,6 +153,7 @@ class ExtractPointCloud(publish.Extractor):
         return custom_attr_list
 
     def get_files(self,
+                  container,
                   path,
                   start_frame,
                   end_frame):
@@ -144,24 +165,43 @@ class ExtractPointCloud(publish.Extractor):
             Actual File Output from tyFlow:
             <SceneFile>__part<PartitionStart>of<PartitionCount>.<frame>.prt
             e.g. tyFlow_cloth_CCCS_blobbyFill_001__part1of1_00004.prt
-            Renamed Output:
-            <instance.name>.<frame>.prt
-            e.g. pointcloudMain.0001.prt
         """
         filenames = []
         filename = os.path.basename(path)
         orig_name, ext = os.path.splitext(filename)
-        partition_start = self.partition_start
-        partition_count = self.partition_count
+        partition_count, partition_start = self.get_partition(container)
         for frame in range(int(start_frame), int(end_frame) + 1):
             actual_name = "{}__part{:03}of{}_{:05}".format(orig_name,
                                                            partition_start,
                                                            partition_count,
                                                            frame)
             actual_filename = path.replace(orig_name, actual_name)
-            new_name = "{}.{:04}".format(orig_name, frame)
-            renamed_filename = path.replace(orig_name, new_name)
-            os.rename(actual_filename, renamed_filename)
-            filenames.append(os.path.basename(renamed_filename))
+            filenames.append(os.path.basename(actual_filename))
 
         return filenames
+
+    def partition_output_name(self, container):
+        """
+        Notes:
+            Partition output name set for mapping
+            the published file output
+
+        todo:
+            Customizes the setting for the output
+        """
+        partition_count, partition_start = self.get_partition(container)
+        partition = "_part{:03}of{}".format(partition_start,
+                                            partition_count)
+
+        return partition
+
+    def get_partition(self, container):
+        """
+        Get Partition Value
+        """
+        opt_list = self.get_operators(container)
+        for operator in opt_list:
+            count = rt.execute(f'{operator}.PRTPartitionsCount')
+            start = rt.execute(f'{operator}.PRTPartitionsFrom')
+
+            return count, start
