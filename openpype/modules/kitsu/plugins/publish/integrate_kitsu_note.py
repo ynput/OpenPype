@@ -102,10 +102,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     (
                         False
                         for family_req in self.family_requirements
-                        if family_req['equality'] == 'equal'
+                        if family_req['condition'] == 'equal'
                         and family_req['family'].lower() != family
                         or
-                        family_req['equality'] == 'not_equal'
+                        family_req['condition'] == 'not_equal'
                         and family_req['family'].lower() == family
                     ),
                     True,

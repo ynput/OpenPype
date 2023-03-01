@@ -89,8 +89,8 @@
                                 "children": [
                                     {
                                         "type": "enum",
-                                        "key": "equality",
-                                        "label": "Equality",
+                                        "key": "condition",
+                                        "label": "Condition",
                                         "enum_items": [
                                             {"equal": "Equal"},
                                             {"not_equal": "Not equal"}
