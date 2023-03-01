@@ -199,6 +199,14 @@
             "maskColor_manager": false,
             "maskOperator": false
         },
+        "CreateVrayProxy": {
+            "enabled": true,
+            "vrmesh": true,
+            "alembic": true,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -266,12 +274,6 @@
             "defaults": [
                 "Main",
                 "Anim"
-            ]
-        },
-        "CreateVrayProxy": {
-            "enabled": true,
-            "defaults": [
-                "Main"
             ]
         },
         "CreateVRayScene": {
@@ -676,7 +678,7 @@
             "families": [
                 "pointcache",
                 "model",
-                "vrayproxy"
+                "vrayproxy.alembic"
             ]
         },
         "ExtractObj": {
