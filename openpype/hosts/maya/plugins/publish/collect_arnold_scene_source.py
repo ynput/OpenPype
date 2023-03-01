@@ -1,6 +1,7 @@
 from maya import cmds
 
 import pyblish.api
+from openpype.hosts.maya.api.lib import get_all_children
 
 
 class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
@@ -21,11 +22,13 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
             if objset.endswith("content_SET"):
-                instance.data["setMembers"] = cmds.ls(members, long=True)
-                self.log.debug("content members: {}".format(members))
+                set_members = get_all_children(cmds.ls(members, long=True))
+                instance.data["setMembers"] = set_members
+                self.log.debug("content members: {}".format(set_members))
             elif objset.endswith("proxy_SET"):
-                instance.data["proxy"] = cmds.ls(members, long=True)
-                self.log.debug("proxy members: {}".format(members))
+                set_members = get_all_children(cmds.ls(members, long=True))
+                instance.data["proxy"] = set_members
+                self.log.debug("proxy members: {}".format(set_members))
 
         # Use camera in object set if present else default to render globals
         # camera.

@@ -36,9 +36,6 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
                 parents.append(parent)
 
             nodes_by_name[node_split[-1].split(":")[-1]] = node
-            for shape in cmds.listRelatives(node, shapes=True):
-                basename = shape.split("|")[-1].split(":")[-1]
-                nodes_by_name[basename] = node + "|" + shape
 
         return ungrouped_nodes, nodes_by_name, parents
 

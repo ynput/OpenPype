@@ -24,9 +24,6 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
         for node in nodes:
             node_split = node.split("|")
             nodes_by_name[node_split[-1].split(":")[-1]] = node
-            for shape in cmds.listRelatives(node, shapes=True):
-                basename = shape.split("|")[-1].split(":")[-1]
-                nodes_by_name[basename] = node + "|" + shape
 
         return nodes_by_name
 
