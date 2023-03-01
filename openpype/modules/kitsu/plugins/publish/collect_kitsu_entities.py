@@ -64,7 +64,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
                     raise ValueError(
                         "Task type {} not found in Kitsu!".format(task_name)
                     )
-                    
+
                 kitsu_task = gazu.task.get_task_by_name(
                     entity, kitsu_task_type
                 )
