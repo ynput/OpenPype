@@ -1,5 +1,4 @@
 import os
-import copy
 
 from maya import cmds
 
@@ -10,7 +9,6 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     iter_visible_nodes_in_range
 )
-from openpype.lib import StringTemplate
 
 
 class ExtractAlembic(publish.Extractor):
@@ -25,7 +23,7 @@ class ExtractAlembic(publish.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["pointcache", "model", "vrayproxy"]
+    families = ["pointcache", "model", "vrayproxy.alembic"]
     targets = ["local", "remote"]
 
     def process(self, instance):
@@ -41,6 +39,7 @@ class ExtractAlembic(publish.Extractor):
 
         attrs = instance.data.get("attr", "").split(";")
         attrs = [value for value in attrs if value.strip()]
+        attrs += instance.data.get("userDefinedAttributes", [])
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
@@ -115,6 +114,7 @@ class ExtractAlembic(publish.Extractor):
 
         # Extract proxy.
         if not instance.data.get("proxy"):
+            self.log.info("No proxy nodes found. Skipping proxy extraction.")
             return
 
         path = path.replace(".abc", "_proxy.abc")
@@ -134,26 +134,14 @@ class ExtractAlembic(publish.Extractor):
                     **options
                 )
 
-        template_data = copy.deepcopy(instance.data["anatomyData"])
-        template_data.update({"ext": "abc"})
-        templates = instance.context.data["anatomy"].templates["publish"]
-        published_filename_without_extension = StringTemplate(
-            templates["file"]
-        ).format(template_data).replace(".abc", "_proxy")
-        transfers = []
-        destination = os.path.join(
-            instance.data["resourcesDir"],
-            filename.replace(
-                filename.split(".")[0],
-                published_filename_without_extension
-            )
-        )
-        transfers.append((path, destination))
-
-        for source, destination in transfers:
-            self.log.debug("Transfer: {} > {}".format(source, destination))
-
-        instance.data["transfers"] = transfers
+        representation = {
+            "name": "proxy",
+            "ext": "abc",
+            "files": os.path.basename(path),
+            "stagingDir": dirname,
+            "outputName": "proxy"
+        }
+        instance.data["representations"].append(representation)
 
     def get_members_and_roots(self, instance):
         return instance[:], instance.data.get("setMembers")
