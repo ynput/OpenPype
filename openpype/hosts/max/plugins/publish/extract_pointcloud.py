@@ -29,10 +29,11 @@ class ExtractPointCloud(publish.Extractor):
 
         get_operators(): get the export_particle operator
 
-        get_custom_attr(): get all custom channel attributes from the Openpype
+        get_custom_attr(): get all custom channel attributes from Openpype
         setting and sets it as job arguments before exporting
 
-        get_files(): get the files with tyFlow naming convention before publishing
+        get_files(): get the files with tyFlow naming convention
+        before publishing
 
         partition_output_name(): get the naming with partition settings.
         get_partition(): get partition value
@@ -78,7 +79,7 @@ class ExtractPointCloud(publish.Extractor):
             'ext': 'prt',
             'files': filenames if len(filenames) > 1 else filenames[0],
             "stagingDir": stagingdir,
-            "outputName": partition # partition value
+            "outputName": partition         # partition value
         }
         instance.data["representations"].append(representation)
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
