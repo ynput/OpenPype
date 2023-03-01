@@ -113,16 +113,21 @@ def load_casting(project_name, shot_name):
     gazu.log_out()
 
 
-def build_model(asset_name):
+def build_model(project_name, asset_name):
     """Build model workfile.
 
     Args:
+        project_name (str):  The current project name from OpenPype Session.
         asset_name (str): The current asset name from OpenPype Session.
     """
     bpy.ops.mesh.primitive_cube_add()
     bpy.context.object.name = f"{asset_name}_model"
     bpy.context.object.data.name = f"{asset_name}_model"
     create_instance("CreateModel", "modelMain", useSelection=True)
+    # load the concept reference as image reference in the scene.
+    load_subset(
+        project_name, asset_name, "ConceptReference", "Reference", "jpg"
+    )
 
 
 def build_look(project_name, asset_name):
@@ -249,7 +254,7 @@ def build_workfile():
     task_name = legacy_io.Session.get("AVALON_TASK").lower()
 
     if task_name in ("model", "modeling", "fabrication"):
-        build_model(asset_name)
+        build_model(project_name, asset_name)
 
     elif task_name in ("texture", "look", "lookdev", "shader"):
         build_look(project_name, asset_name)
