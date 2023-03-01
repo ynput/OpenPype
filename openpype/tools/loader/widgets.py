@@ -339,7 +339,7 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_docs = get_representations(
             project_name,
             version_ids=version_ids,
-            fields=["name", "parent"]
+            fields=["name", "parent", "data", "context"]
         )
 
         repre_docs_by_version_id = {
@@ -1264,7 +1264,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         repre_docs = list(get_representations(
             project_name,
             representation_ids=repre_ids,
-            fields=["name", "parent"]
+            fields=["name", "parent", "data", "context"]
         ))
 
         version_ids = [
