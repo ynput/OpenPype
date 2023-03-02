@@ -129,12 +129,9 @@ class Listener:
         """Create new project into OP DB."""
 
         # Use update process to avoid duplicating code
-        self._update_project(data)
+        self._update_project(data, new_project=True)
 
-        # Print message
-        # - Happens in write_project_to_op()
-
-    def _update_project(self, data):
+    def _update_project(self, data, new_project=False):
         """Update project into OP DB."""
         # Get project entity
         project = gazu.project.get_project(data["project_id"])
@@ -146,6 +143,9 @@ class Listener:
             self.dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(
                 data["project_id"])
             self.dbcon.bulk_write([update_project])
+
+            if new_project:
+                log.info("Project created: {}".format(project["name"]))
 
     def _delete_project(self, data):
         """Delete project."""
@@ -579,7 +579,7 @@ class Listener:
                             shot=task["entity"]["name"]
                         )
 
-                    ent_type=ent_type + " - " if ent_type is not None else ""
+                    ent_type = ent_type + " - " if ent_type is not None else ""
                     msg = "Task deleted: {proj} - {ent_type}{parent}" \
                         " - {task}".format(
                             proj=task["zou"]["project"]["name"],
