@@ -169,6 +169,25 @@ def build_rig(project_name, asset_name):
     load_subset(project_name, asset_name, "modelMain", "Append")
 
 
+def create_gdeformer_collection(parent_collection: bpy.types.Collection):
+    """Create GDEFORMER collection under a parent collection.
+
+    Args:
+        parent_collection (bpy.types.Collection): Collection to create GDEFORMER col in
+    """
+    # Create GDEFORMER collection
+    gdeformer_col = bpy.data.collections.new("GDEFORMER")
+    parent_collection.children.link(gdeformer_col)
+    for obj in bpy.context.scene.collection.all_objects:
+        if obj.name.startswith("GDEFORM"):
+            gdeformer_col.objects.link(obj)
+
+        # Assign collection to sol(s) object(s)
+        if obj.name.startswith("sol"):
+            if obj.modifiers.get("GroundDeform"):
+                obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
+
+
 def build_layout(project_name, asset_name):
     """Build layout workfile.
 
@@ -194,18 +213,9 @@ def build_layout(project_name, asset_name):
             bpy.context.scene.collection.children.unlink(c.outliner_entity)
 
         # Create GDEFORMER collection
-        gdeformer_col = bpy.data.collections.new("GDEFORMER")
-        layout_instance.datablock_refs[0].datablock.children.link(
-            gdeformer_col
+        create_gdeformer_collection(
+            layout_instance.datablock_refs[0].datablock
         )
-        for obj in bpy.context.scene.collection.all_objects:
-            if obj.name.startswith("GDEFORM"):
-                gdeformer_col.objects.link(obj)
-
-            # Assign collection to sol(s) object(s)
-            if obj.name.startswith("sol"):
-                if obj.modifiers.get("GroundDeform"):
-                    obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
     except RuntimeError:
         containers = {}
 
@@ -278,11 +288,22 @@ def build_anim(project_name, asset_name):
         project_name (str):  The current project name from OpenPype Session.
         asset_name (str):  The current asset name from OpenPype Session.
     """
+    layout_container, _layout_datablocks = load_subset(
+        project_name, asset_name, "layoutMain", "Link"
+    )
 
-    layout_container, _layout_datablocks = load_subset(project_name, asset_name, "layoutMain", "Link")
-    
     # Make container publishable, expose its content
-    bpy.ops.scene.make_container_publishable(container_name=layout_container.name)
+    layout_collection_name = layout_container.outliner_entity.name
+    bpy.ops.scene.make_container_publishable(
+        container_name=layout_container.name
+    )
+
+    # Substitute overridden GDEFORMER collection by local one
+    old_gdeform_collection = bpy.data.collections.get("GDEFORMER")
+    old_gdeform_collection.name += ".old"
+    layout_collection = bpy.data.collections.get(layout_collection_name)
+    create_gdeformer_collection(layout_collection)
+    bpy.data.collections.remove(old_gdeform_collection)
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
@@ -401,7 +422,7 @@ def build_workfile():
 
     else:
         return False
-    
+
     # Auto save
     if bpy.data.filepath:
         bpy.ops.wm.save_mainfile()
