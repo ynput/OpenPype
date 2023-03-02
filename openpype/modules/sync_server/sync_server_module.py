@@ -1511,7 +1511,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 for editable_item in editables:
                     editable_keys[provider_code].append(editable_item["key"])
 
-            for site_name, site in system_sites.items():
+            for _, site in system_sites.items():
                 provider = site["provider"]
                 for site_config_key in list(site.keys()):
                     if site_config_key not in editable_keys[provider]:
