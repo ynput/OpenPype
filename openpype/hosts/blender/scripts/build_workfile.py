@@ -1,4 +1,6 @@
 import os
+from time import sleep
+from typing import Set
 import bpy
 
 from openpype.client import (
@@ -7,6 +9,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
     get_representations,
 )
+from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     legacy_io,
@@ -69,14 +72,13 @@ def load_subset(
     all_loaders = discover_loader_plugins(project_name=project_name)
     loaders = loaders_from_representation(all_loaders, representation)
     for loader in loaders:
-        if loader_type and loader_type not in loader.__name__:
-            continue
-        return load_container(loader, representation)
+        if loader_type in loader.__name__:
+            return load_container(loader, representation)
 
 
 def create_instance(creator_name, instance_name, **options):
     """Create openpype publishable instance."""
-    legacy_create(
+    return legacy_create(
         get_legacy_creator_by_name(creator_name),
         name=instance_name,
         asset=legacy_io.Session.get("AVALON_ASSET"),
@@ -84,7 +86,7 @@ def create_instance(creator_name, instance_name, **options):
     )
 
 
-def load_casting(project_name, shot_name):
+def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
     """Load casting from shot_name using kitsu api."""
 
     modules_manager = ModulesManager()
@@ -97,20 +99,32 @@ def load_casting(project_name, shot_name):
     gazu.client.set_host(os.environ["KITSU_SERVER"])
     gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
 
-    shot_data = get_asset_by_name(project_name, shot_name, fields=["data"])["data"]
+    shot_data = get_asset_by_name(project_name, shot_name, fields=["data"])[
+        "data"
+    ]
 
     shot = gazu.shot.get_shot(shot_data["zou"]["id"])
     casting = gazu.casting.get_shot_casting(shot)
 
+    containers = []
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
             if actor["asset_type_name"] == "Environment":
                 subset_name = "setdressMain"
             else:
                 subset_name = "rigMain"
-            load_subset(project_name, actor["asset_name"], subset_name, "Link")
+            try:
+                container, _datablocks = load_subset(
+                    project_name, actor["asset_name"], subset_name, "Link"
+                )
+                containers.append(container)
+                sleep(1)  # TODO blender is too fast for windows
+            except TypeError:
+                print(f"Cannot load {actor['asset_name']} {subset_name}.")
 
     gazu.log_out()
+
+    return containers
 
 
 def build_model(project_name, asset_name):
@@ -163,34 +177,98 @@ def build_layout(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
 
-    create_instance("CreateLayout", "layoutMain")
+    layout_instance = create_instance("CreateLayout", "layoutMain")
 
     # Load casting from kitsu breakdown.
     try:
         load_casting(project_name, asset_name)
+
+        # NOTE cannot rely on containers from load_casting, memory is shuffled
+        containers = bpy.context.scene.openpype_containers
+
+        # Link loaded containers to layout collection
+        for c in containers:
+            layout_instance.datablock_refs[0].datablock.children.link(
+                c.outliner_entity
+            )
+            bpy.context.scene.collection.children.unlink(c.outliner_entity)
+
+        # Create GDEFORMER collection
+        gdeformer_col = bpy.data.collections.new("GDEFORMER")
+        layout_instance.datablock_refs[0].datablock.children.link(
+            gdeformer_col
+        )
+        for obj in bpy.context.scene.collection.all_objects:
+            if obj.name.startswith("GDEFORM"):
+                gdeformer_col.objects.link(obj)
+
+            # Assign collection to sol(s) object(s)
+            if obj.name.startswith("sol"):
+                if obj.modifiers.get("GroundDeform"):
+                    obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
     except RuntimeError:
-        pass
+        containers = {}
 
-    # Try using camera from loaded casting for the creation of
-    # the instance camera collection.
-    bpy.ops.object.select_all(action="DESELECT")
-    for obj in bpy.context.scene.objects:
-        if obj.type == "CAMERA":
-            obj.select_set(True)
-            break
-    create_instance("CreateCamera", "cameraMain", useSelection=True)
+    # Try to load camera from environment's setdress
+    camera_collection = None
+    try:
+        # Get env asset name
+        env_asset_name = next(
+            (
+                c["avalon"]["asset_name"]
+                for c in containers
+                if c.get("avalon", {}).get("family") == "setdress"
+            ),
+            None,
+        )
+        if env_asset_name:
+            # Load camera published at environment task
+            cam_container, _cam_datablocks = load_subset(
+                project_name, env_asset_name, "cameraMain", "Append"
+            )
 
-    # Select camera from cameraMain instance to link with the review.
-    bpy.ops.object.select_all(action="DESELECT")
-    for obj in bpy.context.scene.objects:
-        if obj.type == "CAMERA":
-            obj.select_set(True)
-            break
-    create_instance("CreateReview", "reviewMain", useSelection=True)
+            # Make cam container publishable
+            bpy.ops.scene.make_container_publishable(
+                container_name=cam_container.name,
+                convert_to_current_asset=True,
+            )
 
-    # load the board mov as image background linked into the camera.
-    # TODO when fixed
-    # load_subset(project_name, asset_name, "BoardReview", "Background", "mov")
+            # Keep camera collection
+            camera_collection = (
+                bpy.context.scene.openpype_instances[-1]
+                .datablock_refs[0]
+                .datablock
+            )
+    except RuntimeError:
+        camera_collection = None
+
+    # Ensure camera instance
+    if not camera_collection:
+        bpy.ops.scene.create_openpype_instance(
+            creator_name="CreateCamera",
+            asset_name=asset_name,
+            subset_name="cameraMain",
+            gather_into_collection=True,
+        )
+        camera_collection = (
+            bpy.context.scene.openpype_instances[-1]
+            .datablock_refs[0]
+            .datablock
+        )
+
+    # Create review instance with camera collection
+    bpy.ops.scene.create_openpype_instance(
+        creator_name="CreateReview",
+        asset_name=asset_name,
+        subset_name="reviewMain",
+        datapath="collections",
+        datablock_name=camera_collection.name,
+    )
+
+    # load the board mov as image background linked into the camera
+    load_subset(
+        project_name, asset_name, "BoardReference", "Background", "mov"
+    )
 
 
 def build_anim(project_name, asset_name):
@@ -201,35 +279,64 @@ def build_anim(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
 
-    load_subset(project_name, asset_name, "layoutMain", "Append")
-    load_subset(project_name, asset_name, "cameraMain", "Link")
+    layout_container, _layout_datablocks = load_subset(project_name, asset_name, "layoutMain", "Link")
+    
+    # Make container publishable, expose its content
+    bpy.ops.scene.make_container_publishable(container_name=layout_container.name)
 
-    # Get animation instance creator
-    Creator = get_legacy_creator_by_name("CreateAnimation")
-    if not Creator:
-        raise ValueError('Creator plugin "CreateAnimation" was not found.')
+    # Load camera
+    cam_container, _cam_datablocks = load_subset(
+        project_name, asset_name, "cameraMain", "AppendCamera"
+    )
 
-    # TODO shouldn't touch the selection
-    bpy.ops.object.select_all(action="DESELECT")
+    # Clean cam container from review collection
+    # NOTE meant to be removed ASAP
+    for i, d_ref in reversed(list(enumerate(cam_container.datablock_refs))):
+        if isinstance(
+            d_ref.datablock, bpy.types.Collection
+        ) and d_ref.datablock.name.endswith("reviewMain"):
+            bpy.data.collections.remove(d_ref.datablock)
+            cam_container.datablock_refs.remove(i)
+
+    # Get main camera
+    camera_collection = next(
+        (
+            d_ref.datablock
+            for d_ref in cam_container.datablock_refs
+            if isinstance(d_ref.datablock, bpy.types.Collection)
+        ),
+        None,
+    )
+
+    # Make cam container publishable
+    bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
+
     for obj in bpy.context.scene.objects:
         # Select camera from cameraMain instance to link with the review.
-        # TODO shouldn't touch the selection
-        if obj.type == "CAMERA":
-            obj.select_set(True)
-            break
-        elif obj.type == "ARMATURE":
+        if obj.type == "ARMATURE":
             # Create animation instance
-            variant_name = obj.name.capitalize()
-            plugin = Creator(
-                f"animation{variant_name}",
-                asset_name,
-                {"variant": variant_name},
+            variant_name = obj.name[obj.name.find("RIG_") + 4 :].capitalize()
+            bpy.ops.scene.create_openpype_instance(
+                creator_name="CreateAnimation",
+                asset_name=asset_name,
+                subset_name=f"animation{variant_name}",
+                datapath="objects",
+                datablock_name=obj.name,
             )
-            plugin.process([obj])
-            # instance = plugin.process([obj])
-            # instance.name = f"{instance.name}:{obj.name}"
-    
-    create_instance("CreateReview", "reviewMain", useSelection=True)
+
+    # Create review
+    bpy.ops.scene.create_openpype_instance(
+        creator_name="CreateReview",
+        asset_name=asset_name,
+        subset_name="reviewMain",
+        datapath="collections",
+        datablock_name=camera_collection.name,
+    )
+
+    # load the board mov as image background linked into the camera
+    load_subset(
+        project_name, asset_name, "BoardReference", "Background", "mov"
+    )
 
 
 def build_render(project_name, asset_name):
@@ -244,7 +351,28 @@ def build_render(project_name, asset_name):
         load_subset(project_name, asset_name, "layoutMain", "Append")
     if not load_subset(project_name, asset_name, "cameraFromAnim", "Link"):
         load_subset(project_name, asset_name, "cameraMain", "Link")
-    load_subset(project_name, asset_name, "animationMain", "Link")
+    _anim_container, anim_datablocks = load_subset(
+        project_name, asset_name, "animationMain", "Link"
+    )
+
+    # Try to assign linked actions by parsing their name
+    for action in anim_datablocks:
+        users = action.get("users", {})
+        for user_name in users:
+            obj = bpy.context.scene.objects.get(user_name)
+            if obj:
+                # Ensure animation data
+                if not obj.animation_data:
+                    obj.animation_data_create()
+
+                # Assign action
+                obj.animation_data.action = action
+            else:
+                print(
+                    f"Cannot match armature by name '{user_name}' "
+                    f"for action: {action.name}"
+                )
+                continue
 
 
 def build_workfile():
@@ -273,6 +401,10 @@ def build_workfile():
 
     else:
         return False
+    
+    # Auto save
+    if bpy.data.filepath:
+        bpy.ops.wm.save_mainfile()
 
     return True
 
