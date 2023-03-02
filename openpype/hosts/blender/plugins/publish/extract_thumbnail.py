@@ -72,9 +72,9 @@ class ExtractThumbnail(openpype.api.Extractor):
         preset.update(
             {
                 "camera": camera,
-                "start_frame": start,
-                "end_frame": start,
-                "filename": path,
+                "frame_start": start,
+                "frame_end": start,
+                "filepath": path,
                 "overwrite": True,
                 "isolate": isolate,
                 "focus": focus,

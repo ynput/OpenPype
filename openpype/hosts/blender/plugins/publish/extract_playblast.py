@@ -54,15 +54,16 @@ class ExtractPlayblast(openpype.api.Extractor):
 
         self.log.info(f"Outputting images to {path}")
 
+        family = instance.data.get("family")
         project_settings = instance.context.data["project_settings"]["blender"]
         presets = project_settings["publish"]["ExtractPlayblast"]["presets"]
-        preset = presets.get("default")
+        preset = presets.get(family, presets.get("default", {}))
         preset.update(
             {
                 "camera": camera,
-                "start_frame": start,
-                "end_frame": end,
-                "filename": path,
+                "frame_start": start,
+                "frame_end": end,
+                "filepath": path,
                 "overwrite": True,
                 "isolate": isolate,
             }
@@ -130,7 +131,9 @@ class ExtractPlayblast(openpype.api.Extractor):
                 )
 
             frame_collection = collections[0]
-            self.log.info(f"We found collection of interest {frame_collection}")
+            self.log.info(
+                f"We found collection of interest {frame_collection}"
+            )
             files = list(frame_collection)
 
         instance.data.setdefault("representations", [])
