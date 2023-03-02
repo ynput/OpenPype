@@ -46,10 +46,9 @@ class ExtractPointCloud(publish.Extractor):
     families = ["pointcloud"]
 
     def process(self, instance):
-        start = str(instance.data.get("frameStartHandle", 1))
-        end = str(instance.data.get("frameEndHandle", 1))
+        start = int(instance.context.data.get("frameStart"))
+        end = int(instance.context.data.get("frameEnd"))
         container = instance.data["instance_node"]
-
         self.log.info("Extracting PRT...")
 
         stagingdir = self.staging_dir(instance)
