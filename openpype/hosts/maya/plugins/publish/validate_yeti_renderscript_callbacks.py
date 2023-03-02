@@ -48,6 +48,11 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
         yeti_loaded = cmds.pluginInfo("pgYetiMaya", query=True, loaded=True)
 
+        yeti_nodes = cmds.ls(type="pgYetiMaya")
+        if not yeti_nodes:
+            cls.log.info("No yeti nodes found.")
+            return False
+
         renderer = instance.data["renderer"]
         if renderer == "redshift":
             cls.log.info("Redshift ignores any pre and post render callbacks")
