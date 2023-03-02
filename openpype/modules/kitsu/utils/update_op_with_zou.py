@@ -65,32 +65,32 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 def update_op_assets(
     dbcon: AvalonMongoDB,
     gazu_project: dict,
-    project_dict: dict,
+    project_doc: dict,
     entities_list: List[dict],
-    asset_dict_ids: Dict[str, dict],
+    asset_doc_ids: Dict[str, dict],
 ) -> List[Dict[str, dict]]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
 
     Args:
         dbcon (AvalonMongoDB): Connection to DB
-        gazu_project dict): Dict of gazu,
-        project_dict dict): Dict of project,
+        gazu_project (dict): Dict of gazu,
+        project_doc (dict): Dict of project,
         entities_list (List[dict]): List of zou entities to update
-        asset_dict_ids (Dict[str, dict]): Dicts of [{zou_id: asset_doc}, ...]
+        asset_doc_ids (Dict[str, dict]): Dicts of [{zou_id: asset_doc}, ...]
 
     Returns:
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
-    if not project_dict:
+    if not project_doc:
         return
 
-    project_name = project_dict["name"]
+    project_name = project_doc["name"]
 
     assets_with_update = []
     for item in entities_list:
         # Check asset exists
-        item_doc = asset_dict_ids.get(item["id"])
+        item_doc = asset_doc_ids.get(item["id"])
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
@@ -108,7 +108,7 @@ def update_op_assets(
         try:
             frame_in = int(
                 item_data.pop(
-                    "frame_in", project_dict["data"].get("frameStart")
+                    "frame_in", project_doc["data"].get("frameStart")
                 )
             )
         except (TypeError, ValueError):
@@ -127,14 +127,14 @@ def update_op_assets(
             if frames_duration:
                 frame_out = frame_in + frames_duration - 1
             else:
-                frame_out = project_dict["data"].get("frameEnd", frame_in)
+                frame_out = project_doc["data"].get("frameEnd", frame_in)
         item_data["frameEnd"] = frame_out
         # Fps, fallback to project's value or default value (25.0)
         try:
             fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
             fps = float(gazu_project.get(
-                "fps", project_dict["data"].get("fps", 25)))
+                "fps", project_doc["data"].get("fps", 25)))
         item_data["fps"] = fps
         # Resolution, fall back to project default
         match_res = re.match(
@@ -145,27 +145,27 @@ def update_op_assets(
             item_data["resolutionWidth"] = int(match_res.group(1))
             item_data["resolutionHeight"] = int(match_res.group(2))
         else:
-            item_data["resolutionWidth"] = project_dict["data"].get(
+            item_data["resolutionWidth"] = project_doc["data"].get(
                 "resolutionWidth")
-            item_data["resolutionHeight"] = project_dict["data"].get(
+            item_data["resolutionHeight"] = project_doc["data"].get(
                 "resolutionHeight")
         # Properties that doesn't fully exist in Kitsu.
         # Guessing those property names below:
         # Pixel Aspect Ratio
         item_data["pixelAspect"] = item_data.get(
-            "pixel_aspect", project_dict["data"].get("pixelAspect"))
+            "pixel_aspect", project_doc["data"].get("pixelAspect"))
         # Handle Start
         item_data["handleStart"] = item_data.get(
-            "handle_start", project_dict["data"].get("handleStart"))
+            "handle_start", project_doc["data"].get("handleStart"))
         # Handle End
         item_data["handleEnd"] = item_data.get(
-            "handle_end", project_dict["data"].get("handleEnd"))
+            "handle_end", project_doc["data"].get("handleEnd"))
         # Clip In
         item_data["clipIn"] = item_data.get(
-            "clip_in", project_dict["data"].get("clipIn"))
+            "clip_in", project_doc["data"].get("clipIn"))
         # Clip Out
         item_data["clipOut"] = item_data.get(
-            "clip_out", project_dict["data"].get("clipOut"))
+            "clip_out", project_doc["data"].get("clipOut"))
 
         # Tasks
         tasks_list = []
@@ -209,7 +209,7 @@ def update_op_assets(
         # Root parent folder if exist
         visual_parent_doc_id = None
         if parent_zou_id is not None:
-            parent_zou_id_dict = asset_dict_ids.get(parent_zou_id)
+            parent_zou_id_dict = asset_doc_ids.get(parent_zou_id)
             if parent_zou_id_dict is not None:
                 visual_parent_doc_id = (
                     parent_zou_id_dict.get("_id")
@@ -233,7 +233,7 @@ def update_op_assets(
         item_data["parents"] = []
         ancestor_id = parent_zou_id
         while ancestor_id is not None:
-            parent_doc = asset_dict_ids.get(ancestor_id)
+            parent_doc = asset_doc_ids.get(ancestor_id)
             if parent_doc is not None:
                 item_data["parents"].insert(0, parent_doc["name"])
 
@@ -250,7 +250,7 @@ def update_op_assets(
             item_name = f"{item_data['parents'][-1]}_{item['name']}"
 
             # Update doc name
-            asset_dict_ids[item["id"]]["name"] = item_name
+            asset_doc_ids[item["id"]]["name"] = item_name
         else:
             item_name = item["name"]
 
@@ -269,7 +269,7 @@ def update_op_assets(
                         "$set": {
                             "name": item_name,
                             "data": item_data,
-                            "parent": project_dict["_id"],
+                            "parent": project_doc["_id"],
                         }
                     },
                 )
