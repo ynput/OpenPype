@@ -9,7 +9,12 @@ from openpype.hosts.maya.api.lib import imprint
 
 
 class ValidateInstanceAttributes(pyblish.api.InstancePlugin):
-    """Validate Instance Attributes."""
+    """Validate Instance Attributes.
+
+    New attributes can be introduced as new features come in. Old instances
+    will need to be updated with these attributes for the documentation to make
+    sense, and users do not have to recreate the instances.
+    """
 
     order = ValidateContentsOrder
     hosts = ["maya"]
