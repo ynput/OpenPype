@@ -28,7 +28,6 @@ from openpype.lib import (
     TemplateUnsolved,
 )
 from openpype.pipeline import (
-    schema,
     legacy_io,
     Anatomy,
 )
@@ -643,7 +642,10 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     def path_from_config():
         try:
-            version_, subset, asset, project = dbcon.parenthood(representation)
+            project_name = dbcon.active_project()
+            version_, subset, asset, project = get_representation_parents(
+                project_name, representation
+            )
         except ValueError:
             log.debug(
                 "Representation %s wasn't found in database, "
@@ -748,25 +750,9 @@ def is_compatible_loader(Loader, context):
 
     Returns:
         bool
-
     """
-    maj_version, _ = schema.get_schema_version(context["subset"]["schema"])
-    if maj_version < 3:
-        families = context["version"]["data"].get("families", [])
-    else:
-        families = context["subset"]["data"]["families"]
 
-    representation = context["representation"]
-    has_family = (
-        "*" in Loader.families or any(
-            family in Loader.families for family in families
-        )
-    )
-    representations = Loader.get_representations()
-    has_representation = (
-        "*" in representations or representation["name"] in representations
-    )
-    return has_family and has_representation
+    return Loader.is_compatible_loader(context)
 
 
 def loaders_from_repre_context(loaders, repre_context):

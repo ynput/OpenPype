@@ -13,6 +13,7 @@ class CreateAnimation(plugin.Creator):
     icon = "male"
     write_color_sets = False
     write_face_sets = False
+    include_user_defined_attributes = False
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -47,3 +48,6 @@ class CreateAnimation(plugin.Creator):
 
         # Default to write normals.
         self.data["writeNormals"] = True
+
+        value = self.include_user_defined_attributes
+        self.data["includeUserDefinedAttributes"] = value

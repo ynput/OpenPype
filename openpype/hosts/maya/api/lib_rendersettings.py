@@ -15,7 +15,7 @@ from openpype.settings import (
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.hosts.maya.api.commands import reset_frame_range
+from openpype.hosts.maya.api.lib import reset_frame_range
 
 
 class RenderSettings(object):
@@ -25,7 +25,8 @@ class RenderSettings(object):
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
         'redshift': 'defaultRenderGlobals.imageFilePrefix',
-        '_3delight': 'defaultRenderGlobals.imageFilePrefix'
+        '_3delight': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {

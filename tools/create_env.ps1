@@ -68,7 +68,7 @@ function Install-Poetry() {
     }
 
     $env:POETRY_HOME="$openpype_root\.poetry"
-    # $env:POETRY_VERSION="1.1.15"
+    $env:POETRY_VERSION="1.3.2"
     (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | & $($python) -
 }
 
