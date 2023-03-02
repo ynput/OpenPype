@@ -39,7 +39,6 @@ class HostDirmap(object):
         self._project_settings = project_settings
         self._sync_module = sync_module  # to limit reinit of Modules
         self._log = None
-        self._mapping = None  # cache mapping
 
     @property
     def sync_module(self):
@@ -70,29 +69,28 @@ class HostDirmap(object):
         """Run host dependent remapping from source_path to destination_path"""
         pass
 
-    def process_dirmap(self):
+    def process_dirmap(self, mapping=None):
         # type: (dict) -> None
         """Go through all paths in Settings and set them using `dirmap`.
 
             If artists has Site Sync enabled, take dirmap mapping directly from
             Local Settings when artist is syncing workfile locally.
 
-        Args:
-            project_settings (dict): Settings for current project.
         """
 
-        if not self._mapping:
-            self._mapping = self.get_mappings(self.project_settings)
-        if not self._mapping:
+        if not mapping:
+            mapping = self.get_mappings()
+        if not mapping:
             return
 
-        self.log.info("Processing directory mapping ...")
         self.on_enable_dirmap()
-        self.log.info("mapping:: {}".format(self._mapping))
 
-        for k, sp in enumerate(self._mapping["source-path"]):
-            dst = self._mapping["destination-path"][k]
+        for k, sp in enumerate(mapping["source-path"]):
+            dst = mapping["destination-path"][k]
             try:
+                # add trailing slash if missing
+                sp = os.path.join(sp, '')
+                dst = os.path.join(dst, '')
                 print("{} -> {}".format(sp, dst))
                 self.dirmap_routine(sp, dst)
             except IndexError:
@@ -110,7 +108,7 @@ class HostDirmap(object):
                 )
                 continue
 
-    def get_mappings(self, project_settings):
+    def get_mappings(self):
         """Get translation from source-path to destination-path.
 
             It checks if Site Sync is enabled and user chose to use local
@@ -137,6 +135,8 @@ class HostDirmap(object):
             or not mapping.get("source-path")
         ):
             return {}
+        self.log.info("Processing directory mapping ...")
+        self.log.info("mapping:: {}".format(mapping))
         return mapping
 
     def _get_local_sync_dirmap(self):
