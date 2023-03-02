@@ -204,8 +204,10 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         cur_entity_tasks = cur_entity_data.get("tasks") or {}
 
         # Tasks
-        data["tasks"] = {}
+        # Keep tasks from previous asset
+        data["tasks"] = deepcopy(cur_entity_tasks)
         new_tasks = entity_data.get("tasks") or {}
+        # Add/update tasks from new entity data
         for task_name, task_info in new_tasks.items():
             task_info = deepcopy(task_info)
             if task_name in cur_entity_tasks:
