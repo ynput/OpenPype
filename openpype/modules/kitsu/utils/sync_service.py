@@ -124,6 +124,11 @@ class Listener:
         log.info("Listening to Kitsu events...")
         gazu.events.run_client(self.event_client)
 
+    def get_ep_dict(self, ep_id):
+        if ep_id and ep_id != "":
+            return gazu.entity.get_entity(ep_id)
+        return
+
     # == Project ==
     def _new_project(self, data):
         """Create new project into OP DB."""
@@ -179,10 +184,7 @@ class Listener:
 
         # Print message
         ep_id = asset.get("episode_id")
-        if ep_id and ep_id != "":
-            ep = gazu.asset.get_episode(ep_id)
-         else:
-             ep = None
+        ep = self.get_ep_dict(ep_id)
 
         msg = "Asset created: {proj_name} - {ep_name}" \
             "{asset_type_name} - {asset_name}".format(
@@ -233,10 +235,8 @@ class Listener:
             )
 
             # Print message
-            ep = None
             ep_id = asset["data"]["zou"].get("episode_id")
-            if ep_id and ep_id != "":
-                ep = gazu.asset.get_episode(ep_id)
+            ep = self.get_ep_dict(ep_id)
 
             msg = "Asset deleted: {proj_name} - {ep_name}" \
                 "{asset_type_name} - {asset_name}".format(
@@ -334,10 +334,8 @@ class Listener:
         self._update_sequence(data)
 
         # Print message
-        ep = None
         ep_id = sequence.get("episode_id")
-        if ep_id and ep_id != "":
-            ep = gazu.asset.get_episode(ep_id)
+        ep = self.get_ep_dict(ep_id)
 
         msg = "Sequence created: {proj_name} - {ep_name}" \
             "{sequence_name}".format(
@@ -386,10 +384,8 @@ class Listener:
             )
 
             # Print message
-            ep = None
             ep_id = sequence["data"]["zou"].get("episode_id")
-            if ep_id and ep_id != "":
-                ep = gazu.asset.get_episode(ep_id)
+            ep = self.get_ep_dict(ep_id)
 
             gazu_project = gazu.project.get_project(
                 sequence["data"]["zou"]["project_id"])
@@ -418,9 +414,8 @@ class Listener:
         self._update_shot(data)
 
         # Print message
-        ep = None
-        if shot["episode_id"] and shot["episode_id"] != "":
-            ep = gazu.asset.get_episode(shot["episode_id"])
+        ep_id = shot["episode_id"]
+        ep = self.get_ep_dict(ep_id)
 
         msg = "Shot created: {proj_name} - {ep_name}" \
             "{sequence_name} - {shot_name}".format(
@@ -471,10 +466,8 @@ class Listener:
             )
 
             # Print message
-            ep = None
             ep_id = shot["data"]["zou"].get("episode_id")
-            if ep_id and ep_id != "":
-                ep = gazu.asset.get_episode(ep_id)
+            ep = self.get_ep_dict(ep_id)
 
             msg = "Shot deleted: {proj_name} - {ep_name}" \
                 "{sequence_name} - {shot_name}".format(
@@ -496,10 +489,8 @@ class Listener:
         task = gazu.task.get_task(data["task_id"])
 
         # Print message
-        ep = None
         ep_id = task.get("episode_id")
-        if ep_id and ep_id != "":
-            ep = gazu.asset.get_episode(ep_id)
+        ep = self.get_ep_dict(ep_id)
 
         parent_name = None
         ent_type = None
