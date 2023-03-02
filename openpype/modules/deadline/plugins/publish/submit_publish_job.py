@@ -933,8 +933,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         self.log.info(data.get("expectedFiles"))
 
-        additional_data = {}
-        if pyblish.api.current_host() == "maya":
+        if isinstance(data.get("expectedFiles")[0], dict):
+            # we cannot attach AOVs to other subsets as we consider every
+            # AOV subset of its own.
+
             config = instance.data["colorspaceConfig"]
             additional_data = {
                 "renderProducts": instance.data["renderProducts"],
@@ -945,10 +947,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     str(context.data["anatomy"].roots["work"]), "{root[work]}"
                 )
             }
-
-        if isinstance(data.get("expectedFiles")[0], dict):
-            # we cannot attach AOVs to other subsets as we consider every
-            # AOV subset of its own.
 
             if len(data.get("attachTo")) > 0:
                 assert len(data.get("expectedFiles")[0].keys()) == 1, (
