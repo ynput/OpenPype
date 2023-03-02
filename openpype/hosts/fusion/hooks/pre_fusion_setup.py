@@ -46,7 +46,7 @@ class FusionPrelaunch(PreLaunchHook):
             )
             return fusion_prefs_dir
         # otherwise get the profile folder from default location
-        fusion_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}" #noqa
+        fusion_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}"  # noqa
         if platform.system() == "Windows":
             prefs_source = Path(os.getenv("AppData"), fusion_prefs_dir)
         elif platform.system() == "Darwin":
@@ -138,7 +138,7 @@ class FusionPrelaunch(PreLaunchHook):
         # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
         # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
         # TODO: Detect Fusion version to only set for specific Fusion build
-        self.launch_context.env[f"FUSION{self.VERSION}_PYTHON36_HOME"] = py3_dir #noqa
+        self.launch_context.env[f"FUSION{self.VERSION}_PYTHON36_HOME"] = py3_dir  # noqa
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
@@ -152,11 +152,11 @@ class FusionPrelaunch(PreLaunchHook):
         ) = self.get_copy_fusion_prefs_settings()
         if copy_status and fusion_profile_dir is not None:
             prefs_source = self.get_profile_source()
-            self.copy_existing_prefs(prefs_source, fusion_profile_dir, force_sync) #noqa
+            self.copy_existing_prefs(prefs_source, fusion_profile_dir, force_sync)  # noqa
         else:
             fusion_profile_dir_variable = f"FUSION{self.VERSION}_PROFILE_DIR"
-            self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}") #noqa
-            self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir) #noqa
+            self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}")  # noqa
+            self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir)  # noqa
         master_prefs_variable = f"FUSION{self.VERSION}_MasterPrefs"
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
