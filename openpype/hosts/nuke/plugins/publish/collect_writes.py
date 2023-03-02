@@ -67,6 +67,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         write_file_path = nuke.filename(write_node)
         output_dir = os.path.dirname(write_file_path)
 
+        # get colorspace and add to version data
+        colorspace = napi.get_colorspace_from_node(write_node)
+
         self.log.debug('output dir: {}'.format(output_dir))
 
         if render_target == "frames":
@@ -151,9 +154,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["transfer"] = False
             instance.data["farm"] = True
             self.log.info("Farm rendering ON ...")
-
-        # get colorspace and add to version data
-        colorspace = napi.get_colorspace_from_node(write_node)
 
         # TODO: remove this when we have proper colorspace support
         version_data = {
