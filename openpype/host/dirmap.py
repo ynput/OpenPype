@@ -16,7 +16,6 @@ from openpype.lib import Logger
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 from openpype.settings.lib import get_site_local_overrides
-from openpype.pipeline import Anatomy
 
 
 @six.add_metaclass(ABCMeta)
