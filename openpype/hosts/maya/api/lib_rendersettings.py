@@ -420,7 +420,7 @@ class RenderSettings(object):
         sensible way. This is also copying start and end frame from the Maya
         to the node specific attributes, because otherwise it would only use
         currentFrame.
-        
+
         TODO: This needs some attention when Dealing with other
               farms probably.
         """
