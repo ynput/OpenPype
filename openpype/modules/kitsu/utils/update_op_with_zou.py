@@ -291,7 +291,6 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_dict = get_project(project_name)
     if not project_dict:
-        log.info("Project created: {}".format(project_name))
         project_dict = create_project(project_name, project_name)
 
     # Project data and tasks
@@ -405,12 +404,16 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     ]
 
     # Sync project. Create if doesn't exist
+    project_name = project["name"]
+    project_dict = get_project(project_name)
+    if not project_dict:
+        log.info("Project created: {}".format(project_name))
     bulk_writes.append(write_project_to_op(project, dbcon))
 
     # Try to find project document
-    project_name = project["name"]
+    if not project_dict:
+        project_dict = get_project(project_name)
     dbcon.Session["AVALON_PROJECT"] = project_name
-    project_dict = get_project(project_name)
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
