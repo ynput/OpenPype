@@ -591,7 +591,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files, additional_data):
+    def _get_representations(self, instance, exp_files):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
@@ -936,19 +936,20 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         self.log.info(data.get("expectedFiles"))
 
-        additional_data = {
-            "renderProducts": instance.data["renderProducts"],
-            "colorspaceConfig": instance.data["colorspaceConfig"],
-            "display": instance.data["colorspaceDisplay"],
-            "view": instance.data["colorspaceView"],
-            "colorspaceTemplate": instance.data["colorspaceConfig"].replace(
-                str(context.data["anatomy"].roots["work"]), "{root[work]}"
-            )
-        }
-
         if isinstance(data.get("expectedFiles")[0], dict):
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
+
+            config = instance.data["colorspaceConfig"]
+            additional_data = {
+                "renderProducts": instance.data["renderProducts"],
+                "colorspaceConfig": instance.data["colorspaceConfig"],
+                "display": instance.data["colorspaceDisplay"],
+                "view": instance.data["colorspaceView"],
+                "colorspaceTemplate": config.replace(
+                    str(context.data["anatomy"].roots["work"]), "{root[work]}"
+                )
+            }
 
             if len(data.get("attachTo")) > 0:
                 assert len(data.get("expectedFiles")[0].keys()) == 1, (
