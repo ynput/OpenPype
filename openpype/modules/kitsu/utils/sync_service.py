@@ -554,31 +554,32 @@ class Listener:
                     # Print message
                     entity = gazu.entity.get_entity(task["zou"]["entity_id"])
 
-                    ep = None
-                    ep_id = entity.get("episode_id")
-                    if ep_id and ep_id != "":
-                        ep = gazu.asset.get_episode(ep_id)
+                    if entity["type"] == "Asset":
+                        ep = self.get_ep_dict(entity["source_id"])
 
-                    parent_name = None
-                    ent_type = None
-                    if task["task_type"]["for_entity"] == "Asset":
-                        parent_name = task["entity"]["name"]
-                        ent_type = task["entity_type"]["name"]
-                    elif task["task_type"]["for_entity"] == "Shot":
+                        parent_name = "{ep}{entity_type} - {entity}".format(
+                            ep=ep["name"] + " - " if ep is not None else "",
+                            entity_type=task["zou"]["entity_type_name"],
+                            entity=task["zou"]["entity_name"]
+                        )
+                    elif entity["type"] == "Shot":
+                        shot_dict = gazu.entity.get_entity(
+                            task["zou"]["entity_id"])
+                        seq_dict = gazu.entity.get_entity(
+                            shot_dict["parent_id"])
+                        ep = self.get_ep_dict(seq_dict["parent_id"])
+
                         parent_name = "{ep}{sequence} - {shot}".format(
                             ep=ep["name"] + " - " if ep is not None else "",
-                            sequence=task["sequence"]["name"],
-                            shot=task["entity"]["name"]
+                            sequence=seq_dict["name"],
+                            shot=shot_dict["name"]
                         )
 
-                    ent_type = ent_type + " - " if ent_type is not None else ""
-                    msg = "Task deleted: {proj} - {ent_type}{parent}" \
-                        " - {task}".format(
-                            proj=task["zou"]["project"]["name"],
-                            ent_type=ent_type,
-                            parent=parent_name,
-                            task=task["type"]
-                        )
+                    msg = "Task deleted: {proj} - {parent} - {task}".format(
+                        proj=task["zou"]["project_name"],
+                        parent=parent_name,
+                        task=task["zou"]["task_type_name"]
+                    )
                     log.info(msg)
 
                     return
