@@ -16,6 +16,7 @@ from openpype.lib import Logger
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 from openpype.settings.lib import get_site_local_overrides
+from openpype.pipeline import Anatomy
 
 
 @six.add_metaclass(ABCMeta)
@@ -117,21 +118,17 @@ class HostDirmap(object):
             site, in that case configuration in Local Settings takes precedence
         """
 
-        local_mapping = self._get_local_sync_dirmap(project_settings)
         dirmap_label = "{}-dirmap".format(self.host_name)
-        if (
-            not self.project_settings[self.host_name].get(dirmap_label)
-            and not local_mapping
-        ):
-            return {}
-        mapping_settings = self.project_settings[self.host_name][dirmap_label]
-        mapping_enabled = mapping_settings["enabled"] or bool(local_mapping)
+        mapping_sett = self.project_settings[self.host_name].get(dirmap_label,
+                                                                 {})
+        local_mapping = self._get_local_sync_dirmap()
+        mapping_enabled = mapping_sett.get("enabled") or bool(local_mapping)
         if not mapping_enabled:
             return {}
 
         mapping = (
             local_mapping
-            or mapping_settings["paths"]
+            or mapping_sett["paths"]
             or {}
         )
 
@@ -143,25 +140,22 @@ class HostDirmap(object):
             return {}
         return mapping
 
-    def _get_local_sync_dirmap(self, project_settings):
+    def _get_local_sync_dirmap(self):
         """
             Returns dirmap if synch to local project is enabled.
 
             Only valid mapping is from roots of remote site to local site set
             in Local Settings.
 
-            Args:
-                project_settings (dict)
             Returns:
                 dict : { "source-path": [XXX], "destination-path": [YYYY]}
         """
+        project_name = os.getenv("AVALON_PROJECT")
 
         mapping = {}
-
-        if not project_settings["global"]["sync_server"]["enabled"]:
+        if (not self.sync_module.enabled or
+                project_name not in self.sync_module.get_enabled_projects()):
             return mapping
-
-        project_name = os.getenv("AVALON_PROJECT")
 
         active_site = self.sync_module.get_local_normalized_site(
             self.sync_module.get_active_site(project_name))
@@ -171,11 +165,7 @@ class HostDirmap(object):
             "active {} - remote {}".format(active_site, remote_site)
         )
 
-        if (
-            active_site == "local"
-            and project_name in self.sync_module.get_enabled_projects()
-            and active_site != remote_site
-        ):
+        if active_site == "local" and active_site != remote_site:
             sync_settings = self.sync_module.get_sync_project_setting(
                 project_name,
                 exclude_locals=False,
@@ -188,7 +178,15 @@ class HostDirmap(object):
 
             self.log.debug("local overrides {}".format(active_overrides))
             self.log.debug("remote overrides {}".format(remote_overrides))
+
             current_platform = platform.system().lower()
+            remote_provider = self.sync_module.get_provider_for_site(
+                project_name, remote_site
+            )
+            # dirmap has sense only with regular disk provider, in the workfile
+            # wont be root on cloud or sftp provider
+            if remote_provider != "local_drive":
+                remote_site = "studio"
             for root_name, active_site_dir in active_overrides.items():
                 remote_site_dir = (
                     remote_overrides.get(root_name)
