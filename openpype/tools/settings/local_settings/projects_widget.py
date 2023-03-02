@@ -272,7 +272,7 @@ class SitesWidget(QtWidgets.QWidget):
         )
 
         site_configs = sync_server_module.get_all_site_configs(
-            self._project_name)
+            self._project_name, local_editable_only=True)
 
         roots_entity = (
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
