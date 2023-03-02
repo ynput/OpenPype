@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Simple alembic loader for 3dsmax.
 
-Because of limited api, alembics can be only loaded, but not easily updated.
-
-"""
 import os
 from openpype.pipeline import (
     load, get_representation_path
@@ -12,13 +7,11 @@ from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 
 
-class AbcLoader(load.LoaderPlugin):
-    """Alembic loader."""
+class ModelAbcLoader(load.LoaderPlugin):
+    """Loading model with the Alembic loader."""
 
-    families = ["camera",
-                "animation",
-                "pointcache"]
-    label = "Load Alembic"
+    families = ["model"]
+    label = "Load Model(Alembic)"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
@@ -34,14 +27,17 @@ class AbcLoader(load.LoaderPlugin):
             if rt.classOf(c) == rt.AlembicContainer
         }
 
-        abc_export_cmd = (f"""
+        abc_import_cmd = (f"""
 AlembicImport.ImportToRoot = false
+AlembicImport.CustomAttributes = true
+AlembicImport.UVs = true
+AlembicImport.VertexColors = true
 
 importFile @"{file_path}" #noPrompt
         """)
 
-        self.log.debug(f"Executing command: {abc_export_cmd}")
-        rt.execute(abc_export_cmd)
+        self.log.debug(f"Executing command: {abc_import_cmd}")
+        rt.execute(abc_import_cmd)
 
         abc_after = {
             c for c in rt.rootNode.Children
