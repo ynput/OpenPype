@@ -17,26 +17,26 @@ class FusionPrelaunch(PreLaunchHook):
     as set in openpype/hosts/fusion/deploy/fusion_shared.prefs to enable
     the OpenPype menu and force Python 3 over Python 2.
 
-    PROFILE_NUMBER is used because from the Fusion v16 the profile folder
+    VERSION variable is used because from the Fusion v16 the profile folder
     is project-specific, but then it was abandoned by devs,
-    and despite it is already Fusion version 18, still FUSION16_PROFILE_DIR is used.
-    The variable is added in case the version number will be updated or deleted
-    so we could easily change the version or disable it.
+    and despite it is already Fusion version 18, still FUSION16_PROFILE_DIR
+    is used. The variable is added in case the version number will be
+    updated or deleted so we could easily change the version or disable it.
     """
 
     app_groups = ["fusion"]
-    PROFILE_NUMBER = 16
+    VERSION = 16
 
     def get_fusion_profile_name(self) -> str:
         """usually set to 'Default', unless FUSION16_PROFILE is set"""
-        return os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE", "Default")
+        return os.getenv(f"FUSION{self.VERSION}_PROFILE", "Default")
 
     def get_profile_source(self) -> Path:
         """Get the Fusion preferences (profile) location.
         Check Per-User_Preferences_and_Paths on VFXpedia for reference.
         """
         fusion_profile = self.get_fusion_profile_name()
-        fusion_var_prefs_dir = os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR")
+        fusion_var_prefs_dir = os.getenv(f"FUSION{self.VERSION}_PROFILE_DIR")
 
         # if FUSION16_PROFILE_DIR variable exists
         if fusion_var_prefs_dir and Path(fusion_var_prefs_dir).is_dir():
@@ -46,7 +46,7 @@ class FusionPrelaunch(PreLaunchHook):
             )
             return fusion_prefs_dir
         # otherwise get the profile folder from default location
-        fusion_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}"
+        fusion_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}" #noqa
         if platform.system() == "Windows":
             prefs_source = Path(os.getenv("AppData"), fusion_prefs_dir)
         elif platform.system() == "Darwin":
@@ -59,7 +59,7 @@ class FusionPrelaunch(PreLaunchHook):
         return prefs_source
 
     def get_copy_fusion_prefs_settings(self):
-        """Get copy prefserences options from the global application settings"""
+        """Get copy preferences options from the global application settings"""
         copy_fusion_settings = self.data["project_settings"]["fusion"].get(
             "copy_fusion_settings", {}
         )
@@ -75,9 +75,9 @@ class FusionPrelaunch(PreLaunchHook):
     def copy_existing_prefs(
         self, copy_from: Path, copy_to: Path, force_sync: bool
     ) -> None:
-        """On the first Fusion launch copy the contents of Fusion profile directory
-        to the working predefined location. If the Openpype profile folder exists,
-        skip copying, unless re-sync is checked.
+        """On the first Fusion launch copy the contents of Fusion profile
+        directory to the working predefined location. If the Openpype profile
+        folder exists, skip copying, unless re-sync is checked.
         If the prefs were not copied on the first launch,
         clean Fusion profile will be created in fusion_profile_dir.
         """
@@ -89,13 +89,17 @@ class FusionPrelaunch(PreLaunchHook):
         self.log.info(f"Starting copying Fusion preferences")
         self.log.info(f"force_sync option is set to {force_sync}")
         dest_folder = copy_to / self.get_fusion_profile_name()
-        dest_folder.mkdir(exist_ok=True, parents=True)
+        try:
+            dest_folder.mkdir(exist_ok=True, parents=True)
+        except Exception:
+            self.log.warn(f"Could not create folder at {dest_folder}")
+            return
         if not copy_from.exists():
-            self.log.warning(f"Fusion preferences file not found in {copy_from}")
+            self.log.warning(f"Fusion preferences not found in {copy_from}")
             return
         for file in copy_from.iterdir():
-            if file.suffix in (".prefs", ".def", ".blocklist", "fu"):
-                # convert Path to str to be compatible with Python 3.6 and above
+            if file.suffix in (".prefs", ".def", ".blocklist", ".fu"):
+                # convert Path to str to be compatible with Python 3.6+
                 shutil.copy(str(file), str(dest_folder))
         self.log.info(
             f"successfully copied preferences:\n {copy_from} to {dest_folder}"
@@ -134,26 +138,26 @@ class FusionPrelaunch(PreLaunchHook):
         # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
         # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
         # TODO: Detect Fusion version to only set for specific Fusion build
-        self.launch_context.env[f"FUSION{self.PROFILE_NUMBER}_PYTHON36_HOME"] = py3_dir
+        self.launch_context.env[f"FUSION{self.VERSION}_PYTHON36_HOME"] = py3_dir #noqa
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
         # to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
-
         (
             copy_status,
             fusion_profile_dir,
             force_sync,
         ) = self.get_copy_fusion_prefs_settings()
-        if copy_status:
+        if copy_status and fusion_profile_dir is not None:
             prefs_source = self.get_profile_source()
-            self.copy_existing_prefs(prefs_source, fusion_profile_dir, force_sync)
-        fusion_profile_dir_variable = f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR"
-        master_prefs_variable = f"FUSION{self.PROFILE_NUMBER}_MasterPrefs"
+            self.copy_existing_prefs(prefs_source, fusion_profile_dir, force_sync) #noqa
+        else:
+            fusion_profile_dir_variable = f"FUSION{self.VERSION}_PROFILE_DIR"
+            self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}") #noqa
+            self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir) #noqa
+        master_prefs_variable = f"FUSION{self.VERSION}_MasterPrefs"
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
-        self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}")
-        self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir)
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
         self.launch_context.env[master_prefs_variable] = str(master_prefs)
