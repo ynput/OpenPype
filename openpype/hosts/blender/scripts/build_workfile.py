@@ -111,11 +111,13 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
         for _ in range(actor["nb_occurences"]):
             if actor["asset_type_name"] == "Environment":
                 subset_name = "setdressMain"
+                loader_name = "LinkSetdressLoader"
             else:
                 subset_name = "rigMain"
+                loader_name = "LinkRigLoader"
             try:
                 container, _datablocks = load_subset(
-                    project_name, actor["asset_name"], subset_name, "Link"
+                    project_name, actor["asset_name"], subset_name, loader_name
                 )
                 containers.append(container)
                 sleep(1)  # TODO blender is too fast for windows
@@ -152,7 +154,7 @@ def build_look(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
     create_instance("CreateLook", "lookMain")
-    load_subset(project_name, asset_name, "modelMain", "Append")
+    load_subset(project_name, asset_name, "modelMain", "AppendModelLoader")
 
 
 def build_rig(project_name, asset_name):
@@ -166,7 +168,7 @@ def build_rig(project_name, asset_name):
     bpy.context.object.name = f"{asset_name}_armature"
     bpy.context.object.data.name = f"{asset_name}_armature"
     create_instance("CreateRig", "rigMain", useSelection=True)
-    load_subset(project_name, asset_name, "modelMain", "Append")
+    load_subset(project_name, asset_name, "modelMain", "AppendModelLoader")
 
 
 def create_gdeformer_collection(parent_collection: bpy.types.Collection):
@@ -221,6 +223,7 @@ def build_layout(project_name, asset_name):
 
     # Try to load camera from environment's setdress
     camera_collection = None
+    env_asset_name = None
     try:
         # Get env asset name
         env_asset_name = next(
@@ -234,7 +237,10 @@ def build_layout(project_name, asset_name):
         if env_asset_name:
             # Load camera published at environment task
             cam_container, _cam_datablocks = load_subset(
-                project_name, env_asset_name, "cameraMain", "Append"
+                project_name,
+                env_asset_name,
+                "cameraMain",
+                "AppendCameraLoader"
             )
 
             # Make cam container publishable
@@ -279,6 +285,15 @@ def build_layout(project_name, asset_name):
     load_subset(
         project_name, asset_name, "BoardReference", "Background", "mov"
     )
+    # load the concept reference of the environment as image background.
+    if env_asset_name:
+        load_subset(
+            project_name,
+            env_asset_name,
+            "ConceptReference",
+            "Background",
+            "jpg",
+        )
 
 
 def build_anim(project_name, asset_name):
@@ -289,7 +304,7 @@ def build_anim(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
     layout_container, _layout_datablocks = load_subset(
-        project_name, asset_name, "layoutMain", "Link"
+        project_name, asset_name, "layoutMain", "LinkLayoutLoader"
     )
 
     # Make container publishable, expose its content
@@ -307,7 +322,7 @@ def build_anim(project_name, asset_name):
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
-        project_name, asset_name, "cameraMain", "AppendCamera"
+        project_name, asset_name, "cameraMain", "AppendCameraLoader"
     )
 
     # Clean cam container from review collection
@@ -368,12 +383,13 @@ def build_render(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
 
-    if not load_subset(project_name, asset_name, "layoutFromAnim", "Link"):
-        load_subset(project_name, asset_name, "layoutMain", "Append")
-    if not load_subset(project_name, asset_name, "cameraFromAnim", "Link"):
-        load_subset(project_name, asset_name, "cameraMain", "Link")
+    load_subset(project_name, asset_name, "layoutMain", "AppendLayoutLoader")
+    load_subset(project_name, asset_name, "cameraMain", "LinkCameraLoader")
+
+    # TODO : Because subset animationMain no longer be used,
+    # we need to load all animation subsets from the asset.
     _anim_container, anim_datablocks = load_subset(
-        project_name, asset_name, "animationMain", "Link"
+        project_name, asset_name, "animationMain", "LinkAnimationLoader"
     )
 
     # Try to assign linked actions by parsing their name
