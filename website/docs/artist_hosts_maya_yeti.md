@@ -64,7 +64,7 @@ Create select model mesh, create Yeti node - **Yeti → Create Yeti Node on Mesh
 setup similar Yeti graph as in cache example above.
 
 Then select this Yeti node (mine is called with default name `pgYetiMaya1`) and
-create *Yeti Rig instance* - **OpenPype → Create...** and select **Yeti Cache**.
+create *Yeti Rig instance* - **OpenPype → Create...** and select **Yeti Rig**.
 Leave `Use selection` checked.
 
 Last step is to add our model geometry to rig instance, so middle+drag its
