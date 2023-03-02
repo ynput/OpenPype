@@ -6,8 +6,7 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -38,7 +37,7 @@ class ExtractModelUSD(publish.Extractor,
         self.log.info("Writing USD '%s' to '%s'" % (asset_filepath,
                                                     stagingdir))
 
-        log_filename ="{name}.txt".format(**instance.data)
+        log_filename = "{name}.txt".format(**instance.data)
         log_filepath = os.path.join(stagingdir,
                                     log_filename)
         self.log.info("Writing log '%s' to '%s'" % (log_filepath,
