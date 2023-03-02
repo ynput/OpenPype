@@ -155,5 +155,12 @@ class BackgroundLoader(ImageLoader):
             bkg_img.image_user.frame_duration = (
                 bpy.context.scene.frame_end - bpy.context.scene.frame_start
             )
+            # Append audio in the sequencer
+            bpy.context.scene.sequence_editor.sequences.new_sound(
+                img.name,
+                img.filepath,
+                1,
+                bpy.context.scene.frame_start
+            )
 
         return container, datablocks
