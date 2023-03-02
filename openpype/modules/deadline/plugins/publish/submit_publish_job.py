@@ -588,7 +588,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files, additional_data):
+    def _get_representations(self, instance, exp_files):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
