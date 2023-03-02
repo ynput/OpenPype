@@ -178,10 +178,11 @@ class Listener:
         self._update_asset(data)
 
         # Print message
-        ep = None
         ep_id = asset.get("episode_id")
         if ep_id and ep_id != "":
             ep = gazu.asset.get_episode(ep_id)
+         else:
+             ep = None
 
         msg = "Asset created: {proj_name} - {ep_name}" \
             "{asset_type_name} - {asset_name}".format(
