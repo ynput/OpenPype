@@ -6,14 +6,19 @@ from openpype.hosts.aftereffects import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    CreatorError,
-    legacy_io,
+    CreatorError
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
 from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class RenderCreator(Creator):
+    """Creates 'render' instance for publishing.
+
+    Result of 'render' instance is video or sequence of images for particular
+    composition based of configuration in its RenderQueue.
+    """
     identifier = "render"
     label = "Render"
     family = "render"
@@ -27,45 +32,6 @@ class RenderCreator(Creator):
                                                   ["create"]
                                                   ["RenderCreator"]
                                                   ["defaults"])
-
-    def get_icon(self):
-        return resources.get_openpype_splash_filepath()
-
-    def collect_instances(self):
-        for instance_data in cache_and_get_instances(self):
-            # legacy instances have family=='render' or 'renderLocal', use them
-            creator_id = (instance_data.get("creator_identifier") or
-                          instance_data.get("family", '').replace("Local", ''))
-            if creator_id == self.identifier:
-                instance_data = self._handle_legacy(instance_data)
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
-
-    def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
-            api.get_stub().imprint(created_inst.get("instance_id"),
-                                   created_inst.data_to_store())
-            subset_change = _changes.get("subset")
-            if subset_change:
-                api.get_stub().rename_item(created_inst.data["members"][0],
-                                           subset_change[1])
-
-    def remove_instances(self, instances):
-        for instance in instances:
-            self._remove_instance_from_context(instance)
-            self.host.remove_instance(instance)
-
-            subset = instance.data["subset"]
-            comp_id = instance.data["members"][0]
-            comp = api.get_stub().get_item(comp_id)
-            if comp:
-                new_comp_name = comp.name.replace(subset, '')
-                if not new_comp_name:
-                    new_comp_name = "dummyCompName"
-                api.get_stub().rename_item(comp_id,
-                                           new_comp_name)
 
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
@@ -82,10 +48,19 @@ class RenderCreator(Creator):
                 "if 'useSelection' or create at least "
                 "one composition."
             )
-
+        use_composition_name = (pre_create_data.get("use_composition_name") or
+                                len(comps) > 1)
         for comp in comps:
-            if pre_create_data.get("use_composition_name"):
-                composition_name = comp.name
+            if use_composition_name:
+                if "{composition}" not in subset_name_from_ui.lower():
+                    subset_name_from_ui += "{Composition}"
+
+                composition_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    comp.name
+                )
+
                 dynamic_fill = prepare_template_data({"composition":
                                                       composition_name})
                 subset_name = subset_name_from_ui.format(**dynamic_fill)
@@ -129,8 +104,72 @@ class RenderCreator(Creator):
         ]
         return output
 
+    def get_icon(self):
+        return resources.get_openpype_splash_filepath()
+
+    def collect_instances(self):
+        for instance_data in cache_and_get_instances(self):
+            # legacy instances have family=='render' or 'renderLocal', use them
+            creator_id = (instance_data.get("creator_identifier") or
+                          instance_data.get("family", '').replace("Local", ''))
+            if creator_id == self.identifier:
+                instance_data = self._handle_legacy(instance_data)
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            api.get_stub().imprint(created_inst.get("instance_id"),
+                                   created_inst.data_to_store())
+            subset_change = _changes.get("subset")
+            if subset_change:
+                api.get_stub().rename_item(created_inst.data["members"][0],
+                                           subset_change.new_value)
+
+    def remove_instances(self, instances):
+        for instance in instances:
+            self._remove_instance_from_context(instance)
+            self.host.remove_instance(instance)
+
+            subset = instance.data["subset"]
+            comp_id = instance.data["members"][0]
+            comp = api.get_stub().get_item(comp_id)
+            if comp:
+                new_comp_name = comp.name.replace(subset, '')
+                if not new_comp_name:
+                    new_comp_name = "dummyCompName"
+                api.get_stub().rename_item(comp_id,
+                                           new_comp_name)
+
     def get_detail_description(self):
-        return """Creator for Render instances"""
+        return """Creator for Render instances
+
+        Main publishable item in AfterEffects will be of `render` family.
+        Result of this item (instance) is picture sequence or video that could
+        be a final delivery product or loaded and used in another DCCs.
+
+        Select single composition and create instance of 'render' family or
+        turn off 'Use selection' to create instance for all compositions.
+
+        'Use composition name in subset' allows to explicitly add composition
+        name into created subset name.
+
+        Position of composition name could be set in
+        `project_settings/global/tools/creator/subset_name_profiles` with some
+        form of '{composition}' placeholder.
+
+        Composition name will be used implicitly if multiple composition should
+        be handled at same time.
+
+        If {composition} placeholder is not us 'subset_name_profiles'
+        composition name will be capitalized and set at the end of subset name
+        if necessary.
+
+        If composition name should be used, it will be cleaned up of characters
+        that would cause an issue in published file names.
+        """
 
     def get_dynamic_data(self, variant, task_name, asset_doc,
                          project_name, host_name, instance):
@@ -155,7 +194,7 @@ class RenderCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = legacy_io.Session.get("AVALON_TASK")
+            instance_data["task"] = self.create_context.get_current_task_name()
 
         if not instance_data.get("creator_attributes"):
             is_old_farm = instance_data["family"] != "renderLocal"

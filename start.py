@@ -348,8 +348,15 @@ def run_disk_mapping_commands(settings):
 
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
-        destination = destination.rstrip('/')
-        source = source.rstrip('/')
+        if low_platform == "windows":
+            destination = destination.replace("/", "\\").rstrip("\\")
+            source = source.replace("/", "\\").rstrip("\\")
+            # Add slash after ':' ('G:' -> 'G:\')
+            if destination.endswith(":"):
+                destination += "\\"
+        else:
+            destination = destination.rstrip("/")
+            source = source.rstrip("/")
 
         if low_platform == "darwin":
             scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
@@ -1025,7 +1032,7 @@ def boot():
 
     if "validate" in commands:
         _boot_validate_versions(use_version, local_version)
-        sys.exit(1)
+        sys.exit(0)
 
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
@@ -1035,7 +1042,7 @@ def boot():
 
     if "print_versions" in commands:
         _boot_print_versions(OPENPYPE_ROOT)
-        sys.exit(1)
+        sys.exit(0)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
