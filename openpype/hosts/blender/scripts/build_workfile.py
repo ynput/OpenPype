@@ -348,7 +348,6 @@ def build_anim(project_name, asset_name):
     bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
 
     for obj in bpy.context.scene.objects:
-        # Select camera from cameraMain instance to link with the review.
         if obj.type == "ARMATURE":
             # Create animation instance
             variant_name = obj.name[obj.name.find("RIG_") + 4 :].capitalize()
@@ -358,6 +357,7 @@ def build_anim(project_name, asset_name):
                 subset_name=f"animation{variant_name}",
                 datapath="objects",
                 datablock_name=obj.name,
+                use_selection=False,
             )
 
     # Create review
@@ -367,6 +367,7 @@ def build_anim(project_name, asset_name):
         subset_name="reviewMain",
         datapath="collections",
         datablock_name=camera_collection.name,
+        use_selection=False,
     )
 
     # load the board mov as image background linked into the camera
