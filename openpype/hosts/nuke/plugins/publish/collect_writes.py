@@ -10,7 +10,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                         publish.ColormanagedPyblishPluginMixin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder - 0.48
+    order = pyblish.api.CollectorOrder + 0.0021
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["render", "prerender", "image"]

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import inspect
 from abc import ABCMeta
 from pprint import pformat
@@ -323,7 +324,7 @@ class ColormanagedPyblishPluginMixin(object):
 
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
-        anatomy_data = context.data["anatomyData"]
+        anatomy_data = deepcopy(context.data["anatomyData"])
         project_settings_ = context.data["project_settings"]
 
         config_data = get_imageio_config(
