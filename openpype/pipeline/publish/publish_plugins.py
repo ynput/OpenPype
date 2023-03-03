@@ -298,7 +298,7 @@ class ColormanagedPyblishPluginMixin(object):
     It also contains a method, set_representation_colorspace,
     which sets colorspace data to the representation.
     The allowed file extensions are listed in the allowed_ext variable.
-    he method first checks if the file extension is in
+    The method first checks if the file extension is in
     the list of allowed extensions. If it is, it then gets the
     colorspace settings from the host context and gets a
     matching colorspace from rules. Finally, it infuses this
