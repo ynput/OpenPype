@@ -17,7 +17,6 @@ class Fusionlocal(pyblish.api.InstancePlugin):
     families = ["render.local"]
 
     def process(self, instance):
-
         context = instance.context
 
         # Start render
@@ -35,10 +34,10 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             for frame in range(frame_start, frame_end + 1)
         ]
         repre = {
-            'name': ext[1:],
-            'ext': ext[1:],
-            'frameStart': f"%0{len(str(frame_end))}d" % frame_start,
-            'files': files,
+            "name": ext[1:],
+            "ext": ext[1:],
+            "frameStart": f"%0{len(str(frame_end))}d" % frame_start,
+            "files": files,
             "stagingDir": output_dir,
         }
 
@@ -67,18 +66,20 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             current_comp = context.data["currentComp"]
             frame_start = context.data["frameStartHandle"]
             frame_end = context.data["frameEndHandle"]
-    
+
             self.log.info("Starting Fusion render")
             self.log.info(f"Start frame: {frame_start}")
             self.log.info(f"End frame: {frame_end}")
-    
+
             with comp_lock_and_undo_chunk(current_comp):
-                result = current_comp.Render({
-                    "Start": frame_start,
-                    "End": frame_end,
-                    "Wait": True
-                })
-                
+                result = current_comp.Render(
+                    {
+                        "Start": frame_start,
+                        "End": frame_end,
+                        "Wait": True,
+                    }
+                )
+
             context.data[key] = bool(result)
 
         if context.data[key] is False:
