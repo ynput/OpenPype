@@ -83,7 +83,8 @@ def sync_zou_from_op_project(
             }
         )
         gazu.project.update_project_data(
-            zou_project, data=project_doc["data"])
+            zou_project, data=project_doc["data"]
+        )
     gazu.project.update_project(zou_project)
 
     asset_types = gazu.asset.all_asset_types()
@@ -99,8 +100,7 @@ def sync_zou_from_op_project(
     project_module_settings = get_project_settings(project_name)["kitsu"]
     dbcon.Session["AVALON_PROJECT"] = project_name
     asset_docs = {
-        asset_doc["_id"]: asset_doc
-        for asset_doc in get_assets(project_name)
+        asset_doc["_id"]: asset_doc for asset_doc in get_assets(project_name)
     }
 
     # Create new assets
@@ -176,7 +176,8 @@ def sync_zou_from_op_project(
                 frame_in=doc["data"]["frameStart"],
                 frame_out=doc["data"]["frameEnd"],
                 nb_frames=(
-                    doc["data"]["frameEnd"] - doc["data"]["frameStart"] + 1),
+                    doc["data"]["frameEnd"] - doc["data"]["frameStart"] + 1
+                ),
             )
 
         elif match.group(2):  # Sequence

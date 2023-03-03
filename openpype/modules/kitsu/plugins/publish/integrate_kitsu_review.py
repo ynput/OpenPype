@@ -12,7 +12,6 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-
         task = instance.data["kitsu_task"]["id"]
         comment = instance.data["kitsu_comment"]["id"]
 

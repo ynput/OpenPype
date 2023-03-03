@@ -13,7 +13,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     note_status_shortname = "wfa"
 
     def process(self, context):
-
         # Get comment text body
         publish_comment = context.data.get("comment")
         if not publish_comment:
@@ -45,9 +44,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # Add comment to kitsu task
             task_id = kitsu_task["id"]
-            self.log.debug(
-                "Add new note in taks id {}".format(task_id)
-            )
+            self.log.debug("Add new note in taks id {}".format(task_id))
             kitsu_comment = gazu.task.add_comment(
                 task_id, note_status, comment=publish_comment
             )
