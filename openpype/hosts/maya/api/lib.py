@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 import uuid
-import math
 import re
 
 import json
@@ -2064,13 +2063,8 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def reset_frame_range():
-    """Set frame range to current asset"""
-
-    fps = convert_to_maya_fps(
-        float(legacy_io.Session.get("AVALON_FPS", 25))
-    )
-    set_scene_fps(fps)
+def get_frame_range():
+    """Get the current assets frame range and handles."""
 
     # Set frame start/end
     project_name = legacy_io.active_project()
@@ -2097,8 +2091,26 @@ def reset_frame_range():
     if handle_end is None:
         handle_end = handles
 
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range():
+    """Set frame range to current asset"""
+
+    fps = convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    set_scene_fps(fps)
+
+    frame_range = get_frame_range()
+
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
 
     cmds.playbackOptions(minTime=frame_start)
     cmds.playbackOptions(maxTime=frame_end)
@@ -3562,3 +3574,34 @@ def get_color_management_output_transform():
     if preferences["output_transform_enabled"]:
         colorspace = preferences["output_transform"]
     return colorspace
+
+
+def len_flattened(components):
+    """Return the length of the list as if it was flattened.
+
+    Maya will return consecutive components as a single entry
+    when requesting with `maya.cmds.ls` without the `flatten`
+    flag. Though enabling `flatten` on a large list (e.g. millions)
+    will result in a slow result. This command will return the amount
+    of entries in a non-flattened list by parsing the result with
+    regex.
+
+    Args:
+        components (list): The non-flattened components.
+
+    Returns:
+        int: The amount of entries.
+
+    """
+    assert isinstance(components, (list, tuple))
+    n = 0
+
+    pattern = re.compile(r"\[(\d+):(\d+)\]")
+    for c in components:
+        match = pattern.search(c)
+        if match:
+            start, end = match.groups()
+            n += int(end) - int(start) + 1
+        else:
+            n += 1
+    return n
