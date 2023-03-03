@@ -9,7 +9,7 @@ from openpype.hosts.max.api import lib
 class ModelUSDLoader(load.LoaderPlugin):
     """Loading model with the USD loader."""
 
-    families = ["model"]
+    families = ["usdmodel"]
     label = "Load Model(USD)"
     representations = ["usda"]
     order = -10

@@ -12,7 +12,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["model"]
+    families = ["model", "usdmodel"]
     hosts = ["max"]
     label = "Model Contents"
 

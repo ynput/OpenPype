@@ -19,7 +19,7 @@ class ExtractModelUSD(publish.Extractor,
     order = pyblish.api.ExtractorOrder - 0.05
     label = "Extract Geometry (USD)"
     hosts = ["max"]
-    families = ["model"]
+    families = ["usdmodel"]
     optional = True
 
     def process(self, instance):
