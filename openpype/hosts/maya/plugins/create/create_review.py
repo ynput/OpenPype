@@ -58,7 +58,7 @@ class CreateReview(plugin.MayaCreator):
                     default=True),
             EnumDef("transparency",
                     label="Transparency",
-                    items={key: key for key in TRANSPARENCIES})
+                    items=TRANSPARENCIES)
         ])
 
         return defs

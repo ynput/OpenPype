@@ -19,7 +19,7 @@ class CreateMultiverseLook(plugin.MayaCreator):
             EnumDef("fileFormat",
                     label="File Format",
                     tooltip="USD export file format",
-                    items={key: key for key in ["usda", "usd"]},
+                    items=["usda", "usd"],
                     default="usda"),
             BoolDef("publishMipMap",
                     label="Publish MipMap",

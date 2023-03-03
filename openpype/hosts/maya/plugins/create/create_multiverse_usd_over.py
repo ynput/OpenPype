@@ -19,7 +19,7 @@ class CreateMultiverseUsdOver(plugin.Creator):
         defs.extend([
             EnumDef("fileFormat",
                     label="File format",
-                    items={key: key for key in ["usd", "usda"]},
+                    items=["usd", "usda"],
                     default="usd"),
             BoolDef("writeAll",
                     label="Write All",
