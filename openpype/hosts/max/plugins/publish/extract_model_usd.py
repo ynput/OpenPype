@@ -96,9 +96,11 @@ class ExtractModelUSD(publish.Extractor,
         export_options = rt.USDExporter.createOptions()
 
         export_options.Meshes = True
+        export_options.Shapes = True
         export_options.Lights = False
         export_options.Cameras = False
         export_options.Materials = False
+        export_options.MeshFormat = rt.name('fromScene')
         export_options.FileFormat = rt.name('ascii')
         export_options.UpAxis = rt.name('y')
         export_options.LogLevel = rt.name('info')
