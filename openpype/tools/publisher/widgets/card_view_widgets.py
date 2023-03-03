@@ -23,7 +23,7 @@ Only one item can be selected at a time.
 import re
 import collections
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -385,6 +385,7 @@ class InstanceCardWidget(CardWidget):
 
         self._last_subset_name = None
         self._last_variant = None
+        self._last_label = None
 
         icon_widget = IconValuePixmapLabel(group_icon, self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -462,14 +463,17 @@ class InstanceCardWidget(CardWidget):
     def _update_subset_name(self):
         variant = self.instance["variant"]
         subset_name = self.instance["subset"]
+        label = self.instance.label
         if (
             variant == self._last_variant
             and subset_name == self._last_subset_name
+            and label == self._last_label
         ):
             return
 
         self._last_variant = variant
         self._last_subset_name = subset_name
+        self._last_label = label
         # Make `variant` bold
         label = html_escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))

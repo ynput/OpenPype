@@ -6,10 +6,10 @@ import functools
 import uuid
 import shutil
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib.attribute_definitions import UnknownDef
+from openpype.lib.attribute_definitions import UnknownDef, UIDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -143,9 +143,9 @@ class PublishIconBtn(IconButton):
         icon = QtGui.QIcon()
         image = QtGui.QImage(pixmap_path)
         enabled_pixmap = self.paint_image_with_color(image, enabled_color)
-        icon.addPixmap(enabled_pixmap, icon.Normal)
+        icon.addPixmap(enabled_pixmap, QtGui.QIcon.Normal)
         disabled_pixmap = self.paint_image_with_color(image, disabled_color)
-        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        icon.addPixmap(disabled_pixmap, QtGui.QIcon.Disabled)
         return icon
 
     @staticmethod
@@ -250,21 +250,25 @@ class PublishReportBtn(PublishIconBtn):
         self._actions = []
 
     def add_action(self, label, identifier):
-        action = QtWidgets.QAction(label)
-        action.setData(identifier)
-        action.triggered.connect(
-            functools.partial(self._on_action_trigger, action)
+        self._actions.append(
+            (label, identifier)
         )
-        self._actions.append(action)
 
-    def _on_action_trigger(self, action):
-        identifier = action.data()
+    def _on_action_trigger(self, identifier):
         self.triggered.emit(identifier)
 
     def mouseReleaseEvent(self, event):
         super(PublishReportBtn, self).mouseReleaseEvent(event)
         menu = QtWidgets.QMenu(self)
-        menu.addActions(self._actions)
+        actions = []
+        for item in self._actions:
+            label, identifier = item
+            action = QtWidgets.QAction(label, menu)
+            action.triggered.connect(
+                functools.partial(self._on_action_trigger, identifier)
+            )
+            actions.append(action)
+        menu.addActions(actions)
         menu.exec_(event.globalPos())
 
 
@@ -412,7 +416,8 @@ class AssetsField(BaseClickableFrame):
             icon_btn
         ):
             size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
         name_input.clicked.connect(self._mouse_release_callback)
         icon_btn.clicked.connect(self._mouse_release_callback)
@@ -595,7 +600,8 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         # Make sure combobox is extended horizontally
         size_policy = self.sizePolicy()
-        size_policy.setHorizontalPolicy(size_policy.MinimumExpanding)
+        size_policy.setHorizontalPolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding)
         self.setSizePolicy(size_policy)
 
     def set_invalid_empty_task(self, invalid=True):
@@ -1218,7 +1224,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         asset_task_combinations = []
         for instance in instances:
-            if instance.creator is None:
+            # NOTE I'm not sure how this can even happen?
+            if instance.creator_identifier is None:
                 editable = False
 
             variants.add(instance.get("variant") or self.unknown_value)
@@ -1435,7 +1442,16 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        attr_def_widget = QtWidgets.QWidget(content_widget)
+        attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
+        attr_def_layout.setColumnStretch(0, 0)
+        attr_def_layout.setColumnStretch(1, 1)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.addWidget(attr_def_widget, 0)
+        content_layout.addStretch(1)
+
+        row = 0
         for plugin_name, attr_defs, all_plugin_values in result:
             plugin_values = all_plugin_values[plugin_name]
 
@@ -1452,8 +1468,29 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                     hidden_widget = True
 
                 if not hidden_widget:
+                    expand_cols = 2
+                    if attr_def.is_value_def and attr_def.is_label_horizontal:
+                        expand_cols = 1
+
+                    col_num = 2 - expand_cols
                     label = attr_def.label or attr_def.key
-                    content_layout.addRow(label, widget)
+                    if label:
+                        label_widget = QtWidgets.QLabel(label, content_widget)
+                        tooltip = attr_def.tooltip
+                        if tooltip:
+                            label_widget.setToolTip(tooltip)
+                        attr_def_layout.addWidget(
+                            label_widget, row, 0, 1, expand_cols
+                        )
+                        if not attr_def.is_label_horizontal:
+                            row += 1
+                    attr_def_layout.addWidget(
+                        widget, row, col_num, 1, expand_cols
+                    )
+                    row += 1
+
+                if isinstance(attr_def, UIDef):
+                    continue
 
                 widget.value_changed.connect(self._input_value_changed)
 
@@ -1777,11 +1814,11 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
             return
         self._increasing = increasing
         if increasing:
-            self._change_anim.setDirection(self._change_anim.Forward)
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Forward)
         else:
-            self._change_anim.setDirection(self._change_anim.Backward)
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Backward)
 
-        if self._change_anim.state() != self._change_anim.Running:
+        if self._change_anim.state() != QtCore.QAbstractAnimation.Running:
             self._change_anim.start()
 
     def set_visible(self, visible):
@@ -1855,8 +1892,8 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
         painter.setClipRect(event.rect())
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
 
         painter.setPen(QtCore.Qt.NoPen)

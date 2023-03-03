@@ -2,12 +2,15 @@ import os
 import re
 import json
 import getpass
+from datetime import datetime
 
 import requests
 import pyblish.api
 
 import nuke
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -40,7 +43,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
-        node = instance[0]
+        node = instance.data["transientData"]["node"]
         context = instance.context
 
         # get default deadline webservice url from deadline module
@@ -141,8 +144,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         responce_data=None
     ):
         render_dir = os.path.normpath(os.path.dirname(render_path))
-        script_name = os.path.basename(script_path)
-        jobname = "%s - %s" % (script_name, instance.name)
+        batch_name = os.path.basename(script_path)
+        jobname = "%s - %s" % (batch_name, instance.name)
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+
 
         output_filename_0 = self.preview_fname(render_path)
 
@@ -176,7 +182,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         payload = {
             "JobInfo": {
                 # Top-level group name
-                "BatchName": script_name,
+                "BatchName": batch_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
                 # "AssetDependency0": script_path,
@@ -261,8 +267,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "NUKE_PATH",
             "TOOL_ENV",
             "FOUNDRY_LICENSE",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_SG_USER",
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")

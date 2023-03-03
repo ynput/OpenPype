@@ -6,12 +6,12 @@ sidebar_label: Houdini
 
 ## OpenPype global tools
 
-- [Work Files](artist_tools.md#workfiles)
-- [Create](artist_tools.md#creator)
-- [Load](artist_tools.md#loader)
-- [Manage (Inventory)](artist_tools.md#inventory)
-- [Publish](artist_tools.md#publisher)
-- [Library Loader](artist_tools.md#library-loader)
+- [Work Files](artist_tools_workfiles)
+- [Create](artist_tools_creator)
+- [Load](artist_tools_loader)
+- [Manage (Inventory)](artist_tools_inventory)
+- [Publish](artist_tools_publisher)
+- [Library Loader](artist_tools_library-loader)
 
 ## Publishing Alembic Cameras
 You can publish baked camera in Alembic format. Select your camera and go **OpenPype -> Create** and select **Camera (abc)**.

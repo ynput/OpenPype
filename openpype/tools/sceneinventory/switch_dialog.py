@@ -1,8 +1,7 @@
 import collections
 import logging
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
-from bson.objectid import ObjectId
 
 from openpype.client import (
     get_asset_by_name,
@@ -161,7 +160,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_ids = set()
         content_loaders = set()
         for item in self._items:
-            repre_ids.add(ObjectId(item["representation"]))
+            repre_ids.add(str(item["representation"]))
             content_loaders.add(item["loader"])
 
         project_name = self.active_project()
@@ -170,7 +169,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             representation_ids=repre_ids,
             archived=True
         ))
-        repres_by_id = {repre["_id"]: repre for repre in repres}
+        repres_by_id = {str(repre["_id"]): repre for repre in repres}
 
         # stash context values, works only for single representation
         if len(repres) == 1:
@@ -181,22 +180,22 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         content_repres = {}
         archived_repres = []
         missing_repres = []
-        version_ids = []
+        version_ids = set()
         for repre_id in repre_ids:
             if repre_id not in repres_by_id:
                 missing_repres.append(repre_id)
             elif repres_by_id[repre_id]["type"] == "archived_representation":
                 repre = repres_by_id[repre_id]
                 archived_repres.append(repre)
-                version_ids.append(repre["parent"])
+                version_ids.add(repre["parent"])
             else:
                 repre = repres_by_id[repre_id]
                 content_repres[repre_id] = repres_by_id[repre_id]
-                version_ids.append(repre["parent"])
+                version_ids.add(repre["parent"])
 
         versions = get_versions(
             project_name,
-            version_ids=set(version_ids),
+            version_ids=version_ids,
             hero=True
         )
         content_versions = {}
@@ -1249,7 +1248,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_docs_by_parent_id_by_name[parent_id][name] = repre_doc
 
         for container in self._items:
-            container_repre_id = ObjectId(container["representation"])
+            container_repre_id = container["representation"]
             container_repre = self.content_repres[container_repre_id]
             container_repre_name = container_repre["name"]
 
