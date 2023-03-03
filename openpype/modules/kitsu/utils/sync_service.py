@@ -102,7 +102,8 @@ class Listener:
         )
 
         gazu.events.add_listener(
-            self.event_client, "shot:new", self._new_shot)
+            self.event_client, "shot:new", self._new_shot
+        )
         gazu.events.add_listener(
             self.event_client, "shot:update", self._update_shot
         )
@@ -111,7 +112,8 @@ class Listener:
         )
 
         gazu.events.add_listener(
-            self.event_client, "task:new", self._new_task)
+            self.event_client, "task:new", self._new_task
+        )
         gazu.events.add_listener(
             self.event_client, "task:update", self._update_task
         )
@@ -146,7 +148,8 @@ class Listener:
         # Write into DB
         if update_project:
             self.dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(
-                data["project_id"])
+                data["project_id"]
+            )
             self.dbcon.bulk_write([update_project])
 
             if new_project:
@@ -158,7 +161,8 @@ class Listener:
         collections = self.dbcon.database.list_collection_names()
         for collection in collections:
             project = self.dbcon.database[collection].find_one(
-                {"data.zou_id": data["project_id"]})
+                {"data.zou_id": data["project_id"]}
+            )
             if project:
                 # Delete project collection
                 self.dbcon.database[project["name"]].drop()
@@ -186,13 +190,15 @@ class Listener:
         ep_id = asset.get("episode_id")
         ep = self.get_ep_dict(ep_id)
 
-        msg = "Asset created: {proj_name} - {ep_name}" \
+        msg = (
+            "Asset created: {proj_name} - {ep_name}"
             "{asset_type_name} - {asset_name}".format(
                 proj_name=asset["project_name"],
                 ep_name=ep["name"] + " - " if ep is not None else "",
                 asset_type_name=asset["asset_type_name"],
-                asset_name=asset["name"]
+                asset_name=asset["name"],
             )
+        )
         log.info(msg)
 
     def _update_asset(self, data):
@@ -216,8 +222,11 @@ class Listener:
 
         # Update
         update_op_result = update_op_assets(
-            self.dbcon, gazu_project, project_doc,
-            [asset], zou_ids_and_asset_docs
+            self.dbcon,
+            gazu_project,
+            project_doc,
+            [asset],
+            zou_ids_and_asset_docs,
         )
         if update_op_result:
             asset_doc_id, asset_update = update_op_result[0]
@@ -238,13 +247,15 @@ class Listener:
             ep_id = asset["data"]["zou"].get("episode_id")
             ep = self.get_ep_dict(ep_id)
 
-            msg = "Asset deleted: {proj_name} - {ep_name}" \
+            msg = (
+                "Asset deleted: {proj_name} - {ep_name}"
                 "{type_name} - {asset_name}".format(
                     proj_name=asset["data"]["zou"]["project_name"],
                     ep_name=ep["name"] + " - " if ep is not None else "",
                     type_name=asset["data"]["zou"]["asset_type_name"],
-                    asset_name=asset["name"]
+                    asset_name=asset["name"],
                 )
+            )
             log.info(msg)
 
     # == Episode ==
@@ -264,8 +275,7 @@ class Listener:
 
         # Print message
         msg = "Episode created: {proj_name} - {ep_name}".format(
-            proj_name=ep["project_name"],
-            ep_name=ep["name"]
+            proj_name=ep["project_name"], ep_name=ep["name"]
         )
         log.info(msg)
 
@@ -290,8 +300,11 @@ class Listener:
 
         # Update
         update_op_result = update_op_assets(
-            self.dbcon, gazu_project, project_doc,
-            [ep], zou_ids_and_asset_docs
+            self.dbcon,
+            gazu_project,
+            project_doc,
+            [ep],
+            zou_ids_and_asset_docs,
         )
         if update_op_result:
             asset_doc_id, asset_update = update_op_result[0]
@@ -310,11 +323,11 @@ class Listener:
 
             # Print message
             project = gazu.project.get_project(
-                ep["data"]["zou"]["project_id"])
+                ep["data"]["zou"]["project_id"]
+            )
 
             msg = "Episode deleted: {proj_name} - {ep_name}".format(
-                proj_name=project["name"],
-                ep_name=ep["name"]
+                proj_name=project["name"], ep_name=ep["name"]
             )
             log.info(msg)
 
@@ -337,12 +350,14 @@ class Listener:
         ep_id = sequence.get("episode_id")
         ep = self.get_ep_dict(ep_id)
 
-        msg = "Sequence created: {proj_name} - {ep_name}" \
+        msg = (
+            "Sequence created: {proj_name} - {ep_name}"
             "{sequence_name}".format(
                 proj_name=sequence["project_name"],
                 ep_name=ep["name"] + " - " if ep is not None else "",
-                sequence_name=sequence["name"]
+                sequence_name=sequence["name"],
             )
+        )
         log.info(msg)
 
     def _update_sequence(self, data):
@@ -366,8 +381,11 @@ class Listener:
 
         # Update
         update_op_result = update_op_assets(
-            self.dbcon, gazu_project, project_doc,
-            [sequence], zou_ids_and_asset_docs
+            self.dbcon,
+            gazu_project,
+            project_doc,
+            [sequence],
+            zou_ids_and_asset_docs,
         )
         if update_op_result:
             asset_doc_id, asset_update = update_op_result[0]
@@ -388,14 +406,17 @@ class Listener:
             ep = self.get_ep_dict(ep_id)
 
             gazu_project = gazu.project.get_project(
-                sequence["data"]["zou"]["project_id"])
+                sequence["data"]["zou"]["project_id"]
+            )
 
-            msg = "Sequence deleted: {proj_name} - {ep_name}" \
+            msg = (
+                "Sequence deleted: {proj_name} - {ep_name}"
                 "{sequence_name}".format(
                     proj_name=gazu_project["name"],
                     ep_name=ep["name"] + " - " if ep is not None else "",
-                    sequence_name=sequence["name"]
+                    sequence_name=sequence["name"],
                 )
+            )
             log.info(msg)
 
     # == Shot ==
@@ -417,13 +438,15 @@ class Listener:
         ep_id = shot["episode_id"]
         ep = self.get_ep_dict(ep_id)
 
-        msg = "Shot created: {proj_name} - {ep_name}" \
+        msg = (
+            "Shot created: {proj_name} - {ep_name}"
             "{sequence_name} - {shot_name}".format(
                 proj_name=shot["project_name"],
                 ep_name=ep["name"] + " - " if ep is not None else "",
                 sequence_name=shot["sequence_name"],
-                shot_name=shot["name"]
+                shot_name=shot["name"],
             )
+        )
         log.info(msg)
 
     def _update_shot(self, data):
@@ -440,14 +463,18 @@ class Listener:
         zou_ids_and_asset_docs = {
             asset_doc["data"]["zou"]["id"]: asset_doc
             for asset_doc in get_assets(project_name)
-            if asset_doc["data"].get("zou", {}).get("id")}
+            if asset_doc["data"].get("zou", {}).get("id")
+        }
         zou_ids_and_asset_docs[shot["project_id"]] = project_doc
         gazu_project = gazu.project.get_project(shot["project_id"])
 
         # Update
         update_op_result = update_op_assets(
-            self.dbcon, gazu_project, project_doc,
-            [shot], zou_ids_and_asset_docs
+            self.dbcon,
+            gazu_project,
+            project_doc,
+            [shot],
+            zou_ids_and_asset_docs,
         )
 
         if update_op_result:
@@ -469,13 +496,15 @@ class Listener:
             ep_id = shot["data"]["zou"].get("episode_id")
             ep = self.get_ep_dict(ep_id)
 
-            msg = "Shot deleted: {proj_name} - {ep_name}" \
+            msg = (
+                "Shot deleted: {proj_name} - {ep_name}"
                 "{sequence_name} - {shot_name}".format(
                     proj_name=shot["data"]["zou"]["project_name"],
                     ep_name=ep["name"] + " - " if ep is not None else "",
                     sequence_name=shot["data"]["zou"]["sequence_name"],
-                    shot_name=shot["name"]
+                    shot_name=shot["name"],
                 )
+            )
             log.info(msg)
 
     # == Task ==
@@ -504,12 +533,12 @@ class Listener:
             parent_name = "{ep_name}{sequence_name} - {shot_name}".format(
                 ep_name=ep["name"] + " - " if ep is not None else "",
                 sequence_name=task["sequence"]["name"],
-                shot_name=task["entity"]["name"]
+                shot_name=task["entity"]["name"],
             )
             asset_name = "{ep_name}{sequence_name}_{shot_name}".format(
                 ep_name=ep["name"] + "_" if ep is not None else "",
                 sequence_name=task["sequence"]["name"],
-                shot_name=task["entity"]["name"]
+                shot_name=task["entity"]["name"],
             )
 
         # Update asset tasks with new one
@@ -518,20 +547,24 @@ class Listener:
             asset_tasks = asset_doc["data"].get("tasks")
             task_type_name = task["task_type"]["name"]
             asset_tasks[task_type_name] = {
-                "type": task_type_name, "zou": task}
+                "type": task_type_name,
+                "zou": task,
+            }
             self.dbcon.update_one(
                 {"_id": asset_doc["_id"]},
-                {"$set": {"data.tasks": asset_tasks}}
+                {"$set": {"data.tasks": asset_tasks}},
             )
 
             # Print message
-            msg = "Task created: {proj} - {ent_type}{parent}" \
+            msg = (
+                "Task created: {proj} - {ent_type}{parent}"
                 " - {task}".format(
                     proj=task["project"]["name"],
                     ent_type=ent_type + " - " if ent_type is not None else "",
                     parent=parent_name,
-                    task=task["task_type"]["name"]
+                    task=task["task_type"]["name"],
                 )
+            )
             log.info(msg)
 
     def _update_task(self, data):
@@ -567,19 +600,19 @@ class Listener:
                         parent_name = "{ep}{entity_type} - {entity}".format(
                             ep=ep["name"] + " - " if ep is not None else "",
                             entity_type=task["zou"]["entity_type"]["name"],
-                            entity=task["zou"]["entity"]["name"]
+                            entity=task["zou"]["entity"]["name"],
                         )
                     elif entity["type"] == "Shot":
                         parent_name = "{ep}{sequence} - {shot}".format(
                             ep=ep["name"] + " - " if ep is not None else "",
                             sequence=task["zou"]["sequence"]["name"],
-                            shot=task["zou"]["entity"]["name"]
+                            shot=task["zou"]["entity"]["name"],
                         )
 
                     msg = "Task deleted: {proj} - {parent} - {task}".format(
                         proj=task["zou"]["project"]["name"],
                         parent=parent_name,
-                        task=name
+                        task=name,
                     )
                     log.info(msg)
 
@@ -593,6 +626,7 @@ def start_listeners(login: str, password: str):
         login (str): Kitsu user login
         password (str): Kitsu user password
     """
+
     # Refresh token every week
     def refresh_token_every_week():
         log.info("Refreshing token...")

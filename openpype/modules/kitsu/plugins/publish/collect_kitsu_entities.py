@@ -10,9 +10,9 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
     label = "Kitsu entities"
 
     def process(self, context):
-
         kitsu_project = gazu.project.get_project_by_name(
-            context.data["projectName"])
+            context.data["projectName"]
+        )
         if not kitsu_project:
             raise ValueError("Project not found in kitsu!")
 
@@ -35,7 +35,8 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
             zou_task_data = asset_doc["data"]["tasks"][task_name].get("zou")
             self.log.debug(
-                "Collected zou task data: {}".format(zou_task_data))
+                "Collected zou task data: {}".format(zou_task_data)
+            )
 
             entity_id = zou_asset_data["id"]
             entity = kitsu_entities_by_id.get(entity_id)
@@ -44,7 +45,9 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
                 if not entity:
                     raise ValueError(
                         "{} was not found in kitsu!".format(
-                            zou_asset_data["name"]))
+                            zou_asset_data["name"]
+                        )
+                    )
 
             kitsu_entities_by_id[entity_id] = entity
             instance.data["entity"] = entity
