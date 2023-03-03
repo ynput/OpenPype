@@ -14,6 +14,8 @@ from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool
+from openpype.pipeline.context_tools import change_current_context
+from openpype.client import get_asset_by_name
 
 from .ws_stub import PhotoshopServerStub
 
@@ -315,18 +317,13 @@ class PhotoshopRoute(WebSocketRoute):
             Args:
                 project (str)
                 asset (str)
+                task (str
         """
         log.info("Setting context change")
-        log.info("project {} asset {} ".format(project, asset))
-        if project:
-            legacy_io.Session["AVALON_PROJECT"] = project
-            os.environ["AVALON_PROJECT"] = project
-        if asset:
-            legacy_io.Session["AVALON_ASSET"] = asset
-            os.environ["AVALON_ASSET"] = asset
-        if task:
-            legacy_io.Session["AVALON_TASK"] = task
-            os.environ["AVALON_TASK"] = task
+        log.info(f"project {project} asset {asset} task {task}")
+
+        asset_doc = get_asset_by_name(project, asset)
+        change_current_context(asset_doc, task)
 
     async def read(self):
         log.debug("photoshop.read client calls server server calls "
