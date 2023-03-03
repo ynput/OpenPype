@@ -22,6 +22,15 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         # Start render
         self.render_once(context)
 
+        # Log render status
+        self.log.info(
+            "Rendered '{nm}' for asset '{ast}' under the task '{tsk}'".format(
+                nm=instance.data.name,
+                ast=instance.data.asset,
+                tsk=instance.data.task,
+            )
+        )
+
         frame_start = context.data["frameStartHandle"]
         frame_end = context.data["frameEndHandle"]
         path = instance.data["path"]
