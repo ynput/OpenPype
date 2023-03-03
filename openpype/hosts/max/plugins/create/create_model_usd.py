@@ -11,7 +11,6 @@ class CreateUSDModel(plugin.MaxCreator):
     icon = "gear"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        from pymxs import runtime as rt
         _ = super(CreateUSDModel, self).create(
             subset_name,
             instance_data,
