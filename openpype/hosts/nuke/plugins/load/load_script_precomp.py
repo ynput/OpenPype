@@ -20,8 +20,9 @@ from openpype.hosts.nuke.api import (
 class LinkAsGroup(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
-    representations = ["nk"]
     families = ["workfile", "nukenodes"]
+    representations = ["*"]
+    extension = {"nk"}
 
     label = "Load Precomp"
     order = 0

@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 import uuid
-import math
 import re
 
 import json
@@ -403,9 +402,9 @@ def lsattrs(attrs):
 
     """
 
-    dep_fn = om.MFnDependencyNode()
-    dag_fn = om.MFnDagNode()
-    selection_list = om.MSelectionList()
+    dep_fn = OpenMaya.MFnDependencyNode()
+    dag_fn = OpenMaya.MFnDagNode()
+    selection_list = OpenMaya.MSelectionList()
 
     first_attr = next(iter(attrs))
 
@@ -419,7 +418,7 @@ def lsattrs(attrs):
     matches = set()
     for i in range(selection_list.length()):
         node = selection_list.getDependNode(i)
-        if node.hasFn(om.MFn.kDagNode):
+        if node.hasFn(OpenMaya.MFn.kDagNode):
             fn_node = dag_fn.setObject(node)
             full_path_names = [path.fullPathName()
                                for path in fn_node.getAllPaths()]
@@ -868,11 +867,11 @@ def maintained_selection_api():
     Warning: This is *not* added to the undo stack.
 
     """
-    original = om.MGlobal.getActiveSelectionList()
+    original = OpenMaya.MGlobal.getActiveSelectionList()
     try:
         yield
     finally:
-        om.MGlobal.setActiveSelectionList(original)
+        OpenMaya.MGlobal.setActiveSelectionList(original)
 
 
 @contextlib.contextmanager
@@ -1282,11 +1281,11 @@ def get_id(node):
     if node is None:
         return
 
-    sel = om.MSelectionList()
+    sel = OpenMaya.MSelectionList()
     sel.add(node)
 
     api_node = sel.getDependNode(0)
-    fn = om.MFnDependencyNode(api_node)
+    fn = OpenMaya.MFnDependencyNode(api_node)
 
     if not fn.hasAttribute("cbId"):
         return
@@ -2064,13 +2063,8 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def reset_frame_range():
-    """Set frame range to current asset"""
-
-    fps = convert_to_maya_fps(
-        float(legacy_io.Session.get("AVALON_FPS", 25))
-    )
-    set_scene_fps(fps)
+def get_frame_range():
+    """Get the current assets frame range and handles."""
 
     # Set frame start/end
     project_name = legacy_io.active_project()
@@ -2097,8 +2091,26 @@ def reset_frame_range():
     if handle_end is None:
         handle_end = handles
 
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range():
+    """Set frame range to current asset"""
+
+    fps = convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    set_scene_fps(fps)
+
+    frame_range = get_frame_range()
+
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
 
     cmds.playbackOptions(minTime=frame_start)
     cmds.playbackOptions(maxTime=frame_end)
@@ -3341,15 +3353,15 @@ def iter_visible_nodes_in_range(nodes, start, end):
     @memodict
     def get_visibility_mplug(node):
         """Return api 2.0 MPlug with cached memoize decorator"""
-        sel = om.MSelectionList()
+        sel = OpenMaya.MSelectionList()
         sel.add(node)
         dag = sel.getDagPath(0)
-        return om.MFnDagNode(dag).findPlug("visibility", True)
+        return OpenMaya.MFnDagNode(dag).findPlug("visibility", True)
 
     @contextlib.contextmanager
     def dgcontext(mtime):
         """MDGContext context manager"""
-        context = om.MDGContext(mtime)
+        context = OpenMaya.MDGContext(mtime)
         try:
             previous = context.makeCurrent()
             yield context
@@ -3358,9 +3370,9 @@ def iter_visible_nodes_in_range(nodes, start, end):
 
     # We skip the first frame as we already used that frame to check for
     # overall visibilities. And end+1 to include the end frame.
-    scene_units = om.MTime.uiUnit()
+    scene_units = OpenMaya.MTime.uiUnit()
     for frame in range(start + 1, end + 1):
-        mtime = om.MTime(frame, unit=scene_units)
+        mtime = OpenMaya.MTime(frame, unit=scene_units)
 
         # Build little cache so we don't query the same MPlug's value
         # again if it was checked on this frame and also is a dependency
@@ -3621,3 +3633,34 @@ def guess_colorspace(img_info):
         print(("[maketx] Error: Could not guess"
                "colorspace for {}").format(img_info["filename"]))
         return "linear"
+
+
+def len_flattened(components):
+    """Return the length of the list as if it was flattened.
+
+    Maya will return consecutive components as a single entry
+    when requesting with `maya.cmds.ls` without the `flatten`
+    flag. Though enabling `flatten` on a large list (e.g. millions)
+    will result in a slow result. This command will return the amount
+    of entries in a non-flattened list by parsing the result with
+    regex.
+
+    Args:
+        components (list): The non-flattened components.
+
+    Returns:
+        int: The amount of entries.
+
+    """
+    assert isinstance(components, (list, tuple))
+    n = 0
+
+    pattern = re.compile(r"\[(\d+):(\d+)\]")
+    for c in components:
+        match = pattern.search(c)
+        if match:
+            start, end = match.groups()
+            n += int(end) - int(start) + 1
+        else:
+            n += 1
+    return n
