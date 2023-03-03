@@ -96,7 +96,7 @@ class ExtractModelUSD(publish.Extractor,
         export_options = rt.USDExporter.createOptions()
 
         export_options.Meshes = True
-        export_options.Shapes = True
+        export_options.Shapes = False
         export_options.Lights = False
         export_options.Cameras = False
         export_options.Materials = False
