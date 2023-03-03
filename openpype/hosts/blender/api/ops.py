@@ -1177,23 +1177,30 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
         openpype_containers = context.scene.openpype_containers
         container = openpype_containers.get(self.container_name)
 
-        # In collection, convert to basic
+        # If collection, convert it to regular one
         parent_collection = get_parent_collection(container.outliner_entity)
+        substitute_collection = None
         if isinstance(container.outliner_entity, bpy.types.Collection):
             container.outliner_entity.name += ".old"
-            if isinstance(container.outliner_entity, bpy.types.Collection):
-                substitute_collection = bpy.data.collections.new(
-                    self.container_name
-                )
-                parent_collection.children.link(substitute_collection)
-                link_to_collection(
-                    container.outliner_entity.children, substitute_collection
-                )
+            substitute_collection = bpy.data.collections.new(
+                self.container_name
+            )
+
+            # Link old collection objects to new substitute collection
+            link_to_collection(
+                container.outliner_entity.objects, substitute_collection
+            )
+
+            # Link new substitute collection to parent collection
+            parent_collection.children.link(substitute_collection)
+
+        # Move objects to either substituted collection or the parent one
+        link_to_collection(
+            container.outliner_entity.children,
+            substitute_collection or parent_collection,
+        )
 
         # Unlink entity from scene
-        link_to_collection(
-            container.outliner_entity.objects, parent_collection
-        )
         parent_collection.children.unlink(container.outliner_entity)
         container.outliner_entity.use_fake_user = False
 
