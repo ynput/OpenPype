@@ -25,9 +25,9 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         # Log render status
         self.log.info(
             "Rendered '{nm}' for asset '{ast}' under the task '{tsk}'".format(
-                nm=instance.data.name,
-                ast=instance.data.asset,
-                tsk=instance.data.task,
+                nm=instance.data["name"],
+                ast=instance.data["asset"],
+                tsk=instance.data["task"],
             )
         )
 
