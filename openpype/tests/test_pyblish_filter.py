@@ -1,9 +1,9 @@
-from . import lib
+import os
 import pyblish.api
 import pyblish.util
 import pyblish.plugin
-from openpype.lib import filter_pyblish_plugins
-import os
+from openpype.pipeline.publish.lib import filter_pyblish_plugins
+from . import lib
 
 
 def test_pyblish_plugin_filter_modifier(printer, monkeypatch):

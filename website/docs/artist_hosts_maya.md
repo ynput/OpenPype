@@ -308,13 +308,25 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
 
-:::note Publish on farm
-If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
-Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+#### Options
+
+- **Frame Start**: which frame to start the export at.
+- **Frame End**: which frame to end the export at.
+- **Handle Start**: additional frames to export at frame start. Ei. frame start - handle start = export start.
+- **Handle Start**: additional frames to export at frame end. Ei. frame end + handle end = export end.
+- **Step**: frequency of sampling the export. For example when dealing with quick movements for motion blur, a step size of less than 1 might be better.
+- **Refresh**: refresh the viewport when exporting the pointcache. For performance is best to leave off, but certain situations can require to refresh the viewport, for example using the Bullet plugin.
+- **Attr**: specific attributes to publish separated by `;`.
+- **AttrPrefix**: specific attributes which start with this prefix to publish separated by `;`.
+- **Include User Defined Attribudes**: include all user defined attributes in the publish.
+- **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
+- **Priority**: Farm priority.
 
 ### Loading Point Caches
 
@@ -601,3 +613,20 @@ about customizing review process refer to [admin section](project_settings/setti
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
+
+
+## Inventory Actions
+
+### Connect Geometry
+
+This action will connect geometries between containers.
+
+#### Usage
+
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
+
+#### Details
+
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
+
+The connection between geometries is done with a live blendshape.

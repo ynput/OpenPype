@@ -4,6 +4,10 @@ import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 
 class LoadClip(opfapi.ClipLoader):
@@ -14,7 +18,10 @@ class LoadClip(opfapi.ClipLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip"
     order = -10

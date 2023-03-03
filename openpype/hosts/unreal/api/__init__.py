@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Unreal Editor OpenPype host API."""
 
-from .plugin import Loader
+from .plugin import (
+    UnrealActorCreator,
+    UnrealAssetCreator,
+    Loader
+)
 
 from .pipeline import (
     install,
