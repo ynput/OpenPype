@@ -7,8 +7,8 @@ from pymxs import runtime as rt
 class ValidateModelContent(pyblish.api.InstancePlugin):
     """Validates Model instance contents.
 
-    A model instance may only hold either geometry
-    or editable meshes.
+    A model instance may only hold either geometry-related
+    object(excluding Shapes) or editable meshes.
     """
 
     order = pyblish.api.ValidatorOrder
