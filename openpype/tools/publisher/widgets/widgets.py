@@ -9,7 +9,7 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib.attribute_definitions import UnknownDef
+from openpype.lib.attribute_definitions import UnknownDef, UIDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -1442,7 +1442,16 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        attr_def_widget = QtWidgets.QWidget(content_widget)
+        attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
+        attr_def_layout.setColumnStretch(0, 0)
+        attr_def_layout.setColumnStretch(1, 1)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.addWidget(attr_def_widget, 0)
+        content_layout.addStretch(1)
+
+        row = 0
         for plugin_name, attr_defs, all_plugin_values in result:
             plugin_values = all_plugin_values[plugin_name]
 
@@ -1459,8 +1468,29 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                     hidden_widget = True
 
                 if not hidden_widget:
+                    expand_cols = 2
+                    if attr_def.is_value_def and attr_def.is_label_horizontal:
+                        expand_cols = 1
+
+                    col_num = 2 - expand_cols
                     label = attr_def.label or attr_def.key
-                    content_layout.addRow(label, widget)
+                    if label:
+                        label_widget = QtWidgets.QLabel(label, content_widget)
+                        tooltip = attr_def.tooltip
+                        if tooltip:
+                            label_widget.setToolTip(tooltip)
+                        attr_def_layout.addWidget(
+                            label_widget, row, 0, 1, expand_cols
+                        )
+                        if not attr_def.is_label_horizontal:
+                            row += 1
+                    attr_def_layout.addWidget(
+                        widget, row, col_num, 1, expand_cols
+                    )
+                    row += 1
+
+                if isinstance(attr_def, UIDef):
+                    continue
 
                 widget.value_changed.connect(self._input_value_changed)
 

@@ -147,6 +147,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
+            "include_user_defined_attributes": false,
             "defaults": [
                 "Main"
             ]
@@ -165,6 +166,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
+            "include_user_defined_attributes": false,
             "defaults": [
                 "Main"
             ]
@@ -176,6 +178,13 @@
             "defaults": [
                 "Main"
             ]
+        },
+        "CreateReview": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "useMayaTimeline": true
         },
         "CreateAss": {
             "enabled": true,
@@ -196,6 +205,14 @@
             "maskFilter": false,
             "maskColor_manager": false,
             "maskOperator": false
+        },
+        "CreateVrayProxy": {
+            "enabled": true,
+            "vrmesh": true,
+            "alembic": true,
+            "defaults": [
+                "Main"
+            ]
         },
         "CreateMultiverseUsd": {
             "enabled": true,
@@ -245,12 +262,6 @@
                 "Main"
             ]
         },
-        "CreateReview": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateRig": {
             "enabled": true,
             "defaults": [
@@ -264,12 +275,6 @@
             "defaults": [
                 "Main",
                 "Anim"
-            ]
-        },
-        "CreateVrayProxy": {
-            "enabled": true,
-            "defaults": [
-                "Main"
             ]
         },
         "CreateVRayScene": {
@@ -674,7 +679,7 @@
             "families": [
                 "pointcache",
                 "model",
-                "vrayproxy"
+                "vrayproxy.alembic"
             ]
         },
         "ExtractObj": {

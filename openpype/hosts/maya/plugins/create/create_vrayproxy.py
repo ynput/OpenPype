@@ -9,6 +9,9 @@ class CreateVrayProxy(plugin.Creator):
     family = "vrayproxy"
     icon = "gears"
 
+    vrmesh = True
+    alembic = True
+
     def __init__(self, *args, **kwargs):
         super(CreateVrayProxy, self).__init__(*args, **kwargs)
 
@@ -18,3 +21,6 @@ class CreateVrayProxy(plugin.Creator):
 
         # Write vertex colors
         self.data["vertexColors"] = False
+
+        self.data["vrmesh"] = self.vrmesh
+        self.data["alembic"] = self.alembic
