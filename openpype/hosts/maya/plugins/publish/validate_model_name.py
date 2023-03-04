@@ -2,9 +2,11 @@
 """Validate model nodes names."""
 import os
 import re
-from maya import cmds
-import pyblish.api
+import platform
 
+from maya import cmds
+
+import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.maya.api.action
@@ -44,7 +46,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
                     if not cmds.ls(child, transforms=True):
                         return False
                 return True
-            except:
+            except Exception:
                 return False
 
         invalid = []
@@ -94,9 +96,10 @@ class ValidateModelName(pyblish.api.InstancePlugin):
         # load shader list file as utf-8
         shaders = []
         if not use_db:
-            if cls.material_file:
-                if os.path.isfile(cls.material_file):
-                    shader_file = open(cls.material_file, "r")
+            material_file = cls.material_file[platform.system().lower()]
+            if material_file:
+                if os.path.isfile(material_file):
+                    shader_file = open(material_file, "r")
                     shaders = shader_file.readlines()
                     shader_file.close()
             else:
@@ -113,7 +116,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             shader_file.close()
 
         # strip line endings from list
-        shaders = map(lambda s: s.rstrip(), shaders)
+        shaders = [s.rstrip() for s in shaders if s.rstrip()]
 
         # compile regex for testing names
         regex = cls.regex
