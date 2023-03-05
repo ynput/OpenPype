@@ -53,20 +53,15 @@ class FusionWorkfileCreator(AutoCreator):
         self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
-        for update in update_list:
-            instance = update.instance
-            comp = instance.transient_data["comp"]
+        for created_inst, _changes in update_list:
+            comp = created_inst.transient_data["comp"]
             if not hasattr(comp, "SetData"):
                 # Comp is not alive anymore, likely closed by the user
                 self.log.error("Workfile comp not found for existing instance."
                                " Comp might have been closed in the meantime.")
                 continue
 
-            # TODO: It appears sometimes this could be 'nested'
-            # Get the new values after the changes by key, ignore old value
-            new_data = {
-                key: new for key, (_old, new) in update.changes.items()
-            }
+            new_data = created_inst.data_to_store()
             self._imprint(comp, new_data)
 
     def create(self, options=None):
@@ -128,9 +123,4 @@ class FusionWorkfileCreator(AutoCreator):
         for key in ["variant", "subset", "asset", "task"]:
             data.pop(key, None)
 
-        # Flatten any potential nested dicts
-        data = flatten_dict(data, separator=".")
-
-        # Prefix with data key openpype.workfile
-        data = {f"{self.data_key}.{key}" for key, value in data.items()}
-        comp.SetData(data)
+        comp.SetData(self.data_key, data)

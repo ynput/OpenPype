@@ -87,15 +87,10 @@ class CreateSaver(Creator):
         return qtawesome.icon("fa.eye", color="white")
 
     def update_instances(self, update_list):
-        for update in update_list:
-            instance = update.instance
+        for created_inst, _changes in update_list:
 
-            # Get the new values after the changes by key, ignore old value
-            new_data = {
-                key: new for key, (_old, new) in update.changes.items()
-            }
-
-            tool = instance.transient_data["tool"]
+            new_data = created_inst.data_to_store()
+            tool = created_inst.transient_data["tool"]
             self._update_tool_with_data(tool, new_data)
             self._imprint(tool, new_data)
 
