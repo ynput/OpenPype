@@ -155,10 +155,12 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return ls()
 
     def update_context_data(self, data, changes):
-        print(data, changes)
+        comp = get_current_comp()
+        comp.SetData("openpype", data)
 
     def get_context_data(self):
-        return {}
+        comp = get_current_comp()
+        return comp.GetData("openpype") or {}
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
