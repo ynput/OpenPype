@@ -33,7 +33,7 @@ class FusionWorkfileCreator(AutoCreator):
 
     create_allow_context_change = False
 
-    data_key = "openpype.workfile"
+    data_key = "openpype_workfile"
 
     def collect_instances(self):
 
