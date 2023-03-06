@@ -393,7 +393,6 @@ class PhotoshopRoute(WebSocketRoute):
 
         # Define saving file extension
         extensions = host.get_workfile_extensions()
-        data["ext"] = extensions[0]
 
         folder_template = anatomy.templates[template_key]["folder"]
         work_root = StringTemplate.format_strict_template(
