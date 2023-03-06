@@ -42,10 +42,10 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
                 continue
 
             if "inputVersions" not in instance.data:
-                instance.data["inputVersions"] = set()
+                instance.data["inputVersions"] = []
             input_versions = instance.data["inputVersions"]
             for repre_id in inst_repre:
                 version_id = representation_id_to_version_id.get(repre_id)
                 if version_id:
-                    input_versions.add(version_id)
+                    input_versions.append(version_id)
             instance.data["inputVersions"] = input_versions

@@ -164,7 +164,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             containers = collect_input_containers(scene_containers,
                                                   nodes)
 
-        inputs = {c["representation"] for c in containers}
+        inputs = [c["representation"] for c in containers]
         instance.data["inputRepresentations"] = inputs
         self.log.info("Collected inputs: %s" % inputs)
 
