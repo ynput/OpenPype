@@ -23,7 +23,7 @@ InstanceFilterResult = collections.namedtuple(
 )
 
 
-class IntegrateThumbnailsAyon(pyblish.api.ContextPlugin):
+class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
     """Integrate Thumbnails for Openpype use in Loaders."""
 
     label = "Integrate Thumbnails to AYON"
