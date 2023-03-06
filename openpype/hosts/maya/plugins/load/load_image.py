@@ -1,6 +1,7 @@
+import copy
 from openpype.pipeline import (
     load,
-    get_representation_path
+    get_representation_context
 )
 from openpype.lib import EnumDef
 from openpype.hosts.maya.api.pipeline import containerise
@@ -8,6 +9,8 @@ from openpype.hosts.maya.api.lib import (
     unique_namespace,
     namespaced
 )
+from openpype.pipeline.load.utils import get_representation_path_from_context
+
 
 from maya import cmds
 
@@ -104,7 +107,7 @@ class FileNodeLoader(load.LoaderPlugin):
 
     def load(self, context, name, namespace, data):
 
-        path = self.fname
+        path = self._format_path(context)
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
             asset + "_",
@@ -123,10 +126,7 @@ class FileNodeLoader(load.LoaderPlugin):
                 "projection": create_projection,
                 "stencil": create_stencil
             }[data.get("mode", "texture")]()
-
-            # Set the file node attributes
             file_node = cmds.ls(nodes, type="file")[0]
-            cmds.setAttr(file_node + ".fileTextureName", path, type="string")
 
             # Set UV tiling mode if UDIM tiles
             if has_udim:
@@ -137,7 +137,16 @@ class FileNodeLoader(load.LoaderPlugin):
             if has_frames:
                 is_sequence = self._is_sequence(context)
                 if is_sequence:
+                    # When enabling useFrameExtension maya automatically
+                    # connects an expression to <file>.frameExtension to set
+                    # the current frame. However, this expression  is generated
+                    # with some delay and thus it'll show a warning if frame 0
+                    # doesn't exist because we're explicitly setting the <f>
+                    # token.
                     cmds.setAttr(file_node + ".useFrameExtension", True)
+
+            # Set the file node path attribute
+            cmds.setAttr(file_node + ".fileTextureName", path, type="string")
 
             # For ease of access for the user select all the nodes and select
             # the file node last so that UI shows its attributes by default
@@ -153,7 +162,8 @@ class FileNodeLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
 
-        path = get_representation_path(representation)
+        context = get_representation_context(representation)
+        path = self._format_path(context)
         members = cmds.sets(container['objectName'], query=True)
 
         file_node = cmds.ls(members, type="file")[0]
@@ -186,9 +196,6 @@ class FileNodeLoader(load.LoaderPlugin):
         version = context.get("version", {})
         representation = context.get("representation", {})
 
-        print(version)
-        print(representation)
-
         for doc in [representation, version]:
             # Frame range can be set on version or representation. When set on
             # representation it overrides data on subset
@@ -205,3 +212,45 @@ class FileNodeLoader(load.LoaderPlugin):
                 return False
 
         return False
+
+    def _format_path(self, context):
+        """Format the path with correct tokens for frames and udim tiles."""
+
+        context = copy.deepcopy(context)
+        representation = context["representation"]
+        template = representation.get("data", {}).get("template")
+        if not template:
+            # No template to find token locations for
+            return get_representation_path_from_context(context)
+
+        def _placeholder(key):
+            # Substitute with a long placeholder value so that potential
+            # custom formatting with padding doesn't find its way into
+            # our formatting, so that <f> wouldn't be padded as 0<f>
+            return "___{}___".format(key)
+
+        # We want to format UDIM and Frame numbers with the specific tokens
+        # so we in-place change the representation context so it's formatted
+        # with the tokens as we'd want them. So we explicitly change those
+        # tokens around with what we'd need.
+        tokens = {
+            "frame": "<f>",
+            "udim": "<udim>"
+        }
+        has_tokens = False
+        repre_context = representation["context"]
+        for key, token in tokens.items():
+            if key in repre_context:
+                repre_context[key] = _placeholder(key)
+                has_tokens = True
+
+        # Replace with our custom template that has the tokens set
+        representation["data"]["template"] = template
+        path = get_representation_path_from_context(context)
+
+        if has_tokens:
+            for key, token in tokens.items():
+                if key in repre_context:
+                    path = path.replace(_placeholder(key), token)
+
+        return path
