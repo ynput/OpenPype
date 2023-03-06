@@ -226,8 +226,8 @@ class FileNodeLoader(load.LoaderPlugin):
         representation = context.get("representation", {})
 
         for doc in [representation, version]:
-            # Frame range can be set on version or representation. When set on
-            # representation it overrides data on subset
+            # Frame range can be set on version or representation.
+            # When set on representation it overrides version data.
             data = doc.get("data", {})
             start = data.get("frameStartHandle", data.get("frameStart", None))
             end = data.get("frameEndHandle", data.get("frameEnd", None))
