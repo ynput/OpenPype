@@ -46,6 +46,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectTransientStaging": {
+            "enabled": true,
+            "transient_staging_profiles": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
