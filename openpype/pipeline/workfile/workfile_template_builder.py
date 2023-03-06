@@ -1711,7 +1711,7 @@ class PlaceholderCreateMixin(object):
                     task_name=task_name
                 )
 
-        except:
+        except:  # noqa: E722
             failed = True
             self.create_failed(placeholder, creator_data)
 
