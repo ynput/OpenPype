@@ -155,8 +155,8 @@ def add_nuke_callbacks():
     # Set context settings.
     nuke.addOnCreate(
         workfile_settings.set_context_settings, nodeClass="Root")
-    nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+    nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
 
     # fix ffmpeg settings on script

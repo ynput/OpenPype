@@ -56,7 +56,6 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
 
         return True
 
-
 class NukePlaceholderPlugin(PlaceholderPlugin):
     node_color = 4278190335
 

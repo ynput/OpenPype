@@ -2682,11 +2682,12 @@ def start_workfile_template_builder():
         build_workfile_template
     )
 
-    # to avoid looping of the callback, remove it!
-    # nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
-    log.info("Starting workfile template builder...")
-    build_workfile_template(run_from_callback=True)
 
+    # to avoid looping of the callback, remove it!
+    log.info("Starting workfile template builder...")
+    build_workfile_template(workfile_creation_enabled=True)
+
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):
