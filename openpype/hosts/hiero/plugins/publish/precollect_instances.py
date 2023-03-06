@@ -69,8 +69,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             tag_data["handleEnd"] = min(
                 tag_data["handleEnd"], int(track_item.handleOutLength()))
 
-            if tag_data["family"] == 'reference':
-                print('Reference family found - modifying handles to 0 ')
+            if tag_data["family"] == "reference":
+                self.log.info("Reference family found - modifying handles to 0 ")
                 tag_data["workfileFrameStart"] = tag_data["workfileFrameStart"] + tag_data["handleStart"]
                 tag_data["handleStart"] = 0
                 tag_data["handleEnd"] = 0
