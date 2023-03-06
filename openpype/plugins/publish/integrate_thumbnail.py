@@ -40,7 +40,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
     def process(self, context):
         if AYON_SERVER_ENABLED:
-            self.log.info("V4 is enabled. Skipping v3 thumbnail integration")
+            self.log.info("AYON is enabled. Skipping v3 thumbnail integration")
             return
 
         # Filter instances which can be used for integration
