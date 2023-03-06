@@ -8,7 +8,9 @@ class MatchmoveLoader(load.LoaderPlugin):
     """
 
     families = ["matchmove"]
-    representations = ["py"]
+    representations = ["*"]
+    extension = {"py"}
+
     defaults = ["Camera", "Object"]
 
     label = "Run matchmove script"
