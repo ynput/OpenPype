@@ -12,6 +12,7 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance
 )
+from openpype.client import get_asset_by_name
 
 
 class CreateSaver(Creator):
@@ -145,14 +146,22 @@ class CreateSaver(Creator):
         asset = legacy_io.Session["AVALON_ASSET"]
         task = legacy_io.Session["AVALON_TASK"]
 
+        asset_doc = get_asset_by_name(project_name=project,
+                                      asset_name=asset)
+
         path = tool["Clip"][comp.TIME_UNDEFINED]
         fname = os.path.basename(path)
         fname, _ext = os.path.splitext(fname)
-        subset = fname.rstrip(".")
+        variant = fname.rstrip(".")
+        subset = self.get_subset_name(
+            variant=variant,
+            task_name=task,
+            asset_doc=asset_doc,
+            project_name=project,
+        )
 
         attrs = tool.GetAttrs()
         passthrough = attrs["TOOLB_PassThrough"]
-        variant = subset[len("render"):]
         return {
             # Required data
             "project": project,
