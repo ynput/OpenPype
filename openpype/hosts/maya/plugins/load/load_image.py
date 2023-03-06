@@ -147,11 +147,10 @@ class FileNodeLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
 
-        context = get_representation_context(representation)
-        path = self._format_path(context)
         members = cmds.sets(container['objectName'], query=True)
-
         file_node = cmds.ls(members, type="file")[0]
+
+        context = get_representation_context(representation)
         self._apply_representation_context(context, file_node)
 
         # Update representation
