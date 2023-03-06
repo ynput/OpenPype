@@ -33,6 +33,16 @@
             "label": "Delete assets that are not matched"
         },
         {
+            "type": "text",
+            "key": "render_config_path",
+            "label": "Render Config Path"
+        },
+        {
+            "type": "number",
+            "key": "preroll_frames",
+            "label": "Pre-roll frames"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "project_setup",

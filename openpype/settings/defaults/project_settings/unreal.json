@@ -11,6 +11,8 @@
     },
     "level_sequences_for_layouts": false,
     "delete_unmatched_assets": false,
+    "render_config_path": "",
+    "preroll_frames": 0,
     "project_setup": {
         "dev_mode": true
     }
