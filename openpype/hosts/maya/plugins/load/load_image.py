@@ -239,7 +239,7 @@ class FileNodeLoader(load.LoaderPlugin):
         }
         has_tokens = False
         repre_context = representation["context"]
-        for key, token in tokens.items():
+        for key, _token in tokens.items():
             if key in repre_context:
                 repre_context[key] = _placeholder(key)
                 has_tokens = True
