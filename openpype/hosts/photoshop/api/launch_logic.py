@@ -340,7 +340,7 @@ class PhotoshopRoute(WebSocketRoute):
                                                           task)
         if last_workfile_path and os.path.exists(last_workfile_path):
             ProcessLauncher.execute_in_main_thread(
-                lambda:  stub().open(last_workfile_path))
+                lambda: stub().open(last_workfile_path))
 
 
     async def read(self):
