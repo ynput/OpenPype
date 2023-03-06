@@ -1,5 +1,3 @@
-import collections
-
 import qtawesome
 
 from openpype.hosts.fusion.api import (
