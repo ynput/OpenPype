@@ -461,8 +461,9 @@ class AbstractTemplateBuilder(object):
                 hosts to decide if they want to remove
                 placeholder after it is used.
             create_first_version (bool): create first version of a workfile
-            workfile_creation_enabled (bool): If True, it might create first version
-                                      but ignore process if version is created
+            workfile_creation_enabled (bool): If True, it might create
+                                              first version but ignore
+                                              process if version is created
 
         """
         template_preset = self.get_template_preset()
@@ -478,7 +479,8 @@ class AbstractTemplateBuilder(object):
         # check if first version is created
         created_version_workfile = self.create_first_workfile_version()
 
-        # if first version is created, import template and populate placeholders
+        # if first version is created, import template
+        # and populate placeholders
         if (
             create_first_version
             and workfile_creation_enabled

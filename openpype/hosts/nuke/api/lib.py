@@ -2682,11 +2682,11 @@ def start_workfile_template_builder():
         build_workfile_template
     )
 
-
     # to avoid looping of the callback, remove it!
     log.info("Starting workfile template builder...")
     build_workfile_template(workfile_creation_enabled=True)
 
+    # remove callback since it would be duplicating the workfile
     nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
 @deprecated

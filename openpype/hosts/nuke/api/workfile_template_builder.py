@@ -1,8 +1,5 @@
-import os
 import collections
-
 import nuke
-
 from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
@@ -15,7 +12,6 @@ from openpype.pipeline.workfile.workfile_template_builder import (
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
-from openpype.host import IWorkfileHost
 from .lib import (
     find_free_space_to_paste_nodes,
     get_extreme_positions,
