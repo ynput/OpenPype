@@ -12,6 +12,7 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance
 )
+from openpype.client import get_asset_by_name
 
 
 class CreateSaver(Creator):
@@ -87,15 +88,10 @@ class CreateSaver(Creator):
         return qtawesome.icon("fa.eye", color="white")
 
     def update_instances(self, update_list):
-        for update in update_list:
-            instance = update.instance
+        for created_inst, _changes in update_list:
 
-            # Get the new values after the changes by key, ignore old value
-            new_data = {
-                key: new for key, (_old, new) in update.changes.items()
-            }
-
-            tool = instance.transient_data["tool"]
+            new_data = created_inst.data_to_store()
+            tool = created_inst.transient_data["tool"]
             self._update_tool_with_data(tool, new_data)
             self._imprint(tool, new_data)
 
@@ -150,14 +146,22 @@ class CreateSaver(Creator):
         asset = legacy_io.Session["AVALON_ASSET"]
         task = legacy_io.Session["AVALON_TASK"]
 
+        asset_doc = get_asset_by_name(project_name=project,
+                                      asset_name=asset)
+
         path = tool["Clip"][comp.TIME_UNDEFINED]
         fname = os.path.basename(path)
         fname, _ext = os.path.splitext(fname)
-        subset = fname.rstrip(".")
+        variant = fname.rstrip(".")
+        subset = self.get_subset_name(
+            variant=variant,
+            task_name=task,
+            asset_doc=asset_doc,
+            project_name=project,
+        )
 
         attrs = tool.GetAttrs()
         passthrough = attrs["TOOLB_PassThrough"]
-        variant = subset[len("render"):]
         return {
             # Required data
             "project": project,
