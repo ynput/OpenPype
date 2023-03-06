@@ -112,6 +112,10 @@ class FileNodeLoader(load.LoaderPlugin):
             suffix="_",
         )
 
+        repre_context = context["representation"]["context"]
+        has_frames = repre_context.get("frame") is not None
+        has_udim = repre_context.get("udim") is not None
+
         with namespaced(namespace, new=True) as namespace:
             # Create the nodes within the namespace
             nodes = {
@@ -125,13 +129,15 @@ class FileNodeLoader(load.LoaderPlugin):
             cmds.setAttr(file_node + ".fileTextureName", path, type="string")
 
             # Set UV tiling mode if UDIM tiles
-            # TODO: Detect UDIM tiles and set accordingly (also on update)
-            cmds.setAttr(file_node + ".uvTilingMode", 3)    # UDIM-tiles
+            if has_udim:
+                cmds.setAttr(file_node + ".uvTilingMode", 3)    # UDIM-tiles
 
             # Enable sequence if publish has `startFrame` and `endFrame` and
             # `startFrame != endFrame`
-            # TODO: Detect sequences (also on update)
-            # cmds.setAttr(file_node + ".useFrameExtension", True)
+            if has_frames:
+                is_sequence = self._is_sequence(context)
+                if is_sequence:
+                    cmds.setAttr(file_node + ".useFrameExtension", True)
 
             # For ease of access for the user select all the nodes and select
             # the file node last so that UI shows its attributes by default
@@ -174,3 +180,28 @@ class FileNodeLoader(load.LoaderPlugin):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    def _is_sequence(self, context):
+        """Check whether frameStart and frameEnd are not the same."""
+        version = context.get("version", {})
+        representation = context.get("representation", {})
+
+        print(version)
+        print(representation)
+
+        for doc in [representation, version]:
+            # Frame range can be set on version or representation. When set on
+            # representation it overrides data on subset
+            data = doc.get("data", {})
+            start = data.get("frameStartHandle", data.get("frameStart", None))
+            end = data.get("frameEndHandle", data.get("frameEnd", None))
+
+            if start is None or end is None:
+                continue
+
+            if start != end:
+                return True
+            else:
+                return False
+
+        return False
