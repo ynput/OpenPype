@@ -117,10 +117,4 @@ class FusionWorkfileCreator(AutoCreator):
         return qtawesome.icon("fa.file-o", color="white")
 
     def _imprint(self, comp, data):
-
-        # TODO: Should this keys persist or not? I'd prefer not
-        # Do not persist the current context for the Workfile
-        for key in ["variant", "subset", "asset", "task"]:
-            data.pop(key, None)
-
         comp.SetData(self.data_key, data)
