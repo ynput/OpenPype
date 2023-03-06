@@ -186,10 +186,11 @@ elif os.getenv("SSL_CERT_FILE") != certifi.where():
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
-    store_token,
     need_server_or_login,
     load_environments,
     set_environments,
+    create_global_connection,
+    confirm_server_login,
 )
 from ayon_common.distribution.addon_distribution import AyonDistribution
 
@@ -245,6 +246,7 @@ def set_addons_environments():
 def _connect_to_ayon_server():
     load_environments()
     if not need_server_or_login():
+        create_global_connection()
         return
 
     if HEADLESS_MODE_ENABLED:
@@ -257,12 +259,12 @@ def _connect_to_ayon_server():
 
     current_url = os.environ.get("AYON_SERVER_URL")
     url, token, username = ask_to_login_ui(current_url)
+    if url is not None and token is not None:
+        confirm_server_login(url, token, username)
+        return
+
     if url is not None:
         add_server(url, username)
-        if token is not None:
-            store_token(url, token)
-            set_environments(url, token)
-            return
 
     _print("!!! Login was not successful.")
     sys.exit(0)
