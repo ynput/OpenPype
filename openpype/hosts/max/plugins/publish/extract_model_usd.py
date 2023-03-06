@@ -19,7 +19,7 @@ class ExtractModelUSD(publish.Extractor,
     order = pyblish.api.ExtractorOrder - 0.05
     label = "Extract Geometry (USD)"
     hosts = ["max"]
-    families = ["usdmodel"]
+    families = ["model"]
     optional = True
 
     def process(self, instance):
@@ -50,6 +50,7 @@ class ExtractModelUSD(publish.Extractor,
             node_list = self.get_node_list(container)
             rt.USDExporter.ExportFile(asset_filepath,
                                       exportOptions=export_options,
+                                      contentSource=rt.name("selected"),
                                       nodeList=node_list)
 
         self.log.info("Performing Extraction ...")
