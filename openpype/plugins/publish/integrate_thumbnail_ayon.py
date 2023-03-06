@@ -23,10 +23,10 @@ InstanceFilterResult = collections.namedtuple(
 )
 
 
-class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
+class IntegrateThumbnailsAyon(pyblish.api.ContextPlugin):
     """Integrate Thumbnails for Openpype use in Loaders."""
 
-    label = "Integrate Thumbnails (v4)"
+    label = "Integrate Thumbnails to AYON"
     order = pyblish.api.IntegratorOrder + 0.01
 
     required_context_keys = [
@@ -35,7 +35,7 @@ class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
 
     def process(self, context):
         if not AYON_SERVER_ENABLED:
-            self.log.info("V4 is not enabled. Skipping")
+            self.log.info("AYON is not enabled. Skipping")
             return
 
         # Filter instances which can be used for integration
