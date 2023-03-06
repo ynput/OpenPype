@@ -306,13 +306,12 @@ class FileNodeLoader(load.LoaderPlugin):
             # our formatting, so that <f> wouldn't be padded as 0<f>
             return "___{}___".format(key)
 
-        # We want to format UDIM and Frame numbers with the specific tokens
-        # so we in-place change the representation context so it's formatted
-        # with the tokens as we'd want them. So we explicitly change those
-        # tokens around with what we'd need.
+        # We format UDIM and Frame numbers with their specific tokens. To do so
+        # we in-place change the representation context data to format the path
+        # with our own data
         tokens = {
             "frame": "<f>",
-            "udim": "<udim>"
+            "udim": "<UDIM>"
         }
         has_tokens = False
         repre_context = representation["context"]
