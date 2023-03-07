@@ -1,7 +1,5 @@
 import pyblish.api
 
-from openpype.hosts.fusion.api import get_current_comp
-
 
 def get_comp_render_range(comp):
     """Return comp's start-end render range and global start-end range."""
