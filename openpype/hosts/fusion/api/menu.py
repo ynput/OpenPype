@@ -56,8 +56,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
-        publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
@@ -78,8 +78,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addSpacing(20)
 
-        layout.addWidget(load_btn)
         layout.addWidget(create_btn)
+        layout.addWidget(load_btn)
         layout.addWidget(publish_btn)
         layout.addWidget(manager_btn)
 
