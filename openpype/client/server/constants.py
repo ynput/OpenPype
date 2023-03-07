@@ -61,7 +61,7 @@ DEFAULT_REPRESENTATION_FIELDS = {
 }
 
 REPRESENTATION_FILES_FIELDS = {
-    "files.baseName",
+    "files.name",
     "files.hash",
     "files.id",
     "files.path",
