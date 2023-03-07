@@ -3,6 +3,15 @@ from openpype.modules import OpenPypeModule, IHostAddon
 
 FUSION_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
+FUSION_PROFILE_VERSION = 16
+
+# FUSION_PROFILE_VERSION variable is used by the pre-launch hooks. 
+# Since Fusion v16, the profile folder became project-specific,
+# but then it was abandoned by BlackmagicDesign devs, and now, despite it is
+# already Fusion version 18, still FUSION16_PROFILE_DIR is used.
+# The variable is added in case the version number will be
+# updated or deleted so we could easily change the version or disable it.
+
 
 class FusionAddon(OpenPypeModule, IHostAddon):
     name = "fusion"
