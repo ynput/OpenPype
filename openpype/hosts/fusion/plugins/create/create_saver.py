@@ -109,6 +109,12 @@ class CreateSaver(Creator):
 
     def _imprint(self, tool, data):
         # Save all data in a "openpype.{key}" = value data
+
+        active = data.pop("active", None)
+        if active is not None:
+            # Use active value to set the passthrough state
+            tool.SetAttrs({"TOOLB_PassThrough": not active})
+
         for key, value in data.items():
             tool.SetData(f"openpype.{key}", value)
 
@@ -191,6 +197,11 @@ class CreateSaver(Creator):
         for key, value in required.items():
             if key not in data or data[key] != value:
                 return
+
+        # Get active state from the actual tool state
+        attrs = tool.GetAttrs()
+        passthrough = attrs["TOOLB_PassThrough"]
+        data["active"] = not passthrough
 
         return data
 
