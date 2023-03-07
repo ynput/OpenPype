@@ -91,16 +91,16 @@ class CollectTransientStaging(pyblish.api.InstancePlugin):
         is_valid = True
         if self.template_key not in anatomy.templates:
             self.log.warning((
-                 "!!! Anatomy of project \"{}\" does not have set"
-                 " \"{}\" template key!"
-             ).format(project_name, template_key))
+                "!!! Anatomy of project \"{}\" does not have set"
+                " \"{}\" template key!"
+            ).format(project_name, template_key))
             is_valid = False
 
         if is_valid and "folder" not in anatomy.templates[template_key]:  # noqa
             self.log.warning((
-                 "!!! There is not set \"folder\" template in \"{}\" anatomy"
-                 " for project \"{}\"."
-             ).format(template_key, project_name))
+                "!!! There is not set \"folder\" template in \"{}\" anatomy"
+                " for project \"{}\"."
+            ).format(template_key, project_name))
             is_valid = False
 
         return is_valid
