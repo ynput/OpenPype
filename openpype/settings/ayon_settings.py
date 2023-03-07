@@ -979,7 +979,7 @@ def _convert_global_project_settings(ayon_settings, output):
 
     for profile in extract_burnin["profiles"]:
         extract_burnin_defs = profile["burnins"]
-        extract_burnin["burnins"] = {
+        profile["burnins"] = {
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
