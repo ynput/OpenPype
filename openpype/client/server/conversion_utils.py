@@ -838,22 +838,46 @@ def convert_create_version_to_v4(version, con):
 
 
 def convert_create_hero_version_to_v4(hero_version, project_name, con):
-    if "version_id" not in hero_version:
-        return None
+    if "version_id" in hero_version:
+        version_id = hero_version["version_id"]
+        version = con.get_version_by_id(project_name, version_id)
+        version["version"] = - version["version"]
 
-    version_id = hero_version["version_id"]
-    version = con.get_version_by_id(project_name, version_id)
-    version["version"] = - version["version"]
-    version["id"] = hero_version["_id"]
-    for auto_key in (
-        "name",
-        "createdAt",
-        "updatedAt",
-        "author",
-    ):
-        version.pop(auto_key, None)
+        for auto_key in (
+            "name",
+            "createdAt",
+            "updatedAt",
+            "author",
+        ):
+            version.pop(auto_key, None)
 
-    return version
+        return version
+
+    version_attributes = con.get_attributes_for_type("version")
+    converted_version = {
+        "version": hero_version["version"],
+        "subsetId": hero_version["parent"],
+    }
+    entity_id = hero_version.get("_id")
+    if entity_id:
+        converted_version["id"] = entity_id
+
+    version_data = hero_version["data"]
+    attribs = {}
+    data = {}
+    for key, value in version_data.items():
+        if key not in version_attributes:
+            data[key] = value
+        elif value is not None:
+            attribs[key] = value
+
+    if attribs:
+        converted_version["attrib"] = attribs
+
+    if data:
+        converted_version["data"] = attribs
+
+    return converted_version
 
 
 def convert_create_representation_to_v4(representation, con):
