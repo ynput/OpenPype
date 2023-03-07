@@ -13,10 +13,10 @@ class CollectCurrentCompFusion(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect all image sequence tools"""
 
-        comp = get_current_comp()
-        assert comp, "Must have active Fusion composition"
-        context.data["currentComp"] = comp
+        current_comp = get_current_comp()
+        assert current_comp, "Must have active Fusion composition"
+        context.data["currentComp"] = current_comp
 
         # Store path to current file
-        filepath = comp.GetAttrs().get("COMPS_FileName", "")
+        filepath = current_comp.GetAttrs().get("COMPS_FileName", "")
         context.data['currentFile'] = filepath
