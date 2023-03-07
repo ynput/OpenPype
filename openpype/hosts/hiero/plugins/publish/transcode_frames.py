@@ -15,7 +15,17 @@ def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, re
     app_manager = ApplicationManager()
     nuke_app = app_manager.applications.get("nuke/14-02")
     nuke_args = nuke_app.find_executable().as_args()
-    cmd = nuke_args + ["-t", python_template, nuke_template, "{0}_{1}_{2}".format(first_frame, last_frame, input_frame), output_ext, read_path, write_path, src_colorspace, dst_colorspace]
+    cmd = nuke_args + [
+        "-t",
+        python_template,
+        nuke_template,
+        "{0}_{1}_{2}".format(first_frame, last_frame, input_frame),
+        output_ext,
+        read_path,
+        write_path,
+        src_colorspace,
+        dst_colorspace
+    ]
 
     # If non exist status is returned output will raise exception.
     # No need to handle since run_subprocess already formats and handles error
