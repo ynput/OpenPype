@@ -4,8 +4,8 @@ Requires:
 
 
 Provides:
-    instance     -> stagingDir (folder path)
-                 -> stagingDir_persistent (bool)
+    instance.data     -> stagingDir (folder path)
+                      -> stagingDir_persistent (bool)
 """
 import copy
 
@@ -19,9 +19,16 @@ class CollectTransientStaging(pyblish.api.InstancePlugin):
         Looks through profiles if stagingDir should be persistent.
 
     Transient staging dir could be useful in specific use cases where is
-    desirable to have temporary renders is specific, persistent folders.
+    desirable to have temporary renders in specific, persistent folders.
 
     It is studio responsibility to clean up obsolete folders with data.
+
+    Location of the folder is configured in `project_anatomy/templates/others`.
+    ('transient' key is expected, with 'folder' key)
+
+    Which family/task type/subset is applicable is configured in:
+    `project_settings/global/publish/CollectTransientStaging`
+
     """
     label = "Collect Transient Staging Dir"
     order = pyblish.api.CollectorOrder + 0.4990
@@ -73,9 +80,9 @@ class CollectTransientStaging(pyblish.api.InstancePlugin):
                 instance.data["stagingDir"] = staging_dir
                 instance.data["stagingDir_persistent"] = True
 
-        result_str = "Adding"
-        if not transient_staging:
-            result_str = "Not adding"
+        result_str = "Not adding"
+        if transient_staging:
+            result_str = "Adding '{}' as".format(staging_dir)
         self.log.info("{} transient staging dir for instance with '{}'".format(
             result_str, family
         ))
@@ -89,10 +96,9 @@ class CollectTransientStaging(pyblish.api.InstancePlugin):
              ).format(project_name, template_key))
             is_valid = False
 
-        self.log.info("template::{}".format(anatomy.templates))
-        if is_valid and "folder" not in anatomy.templates["others"][template_key]:  # noqa
+        if is_valid and "folder" not in anatomy.templates[template_key]:  # noqa
             self.log.warning((
-                 "!!! There is not set \"path\" template in \"{}\" anatomy"
+                 "!!! There is not set \"folder\" template in \"{}\" anatomy"
                  " for project \"{}\"."
              ).format(template_key, project_name))
             is_valid = False
