@@ -22,7 +22,7 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
         # Query all version ids for representation ids from the database once
         representations = set()
         for instance in context:
-            inst_repre = instance.data.get("inputRepresentations")
+            inst_repre = instance.data.get("inputRepresentations", [])
             if inst_repre:
                 representations.update(inst_repre)
 
