@@ -1,6 +1,4 @@
 import os
-import shutil
-import platform
 from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR

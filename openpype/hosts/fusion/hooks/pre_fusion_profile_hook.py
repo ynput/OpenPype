@@ -2,7 +2,7 @@ import os
 import shutil
 import platform
 from pathlib import Path
-from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
+from openpype.lib import PreLaunchHook
 from openpype.hosts.fusion import FUSION_PROFILE_VERSION as VERSION
 
 
@@ -11,7 +11,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
     """
 
     app_groups = ["fusion"]
-    
+
     def get_fusion_profile_name(self) -> str:
         """usually set to 'Default', unless FUSION16_PROFILE is set"""
         return os.getenv(f"FUSION{VERSION}_PROFILE", "Default")
