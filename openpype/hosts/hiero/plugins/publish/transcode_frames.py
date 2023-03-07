@@ -168,21 +168,12 @@ class TranscodeFrames(publish.Extractor):
         else:
             self.log.info("No source ext to remove from representation")
 
-        if len(files) == 1:
-            instance.data["representations"].append(
-                {
-                    "name": output_ext,
-                    "ext": output_ext,
-                    "files": os.path.basename(files[0]),
-                    "stagingDir": output_dir
-                }
-            )
-        else:
-            instance.data["representations"].append(
-                {
-                    "name": output_ext,
-                    "ext": output_ext,
-                    "files": [os.path.basename(x) for x in files],
-                    "stagingDir": output_dir
-                }
-            )
+
+        instance.data["representations"].append(
+            {
+                "name": output_ext,
+                "ext": output_ext,
+                "files": os.path.basename(files[0]) if len(files) == 1 else [os.path.basename(x) for x in files],
+                "stagingDir": output_dir
+            }
+        )
