@@ -24,6 +24,8 @@ def get_comp_render_range(comp):
 class CollectFusionCompFrameRanges(pyblish.api.ContextPlugin):
     """Collect current comp"""
 
+    # We run this after CollectorOrder - 0.1 otherwise it gets
+    # overridden by global plug-in `CollectContextEntities`
     order = pyblish.api.CollectorOrder - 0.05
     label = "Collect Comp Frame Ranges"
     hosts = ["fusion"]
