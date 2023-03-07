@@ -15,7 +15,7 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
-from openpype.modules import OpenPypeModule, ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -39,7 +39,7 @@ from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 log = Logger.get_logger("SyncServer")
 
 
-class SyncServerModule(OpenPypeModule, ITrayModule):
+class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
@@ -135,6 +135,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.long_running_tasks = deque()
         # projects that long tasks are running on
         self.projects_processed = set()
+
+    def get_plugin_paths(self):
+        """Deadline plugin paths."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return {
+            "load": [os.path.join(current_dir, "plugins", "load")]
+        }
 
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
