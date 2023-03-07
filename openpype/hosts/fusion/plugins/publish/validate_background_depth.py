@@ -11,12 +11,11 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Background Depth 32 bit"
-    actions = [RepairAction]
     hosts = ["fusion"]
     families = ["render"]
     optional = True
 
-    actions = [SelectInvalidAction]
+    actions = [SelectInvalidAction, RepairAction]
 
     @classmethod
     def get_invalid(cls, instance):
