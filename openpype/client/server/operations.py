@@ -185,14 +185,13 @@ def new_version_doc(version, subset_id, data=None, entity_id=None):
     }
 
 
-def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
+def new_hero_version_doc(subset_id, data, version=None, entity_id=None):
     """Create skeleton data of hero version document.
 
     Args:
-        version_id (ObjectId): Is considered as unique identifier of version
-            under subset.
         subset_id (Union[str, ObjectId]): Id of parent subset.
         data (Dict[str, Any]): Version document data.
+        version (int): Version of source version.
         entity_id (Union[str, ObjectId]): Predefined id of document. New id is
             created if not passed.
 
@@ -200,14 +199,16 @@ def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
         Dict[str, Any]: Skeleton of version document.
     """
 
-    if data is None:
-        data = {}
+    if version is None:
+        version = -1
+    elif version > 0:
+        version = -version
 
     return {
         "_id": _create_or_convert_to_id(entity_id),
         "schema": CURRENT_HERO_VERSION_SCHEMA,
         "type": "hero_version",
-        "version_id": _create_or_convert_to_id(version_id),
+        "version": version,
         "parent": _create_or_convert_to_id(subset_id),
         "data": data
     }
@@ -731,7 +732,7 @@ class OperationsSession(BaseOperationsSession):
                     ).format(
                         operation_id,
                         json.dumps(body_by_id[operation_id], indent=4),
-                        op_result["error"],
+                        op_result.get("error", "unknown"),
                     ))
 
     def create_entity(self, project_name, entity_type, data, nested_id=None):
