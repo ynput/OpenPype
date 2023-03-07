@@ -99,7 +99,7 @@ class Popup(QtWidgets.QDialog):
         height = max(height, window.sizeHint().height())
 
         try:
-            screen = QtWidgets.QApplication.primaryScreen()
+            screen = window.screen()
             desktop_geometry = screen.availableGeometry()
         except AttributeError:
             # Backwards compatibility for older Qt versions
