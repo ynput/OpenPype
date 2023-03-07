@@ -102,9 +102,6 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_creator_plugin_path(CREATE_PATH)
         register_inventory_action_path(INVENTORY_PATH)
 
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled)
-
         # Register events
         register_event_callback("open", on_after_open)
         register_event_callback("save", on_save)
@@ -161,29 +158,6 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_context_data(self):
         comp = get_current_comp()
         return comp.GetData("openpype") or {}
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle saver tool passthrough states on instance toggles."""
-    comp = instance.context.data.get("currentComp")
-    if not comp:
-        return
-
-    savers = [tool for tool in instance if
-              getattr(tool, "ID", None) == "Saver"]
-    if not savers:
-        return
-
-    # Whether instances should be passthrough based on new value
-    passthrough = not new_value
-    with comp_lock_and_undo_chunk(comp,
-                                  undo_queue_name="Change instance "
-                                                  "active state"):
-        for tool in savers:
-            attrs = tool.GetAttrs()
-            current = attrs["TOOLB_PassThrough"]
-            if current != passthrough:
-                tool.SetAttrs({"TOOLB_PassThrough": passthrough})
 
 
 def on_new(event):
