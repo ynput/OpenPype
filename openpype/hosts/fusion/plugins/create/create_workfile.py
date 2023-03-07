@@ -89,6 +89,7 @@ class FusionWorkfileCreator(AutoCreator):
             new_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )
+            new_instance.transient_data["comp"] = comp
             self._add_instance_to_context(new_instance)
 
         elif (
