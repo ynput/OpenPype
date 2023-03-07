@@ -36,7 +36,7 @@ class FusionPrelaunch(PreLaunchHook):
                 "Make sure the environment in fusion settings has "
                 "'FUSION_PYTHON3_HOME' set correctly and make sure "
                 "Python 3 is installed in the given path."
-                f"\n\nPYTHON36: {fusion_python3_home}"
+                f"\n\nPYTHON PATH: {fusion_python3_home}"
             )
 
         self.log.info(f"Setting {py3_var}: '{py3_dir}'...")

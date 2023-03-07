@@ -17,6 +17,7 @@ class SetFrameRangeLoader(load.LoaderPlugin):
                 "yeticache",
                 "pointcache"]
     representations = ["*"]
+    extension = {"*"}
 
     label = "Set frame range"
     order = 11
