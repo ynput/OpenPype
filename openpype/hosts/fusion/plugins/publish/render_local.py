@@ -1,6 +1,4 @@
 import os
-import copy
-
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
@@ -64,10 +62,8 @@ class Fusionlocal(pyblish.api.InstancePlugin,
         instance.data["representations"].append(repre)
 
         # review representation
-        repre_preview = copy.deepcopy(repre)
-        repre_preview["name"] = repre_preview["ext"] = "mp4"
-        repre_preview["tags"] = ["review", "ftrackreview", "delete"]
-        instance.data["representations"].append(repre_preview)
+        if instance.data.get("review", False):
+            repre["tags"] = ["review", "ftrackreview"]
 
     def render_once(self, context):
         """Render context comp only once, even with more render instances"""
