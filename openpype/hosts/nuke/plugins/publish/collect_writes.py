@@ -132,14 +132,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             self.log.info("Publishing rendered frames ...")
 
         elif render_target == "farm":
-            farm_priority = creator_attributes.get("farm_priority")
-            farm_chunk = creator_attributes.get("farm_chunk")
-            farm_concurency = creator_attributes.get("farm_concurency")
-            instance.data.update({
-                "deadlineChunkSize": farm_chunk or 1,
-                "deadlinePriority": farm_priority or 50,
-                "deadlineConcurrentTasks": farm_concurency or 0
-            })
+            farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
+            for key in farm_keys:
+                # Skip if key is not in creator attributes
+                if key not in creator_attributes:
+                    continue
+                # Add farm attributes to instance
+                instance.data[key] = creator_attributes[key]
+
             # Farm rendering
             instance.data["transfer"] = False
             instance.data["farm"] = True
