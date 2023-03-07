@@ -976,11 +976,13 @@ def _convert_global_project_settings(ayon_settings, output):
         extract_burnin_options[color_key] = _convert_color(
             extract_burnin_options[color_key]
         )
-    extract_burnin_defs = extract_burnin["burnins"]
-    extract_burnin["burnins"] = {
-        extract_burnin_def.pop("name"): extract_burnin_def
-        for extract_burnin_def in extract_burnin_defs
-    }
+
+    for profile in extract_burnin["profiles"]:
+        extract_burnin_defs = profile["burnins"]
+        extract_burnin["burnins"] = {
+            extract_burnin_def.pop("name"): extract_burnin_def
+            for extract_burnin_def in extract_burnin_defs
+        }
 
     global_publish = global_settings["publish"]
     ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
