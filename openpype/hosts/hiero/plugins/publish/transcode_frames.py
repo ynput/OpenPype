@@ -37,9 +37,9 @@ def openpype_publish_tag(track_item, instance_tags):
     Get tag that was used to publish track item
     """
     for instance_tag in instance_tags:
-        t_metadata = dict(instance_tag.metadata())
-        t_family = t_metadata.get("tag.family", "")
-        if t_family == "plate":
+        tag_metadata = dict(instance_tag.metadata())
+        tag_family = tag_metadata.get("tag.family", "")
+        if tag_family == "plate":
             for item_tag in track_item.tags():
                 if instance_tag.name() == item_tag.name():
                     return dict(item_tag.metadata())
