@@ -2,7 +2,8 @@ import pyblish.api
 from openpype.pipeline import publish
 
 
-class ExtractColorspaceData(publish.ExtractorColormanaged):
+class ExtractColorspaceData(publish.Extractor,
+                            publish.ColormanagedPyblishPluginMixin):
     """ Inject Colorspace data to available representations.
 
     Input data:

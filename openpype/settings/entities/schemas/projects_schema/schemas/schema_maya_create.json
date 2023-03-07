@@ -243,6 +243,31 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CreateReview",
+            "label": "Create Review",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "useMayaTimeline",
+                    "label": "Use Maya Timeline for Frame Range."
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CreateAss",
             "label": "Create Ass",
             "checkbox_key": "enabled",
@@ -397,10 +422,6 @@
                 {
                     "key": "CreateRenderSetup",
                     "label": "Create Render Setup"
-                },
-                {
-                    "key": "CreateReview",
-                    "label": "Create Review"
                 },
                 {
                     "key": "CreateRig",
