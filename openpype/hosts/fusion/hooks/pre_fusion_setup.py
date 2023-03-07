@@ -64,4 +64,3 @@ class FusionPrelaunch(PreLaunchHook):
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
         self.launch_context.env[master_prefs_variable] = str(master_prefs)
-        

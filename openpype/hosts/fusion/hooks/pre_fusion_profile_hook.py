@@ -107,4 +107,3 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         fusion_profile_dir_variable = f"FUSION{VERSION}_PROFILE_DIR"
         self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}")  # noqa
         self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir)  # noqa
-        
