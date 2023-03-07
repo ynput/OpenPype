@@ -120,13 +120,9 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
         track = sitem.parentTrack().name()
         # node serialization
         node = sitem.node()
-        node_serialized = self.node_serialisation(node)
+        node_serialized = self.node_serialization(node)
         node_name = sitem.name()
-
-        if "_" in node_name:
-            node_class = re.sub(r"(?:_)[_0-9]+", "", node_name)  # more numbers
-        else:
-            node_class = re.sub(r"\d+", "", node_name)  # one number
+        node_class = node.Class()
 
         # collect timelineIn/Out
         effect_t_in = int(sitem.timelineIn())
@@ -148,7 +144,7 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
             "node": node_serialized
         }}
 
-    def node_serialisation(self, node):
+    def node_serialization(self, node):
         node_serialized = {}
 
         # adding ignoring knob keys

@@ -1,6 +1,9 @@
 import pyblish.api
 
 from openpype.pipeline.publish import RepairAction
+from openpype.pipeline import PublishValidationError
+
+from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 
 class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
@@ -15,6 +18,7 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     label = "Validate Create Folder Checked"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
@@ -31,8 +35,9 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found Saver with Create Folder During "
-                               "Render checked off")
+            raise PublishValidationError(
+                "Found Saver with Create Folder During Render checked off",
+                title=self.label)
 
     @classmethod
     def repair(cls, instance):
