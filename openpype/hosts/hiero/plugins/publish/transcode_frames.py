@@ -91,7 +91,7 @@ class TranscodeFrames(publish.Extractor):
         dst_colorspace = "scene_linear"
 
         files = []
-        movie_extensions = ["mov", "mp4", "mxf"]
+        movie_extensions = {"mov", "mp4", "mxf"}
         output_ext = "exr"
         frames = range(first_frame, end_frame + handle_start + 1)
         self.log.info('Trancoding frame range {0} - {1}'.format(frames[0], frames[-1]))
