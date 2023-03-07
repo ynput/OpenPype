@@ -1,4 +1,6 @@
 import os
+import copy
+
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
@@ -62,7 +64,7 @@ class Fusionlocal(pyblish.api.InstancePlugin,
         instance.data["representations"].append(repre)
 
         # review representation
-        repre_preview = repre.copy()
+        repre_preview = copy.deepcopy(repre)
         repre_preview["name"] = repre_preview["ext"] = "mp4"
         repre_preview["tags"] = ["review", "ftrackreview", "delete"]
         instance.data["representations"].append(repre_preview)
