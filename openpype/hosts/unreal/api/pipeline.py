@@ -15,6 +15,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
+    get_current_project_name,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -142,8 +143,7 @@ def _init_perforce():
     from openpype.hosts.unreal.api.p4_integrate import P4Integrate
     p4Connector = P4Integrate()
 
-    p4Connector.P4VCreateDefaultChangelist("PLACE DEFAULT COMMENT FOR OPENPYPE CHANGELIST")
-
+    p4Connector.P4VCreateOrLoadOpenPypeChangelist("DO NOT EDIT THIS CHANGELIST", None, get_current_project_name())
 
 def ls():
     """List all containers.
