@@ -7,6 +7,7 @@ from openpype.hosts.fusion.api import (
     comp_lock_and_undo_chunk
 )
 
+from openpype.lib import BoolDef
 from openpype.pipeline import (
     legacy_io,
     Creator,
@@ -192,3 +193,12 @@ class CreateSaver(Creator):
                 return
 
         return data
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef(
+                "review",
+                default=True,
+                label="Review"
+            )
+        ]

@@ -53,10 +53,8 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         instance.data["representations"].append(repre)
 
         # review representation
-        repre_preview = repre.copy()
-        repre_preview["name"] = repre_preview["ext"] = "mp4"
-        repre_preview["tags"] = ["review", "ftrackreview", "delete"]
-        instance.data["representations"].append(repre_preview)
+        if instance.data.get("review", False):
+            repre["tags"] = ["review", "ftrackreview"]
 
     def render_once(self, context):
         """Render context comp only once, even with more render instances"""
