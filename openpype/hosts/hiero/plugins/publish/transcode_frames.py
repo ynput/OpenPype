@@ -33,9 +33,7 @@ def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, re
 
 
 def openpype_publish_tag(track_item, instance_tags):
-    """
-    Get tag that was used to publish track item
-    """
+    """Get tag that was used to publish track item"""
     for instance_tag in instance_tags:
         tag_metadata = dict(instance_tag.metadata())
         tag_family = tag_metadata.get("tag.family", "")
@@ -104,16 +102,16 @@ class TranscodeFrames(publish.Extractor):
         movie_extensions = {"mov", "mp4", "mxf"}
         output_ext = "exr"
         frames = range(first_frame, end_frame + handle_start + 1)
+        len_frames = len(frames)
         self.log.info('Trancoding frame range {0} - {1}'.format(frames[0], frames[-1]))
-        for frame in frames:
+        for index, frame in enumerate(frames):
             # Calculate input_frame for output by normalizing input media to first frame
             input_frame = source_start + clip_source_in - handle_start + frame - first_frame
-            if not input_frame >= 1 or input_frame >= source_end + 1:
+            if input_frame < 1 or input_frame > source_end:
                 self.log.warning("Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(frame, input_frame))
                 continue
 
-            output_path = output_template
-            output_path += ".{:04d}.{}".format(int(frame), output_ext)
+            output_path = f"{output_template}.{frame:04d}.{output_ext}"
             # If either source or output is a video format, transcode using Nuke
             if output_ext.lower() in movie_extensions or source_ext.lower() in movie_extensions:
                 # No need to raise error as Nuke raises an error exit value if something went wrong
@@ -158,21 +156,17 @@ class TranscodeFrames(publish.Extractor):
             # appear unresponsive.
             self.log.info(
                 "Processed {} of {} frames".format(
-                    frames.index(frame) + 1,
-                    len(frames)
+                    index + 1,
+                    len_frames
                 )
             )
 
-        try:
-            representation_exts = [rep["ext"] for rep in instance.data["representations"]]
-            representation_ext_index = representation_exts.index(source_ext)
-            if source_ext in representation_exts:
-                self.log.info("Removing source representation and replacing with transcoded frames")
-                instance.data["representations"].pop(representation_ext_index)
-            else:
-                self.log.info("No source ext to remove from representation")
-        except IndexError:
-            self.log.warning("Failed to remove source ext '{0}' from representations".format(source_ext))
+        ext_representations = [rep for rep in instance.data["representations"] if rep['ext'] == source_ext]
+        if ext_representations:
+            self.log.info("Removing source representation and replacing with transcoded frames")
+            instance.data["representations"].remove(ext_representations[0])
+        else:
+            self.log.info("No source ext to remove from representation")
 
         if len(files) == 1:
             instance.data["representations"].append(
