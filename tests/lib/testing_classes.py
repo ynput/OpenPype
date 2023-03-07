@@ -243,6 +243,8 @@ class PublishTest(ModuleUnitTest):
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
     TEST_DATA_FOLDER = None  # use specific folder of unzipped test file
 
+    SETUP_ONLY = False
+
     @pytest.fixture(scope="module")
     def app_name(self, app_variant):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
@@ -286,8 +288,13 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts, app_args, app_name, output_folder_url):
+                     startup_scripts, app_args, app_name, output_folder_url,
+                     setup_only):
         """Launch host app"""
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            yield
+            return
         # set schema - for integrate_new
         from openpype import PACKAGE_DIR
         # Path to OpenPype's schema
@@ -316,8 +323,12 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout):
+                         timeout, setup_only):
         """Dummy fixture waiting for publish to finish"""
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            yield False
+            return
         import time
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
@@ -334,11 +345,16 @@ class PublishTest(ModuleUnitTest):
 
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,
-                                   skip_compare_folders):
+                                   skip_compare_folders,
+                                   setup_only):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            return
+
         published_dir_base = output_folder_url
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")

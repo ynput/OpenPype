@@ -270,7 +270,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout):
+                  test_data_folder, persist, app_variant, timeout, setup_only):
         """
             Runs tests from 'folder'
 
@@ -310,6 +310,9 @@ class PypeCommands:
 
         if timeout:
             args.extend(["--timeout", timeout])
+
+        if setup_only:
+            args.extend(["--setup_only", setup_only])
 
         print("run_tests args: {}".format(args))
         import pytest
