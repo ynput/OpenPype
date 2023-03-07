@@ -1,9 +1,11 @@
 import os
 import pyblish.api
+from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
 
 
-class Fusionlocal(pyblish.api.InstancePlugin):
+class Fusionlocal(pyblish.api.InstancePlugin,
+                  publish.ColormanagedPyblishPluginMixin):
     """Render the current Fusion composition locally.
 
     Extract the result of savers by starting a comp render
@@ -49,6 +51,11 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             "files": files,
             "stagingDir": output_dir,
         }
+
+        self.set_representation_colorspace(
+            representation=repre,
+            context=context,
+        )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
