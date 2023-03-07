@@ -23,7 +23,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         self.log.debug("Comment is `{}`".format(publish_comment))
 
         for instance in context:
-            kitsu_task = instance.data["kitsu_task"]
+            kitsu_task = instance.data.get("kitsu_task")
             if kitsu_task is None:
                 continue
 
