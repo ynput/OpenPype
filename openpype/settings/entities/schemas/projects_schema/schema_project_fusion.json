@@ -45,6 +45,29 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "key": "copy_fusion_settings",
+            "collapsible": true,
+            "label": "Local Fusion profile settings",
+            "children": [
+                {
+                    "key": "copy_path",
+                    "type": "path",
+                    "label": "Local Fusion profile directory"
+                },
+                {
+                    "type": "boolean",
+                    "key": "copy_status",
+                    "label": "Copy profile on first launch"
+                },
+                {
+                    "key":"force_sync",
+                    "type": "boolean",
+                    "label": "Resync profile on each launch"
+                }
+            ]
         }
     ]
 }

@@ -2,7 +2,7 @@
 import sys
 import os
 
-from .lib import get_current_comp
+from .lib import get_fusion_module, get_current_comp
 
 
 def file_extensions():
@@ -20,20 +20,14 @@ def save_file(filepath):
 
 
 def open_file(filepath):
-    # Hack to get fusion, see
-    #   openpype.hosts.fusion.api.pipeline.get_current_comp()
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-
+    fusion = get_fusion_module()
     return fusion.LoadComp(filepath)
 
 
 def current_file():
     comp = get_current_comp()
     current_filepath = comp.GetAttrs()["COMPS_FileName"]
-    if not current_filepath:
-        return None
-
-    return current_filepath
+    return current_filepath or None
 
 
 def work_root(session):

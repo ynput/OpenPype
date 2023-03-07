@@ -16,5 +16,10 @@
                 "linux": []
             }
         }
+    },
+    "copy_fusion_settings": {
+        "copy_path": "~/.openpype/hosts/fusion/profiles",
+        "copy_status": false,
+        "force_sync": false
     }
 }
