@@ -382,8 +382,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 continue
 
             progress = self.sync_server.get_progress_for_repre(
-                project_name,
-                repre_id,
+                repre_doc,
                 active_site,
                 remote_site
             )
