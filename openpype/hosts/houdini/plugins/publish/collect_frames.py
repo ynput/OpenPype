@@ -8,13 +8,12 @@ import pyblish.api
 from openpype.hosts.houdini.api import lib
 
 
-
 class CollectFrames(pyblish.api.InstancePlugin):
     """Collect all frames which would be saved from the ROP nodes"""
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["vdbcache", "imagesequence", "ass", "redshiftproxy"]
+    families = ["vdbcache", "imagesequence", "ass", "redshiftproxy", "bgeo"]
 
     def process(self, instance):
 
@@ -35,7 +34,9 @@ class CollectFrames(pyblish.api.InstancePlugin):
             output = output_parm.eval()
 
         _, ext = lib.splitext(output,
-                          allowed_multidot_extensions=[".ass.gz"])
+                          allowed_multidot_extensions=[
+                              ".ass.gz", ".bgeo.sc", ".bgeo.gz",
+                              ".bgeo.lzma", ".bgeo.bz2"])
         file_name = os.path.basename(output)
         result = file_name
 
