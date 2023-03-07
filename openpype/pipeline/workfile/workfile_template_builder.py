@@ -28,6 +28,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.host import IWorkfileHost
 from openpype.host import HostBase
 from openpype.lib import (
     Logger,
@@ -440,7 +441,9 @@ class AbstractTemplateBuilder(object):
         self,
         template_path=None,
         level_limit=None,
-        keep_placeholders=None
+        keep_placeholders=None,
+        create_first_version=None,
+        workfile_creation_enabled=False
     ):
         """Main callback for building workfile from template path.
 
@@ -457,6 +460,11 @@ class AbstractTemplateBuilder(object):
             keep_placeholders (bool): Add flag to placeholder data for
                 hosts to decide if they want to remove
                 placeholder after it is used.
+            create_first_version (bool): create first version of a workfile
+            workfile_creation_enabled (bool): If True, it might create
+                                              first version but ignore
+                                              process if version is created
+
         """
         template_preset = self.get_template_preset()
 
@@ -465,6 +473,30 @@ class AbstractTemplateBuilder(object):
 
         if keep_placeholders is None:
             keep_placeholders = template_preset["keep_placeholder"]
+        if create_first_version is None:
+            create_first_version = template_preset["create_first_version"]
+
+        # check if first version is created
+        created_version_workfile = self.create_first_workfile_version()
+
+        # if first version is created, import template
+        # and populate placeholders
+        if (
+            create_first_version
+            and workfile_creation_enabled
+            and created_version_workfile
+        ):
+            self.import_template(template_path)
+            self.populate_scene_placeholders(
+                level_limit, keep_placeholders)
+
+            # save workfile after template is populated
+            self.save_workfile(created_version_workfile)
+
+        # ignore process if first workfile is enabled
+        # but a version is already created
+        if workfile_creation_enabled:
+            return
 
         self.import_template(template_path)
         self.populate_scene_placeholders(
@@ -515,6 +547,39 @@ class AbstractTemplateBuilder(object):
         """
 
         pass
+
+    def create_first_workfile_version(self):
+        """
+        Create first version of workfile.
+
+        Should load the content of template into scene so
+        'populate_scene_placeholders' can be started.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
+        if os.path.exists(last_workfile_path):
+            # ignore in case workfile existence
+            self.log.info("Workfile already exists, skipping creation.")
+            return False
+
+        # Create first version
+        self.log.info("Creating first version of workfile.")
+        self.save_workfile(last_workfile_path)
+
+        # Confirm creation of first version
+        return last_workfile_path
+
+    def save_workfile(self, workfile_path):
+        """Save workfile in current host."""
+        # Save current scene, continue to open file
+        if isinstance(self.host, IWorkfileHost):
+            self.host.save_workfile(workfile_path)
+        else:
+            self.host.save_file(workfile_path)
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.
@@ -699,6 +764,8 @@ class AbstractTemplateBuilder(object):
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
+        create_first_version = profile.get("create_first_version")
+
         # backward compatibility, since default is True
         if keep_placeholder is None:
             keep_placeholder = True
@@ -732,7 +799,8 @@ class AbstractTemplateBuilder(object):
             self.log.info("Found template at: '{}'".format(path))
             return {
                 "path": path,
-                "keep_placeholder": keep_placeholder
+                "keep_placeholder": keep_placeholder,
+                "create_first_version": create_first_version
             }
 
         solved_path = None
@@ -761,7 +829,8 @@ class AbstractTemplateBuilder(object):
 
         return {
             "path": solved_path,
-            "keep_placeholder": keep_placeholder
+            "keep_placeholder": keep_placeholder,
+            "create_first_version": create_first_version
         }
 
 
