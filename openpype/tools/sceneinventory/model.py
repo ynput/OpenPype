@@ -432,7 +432,6 @@ class InventoryModel(TreeModel):
 
             if self.sync_enabled:
                 progress = self.sync_server.get_progress_for_repre(
-                    project_name,
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site

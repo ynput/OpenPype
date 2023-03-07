@@ -1174,7 +1174,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                     group = group_item
 
             progress = self.sync_server.get_progress_for_repre(
-                self.dbcon.active_project(), doc["_id"],
+                doc,
                 self.active_site, self.remote_site)
 
             active_site_icon = self._icons.get(self.active_provider)
