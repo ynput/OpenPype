@@ -30,9 +30,11 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
     def displayText(self, value, locale):
         if isinstance(value, HeroVersionType):
             return lib.format_version(value, True)
-        assert isinstance(value, numbers.Integral), (
-            "Version is not integer. \"{}\" {}".format(value, str(type(value)))
-        )
+        if not isinstance(value, numbers.Integral):
+            # For cases where no version is resolved like NOT FOUND cases
+            # where a representation might not exist in current database
+            return
+
         return lib.format_version(value)
 
     def paint(self, painter, option, index):
