@@ -315,10 +315,11 @@ def build_anim(project_name, asset_name):
 
     # Substitute overridden GDEFORMER collection by local one
     old_gdeform_collection = bpy.data.collections.get("GDEFORMER")
-    old_gdeform_collection.name += ".old"
-    layout_collection = bpy.data.collections.get(layout_collection_name)
-    create_gdeformer_collection(layout_collection)
-    bpy.data.collections.remove(old_gdeform_collection)
+    if old_gdeform_collection:
+        old_gdeform_collection.name += ".old"
+        layout_collection = bpy.data.collections.get(layout_collection_name)
+        create_gdeformer_collection(layout_collection)
+        bpy.data.collections.remove(old_gdeform_collection)
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
