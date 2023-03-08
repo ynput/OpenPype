@@ -252,7 +252,7 @@ def create_unreal_project(project_name: str,
 
     with open(project_file.as_posix(), mode="r+") as pf:
         pf_json = json.load(pf)
-        pf_json["EngineAssociation"] = _get_build_id(engine_path, ue_version)
+        pf_json["EngineAssociation"] = get_build_id(engine_path, ue_version)
         pf.seek(0)
         json.dump(pf_json, pf, indent=4)
         pf.truncate()
@@ -338,7 +338,7 @@ def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
     return Path(u_build_tool_path)
 
 
-def _get_build_id(engine_path: Path, ue_version: str) -> str:
+def get_build_id(engine_path: Path, ue_version: str) -> str:
     ue_modules = Path()
     if platform.system().lower() == "windows":
         ue_modules_path = engine_path / "Engine/Binaries/Win64"
