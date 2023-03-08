@@ -64,7 +64,8 @@ class SplashScreen(QtWidgets.QDialog):
             None
         """
         if not q_thread:
-            raise RuntimeError("Failed to run a worker thread! The thread is null!")
+            raise RuntimeError("Failed to run a worker thread! "
+                               "The thread is null!")
 
         self.q_thread = q_thread
         self.q_thread.start()
@@ -147,8 +148,12 @@ class SplashScreen(QtWidgets.QDialog):
         self.scroll_area.hide()
         log_widget = QtWidgets.QWidget(self.scroll_area)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOn
+        )
+        self.scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOn
+        )
         self.scroll_area.setWidget(log_widget)
 
         self.scroll_bar = self.scroll_area.verticalScrollBar()
@@ -203,8 +208,8 @@ class SplashScreen(QtWidgets.QDialog):
         """A slot used for receiving log info and appending it to scroll area's
             content.
         Args:
-            text (str): A log text that will append to the current one in the scroll
-                area.
+            text (str): A log text that will append to the current one in the
+                scroll area.
             end (str): end string which can be appended to the end of the given
                 line (for ex. a line break).
 

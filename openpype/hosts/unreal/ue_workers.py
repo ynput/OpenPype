@@ -64,19 +64,6 @@ class UEProjectGenerationWorker(QtCore.QObject):
         self.engine_path = engine_path
 
     def run(self):
-
-
-        ue_id = ".".join(self.ue_version.split(".")[:2])
-        # get unreal engine identifier
-        # -------------------------------------------------------------------------
-        # FIXME (antirotor): As of 4.26 this is problem with UE4 built from
-        # sources. In that case Engine ID is calculated per machine/user and not
-        # from Engine files as this code then reads. This then prevents UE4
-        # to directly open project as it will complain about project being
-        # created in different UE4 version. When user convert such project
-        # to his UE4 version, Engine ID is replaced in uproject file. If some
-        # other user tries to open it, it will present him with similar error.
-
         # engine_path should be the location of UE_X.X folder
 
         ue_editor_exe = ue_lib.get_editor_exe_path(self.engine_path,
@@ -122,10 +109,17 @@ class UEProjectGenerationWorker(QtCore.QObject):
         self.stage_begin.emit(f'Writing the Engine ID of the build UE ... 1 out'
                               f' of {stage_count}')
 
+        if not project_file.is_file():
+            msg = "Failed to write the Engine ID into .uproject file! Can " \
+                  "not read!"
+            self.failed.emit(msg)
+            raise RuntimeError(msg)
+
         with open(project_file.as_posix(), mode="r+") as pf:
             pf_json = json.load(pf)
             pf_json["EngineAssociation"] = ue_lib.get_build_id(self.engine_path,
                                                                self.ue_version)
+            print(pf_json["EngineAssociation"])
             pf.seek(0)
             json.dump(pf_json, pf, indent=4)
             pf.truncate()

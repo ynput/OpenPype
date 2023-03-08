@@ -5,7 +5,10 @@ import copy
 from pathlib import Path
 from openpype.widgets.splash_screen import SplashScreen
 from qtpy import QtCore
-from openpype.hosts.unreal.ue_workers import UEProjectGenerationWorker, UEPluginInstallWorker
+from openpype.hosts.unreal.ue_workers import (
+    UEProjectGenerationWorker,
+    UEPluginInstallWorker
+)
 
 from openpype import resources
 from openpype.lib import (
@@ -73,8 +76,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue_plugin_worker.setup(engine_path, env)
         ue_plugin_worker.moveToThread(q_thread)
 
-        splash_screen = SplashScreen("Installing plugin",
-                                     resources.get_resource("app_icons", "ue4.png"))
+        splash_screen = SplashScreen(
+            "Installing plugin",
+            resources.get_resource("app_icons", "ue4.png")
+        )
 
         # set up the splash screen with necessary triggers
         ue_plugin_worker.installing.connect(splash_screen.update_top_label_text)
@@ -111,10 +116,14 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue_project_worker.moveToThread(q_thread)
         q_thread.started.connect(ue_project_worker.run)
 
-        splash_screen = SplashScreen("Initializing UE project",
-                                     resources.get_resource("app_icons", "ue4.png"))
+        splash_screen = SplashScreen(
+            "Initializing UE project",
+            resources.get_resource("app_icons", "ue4.png")
+        )
 
-        ue_project_worker.stage_begin.connect(splash_screen.update_top_label_text)
+        ue_project_worker.stage_begin.connect(
+            splash_screen.update_top_label_text
+        )
         ue_project_worker.progress.connect(splash_screen.update_progress)
         ue_project_worker.log.connect(splash_screen.append_log)
         ue_project_worker.finished.connect(splash_screen.quit_and_close)
