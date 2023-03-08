@@ -13,7 +13,8 @@ def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, re
     python_template = "/pipe/hiero/templates/nuke_transcode.py"
     nuke_template = "/pipe/hiero/templates/ingest_transcode.nk"
     app_manager = ApplicationManager()
-    nuke_app = app_manager.applications.get("nuke/14-02")
+    nuke_app_name = os.environ["AVALON_APP_NAME"].replace("hiero", "nuke")
+    nuke_app = app_manager.applications.get(nuke_app_name)
     nuke_args = nuke_app.find_executable().as_args()
     cmd = nuke_args + [
         "-t",
@@ -63,6 +64,9 @@ class TranscodeFrames(publish.Extractor):
     label = "Transcode Frames"
     hosts = ["hiero"]
     families = ["plate"]
+    movie_extensions = {"mov", "mp4", "mxf"}
+    output_ext = "exr"
+    dst_colorspace = "scene_linear"
 
     def process(self, instance):
         """
@@ -71,9 +75,6 @@ class TranscodeFrames(publish.Extractor):
         """
         oiio_tool_path = get_oiio_tools_path()
 
-        staging_dir = self.staging_dir(instance)
-        output_template = os.path.join(staging_dir, instance.data["name"])
-        output_dir = os.path.dirname(output_template)
         instance_tags = instance.data["tags"]
         track_item = instance.data["item"]
         media_source = track_item.source().mediaSource()
@@ -94,16 +95,18 @@ class TranscodeFrames(publish.Extractor):
         input_path = media_source.fileinfos()[0].filename()
         source_ext = os.path.splitext(input_path)[1][1:]
 
+        # Output variables
+        staging_dir = self.staging_dir(instance)
+        output_template = os.path.join(staging_dir, instance.data["name"])
+        output_dir = os.path.dirname(output_template)
+
         # Determine color transformation
         src_colorspace = track_item.sourceMediaColourTransform()
-        dst_colorspace = "scene_linear"
 
         files = []
-        movie_extensions = {"mov", "mp4", "mxf"}
-        output_ext = "exr"
         frames = range(first_frame, end_frame + handle_start + 1)
         len_frames = len(frames)
-        self.log.info('Trancoding frame range {0} - {1}'.format(frames[0], frames[-1]))
+        self.log.info("Trancoding frame range {0} - {1}".format(frames[0], frames[-1]))
         for index, frame in enumerate(frames):
             # Calculate input_frame for output by normalizing input media to first frame
             input_frame = source_start + clip_source_in - handle_start + frame - first_frame
@@ -111,11 +114,11 @@ class TranscodeFrames(publish.Extractor):
                 self.log.warning("Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(frame, input_frame))
                 continue
 
-            output_path = f"{output_template}.{frame:04d}.{output_ext}"
+            output_path = f"{output_template}.{frame:04d}.{self.output_ext}"
             # If either source or output is a video format, transcode using Nuke
-            if output_ext.lower() in movie_extensions or source_ext.lower() in movie_extensions:
+            if self.output_ext.lower() in self.movie_extensions or source_ext.lower() in self.movie_extensions:
                 # No need to raise error as Nuke raises an error exit value if something went wrong
-                nuke_transcode_template(output_ext, int(input_frame), int(frame), int(frame), input_path, output_path, src_colorspace, dst_colorspace)
+                nuke_transcode_template(self.output_ext, input_frame, frame, frame, input_path, output_path, src_colorspace, self.dst_colorspace)
 
             # Else use OIIO instead of Nuke for faster transcoding
             else:
@@ -128,7 +131,7 @@ class TranscodeFrames(publish.Extractor):
                 args.append(input_path)
 
                 # Add colorspace conversion
-                args.extend(["--colorconvert", src_colorspace, dst_colorspace])
+                args.extend(["--colorconvert", src_colorspace, self.dst_colorspace])
 
                 # Copy old metadata
                 args.append("--pastemeta")
@@ -168,11 +171,10 @@ class TranscodeFrames(publish.Extractor):
         else:
             self.log.info("No source ext to remove from representation")
 
-
         instance.data["representations"].append(
             {
-                "name": output_ext,
-                "ext": output_ext,
+                "name": self.output_ext,
+                "ext": self.output_ext,
                 "files": os.path.basename(files[0]) if len(files) == 1 else [os.path.basename(x) for x in files],
                 "stagingDir": output_dir
             }
