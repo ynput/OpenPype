@@ -409,7 +409,7 @@ class LayoutLoader(plugin.Loader):
 
         return sequence, (min_frame, max_frame)
 
-    def _get_repre_docs_by_version_id(self, project_name, data):
+    def _get_repre_docs_by_version_id(self, data):
         version_ids = {
             element.get("version")
             for element in data
@@ -421,6 +421,7 @@ class LayoutLoader(plugin.Loader):
         if not version_ids:
             return output
 
+        project_name = legacy_io.active_project()
         repre_docs = get_representations(
             project_name,
             representation_names=["fbx", "abc"],
