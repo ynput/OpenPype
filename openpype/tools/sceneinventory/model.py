@@ -384,6 +384,7 @@ class InventoryModel(TreeModel):
                 item_node = Item()
                 item_node.update(item)
                 item_node["Name"] = item.get("objectName", "NO NAME")
+                item_node["isNotFound"] = True
                 self.add_child(item_node, parent=group_node)
 
         for repre_id, group_dict in sorted(grouped.items()):
