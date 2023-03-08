@@ -15,18 +15,18 @@ sidebar_label: AfterEffects
 
 ## Setup
 
-To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`. 
+To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`.
 
-Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself. 
+Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself.
 
 ## Implemented functionality
 
 AfterEffects implementation currently allows you to import and add various media to composition (image plates, renders, audio files, video files etc.)
-and send prepared composition for rendering to Deadline or render locally. 
+and send prepared composition for rendering to Deadline or render locally.
 
 ## Usage
 
-When you launch AfterEffects you will be met with the Workfiles app. If don't 
+When you launch AfterEffects you will be met with the Workfiles app. If don't
 have any previous workfiles, you can just close this window.
 
 Workfiles tools takes care of saving your .AEP files in the correct location and under
@@ -34,7 +34,7 @@ a correct name. You should use it instead of standard file saving dialog.
 
 In AfterEffects you'll find the tools in the `OpenPype` extension:
 
-![Extension](assets/photoshop_extension.PNG) <!-- same menu as in PS -->
+![Extension](assets/photoshop_extension.png) <!-- same menu as in PS -->
 
 You can show the extension panel by going to `Window` > `Extensions` > `OpenPype`.
 
@@ -67,7 +67,7 @@ Publisher allows publishing into different context, just click on any instance, 
 
 #### RenderQueue
 
-AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. 
+AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module.
 Currently its expected to have only single render item per composition in the Render Queue.
 
 
