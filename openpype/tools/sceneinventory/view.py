@@ -83,9 +83,12 @@ class SceneInventoryView(QtWidgets.QTreeView):
         if not items:
             return
 
+        # An item might not have a representation, for example when an item
+        # is listed as "NOT FOUND"
         repre_ids = {
-            item["representation"]
+            item.get("representation")
             for item in items
+            if "representation" in item
         }
 
         project_name = legacy_io.active_project()
