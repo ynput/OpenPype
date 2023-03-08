@@ -73,56 +73,54 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
-        families = set()
-        for instance in context:
-            if instance.data.get('publish'):
-                families.add(instance.data['family'])
+        families = set(
+            instance.data.get('kitsu_task')
+            for instance in context
+            if instance.data.get('publish')
+        )
 
-        # Get note status, by default uses the task status for the note
-        # if it is not specified in the configuration
-        kitsu_task = context.data["kitsu_task"]
-        shortname = kitsu_task["task_status"]["short_name"].upper()
-        note_status = kitsu_task["task_status_id"]
-        if self.set_status_note and next(
-            (
-                False
-                for status_except in self.status_exceptions
-                if shortname == status_except["short_name"].upper()
-                and status_except["condition"] == "equal"
-                or
-                shortname != status_except["short_name"].upper()
-                and status_except["condition"] == "not_equal"
-            ),
-            True,
-        ) and next(
-            (
-                True
-                for family in families
-                if next(
-                    (
-                        False
-                        for family_req in self.family_requirements
-                        if family_req['condition'] == 'equal'
-                        and family_req['family'].lower() != family
-                        or
-                        family_req['condition'] == 'not_equal'
-                        and family_req['family'].lower() == family
-                    ),
-                    True,
-                )
-            ),
-            False,
-        ):
-            kitsu_status = gazu.task.get_task_status_by_short_name(
-                self.note_status_shortname
-            )
-            if kitsu_status:
-                note_status = kitsu_status
-                self.log.info("Note Kitsu status: {}".format(note_status))
-            else:
-                self.log.info(
-                    "Cannot find {} status. The status will not be "
-                    "changed!".format(self.note_status_shortname)
+        for instance in context:
+            kitsu_task = instance.data.get("kitsu_task")
+            if not kitsu_task:
+                continue
+
+            # Get note status, by default uses the task status for the note
+            # if it is not specified in the configuration
+            kitsu_task = context.data["kitsu_task"]
+            shortname = kitsu_task["task_status"]["short_name"].upper()
+            note_status = kitsu_task["task_status_id"]
+            if self.set_status_note and next(
+                (
+                    False
+                    for status_except in self.status_exceptions
+                    if shortname == status_except["short_name"].upper()
+                    and status_except["condition"] == "equal"
+                    or
+                    shortname != status_except["short_name"].upper()
+                    and status_except["condition"] == "not_equal"
+                ),
+                True,
+            ) and next(
+                (
+                    True
+                    for family in families
+                    if next(
+                        (
+                            False
+                            for family_req in self.family_requirements
+                            if family_req['condition'] == 'equal'
+                            and family_req['family'].lower() != family
+                            or
+                            family_req['condition'] == 'not_equal'
+                            and family_req['family'].lower() == family
+                        ),
+                        True,
+                    )
+                ),
+                False,
+            ):
+                kitsu_status = gazu.task.get_task_status_by_short_name(
+                    self.note_status_shortname
                 )
                 if kitsu_status:
                     note_status = kitsu_status
