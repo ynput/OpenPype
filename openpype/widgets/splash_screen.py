@@ -30,8 +30,8 @@ class SplashScreen(QtWidgets.QDialog):
         """
         Args:
             window_title (str): String which sets the window title
-            splash_icon (str | bytes | None): A resource (pic) which is used for
-                the splash icon
+            splash_icon (str | bytes | None): A resource (pic) which is used
+                for the splash icon
             window_icon (str | bytes | None: A resource (pic) which is used for
                 the window's icon
         """
@@ -113,7 +113,7 @@ class SplashScreen(QtWidgets.QDialog):
         self.setStyleSheet(style.load_stylesheet())
 
         # Top Section
-        self.top_label = QtWidgets.QLabel(self);
+        self.top_label = QtWidgets.QLabel(self)
         self.top_label.setText("Starting process ...")
         self.top_label.setWordWrap(True)
 
