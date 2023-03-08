@@ -25,6 +25,8 @@ import hashlib
 from datetime import datetime
 import itertools
 from collections import OrderedDict
+import sys
+import subprocess
 
 import attr
 
@@ -103,6 +105,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = "none"
+    previewFrames = 9
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -301,6 +304,47 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         else:
             # Submit main render job
             job_info, plugin_info = payload
+
+            # Hornet: make preview job if enabled
+            preview_enabled = instance.data.get("renderPreviewFrames")
+            while preview_enabled:
+                preview_sufix = "[PREVIEW_FRAMES]"
+                rest_suffix = "[REST OF FRAMES]"
+                orig_name = job_info.Name
+                orig_priority = job_info.Priority
+                preview_priority_offset = instance.data.get("previewPriorityOffset")
+                try:
+                    # possible errors:
+                    #   - number of frames <= previewFrames
+                    #   - error calculating preview frames
+                    frameList = _convert_frame_string_to_list(job_info.Frames)
+                    previewFrameList, restFrameList = _get_preview_frames(
+                        frameList, self.previewFrames
+                        )
+                except Exception as e:
+                    self.log.warning(
+                        "Error making preview job, submitting job directly. Error: {}"
+                        .format(e)
+                        )
+                    break
+                jobList = [
+                    (preview_sufix, previewFrameList),
+                    (rest_suffix, restFrameList)
+                ]
+                for suffix, frames in jobList:
+                    if suffix == preview_sufix:
+                        job_info.Priority = orig_priority + preview_priority_offset
+                    else:
+                        job_info.Priority = orig_priority
+
+                    frameString = ",".join([str(i) for i in frames])
+                    job_info.Frames = frameString
+                    job_info.Name = orig_name + suffix
+
+                    self.log.info("Submitting {}: {}".format(suffix, frameString))
+                    self.submit(self.assemble_payload(job_info, plugin_info))
+                return
+            
             self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _tile_render(self, payload):
@@ -847,3 +891,125 @@ def _format_tiles(
             tile += 1
 
     return out, cfg
+
+
+# Hornet
+def _get_preview_frames(frames, previewFrames):
+    '''
+    This is "From both ends and from center" as in Deadline submitter
+    Based on SubmitMayaDeadline.ApplyOutOfOrder
+    '''
+    if not len(frames) > previewFrames:
+        raise Exception("Too few frames to preview")
+    else:
+        newFrames = []
+        theSize = len(frames)
+        halfSize = int(theSize / 2)
+
+        front = 0
+        back = theSize - 1
+        middleDec = halfSize - 1
+        middleInc = halfSize
+
+        for x in range(9999):
+            if front < halfSize \
+                and middleDec > front \
+                    and back > halfSize \
+                        and middleInc < back:
+                newFrames.append(frames[front])
+                newFrames.append(frames[back])
+                newFrames.append(frames[middleDec])
+                #newFrames.append(frames[middleInc])
+
+                front += 1
+                middleInc += 1
+                middleDec -= 1
+                back -= 1
+            else:
+                break
+
+        # Check that no elements have been missed
+        if len(frames) > len(newFrames):
+            for i in range(len(frames)):
+                found = False            
+                for j in range(len(newFrames)):
+                    if newFrames[j] == frames[i]:
+                        found = True
+                if not found:
+                    newFrames.append(frames[i])
+
+    previewFrameList = sorted(newFrames[:previewFrames])
+    restFramesList = sorted(newFrames[previewFrames:])
+    
+    return previewFrameList, restFramesList
+
+
+def _convert_frame_string_to_list(frameString):
+    """
+    Return: A list of int
+    """
+    try:
+        listString = CallDeadlineCommand([
+            '-ParseFrameList', frameString, 'false'
+            ])
+        frames = [int(a) for a in listString.split(",")]
+    except Exception as e:
+        raise Exception(e)
+
+    return frames
+
+
+# Hornet: below funcs from main/MayaJigsaw
+def CallDeadlineCommand( arguments, hideWindow=True, readStdout=True ):
+    environment = None
+    
+    deadlineCommand = GetDeadlineCommand()
+            
+    if os.name == 'nt':
+        
+        # Need to set the PATH, cuz windows 8 seems to load DLLs from the PATH earlier that cwd....
+        environment = {}
+        for key in os.environ.keys():
+            environment[key] = str(os.environ[key])
+        environment['PATH'] = str(os.path.dirname( deadlineCommand ) + ";" + os.environ['PATH'])
+    
+    startupinfo = None
+    if hideWindow and os.name == 'nt':
+        # Python 2.6 has subprocess.STARTF_USESHOWWINDOW, and Python 2.7 has subprocess._subprocess.STARTF_USESHOWWINDOW, so check for both.
+        if hasattr( subprocess, '_subprocess' ) and hasattr( subprocess._subprocess, 'STARTF_USESHOWWINDOW' ):
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess._subprocess.STARTF_USESHOWWINDOW
+        elif hasattr( subprocess, 'STARTF_USESHOWWINDOW' ):
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    
+    stdoutPipe = None
+    if readStdout:
+        stdoutPipe=subprocess.PIPE
+    
+    arguments.insert( 0, deadlineCommand)
+        
+    proc = subprocess.Popen(arguments, stdout=stdoutPipe, startupinfo=startupinfo, env=environment)
+    
+    output = ""
+    if readStdout:
+        output = proc.stdout.read()
+    
+    return output
+
+def GetDeadlineCommand():
+    deadlineBin = ""
+    try:
+        deadlineBin = os.environ['DEADLINE_PATH']
+    except KeyError:
+        #if the error is a key error it means that DEADLINE_PATH is not set. however Deadline command may be in the PATH or on OSX it could be in the file /Users/Shared/Thinkbox/DEADLINE_PATH
+        pass
+        
+    # On OSX, we look for the DEADLINE_PATH file if the environment variable does not exist.
+    if deadlineBin == "" and  os.path.exists( "/Users/Shared/Thinkbox/DEADLINE_PATH" ):
+        with open( "/Users/Shared/Thinkbox/DEADLINE_PATH" ) as f:
+            deadlineBin = f.read().strip()
+
+    deadlineCommand = os.path.join(deadlineBin, "deadlinecommand")
+    
+    return deadlineCommand

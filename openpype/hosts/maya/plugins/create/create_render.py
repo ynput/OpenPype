@@ -201,6 +201,8 @@ class CreateRender(plugin.Creator):
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
         self.data["priority"] = default_priority
+        self.data["renderPreviewFrames"] = True     #hornet
+        self.data["previewPriorityOffset"] = 10     #hornet
         self.data["tile_priority"] = default_priority
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
@@ -209,6 +211,7 @@ class CreateRender(plugin.Creator):
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
+        # Hornet: edits below
         #self.data["convertToScanline"] = False
         #self.data["useReferencedAovs"] = False
         #self.data["renderSetupIncludeLights"] = (
