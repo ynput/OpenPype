@@ -35,8 +35,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
         _, ext = lib.splitext(
             output, allowed_multidot_extensions=[
-                              ".ass.gz", ".bgeo.sc", ".bgeo.gz",
-                              ".bgeo.lzma", ".bgeo.bz2"])
+                ".ass.gz", ".bgeo.sc", ".bgeo.gz",
+                ".bgeo.lzma", ".bgeo.bz2"])
         file_name = os.path.basename(output)
         result = file_name
 
