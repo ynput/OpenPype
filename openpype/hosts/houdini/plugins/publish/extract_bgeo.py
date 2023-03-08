@@ -27,14 +27,13 @@ class ExtractBGEO(publish.Extractor):
         file_name = os.path.basename(output)
 
         # We run the render
-        self.log.info("Writing bgeo files '%s' to '%s'" % (file_name,
-                                                        staging_dir))
+        self.log.info("Writing bgeo files '{}' to '{}'.".format(
+            file_name, staging_dir))
 
         # write files
-        ropnode.parm("execute").pressButton()
+        render_rop(ropnode)
 
         output = instance.data["frames"]
-        self.log.debug(f"output: {output}")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

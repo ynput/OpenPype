@@ -33,8 +33,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
             self.log.warning("Using current frame: {}".format(hou.frame()))
             output = output_parm.eval()
 
-        _, ext = lib.splitext(output,
-                          allowed_multidot_extensions=[
+        _, ext = lib.splitext(
+            output, allowed_multidot_extensions=[
                               ".ass.gz", ".bgeo.sc", ".bgeo.gz",
                               ".bgeo.lzma", ".bgeo.bz2"])
         file_name = os.path.basename(output)
@@ -78,7 +78,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
         frame = match.group(1)
         padding = len(frame)
 
-        # Get the parts of the filename surrounding the frame number
+        # Get the parts of the filename surrounding the frame number,
         # so we can put our own frame numbers in.
         span = match.span(1)
         prefix = match.string[: span[0]]

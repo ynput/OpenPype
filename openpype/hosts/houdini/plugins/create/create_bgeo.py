@@ -52,12 +52,12 @@ class CreateBGEO(plugin.HoudiniCreator):
     def get_pre_create_attr_defs(self):
         attrs = super().get_pre_create_attr_defs()
         bgeo_enum = [
-            {"option": "bgeo", "value": "bgeo", "label": "uncompressed bgeo (.bgeo)"},
-            {"option": "bgeosc", "value": "bgeosc", "label": "BLOSC compressed bgeo (.bgeosc)"},
-            {"option": "bgeo.sc", "value": "bgeo.sc", "label": "BLOSC compressed bgeo (.bgeo.sc)"},
-            {"option": "bgeo.gz", "value": "bgeo.gz", "label": "GZ compressed bgeo (.bgeo.gz)"},
-            {"option": "bgeo.lzma", "value": "bgeo.lzma", "label": "LZMA compressed bgeo (.bgeo.lzma)"},
-            {"option": "bgeo.bz2", "value": "bgeo.bz2", "label": "BZip2 compressed bgeo (.bgeo.bz2)"}
+            {"value": "bgeo", "label": "uncompressed bgeo (.bgeo)"},
+            {"value": "bgeosc", "label": "BLOSC compressed bgeo (.bgeosc)"},
+            {"value": "bgeo.sc", "label": "BLOSC compressed bgeo (.bgeo.sc)"},
+            {"value": "bgeo.gz", "label": "GZ compressed bgeo (.bgeo.gz)"},
+            {"value": "bgeo.lzma", "label": "LZMA compressed bgeo (.bgeo.lzma)"},
+            {"value": "bgeo.bz2", "label": "BZip2 compressed bgeo (.bgeo.bz2)"}
         ]
 
         return attrs + [
