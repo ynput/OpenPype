@@ -106,8 +106,8 @@ class UEProjectGenerationWorker(QtCore.QObject):
             raise RuntimeError(msg)
 
         print("--- Project has been generated successfully.")
-        self.stage_begin.emit(f'Writing the Engine ID of the build UE ... 1 out'
-                              f' of {stage_count}')
+        self.stage_begin.emit(f'Writing the Engine ID of the build UE ... 1'
+                              f' out of {stage_count}')
 
         if not project_file.is_file():
             msg = "Failed to write the Engine ID into .uproject file! Can " \
@@ -117,8 +117,10 @@ class UEProjectGenerationWorker(QtCore.QObject):
 
         with open(project_file.as_posix(), mode="r+") as pf:
             pf_json = json.load(pf)
-            pf_json["EngineAssociation"] = ue_lib.get_build_id(self.engine_path,
-                                                               self.ue_version)
+            pf_json["EngineAssociation"] = ue_lib.get_build_id(
+                self.engine_path,
+                self.ue_version
+            )
             print(pf_json["EngineAssociation"])
             pf.seek(0)
             json.dump(pf_json, pf, indent=4)
@@ -132,7 +134,8 @@ class UEProjectGenerationWorker(QtCore.QObject):
                                   f'{stage_count}')
 
             self.progress.emit(0)
-            ubt_path = ue_lib.get_path_to_ubt(self.engine_path, self.ue_version)
+            ubt_path = ue_lib.get_path_to_ubt(self.engine_path,
+                                              self.ue_version)
 
             arch = "Win64"
             if platform.system().lower() == "windows":
@@ -199,8 +202,8 @@ class UEProjectGenerationWorker(QtCore.QObject):
         # ensure we have PySide2 installed in engine
 
         self.progress.emit(0)
-        self.stage_begin.emit(f'Checking PySide2 installation... {stage_count} '
-                              f'out of {stage_count}')
+        self.stage_begin.emit(f'Checking PySide2 installation... {stage_count}'
+                              f' out of {stage_count}')
         python_path = None
         if platform.system().lower() == "windows":
             python_path = self.engine_path / ("Engine/Binaries/ThirdParty/"
