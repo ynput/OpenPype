@@ -82,7 +82,9 @@ class UnrealPrelaunchHook(PreLaunchHook):
         )
 
         # set up the splash screen with necessary triggers
-        ue_plugin_worker.installing.connect(splash_screen.update_top_label_text)
+        ue_plugin_worker.installing.connect(
+            splash_screen.update_top_label_text
+        )
         ue_plugin_worker.progress.connect(splash_screen.update_progress)
         ue_plugin_worker.log.connect(splash_screen.append_log)
         ue_plugin_worker.finished.connect(splash_screen.quit_and_close)
