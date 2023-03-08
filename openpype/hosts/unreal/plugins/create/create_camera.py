@@ -7,8 +7,6 @@ from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator,
 )
 
-class CreateCamera(UnrealActorCreator):
-    """Create Camera."""
 
 class CreateCamera(UnrealAssetCreator):
     """Create Camera."""
