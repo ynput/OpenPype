@@ -222,18 +222,21 @@ class LoadClip(plugin.NukeLoader):
         """
         representation = deepcopy(representation)
         context = representation["context"]
-        template = representation["data"]["template"]
+
+        # Get the frame from the context and hash it
+        frame = context["frame"]
+        hashed_frame = "#" * len(str(frame))
+
+        # Replace the frame with the hash in the originalBasename
         if (
-            "{originalBasename}" in template
-            and "frame" in context
+            "{originalBasename}" in representation["data"]["template"]
         ):
-            frame = context["frame"]
-            hashed_frame = "#" * len(str(frame))
             origin_basename = context["originalBasename"]
             context["originalBasename"] = origin_basename.replace(
                 frame, hashed_frame
             )
 
+        # Replace the frame with the hash in the frame
         representation["context"]["frame"] = hashed_frame
         return representation
 
