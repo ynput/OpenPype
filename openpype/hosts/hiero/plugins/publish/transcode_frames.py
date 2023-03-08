@@ -103,7 +103,7 @@ class TranscodeFrames(publish.Extractor):
         output_ext = "exr"
         frames = range(first_frame, end_frame + handle_start + 1)
         len_frames = len(frames)
-        self.log.info('Trancoding frame range {0} - {1}'.format(frames[0], frames[-1]))
+        self.log.info("Trancoding frame range {0} - {1}".format(frames[0], frames[-1]))
         for index, frame in enumerate(frames):
             # Calculate input_frame for output by normalizing input media to first frame
             input_frame = source_start + clip_source_in - handle_start + frame - first_frame
