@@ -8,13 +8,12 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
-    # families = ["kitsu"]
+    families = ["render", "kitsu"]
     set_status_note = False
     note_status_shortname = "wfa"
     status_exceptions = list()
 
     def process(self, context):
-
         # Get comment text body
         publish_comment = context.data.get("comment")
         if not publish_comment:

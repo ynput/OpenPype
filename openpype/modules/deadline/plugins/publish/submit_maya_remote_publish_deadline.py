@@ -7,6 +7,7 @@ from maya import cmds
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.settings import get_project_settings
 from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 import pyblish.api
 
@@ -104,9 +105,13 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         keys = [
             "FTRACK_API_USER",
             "FTRACK_API_KEY",
-            "FTRACK_SERVER",
-            "OPENPYPE_VERSION"
+            "FTRACK_SERVER"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 

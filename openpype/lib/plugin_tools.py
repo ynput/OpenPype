@@ -8,7 +8,6 @@ import warnings
 import functools
 
 from openpype.client import get_asset_by_id
-from openpype.settings import get_project_settings
 
 log = logging.getLogger(__name__)
 
@@ -101,8 +100,6 @@ def get_subset_name_with_asset_doc(
             is not passed.
         dynamic_data (dict): Dynamic data specific for a creator which creates
             instance.
-        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
-            if 'asset_doc' is not passed.
     """
 
     from openpype.pipeline.create import get_subset_name
@@ -200,122 +197,6 @@ def prepare_template_data(fill_pairs):
         fill_data[key.capitalize()] = capitalized
 
     return fill_data
-
-
-@deprecated("openpype.pipeline.publish.lib.filter_pyblish_plugins")
-def filter_pyblish_plugins(plugins):
-    """Filter pyblish plugins by presets.
-
-    This servers as plugin filter / modifier for pyblish. It will load plugin
-    definitions from presets and filter those needed to be excluded.
-
-    Args:
-        plugins (dict): Dictionary of plugins produced by :mod:`pyblish-base`
-            `discover()` method.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    from openpype.pipeline.publish.lib import filter_pyblish_plugins
-
-    filter_pyblish_plugins(plugins)
-
-
-@deprecated
-def set_plugin_attributes_from_settings(
-    plugins, superclass, host_name=None, project_name=None
-):
-    """Change attribute values on Avalon plugins by project settings.
-
-    This function should be used only in host context. Modify
-    behavior of plugins.
-
-    Args:
-        plugins (list): Plugins discovered by origin avalon discover method.
-        superclass (object): Superclass of plugin type (e.g. Cretor, Loader).
-        host_name (str): Name of host for which plugins are loaded and from.
-            Value from environment `AVALON_APP` is used if not entered.
-        project_name (str): Name of project for which settings will be loaded.
-            Value from environment `AVALON_PROJECT` is used if not entered.
-
-    Deprecated:
-        Function will be removed after release version 3.15.*
-    """
-
-    # Function is not used anymore
-    from openpype.pipeline import LegacyCreator, LoaderPlugin
-
-    # determine host application to use for finding presets
-    if host_name is None:
-        host_name = os.environ.get("AVALON_APP")
-
-    if project_name is None:
-        project_name = os.environ.get("AVALON_PROJECT")
-
-    # map plugin superclass to preset json. Currently supported is load and
-    # create (LoaderPlugin and LegacyCreator)
-    plugin_type = None
-    if superclass is LoaderPlugin or issubclass(superclass, LoaderPlugin):
-        plugin_type = "load"
-    elif superclass is LegacyCreator or issubclass(superclass, LegacyCreator):
-        plugin_type = "create"
-
-    if not host_name or not project_name or plugin_type is None:
-        msg = "Skipped attributes override from settings."
-        if not host_name:
-            msg += " Host name is not defined."
-
-        if not project_name:
-            msg += " Project name is not defined."
-
-        if plugin_type is None:
-            msg += " Plugin type is unsupported for class {}.".format(
-                superclass.__name__
-            )
-
-        print(msg)
-        return
-
-    print(">>> Finding presets for {}:{} ...".format(host_name, plugin_type))
-
-    project_settings = get_project_settings(project_name)
-    plugin_type_settings = (
-        project_settings
-        .get(host_name, {})
-        .get(plugin_type, {})
-    )
-    global_type_settings = (
-        project_settings
-        .get("global", {})
-        .get(plugin_type, {})
-    )
-    if not global_type_settings and not plugin_type_settings:
-        return
-
-    for plugin in plugins:
-        plugin_name = plugin.__name__
-
-        plugin_settings = None
-        # Look for plugin settings in host specific settings
-        if plugin_name in plugin_type_settings:
-            plugin_settings = plugin_type_settings[plugin_name]
-
-        # Look for plugin settings in global settings
-        elif plugin_name in global_type_settings:
-            plugin_settings = global_type_settings[plugin_name]
-
-        if not plugin_settings:
-            continue
-
-        print(">>> We have preset for {}".format(plugin_name))
-        for option, value in plugin_settings.items():
-            if option == "enabled" and value is False:
-                setattr(plugin, "active", False)
-                print("  - is disabled by preset")
-            else:
-                setattr(plugin, option, value)
-                print("  - setting `{}`: `{}`".format(option, value))
 
 
 def source_hash(filepath, *args):

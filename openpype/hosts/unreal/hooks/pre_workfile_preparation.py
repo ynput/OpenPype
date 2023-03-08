@@ -79,9 +79,9 @@ class UnrealPrelaunchHook(PreLaunchHook):
         unreal_project_name = os.path.splitext(unreal_project_filename)[0]
         # Unreal is sensitive about project names longer then 20 chars
         if len(unreal_project_name) > 20:
-            self.log.warning((
-                f"Project name exceed 20 characters ({unreal_project_name})!"
-            ))
+            raise ApplicationLaunchFailed(
+                f"Project name exceeds 20 characters ({unreal_project_name})!"
+            )
 
         # Unreal doesn't accept non alphabet characters at the start
         # of the project name. This is because project name is then used
@@ -119,29 +119,34 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"detected [ {engine_version} ]"
             ))
 
-        ue_path = unreal_lib.get_editor_executable_path(
+        ue_path = unreal_lib.get_editor_exe_path(
             Path(detected[engine_version]), engine_version)
 
         self.launch_context.launch_args = [ue_path.as_posix()]
         project_path.mkdir(parents=True, exist_ok=True)
 
+        # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
+        # execution of `create_unreal_project`
+
+        if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
+            self.log.info((
+                f"{self.signature} using OpenPype plugin from "
+                f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
+            ))
+        env_key = "OPENPYPE_UNREAL_PLUGIN"
+        if self.launch_context.env.get(env_key):
+            os.environ[env_key] = self.launch_context.env[env_key]
+
+        engine_path = detected[engine_version]
+
+        unreal_lib.try_installing_plugin(Path(engine_path), os.environ)
+
         project_file = project_path / unreal_project_filename
         if not project_file.is_file():
-            engine_path = detected[engine_version]
             self.log.info((
                 f"{self.signature} creating unreal "
                 f"project [ {unreal_project_name} ]"
             ))
-            # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
-            # execution of `create_unreal_project`
-            if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
-                self.log.info((
-                    f"{self.signature} using OpenPype plugin from "
-                    f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
-                ))
-            env_key = "OPENPYPE_UNREAL_PLUGIN"
-            if self.launch_context.env.get(env_key):
-                os.environ[env_key] = self.launch_context.env[env_key]
 
             unreal_lib.create_unreal_project(
                 unreal_project_name,
