@@ -3,14 +3,17 @@ import ast
 import collections
 import sys
 import six
-from abc import ABC
+from abc import (
+    ABC,
+    ABCMeta,
+)
 
 import unreal
 
 from .pipeline import (
     create_publish_instance,
     imprint,
-    lsinst,
+    ls_inst,
     UNREAL_VERSION
 )
 from openpype.lib import (
@@ -25,6 +28,7 @@ from openpype.pipeline import (
 )
 
 
+@six.add_metaclass(ABCMeta)
 class UnrealBaseCreator(Creator):
     """Base class for Unreal creator plugins."""
     root = "/Game/OpenPype/PublishInstances"
@@ -52,7 +56,7 @@ class UnrealBaseCreator(Creator):
         if shared_data.get("unreal_cached_subsets") is None:
             unreal_cached_subsets = collections.defaultdict(list)
             unreal_cached_legacy_subsets = collections.defaultdict(list)
-            for instance in lsinst():
+            for instance in ls_inst():
                 creator_id = instance.get("creator_identifier")
                 if creator_id:
                     unreal_cached_subsets[creator_id].append(instance)
@@ -140,6 +144,7 @@ class UnrealBaseCreator(Creator):
             self._remove_instance_from_context(instance)
 
 
+@six.add_metaclass(ABCMeta)
 class UnrealAssetCreator(UnrealBaseCreator):
     """Base class for Unreal creator plugins based on assets."""
 
@@ -183,6 +188,7 @@ class UnrealAssetCreator(UnrealBaseCreator):
         ]
 
 
+@six.add_metaclass(ABCMeta)
 class UnrealActorCreator(UnrealBaseCreator):
     """Base class for Unreal creator plugins based on actors."""
 
@@ -211,12 +217,9 @@ class UnrealActorCreator(UnrealBaseCreator):
             # Check if instance data has members, filled by the plugin.
             # If not, use selection.
             if not instance_data.get("members"):
-                selection = []
-
-                if pre_create_data.get("use_selection"):
-                    utility_lib = unreal.EditorUtilityLibrary
-                    sel_objects = utility_lib.get_selected_assets()
-                    selection = [a.get_path_name() for a in sel_objects]
+                actor_subsystem = unreal.EditorActorSubsystem()
+                sel_actors = actor_subsystem.get_selected_level_actors()
+                selection = [a.get_path_name() for a in sel_actors]
 
                 instance_data["members"] = selection
 

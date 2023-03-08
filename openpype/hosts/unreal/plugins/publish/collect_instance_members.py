@@ -14,7 +14,7 @@ class CollectInstanceMembers(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["unreal"]
-    families = ["look", "unrealStaticMesh", "uasset"]
+    families = ["camera", "look", "unrealStaticMesh", "uasset"]
     label = "Collect Instance Members"
 
     def process(self, instance):
@@ -39,10 +39,7 @@ class CollectInstanceMembers(pyblish.api.InstancePlugin):
 
         assets = pub_instance.get_editor_property('asset_data_external')
 
-        members = []
-
-        for asset in assets:
-            members.append(asset.get_path_name())
+        members = [asset.get_path_name() for asset in assets]
 
         self.log.debug(f"Members: {members}")
 
