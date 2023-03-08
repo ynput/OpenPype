@@ -310,8 +310,8 @@ class UEPluginInstallWorker(QtCore.QObject):
             raise RuntimeError(msg)
 
         # Create a path to the plugin in the engine
-        op_plugin_path = self.engine_path / \
-                         "Engine/Plugins/Marketplace/OpenPype"
+        op_plugin_path = self.engine_path / "Engine/Plugins/Marketplace" \
+                                            "/OpenPype"
 
         if not op_plugin_path.is_dir():
             self.installing.emit("Installing and building the plugin ...")
