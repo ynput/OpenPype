@@ -50,7 +50,14 @@ class ExtractBlend(publish.Extractor):
 
         # Set object mode
         with plugin.context_override(
-            active=bpy.context.scene.objects[0],
+            active=next(  # Get first object that is not library override
+                (
+                    o
+                    for o in bpy.context.scene.objects
+                    if o.override_library is None
+                ),
+                None,
+            ),
             selected=bpy.context.scene.objects,
         ):
             bpy.ops.object.mode_set()
