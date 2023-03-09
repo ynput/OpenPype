@@ -55,15 +55,13 @@ class FusionPrelaunch(PreLaunchHook):
         # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
         # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
         # TODO: Detect Fusion version to only set for specific Fusion build
-        self.launch_context.env[f"FUSION{app_version}_PYTHON36_HOME"] = py3_dir
+        if app_version == 9:
+            self.launch_context.env[f"FUSION_PYTHON36_HOME"] = py3_dir
+        elif app_version == 16:
+            self.launch_context.env[f"FUSION{app_version}_PYTHON36_HOME"] = py3_dir
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
         # to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
-
-        master_prefs_variable = f"FUSION{app_version}_MasterPrefs"
-        master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
-        self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
-        self.launch_context.env[master_prefs_variable] = str(master_prefs)
