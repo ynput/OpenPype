@@ -58,7 +58,7 @@ class FusionPrelaunch(PreLaunchHook):
         if app_version == 9:
             self.launch_context.env[f"FUSION_PYTHON36_HOME"] = py3_dir
         elif app_version == 16:
-            self.launch_context.env[f"FUSION{app_version}_PYTHON36_HOME"] = py3_dir
+            self.launch_context.env[f"FUSION{app_version}_PYTHON36_HOME"] = py3_dir  # noqa
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
