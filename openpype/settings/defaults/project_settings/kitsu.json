@@ -8,6 +8,10 @@
         "IntegrateKitsuNote": {
             "set_status_note": false,
             "note_status_shortname": "wfa"
+        },
+        "CustomCommentTemplate": {
+            "enabled": false,
+            "comment_template": "{comment}\n\n|  |  |\n|--|--|\n| version| `{version}` |\n| family | `{family}` |\n| name | `{name}` |"
         }
     }
 }
