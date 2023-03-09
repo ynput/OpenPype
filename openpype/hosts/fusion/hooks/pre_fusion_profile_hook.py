@@ -2,7 +2,6 @@ import os
 import shutil
 import platform
 from pathlib import Path
-from pprint import pprint
 from openpype.lib import PreLaunchHook
 from openpype.hosts.fusion import get_fusion_profile_number
 
@@ -13,7 +12,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
 
     app_groups = ["fusion"]
     order = 2
-    
+
     def get_fusion_profile_name(self, app_version) -> str:
         # Returns 'Default', unless FUSION16_PROFILE is set
         return os.getenv(f"FUSION{app_version}_PROFILE", "Default")
@@ -39,8 +38,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         profile_source = self.check_profile_variable(app_version)
         if profile_source:
             return profile_source
-        # otherwise get default location of the profile folder 
-        fu_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}" 
+        # otherwise get default location of the profile folder
+        fu_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}"
         if platform.system() == "Windows":
             profile_source = Path(os.getenv("AppData"), fu_prefs_dir)
         elif platform.system() == "Darwin":
@@ -110,12 +109,12 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         app_data = self.launch_context.env.get("AVALON_APP_NAME", "fusion/18")
         app_version = get_fusion_profile_number(__name__, app_data)
         fu_profile = self.get_fusion_profile_name(app_version)
-        
+
         # do a copy of Fusion profile if copy_status toggle is enabled
         if copy_status and fu_profile_dir is not None:
             profile_source = self.get_profile_source(app_version)
             dest_folder = Path(fu_profile_dir, fu_profile)
-            self.copy_fusion_profile(profile_source, dest_folder, force_sync) 
+            self.copy_fusion_profile(profile_source, dest_folder, force_sync)
 
         # Add temporary profile directory variables to customize Fusion
         # to define where it can read custom scripts and tools from
