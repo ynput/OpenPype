@@ -39,3 +39,5 @@ class CollectFusionCompFrameRanges(pyblish.api.ContextPlugin):
         context.data["frameEnd"] = int(end)
         context.data["frameStartHandle"] = int(global_start)
         context.data["frameEndHandle"] = int(global_end)
+        context.data["handleStart"] = int(start) - int(global_start)
+        context.data["handleEnd"] = int(global_end) - int(end)
