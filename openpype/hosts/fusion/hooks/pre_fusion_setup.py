@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR
-from openpype.hosts.fusion import FUSION_PROFILE_VERSION as VERSION
+from openpype.hosts.fusion import get_fusion_profile_number
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -18,10 +18,13 @@ class FusionPrelaunch(PreLaunchHook):
     """
 
     app_groups = ["fusion"]
+    order = 1
 
     def execute(self):
         # making sure python 3 is installed at provided path
         # Py 3.3-3.10 for Fusion 18+ or Py 3.6 for Fu 16-17
+        app_data = self.launch_context.env.get("AVALON_APP_NAME", "fusion/18")
+        app_version = get_fusion_profile_number(__name__, app_data)
 
         py3_var = "FUSION_PYTHON3_HOME"
         fusion_python3_home = self.launch_context.env.get(py3_var, "")
@@ -52,7 +55,7 @@ class FusionPrelaunch(PreLaunchHook):
         # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
         # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
         # TODO: Detect Fusion version to only set for specific Fusion build
-        self.launch_context.env[f"FUSION{VERSION}_PYTHON36_HOME"] = py3_dir  # noqa
+        self.launch_context.env[f"FUSION{app_version}_PYTHON36_HOME"] = py3_dir
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
@@ -60,7 +63,7 @@ class FusionPrelaunch(PreLaunchHook):
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
-        master_prefs_variable = f"FUSION{VERSION}_MasterPrefs"
+        master_prefs_variable = f"FUSION{app_version}_MasterPrefs"
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
         self.launch_context.env[master_prefs_variable] = str(master_prefs)

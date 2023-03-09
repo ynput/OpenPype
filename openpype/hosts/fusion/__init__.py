@@ -1,12 +1,12 @@
 from .addon import (
+    get_fusion_profile_number,
     FusionAddon,
     FUSION_HOST_DIR,
-    FUSION_PROFILE_VERSION
 )
 
 
 __all__ = (
+    "get_fusion_profile_number",
     "FusionAddon",
     "FUSION_HOST_DIR",
-    "FUSION_PROFILE_VERSION"
 )

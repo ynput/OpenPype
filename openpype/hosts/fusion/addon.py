@@ -1,16 +1,35 @@
 import os
+import re
 from openpype.modules import OpenPypeModule, IHostAddon
+from openpype.lib import Logger
 
 FUSION_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
-FUSION_PROFILE_VERSION = 16
 
-# FUSION_PROFILE_VERSION variable is used by the pre-launch hooks.
-# Since Fusion v16, the profile folder became project-specific,
-# but then it was abandoned by BlackmagicDesign devs, and now, despite it is
-# already Fusion version 18, still FUSION16_PROFILE_DIR is used.
-# The variable is added in case the version number will be
-# updated or deleted so we could easily change the version or disable it.
+def get_fusion_profile_number(module: str, app_data: str) -> int:
+    """
+    FUSION_PROFILE_VERSION variable is used by the pre-launch hooks.
+    Since Fusion v16, the profile folder variable became version-specific,
+    but then it was abandoned by BlackmagicDesign devs, and now, despite it is
+    already Fusion version 18, still FUSION16_PROFILE_DIR is used.
+    The variable is added in case the version number will be
+    updated or deleted so we could easily change the version or disable it.
+    """
+
+    log = Logger.get_logger(__name__)
+
+    if not app_data:
+        return
+    fusion16_profile_versions = ("16", "17", "18")
+    try:
+        app_version = re.search(r"fusion/(\d+)", app_data).group(1)
+        log.info(f"{module} found Fusion profile version: {app_version}")
+        if app_version in fusion16_profile_versions:
+            return 16
+        elif app_version == "9":
+            return 9
+    except AttributeError:
+        log.info("Fusion version was not found in the app data")
 
 
 class FusionAddon(OpenPypeModule, IHostAddon):
