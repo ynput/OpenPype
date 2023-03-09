@@ -186,7 +186,7 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
 class _BaseAttrDefWidget(QtWidgets.QWidget):
     # Type 'object' may not work with older PySide versions
-    value_changed = QtCore.Signal(object, uuid.UUID)
+    value_changed = QtCore.Signal(object, str)
 
     def __init__(self, attr_def, parent):
         super(_BaseAttrDefWidget, self).__init__(parent)

@@ -7,11 +7,11 @@ from openpype.style import load_stylesheet
 from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
     set_rendermode,
-    duplicate_with_inputs
+    duplicate_with_inputs,
 )
 from openpype.hosts.fusion.api.lib import (
     set_asset_framerange,
-    set_asset_resolution
+    set_asset_resolution,
 )
 from openpype.pipeline import legacy_io
 from openpype.resources import get_openpype_icon_filepath
@@ -45,17 +45,19 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self.setWindowTitle("OpenPype")
 
         asset_label = QtWidgets.QLabel("Context", self)
-        asset_label.setStyleSheet("""QLabel {
+        asset_label.setStyleSheet(
+            """QLabel {
             font-size: 14px;
             font-weight: 600;
             color: #5f9fb8;
-        }""")
+        }"""
+        )
         asset_label.setAlignment(QtCore.Qt.AlignHCenter)
 
         workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
         create_btn = QtWidgets.QPushButton("Create...", self)
-        publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
+        publish_btn = QtWidgets.QPushButton("Publish...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
@@ -108,7 +110,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
         libload_btn.clicked.connect(self.on_libload_clicked)
         rendermode_btn.clicked.connect(self.on_rendermode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
-            self.on_duplicate_with_inputs_clicked)
+            self.on_duplicate_with_inputs_clicked
+        )
         set_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
         set_framerange_btn.clicked.connect(self.on_set_framerange_clicked)
 
@@ -130,7 +133,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
-
         # Create a wrapper callback that we only store
         # for as long as we want it to persist as callback
         def _callback(*args):
@@ -146,10 +148,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         host_tools.show_workfiles()
 
     def on_create_clicked(self):
-        host_tools.show_creator()
+        host_tools.show_publisher(tab="create")
 
     def on_publish_clicked(self):
-        host_tools.show_publish()
+        host_tools.show_publisher(tab="publish")
 
     def on_load_clicked(self):
         host_tools.show_loader(use_context=True)

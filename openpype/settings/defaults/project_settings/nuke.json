@@ -565,7 +565,17 @@
         ]
     },
     "templated_workfile_build": {
-        "profiles": []
+        "profiles": [
+            {
+                "task_types": [
+                    "Compositing"
+                ],
+                "task_names": [],
+                "path": "{project[name]}/templates/comp.nk",
+                "keep_placeholder": true,
+                "create_first_version": true
+            }
+        ]
     },
     "filters": {}
 }
