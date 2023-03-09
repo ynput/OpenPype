@@ -43,6 +43,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "rendersetup",
                 "rig",
                 "plate",
+                "reference",
                 "look",
                 "mvLook",
                 "yetiRig",

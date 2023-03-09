@@ -142,7 +142,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "chose subset name pattern, if <track_name> is selected, name of track layer will be used",  # noqa
                     "order": 0},
                 "subsetFamily": {
-                    "value": ["plate", "take"],
+                    "value": ["plate", "take", "reference"],
                     "type": "QComboBox",
                     "label": "Subset Family",
                     "target": "ui", "toolTip": "What use of this subset is for",  # noqa
