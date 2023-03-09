@@ -419,8 +419,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
+        assembly_job_info.Priority = instance.data.get(
+            "tile_priority", self.tile_priority
+        )
+
+        pool = instance.context.data["project_settings"]["deadline"]
+        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
+        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
