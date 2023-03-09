@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR
 from openpype.hosts.fusion import get_fusion_profile_number
