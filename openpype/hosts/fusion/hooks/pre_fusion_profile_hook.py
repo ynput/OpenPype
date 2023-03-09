@@ -3,7 +3,7 @@ import shutil
 import platform
 from pathlib import Path
 from openpype.lib import PreLaunchHook
-from openpype.hosts.fusion import get_fusion_profile_number
+from openpype.hosts.fusion import FUSION_HOST_DIR, get_fusion_profile_number
 
 
 class FusionCopyPrefsPrelaunch(PreLaunchHook):
@@ -121,3 +121,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         fu_profile_dir_variable = f"FUSION{app_version}_PROFILE_DIR"
         self.log.info(f"Setting {fu_profile_dir_variable}: {fu_profile_dir}")
         self.launch_context.env[fu_profile_dir_variable] = str(fu_profile_dir)
+
+        master_prefs_variable = f"FUSION{app_version}_MasterPrefs"
+        master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
+        self.launch_context.env[master_prefs_variable] = str(master_prefs)
