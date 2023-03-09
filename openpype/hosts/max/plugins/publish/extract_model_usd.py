@@ -101,7 +101,7 @@ class ExtractModelUSD(publish.Extractor,
         export_options.Lights = False
         export_options.Cameras = False
         export_options.Materials = False
-        export_options.MeshFormat = rt.name('fromScene')
+        export_options.MeshFormat = rt.name('polyMesh')
         export_options.FileFormat = rt.name('ascii')
         export_options.UpAxis = rt.name('y')
         export_options.LogLevel = rt.name('info')
