@@ -240,7 +240,6 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         )
 
 
-
 class ProjectModel(QtGui.QStandardItemModel):
     def __init__(
         self, dbcon=None, only_active=True, add_default_project=False,
