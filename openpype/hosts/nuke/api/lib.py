@@ -48,7 +48,6 @@ from openpype.pipeline.colorspace import (
     get_imageio_config
 )
 from openpype.pipeline.workfile import BuildWorkfile
-
 from . import gizmo_menu
 from .constants import ASSIST
 
@@ -2677,6 +2676,18 @@ def process_workfile_builder():
     # open workfile
     open_file(last_workfile_path)
 
+
+def start_workfile_template_builder():
+    from .workfile_template_builder import (
+        build_workfile_template
+    )
+
+    # to avoid looping of the callback, remove it!
+    log.info("Starting workfile template builder...")
+    build_workfile_template(workfile_creation_enabled=True)
+
+    # remove callback since it would be duplicating the workfile
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):
