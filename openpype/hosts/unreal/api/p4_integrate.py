@@ -2,14 +2,21 @@ from __future__ import annotations
 import json, time
 from P4 import P4, P4Exception
 from enum import Enum
+from openpype.settings import get_project_settings
 
 
 class P4Integrate:
     p4Connection = None
     p4OpenPypeChangelist = None
-    client = "PLACE YOUR NAME OF EXISTING WORKSPACE"
-    port = "PLACE YOUR ADDRESS WITH PORT"
-    user = "PLACE YOUR USERNAME"
+
+    def __init__(self, project_name: str):
+        settings = get_project_settings(project_name)
+        self.settings = settings["p4v"]["general"]
+        self.client = self.settings["client"]
+        self.port = self.settings["port"]
+        self.user = self.settings["user"]
+        self.project_name = project_name
+
 
     def P4VConnect(self):
         try:
@@ -27,7 +34,6 @@ class P4Integrate:
 
     def P4VCreateOrLoadOpenPypeChangelist(self, changeListDesc: str,
                                           changeListIdentity: str | None,
-                                          currentProjectName: str,
                                           changeListFiles: list[str] | None = None):
         try:
             p4 = self.P4VConnect()
@@ -47,7 +53,7 @@ class P4Integrate:
                     self.p4OpenPypeChangelist = existingChangelist
                 else:
                     currentTimestamp = round(time.time() * 1000)
-                    customIdentity = P4CustomIdentity(currentProjectName, str(currentTimestamp))
+                    customIdentity = P4CustomIdentity(self.project_name, str(currentTimestamp))
 
                     change = p4.fetch_change()
                     change._identity = customIdentity.getIdentityAsJson()

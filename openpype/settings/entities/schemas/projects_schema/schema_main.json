@@ -155,6 +155,10 @@
                     "name": "schema_project_unreal"
                 },
                 {
+                    "type": "schema",
+                    "name": "schema_project_perforce"
+                },
+                {
                     "type": "dynamic_schema",
                     "name": "project_settings/global"
                 }
