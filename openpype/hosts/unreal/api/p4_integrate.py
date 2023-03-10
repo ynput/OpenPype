@@ -83,21 +83,23 @@ class P4Integrate:
                     if changelist["changeIdentity"] == identity:
                         return changelist["change"]
             return None
-        except P4Exception as P4E:
-            print(P4E)
+        except P4Exception as e:
+            raise P4Exception(e) from e
 
     def p4_get_changelist_for_source_app_and_target_env(
             self, source_app_name: str, target_env: str):
-        p4 = self.p4_connect()
-
-        for changelist in p4.run("changes", "-c", p4.client, "-l"):
-            if changelist['status'] != P4ChangelistStatusEnum.SUBMITTED.value:
-                if self.is_json(changelist["desc"]):
-                    parsed_json = json.loads(changelist['desc'])
-                    if "sourceApp" in parsed_json and "targetEnv" in parsed_json:
-                        if parsed_json["sourceApp"] == source_app_name and parsed_json["targetEnv"] == target_env:  # noqa
-                            return changelist["change"]
-        return None
+        try:
+            p4 = self.p4_connect()
+            for changelist in p4.run("changes", "-c", p4.client, "-l"):
+                if changelist['status'] != P4ChangelistStatusEnum.SUBMITTED.value:
+                    if self.is_json(changelist["changeIdentity"]):
+                        parsed_json = json.loads(changelist['changeIdentity'])
+                        if "sourceApp" in parsed_json and "targetEnv" in parsed_json:
+                            if parsed_json["sourceApp"] == source_app_name and parsed_json["targetEnv"] == target_env:  # noqa
+                                return changelist["change"]
+            return None
+        except P4Exception as e:
+            raise P4Exception(e) from e
 
     @staticmethod
     def is_json(string_to_check: str):
