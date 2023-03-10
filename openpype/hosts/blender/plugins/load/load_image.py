@@ -25,7 +25,7 @@ class ImageLoader(plugin.AssetLoader):
     order = 0
     color = "orange"
 
-    load_type = "LINK"
+    load_type = "LINK" # TODO meaningless here, must be refactored
 
     def _load_library_datablocks(
         self,
