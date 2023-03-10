@@ -142,7 +142,8 @@ def _register_events():
 def _init_perforce():
     from openpype.hosts.unreal.api.p4_integrate import P4Integrate
     p4_connector = P4Integrate(get_current_project_name())
-    p4_connector.p4_create_or_load_openpype_changelist("DO NOT EDIT THIS CHANGELIST", None, get_current_project_name())
+    p4_connector.p4_create_or_load_openpype_changelist(
+        "DO NOT EDIT THIS CHANGELIST", None, get_current_project_name())
 
 def ls():
     """List all containers.
@@ -153,7 +154,7 @@ def ls():
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     # UE 5.1 changed how class name is specified
-    class_name = ["/Script/OpenPype", "AssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AssetContainer"  # noqa
+    class_name = ["/Script/OpenPype", "AssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AssetContainer"  # noqa: E501
     openpype_containers = ar.get_assets_by_class(class_name, True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
