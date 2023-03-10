@@ -285,6 +285,17 @@ def build_layout(project_name, asset_name):
     load_subset(
         project_name, asset_name, "BoardReference", "Background", "mov"
     )
+
+    # Delete sound sequence from board mov
+    sound_seq = bpy.context.scene.sequence_editor.sequences[-1]
+    if sound_seq:
+        bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
+
+    # load the audio reference as sound into sequencer
+    load_subset(
+        project_name, asset_name, "AudioReference", "Audio", "wav"
+    )
+
     # load the concept reference of the environment as image background.
     if env_asset_name:
         load_subset(
