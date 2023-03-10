@@ -141,9 +141,8 @@ def _register_events():
 
 def _init_perforce():
     from openpype.hosts.unreal.api.p4_integrate import P4Integrate
-    p4Connector = P4Integrate()
-
-    p4Connector.P4VCreateOrLoadOpenPypeChangelist("DO NOT EDIT THIS CHANGELIST", None, get_current_project_name())
+    p4_connector = P4Integrate(get_current_project_name())
+    p4_connector.p4_create_or_load_openpype_changelist("DO NOT EDIT THIS CHANGELIST", None, get_current_project_name())
 
 def ls():
     """List all containers.

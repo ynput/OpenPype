@@ -1,5 +1,6 @@
 from __future__ import annotations
-import json, time
+import json
+import time
 from P4 import P4, P4Exception
 from enum import Enum
 from openpype.settings import get_project_settings
@@ -41,18 +42,19 @@ class P4Integrate:
                 changelist_files = []
 
             if changelist_identity is not None:
-                changelist = self.p4_get_changelist_by_identity(changelist_identity)
+                changelist = self.p4_get_changelist_by_identity(changelist_identity)  # noqa: E501
                 self.P4_openpype_changelist = changelist
 
             if self.P4_openpype_changelist is None:
-                existing_changelist = self.p4_get_changelist_for_source_app_and_target_env(
+                existing_changelist = self.p4_get_changelist_for_source_app_and_target_env(  # noqa: E501
                     P4CustomIdentity.source_app, P4CustomIdentity.target_env)
 
                 if existing_changelist is not None:
                     self.P4_openpype_changelist = existing_changelist
                 else:
                     current_timestamp = round(time.time() * 1000)
-                    custom_identity = P4CustomIdentity(self.project_name, str(current_timestamp))
+                    custom_identity = P4CustomIdentity(
+                        self.project_name, str(current_timestamp))
 
                     change = p4.fetch_change()
                     change._identity = custom_identity.get_identity_as_json()
@@ -84,7 +86,8 @@ class P4Integrate:
         except P4Exception as P4E:
             print(P4E)
 
-    def p4_get_changelist_for_source_app_and_target_env(self, source_app_name: str, target_env: str):
+    def p4_get_changelist_for_source_app_and_target_env(
+            self, source_app_name: str, target_env: str):
         p4 = self.p4_connect()
 
         for changelist in p4.run("changes", "-c", p4.client, "-l"):
@@ -92,7 +95,7 @@ class P4Integrate:
                 if self.is_json(changelist["desc"]):
                     parsed_json = json.loads(changelist['desc'])
                     if "sourceApp" in parsed_json and "targetEnv" in parsed_json:
-                        if parsed_json["sourceApp"] == source_app_name and parsed_json["targetEnv"] == target_env:
+                        if parsed_json["sourceApp"] == source_app_name and parsed_json["targetEnv"] == target_env:  # noqa
                             return changelist["change"]
         return None
 
