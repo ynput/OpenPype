@@ -52,30 +52,30 @@
                             "type": "text",
                             "key": "note_status_shortname",
                             "label": "Note shortname"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "CustomCommentTemplate",
-                    "label": "Custom Comment Template",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
                         },
                         {
-                            "type": "label",
-                            "label": "Kitsu supports markdown and here you can create a custom comment template.<br/>You can use data from your instance's anatomy."
-                        },
-                        {
-                            "key": "comment_template",
-                            "type": "text",
-                            "multiline": true,
-                            "label": "Custom comment"
+                            "type": "dict",
+                            "collapsible": true,
+                            "checkbox_key": "enabled",
+                            "key": "CustomCommentTemplate",
+                            "label": "Custom Comment Template",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                },
+                                {
+                                    "type": "label",
+                                    "label": "Kitsu supports markdown and here you can create a custom comment template.<br/>You can use data from your instance's anatomy."
+                                },
+                                {
+                                    "key": "comment_template",
+                                    "type": "text",
+                                    "multiline": true,
+                                    "label": "Custom comment"
+                                }
+                            ]
                         }
                     ]
                 }
