@@ -4,7 +4,6 @@ from openpype.pipeline import LauncherAction
 from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
-
 class ClockifySync(LauncherAction):
 
     name = "sync_to_clockify"
@@ -14,18 +13,19 @@ class ClockifySync(LauncherAction):
     reg = OpenPypeSecureRegistry("clockify")
     api_key = reg.get_item("api_key")
     clockapi = ClockifyAPI(api_key=api_key)
-    clockapi.verify_api()
-    have_permissions = clockapi.validate_workspace_perm() or True
+    clockapi.set_api()
+    workspace_id = clockapi.workspace_id
+    user_id = clockapi.user_id
+    workspace_name = clockapi.workspace_name
+    have_permissions = clockapi.validate_workspace_perm(workspace_id, user_id)
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
         return self.have_permissions
 
     def process(self, session, **kwargs):
+        workspace_id = self.workspace_id
         project_name = session.get("AVALON_PROJECT") or ""
-
-        user_id = self.clockapi.get_user_id()
-        workspace_id = self.clockapi.get_workspace_id("test_workspace")
 
         projects_to_sync = []
         if project_name.strip():

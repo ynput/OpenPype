@@ -21,8 +21,6 @@ class ClockifyAPI:
         self.workspace_id = None
         self.master_parent = master_parent
         self.api_key = api_key
-        self.request_counter = 0
-        self.request_time = time.time()
         self._secure_registry = None
         self.user_id = None
 
@@ -68,9 +66,8 @@ class ClockifyAPI:
         return True
 
     @RateLimiter(MAX_CALLS, PERIOD)
-    def validate_workspace_perm(self, workspace_id=None):
+    def validate_workspace_perm(self, workspace_id=None, user_id=None):
         print("validating workspace")
-        user_id = self.get_user_id()
         if user_id is None:
             print("no User found during validation")
             return False
@@ -80,6 +77,7 @@ class ClockifyAPI:
             workspace_id, user_id
         )
         print(action_url)
+        return True # temporarily
         # response = requests.get(
         #     CLOCKIFY_ENDPOINT + action_url,
         #     headers=self.headers
@@ -131,16 +129,12 @@ class ClockifyAPI:
 
     def set_user_id(self):
         try:
-            result = self.validate_user_id()
-            print(f"setting user_id: {result}")
+            user_id = self.get_user_id()
+            print(f"Setting user_id: {user_id}")
         except Exception:
-            result = False
-        if result is not False:
-            self.user_id = result
-
-    def validate_user_id(self):
-        user_id = self.get_user_id()
-        return user_id or False
+            user_id = False
+        if user_id is not False:
+            self.user_id = user_id
         
     def get_api_key(self):
         return self.secure_registry.get_item("api_key", None)
@@ -173,7 +167,6 @@ class ClockifyAPI:
         print(response.status_code)
         if response.status_code != 403:
             result = response.json()
-            print(f"projects: {response.json()}")
             return {
                 project["name"]: project["id"] for project in result
             }
@@ -274,7 +267,8 @@ class ClockifyAPI:
 
         # Check if is currently run another times and has same values
         current = self.get_in_progress(workspace_id)
-        if current is not None:
+        print(f"currently running timers: {current}")
+        if current and current is not None:
             current = current[0]
             if (
                 current.get("description", None) == description and
@@ -313,8 +307,8 @@ class ClockifyAPI:
             success = True
         return success
 
-    @RateLimiter(MAX_CALLS, PERIOD)
-    def get_in_progress(self, user_id=None, workspace_id=None):
+    @RateLimiter(max_calls=10, period=3)
+    def get_in_progress(self, user_id=None, workspace_id=None) -> list:
         if workspace_id is None:
             workspace_id = self.workspace_id
         if user_id is None:
@@ -322,7 +316,6 @@ class ClockifyAPI:
 
         action_url = (f'workspaces/{workspace_id}/user/'
                      f'{user_id}/time-entries?in-progress=1')
-        print(action_url)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -332,8 +325,10 @@ class ClockifyAPI:
         except json.decoder.JSONDecodeError:
             output = None
         if isinstance(output, dict):
-            print(f"Response code: {output.get('code')}")
             output = None
+        if output and isinstance(output, list):
+            print(f"found running timer: {output[0].get('id')}")
+        
         return output
 
     @RateLimiter(MAX_CALLS, PERIOD)
@@ -342,7 +337,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         if user_id is None:
             user_id = self.user_id
-        current = self.get_in_progress(workspace_id)
+        current = self.get_in_progress()
         if current is None:
             print("no current")
             return

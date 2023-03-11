@@ -1,7 +1,6 @@
 import os
 import threading
 import time
-import json
 
 from openpype.modules import (
     OpenPypeModule,
@@ -66,7 +65,7 @@ class ClockifyModule(
         self.bool_timer_run = False
         self.bool_api_key_set = self.clockapi.set_api()
 
-        # Define itself as TimersManager connector
+        # Define itself as ITimersManager connector
         self.timers_manager_connector = self
 
     def tray_start(self):
@@ -108,7 +107,7 @@ class ClockifyModule(
         self.timer_stopped()
 
     def start_timer_check(self):
-        self.bool_thread_check_running = False
+        self.bool_thread_check_running = True
         if self.thread_timer_check is None:
             self.thread_timer_check = threading.Thread(
                 target=self.check_running
@@ -170,7 +169,6 @@ class ClockifyModule(
                 self.bool_timer_run = bool_timer_run
                 self.set_menu_visibility()
             time.sleep(10)
-            print("sleeeeep")
 
     def signed_in(self):
         if not self.timer_manager:
@@ -223,12 +221,12 @@ class ClockifyModule(
     def timer_started(self, data):
         """Tell TimersManager that timer started."""
         if self._timers_manager_module is not None:
-            self._timers_manager_module.timer_started(self._module.id, data)
+            self._timers_manager_module.timer_started(self.id, data)
 
     def timer_stopped(self):
         """Tell TimersManager that timer stopped."""
         if self._timers_manager_module is not None:
-            self._timers_manager_module.timer_stopped(self._module.id)
+            self._timers_manager_module.timer_stopped(self.id)
 
     def stop_timer(self):
         """Called from TimersManager to stop timer."""
