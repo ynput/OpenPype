@@ -3,7 +3,14 @@
 import os
 import copy
 from pathlib import Path
+from openpype.widgets.splash_screen import SplashScreen
+from qtpy import QtCore
+from openpype.hosts.unreal.ue_workers import (
+    UEProjectGenerationWorker,
+    UEPluginInstallWorker
+)
 
+from openpype import resources
 from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
@@ -22,6 +29,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     shell script.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -57,6 +65,78 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         # Return filename
         return filled_anatomy[workfile_template_key]["file"]
+
+    def exec_plugin_install(self, engine_path: Path, env: dict = None):
+        # set up the QThread and worker with necessary signals
+        env = env or os.environ
+        q_thread = QtCore.QThread()
+        ue_plugin_worker = UEPluginInstallWorker()
+
+        q_thread.started.connect(ue_plugin_worker.run)
+        ue_plugin_worker.setup(engine_path, env)
+        ue_plugin_worker.moveToThread(q_thread)
+
+        splash_screen = SplashScreen(
+            "Installing plugin",
+            resources.get_resource("app_icons", "ue4.png")
+        )
+
+        # set up the splash screen with necessary triggers
+        ue_plugin_worker.installing.connect(
+            splash_screen.update_top_label_text
+        )
+        ue_plugin_worker.progress.connect(splash_screen.update_progress)
+        ue_plugin_worker.log.connect(splash_screen.append_log)
+        ue_plugin_worker.finished.connect(splash_screen.quit_and_close)
+        ue_plugin_worker.failed.connect(splash_screen.fail)
+
+        splash_screen.start_thread(q_thread)
+        splash_screen.show_ui()
+
+        if not splash_screen.was_proc_successful():
+            raise ApplicationLaunchFailed("Couldn't run the application! "
+                                          "Plugin failed to install!")
+
+    def exec_ue_project_gen(self,
+                            engine_version: str,
+                            unreal_project_name: str,
+                            engine_path: Path,
+                            project_dir: Path):
+        self.log.info((
+            f"{self.signature} Creating unreal "
+            f"project [ {unreal_project_name} ]"
+        ))
+
+        q_thread = QtCore.QThread()
+        ue_project_worker = UEProjectGenerationWorker()
+        ue_project_worker.setup(
+            engine_version,
+            unreal_project_name,
+            engine_path,
+            project_dir
+        )
+        ue_project_worker.moveToThread(q_thread)
+        q_thread.started.connect(ue_project_worker.run)
+
+        splash_screen = SplashScreen(
+            "Initializing UE project",
+            resources.get_resource("app_icons", "ue4.png")
+        )
+
+        ue_project_worker.stage_begin.connect(
+            splash_screen.update_top_label_text
+        )
+        ue_project_worker.progress.connect(splash_screen.update_progress)
+        ue_project_worker.log.connect(splash_screen.append_log)
+        ue_project_worker.finished.connect(splash_screen.quit_and_close)
+        ue_project_worker.failed.connect(splash_screen.fail)
+
+        splash_screen.start_thread(q_thread)
+        splash_screen.show_ui()
+
+        if not splash_screen.was_proc_successful():
+            raise ApplicationLaunchFailed("Couldn't run the application! "
+                                          "Failed to generate the project!")
 
     def execute(self):
         """Hook entry method."""
@@ -137,23 +217,18 @@ class UnrealPrelaunchHook(PreLaunchHook):
         if self.launch_context.env.get(env_key):
             os.environ[env_key] = self.launch_context.env[env_key]
 
-        engine_path = detected[engine_version]
+        engine_path: Path = Path(detected[engine_version])
 
-        unreal_lib.try_installing_plugin(Path(engine_path), os.environ)
+        if not unreal_lib.check_plugin_existence(engine_path):
+            self.exec_plugin_install(engine_path)
 
         project_file = project_path / unreal_project_filename
-        if not project_file.is_file():
-            self.log.info((
-                f"{self.signature} creating unreal "
-                f"project [ {unreal_project_name} ]"
-            ))
 
-            unreal_lib.create_unreal_project(
-                unreal_project_name,
-                engine_version,
-                project_path,
-                engine_path=Path(engine_path)
-            )
+        if not project_file.is_file():
+            self.exec_ue_project_gen(engine_version,
+                                     unreal_project_name,
+                                     engine_path,
+                                     project_path)
 
         self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments

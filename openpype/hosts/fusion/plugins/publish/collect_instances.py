@@ -39,6 +39,8 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             "frameEnd": context.data["frameEnd"],
             "frameStartHandle": context.data["frameStartHandle"],
             "frameEndHandle": context.data["frameStartHandle"],
+            "handleStart": context.data["handleStart"],
+            "handleEnd": context.data["handleEnd"],
             "fps": context.data["fps"],
         })
 
