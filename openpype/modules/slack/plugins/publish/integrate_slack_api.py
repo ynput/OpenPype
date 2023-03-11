@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import time
 
 from openpype.client import OpenPypeMongoConnection
+from openpype.pipeline.publish import get_publish_repre_path
 from openpype.lib.plugin_tools import prepare_template_data
 
 
@@ -167,9 +168,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         thumbnail_path = None
         for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
-                repre_thumbnail_path = (
-                    repre.get("published_path") or
-                    os.path.join(repre["stagingDir"], repre["files"])
+                repre_thumbnail_path = get_publish_repre_path(
+                    instance, repre, False
                 )
                 if os.path.exists(repre_thumbnail_path):
                     thumbnail_path = repre_thumbnail_path
@@ -184,11 +184,10 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if (repre.get("review")
                     or "review" in tags
                     or "burnin" in tags):
-                repre_review_path = (
-                    repre.get("published_path") or
-                    os.path.join(repre["stagingDir"], repre["files"])
+                repre_review_path = get_publish_repre_path(
+                    instance, repre, False
                 )
-                if os.path.exists(repre_review_path):
+                if repre_review_path and os.path.exists(repre_review_path):
                     review_path = repre_review_path
                 if "burnin" in tags:  # burnin has precedence if exists
                     break

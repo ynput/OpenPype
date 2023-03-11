@@ -86,6 +86,12 @@ from .context_tools import (
     registered_host,
     deregister_host,
     get_process_id,
+
+    get_current_context,
+    get_current_host_name,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
 )
 install = install_host
 uninstall = uninstall_host
@@ -176,6 +182,13 @@ __all__ = (
     "register_host",
     "registered_host",
     "deregister_host",
+    "get_process_id",
+
+    "get_current_context",
+    "get_current_host_name",
+    "get_current_project_name",
+    "get_current_asset_name",
+    "get_current_task_name",
 
     # Backwards compatible function names
     "install",

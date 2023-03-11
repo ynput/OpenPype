@@ -33,13 +33,25 @@
             "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
-            "scene_patches": []
+            "scene_patches": [],
+            "strict_error_checking": true
+        },
+        "MaxSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "use_published": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "group": "none",
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "framePerTask": 1
         },
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
-            "use_published": true,
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
@@ -101,6 +113,9 @@
                     ".*"
                 ],
                 "harmony": [
+                    ".*"
+                ],
+                "max": [
                     ".*"
                 ]
             }

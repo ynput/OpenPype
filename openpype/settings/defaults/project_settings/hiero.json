@@ -60,16 +60,6 @@
                 "render",
                 "review"
             ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4"
-            ],
             "clip_name_template": "{asset}_{subset}_{representation}"
         }
     },

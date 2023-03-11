@@ -144,13 +144,20 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         """
         obj_network = hou.node("/obj")
-        op_ctx = obj_network.createNode(
-            "null", node_name="OpenPypeContext")
+        op_ctx = obj_network.createNode("null", node_name="OpenPypeContext")
+
+        # A null in houdini by default comes with content inside to visualize
+        # the null. However since we explicitly want to hide the node lets
+        # remove the content and disable the display flag of the node
+        for node in op_ctx.children():
+            node.destroy()
+
         op_ctx.moveToGoodPosition()
         op_ctx.setBuiltExplicitly(False)
         op_ctx.setCreatorState("OpenPype")
         op_ctx.setComment("OpenPype node to hold context metadata")
         op_ctx.setColor(hou.Color((0.081, 0.798, 0.810)))
+        op_ctx.setDisplayFlag(False)
         op_ctx.hide(True)
         return op_ctx
 

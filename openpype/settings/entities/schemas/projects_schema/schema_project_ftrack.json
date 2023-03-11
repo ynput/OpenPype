@@ -1037,6 +1037,21 @@
                                 {"fps": "FPS"},
                                 {"code": "Codec"}
                             ]
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "upload_reviewable_with_origin_name",
+                            "label": "Upload reviewable with origin name"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Note:</b> Reviewable will be uploaded twice into ftrack when enabled. One with original name and second with required 'ftrackreview-mp4'. That may cause dramatic increase of ftrack storage usage."
+                        },
+                        {
+                            "type": "separator"
                         }
                     ]
                 },
