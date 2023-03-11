@@ -230,8 +230,8 @@ Maya settings concerning framerate, resolution and frame range are handled by
 OpenPype. If set correctly in Ftrack, Maya will validate you have correct fps on
 scene save and publishing offering way to fix it for you.
 
-For resolution and frame range, use **OpenPype → Reset Frame Range** and
-**OpenPype → Reset Resolution**
+For resolution and frame range, use **OpenPype → Set Frame Range** and
+**OpenPype → Set Resolution**
 
 
 ## Creating rigs with OpenPype
@@ -386,7 +386,7 @@ Lets start with empty scene. First I'll pull in my favorite Buddha model.
 there just click on **Reference (abc)**.
 
 Next, I want to be sure that I have same frame range as is set on shot I am working
-on. To do this just **OpenPype → Reset Frame Range**. This should set Maya timeline to same
+on. To do this just **OpenPype → Set Frame Range**. This should set Maya timeline to same
 values as they are set on shot in *Ftrack* for example.
 
 I have my time set, so lets create some animation. We'll turn Buddha model around for
@@ -500,7 +500,7 @@ and for vray:
 maya/<Layer>/<Layer>
 ```
 
-Doing **OpenPype → Reset Resolution** will set correct resolution on camera.
+Doing **OpenPype → Set Resolution** will set correct resolution on camera.
 
 Scene is now ready for submission and should publish without errors.
 
