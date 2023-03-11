@@ -528,7 +528,7 @@ def switch_container(container, representation, loader_plugin=None):
     return loader.switch(container, new_representation)
 
 
-def get_representation_path_from_context(context):
+def filepath_from_context(context):
     """Preparation wrapper using only context as a argument"""
     representation = context['representation']
     project_doc = context.get("project")

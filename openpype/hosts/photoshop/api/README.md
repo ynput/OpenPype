@@ -210,8 +210,9 @@ class ImageLoader(load.LoaderPlugin):
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
+        path = self.filepath_from_context(context)
         with photoshop.maintained_selection():
-            layer = stub.import_smart_object(self.fname)
+            layer = stub.import_smart_object(path)
 
         self[:] = [layer]
 

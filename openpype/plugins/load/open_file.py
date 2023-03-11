@@ -28,7 +28,7 @@ class OpenFile(load.LoaderPlugin):
 
     def load(self, context, name, namespace, data):
 
-        path = self.fname
+        path = self.filepath_from_context(context)
         if not os.path.exists(path):
             raise RuntimeError("File not found: {}".format(path))
 

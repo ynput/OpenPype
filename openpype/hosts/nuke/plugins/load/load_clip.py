@@ -454,7 +454,7 @@ class LoadClip(plugin.NukeLoader):
 
     def _set_colorspace(self, node, version_data, repre_data, path=None):
         output_color = None
-        path = path or self.fname.replace("\\", "/")
+        path = path or self.filepath_from_context(context).replace("\\", "/")
         # get colorspace
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")

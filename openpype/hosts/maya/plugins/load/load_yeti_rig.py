@@ -52,8 +52,9 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             scene_lookup[cb_id] = node
 
         # load rig
+        path = self.filepath_from_context(context)
         with lib.maintained_selection():
-            file_url = self.prepare_root_value(self.fname,
+            file_url = self.prepare_root_value(path,
                                                context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,

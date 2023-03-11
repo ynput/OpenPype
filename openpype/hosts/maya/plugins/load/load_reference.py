@@ -52,9 +52,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            file_url = self.prepare_root_value(self.fname,
+            file_url = self.prepare_root_value(path,
                                                context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
