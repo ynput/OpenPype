@@ -9,4 +9,8 @@ CLOCKIFY_FTRACK_USER_PATH = os.path.join(
 )
 
 ADMIN_PERMISSION_NAMES = ["WORKSPACE_OWN", "WORKSPACE_ADMIN"]
-CLOCKIFY_ENDPOINT = "https://api.clockify.me/api/"
+CLOCKIFY_ENDPOINT = "https://api.clockify.me/api/v1/"
+
+#rate limiter
+MAX_CALLS = 10
+PERIOD = 30

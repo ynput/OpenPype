@@ -6,7 +6,7 @@ from openpype_modules.clockify.clockify_api import ClockifyAPI
 class ClockifyStart(LauncherAction):
     name = "clockify_start_timer"
     label = "Clockify - Start Timer"
-    icon = "clockify_icon"
+    icon = "app_icons/clockify-white.png"
     order = 500
     clockapi = ClockifyAPI()
 

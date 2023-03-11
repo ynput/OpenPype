@@ -77,7 +77,7 @@ class MessageWidget(QtWidgets.QWidget):
 
 
 class ClockifySettings(QtWidgets.QWidget):
-    SIZE_W = 300
+    SIZE_W = 500
     SIZE_H = 130
 
     loginSignal = QtCore.Signal(object, object, object)

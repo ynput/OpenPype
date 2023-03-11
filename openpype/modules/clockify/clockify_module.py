@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+import json
 
 from openpype.modules import (
     OpenPypeModule,
@@ -129,10 +130,11 @@ class ClockifyModule(
                 if self.bool_timer_run is True:
                     self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
-                    actual_timer = self.clockapi.get_in_progress()
-                    if not actual_timer:
+                    timer_in_progress = self.clockapi.get_in_progress()
+                    if not timer_in_progress:
                         continue
-
+                    # print(f"Running timer found: {timer_in_progress}")
+                    actual_timer = timer_in_progress[0]
                     actual_proj_id = actual_timer["projectId"]
                     if not actual_proj_id:
                         continue
@@ -160,12 +162,13 @@ class ClockifyModule(
                         "project_name": project_name,
                         "task_type": task_type
                     }
-                    # Call `ITimersManager` method
+                    # Call `TimersManager` method
                     self.timer_started(data)
 
                 self.bool_timer_run = bool_timer_run
                 self.set_menu_visibility()
-            time.sleep(5)
+            time.sleep(10)
+            print("sleeeeep")
 
     def signed_in(self):
         if not self.timer_manager:
@@ -230,26 +233,32 @@ class ClockifyModule(
         self.clockapi.finish_time_entry()
 
     def start_timer(self, input_data):
+        print(f"DATA: {input_data}")
         """Called from TimersManager to start timer."""
-        # If not api key is not entered then skip
-        if not self.clockapi.get_api_key():
-            return
+        # # If not api key is not entered then skip
+        # if not self.clockapi.get_api_key():
+        #     print("no api key")
+        #     return
 
-        actual_timer = self.clockapi.get_in_progress()
+        timer_in_progress = self.clockapi.get_in_progress()
         actual_timer_hierarchy = None
         actual_project_id = None
-        if actual_timer is not None:
+        if timer_in_progress is not None:
+            actual_timer = timer_in_progress[0]
+            print(f"Found running timer: {actual_timer}")
             actual_timer_hierarchy = actual_timer.get("description")
             actual_project_id = actual_timer.get("projectId")
 
         # Concatenate hierarchy and task to get description
-        desc_items = [val for val in input_data.get("hierarchy", [])]
+        desc_items = input_data.get("hierarchy", [])
         desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
+        print(f"description: {description}")
 
         # Check project existence
         project_name = input_data["project_name"]
         project_id = self.clockapi.get_project_id(project_name)
+        print(f"PROJECT ID: {project_id}")
         if not project_id:
             self.log.warning((
                 "Project \"{}\" was not found in Clockify. Timer won't start."
