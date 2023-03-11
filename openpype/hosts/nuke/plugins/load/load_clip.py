@@ -99,8 +99,8 @@ class LoadClip(plugin.NukeLoader):
             representation = self._representation_with_hash_in_frame(
                 representation
             )
-        filepath = self.filepath_from_context(representation).replace("\\",
-                                                                      "/")
+        filepath = self.filepath_from_context(representation)
+        filepath = filepath.replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
@@ -156,7 +156,7 @@ class LoadClip(plugin.NukeLoader):
             read_node["file"].setValue(filepath)
 
             used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"], path)
+                read_node, version_data, representation["data"], filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
