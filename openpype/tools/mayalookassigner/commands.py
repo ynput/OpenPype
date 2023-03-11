@@ -80,21 +80,9 @@ def get_all_asset_nodes():
     Returns:
         list: list of dictionaries
     """
-
-    host = registered_host()
-
-    nodes = []
-    for container in host.ls():
-        # We are not interested in looks but assets!
-        if container["loader"] == "LookLoader":
-            continue
-
-        # Gather all information
-        container_name = container["objectName"]
-        nodes += lib.get_container_members(container_name)
-
-    nodes = list(set(nodes))
-    return nodes
+    nodes = cmds.ls(dag=True, noIntermediate=True, long=True)
+    items = commands.create_items_from_nodes(nodes)
+    return items
 
 
 def create_asset_id_hash(nodes):
