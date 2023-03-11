@@ -66,7 +66,7 @@ host_tools.show_workfiles(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="reset_frame_range">
+            <scriptItem id="set_frame_range">
                 <label>Set Frame Range</label>
                 <scriptCode><![CDATA[
 import openpype.hosts.houdini.api.lib
