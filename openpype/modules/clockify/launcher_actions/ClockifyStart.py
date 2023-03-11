@@ -17,6 +17,7 @@ class ClockifyStart(LauncherAction):
         return False
 
     def process(self, session, **kwargs):
+        print(f"SESSION: {session}")
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]

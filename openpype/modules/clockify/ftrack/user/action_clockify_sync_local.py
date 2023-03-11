@@ -3,7 +3,7 @@ from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocifyLocal(BaseAction):
+class SyncClockifyLocal(BaseAction):
     '''Synchronise project names and task types.'''
 
     #: Action identifier.
@@ -18,7 +18,7 @@ class SyncClocifyLocal(BaseAction):
     icon = statics_icon("app_icons", "clockify-white.png")
 
     def __init__(self, *args, **kwargs):
-        super(SyncClocifyLocal, self).__init__(*args, **kwargs)
+        super(SyncClockifyLocal, self).__init__(*args, **kwargs)
         #: CLockifyApi
         self.clockapi = ClockifyAPI()
 
@@ -121,4 +121,4 @@ class SyncClocifyLocal(BaseAction):
 
 
 def register(session, **kw):
-    SyncClocifyLocal(session).register()
+    SyncClockifyLocal(session).register()

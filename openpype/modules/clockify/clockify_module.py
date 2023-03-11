@@ -14,7 +14,7 @@ from .constants import (
     CLOCKIFY_FTRACK_USER_PATH,
     CLOCKIFY_FTRACK_SERVER_PATH
 )
-
+from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 class ClockifyModule(
     OpenPypeModule,
@@ -35,7 +35,9 @@ class ClockifyModule(
         self.MessageWidgetClass = None
         self.message_widget = None
 
-        self.clockapi = ClockifyAPI(master_parent=self)
+        reg = OpenPypeSecureRegistry("clockify")
+        api_key = reg.get_item("api_key")
+        self.clockapi = ClockifyAPI(api_key=api_key, master_parent=self)
 
         # TimersManager attributes
         # - set `timers_manager_connector` only in `tray_init`
@@ -106,7 +108,7 @@ class ClockifyModule(
         self.timer_stopped()
 
     def start_timer_check(self):
-        self.bool_thread_check_running = True
+        self.bool_thread_check_running = False
         if self.thread_timer_check is None:
             self.thread_timer_check = threading.Thread(
                 target=self.check_running
