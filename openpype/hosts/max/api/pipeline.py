@@ -2,6 +2,7 @@
 """Pipeline tools for OpenPype Houdini integration."""
 import os
 import logging
+from operator import attrgetter
 
 import json
 
@@ -141,5 +142,25 @@ def ls() -> list:
         if rt.getUserProp(obj, "id") == AVALON_CONTAINER_ID
     ]
 
-    for container in sorted(containers, key=lambda name: container.name):
+    for container in sorted(containers, key=attrgetter("name")):
         yield lib.read(container)
+
+
+def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
+    data = {
+        "schema": "openpype:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": name,
+        "namespace": "",
+        "loader": loader,
+        "representation": context["representation"]["_id"],
+    }
+
+    container_name = f"{name}{suffix}"
+    container = rt.container(name=container_name)
+    for node in nodes:
+        node.Parent = container
+
+    if not lib.imprint(container_name, data):
+        print(f"imprinting of {container_name} failed.")
+    return container

@@ -1,3 +1,4 @@
+import os
 import logging
 import contextlib
 from abc import ABCMeta, abstractproperty
@@ -100,6 +101,30 @@ class HostBase(object):
 
         pass
 
+    def get_current_project_name(self):
+        """
+        Returns:
+            Union[str, None]: Current project name.
+        """
+
+        return os.environ.get("AVALON_PROJECT")
+
+    def get_current_asset_name(self):
+        """
+        Returns:
+            Union[str, None]: Current asset name.
+        """
+
+        return os.environ.get("AVALON_ASSET")
+
+    def get_current_task_name(self):
+        """
+        Returns:
+            Union[str, None]: Current task name.
+        """
+
+        return os.environ.get("AVALON_TASK")
+
     def get_current_context(self):
         """Get current context information.
 
@@ -111,19 +136,14 @@ class HostBase(object):
         Default implementation returns values from 'legacy_io.Session'.
 
         Returns:
-            dict: Context with 3 keys 'project_name', 'asset_name' and
-                'task_name'. All of them can be 'None'.
+            Dict[str, Union[str, None]]: Context with 3 keys 'project_name',
+                'asset_name' and 'task_name'. All of them can be 'None'.
         """
 
-        from openpype.pipeline import legacy_io
-
-        if legacy_io.is_installed():
-            legacy_io.install()
-
         return {
-            "project_name": legacy_io.Session["AVALON_PROJECT"],
-            "asset_name": legacy_io.Session["AVALON_ASSET"],
-            "task_name": legacy_io.Session["AVALON_TASK"]
+            "project_name": self.get_current_project_name(),
+            "asset_name": self.get_current_asset_name(),
+            "task_name": self.get_current_task_name()
         }
 
     def get_context_title(self):

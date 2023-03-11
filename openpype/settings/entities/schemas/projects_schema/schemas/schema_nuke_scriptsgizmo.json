@@ -74,6 +74,11 @@
                                                     },
                                                     {
                                                         "type": "text",
+                                                        "key": "icon",
+                                                        "label": "Icon Path"
+                                                    },
+                                                    {
+                                                        "type": "text",
                                                         "key": "shortcut",
                                                         "label": "Hotkey"
                                                     }

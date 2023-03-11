@@ -33,6 +33,8 @@ class BatchMovieCreator(TrayPublishCreator):
 
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
+    # Position batch creator after simple creators
+    order = 110
 
     def __init__(self, project_settings, *args, **kwargs):
         super(BatchMovieCreator, self).__init__(project_settings,

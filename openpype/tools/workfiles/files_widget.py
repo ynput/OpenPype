@@ -621,7 +621,7 @@ class FilesWidget(QtWidgets.QWidget):
             "caption": "Work Files",
             "filter": ext_filter
         }
-        if qtpy.API in ("pyside", "pyside2"):
+        if qtpy.API in ("pyside", "pyside2", "pyside6"):
             kwargs["dir"] = self._workfiles_root
         else:
             kwargs["directory"] = self._workfiles_root

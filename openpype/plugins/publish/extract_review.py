@@ -169,7 +169,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "Skipped representation. All output definitions from"
                     " selected profile does not match to representation's"
                     " custom tags. \"{}\""
-                ).format(str(tags)))
+                ).format(str(custom_tags)))
                 continue
 
             outputs_per_representations.append((repre, outputs))

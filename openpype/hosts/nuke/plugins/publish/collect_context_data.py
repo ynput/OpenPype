@@ -1,7 +1,7 @@
 import os
 import nuke
 import pyblish.api
-import openpype.api as api
+from openpype.lib import get_version_from_path
 import openpype.hosts.nuke.api as napi
 from openpype.pipeline import KnownPublishError
 
@@ -57,7 +57,7 @@ class CollectContextData(pyblish.api.ContextPlugin):
             "fps": root_node['fps'].value(),
 
             "currentFile": current_file,
-            "version": int(api.get_version_from_path(current_file)),
+            "version": int(get_version_from_path(current_file)),
 
             "host": pyblish.api.current_host(),
             "hostVersion": nuke.NUKE_VERSION_STRING

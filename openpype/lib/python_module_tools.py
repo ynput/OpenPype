@@ -28,6 +28,7 @@ def import_filepath(filepath, module_name=None):
 
     # Prepare module object where content of file will be parsed
     module = types.ModuleType(module_name)
+    module.__file__ = filepath
 
     if six.PY3:
         # Use loader so module has full specs
@@ -41,7 +42,6 @@ def import_filepath(filepath, module_name=None):
             # Execute content and store it to module object
             six.exec_(_stream.read(), module.__dict__)
 
-        module.__file__ = filepath
     return module
 
 

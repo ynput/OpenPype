@@ -120,3 +120,51 @@ def get_all_children(parent, node_type=None):
 
     return ([x for x in child_list if rt.superClassOf(x) == node_type]
             if node_type else child_list)
+
+
+def get_current_renderer():
+    """get current renderer"""
+    return rt.renderers.production
+
+
+def get_default_render_folder(project_setting=None):
+    return (project_setting["max"]
+                           ["RenderSettings"]
+                           ["default_render_image_folder"])
+
+
+def set_framerange(start_frame, end_frame):
+    """
+    Note:
+        Frame range can be specified in different types. Possible values are:
+        * `1` - Single frame.
+        * `2` - Active time segment ( animationRange ).
+        * `3` - User specified Range.
+        * `4` - User specified Frame pickup string (for example `1,3,5-12`).
+
+    Todo:
+        Current type is hard-coded, there should be a custom setting for this.
+    """
+    rt.rendTimeType = 4
+    if start_frame is not None and end_frame is not None:
+        frame_range = "{0}-{1}".format(start_frame, end_frame)
+        rt.rendPickupFrames = frame_range
+
+
+def get_multipass_setting(project_setting=None):
+    return (project_setting["max"]
+                           ["RenderSettings"]
+                           ["multipass"])
+
+
+def get_max_version():
+    """
+    Args:
+    get max version date for deadline
+
+    Returns:
+        #(25000, 62, 0, 25, 0, 0, 997, 2023, "")
+        max_info[7] = max version date
+    """
+    max_info = rt.maxversion()
+    return max_info[7]

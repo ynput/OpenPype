@@ -8,6 +8,7 @@ exists is used.
 
 import os
 from abc import ABCMeta, abstractmethod
+import platform
 
 import six
 
@@ -187,11 +188,19 @@ class HostDirmap(object):
 
             self.log.debug("local overrides {}".format(active_overrides))
             self.log.debug("remote overrides {}".format(remote_overrides))
+            current_platform = platform.system().lower()
             for root_name, active_site_dir in active_overrides.items():
                 remote_site_dir = (
                     remote_overrides.get(root_name)
                     or sync_settings["sites"][remote_site]["root"][root_name]
                 )
+
+                if isinstance(remote_site_dir, dict):
+                    remote_site_dir = remote_site_dir.get(current_platform)
+
+                if not remote_site_dir:
+                    continue
+
                 if os.path.isdir(active_site_dir):
                     if "destination-path" not in mapping:
                         mapping["destination-path"] = []

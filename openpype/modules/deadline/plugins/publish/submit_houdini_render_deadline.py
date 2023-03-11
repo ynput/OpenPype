@@ -10,7 +10,7 @@ from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-
+from openpype.lib import is_running_from_build
 
 @attr.s
 class DeadlinePluginInfo():
@@ -86,6 +86,11 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "OPENPYPE_LOG_NO_COLORS",
             "OPENPYPE_VERSION"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
