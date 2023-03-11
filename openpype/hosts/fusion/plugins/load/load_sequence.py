@@ -143,7 +143,7 @@ class FusionLoadSequence(load.LoaderPlugin):
             namespace = context['asset']['name']
 
         # Use the first file for now
-        path = filepath_from_context(context)
+        path = self.filepath_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()

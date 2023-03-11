@@ -31,7 +31,7 @@ class LoadWorkfile(plugin.Loader):
     def load(self, context, name, namespace, options):
         # Load context of current workfile as first thing
         #   - which context and extension has
-        filepath = self.filepath_from_context(Context)
+        filepath = self.filepath_from_context(context)
         filepath = filepath.replace("\\", "/")
 
         if not os.path.exists(filepath):

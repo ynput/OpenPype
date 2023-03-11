@@ -29,14 +29,14 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
     options = []
 
     def load(self, context, name=None, namespace=None, data=None):
+
+        path = self.filepath_from_context(context)
         if data.get("frame"):
             path = os.path.join(
                 os.path.dirname(path), data["frame"]
             )
             if not os.path.exists(path):
                 return
-        else:
-            path = self.filepath_from_context(context)
 
         stub = self.get_stub()
         layer_name = get_unique_layer_name(

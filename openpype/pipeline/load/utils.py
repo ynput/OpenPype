@@ -613,7 +613,7 @@ def get_representation_path(representation, root=None, dbcon=None):
 
         root = registered_root()
 
-    def path_from_represenation():
+    def path_from_representation():
         try:
             template = representation["data"]["template"]
         except KeyError:
@@ -737,7 +737,7 @@ def get_representation_path(representation, root=None, dbcon=None):
                 return os.path.normpath(path)
 
     return (
-        path_from_represenation() or
+        path_from_representation() or
         path_from_config() or
         path_from_data()
     )
