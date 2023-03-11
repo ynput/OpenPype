@@ -1,4 +1,4 @@
-from ....tools.utils.host_tools import HostToolsHelper, qt_app_context
+from ....tools.utils.host_tools import qt_app_context
 
 class MayaToolsSingleton:
     _look_assigner = None
@@ -6,7 +6,7 @@ class MayaToolsSingleton:
 
 def get_look_assigner_tool(parent):
     """Create, cache and return look assigner tool window."""
-    if self._look_assigner is None:
+    if MayaToolsSingleton._look_assigner is None:
         from .mayalookassigner import MayaLookAssignerWindow
         mayalookassigner_window = MayaLookAssignerWindow(parent)
         MayaToolsSingleton._look_assigner = mayalookassigner_window
