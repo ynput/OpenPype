@@ -237,7 +237,7 @@ class BackgroundLoader(load.LoaderPlugin):
     representations = ["json"]
 
     def load(self, context, name=None, namespace=None, data=None):
-        
+
         path = self.filepath_from_context(context)
         with open(path) as json_file:
             data = json.load(json_file)
