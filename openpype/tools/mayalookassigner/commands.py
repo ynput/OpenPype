@@ -81,7 +81,7 @@ def get_all_asset_nodes():
         list: list of dictionaries
     """
     nodes = cmds.ls(dag=True, noIntermediate=True, long=True)
-    items = commands.create_items_from_nodes(nodes)
+    items = create_items_from_nodes(nodes)
     return items
 
 
