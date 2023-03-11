@@ -12,6 +12,7 @@ from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
 
+
 @attr.s
 class DeadlinePluginInfo():
     SceneFile = attr.ib(default=None)
