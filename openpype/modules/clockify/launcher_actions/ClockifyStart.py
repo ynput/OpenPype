@@ -1,7 +1,6 @@
 from openpype.client import get_asset_by_name
 from openpype.pipeline import LauncherAction
 from openpype_modules.clockify.clockify_api import ClockifyAPI
-from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 class ClockifyStart(LauncherAction):
