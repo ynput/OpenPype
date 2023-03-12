@@ -5,7 +5,6 @@ from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 class ClockifyStart(LauncherAction):
-
     name = "clockify_start_timer"
     label = "Clockify - Start Timer"
     icon = "app_icons/clockify.png"
@@ -42,6 +41,9 @@ class ClockifyStart(LauncherAction):
         tag_ids = []
         tag_ids.append(self.clockapi.get_tag_id(task_name, workspace_id))
         self.clockapi.start_time_entry(
-            description, project_id, tag_ids=tag_ids, 
-            workspace_id=workspace_id, user_id=user_id
+            description,
+            project_id,
+            tag_ids=tag_ids,
+            workspace_id=workspace_id,
+            user_id=user_id,
         )

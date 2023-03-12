@@ -238,7 +238,7 @@ class ClockifyAPI:
         description,
         project_id,
         task_id=None,
-        tag_ids=[],
+        tag_ids=None,
         workspace_id=None,
         user_id=None,
         billable=True,
@@ -328,7 +328,6 @@ class ClockifyAPI:
             (current_timer,) = current
         except Exception:
             raise
-        current_timer_id = current_timer["id"]
         action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id
         )

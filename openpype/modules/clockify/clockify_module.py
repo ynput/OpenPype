@@ -6,7 +6,6 @@ from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
 
 from .clockify_api import ClockifyAPI
 from .constants import CLOCKIFY_FTRACK_USER_PATH, CLOCKIFY_FTRACK_SERVER_PATH
-from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):

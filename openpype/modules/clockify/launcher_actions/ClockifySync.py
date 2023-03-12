@@ -1,11 +1,9 @@
 from openpype.client import get_projects, get_project
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 from openpype.pipeline import LauncherAction
-from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 class ClockifySync(LauncherAction):
-
     name = "sync_to_clockify"
     label = "Sync to Clockify"
     icon = "app_icons/clockify-white.png"
@@ -43,9 +41,9 @@ class ClockifySync(LauncherAction):
 
             response = self.clockapi.add_project(project_name, workspace_id)
             if "id" not in response:
-                self.log.error("Project {} can't be created".format(
-                    project_name
-                ))
+                self.log.error(
+                    "Project {} can't be created".format(project_name)
+                )
                 continue
 
             clockify_workspace_tags = self.clockapi.get_tags(workspace_id)
@@ -53,7 +51,7 @@ class ClockifySync(LauncherAction):
                 if task_type not in clockify_workspace_tags:
                     response = self.clockapi.add_tag(task_type, workspace_id)
                     if "id" not in response:
-                        self.log.error('Task {} can\'t be created'.format(
-                            task_type
-                        ))
+                        self.log.error(
+                            "Task {} can't be created".format(task_type)
+                        )
                         continue
