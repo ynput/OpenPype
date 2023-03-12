@@ -153,7 +153,7 @@ class ClockifyAPI:
             workspace["name"]: workspace["id"] for workspace in response.json()
         }
 
-    # @RateLimiter(MAX_CALLS, PERIOD)
+    @RateLimiter(MAX_CALLS, PERIOD)
     def get_projects(self, workspace_id=None):
         print(f"found tokens: {self.headers}")
         if workspace_id is None:
@@ -307,7 +307,7 @@ class ClockifyAPI:
             success = True
         return success
 
-    @RateLimiter(max_calls=10, period=3)
+    @RateLimiter(max_calls=7, period=1)
     def get_in_progress(self, user_id=None, workspace_id=None) -> list:
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -338,28 +338,27 @@ class ClockifyAPI:
         if user_id is None:
             user_id = self.user_id
         current = self.get_in_progress()
-        if current is None:
-            print("no current")
+        if not current:
+            print("no timers run currently")
             return
-
-        current_id = current[0]["id"]
-        action_url = 'workspaces/{}/user/{}/time-entries/{}'.format(
-            workspace_id, user_id, current_id
+        try:
+            current_timer, = current
+        except Exception:
+            raise
+        print(f"current timer values: {current_timer}")
+        current_timer_id = current_timer["id"]
+        action_url = 'workspaces/{}/user/{}/time-entries'.format(
+            workspace_id, user_id
         )
         body = {
-            "start": current["timeInterval"]["start"],
-            "billable": current["billable"],
-            "description": current["description"],
-            "projectId": current["projectId"],
-            "taskId": current["taskId"],
-            "tagIds": current["tagIds"],
             "end": self.get_current_time()
         }
-        response = requests.put(
+        response = requests.patch(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
+        print(f"stop timer status: {response.status_code}")
         return response.json()
 
     @RateLimiter(MAX_CALLS, PERIOD)
