@@ -246,14 +246,13 @@ class ClockifyAPI:
         # Workspace
         if workspace_id is None:
             workspace_id = self.workspace_id
+        print(f"Starting timer for workspace {workspace_id}")
         # User ID
         if user_id is None:
             user_id = self.user_id
-        print(f"Starting timer: {user_id}: {workspace_id}")
 
         # Check if is currently run another times and has same values
         current = self.get_in_progress(workspace_id)
-        print(f"currently running timers: {current}")
         if current and current is not None:
             current = current[0]
             if (
@@ -329,7 +328,6 @@ class ClockifyAPI:
             (current_timer,) = current
         except Exception:
             raise
-        print(f"current timer values: {current_timer}")
         current_timer_id = current_timer["id"]
         action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id
