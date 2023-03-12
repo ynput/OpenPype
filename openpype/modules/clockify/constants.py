@@ -13,4 +13,4 @@ CLOCKIFY_ENDPOINT = "https://api.clockify.me/api/v1/"
 
 # rate limiter
 MAX_CALLS = 10
-PERIOD = 5
+PERIOD = 2

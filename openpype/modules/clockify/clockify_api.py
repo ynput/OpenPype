@@ -155,10 +155,8 @@ class ClockifyAPI:
 
     @RateLimiter(MAX_CALLS, PERIOD)
     def get_projects(self, workspace_id=None):
-        print(f"found tokens: {self.headers}")
         if workspace_id is None:
             workspace_id = self.workspace_id
-        print(f"workspace: {workspace_id}")
         action_url = f"workspaces/{workspace_id}/projects"
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
@@ -189,7 +187,7 @@ class ClockifyAPI:
     def get_tags(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = 'workspaces/{}/tags/'.format(workspace_id)
+        action_url = 'workspaces/{}/tags'.format(workspace_id)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -307,7 +305,7 @@ class ClockifyAPI:
             success = True
         return success
 
-    @RateLimiter(max_calls=7, period=1)
+    @RateLimiter(max_calls=3, period=1)
     def get_in_progress(self, user_id=None, workspace_id=None) -> list:
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -358,7 +356,6 @@ class ClockifyAPI:
             headers=self.headers,
             json=body
         )
-        print(f"stop timer status: {response.status_code}")
         return response.json()
 
     @RateLimiter(MAX_CALLS, PERIOD)
