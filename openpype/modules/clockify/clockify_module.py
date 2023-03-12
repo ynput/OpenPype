@@ -2,24 +2,14 @@ import os
 import threading
 import time
 
-from openpype.modules import (
-    OpenPypeModule,
-    ITrayModule,
-    IPluginPaths
-)
+from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
 
 from .clockify_api import ClockifyAPI
-from .constants import (
-    CLOCKIFY_FTRACK_USER_PATH,
-    CLOCKIFY_FTRACK_SERVER_PATH
-)
+from .constants import CLOCKIFY_FTRACK_USER_PATH, CLOCKIFY_FTRACK_SERVER_PATH
 from openpype.lib.local_settings import OpenPypeSecureRegistry
 
-class ClockifyModule(
-    OpenPypeModule,
-    ITrayModule,
-    IPluginPaths
-):
+
+class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
     name = "clockify"
 
     def initialize(self, modules_settings):
@@ -42,9 +32,7 @@ class ClockifyModule(
         self._timers_manager_module = None
 
     def get_global_environments(self):
-        return {
-            "CLOCKIFY_WORKSPACE": self.workspace_name
-        }
+        return {"CLOCKIFY_WORKSPACE": self.workspace_name}
 
     def tray_init(self):
         from .widgets import ClockifySettings, MessageWidget
@@ -88,18 +76,15 @@ class ClockifyModule(
     def get_plugin_paths(self):
         """Implementaton of IPluginPaths to get plugin paths."""
         actions_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "launcher_actions"
+            os.path.dirname(os.path.abspath(__file__)), "launcher_actions"
         )
-        return {
-            "actions": [actions_path]
-        }
+        return {"actions": [actions_path]}
 
     def get_ftrack_event_handler_paths(self):
         """Function for Ftrack module to add ftrack event handler paths."""
         return {
             "user": [CLOCKIFY_FTRACK_USER_PATH],
-            "server": [CLOCKIFY_FTRACK_SERVER_PATH]
+            "server": [CLOCKIFY_FTRACK_SERVER_PATH],
         }
 
     def clockify_timer_stopped(self):
@@ -162,7 +147,7 @@ class ClockifyModule(
                         "task_name": task_name,
                         "hierarchy": hierarchy,
                         "project_name": project_name,
-                        "task_type": task_type
+                        "task_type": task_type,
                     }
                     # Call `TimersManager` method
                     self.timer_started(data)
@@ -188,6 +173,7 @@ class ClockifyModule(
     def tray_menu(self, parent_menu):
         # Menu for Tray App
         from qtpy import QtWidgets
+
         menu = QtWidgets.QMenu("Clockify", parent_menu)
         menu.setProperty("submenu", "on")
 
@@ -232,7 +218,7 @@ class ClockifyModule(
     def stop_timer(self):
         """Called from TimersManager to stop timer."""
         self.clockapi.finish_time_entry()
-    
+
     def start_timer(self, input_data):
         """Called from TimersManager to start timer."""
 
@@ -259,16 +245,19 @@ class ClockifyModule(
         project_name = input_data["project_name"]
         project_id = self.clockapi.get_project_id(project_name)
         if not project_id:
-            self.log.warning((
-                "Project \"{}\" was not found in Clockify. Timer won't start."
-            ).format(project_name))
+            self.log.warning(
+                (
+                    f'Project "{project_name}" was not found in Clockify. '
+                    f"Timer won't start."
+                )
+            )
 
             if not self.MessageWidgetClass:
                 return
 
             msg = (
-                "Project <b>\"{}\"</b> is not"
-                " in Clockify Workspace <b>\"{}\"</b>."
+                'Project <b>"{}"</b> is not'
+                ' in Clockify Workspace <b>"{}"</b>.'
                 "<br><br>Please inform your Project Manager."
             ).format(project_name, str(self.clockapi.workspace_name))
 
@@ -284,20 +273,22 @@ class ClockifyModule(
         # Need to get timer in progress,
         # to skip starting the timer if it is already running
         if (
-            running_timer and
-            description == actual_timer_hierarchy and
-            project_id == actual_project_id
+            running_timer
+            and description == actual_timer_hierarchy
+            and project_id == actual_project_id
         ):
             print("Timer for the current project is already running")
             return
 
         tag_ids = []
         task_name = input_data["task_name"]
-        task_tag_id = self.clockapi.get_tag_id(task_name,
-                                               self.workspace_id)
+        task_tag_id = self.clockapi.get_tag_id(task_name, self.workspace_id)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
         self.clockapi.start_time_entry(
-            description, project_id, tag_ids=tag_ids,
-            workspace_id=self.workspace_id, user_id=self.user_id
+            description,
+            project_id,
+            tag_ids=tag_ids,
+            workspace_id=self.workspace_id,
+            user_id=self.user_id,
         )
