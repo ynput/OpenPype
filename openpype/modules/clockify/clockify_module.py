@@ -147,14 +147,14 @@ class ClockifyModule(
 
                     project_name = project["name"]
 
+                    print(f"TIMER: {actual_timer}")
                     actual_timer_hierarchy = actual_timer["description"]
                     hierarchy_items = actual_timer_hierarchy.split("/")
-                    # Each pype timer must have at least 2 items!
-                    if len(hierarchy_items) < 2:
+                    # Each pype timer must have at least 3 items!
+                    if len(hierarchy_items) < 3:
                         continue
-                    task_name = hierarchy_items[-1]
-                    hierarchy = hierarchy_items[:-1]
 
+                    task_name, task_type, hierarchy = hierarchy_items
                     task_type = None
                     if len(actual_timer.get("tags", [])) > 0:
                         task_type = actual_timer["tags"][0].get("name")
@@ -236,21 +236,23 @@ class ClockifyModule(
     def start_timer(self, input_data):
         """Called from TimersManager to start timer."""
 
+        # get running timer to check if we need to start it
+        # TODO: Check running is not working here
         actual_timer_hierarchy = None
         actual_project_id = None
-        # this does not update here
+        # current timer does not update here
         actual_timer = self.currently_active_timer
-        # not working too
+        # this returns nothing
         running_timer = self.clockapi.get_in_progress()
-        print(f"actual: {actual_timer}")
-        print(f"running: {running_timer}")
         if actual_timer:
             actual_timer_hierarchy = actual_timer.get("description")
             actual_project_id = actual_timer.get("projectId")
 
         # Concatenate hierarchy and task to get description
         desc_items = input_data.get("hierarchy", [])
-        desc_items.append(input_data["task_name"])
+        if len(desc_items) == 1:
+            desc_items.append(input_data["task_name"])
+            desc_items.append(input_data["task_type"])
         description = "/".join(desc_items)
 
         # Check project existence
@@ -282,6 +284,7 @@ class ClockifyModule(
         # Need to get timer in progress,
         # to skip starting the timer if it is already running
         if (
+            running_timer and
             description == actual_timer_hierarchy and
             project_id == actual_project_id
         ):
@@ -294,7 +297,6 @@ class ClockifyModule(
                                                self.workspace_id)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
-        print(tag_ids)
         self.clockapi.start_time_entry(
             description, project_id, tag_ids=tag_ids,
             workspace_id=self.workspace_id, user_id=self.user_id
