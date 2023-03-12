@@ -132,22 +132,18 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
                     project_name = project["name"]
 
-                    print(f"TIMER: {actual_timer}")
                     actual_timer_hierarchy = actual_timer["description"]
                     hierarchy_items = actual_timer_hierarchy.split("/")
-                    # Each pype timer must have at least 3 items!
-                    if len(hierarchy_items) < 3:
+                    # Each pype timer must have at least 2 items!
+                    if len(hierarchy_items) < 2:
                         continue
 
-                    task_name, task_type, hierarchy = hierarchy_items
-                    task_type = None
-                    if len(actual_timer.get("tags", [])) > 0:
-                        task_type = actual_timer["tags"][0].get("name")
+                    task_name, hierarchy = hierarchy_items
+
                     data = {
                         "task_name": task_name,
                         "hierarchy": hierarchy,
                         "project_name": project_name,
-                        "task_type": task_type,
                     }
                     # Call `TimersManager` method
                     self.timer_started(data)
@@ -238,7 +234,6 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         desc_items = input_data.get("hierarchy", [])
         if len(desc_items) == 1:
             desc_items.append(input_data["task_name"])
-            desc_items.append(input_data["task_type"])
         description = "/".join(desc_items)
 
         # Check project existence
