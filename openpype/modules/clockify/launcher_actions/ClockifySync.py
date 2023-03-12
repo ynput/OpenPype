@@ -10,9 +10,7 @@ class ClockifySync(LauncherAction):
     label = "Sync to Clockify"
     icon = "app_icons/clockify-white.png"
     order = 500
-    reg = OpenPypeSecureRegistry("clockify")
-    api_key = reg.get_item("api_key")
-    clockapi = ClockifyAPI(api_key=api_key)
+    clockapi = ClockifyAPI()
     clockapi.set_api()
     workspace_id = clockapi.workspace_id
     user_id = clockapi.user_id

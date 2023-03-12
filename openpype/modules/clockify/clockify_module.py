@@ -34,9 +34,7 @@ class ClockifyModule(
         self.MessageWidgetClass = None
         self.message_widget = None
 
-        reg = OpenPypeSecureRegistry("clockify")
-        api_key = reg.get_item("api_key")
-        self.clockapi = ClockifyAPI(api_key=api_key, master_parent=self)
+        self.clockapi = ClockifyAPI(master_parent=self)
 
         # TimersManager attributes
         # - set `timers_manager_connector` only in `tray_init`
@@ -56,6 +54,7 @@ class ClockifyModule(
         self.message_widget = None
         self.widget_settings = ClockifySettings(self.clockapi)
         self.widget_settings_required = None
+        self.currently_active_timer = None
 
         self.thread_timer_check = None
         # Bools
@@ -76,6 +75,8 @@ class ClockifyModule(
         self.bool_workspace_set = self.clockapi.workspace_id is not None
         if self.bool_workspace_set is False:
             return
+        self.workspace_id = self.clockapi.workspace_id
+        self.user_id = self.clockapi.user_id
 
         self.start_timer_check()
 
@@ -134,8 +135,8 @@ class ClockifyModule(
                     timer_in_progress = self.clockapi.get_in_progress()
                     if not timer_in_progress:
                         continue
-                    # print(f"Running timer found: {timer_in_progress}")
                     actual_timer = timer_in_progress[0]
+                    self.currently_active_timer = actual_timer
                     actual_proj_id = actual_timer["projectId"]
                     if not actual_proj_id:
                         continue
@@ -168,7 +169,7 @@ class ClockifyModule(
 
                 self.bool_timer_run = bool_timer_run
                 self.set_menu_visibility()
-            time.sleep(10)
+            time.sleep(5)
 
     def signed_in(self):
         if not self.timer_manager:
@@ -231,21 +232,19 @@ class ClockifyModule(
     def stop_timer(self):
         """Called from TimersManager to stop timer."""
         self.clockapi.finish_time_entry()
-
+    
     def start_timer(self, input_data):
-        print(f"DATA: {input_data}")
         """Called from TimersManager to start timer."""
-        # # If not api key is not entered then skip
-        # if not self.clockapi.get_api_key():
-        #     print("no api key")
-        #     return
 
-        timer_in_progress = self.clockapi.get_in_progress()
         actual_timer_hierarchy = None
         actual_project_id = None
-        if timer_in_progress is not None:
-            actual_timer = timer_in_progress[0]
-            print(f"Found running timer: {actual_timer}")
+        # this does not update here
+        actual_timer = self.currently_active_timer
+        # not working too
+        running_timer = self.clockapi.get_in_progress()
+        print(f"actual: {actual_timer}")
+        print(f"running: {running_timer}")
+        if actual_timer:
             actual_timer_hierarchy = actual_timer.get("description")
             actual_project_id = actual_timer.get("projectId")
 
@@ -253,12 +252,10 @@ class ClockifyModule(
         desc_items = input_data.get("hierarchy", [])
         desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
-        print(f"description: {description}")
 
         # Check project existence
         project_name = input_data["project_name"]
         project_id = self.clockapi.get_project_id(project_name)
-        print(f"PROJECT ID: {project_id}")
         if not project_id:
             self.log.warning((
                 "Project \"{}\" was not found in Clockify. Timer won't start."
@@ -281,18 +278,24 @@ class ClockifyModule(
 
             return
 
+        # TODO: This check is not working.
+        # Need to get timer in progress,
+        # to skip starting the timer if it is already running
         if (
-            actual_timer is not None and
             description == actual_timer_hierarchy and
             project_id == actual_project_id
         ):
+            print("Timer for the current project is already running")
             return
 
         tag_ids = []
-        task_tag_id = self.clockapi.get_tag_id(input_data["task_type"])
+        task_name = input_data["task_name"]
+        task_tag_id = self.clockapi.get_tag_id(task_name,
+                                               self.workspace_id)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
-
+        print(tag_ids)
         self.clockapi.start_time_entry(
-            description, project_id, tag_ids=tag_ids
+            description, project_id, tag_ids=tag_ids,
+            workspace_id=self.workspace_id, user_id=self.user_id
         )
