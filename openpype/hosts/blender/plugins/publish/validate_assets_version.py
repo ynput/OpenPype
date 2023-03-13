@@ -3,7 +3,7 @@ from typing import List
 
 import pyblish.api
 
-from openpype.api import ValidateContentsOrder
+from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.action import UpdateContainer
 
