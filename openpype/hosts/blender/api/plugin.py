@@ -11,7 +11,7 @@ from bson.objectid import ObjectId
 import bpy
 from mathutils import Matrix
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.hosts.blender.api.properties import (
     OpenpypeContainer,
     OpenpypeInstance,
