@@ -665,6 +665,8 @@ class TrayManager:
 
         args.extend(additional_args)
 
+        log = Logger.get_logger(__name__)
+        log.info("Executing ({})".format(" ".join(args)))
         # run_detached_process(args, env=envs)
         run_subprocess(args, env=envs)
         self.exit()
