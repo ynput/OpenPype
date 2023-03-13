@@ -41,4 +41,4 @@ openpype_console module kitsu push-to-zou -l me@domain.ext -p my_password
 ## Q&A
 ### Is it safe to rename an entity from Kitsu?
 Absolutely! Entities are linked by their unique IDs between the two databases.  
-But renaming from the OP's Project Manager won't apply the change to Kitsu, it'll be overriden during the next synchronization.
+But renaming from the OP's Project Manager won't apply the change to Kitsu, it'll be overridden during the next synchronization.

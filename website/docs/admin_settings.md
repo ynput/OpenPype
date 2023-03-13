@@ -76,7 +76,7 @@ You can also reset any settings to OpenPype default by doing `right click` and `
 Many settings are useful to be adjusted on a per-project basis. To identify project
 overrides, they are marked with **orange edge** and **orange labels** in the settings GUI.
 
-The process of settting project overrides is similar to setting the Studio defaults. The key difference is to select a particular project you want to be configure. Those projects can be found on the left hand side of the Project Settings tab.
+The process of setting project overrides is similar to setting the Studio defaults. The key difference is to select a particular project you want to be configure. Those projects can be found on the left hand side of the Project Settings tab.
 
 In the image below you can see all three overrides at the same time.
 1. Deadline has **no changes to the OpenPype defaults** at all — **grey** colour of left bar.
