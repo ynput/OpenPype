@@ -13,6 +13,7 @@ from openpype.lib import (
     Logger,
     get_openpype_execute_args,
     run_detached_process,
+    run_subprocess,
 )
 from openpype.lib.openpype_version import (
     op_version_control_available,
@@ -657,14 +658,15 @@ class TrayManager:
         if cleanup_additional_args:
             _additional_args = []
             for arg in additional_args:
-                if arg == "--use-staging" or arg.startswith("--use-version"):
+                if arg in ["--use-staging", "openpype_console"] or arg.startswith("--use-version"):
                     continue
                 _additional_args.append(arg)
             additional_args = _additional_args
 
         args.extend(additional_args)
 
-        run_detached_process(args, env=envs)
+        # run_detached_process(args, env=envs)
+        run_subprocess(args, env=envs)
         self.exit()
 
     def exit(self):
