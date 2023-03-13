@@ -14,11 +14,10 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    actions = [RepairAction]
     label = "Validate Create Folder Checked"
     families = ["render"]
     hosts = ["fusion"]
-    actions = [SelectInvalidAction]
+    actions = [RepairAction, SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
@@ -29,7 +28,9 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
         tool = instance[0]
         create_dir = tool.GetInput("CreateDir")
         if create_dir == 0.0:
-            cls.log.error("%s has Create Folder turned off" % instance[0].Name)
+            cls.log.error(
+                "%s has Create Folder turned off" % instance[0].Name
+            )
             return [tool]
 
     def process(self, instance):
@@ -37,7 +38,8 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
         if invalid:
             raise PublishValidationError(
                 "Found Saver with Create Folder During Render checked off",
-                title=self.label)
+                title=self.label,
+            )
 
     @classmethod
     def repair(cls, instance):
