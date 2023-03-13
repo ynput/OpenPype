@@ -3,7 +3,7 @@ import os
 import maya.cmds as cmds
 import xgenm
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
