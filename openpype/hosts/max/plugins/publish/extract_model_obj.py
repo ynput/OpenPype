@@ -41,7 +41,7 @@ class ExtractModelObj(publish.Extractor,
         with maintained_selection():
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(f'exportFile @"{filepath}" #noPrompt selectedOnly:true using:ObjExp')
+            rt.execute(f'exportFile @"{filepath}" #noPrompt selectedOnly:true using:ObjExp')    # noqa
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
