@@ -32,7 +32,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     label = "Submit Nuke to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke"]
-    families = ["render", "prerender.farm"]
+    families = ["render", "prerender"]
     optional = True
     targets = ["local"]
 
@@ -80,6 +80,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         ]
 
     def process(self, instance):
+        if not instance.data.get("farm"):
+            return
+
         instance.data["attributeValues"] = self.get_attr_values_from_data(
             instance.data)
 
@@ -168,10 +171,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                     resp.json()["_id"])
 
         # redefinition of families
-        if "render.farm" in families:
+        if "render" in family:
             instance.data['family'] = 'write'
             families.insert(0, "render2d")
-        elif "prerender.farm" in families:
+        elif "prerender" in family:
             instance.data['family'] = 'write'
             families.insert(0, "prerender")
         instance.data["families"] = families
