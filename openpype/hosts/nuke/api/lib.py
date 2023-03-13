@@ -48,7 +48,6 @@ from openpype.pipeline.colorspace import (
     get_imageio_config
 )
 from openpype.pipeline.workfile import BuildWorkfile
-
 from . import gizmo_menu
 from .constants import ASSIST
 
@@ -2678,6 +2677,18 @@ def process_workfile_builder():
     open_file(last_workfile_path)
 
 
+def start_workfile_template_builder():
+    from .workfile_template_builder import (
+        build_workfile_template
+    )
+
+    # to avoid looping of the callback, remove it!
+    log.info("Starting workfile template builder...")
+    build_workfile_template(workfile_creation_enabled=True)
+
+    # remove callback since it would be duplicating the workfile
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
+
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):
     """Recreate input instance to different data
@@ -2850,10 +2861,10 @@ class NukeDirmap(HostDirmap):
         pass
 
     def dirmap_routine(self, source_path, destination_path):
-        log.debug("{}: {}->{}".format(self.file_name,
-                                      source_path, destination_path))
         source_path = source_path.lower().replace(os.sep, '/')
         destination_path = destination_path.lower().replace(os.sep, '/')
+        log.debug("Map: {} with: {}->{}".format(self.file_name,
+                                                source_path, destination_path))
         if platform.system().lower() == "windows":
             self.file_name = self.file_name.lower().replace(
                 source_path, destination_path)
@@ -2867,6 +2878,7 @@ class DirmapCache:
     _project_name = None
     _project_settings = None
     _sync_module = None
+    _mapping = None
 
     @classmethod
     def project_name(cls):
@@ -2885,6 +2897,36 @@ class DirmapCache:
         if cls._sync_module is None:
             cls._sync_module = ModulesManager().modules_by_name["sync_server"]
         return cls._sync_module
+
+    @classmethod
+    def mapping(cls):
+        return cls._mapping
+
+    @classmethod
+    def set_mapping(cls, mapping):
+        cls._mapping = mapping
+
+
+def dirmap_file_name_filter(file_name):
+    """Nuke callback function with single full path argument.
+
+        Checks project settings for potential mapping from source to dest.
+    """
+
+    dirmap_processor = NukeDirmap(
+        file_name,
+        "nuke",
+        DirmapCache.project_name(),
+        DirmapCache.project_settings(),
+        DirmapCache.sync_module(),
+    )
+    if not DirmapCache.mapping():
+        DirmapCache.set_mapping(dirmap_processor.get_mappings())
+
+    dirmap_processor.process_dirmap(DirmapCache.mapping())
+    if os.path.exists(dirmap_processor.file_name):
+        return dirmap_processor.file_name
+    return file_name
 
 
 @contextlib.contextmanager
@@ -2929,25 +2971,6 @@ def duplicate_node(node):
     reset_selection()
 
     return dupli_node
-
-
-def dirmap_file_name_filter(file_name):
-    """Nuke callback function with single full path argument.
-
-        Checks project settings for potential mapping from source to dest.
-    """
-
-    dirmap_processor = NukeDirmap(
-        file_name,
-        "nuke",
-        DirmapCache.project_name(),
-        DirmapCache.project_settings(),
-        DirmapCache.sync_module(),
-    )
-    dirmap_processor.process_dirmap()
-    if os.path.exists(dirmap_processor.file_name):
-        return dirmap_processor.file_name
-    return file_name
 
 
 def get_group_io_nodes(nodes):

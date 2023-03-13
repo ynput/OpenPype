@@ -33,6 +33,7 @@ from .lib import (
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
+    start_workfile_template_builder,
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
@@ -48,7 +49,6 @@ from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
     NukePlaceholderCreatePlugin,
     build_workfile_template,
-    update_workfile_template,
     create_placeholder,
     update_placeholder,
 )
@@ -156,6 +156,7 @@ def add_nuke_callbacks():
     nuke.addOnCreate(
         workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+    nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
 
     # fix ffmpeg settings on script

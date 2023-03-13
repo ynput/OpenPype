@@ -35,7 +35,7 @@ class CreateWriteImage(napi.NukeWriteCreator):
         attr_defs = [
             BoolDef(
                 "use_selection",
-                default=True,
+                default=not self.create_context.headless,
                 label="Use selection"
             ),
             self._get_render_target_enum(),
