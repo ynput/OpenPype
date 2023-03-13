@@ -703,7 +703,7 @@ class PublishClip:
         # If shot path token found, update hierarchy data to respect those values
         hierarchy_value = self.ui_inputs.get("hierarchy", {}).get("value")
         if hierarchy_value:
-            self.update_path_token_hierarchy()            
+            self.update_path_token_hierarchy()
         ### Ends Alkemy-X Override ###
 
         # populate default data before we get other attributes
@@ -711,7 +711,7 @@ class PublishClip:
 
         # use all populated default data to create all important attributes
         self._populate_attributes()
-        
+
         ### Starts Alkemy-X Override ###
         # Override self.hierarchy if path token was updated
         if hierarchy_value:
@@ -840,7 +840,7 @@ class PublishClip:
             self.subset_name = self.track_name
 
         # create subset for publishing
-        self.subset = self.subset_family + self.subset_name.capitalize()
+        self.subset = self.subset_name
 
     def _replace_hash_to_expression(self, name, text):
         """ Replace hash with number in correct padding. """

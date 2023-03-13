@@ -295,10 +295,10 @@ class SubsetWidget(QtWidgets.QWidget):
             self.model.set_grouping(state)
 
     def _subset_changed(self, text):
-        if hasattr(self.proxy, "setFilterRegularExpression"):
-            self.proxy.setFilterRegularExpression(text)
-        else:
+        if hasattr(self.proxy, "setFilterRegExp"):
             self.proxy.setFilterRegExp(text)
+        else:
+            self.proxy.setFilterRegularExpression(text)
         self.view.expandAll()
 
     def set_loading_state(self, loading, empty):
