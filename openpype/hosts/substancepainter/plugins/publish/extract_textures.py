@@ -2,7 +2,8 @@ from openpype.pipeline import KnownPublishError, publish
 import substance_painter.export
 
 
-class ExtractTextures(publish.ExtractorColormanaged):
+class ExtractTextures(publish.Extractor,
+                      publish.ColormanagedPyblishPluginMixin):
     """Extract Textures using an output template config.
 
     Note:
