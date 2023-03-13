@@ -7,10 +7,10 @@ from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 
 
-class FbxLoader(load.LoaderPlugin):
-    """Fbx Loader"""
+class FbxModelLoader(load.LoaderPlugin):
+    """Fbx Model Loader"""
 
-    families = ["camera"]
+    families = ["model"]
     representations = ["fbx"]
     order = -9
     icon = "code-fork"
@@ -24,8 +24,8 @@ class FbxLoader(load.LoaderPlugin):
         fbx_import_cmd = (
             f"""
 
-FBXImporterSetParam "Animation" true
-FBXImporterSetParam "Cameras" true
+FBXImporterSetParam "Animation" false
+FBXImporterSetParam "Cameras" false
 FBXImporterSetParam "AxisConversionMethod" true
 FbxExporterSetParam "UpAxis" "Y"
 FbxExporterSetParam "Preserveinstances" true
