@@ -6,7 +6,6 @@ from openpype.tools.utils import host_tools
 from openpype.style import load_stylesheet
 from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
-    set_rendermode,
     duplicate_with_inputs,
 )
 from openpype.hosts.fusion.api.lib import (
