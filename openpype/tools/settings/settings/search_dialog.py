@@ -27,10 +27,10 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         if not parent.isValid():
             return False
 
-        if hasattr(self, "filterRegularExpression"):
-            regex = self.filterRegularExpression()
-        else:
+        if hasattr(self, "filterRegExp"):
             regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
 
         pattern = regex.pattern()
         if pattern and regex.isValid():
@@ -111,10 +111,10 @@ class SearchEntitiesDialog(QtWidgets.QDialog):
 
     def _on_filter_timer(self):
         text = self._filter_edit.text()
-        if hasattr(self._proxy, "setFilterRegularExpression"):
-            self._proxy.setFilterRegularExpression(text)
-        else:
+        if hasattr(self._proxy, "setFilterRegExp"):
             self._proxy.setFilterRegExp(text)
+        else:
+            self._proxy.setFilterRegularExpression(text)
 
         # WARNING This expanding and resizing is relatively slow.
         self._view.expandAll()
