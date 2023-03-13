@@ -1472,13 +1472,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return sync_settings
 
-    def get_all_site_configs(self, project_name=None):
+    def get_all_site_configs(self, project_name=None,
+                             local_editable_only=False):
         """
             Returns (dict) with all sites configured system wide.
 
             Args:
                 project_name (str)(optional): if present, check if not disabled
-
+                local_editable_only (bool)(opt): if True return only Local
+                    Setting configurable (for LS UI)
             Returns:
                 (dict): {'studio': {'provider':'local_drive'...},
                          'MY_LOCAL': {'provider':....}}
@@ -1499,9 +1501,21 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                     if site_settings:
                         detail.update(site_settings)
                 system_sites[site] = detail
-
         system_sites.update(self._get_default_site_configs(sync_enabled,
                                                            project_name))
+        if local_editable_only:
+            local_schema = SyncServerModule.get_local_settings_schema()
+            editable_keys = {}
+            for provider_code, editables in local_schema.items():
+                editable_keys[provider_code] = ["enabled", "provider"]
+                for editable_item in editables:
+                    editable_keys[provider_code].append(editable_item["key"])
+
+            for _, site in system_sites.items():
+                provider = site["provider"]
+                for site_config_key in list(site.keys()):
+                    if site_config_key not in editable_keys[provider]:
+                        site.pop(site_config_key, None)
 
         return system_sites
 
