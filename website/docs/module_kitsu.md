@@ -7,7 +7,7 @@ sidebar_label: Kitsu
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Kitsu is a great open source production tracker and can be used for project management instead of Ftrack. This documentation assumes that you are familiar with Kitsu and it's basic principles. If you're new to Kitsu, we recommend having a thorough look at [Kitsu Official Documentation](https://kitsu.cg-wire.com/).
+Kitsu is a great open source production tracker and can be used for project management instead of Ftrack. This documentation assumes that you are familiar with Kitsu and its basic principles. If you're new to Kitsu, we recommend having a thorough look at [Kitsu Official Documentation](https://kitsu.cg-wire.com/).
 
 ## Prepare Kitsu for OpenPype
 
