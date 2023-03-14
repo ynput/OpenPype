@@ -69,10 +69,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("primaryPool")
         if self.deadline_pool:
             job_info.Pool = self.deadline_pool
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
         if self.deadline_pool_secondary:
             job_info.SecondaryPool = self.deadline_pool_secondary
         job_info.ChunkSize = instance.data.get("chunkSize", 1)
