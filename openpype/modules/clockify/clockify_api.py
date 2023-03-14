@@ -325,7 +325,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         if user_id is None:
             user_id = self.user_id
-        action_url = "workspaces/{}/user/{}/time-entries/".format(
+        action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id
         )
         response = requests.get(
