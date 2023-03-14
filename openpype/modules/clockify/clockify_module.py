@@ -115,6 +115,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
                     current_timer = self.clockapi.get_in_progress()
+                    if not current_timer:
+                        continue
                     current_proj_id = current_timer["projectId"]
                     if not current_proj_id:
                         continue
