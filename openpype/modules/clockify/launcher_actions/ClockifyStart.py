@@ -23,20 +23,25 @@ class ClockifyStart(LauncherAction):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
+        asset_doc = get_asset_by_name(project_name, asset_name)
+        task_info = asset_doc["data"]["tasks"][task_name]
+        task_type = task_info["type"]
 
         description = asset_name
-        asset_doc = get_asset_by_name(
+        parents_data = get_asset_by_name(
             project_name, asset_name, fields=["data.parents"]
         )
-        if asset_doc is not None:
-            desc_items = asset_doc.get("data", {}).get("parents", [])
+
+        if parents_data is not None:
+            desc_items = parents_data.get("data", {}).get("parents", [])
             desc_items.append(asset_name)
             desc_items.append(task_name)
             description = "/".join(desc_items)
 
         project_id = self.clockapi.get_project_id(project_name, workspace_id)
         tag_ids = []
-        tag_ids.append(self.clockapi.get_tag_id(task_name, workspace_id))
+        tag_name = task_type
+        tag_ids.append(self.clockapi.get_tag_id(tag_name, workspace_id))
         self.clockapi.start_time_entry(
             description,
             project_id,
