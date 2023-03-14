@@ -32,13 +32,18 @@ class SyncClockifyLocal(BaseAction):
 
     def launch(self, session, entities, event):
         self.clockapi.set_api()
+        workspace_id = self.clockapi.workspace_id
+        user_id = self.clockapi.workspace_id
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
                 "message": "Clockify Workspace or API key are not set!"
             }
 
-        if self.clockapi.validate_workspace_perm() is False:
+        if (
+            self.clockapi.validate_workspace_permissions(workspace_id, user_id)
+            is False
+        ):
             return {
                 "success": False,
                 "message": "Missing permissions for this action!"
