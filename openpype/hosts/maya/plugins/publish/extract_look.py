@@ -24,7 +24,7 @@ HARDLINK = 2
 def _has_arnold():
     """Return whether the arnold package is available and can be imported."""
     try:
-        import arnold
+        import arnold  # noqa: F401
         return True
     except (ImportError, ModuleNotFoundError):
         return False
