@@ -32,8 +32,6 @@ class SyncClockifyLocal(BaseAction):
 
     def launch(self, session, entities, event):
         self.clockapi.set_api()
-        workspace_id = self.clockapi.workspace_id
-        user_id = self.clockapi.workspace_id
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
@@ -41,7 +39,8 @@ class SyncClockifyLocal(BaseAction):
             }
 
         if (
-            self.clockapi.validate_workspace_permissions(workspace_id, user_id)
+            self.clockapi.validate_workspace_permissions(
+                self.clockapi.workspace_id, self.clockapi.user_id)
             is False
         ):
             return {

@@ -4,7 +4,7 @@ from openpype_modules.ftrack.lib import ServerAction
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocifyServer(ServerAction):
+class SyncClockifyServer(ServerAction):
     '''Synchronise project names and task types.'''
 
     identifier = "clockify.sync.server"
@@ -14,7 +14,7 @@ class SyncClocifyServer(ServerAction):
     role_list = ["Pypeclub", "Administrator", "project Manager"]
 
     def __init__(self, *args, **kwargs):
-        super(SyncClocifyServer, self).__init__(*args, **kwargs)
+        super(SyncClockifyServer, self).__init__(*args, **kwargs)
 
         workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
         api_key = os.environ.get("CLOCKIFY_API_KEY")
@@ -49,8 +49,6 @@ class SyncClocifyServer(ServerAction):
 
     def launch(self, session, entities, event):
         self.clockapi.set_api()
-        workspace_id = self.clockapi.workspace_id
-        user_id = self.clockapi.workspace_id
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
@@ -143,4 +141,4 @@ class SyncClocifyServer(ServerAction):
 
 
 def register(session, **kw):
-    SyncClocifyServer(session).register()
+    SyncClockifyServer(session).register()
