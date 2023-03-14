@@ -67,5 +67,14 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
-        for tool in invalid:
-            tool.SetInput("CreateDir", 1.0)
+        if invalid:
+            data = invalid[0].GetData("openpype")
+
+            # Change render target to local to render locally
+            data["creator_attributes"]["render_target"] = "local"
+
+            invalid[0].SetData("openpype", data)
+            cls.log.error(
+                f"Reload the publisher and {invalid[0].Name} "
+                "will be set to render locally"
+            )
