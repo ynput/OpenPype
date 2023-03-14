@@ -97,7 +97,7 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                     # the `cbId` attribute is shared between the instances
                     cls.log.warning("Instanced members detected. This is ok, "
                                     "but can introduce issues due to not "
-                                    "having a unique `cbId` for each node."
+                                    "having a unique `cbId` for each node. "
                                     "Instanced nodes: "
                                     "{}".format(instance_members))
 
