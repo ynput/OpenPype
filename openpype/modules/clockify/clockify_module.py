@@ -252,7 +252,6 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
             return
 
-
         # DO not restart the timer, if it is already running for curent task
         # TODO: This check is not working.
         if (
