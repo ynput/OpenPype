@@ -61,11 +61,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.bool_workspace_set = self.clockapi.workspace_id is not None
         if self.bool_workspace_set is False:
             return
-        self.workspace_id = self.clockapi.workspace_id
-        self.user_id = self.clockapi.user_id
 
         self.start_timer_check()
-
         self.set_menu_visibility()
 
     def tray_exit(self, *_a, **_kw):
@@ -220,7 +217,6 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         current_timer_hierarchy = None
         current_project_id = None
 
-        self.clockapi.set_api()
         current_timer = self.clockapi.get_in_progress()
 
         if current_timer:
@@ -256,26 +252,25 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
             return
 
+
+        # DO not restart the timer, if it is already running for curent task
         # TODO: This check is not working.
-        # Need to get timer in progress,
-        # to skip starting the timer if it is already running
         if (
-            current_timer
+            current_timer is not None
             and description == current_timer_hierarchy
             and project_id == current_project_id
         ):
             self.log.info("Timer for the current project is already running")
             return
-
         tag_ids = []
-        task_name = input_data["task_name"]
-        task_tag_id = self.clockapi.get_tag_id(task_name, self.workspace_id)
+        tag_name = input_data["task_type"]
+        task_tag_id = self.clockapi.get_tag_id(tag_name)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
         self.clockapi.start_time_entry(
             description,
             project_id,
             tag_ids=tag_ids,
-            workspace_id=self.workspace_id,
-            user_id=self.user_id,
+            workspace_id=self.clockapi.workspace_id,
+            user_id=self.clockapi.user_id
         )
