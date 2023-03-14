@@ -7,7 +7,7 @@ sidebar_label: Kitsu
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Kitsu is a great open source production tracker and can be used for project management instead of Ftrack. This documentation assumes that you are familiar with Kitsu and it's basic principles. If you're new to Kitsu, we recommend having a thorough look at [Kitsu Official Documentation](https://kitsu.cg-wire.com/).
+Kitsu is a great open source production tracker and can be used for project management instead of Ftrack. This documentation assumes that you are familiar with Kitsu and its basic principles. If you're new to Kitsu, we recommend having a thorough look at [Kitsu Official Documentation](https://kitsu.cg-wire.com/).
 
 ## Prepare Kitsu for OpenPype
 
@@ -41,4 +41,4 @@ openpype_console module kitsu push-to-zou -l me@domain.ext -p my_password
 ## Q&A
 ### Is it safe to rename an entity from Kitsu?
 Absolutely! Entities are linked by their unique IDs between the two databases.  
-But renaming from the OP's Project Manager won't apply the change to Kitsu, it'll be overriden during the next synchronization.
+But renaming from the OP's Project Manager won't apply the change to Kitsu, it'll be overridden during the next synchronization.
