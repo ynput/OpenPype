@@ -18,11 +18,11 @@ from ratelimiter import RateLimiter
 class ClockifyAPI:
     def __init__(self, api_key=None, master_parent=None):
         self.workspace_name = None
-        self.workspace_id = None
         self.master_parent = master_parent
         self.api_key = api_key
+        self.__workspace_id = None
+        self.__user_id = None
         self._secure_registry = None
-        self.user_id = None
 
     @property
     def secure_registry(self):
@@ -33,6 +33,14 @@ class ClockifyAPI:
     @property
     def headers(self):
         return {"x-api-key": self.api_key}
+
+    @property
+    def workspace_id(self):
+        return self.__workspace_id
+
+    @property
+    def user_id(self):
+        return self.__user_id
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -65,27 +73,25 @@ class ClockifyAPI:
         return True
 
     @RateLimiter(MAX_CALLS, PERIOD)
-    def validate_workspace_perm(self, workspace_id=None, user_id=None):
+    def validate_workspace_permissions(self, workspace_id=None, user_id=None):
         if user_id is None:
-            print("no User found during validation")
+            self.log.info("No user_id found during validation")
             return False
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = "workspaces/{}/users/{}/roles".format(
-            workspace_id, user_id
+        action_url = f"workspaces/{workspace_id}/users?includeRoles=1"
+        response = requests.get(
+            CLOCKIFY_ENDPOINT + action_url,
+            headers=self.headers
         )
-        print(action_url)
-        return True  # temporarily
-        # response = requests.get(
-        #     CLOCKIFY_ENDPOINT + action_url,
-        #     headers=self.headers
-        # )
-        # user_roles = response.json()
-        # print(f"roles: {user_roles}")
-        # for perm in user_roles:
-        #     if perm['name'] in ADMIN_PERMISSION_NAMES:
-        #         return True
-        # return False
+        data = response.json()
+        for user in data:
+            if user.get("id") == user_id:
+                roles_data = user.get("roles")
+        for entities in roles_data:
+            if entities.get("role") in ADMIN_PERMISSION_NAMES:
+                return True
+        return False
 
     @RateLimiter(MAX_CALLS, PERIOD)
     def get_user_id(self):
@@ -96,7 +102,6 @@ class ClockifyAPI:
         result = response.json()
         user_id = result.get("id", None)
 
-        print(f"User: {user_id}")
         return user_id
 
     def set_workspace(self, name=None):
@@ -110,7 +115,7 @@ class ClockifyAPI:
         except Exception:
             result = False
         if result is not False:
-            self.workspace_id = result
+            self.__workspace_id = result
             if self.master_parent is not None:
                 self.master_parent.start_timer_check()
             return True
@@ -127,11 +132,10 @@ class ClockifyAPI:
     def set_user_id(self):
         try:
             user_id = self.get_user_id()
-            print(f"Setting user_id: {user_id}")
         except Exception:
             user_id = False
         if user_id is not False:
-            self.user_id = user_id
+            self.__user_id = user_id
 
     def get_api_key(self):
         return self.secure_registry.get_item("api_key", None)
@@ -157,7 +161,6 @@ class ClockifyAPI:
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url, headers=self.headers
         )
-        print(response.status_code)
         if response.status_code != 403:
             result = response.json()
             return {project["name"]: project["id"] for project in result}
@@ -246,10 +249,9 @@ class ClockifyAPI:
         # Workspace
         if workspace_id is None:
             workspace_id = self.workspace_id
-        print(f"Starting timer for workspace {workspace_id}")
         # User ID
         if user_id is None:
-            user_id = self.user_id
+            user_id = self.__user_id
 
         # Check if is currently run another times and has same values
         current = self.get_in_progress(workspace_id)
@@ -262,7 +264,7 @@ class ClockifyAPI:
             ):
                 self.bool_timer_run = True
                 return self.bool_timer_run
-            self.finish_time_entry(workspace_id)
+            self.finish_time_entry()
 
         # Convert billable to strings
         if billable:
@@ -285,7 +287,6 @@ class ClockifyAPI:
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url, headers=self.headers, json=body
         )
-        print(f"RESPONSE: {response}")
         success = False
         if response.status_code < 300:
             success = True
@@ -315,7 +316,7 @@ class ClockifyAPI:
         return output
 
     @RateLimiter(MAX_CALLS, PERIOD)
-    def finish_time_entry(self, user_id=None, workspace_id=None):
+    def finish_time_entry(self, workspace_id=None, user_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
         if user_id is None:
