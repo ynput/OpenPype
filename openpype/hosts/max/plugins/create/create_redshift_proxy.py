@@ -18,9 +18,6 @@ class CreateRedshiftProxy(plugin.MaxCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
         container = rt.getNodeByName(instance.data.get("instance_node"))
-        # TODO: Disable "Add to Containers?" Panel
-        # parent the selected cameras into the container
+
         for obj in sel_obj:
             obj.parent = container
-        # for additional work on the node:
-        # instance_node = rt.getNodeByName(instance.get("instance_node"))

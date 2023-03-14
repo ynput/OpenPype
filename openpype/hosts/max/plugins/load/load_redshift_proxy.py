@@ -10,8 +10,8 @@ from openpype.hosts.max.api import lib
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
-    """Redshift Proxy Loader"""
 
+    label = "Load Redshift Proxy"
     families = ["redshiftproxy"]
     representations = ["rs"]
     order = -9
@@ -21,7 +21,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.fname)
+        filepath = self.filepath_from_context(context)
         rs_proxy = rt.RedshiftProxy()
         rs_proxy.file = filepath
         files_in_folder = os.listdir(os.path.dirname(filepath))
@@ -30,7 +30,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
             rs_proxy.is_sequence = True
 
         container = rt.container()
-        container.name = f"{name}"
+        container.name = name
         rs_proxy.Parent = container
 
         asset = rt.getNodeByName(f"{name}")
