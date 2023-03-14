@@ -22,7 +22,7 @@ class ClockifyAPI:
         self.__workspace_id = None
         self.__user_id = None
         self._secure_registry = None
-    
+
     @property
     def secure_registry(self):
         if self._secure_registry is None:
@@ -78,8 +78,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         action_url = f"workspaces/{workspace_id}/users?includeRoles=1"
         response = requests.get(
-            CLOCKIFY_ENDPOINT + action_url,
-            headers=self.headers
+            CLOCKIFY_ENDPOINT + action_url, headers=self.headers
         )
         data = response.json()
         for user in data:
@@ -282,18 +281,14 @@ class ClockifyAPI:
         return success
 
     def get_current_timer_values(self, response=None):
-        print("RESPONSE", response)
         if response is None:
             return
         output = response.json()
-        print("OUTPUT", output)
         if isinstance(output, dict):
-            print(f"STATUS: {response.status_code}")
             return
         current_timer = None
         if output and isinstance(output, list):
-            current_timer, = output  # unpack list
-        print(f"current: {current_timer}")
+            (current_timer,) = output  # unpack list
         return current_timer
 
     def get_in_progress(self, user_id=None, workspace_id=None):
@@ -301,7 +296,6 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         if user_id is None:
             user_id = self.user_id
-        print(self.headers)
 
         action_url = (
             f"workspaces/{workspace_id}/user/"
@@ -319,7 +313,6 @@ class ClockifyAPI:
             user_id = self.user_id
         current_timer = self.get_in_progress()
         if not current_timer:
-            print("no timers run currently")
             return
         action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id

@@ -41,7 +41,6 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.message_widget = None
         self.widget_settings = ClockifySettings(self.clockapi)
         self.widget_settings_required = None
-        self.currently_active_timer = None
 
         self.thread_timer_check = None
         # Bools
@@ -115,23 +114,19 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                 if self.bool_timer_run is True:
                     self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
-                    timer_in_progress = self.clockapi.get_in_progress()
-                    if not timer_in_progress:
-                        continue
-                    actual_timer = timer_in_progress[0]
-                    self.currently_active_timer = actual_timer
-                    actual_proj_id = actual_timer["projectId"]
-                    if not actual_proj_id:
+                    current_timer = self.clockapi.get_in_progress()
+                    current_proj_id = current_timer["projectId"]
+                    if not current_proj_id:
                         continue
 
-                    project = self.clockapi.get_project_by_id(actual_proj_id)
+                    project = self.clockapi.get_project_by_id(current_proj_id)
                     if project and project.get("code") == 501:
                         continue
 
                     project_name = project["name"]
 
-                    actual_timer_hierarchy = actual_timer["description"]
-                    hierarchy_items = actual_timer_hierarchy.split("/")
+                    current_timer_hierarchy = current_timer["description"]
+                    hierarchy_items = current_timer_hierarchy.split("/")
                     # Each pype timer must have at least 2 items!
                     if len(hierarchy_items) < 2:
                         continue
@@ -214,24 +209,25 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     def start_timer(self, input_data):
         """Called from TimersManager to start timer."""
-
+        # If not api key is not entered then skip
+        if not self.clockapi.get_api_key():
+            return
         # get running timer to check if we need to start it
         # TODO: Check running is not working here
-        actual_timer_hierarchy = None
-        actual_project_id = None
-        # current timer does not update here
-        actual_timer = self.currently_active_timer
-        # this returns nothing
-        running_timer = self.clockapi.get_in_progress()
-        if actual_timer:
-            actual_timer_hierarchy = actual_timer.get("description")
-            actual_project_id = actual_timer.get("projectId")
+        current_timer_hierarchy = None
+        current_project_id = None
+
+        self.clockapi.set_api()
+        current_timer = self.clockapi.get_in_progress()
+
+        if current_timer:
+            current_timer_hierarchy = current_timer.get("description")
+            current_project_id = current_timer.get("projectId")
 
         # Concatenate hierarchy and task to get description
-        desc_items = [val for val in input_data.get("hierarchy", [])]
-        desc_items.append(input_data["task_name"])
-        description = "/".join(desc_items)
-
+        description_items = [val for val in input_data.get("hierarchy", [])]
+        description_items.append(input_data["task_name"])
+        description = "/".join(description_items)
         # Check project existence
         project_name = input_data["project_name"]
         project_id = self.clockapi.get_project_id(project_name)
@@ -261,11 +257,11 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         # Need to get timer in progress,
         # to skip starting the timer if it is already running
         if (
-            running_timer
-            and description == actual_timer_hierarchy
-            and project_id == actual_project_id
+            current_timer
+            and description == current_timer_hierarchy
+            and project_id == current_project_id
         ):
-            print("Timer for the current project is already running")
+            self.log.info("Timer for the current project is already running")
             return
 
         tag_ids = []
