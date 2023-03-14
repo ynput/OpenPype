@@ -284,12 +284,9 @@ class ClockifyAPI:
         if response is None:
             return
         output = response.json()
-        if isinstance(output, dict):
-            return
-        current_timer = None
         if output and isinstance(output, list):
-            (current_timer,) = output  # unpack list
-        return current_timer
+            return output[0]
+        return None
 
     def get_in_progress(self, user_id=None, workspace_id=None):
         if workspace_id is None:
