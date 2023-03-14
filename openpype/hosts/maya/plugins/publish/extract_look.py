@@ -21,6 +21,15 @@ COPY = 1
 HARDLINK = 2
 
 
+def _has_arnold():
+    """Return whether the arnold package is available and can be imported."""
+    try:
+        import arnold
+        return True
+    except (ImportError, ModuleNotFoundError):
+        return False
+
+
 def escape_space(path):
     """Ensure path is enclosed by quotes to allow paths with spaces"""
     return '"{}"'.format(path) if " " in path else path
@@ -546,7 +555,7 @@ class ExtractLook(publish.Extractor):
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        if cmds.loadPlugin("mtoa", quiet=True):
+                        if _has_arnold():
                             img_info = image_info(filepath)
                             color_space = guess_colorspace(img_info)
                         else:
@@ -558,7 +567,7 @@ class ExtractLook(publish.Extractor):
                                             render_colorspace])
                 else:
 
-                    if cmds.loadPlugin("mtoa", quiet=True):
+                    if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
                         if color_space == "sRGB":
