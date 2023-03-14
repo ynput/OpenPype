@@ -6,7 +6,6 @@ from maya import cmds
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
-from openpype.hosts.maya.api.lib import get_all_children
 
 
 SETTINGS = {"renderDensity",
