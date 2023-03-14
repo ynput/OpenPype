@@ -19,7 +19,8 @@ class ExtractMaxSceneRaw(publish.Extractor,
 
     order = pyblish.api.ExtractorOrder - 0.2
     label = "Extract Max Scene (Raw)"
-    hosts = ["max"]
+    hosts = ["max",
+             "maxScene"]
     families = ["camera"]
     optional = True
 
