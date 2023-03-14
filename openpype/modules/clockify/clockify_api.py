@@ -19,8 +19,8 @@ class ClockifyAPI:
         self.workspace_name = None
         self.master_parent = master_parent
         self.api_key = api_key
-        self.__workspace_id = None
-        self.__user_id = None
+        self._workspace_id = None
+        self._user_id = None
         self._secure_registry = None
 
     @property
@@ -35,11 +35,11 @@ class ClockifyAPI:
 
     @property
     def workspace_id(self):
-        return self.__workspace_id
+        return self._workspace_id
 
     @property
     def user_id(self):
-        return self.__user_id
+        return self._user_id
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -110,7 +110,7 @@ class ClockifyAPI:
         except Exception:
             result = False
         if result is not False:
-            self.__workspace_id = result
+            self._workspace_id = result
             if self.master_parent is not None:
                 self.master_parent.start_timer_check()
             return True
@@ -130,7 +130,7 @@ class ClockifyAPI:
         except Exception:
             user_id = False
         if user_id is not False:
-            self.__user_id = user_id
+            self._user_id = user_id
 
     def get_api_key(self):
         return self.secure_registry.get_item("api_key", None)
@@ -240,7 +240,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         # User ID
         if user_id is None:
-            user_id = self.__user_id
+            user_id = self._user_id
 
         # Check if is currently run another times and has same values
         current_timer = self.get_in_progress()
