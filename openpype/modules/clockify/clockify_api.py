@@ -12,7 +12,6 @@ from .constants import (
 )
 
 from openpype.lib.local_settings import OpenPypeSecureRegistry
-from ratelimiter import RateLimiter
 
 
 class ClockifyAPI:
@@ -23,7 +22,7 @@ class ClockifyAPI:
         self.__workspace_id = None
         self.__user_id = None
         self._secure_registry = None
-
+    
     @property
     def secure_registry(self):
         if self._secure_registry is None:
@@ -61,7 +60,6 @@ class ClockifyAPI:
             return True
         return False
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def validate_api_key(self, api_key):
         test_headers = {"x-api-key": api_key}
         action_url = "user"
@@ -72,7 +70,6 @@ class ClockifyAPI:
             return False
         return True
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def validate_workspace_permissions(self, workspace_id=None, user_id=None):
         if user_id is None:
             self.log.info("No user_id found during validation")
@@ -93,7 +90,6 @@ class ClockifyAPI:
                 return True
         return False
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_user_id(self):
         action_url = "user"
         response = requests.get(
@@ -143,7 +139,6 @@ class ClockifyAPI:
     def save_api_key(self, api_key):
         self.secure_registry.set_item("api_key", api_key)
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_workspaces(self):
         action_url = "workspaces/"
         response = requests.get(
@@ -153,7 +148,6 @@ class ClockifyAPI:
             workspace["name"]: workspace["id"] for workspace in response.json()
         }
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_projects(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -165,7 +159,6 @@ class ClockifyAPI:
             result = response.json()
             return {project["name"]: project["id"] for project in result}
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_project_by_id(self, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -178,7 +171,6 @@ class ClockifyAPI:
 
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_tags(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -189,7 +181,6 @@ class ClockifyAPI:
 
         return {tag["name"]: tag["id"] for tag in response.json()}
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_tasks(self, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -235,7 +226,6 @@ class ClockifyAPI:
     def get_current_time(self):
         return str(datetime.datetime.utcnow().isoformat()) + "Z"
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def start_time_entry(
         self,
         description,
@@ -254,13 +244,12 @@ class ClockifyAPI:
             user_id = self.__user_id
 
         # Check if is currently run another times and has same values
-        current = self.get_in_progress(workspace_id)
-        if current and current is not None:
-            current = current[0]
+        current_timer = self.get_in_progress()
+        if current_timer and current_timer is not None:
             if (
-                current.get("description", None) == description
-                and current.get("projectId", None) == project_id
-                and current.get("taskId", None) == task_id
+                current_timer.get("description", None) == description
+                and current_timer.get("projectId", None) == project_id
+                and current_timer.get("taskId", None) == task_id
             ):
                 self.bool_timer_run = True
                 return self.bool_timer_run
@@ -292,12 +281,27 @@ class ClockifyAPI:
             success = True
         return success
 
-    @RateLimiter(max_calls=3, period=1)
-    def get_in_progress(self, user_id=None, workspace_id=None) -> list:
+    def get_current_timer_values(self, response=None):
+        print("RESPONSE", response)
+        if response is None:
+            return
+        output = response.json()
+        print("OUTPUT", output)
+        if isinstance(output, dict):
+            print(f"STATUS: {response.status_code}")
+            return
+        current_timer = None
+        if output and isinstance(output, list):
+            current_timer, = output  # unpack list
+        print(f"current: {current_timer}")
+        return current_timer
+
+    def get_in_progress(self, user_id=None, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
         if user_id is None:
             user_id = self.user_id
+        print(self.headers)
 
         action_url = (
             f"workspaces/{workspace_id}/user/"
@@ -306,29 +310,17 @@ class ClockifyAPI:
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url, headers=self.headers
         )
-        try:
-            output = response.json()
-        except json.decoder.JSONDecodeError:
-            output = None
-        if isinstance(output, dict):
-            output = None
+        return self.get_current_timer_values(response)
 
-        return output
-
-    @RateLimiter(MAX_CALLS, PERIOD)
     def finish_time_entry(self, workspace_id=None, user_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
         if user_id is None:
             user_id = self.user_id
-        current = self.get_in_progress()
-        if not current:
+        current_timer = self.get_in_progress()
+        if not current_timer:
             print("no timers run currently")
             return
-        try:
-            (current_timer,) = current
-        except Exception:
-            raise
         action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id
         )
@@ -338,7 +330,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def get_time_entries(self, workspace_id=None, user_id=None, quantity=10):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -352,7 +343,6 @@ class ClockifyAPI:
         )
         return response.json()[:quantity]
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def remove_time_entry(self, tid, workspace_id=None, user_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -364,7 +354,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def add_project(self, name, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -382,7 +371,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def add_workspace(self, name):
         action_url = "workspaces/"
         body = {"name": name}
@@ -391,7 +379,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def add_task(self, name, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -404,7 +391,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def add_tag(self, name, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
@@ -415,7 +401,6 @@ class ClockifyAPI:
         )
         return response.json()
 
-    @RateLimiter(MAX_CALLS, PERIOD)
     def delete_project(self, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
