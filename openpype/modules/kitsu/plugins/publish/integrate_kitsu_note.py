@@ -23,6 +23,8 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     }
 
     def safe_format(self, msg, **kwargs):
+        """If key is not found in kwargs, set None instead"""
+
         def replace_missing(match):
             value = kwargs.get(match.group(1), None)
             if value is None:
