@@ -1,22 +1,14 @@
-import os
 import pyblish.api
-from openpype.pipeline.publish import (
-    ColormanagedPyblishPluginMixin,
-)
+import os
 
 
-class FusionExtractReviewData(
-    pyblish.api.InstancePlugin, ColormanagedPyblishPluginMixin
-):
-    """
-    Extract the result of savers by starting a comp render
-    This will run the local render of Fusion.
-    """
+class CollectFusionRenders(pyblish.api.InstancePlugin):
+    """Collect all frames needed to publish existing frames"""
 
-    order = pyblish.api.ExtractorOrder - 0.1
-    label = "Extract Review Data"
+    order = pyblish.api.CollectorOrder + 0.5
+    label = "Collect Existing Frames"
     hosts = ["fusion"]
-    families = ["review"]
+    families = ["render.frames"]
 
     def process(self, instance):
         context = instance.context
