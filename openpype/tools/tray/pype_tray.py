@@ -13,7 +13,6 @@ from openpype.lib import (
     Logger,
     get_openpype_execute_args,
     run_detached_process,
-    run_subprocess,
 )
 from openpype.lib.openpype_version import (
     op_version_control_available,
