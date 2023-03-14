@@ -16,9 +16,11 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     note_status_shortname = "wfa"
 
     # comment settings
-    CustomCommentTemplate = {}
-    CustomCommentTemplate["enabled"] = False
-    CustomCommentTemplate["comment_template"] = "{comment}"
+    custom_comment_template = {}
+    custom_comment_template = {
+        "enabled": False,
+        "comment_template": "{comment}",
+    }
 
     def safe_format(self, msg, **kwargs):
         def replace_missing(match):
@@ -70,9 +72,9 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     )
 
             # If custom comment, create it
-            if self.CustomCommentTemplate["enabled"]:
+            if self.custom_comment_template["enabled"]:
                 publish_comment = self.safe_format(
-                    self.CustomCommentTemplate["comment_template"],
+                    self.custom_comment_template["comment_template"],
                     **instance.data,
                 )
 
