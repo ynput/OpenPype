@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
 import os
-import sys
 import json
 import tempfile
 import platform
 import contextlib
-import subprocess
 from collections import OrderedDict
 
 from maya import cmds  # noqa
