@@ -128,7 +128,7 @@ def update_op_assets(
             if frames_duration:
                 frame_out = frame_in + frames_duration - 1
             else:
-                frame_out = int(project_doc["data"].get("frameEnd", frame_in))
+                frame_out = project_doc["data"].get("frameEnd", frame_in)
         item_data["frameEnd"] = int(frame_out)
         # Fps, fallback to project's value or default value (25.0)
         try:
