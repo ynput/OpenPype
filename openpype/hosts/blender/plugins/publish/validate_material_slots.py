@@ -3,8 +3,9 @@ from typing import List
 import bpy
 
 import pyblish.api
-from openpype.api import ValidateContentsOrder
+
 from openpype.hosts.blender.api.action import SelectInvalidAction
+from openpype.plugin import ValidateContentsOrder
 
 
 class ValidateMaterialSlots(pyblish.api.InstancePlugin):
