@@ -9,18 +9,25 @@ class ClockifySync(LauncherAction):
     icon = "app_icons/clockify-white.png"
     order = 500
     clockapi = ClockifyAPI()
-    clockapi.set_api()
-    workspace_id = clockapi.workspace_id
-    user_id = clockapi.user_id
-    workspace_name = clockapi.workspace_name
-    have_permissions = clockapi.validate_workspace_perm(workspace_id, user_id)
 
     def is_compatible(self, session):
-        """Return whether the action is compatible with the session"""
-        return self.have_permissions
+        """Check if there's some projects to sync"""
+        try:
+            next(get_projects())
+            return True
+        except StopIteration:
+            return False
 
     def process(self, session, **kwargs):
-        workspace_id = self.workspace_id
+        self.clockapi.set_api()
+        workspace_id = self.clockapi.workspace_id
+        user_id = self.clockapi.user_id
+        if not self.clockapi.validate_workspace_permissions(
+            workspace_id, user_id
+        ):
+            self.log.info("Missing permissions for this action!")
+            return
+        workspace_name = self.clockapi.workspace_name
         project_name = session.get("AVALON_PROJECT") or ""
 
         projects_to_sync = []
