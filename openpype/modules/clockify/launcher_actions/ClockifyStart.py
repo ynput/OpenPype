@@ -9,9 +9,6 @@ class ClockifyStart(LauncherAction):
     icon = "app_icons/clockify.png"
     order = 500
     clockapi = ClockifyAPI()
-    clockapi.set_api()
-    user_id = clockapi.user_id
-    workspace_id = clockapi.workspace_id
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
@@ -20,8 +17,9 @@ class ClockifyStart(LauncherAction):
         return False
 
     def process(self, session, **kwargs):
-        user_id = self.user_id
-        workspace_id = self.workspace_id
+        self.clockapi.set_api()
+        user_id = self.clockapi.user_id
+        workspace_id = self.clockapi.workspace_id
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
