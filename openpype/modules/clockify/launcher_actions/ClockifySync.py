@@ -27,7 +27,6 @@ class ClockifySync(LauncherAction):
         ):
             self.log.info("Missing permissions for this action!")
             return
-        workspace_name = self.clockapi.workspace_name
         project_name = session.get("AVALON_PROJECT") or ""
 
         projects_to_sync = []
