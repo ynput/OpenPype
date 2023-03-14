@@ -2,8 +2,9 @@ from typing import List
 
 import bpy
 import pyblish.api
-from openpype.api import ValidateContentsOrder
+
 from openpype.hosts.blender.api.action import SaveDirtyTextures
+from openpype.plugin import ValidateContentsOrder
 
 class ValidateNoDirtyTexture(pyblish.api.InstancePlugin):
     """Validates that there are no dirty textures
