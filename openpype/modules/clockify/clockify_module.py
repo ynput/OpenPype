@@ -133,7 +133,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     if len(hierarchy_items) < 2:
                         continue
 
-                    *hierarchy, task_name = hierarchy_items
+                    task_name = hierarchy_items[-1]
+                    hierarchy = hierarchy_items[:-1]
 
                     data = {
                         "task_name": task_name,
