@@ -10,7 +10,7 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractCameraAlembic(publish.Extractor,
+class ExtractRedshiftProxy(publish.Extractor,
                            OptionalPyblishPluginMixin):
     """
     Extract Camera with AlembicExport
