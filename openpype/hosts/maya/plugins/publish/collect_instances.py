@@ -1,9 +1,48 @@
-import json
-
 from maya import cmds
+import maya.api.OpenMaya as om
 
 import pyblish.api
-from openpype.hosts.maya.api.lib import get_all_children
+import json
+
+
+def get_all_children(nodes):
+    """Return all children of `nodes` including each instanced child.
+    Using maya.cmds.listRelatives(allDescendents=True) includes only the first
+    instance. As such, this function acts as an optimal replacement with a
+    focus on a fast query.
+
+    """
+
+    sel = om.MSelectionList()
+    traversed = set()
+    iterator = om.MItDag(om.MItDag.kDepthFirst)
+    for node in nodes:
+
+        if node in traversed:
+            # Ignore if already processed as a child
+            # before
+            continue
+
+        sel.clear()
+        sel.add(node)
+        dag = sel.getDagPath(0)
+
+        iterator.reset(dag)
+        # ignore self
+        iterator.next()  # noqa: B305
+        while not iterator.isDone():
+
+            path = iterator.fullPathName()
+
+            if path in traversed:
+                iterator.prune()
+                iterator.next()  # noqa: B305
+                continue
+
+            traversed.add(path)
+            iterator.next()  # noqa: B305
+
+    return list(traversed)
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
