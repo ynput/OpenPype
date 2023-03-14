@@ -8,7 +8,9 @@ from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 
 class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
-    """Checks if files for savers that's set to publish existing frames exists"""
+    """Checks if files for savers that's set
+    to publish existing frames exists
+    """
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Existing Frames Exists"
@@ -17,7 +19,7 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     actions = [RepairAction, SelectInvalidAction]
 
     @classmethod
-    def get_invalid(cls, instance):
+    def get_invalid(cls, instance, non_existing_frames=[]):
         active = instance.data.get("active", instance.data.get("publish"))
         if not active:
             return []
@@ -37,29 +39,27 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
                 for frame in range(frame_start, frame_end + 1)
             ]
 
-            non_existing_frames = []
-
             for file in files:
-                cls.log.error(file)
                 if not os.path.exists(os.path.join(output_dir, file)):
+                    cls.log.error(
+                        f"Missing file: {os.path.join(output_dir, file)}"
+                    )
                     non_existing_frames.append(file)
 
             if len(non_existing_frames) > 0:
-                cls.log.error(
-                    "Some of {}'s files does not exist".format(tool.Name)
-                )
-                return [tool, output_dir, non_existing_frames]
+                cls.log.error(f"Some of {tool.Name}'s files does not exist")
+                return [tool]
 
     def process(self, instance):
-        invalid = self.get_invalid(instance)
+        non_existing_frames = []
+        invalid = self.get_invalid(instance, non_existing_frames)
         if invalid:
             raise PublishValidationError(
                 "{} is set to publish existing frames but "
-                "some frames are missing in the folder:\n\n{}"
+                "some frames are missing. "
                 "The missing file(s) are:\n\n{}".format(
                     invalid[0].Name,
-                    invalid[1],
-                    "\n\n".join(invalid[2]),
+                    "\n\n".join(non_existing_frames),
                 ),
                 title=self.label,
             )
