@@ -161,7 +161,7 @@ class ClockifyAPI:
     def get_project_by_id(self, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = "workspaces/{}/projects/{}/".format(
+        action_url = "workspaces/{}/projects/{}".format(
             workspace_id, project_id
         )
         response = requests.get(
@@ -183,7 +183,7 @@ class ClockifyAPI:
     def get_tasks(self, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = "workspaces/{}/projects/{}/tasks/".format(
+        action_url = "workspaces/{}/projects/{}/tasks".format(
             workspace_id, project_id
         )
         response = requests.get(
@@ -244,6 +244,7 @@ class ClockifyAPI:
 
         # Check if is currently run another times and has same values
         current_timer = self.get_in_progress()
+        print(current_timer)
         if current_timer and current_timer is not None:
             if (
                 current_timer.get("description", None) == description
@@ -260,7 +261,7 @@ class ClockifyAPI:
         else:
             billable = "false"
         # Rest API Action
-        action_url = "workspaces/{}/user/{}/time-entries/".format(
+        action_url = "workspaces/{}/user/{}/time-entries".format(
             workspace_id, user_id
         )
         start = self.get_current_time()
@@ -301,7 +302,7 @@ class ClockifyAPI:
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url, headers=self.headers
         )
-        return self.get_current_timer_values(response)
+        return self._get_current_timer_values(response)
 
     def finish_time_entry(self, workspace_id=None, user_id=None):
         if workspace_id is None:
@@ -347,7 +348,7 @@ class ClockifyAPI:
     def add_project(self, name, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = "workspaces/{}/projects/".format(workspace_id)
+        action_url = "workspaces/{}/projects".format(workspace_id)
         body = {
             "name": name,
             "clientId": "",
@@ -372,7 +373,7 @@ class ClockifyAPI:
     def add_task(self, name, project_id, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
-        action_url = "workspaces/{}/projects/{}/tasks/".format(
+        action_url = "workspaces/{}/projects/{}/tasks".format(
             workspace_id, project_id
         )
         body = {"name": name, "projectId": project_id}
