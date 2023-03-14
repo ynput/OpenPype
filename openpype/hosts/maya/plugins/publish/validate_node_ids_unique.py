@@ -85,7 +85,7 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                         instance_groups[tuple(all_paths)].add(member)
                     unique_members.append(member)
 
-                for instance_grp, instance_members in instance_groups.items():
+                for _instance_grp, instance_members in instance_groups.items():
                     if len(instance_members) < 2:
                         # Ignore nodes that are instances but their instances
                         # don't appear in the export
