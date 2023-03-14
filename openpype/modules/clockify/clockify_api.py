@@ -128,8 +128,8 @@ class ClockifyAPI:
         try:
             user_id = self.get_user_id()
         except Exception:
-            user_id = False
-        if user_id is not False:
+            user_id = None
+        if user_id is not None:
             self._user_id = user_id
 
     def get_api_key(self):
