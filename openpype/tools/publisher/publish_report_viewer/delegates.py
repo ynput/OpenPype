@@ -1,5 +1,5 @@
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 from .constants import (
     ITEM_IS_GROUP_ROLE,
     ITEM_ERRORED_ROLE,
@@ -201,10 +201,10 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
             style = QtWidgets.QApplicaion.style()
 
         style.proxy().drawPrimitive(
-            style.PE_PanelItemViewItem, option, painter, widget
+            QtWidgets.QStyle.PE_PanelItemViewItem, option, painter, widget
         )
         _rect = style.proxy().subElementRect(
-            style.SE_ItemViewItemText, option, widget
+            QtWidgets.QStyle.SE_ItemViewItemText, option, widget
         )
         bg_rect = QtCore.QRectF(option.rect)
         bg_rect.setY(_rect.y())
@@ -265,7 +265,7 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         else:
             style = QtWidgets.QApplicaion.style()
         _rect = style.proxy().subElementRect(
-            style.SE_ItemViewItemText, option, widget
+            QtWidgets.QStyle.SE_ItemViewItemText, option, widget
         )
 
         bg_rect = QtCore.QRectF(option.rect)

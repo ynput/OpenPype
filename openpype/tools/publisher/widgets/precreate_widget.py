@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 

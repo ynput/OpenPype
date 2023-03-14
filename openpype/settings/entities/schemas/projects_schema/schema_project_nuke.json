@@ -106,26 +106,20 @@
                     "children": [
                         {
                             "type": "text",
-                            "key": "fpath_template",
-                            "label": "Path template"
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Subset name defaults",
+                            "key": "default_variants",
+                            "label": "Default variants",
                             "object_type": {
                                 "type": "text"
                             }
                         },
                         {
                             "type": "schema_template",
-                            "name": "template_nuke_knob_inputs",
-                            "template_data": [
-                                {
-                                    "label": "Node knobs",
-                                    "key": "knobs"
-                                }
-                            ]
+                            "name": "template_nuke_write_attrs"
                         },
                         {
                             "key": "prenodes",
@@ -169,36 +163,20 @@
                     "children": [
                         {
                             "type": "text",
-                            "key": "fpath_template",
-                            "label": "Path template"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "use_range_limit",
-                            "label": "Use Frame range limit by default"
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Subset name defaults",
+                            "key": "default_variants",
+                            "label": "Default variants",
                             "object_type": {
                                 "type": "text"
                             }
                         },
                         {
-                            "type": "boolean",
-                            "key": "reviewable",
-                            "label": "Add reviewable toggle"
-                        },
-                        {
                             "type": "schema_template",
-                            "name": "template_nuke_knob_inputs",
-                            "template_data": [
-                                {
-                                    "label": "Node knobs",
-                                    "key": "knobs"
-                                }
-                            ]
+                            "name": "template_nuke_write_attrs"
                         },
                         {
                             "key": "prenodes",
@@ -236,32 +214,26 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CreateWriteStill",
-                    "label": "CreateWriteStill",
+                    "key": "CreateWriteImage",
+                    "label": "CreateWriteImage",
                     "is_group": true,
                     "children": [
                         {
                             "type": "text",
-                            "key": "fpath_template",
-                            "label": "Path template"
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Subset name defaults",
+                            "key": "default_variants",
+                            "label": "Default variants",
                             "object_type": {
                                 "type": "text"
                             }
                         },
                         {
                             "type": "schema_template",
-                            "name": "template_nuke_knob_inputs",
-                            "template_data": [
-                                {
-                                    "label": "Node knobs",
-                                    "key": "knobs"
-                                }
-                            ]
+                            "name": "template_nuke_write_attrs"
                         },
                         {
                             "key": "prenodes",

@@ -2,14 +2,20 @@
     "key": "imageio",
     "type": "dict",
     "label": "Color Management (ImageIO)",
-    "checkbox_key": "enabled",
     "collapsible": true,
     "is_group": true,
     "children": [
         {
-            "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "type": "label",
+            "label": "<b style='color:red'>'Custom OCIO config path'</b> has deprecated. <br> If you need to set custom config, just enable and add path into 'OCIO config'. <br>Anatomy keys are supported.</i>."
+        },
+        {
+            "type": "schema",
+            "name": "schema_imageio_config"
+        },
+        {
+            "type": "schema",
+            "name": "schema_imageio_file_rules"
         },
         {
             "key": "viewer",

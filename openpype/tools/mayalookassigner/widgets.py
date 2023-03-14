@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils.models import TreeModel
 from openpype.tools.utils.lib import (

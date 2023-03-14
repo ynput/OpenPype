@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 
 class View(QtWidgets.QTreeView):
@@ -10,7 +10,7 @@ class View(QtWidgets.QTreeView):
         # view settings
         self.setAlternatingRowColors(False)
         self.setSortingEnabled(True)
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
     def get_indices(self):

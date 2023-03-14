@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from Qt import QtCore
+from qtpy import QtCore
 import qtawesome
 
 from openpype.tools.utils import models

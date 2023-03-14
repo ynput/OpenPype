@@ -23,8 +23,6 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
-    category = 'cleanup'
-    version = (0, 1, 0)
     label = 'No Namespaces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]

@@ -88,16 +88,16 @@ done
 ###############################################################################
 detect_python () {
   echo -e "${BIGreen}>>>${RST} Using python \c"
-  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}- NOT FOUND${RST} ${BIYellow}You need Python 3.7 installed to continue.${RST}"; return 1; }
+  command -v python >/dev/null 2>&1 || { echo -e "${BIRed}- NOT FOUND${RST} ${BIYellow}You need Python 3.9 installed to continue.${RST}"; return 1; }
   local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version="$(python <<< ${version_command})"
   oIFS="$IFS"
   IFS=.
   set -- $python_version
   IFS="$oIFS"
-  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    if [ "$2" -gt "7" ] ; then
-      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
+  if [ "$1" -ge "3" ] && [ "$2" -ge "9" ] ; then
+    if [ "$2" -gt "9" ] ; then
+      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.9.x${RST}"; return 1;
     else
       echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
     fi
@@ -109,7 +109,7 @@ detect_python () {
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   export POETRY_HOME="$openpype_root/.poetry"
-  export POETRY_VERSION="1.1.15"
+  export POETRY_VERSION="1.3.2"
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
   curl -sSL https://install.python-poetry.org/ | python -
 }
@@ -191,10 +191,10 @@ main () {
   # reinstalling them solves the problem.
   echo -e "${BIGreen}>>>${RST} Post-venv creation fixes ..."
   local openpype_index=$("$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/parse_pyproject.py" tool.poetry.source.0.url)
-  echo -e "${BIGreen}-   ${RST} Using index: ${BIWhite}$openpype_index${RST}" 
-  "$POETRY_HOME/bin/poetry" run pip install setuptools==49.6.0
-  "$POETRY_HOME/bin/poetry" run pip install --disable-pip-version-check --force-reinstall wheel
+  echo -e "${BIGreen}-   ${RST} Using index: ${BIWhite}$openpype_index${RST}"
   "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
+  echo -e "${BIGreen}>>>${RST} Installing pre-commit hooks ..."
+  "$POETRY_HOME/bin/poetry" run pre-commit install
 }
 
 return_code=0

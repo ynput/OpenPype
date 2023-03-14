@@ -210,7 +210,8 @@ def switch_item(container,
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
-        repre_parent_docs = get_representation_parents(representation)
+        repre_parent_docs = get_representation_parents(
+            project_name, representation)
         if repre_parent_docs:
             version, subset, asset, _ = repre_parent_docs
         else:
