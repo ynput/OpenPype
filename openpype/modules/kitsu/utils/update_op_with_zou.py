@@ -267,9 +267,16 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         # Update Zou
         gazu.project.update_project(project)
 
-    all_kitsu_projects_names = [project['name'] for project in gazu.project.all_projects()]
-    all_kitsu_open_projects_names = [project['name'] for project in gazu.project.all_open_projects()]
-    all_kitsu_closed_projects_names = [project for project in all_kitsu_projects_names if project not in all_kitsu_open_projects_names]
+    all_kitsu_projects_names = [
+        project['name'] for project in gazu.project.all_projects()
+    ]
+    all_kitsu_open_projects_names = [
+        project['name'] for project in gazu.project.all_open_projects()
+    ]
+    all_kitsu_closed_projects_names = [
+        project for project in all_kitsu_projects_names
+        if project not in all_kitsu_open_projects_names
+    ]
 
     if project_name in all_kitsu_closed_projects_names:
         project_status = False
