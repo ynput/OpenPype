@@ -9,7 +9,8 @@ from openpype.hosts.max.api import lib
 class MaxSceneLoader(load.LoaderPlugin):
     """Max Scene Loader"""
 
-    families = ["camera"]
+    families = ["camera",
+                "maxScene"]
     representations = ["max"]
     order = -8
     icon = "code-fork"

@@ -84,6 +84,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "camera",
                 "animation",
                 "model",
+                "maxScene",
                 "mayaAscii",
                 "mayaScene",
                 "setdress",
