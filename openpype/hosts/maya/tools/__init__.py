@@ -1,5 +1,6 @@
 from openpype.tools.utils.host_tools import qt_app_context
 
+
 class MayaToolsSingleton:
     _look_assigner = None
 
