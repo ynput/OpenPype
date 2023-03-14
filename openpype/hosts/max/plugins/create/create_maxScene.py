@@ -6,7 +6,7 @@ from openpype.pipeline import CreatedInstance
 
 class CreateMaxScene(plugin.MaxCreator):
     identifier = "io.openpype.creators.max.maxScene"
-    label = "Max Scene(Raw)"
+    label = "Max Scene"
     family = "maxScene"
     icon = "gear"
 
