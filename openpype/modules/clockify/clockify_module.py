@@ -51,7 +51,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.bool_timer_run = False
         self.bool_api_key_set = self.clockapi.set_api()
 
-        # Define itself as ITimersManager connector
+        # Define itself as TimersManager connector
         self.timers_manager_connector = self
 
     def tray_start(self):
@@ -88,7 +88,6 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     def clockify_timer_stopped(self):
         self.bool_timer_run = False
-        # Call `ITimersManager` method
         self.timer_stopped()
 
     def start_timer_check(self):
@@ -137,14 +136,13 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     if len(hierarchy_items) < 2:
                         continue
 
-                    task_name, hierarchy = hierarchy_items
+                    *hierarchy, task_name = hierarchy_items
 
                     data = {
                         "task_name": task_name,
                         "hierarchy": hierarchy,
                         "project_name": project_name,
                     }
-                    # Call `TimersManager` method
                     self.timer_started(data)
 
                 self.bool_timer_run = bool_timer_run
@@ -230,9 +228,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
             actual_project_id = actual_timer.get("projectId")
 
         # Concatenate hierarchy and task to get description
-        desc_items = input_data.get("hierarchy", [])
-        if len(desc_items) == 1:
-            desc_items.append(input_data["task_name"])
+        desc_items = [val for val in input_data.get("hierarchy", [])]
+        desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
 
         # Check project existence
@@ -240,11 +237,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         project_id = self.clockapi.get_project_id(project_name)
         if not project_id:
             self.log.warning(
-                (
-                    f'Project "{project_name}" was not found in Clockify. '
-                    f"Timer won't start."
-                )
-            )
+                'Project "{}" was not found in Clockify. Timer won\'t start.'
+            ).format(project_name)
 
             if not self.MessageWidgetClass:
                 return
