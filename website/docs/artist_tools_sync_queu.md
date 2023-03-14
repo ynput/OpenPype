@@ -2,7 +2,7 @@
 id: artist_tools_sync_queue
 title: Sync Queue
 sidebar_label: Sync Queue
-description: Track sites syncronization progress.
+description: Track sites synchronization progress.
 ---
 
 # Sync Queue

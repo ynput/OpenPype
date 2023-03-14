@@ -179,6 +179,13 @@
                 "Main"
             ]
         },
+        "CreateReview": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "useMayaTimeline": true
+        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
@@ -255,12 +262,6 @@
                 "Main"
             ]
         },
-        "CreateReview": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateRig": {
             "enabled": true,
             "defaults": [
@@ -325,6 +326,11 @@
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMayaColorSpace": {
             "enabled": true,
             "optional": true,
             "active": true

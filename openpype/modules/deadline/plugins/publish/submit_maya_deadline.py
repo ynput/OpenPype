@@ -424,6 +424,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         )
         assembly_job_info.TileJob = False
 
+        pool = instance.context.data["project_settings"]["deadline"]
+        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
+        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
+
         assembly_plugin_info = {
             "CleanupTiles": 1,
             "ErrorOnMissing": True,

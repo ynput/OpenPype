@@ -49,6 +49,16 @@ executable. It is recommended to use the `openpype_console` executable as it pro
 To setup tile rendering copy the `OpenPypeTileAssembler` plugin to the repository;
 `[OpenPype]\openpype\modules\deadline\repository\custom\plugins\OpenPypeTileAssembler` > `[DeadlineRepository]\custom\plugins\OpenPypeTileAssembler`
 
+### Pools
+
+The main pools can be configured at `project_settings/deadline/publish/CollectDeadlinePools/primary_pool`, which is applied to the rendering jobs.
+
+The dependent publishing job's pool uses `project_settings/deadline/publish/ProcessSubmittedJobOnFarm/deadline_pool`. If nothing is specified the pool will fallback to the primary pool above.
+
+:::note maya tile rendering
+The logic for publishing job pool assignment applies to tiling jobs.
+:::
+
 ## Troubleshooting
 
 #### Publishing jobs fail directly in DCCs

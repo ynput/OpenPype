@@ -1,9 +1,11 @@
 import os
 import pyblish.api
+from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
 
 
-class Fusionlocal(pyblish.api.InstancePlugin):
+class Fusionlocal(pyblish.api.InstancePlugin,
+                  publish.ColormanagedPyblishPluginMixin):
     """Render the current Fusion composition locally.
 
     Extract the result of savers by starting a comp render
@@ -17,17 +19,19 @@ class Fusionlocal(pyblish.api.InstancePlugin):
     families = ["render.local"]
 
     def process(self, instance):
-
-        # This plug-in runs only once and thus assumes all instances
-        # currently will render the same frame range
         context = instance.context
-        key = f"__hasRun{self.__class__.__name__}"
-        if context.data.get(key, False):
-            return
 
-        context.data[key] = True
-
+        # Start render
         self.render_once(context)
+
+        # Log render status
+        self.log.info(
+            "Rendered '{nm}' for asset '{ast}' under the task '{tsk}'".format(
+                nm=instance.data["name"],
+                ast=instance.data["asset"],
+                tsk=instance.data["task"],
+            )
+        )
 
         frame_start = context.data["frameStartHandle"]
         frame_end = context.data["frameEndHandle"]
@@ -41,40 +45,56 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             for frame in range(frame_start, frame_end + 1)
         ]
         repre = {
-            'name': ext[1:],
-            'ext': ext[1:],
-            'frameStart': f"%0{len(str(frame_end))}d" % frame_start,
-            'files': files,
+            "name": ext[1:],
+            "ext": ext[1:],
+            "frameStart": f"%0{len(str(frame_end))}d" % frame_start,
+            "files": files,
             "stagingDir": output_dir,
         }
+
+        self.set_representation_colorspace(
+            representation=repre,
+            context=context,
+        )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(repre)
 
         # review representation
-        repre_preview = repre.copy()
-        repre_preview["name"] = repre_preview["ext"] = "mp4"
-        repre_preview["tags"] = ["review", "ftrackreview", "delete"]
-        instance.data["representations"].append(repre_preview)
+        if instance.data.get("review", False):
+            repre["tags"] = ["review", "ftrackreview"]
 
     def render_once(self, context):
         """Render context comp only once, even with more render instances"""
 
-        current_comp = context.data["currentComp"]
-        frame_start = context.data["frameStartHandle"]
-        frame_end = context.data["frameEndHandle"]
+        # This plug-in assumes all render nodes get rendered at the same time
+        # to speed up the rendering. The check below makes sure that we only
+        # execute the rendering once and not for each instance.
+        key = f"__hasRun{self.__class__.__name__}"
+        if key not in context.data:
+            # We initialize as false to indicate it wasn't successful yet
+            # so we can keep track of whether Fusion succeeded
+            context.data[key] = False
 
-        self.log.info("Starting render")
-        self.log.info(f"Start frame: {frame_start}")
-        self.log.info(f"End frame: {frame_end}")
+            current_comp = context.data["currentComp"]
+            frame_start = context.data["frameStartHandle"]
+            frame_end = context.data["frameEndHandle"]
 
-        with comp_lock_and_undo_chunk(current_comp):
-            result = current_comp.Render({
-                "Start": frame_start,
-                "End": frame_end,
-                "Wait": True
-            })
+            self.log.info("Starting Fusion render")
+            self.log.info(f"Start frame: {frame_start}")
+            self.log.info(f"End frame: {frame_end}")
 
-        if not result:
+            with comp_lock_and_undo_chunk(current_comp):
+                result = current_comp.Render(
+                    {
+                        "Start": frame_start,
+                        "End": frame_end,
+                        "Wait": True,
+                    }
+                )
+
+            context.data[key] = bool(result)
+
+        if context.data[key] is False:
             raise RuntimeError("Comp render failed")
