@@ -57,9 +57,8 @@ class SyncClocifyServer(ServerAction):
                 "message": "Clockify Workspace or API key are not set!"
             }
 
-        if (
-            self.clockapi.validate_workspace_permissions(workspace_id, user_id)
-            is False
+        if not self.clockapi.validate_workspace_permissions(
+            self.clockapi.workspace_id, self.clockapi.user_id
         ):
             return {
                 "success": False,
