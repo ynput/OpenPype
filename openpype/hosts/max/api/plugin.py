@@ -102,10 +102,7 @@ class MaxCreator(Creator, MaxCreatorBase):
                 instance.data.get("instance_node"))
             if instance_node:
                 rt.select(instance_node)
-                unparent_cmd = f"""
-                for o in selection do for c in o.children do c.parent = undefined
-                """
-                rt.execute(unparent_cmd)
+                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
                 rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
