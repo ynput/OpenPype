@@ -122,6 +122,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {fu_profile_dir_variable}: {fu_profile_dir}")
         self.launch_context.env[fu_profile_dir_variable] = str(fu_profile_dir)
 
+        # setup masterprefs file to partially alter existing or newly generated
+        # Fusion profile, to add OpenPype menu, scripts and and config files.
         master_prefs_variable = f"FUSION{app_version}_MasterPrefs"
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")

@@ -14,6 +14,10 @@ def get_fusion_profile_number(module: str, app_data: str) -> int:
     already Fusion version 18, still FUSION16_PROFILE_DIR is used.
     The variable is added in case the version number will be
     updated or deleted so we could easily change the version or disable it.
+
+    app_data derives from `launch_context.env.get("AVALON_APP_NAME")`. 
+    For the time being we will encourage user to set a version number 
+    set in the system settings key for the Blackmagic Fusion.
     """
 
     log = Logger.get_logger(__name__)
@@ -42,15 +46,11 @@ class FusionAddon(OpenPypeModule, IHostAddon):
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
             return []
-        return [
-            os.path.join(FUSION_HOST_DIR, "hooks")
-        ]
+        return [os.path.join(FUSION_HOST_DIR, "hooks")]
 
     def add_implementation_envs(self, env, _app):
         # Set default values if are not already set via settings
-        defaults = {
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
-        }
+        defaults = {"OPENPYPE_LOG_NO_COLORS": "Yes"}
         for key, value in defaults.items():
             if not env.get(key):
                 env[key] = value
