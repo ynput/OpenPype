@@ -7,12 +7,15 @@ sidebar_label: Working with settings
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-OpenPype stores all of it's settings and configuration in the mongo database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
+OpenPype stores all of its settings and configuration in the mongo database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
 
 **Settings** GUI can be started from the tray menu *Admin -> Studio Settings*.
 
-Please keep in mind that these settings are set-up for the full studio and not per-individual. If you're looking for individual artist settings, you can head to
-[Local Settings](admin_settings_local.md) section in the artist documentation.
+:::important Studio Settings versus Local Settings
+Please keep in mind that these settings are set up for the full studio and not per-individual. If you're looking for individual artist settings, you can head to
+[Local Settings](admin_settings_local.md) section in the documentation.
+:::
+
 
 ## Categories
 
@@ -76,7 +79,7 @@ You can also reset any settings to OpenPype default by doing `right click` and `
 Many settings are useful to be adjusted on a per-project basis. To identify project
 overrides, they are marked with **orange edge** and **orange labels** in the settings GUI.
 
-The process of settting project overrides is similar to setting the Studio defaults. The key difference is to select a particular project you want to be configure. Those projects can be found on the left hand side of the Project Settings tab.
+The process of setting project overrides is similar to setting the Studio defaults. The key difference is to select a particular project you want to be configure. Those projects can be found on the left hand side of the Project Settings tab.
 
 In the image below you can see all three overrides at the same time.
 1. Deadline has **no changes to the OpenPype defaults** at all — **grey** colour of left bar.

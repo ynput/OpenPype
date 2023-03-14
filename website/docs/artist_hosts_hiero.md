@@ -231,14 +231,14 @@ All published instances that will replace the place holder must contain unique i
 ![Create menu](assets/nuke_publishedinstance.png)
 
 
-The informations about these objects are given by the user by filling the extra attributes of the Place Holder
+The information about these objects are given by the user by filling the extra attributes of the Place Holder
 
 ![Create menu](assets/nuke_fillingExtraAttributes.png)
 
 
 
 ### Update Place Holder
-This tool alows the user to change the information provided in the extra attributes of the selected Place Holder.
+This tool allows the user to change the information provided in the extra attributes of the selected Place Holder.
 
 ![Create menu](assets/nuke_updatePlaceHolder.png)
 
@@ -250,7 +250,7 @@ This tool imports the template used and replaces the existed PlaceHolders with t
 ![Create menu](assets/nuke_buildWorfileFromTemplate.png)
 
 #### Result
-- Replace `PLACEHOLDER` node in the template with the published instance corresponding to the informations provided in extra attributes of the Place Holder
+- Replace `PLACEHOLDER` node in the template with the published instance corresponding to the information provided in extra attributes of the Place Holder
 
 ![Create menu](assets/nuke_buildworkfile.png)
 
