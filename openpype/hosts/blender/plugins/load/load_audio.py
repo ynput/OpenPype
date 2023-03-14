@@ -1,13 +1,12 @@
 """Load audio in Blender."""
 
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Set, Tuple
 
 import bpy
 
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-from openpype.pipeline.load.utils import get_representation_path
+from openpype.hosts.blender.api.properties import OpenpypeContainer
 
 
 class AudioLoader(plugin.AssetLoader):
@@ -19,79 +18,83 @@ class AudioLoader(plugin.AssetLoader):
     label = "Load Audio"
     icon = "volume-up"
     color = "orange"
-    color_tag = "COLOR_02"
 
-    def _remove_audio(self, audio):
-        # Blender needs the Sequence Editor in the current window, to be able
-        # to remove the audio. We take one of the areas in the window, save its
-        # type, and switch to the Sequence Editor. After removing the audio,
-        # we switch back to the previous area.
-        window_manager = bpy.context.window_manager
-        old_type = window_manager.windows[-1].screen.areas[0].type
-        window_manager.windows[-1].screen.areas[0].type = "SEQUENCE_EDITOR"
+    load_type = "APPEND"  # TODO meaningless here, must be refactored
 
-        # We override the context to load the audio in the sequence editor.
-        context = bpy.context.copy()
-        context["area"] = window_manager.windows[-1].screen.areas[0]
+    def _load_library_datablocks(
+        self,
+        libpath: Path,
+        container_name: str,
+        container: OpenpypeContainer = None,
+        **_kwargs
+    ) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+        """OVERRIDE Load datablocks from blend file library.
 
-        # We deselect all sequencer strips, and then select the one we
-        # need to remove.
-        bpy.ops.sequencer.select_all(context, action="DESELECT")
-        bpy.context.scene.sequence_editor.sequences_all[audio].select = True
+        Args:
+            libpath (Path): Path of library.
+            container_name (str): Name of container to be loaded.
+            container (OpenpypeContainer): Load into existing container.
+                Defaults to None.
 
-        bpy.ops.sequencer.delete(context)
+        Returns:
+            Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+                (Created scene container, Loaded datablocks)
+        """
 
-        window_manager.windows[-1].screen.areas[0].type = old_type
-
-        bpy.data.sounds.remove(bpy.data.sounds[audio])
-
-    def _load_process(self, libpath, container_name):  # TODO
-        # Blender needs the Sequence Editor in the current window, to be able
-        # to load the audio. We take one of the areas in the window, save its
-        # type, and switch to the Sequence Editor. After loading the audio,
-        # we switch back to the previous area.
-        window_manager = bpy.context.window_manager
-        old_type = window_manager.windows[-1].screen.areas[0].type
-        window_manager.windows[-1].screen.areas[0].type = "SEQUENCE_EDITOR"
-
-        # We override the context to load the audio in the sequence editor.
-        context = bpy.context.copy()
-        context["area"] = window_manager.windows[-1].screen.areas[0]
-
-        bpy.ops.sequencer.sound_strip_add(
-            context, filepath=libpath, frame_start=1
+        # Append audio as sound in the sequence editor
+        sound_seq = bpy.context.scene.sequence_editor.sequences.new_sound(
+            container_name,
+            libpath.as_posix(),
+            1,
+            bpy.context.scene.frame_start,
         )
 
-        window_manager.windows[-1].screen.areas[0].type = old_type
+        # Put into a container
+        datablocks = [sound_seq.sound]
+        container = self._containerize_datablocks(
+            container_name, datablocks, container
+        )
 
-    def process_asset(*args, **kwargs) -> bpy.types.Collection:
+        # Keep audio sequence in the container
+        container["sequence_name"] = sound_seq.name
+
+        return container, datablocks
+
+    def update(
+        self, *args, **kwargs
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """OVERRIDE Update an existing container from a Blender scene."""
+        self.switch(*args, **kwargs)
+
+    def switch(
+        self, container_metadata: Dict, representation: Dict
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """OVERRIDE Switch an existing container from a Blender scene."""
+        # Remove audio sequence
+        self._remove_audio_sequence(container_metadata)
+
+        container, datablocks = super().update(
+            container_metadata, representation
+        )
+
+        return container, datablocks
+
+    def remove(self, container: Dict) -> bool:
+        """OVERRIDE Remove an existing container from a Blender scene."""
+        # Remove audio sequence
+        self._remove_audio_sequence(container)
+
+        return super().remove(container)
+
+    def _remove_audio_sequence(self, container_metadata: Dict):
+        """Remove audio sequence from the sequence editor
+
+        Args:
+            container (Dict): Container OpenPype metadata
         """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        asset_group = super().process_asset(*args, **kwargs)
-
-        libpath = Path(asset_group[AVALON_PROPERTY]["libpath"])
-        asset_group[AVALON_PROPERTY]["audio"] = libpath.name
-
-        return asset_group
-
-    def exec_update(
-        self, container: Dict, representation: Dict
-    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
-        """Update the loaded asset"""
-        # Remove audio datablock
-        libpath = get_representation_path(representation)
-        self._remove_audio(libpath.name)
-
-        asset_group = super().exec_update(container, representation)
-
-        return asset_group
-
-    def exec_remove(self, container: Dict) -> bool:
-        """Remove an existing container from a Blender scene."""
-        self._remove_audio(Path(container["libpath"]).name)
-        return super().exec_remove(container)
+        container_metadata = self._get_scene_container(container_metadata)
+        sound_seq = bpy.context.scene.sequence_editor.sequences.get(
+            container_metadata["sequence_name"]
+        )
+        if sound_seq:
+            bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
