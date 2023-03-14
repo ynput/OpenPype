@@ -48,8 +48,8 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             self.log.info("Comment is not set.")
 
         for instance in context:
-            # Check if instance is a render by checking its family
-            if "render" not in instance.data["family"]:
+            # Check if instance is a review by checking its family
+            if "review" not in instance.data["family"]:
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
