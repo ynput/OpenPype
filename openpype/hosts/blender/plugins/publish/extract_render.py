@@ -3,16 +3,16 @@ import os
 import bpy
 from bson.objectid import ObjectId
 
-import openpype.api
 from openpype.pipeline import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
     AVALON_PROPERTY,
 )
+from openpype.pipeline.publish.publish_plugins import Extractor
 
 
-class ExtractSceneRender(openpype.api.Extractor):
+class ExtractSceneRender(Extractor):
     """Extract the scene as blend file."""
 
     label = "Extract Scene Render"
