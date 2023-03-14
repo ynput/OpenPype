@@ -864,7 +864,7 @@ def _format_tiles(
             right = (tile_x * w_space) - 1
 
             # Job info
-            key = "OutputFilename{}Tile{}".format(index, tile)
+            key = "OutputFilename{}".format(index)
             out["JobInfo"][key] = new_filename
 
             # Plugin Info
