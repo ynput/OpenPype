@@ -225,7 +225,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
             current_project_id = current_timer.get("projectId")
 
         # Concatenate hierarchy and task to get description
-        description_items = [val for val in input_data.get("hierarchy", [])]
+        description_items = list(input_data.get("hierarchy", []))
         description_items.append(input_data["task_name"])
         description = "/".join(description_items)
         # Check project existence
