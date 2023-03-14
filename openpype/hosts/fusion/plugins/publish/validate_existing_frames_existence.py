@@ -19,7 +19,10 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     actions = [RepairAction, SelectInvalidAction]
 
     @classmethod
-    def get_invalid(cls, instance, non_existing_frames=[]):
+    def get_invalid(cls, instance, non_existing_frames=None):
+        if non_existing_frames is None:
+            non_existing_frames = []
+
         active = instance.data.get("active", instance.data.get("publish"))
         if not active:
             return []
