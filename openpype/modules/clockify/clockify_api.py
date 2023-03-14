@@ -280,7 +280,7 @@ class ClockifyAPI:
             success = True
         return success
 
-    def get_current_timer_values(self, response=None):
+    def _get_current_timer_values(self, response):
         if response is None:
             return
         output = response.json()
