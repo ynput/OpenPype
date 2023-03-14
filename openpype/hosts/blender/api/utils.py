@@ -130,7 +130,9 @@ def get_instanced_collections() -> Set[bpy.types.Collection]:
     return {
         obj.instance_collection
         for obj in bpy.context.scene.objects
-        if obj.is_instancer and obj.instance_collection.library
+        if obj.is_instancer
+        and obj.instance_collection
+        and obj.instance_collection.library
     }
 
 
