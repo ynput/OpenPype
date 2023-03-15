@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## Publish Plugins
 
-### Render Settings Validator 
+### Render Settings Validator
 
 `ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
-we correct settings. Some of these settings are needed by OpenPype but some
-can be defined by TD using [OpenPype Settings UI](admin_settings.md).
+with the correct settings. Some of these settings are needed by OpenPype but some
+can be defined by the admin using [OpenPype Settings UI](admin_settings.md).
 
 OpenPype enforced settings include:
 
@@ -51,7 +51,7 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-### Model Name Validator 
+### Model Name Validator
 
 `ValidateRenderSettings`
 
@@ -95,7 +95,7 @@ You can set various aspects of scene submission to farm with per-project setting
 
  - **Optional** will mark sumission plugin optional
  - **Active** will enable/disable plugin
- - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used 
+ - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used
 or Deadlines **Draft Tile Assembler**.
  - **Use Published scene** enable to render from published scene instead of scene in work area. Rendering from published files is much safer.
  - **Use Asset dependencies** will mark job pending on farm until asset dependencies are fulfilled - for example Deadline will wait for scene file to be synced to cloud, etc.
@@ -169,5 +169,3 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
-
-
