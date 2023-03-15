@@ -12,9 +12,12 @@ from .constants import (
 )
 
 from openpype.lib.local_settings import OpenPypeSecureRegistry
+from openpype.lib import Logger
 
 
 class ClockifyAPI:
+    log = Logger.get_logger(__name__)
+
     def __init__(self, api_key=None, master_parent=None):
         self.workspace_name = None
         self.master_parent = master_parent
@@ -242,15 +245,26 @@ class ClockifyAPI:
         if user_id is None:
             user_id = self._user_id
 
-        # Check if is currently run another times and has same values
+        # get running timer to check if we need to start it
         current_timer = self.get_in_progress()
-        print(current_timer)
+        current_timer_hierarchy = None
+        current_project_id = None
+
+        # Check if is currently run another times and has same values
+        # DO not restart the timer, if it is already running for curent task
         if current_timer and current_timer is not None:
+            current_timer_hierarchy = current_timer.get("description")
+            current_project_id = current_timer.get("projectId")
+            current_task_id = current_timer.get("taskId")
             if (
-                current_timer.get("description", None) == description
-                and current_timer.get("projectId", None) == project_id
-                and current_timer.get("taskId", None) == task_id
+                current_timer
+                and current_timer is not None
+                and description == current_timer_hierarchy
+                and project_id == current_project_id
             ):
+                self.log.info(
+                    "Timer for the current project is already running"
+                )
                 self.bool_timer_run = True
                 return self.bool_timer_run
             self.finish_time_entry()
@@ -284,7 +298,10 @@ class ClockifyAPI:
     def _get_current_timer_values(self, response):
         if response is None:
             return
-        output = response.json()
+        try:
+            output = response.json()
+        except json.decoder.JSONDecodeError:
+            return None
         if output and isinstance(output, list):
             return output[0]
         return None
