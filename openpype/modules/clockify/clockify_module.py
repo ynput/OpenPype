@@ -247,7 +247,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
         # Check project existence
         project_name = input_data.get("project_name")
-        project_id = self._verify_project_exists(project_name)             
+        project_id = self._verify_project_exists(project_name)
         if not project_id:
             return
 
