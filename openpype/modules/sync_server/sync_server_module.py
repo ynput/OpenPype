@@ -837,7 +837,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 get_local_settings_schema()
 
         return ret_dict
-    
+
     def get_launch_hook_paths(self):
         """Implementation for applications launch hooks."""
 
