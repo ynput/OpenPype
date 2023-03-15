@@ -104,7 +104,7 @@ There are currently 2 options of `render` item:
 
 When you want to load existing published work, you can use the `Loader` tool. You can reach it in the extension's panel.
 
-![Loader](assets/photoshop_loader.PNG) <!-- picture needs to be changed -->
+![Loader](assets/photoshop_loader.png) <!-- picture needs to be changed -->
 
 The supported families for loading into AfterEffects are:
 
@@ -128,7 +128,7 @@ Now that we have some content loaded, you can manage which version is loaded. Th
 Loaded images have to stay as smart layers in order to be updated. If you rasterize the layer, you can no longer update it to a different version using OpenPype tools.
 :::
 
-![Loader](assets/photoshop_manage.PNG)
+![Loader](assets/photoshop_manage.png)
 
 You can switch to a previous version of the image or update to the latest.
 
