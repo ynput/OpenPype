@@ -7,7 +7,6 @@ Provides:
 """
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from openpype.lib import filter_profiles
 
 
@@ -35,10 +34,9 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             return
 
         add_ftrack_family = False
-        task_name = instance.data.get("task",
-                                      legacy_io.Session["AVALON_TASK"])
-        host_name = legacy_io.Session["AVALON_APP"]
+        host_name = instance.context.data["hostName"]
         family = instance.data["family"]
+        task_name = instance.data.get("task")
 
         filtering_criteria = {
             "hosts": host_name,
