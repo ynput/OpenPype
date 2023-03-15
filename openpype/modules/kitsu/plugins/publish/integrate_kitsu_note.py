@@ -16,7 +16,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     note_status_shortname = "wfa"
 
     # comment settings
-    custom_comment_template = {}
     custom_comment_template = {
         "enabled": False,
         "comment_template": "{comment}",
@@ -26,17 +25,15 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         """If key is not found in kwargs, set None instead"""
 
         def replace_missing(match):
-            value = kwargs.get(match.group(1), None)
-            if value is None:
+            key = match.group(1)
+            if key not in kwargs:
                 self.log.warning(
                     "Key `{}` was not found in instance.data "
-                    "and will be rendered as `` in the comment".format(
-                        match.group(1)
-                    )
+                    "and will be rendered as `` in the comment".format(key)
                 )
                 return ""
             else:
-                return str(value)
+                return str(kwargs[key])
 
         pattern = r"\{([^}]*)\}"
         return re.sub(pattern, replace_missing, msg)
