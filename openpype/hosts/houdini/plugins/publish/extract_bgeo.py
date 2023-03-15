@@ -6,14 +6,6 @@ from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 import hou
-import os
-
-import pyblish.api
-
-from openpype.pipeline import publish
-from openpype.hosts.houdini.api.lib import render_rop
-
-import hou
 
 
 class ExtractBGEO(publish.Extractor):
