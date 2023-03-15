@@ -7,7 +7,7 @@
 #include "AssetContainerFactory.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class OPENPYPE_API UAssetContainerFactory : public UFactory

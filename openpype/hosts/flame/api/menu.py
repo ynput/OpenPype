@@ -1,5 +1,5 @@
 import os
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from copy import deepcopy
 from pprint import pformat
 from openpype.tools.utils.host_tools import HostToolsHelper
@@ -225,7 +225,8 @@ class FlameMenuUniversal(_FlameMenuApp):
 
         menu['actions'].append({
             "name": "Load...",
-            "execute": lambda x: self.tools_helper.show_loader()
+            "execute": lambda x: callback_selection(
+                x, self.tools_helper.show_loader)
         })
         menu['actions'].append({
             "name": "Manage...",

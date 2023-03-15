@@ -8,7 +8,7 @@ publishing plugins.
 
 import platform
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 import appdirs
 

@@ -1,5 +1,5 @@
 import platform
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from .widgets import (
     Separator,
     ExpandingWidget

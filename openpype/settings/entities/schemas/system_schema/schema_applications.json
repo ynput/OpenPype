@@ -11,6 +11,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_3dsmax"
+    },
+    {
+      "type": "schema",
       "name": "schema_flame"
     },
     {
@@ -19,6 +23,14 @@
       "template_data": {
         "nuke_type": "nuke",
         "nuke_label": "Nuke"
+      }
+    },
+    {
+      "type": "schema_template",
+      "name": "template_nuke",
+      "template_data": {
+        "nuke_type": "nukeassist",
+        "nuke_label": "Nuke Assist"
       }
     },
     {

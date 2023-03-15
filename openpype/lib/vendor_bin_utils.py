@@ -60,9 +60,10 @@ def find_executable(executable):
             path to file.
 
     Returns:
-        str: Full path to executable with extension (is file).
-        None: When the executable was not found.
+        Union[str, None]: Full path to executable with extension which was
+            found otherwise None.
     """
+
     # Skip if passed path is file
     if is_file_executable(executable):
         return executable
@@ -70,24 +71,36 @@ def find_executable(executable):
     low_platform = platform.system().lower()
     _, ext = os.path.splitext(executable)
 
-    # Prepare variants for which it will be looked
-    variants = [executable]
-    # Add other extension variants only if passed executable does not have one
-    if not ext:
-        if low_platform == "windows":
-            exts = [".exe", ".ps1", ".bat"]
-            for ext in os.getenv("PATHEXT", "").split(os.pathsep):
-                ext = ext.lower()
-                if ext and ext not in exts:
-                    exts.append(ext)
-        else:
-            exts = [".sh"]
+    # Prepare extensions to check
+    exts = set()
+    if ext:
+        exts.add(ext.lower())
 
-        for ext in exts:
-            variant = executable + ext
-            if is_file_executable(variant):
-                return variant
-            variants.append(variant)
+    else:
+        # Add other possible extension variants only if passed executable
+        #   does not have any
+        if low_platform == "windows":
+            exts |= {".exe", ".ps1", ".bat"}
+            for ext in os.getenv("PATHEXT", "").split(os.pathsep):
+                exts.add(ext.lower())
+
+        else:
+            exts |= {".sh"}
+
+    # Executable is a path but there may be missing extension
+    #   - this can happen primarily on windows where
+    #       e.g. "ffmpeg" should be "ffmpeg.exe"
+    exe_dir, exe_filename = os.path.split(executable)
+    if exe_dir and os.path.isdir(exe_dir):
+        for filename in os.listdir(exe_dir):
+            filepath = os.path.join(exe_dir, filename)
+            basename, ext = os.path.splitext(filename)
+            if (
+                basename == exe_filename
+                and ext.lower() in exts
+                and is_file_executable(filepath)
+            ):
+                return filepath
 
     # Get paths where to look for executable
     path_str = os.environ.get("PATH", None)
@@ -97,13 +110,27 @@ def find_executable(executable):
         elif hasattr(os, "defpath"):
             path_str = os.defpath
 
-    if path_str:
-        paths = path_str.split(os.pathsep)
-        for path in paths:
-            for variant in variants:
-                filepath = os.path.abspath(os.path.join(path, variant))
-                if is_file_executable(filepath):
-                    return filepath
+    if not path_str:
+        return None
+
+    paths = path_str.split(os.pathsep)
+    for path in paths:
+        if not os.path.isdir(path):
+            continue
+        for filename in os.listdir(path):
+            filepath = os.path.abspath(os.path.join(path, filename))
+            # Filename matches executable exactly
+            if filename == executable and is_file_executable(filepath):
+                return filepath
+
+            basename, ext = os.path.splitext(filename)
+            if (
+                basename == executable
+                and ext.lower() in exts
+                and is_file_executable(filepath)
+            ):
+                return filepath
+
     return None
 
 
@@ -272,8 +299,8 @@ def get_oiio_tools_path(tool="oiiotool"):
         oiio_dir = get_vendor_bin_path("oiio")
         if platform.system().lower() == "linux":
             oiio_dir = os.path.join(oiio_dir, "bin")
-        default_path = os.path.join(oiio_dir, tool)
-        if _oiio_executable_validation(default_path):
+        default_path = find_executable(os.path.join(oiio_dir, tool))
+        if default_path and _oiio_executable_validation(default_path):
             tool_executable_path = default_path
 
     # Look to PATH for the tool

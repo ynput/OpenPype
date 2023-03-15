@@ -1,7 +1,7 @@
 import copy
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype import resources
@@ -40,7 +40,7 @@ class ProjectIconView(QtWidgets.QListView):
 
         # Workaround for scrolling being super slow or fast when
         # toggling between the two visual modes
-        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.setObjectName("IconView")
 
         self._mode = None

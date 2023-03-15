@@ -114,6 +114,35 @@
             }
         }
     },
+    "3dsmax": {
+        "enabled": true,
+        "label": "3ds max",
+        "icon": "{}/app_icons/3dsmax.png",
+        "host_name": "max",
+        "environment": {
+            "ADSK_3DSMAX_STARTUPSCRIPTS_ADDON_DIR": "{OPENPYPE_ROOT}\\openpype\\hosts\\max\\startup"
+        },
+        "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\3ds Max 2023\\3dsmax.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "3DSMAX_VERSION": "2023"
+                }
+            }
+        }
+    },
     "flame": {
         "enabled": true,
         "label": "Flame",
@@ -295,6 +324,134 @@
                     "windows": [],
                     "darwin": [],
                     "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "13-2": "13.2",
+                "13-0": "13.0",
+                "12-2": "12.2",
+                "12-0": "12.0",
+                "11-3": "11.3",
+                "11-2": "11.2"
+            }
+        }
+    },
+    "nukeassist": {
+        "enabled": true,
+        "label": "Nuke Assist",
+        "icon": "{}/app_icons/nuke.png",
+        "host_name": "nuke",
+        "environment": {
+            "NUKE_PATH": [
+                "{NUKE_PATH}",
+                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
+            ]
+        },
+        "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
+                },
+                "environment": {}
+            },
+            "13-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
+                },
+                "environment": {}
+            },
+            "12-2": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.2v3Nuke12.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
+                },
+                "environment": {}
+            },
+            "12-0": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
+                },
+                "environment": {}
+            },
+            "11-3": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
+                },
+                "environment": {}
+            },
+            "11-2": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": ["--nukeassist"],
+                    "darwin": ["--nukeassist"],
+                    "linux": ["--nukeassist"]
                 },
                 "environment": {}
             },
@@ -1268,12 +1425,14 @@
             "CELACTION_TEMPLATE": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/celaction/celaction_template_scene.scn"
         },
         "variants": {
-            "local": {
+            "current": {
                 "enabled": true,
-                "variant_label": "Local",
+                "variant_label": "Current",
                 "use_python_2": false,
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:/Program Files/CelAction/CelAction2D Studio/CelAction2D.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },

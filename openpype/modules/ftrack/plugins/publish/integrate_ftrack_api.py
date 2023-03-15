@@ -36,10 +36,35 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             return
 
         context = instance.context
-        session = context.data["ftrackSession"]
+        task_entity, parent_entity = self.get_instance_entities(
+            instance, context)
+        if parent_entity is None:
+            self.log.info((
+                "Skipping ftrack integration. Instance \"{}\" does not"
+                " have specified ftrack entities."
+            ).format(str(instance)))
+            return
 
+        session = context.data["ftrackSession"]
+        # Reset session operations and reconfigure locations
+        session.recorded_operations.clear()
+        session._configure_locations()
+
+        try:
+            self.integrate_to_ftrack(
+                session,
+                instance,
+                task_entity,
+                parent_entity,
+                component_list
+            )
+
+        except Exception:
+            session.reset()
+            raise
+
+    def get_instance_entities(self, instance, context):
         parent_entity = None
-        default_asset_name = None
         # If instance has set "ftrackEntity" or "ftrackTask" then use them from
         #   instance. Even if they are set to None. If they are set to None it
         #   has a reason. (like has different context)
@@ -52,15 +77,21 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             parent_entity = context.data.get("ftrackEntity")
 
         if task_entity:
-            default_asset_name = task_entity["name"]
             parent_entity = task_entity["parent"]
 
-        if parent_entity is None:
-            self.log.info((
-                "Skipping ftrack integration. Instance \"{}\" does not"
-                " have specified ftrack entities."
-            ).format(str(instance)))
-            return
+        return task_entity, parent_entity
+
+    def integrate_to_ftrack(
+        self,
+        session,
+        instance,
+        task_entity,
+        parent_entity,
+        component_list
+    ):
+        default_asset_name = None
+        if task_entity:
+            default_asset_name = task_entity["name"]
 
         if not default_asset_name:
             default_asset_name = parent_entity["name"]
@@ -186,13 +217,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         self.log.info("Setting task status to \"{}\"".format(status_name))
         task_entity["status"] = status
-        try:
-            session.commit()
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            session.rollback()
-            session._configure_locations()
-            six.reraise(tp, value, tb)
+        session.commit()
 
     def _fill_component_locations(self, session, component_list):
         components_by_location_name = collections.defaultdict(list)
@@ -495,13 +520,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 session.delete(member)
                 del(member)
 
-            try:
-                session.commit()
-            except Exception:
-                tp, value, tb = sys.exc_info()
-                session.rollback()
-                session._configure_locations()
-                six.reraise(tp, value, tb)
+            session.commit()
 
             # Reset members in memory
             if "members" in component_entity.keys():
@@ -617,13 +636,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             )
         else:
             # Commit changes.
-            try:
-                session.commit()
-            except Exception:
-                tp, value, tb = sys.exc_info()
-                session.rollback()
-                session._configure_locations()
-                six.reraise(tp, value, tb)
+            session.commit()
 
     def _create_components(self, session, asset_versions_data_by_id):
         for item in asset_versions_data_by_id.values():

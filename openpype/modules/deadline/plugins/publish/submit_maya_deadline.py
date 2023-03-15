@@ -37,6 +37,8 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 def _validate_deadline_bool_value(instance, attribute, value):
@@ -63,6 +65,7 @@ class MayaPluginInfo(object):
     # Include all lights flag
     RenderSetupIncludeLights = attr.ib(
         default="1", validator=_validate_deadline_bool_value)
+    StrictErrorChecking = attr.ib(default=True)
 
 
 @attr.s
@@ -121,6 +124,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
+        if is_in_tests():
+            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
@@ -160,9 +166,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "OPENPYPE_DEV",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_DEV"
+            "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -183,7 +194,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Adding file dependencies.
         if self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
-            dependencies.append(context.data["currentFile"])
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
 
@@ -215,6 +225,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
+        strict_error_checking = instance.data.get("strict_error_checking",
+                                                  True)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -223,6 +235,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
+            StrictErrorChecking=strict_error_checking
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -294,7 +307,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add export job as dependency --------------------------------------
         if export_job:
             job_info, _ = payload
-            job_info.JobDependency = export_job
+            job_info.JobDependencies = export_job
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
@@ -406,8 +419,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
+        assembly_job_info.Priority = instance.data.get(
+            "tile_priority", self.tile_priority
+        )
+
+        pool = instance.context.data["project_settings"]["deadline"]
+        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
+        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
@@ -431,7 +449,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
             frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
-            frame_assembly_job_info.JobDependency = tile_job_id
+            frame_assembly_job_info.JobDependencies = tile_job_id
 
             # write assembly job config files
             now = datetime.now()

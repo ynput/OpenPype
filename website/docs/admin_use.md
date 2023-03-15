@@ -43,8 +43,7 @@ You can use following command line arguments:
 openpype_console --use-version=3.0.1
 ```
 
-`--use-staging` - to specify you prefer staging version. In that case it will be used
-(if found) instead of production one.
+`--use-staging` - to specify you prefer staging version. In that case it will be used instead of production one.
 
 :::tip List available versions
 To list all available versions, use:
@@ -52,8 +51,6 @@ To list all available versions, use:
 ```shell
 openpype_console --list-versions
 ```
-
-You can add `--use-staging` to list staging versions.
 :::
 
 If you want to validate integrity of some available version, you can use:

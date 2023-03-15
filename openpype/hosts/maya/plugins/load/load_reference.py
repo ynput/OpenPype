@@ -16,6 +16,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     families = ["model",
                 "pointcache",
+                "proxyAbc",
                 "animation",
                 "mayaAscii",
                 "mayaScene",
@@ -24,8 +25,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "camera",
                 "rig",
                 "camerarig",
-                "xgen",
-                "staticMesh"]
+                "staticMesh",
+                "skeletalMesh",
+                "mvLook"]
+
     representations = ["ma", "abc", "fbx", "mb"]
 
     label = "Reference"

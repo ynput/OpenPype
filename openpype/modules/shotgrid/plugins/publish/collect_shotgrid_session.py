@@ -83,6 +83,11 @@ class CollectShotgridSession(pyblish.api.ContextPlugin):
                 "login to shotgrid withing openpype Tray"
             )
 
+        # Set OPENPYPE_SG_USER with login so other deadline tasks can make
+        # use of it
+        self.log.info("Setting OPENPYPE_SG_USER to '%s'.", login)
+        os.environ["OPENPYPE_SG_USER"] = login
+
         session = shotgun_api3.Shotgun(
             base_url=shotgrid_url,
             script_name=shotgrid_script_name,

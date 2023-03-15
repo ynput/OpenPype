@@ -1,18 +1,12 @@
+# -*- coding: utf-8 -*-
+"""Collector plugin for frames data on ROP instances."""
 import os
 import re
 
-import hou
+import hou  # noqa
 import pyblish.api
 from openpype.hosts.houdini.api import lib
 
-
-def splitext(name, allowed_multidot_extensions):
-
-    for ext in allowed_multidot_extensions:
-        if name.endswith(ext):
-            return name[:-len(ext)], ext
-
-    return os.path.splitext(name)
 
 
 class CollectFrames(pyblish.api.InstancePlugin):
@@ -24,7 +18,9 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data["instance_node"])
+        frame_data = lib.get_frame_data(ropnode)
+        instance.data.update(frame_data)
 
         start_frame = instance.data.get("frameStart", None)
         end_frame = instance.data.get("frameEnd", None)
@@ -38,13 +34,13 @@ class CollectFrames(pyblish.api.InstancePlugin):
             self.log.warning("Using current frame: {}".format(hou.frame()))
             output = output_parm.eval()
 
-        _, ext = splitext(output,
+        _, ext = lib.splitext(output,
                           allowed_multidot_extensions=[".ass.gz"])
         file_name = os.path.basename(output)
         result = file_name
 
         # Get the filename pattern match from the output
-        # path so we can compute all frames that would
+        # path, so we can compute all frames that would
         # come out from rendering the ROP node if there
         # is a frame pattern in the name
         pattern = r"\w+\.(\d+)" + re.escape(ext)
@@ -63,8 +59,9 @@ class CollectFrames(pyblish.api.InstancePlugin):
         #       for a custom frame list. So this should be refactored.
         instance.data.update({"frames": result})
 
-    def create_file_list(self, match, start_frame, end_frame):
-        """Collect files based on frame range and regex.match
+    @staticmethod
+    def create_file_list(match, start_frame, end_frame):
+        """Collect files based on frame range and `regex.match`
 
         Args:
             match(re.match): match object

@@ -1,9 +1,8 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+// Copyright 2023, Ayon, All rights reserved.
 
 #pragma once
 
 #include "Engine.h"
-
 #include "IWebSocket.h"       // Socket definition
 
 
@@ -14,6 +13,8 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
+	void RegisterSettings();
+	bool HandleSettingsSaved();
 
 	void AddMenuEntry(FMenuBuilder& MenuBuilder);
 	void AddToobarEntry(FToolBarBuilder& ToolbarBuilder);
@@ -25,5 +26,4 @@ private:
 
 private:
 	TSharedPtr<IWebSocket> Socket;
-
 };

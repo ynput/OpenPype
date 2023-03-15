@@ -23,8 +23,9 @@ from openpype.hosts.nuke.api import (
 class LoadEffectsInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["effectJson"]
     families = ["effect"]
+    representations = ["*"]
+    extension = {"json"}
 
     label = "Load Effects - Input Process"
     order = 0
@@ -89,6 +90,9 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
         GN = nuke.createNode(
             "Group",
             "name {}_1".format(object_name))
+
+        # hide property panel
+        GN.hideControlPanel()
 
         # adding content to the group node
         with GN:

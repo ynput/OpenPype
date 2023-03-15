@@ -3,7 +3,7 @@ from aiohttp import web
 import json
 import logging
 from concurrent.futures import CancelledError
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.modules import ITrayService
 

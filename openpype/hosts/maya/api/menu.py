@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
@@ -12,7 +12,7 @@ from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
-from .commands import reset_frame_range
+from ..tools import show_look_assigner
 
 from .workfile_template_builder import (
     create_placeholder,
@@ -50,7 +50,6 @@ def install():
             parent="MayaWindow"
         )
 
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],
@@ -114,7 +113,7 @@ def install():
 
         cmds.menuItem(
             "Reset Frame Range",
-            command=lambda *args: reset_frame_range()
+            command=lambda *args: lib.reset_frame_range()
         )
 
         cmds.menuItem(
@@ -141,7 +140,7 @@ def install():
 
         cmds.menuItem(
             "Look assigner...",
-            command=lambda *args: host_tools.show_look_assigner(
+            command=lambda *args: show_look_assigner(
                 parent_widget
             )
         )

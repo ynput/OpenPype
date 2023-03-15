@@ -10,10 +10,9 @@
 	"DocsURL": "https://openpype.io/docs/artist_hosts_unreal",
 	"MarketplaceURL": "",
 	"SupportURL": "https://pype.club/",
+	"EngineVersion": "4.27",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
-	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "OpenPype",

@@ -1,4 +1,5 @@
 import os
+
 from openpype.lib import PreLaunchHook
 
 
@@ -39,6 +40,14 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         if not os.path.exists(last_workfile):
             self.log.info("Current context does not have any workfile yet.")
             return
+
+        # Determine whether to open workfile post initialization.
+        if self.host_name == "maya":
+            key = "open_workfile_post_initialization"
+            if self.data["project_settings"]["maya"][key]:
+                self.log.debug("Opening workfile post initialization.")
+                self.data["env"]["OPENPYPE_" + key.upper()] = "1"
+                return
 
         # Add path to workfile to arguments
         self.launch_context.launch_args.append(last_workfile)

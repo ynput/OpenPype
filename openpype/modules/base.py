@@ -786,29 +786,68 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
-    def collect_creator_plugin_paths(self, host_name):
-        """Helper to collect creator plugin paths from modules.
-
-        Args:
-            host_name (str): For which host are creators meants.
-
-        Returns:
-            list: List of creator plugin paths.
-        """
-        # Output structure
+    def _collect_plugin_paths(self, method_name, *args, **kwargs):
         output = []
         for module in self.get_enabled_modules():
             # Skip module that do not inherit from `IPluginPaths`
             if not isinstance(module, IPluginPaths):
                 continue
 
-            paths = module.get_creator_plugin_paths(host_name)
+            method = getattr(module, method_name)
+            paths = method(*args, **kwargs)
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):
                     paths = [paths]
                 output.extend(paths)
         return output
+
+    def collect_create_plugin_paths(self, host_name):
+        """Helper to collect creator plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are creators meant.
+
+        Returns:
+            list: List of creator plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_create_plugin_paths",
+            host_name
+        )
+
+    collect_creator_plugin_paths = collect_create_plugin_paths
+
+    def collect_load_plugin_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of load plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_load_plugin_paths",
+            host_name
+        )
+
+    def collect_publish_plugin_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_publish_plugin_paths",
+            host_name
+        )
 
     def get_host_module(self, host_name):
         """Find host module by host name.

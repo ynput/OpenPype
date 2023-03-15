@@ -1,7 +1,7 @@
 import os
 import sys
 
-from Qt import QtCore
+from qtpy import QtCore
 
 
 class PulseThread(QtCore.QThread):

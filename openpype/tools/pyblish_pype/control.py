@@ -11,7 +11,7 @@ import inspect
 import logging
 import collections
 
-from Qt import QtCore
+from qtpy import QtCore
 
 import pyblish.api
 import pyblish.util

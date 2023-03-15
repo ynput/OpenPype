@@ -1,5 +1,5 @@
 import os
-from Qt import QtGui
+from qtpy import QtGui
 import qtawesome
 from openpype import resources
 

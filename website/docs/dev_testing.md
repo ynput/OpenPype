@@ -14,6 +14,11 @@ But many tests should yet be created!
 - installed DCC you want to test
 - `mongorestore` on a PATH
 
+You could check that `mongorestore` is available by running this in console (or cmd), it shouldn't fail and you should see version of utility:
+```commandline
+mongorestore --version
+```
+
 If you would like just to experiment with provided integration tests, and have particular DCC installed on your machine, you could run test for this host by:
 
 - From source:
@@ -23,7 +28,7 @@ If you would like just to experiment with provided integration tests, and have p
 ```
 - From build:
 ```
-- ${OPENPYPE_BUILD}/openpype_console run {ABSOLUTE_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
+- ${OPENPYPE_BUILD}/openpype_console runtests {ABSOLUTE_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
 ```
 Modify tests path argument to limit which tests should be run (`../tests/integration` will run all implemented integration tests).
 

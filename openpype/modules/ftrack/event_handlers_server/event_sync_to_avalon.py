@@ -973,7 +973,7 @@ class SyncToAvalonEvent(BaseEvent):
                 except Exception:
                     # TODO logging
                     # TODO report
-                    self.process_session.rolback()
+                    self.process_session.rollback()
                     ent_path_items = [self.cur_project["full_name"]]
                     ent_path_items.extend([
                         par for par in avalon_entity["data"]["parents"]
@@ -1016,7 +1016,7 @@ class SyncToAvalonEvent(BaseEvent):
                 except Exception:
                     # TODO logging
                     # TODO report
-                    self.process_session.rolback()
+                    self.process_session.rollback()
                     error_msg = (
                         "Couldn't update custom attributes after recreation"
                         " of entity in Ftrack"
@@ -1338,7 +1338,7 @@ class SyncToAvalonEvent(BaseEvent):
             try:
                 self.process_session.commit()
             except Exception:
-                self.process_session.rolback()
+                self.process_session.rollback()
                 # TODO logging
                 # TODO report
                 error_msg = (

@@ -6,9 +6,10 @@ import functools
 import uuid
 import shutil
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.lib.attribute_definitions import UnknownDef, UIDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -142,9 +143,9 @@ class PublishIconBtn(IconButton):
         icon = QtGui.QIcon()
         image = QtGui.QImage(pixmap_path)
         enabled_pixmap = self.paint_image_with_color(image, enabled_color)
-        icon.addPixmap(enabled_pixmap, icon.Normal)
+        icon.addPixmap(enabled_pixmap, QtGui.QIcon.Normal)
         disabled_pixmap = self.paint_image_with_color(image, disabled_color)
-        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        icon.addPixmap(disabled_pixmap, QtGui.QIcon.Disabled)
         return icon
 
     @staticmethod
@@ -249,21 +250,25 @@ class PublishReportBtn(PublishIconBtn):
         self._actions = []
 
     def add_action(self, label, identifier):
-        action = QtWidgets.QAction(label)
-        action.setData(identifier)
-        action.triggered.connect(
-            functools.partial(self._on_action_trigger, action)
+        self._actions.append(
+            (label, identifier)
         )
-        self._actions.append(action)
 
-    def _on_action_trigger(self, action):
-        identifier = action.data()
+    def _on_action_trigger(self, identifier):
         self.triggered.emit(identifier)
 
     def mouseReleaseEvent(self, event):
         super(PublishReportBtn, self).mouseReleaseEvent(event)
         menu = QtWidgets.QMenu(self)
-        menu.addActions(self._actions)
+        actions = []
+        for item in self._actions:
+            label, identifier = item
+            action = QtWidgets.QAction(label, menu)
+            action.triggered.connect(
+                functools.partial(self._on_action_trigger, identifier)
+            )
+            actions.append(action)
+        menu.addActions(actions)
         menu.exec_(event.globalPos())
 
 
@@ -303,6 +308,20 @@ class AbstractInstanceView(QtWidgets.QWidget):
         """Refresh instances in the view from current `CreatedContext`."""
         raise NotImplementedError((
             "{} Method 'refresh' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def has_items(self):
+        """View has at least one item.
+
+        This is more a question for controller but is called from widget
+        which should probably should not use controller.
+
+        Returns:
+            bool: There is at least one instance or conversion item.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'has_items' is not implemented."
         ).format(self.__class__.__name__))
 
     def get_selected_items(self):
@@ -397,7 +416,8 @@ class AssetsField(BaseClickableFrame):
             icon_btn
         ):
             size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
         name_input.clicked.connect(self._mouse_release_callback)
         icon_btn.clicked.connect(self._mouse_release_callback)
@@ -577,6 +597,12 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._is_valid = True
 
         self._text = None
+
+        # Make sure combobox is extended horizontally
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding)
+        self.setSizePolicy(size_policy)
 
     def set_invalid_empty_task(self, invalid=True):
         self._proxy_model.set_filter_empty(invalid)
@@ -1180,7 +1206,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         """Set currently selected instances.
 
         Args:
-            instances(list<CreatedInstance>): List of selected instances.
+            instances(List[CreatedInstance]): List of selected instances.
                 Empty instances tells that nothing or context is selected.
         """
         self._set_btns_visible(False)
@@ -1198,7 +1224,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         asset_task_combinations = []
         for instance in instances:
-            if instance.creator is None:
+            # NOTE I'm not sure how this can even happen?
+            if instance.creator_identifier is None:
                 editable = False
 
             variants.add(instance.get("variant") or self.unknown_value)
@@ -1303,6 +1330,13 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
                 else:
                     widget.set_value(values, True)
 
+            widget.value_changed.connect(self._input_value_changed)
+            self._attr_def_id_to_instances[attr_def.id] = attr_instances
+            self._attr_def_id_to_attr_def[attr_def.id] = attr_def
+
+            if attr_def.hidden:
+                continue
+
             expand_cols = 2
             if attr_def.is_value_def and attr_def.is_label_horizontal:
                 expand_cols = 1
@@ -1321,12 +1355,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
             content_layout.addWidget(
                 widget, row, col_num, 1, expand_cols
             )
-
             row += 1
-
-            widget.value_changed.connect(self._input_value_changed)
-            self._attr_def_id_to_instances[attr_def.id] = attr_instances
-            self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget
@@ -1413,7 +1442,16 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        attr_def_widget = QtWidgets.QWidget(content_widget)
+        attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
+        attr_def_layout.setColumnStretch(0, 0)
+        attr_def_layout.setColumnStretch(1, 1)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.addWidget(attr_def_widget, 0)
+        content_layout.addStretch(1)
+
+        row = 0
         for plugin_name, attr_defs, all_plugin_values in result:
             plugin_values = all_plugin_values[plugin_name]
 
@@ -1421,8 +1459,38 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                 widget = create_widget_for_attr_def(
                     attr_def, content_widget
                 )
-                label = attr_def.label or attr_def.key
-                content_layout.addRow(label, widget)
+                hidden_widget = attr_def.hidden
+                # Hide unknown values of publish plugins
+                # - The keys in most of cases does not represent what would
+                #   label represent
+                if isinstance(attr_def, UnknownDef):
+                    widget.setVisible(False)
+                    hidden_widget = True
+
+                if not hidden_widget:
+                    expand_cols = 2
+                    if attr_def.is_value_def and attr_def.is_label_horizontal:
+                        expand_cols = 1
+
+                    col_num = 2 - expand_cols
+                    label = attr_def.label or attr_def.key
+                    if label:
+                        label_widget = QtWidgets.QLabel(label, content_widget)
+                        tooltip = attr_def.tooltip
+                        if tooltip:
+                            label_widget.setToolTip(tooltip)
+                        attr_def_layout.addWidget(
+                            label_widget, row, 0, 1, expand_cols
+                        )
+                        if not attr_def.is_label_horizontal:
+                            row += 1
+                    attr_def_layout.addWidget(
+                        widget, row, col_num, 1, expand_cols
+                    )
+                    row += 1
+
+                if isinstance(attr_def, UIDef):
+                    continue
 
                 widget.value_changed.connect(self._input_value_changed)
 
@@ -1614,6 +1682,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
+            convertor_identifiers(List[str]): Identifiers of convert items.
         """
 
         all_valid = True
@@ -1708,3 +1777,159 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self._thumbnail_widget.setVisible(True)
         self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)
+
+
+class CreateNextPageOverlay(QtWidgets.QWidget):
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(CreateNextPageOverlay, self).__init__(parent)
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        self._arrow_color = (
+            get_objected_colors("font").get_qcolor()
+        )
+        self._bg_color = (
+            get_objected_colors("bg-buttons").get_qcolor()
+        )
+
+        change_anim = QtCore.QVariantAnimation()
+        change_anim.setStartValue(0.0)
+        change_anim.setEndValue(1.0)
+        change_anim.setDuration(200)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+
+        change_anim.valueChanged.connect(self._on_anim)
+
+        self._change_anim = change_anim
+        self._is_visible = None
+        self._anim_value = 0.0
+        self._increasing = False
+        self._under_mouse = None
+        self._handle_show_on_own = True
+        self._mouse_pressed = False
+        self.set_visible(True)
+
+    def set_increasing(self, increasing):
+        if self._increasing is increasing:
+            return
+        self._increasing = increasing
+        if increasing:
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Forward)
+        else:
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Backward)
+
+        if self._change_anim.state() != QtCore.QAbstractAnimation.Running:
+            self._change_anim.start()
+
+    def set_visible(self, visible):
+        if self._is_visible is visible:
+            return
+
+        self._is_visible = visible
+        if not visible:
+            self.set_increasing(False)
+            if not self._is_anim_finished():
+                return
+
+        self.setVisible(visible)
+        self._check_anim_timer()
+
+    def _is_anim_finished(self):
+        if self._increasing:
+            return self._anim_value == 1.0
+        return self._anim_value == 0.0
+
+    def _on_anim(self, value):
+        self._check_anim_timer()
+
+        self._anim_value = value
+
+        self.update()
+
+        if not self._is_anim_finished():
+            return
+
+        if not self._is_visible:
+            self.setVisible(False)
+
+    def set_under_mouse(self, under_mouse):
+        if self._under_mouse is under_mouse:
+            return
+
+        self._under_mouse = under_mouse
+        self.set_increasing(under_mouse)
+
+    def _is_under_mouse(self):
+        mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+        under_mouse = self.rect().contains(mouse_pos)
+        return under_mouse
+
+    def _check_anim_timer(self):
+        if not self.isVisible():
+            return
+
+        self.set_increasing(self._under_mouse)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(CreateNextPageOverlay, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(CreateNextPageOverlay, self).mouseReleaseEvent(event)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        if self._anim_value == 0.0:
+            painter.end()
+            return
+
+        painter.setClipRect(event.rect())
+        painter.setRenderHints(
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+        )
+
+        painter.setPen(QtCore.Qt.NoPen)
+
+        rect = QtCore.QRect(self.rect())
+        rect_width = rect.width()
+        rect_height = rect.height()
+        radius = rect_width * 0.2
+
+        x_offset = 0
+        y_offset = 0
+        if self._anim_value != 1.0:
+            x_offset += rect_width - (rect_width * self._anim_value)
+
+        arrow_height = rect_height * 0.4
+        arrow_half_height = arrow_height * 0.5
+        arrow_x_start = x_offset + ((rect_width - arrow_half_height) * 0.5)
+        arrow_x_end = arrow_x_start + arrow_half_height
+        center_y = rect.center().y()
+
+        painter.setBrush(self._bg_color)
+        painter.drawRoundedRect(
+            x_offset, y_offset,
+            rect_width + radius, rect_height,
+            radius, radius
+        )
+
+        src_arrow_path = QtGui.QPainterPath()
+        src_arrow_path.moveTo(arrow_x_start, center_y - arrow_half_height)
+        src_arrow_path.lineTo(arrow_x_end, center_y)
+        src_arrow_path.lineTo(arrow_x_start, center_y + arrow_half_height)
+
+        arrow_stroker = QtGui.QPainterPathStroker()
+        arrow_stroker.setWidth(min(4, arrow_half_height * 0.2))
+        arrow_path = arrow_stroker.createStroke(src_arrow_path)
+
+        painter.fillPath(arrow_path, self._arrow_color)
+
+        painter.end()

@@ -39,7 +39,7 @@ class ValidateMarks(pyblish.api.ContextPlugin):
     def get_expected_data(context):
         scene_mark_in = context.data["sceneMarkIn"]
 
-        # Data collected in `CollectAvalonEntities`
+        # Data collected in `CollectContextEntities`
         frame_end = context.data["frameEnd"]
         frame_start = context.data["frameStart"]
         handle_start = context.data["handleStart"]

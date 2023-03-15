@@ -1,8 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+
+// Copyright 2023, Ayon, All rights reserved.
 
 #include "OpenPypeCommands.h"
 
-#define LOCTEXT_NAMESPACE "OpenPypeModule"
+#define LOCTEXT_NAMESPACE "FOpenPypeModule"
 
 void FOpenPypeCommands::RegisterCommands()
 {

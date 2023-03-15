@@ -11,9 +11,9 @@
 	"MarketplaceURL": "",
 	"SupportURL": "https://pype.club/",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
+	"EngineVersion": "5.0",
 	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "OpenPype",

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AssetContainer.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/PackageName.h"
 #include "Engine.h"
 #include "Containers/UnrealString.h"
@@ -14,7 +14,7 @@ UAssetContainer::UAssetContainer(const FObjectInitializer& ObjectInitializer)
 	UE_LOG(LogTemp, Warning, TEXT("UAssetContainer %s"), *path);
 	FARFilter Filter;
 	Filter.PackagePaths.Add(FName(*path));
-	
+
 	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UAssetContainer::OnAssetAdded);
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UAssetContainer::OnAssetRemoved);
 	AssetRegistryModule.Get().OnAssetRenamed().AddUObject(this, &UAssetContainer::OnAssetRenamed);
@@ -30,13 +30,13 @@ void UAssetContainer::OnAssetAdded(const FAssetData& AssetData)
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
-	
+	FString assetFName = AssetData.ObjectPath.ToString();
+	UE_LOG(LogTemp, Log, TEXT("asset name %s"), *assetFName);
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);
 
 	FString assetDir = FPackageName::GetLongPackagePath(*split[1]);
-	
+
 	// take interest only in paths starting with path of current container
 	if (assetDir.StartsWith(*selfDir))
 	{
@@ -60,7 +60,7 @@ void UAssetContainer::OnAssetRemoved(const FAssetData& AssetData)
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
+	FString assetFName = AssetData.ObjectPath.ToString();
 
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);
@@ -93,7 +93,7 @@ void UAssetContainer::OnAssetRenamed(const FAssetData& AssetData, const FString&
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
+	FString assetFName = AssetData.ObjectPath.ToString();
 
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);
@@ -112,4 +112,3 @@ void UAssetContainer::OnAssetRenamed(const FAssetData& AssetData, const FString&
 		}
 	}
 }
-

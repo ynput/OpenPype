@@ -23,7 +23,7 @@ Only one item can be selected at a time.
 import re
 import collections
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -43,24 +43,14 @@ from ..constants import (
 )
 
 
-class SelectionType:
-    def __init__(self, name):
-        self.name = name
-
-    def __eq__(self, other):
-        if isinstance(other, SelectionType):
-            other = other.name
-        return self.name == other
-
-
 class SelectionTypes:
-    clear = SelectionType("clear")
-    extend = SelectionType("extend")
-    extend_to = SelectionType("extend_to")
+    clear = "clear"
+    extend = "extend"
+    extend_to = "extend_to"
 
 
 class BaseGroupWidget(QtWidgets.QWidget):
-    selected = QtCore.Signal(str, str, SelectionType)
+    selected = QtCore.Signal(str, str, str)
     removed_selected = QtCore.Signal()
 
     def __init__(self, group_name, parent):
@@ -269,7 +259,7 @@ class InstanceGroupWidget(BaseGroupWidget):
 class CardWidget(BaseClickableFrame):
     """Clickable card used as bigger button."""
 
-    selected = QtCore.Signal(str, str, SelectionType)
+    selected = QtCore.Signal(str, str, str)
     # Group identifier of card
     # - this must be set because if send when mouse is released with card id
     _group_identifier = None
@@ -395,6 +385,7 @@ class InstanceCardWidget(CardWidget):
 
         self._last_subset_name = None
         self._last_variant = None
+        self._last_label = None
 
         icon_widget = IconValuePixmapLabel(group_icon, self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -472,14 +463,17 @@ class InstanceCardWidget(CardWidget):
     def _update_subset_name(self):
         variant = self.instance["variant"]
         subset_name = self.instance["subset"]
+        label = self.instance.label
         if (
             variant == self._last_variant
             and subset_name == self._last_subset_name
+            and label == self._last_label
         ):
             return
 
         self._last_variant = variant
         self._last_subset_name = subset_name
+        self._last_label = label
         # Make `variant` bold
         label = html_escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))
@@ -674,9 +668,16 @@ class InstanceCardView(AbstractInstanceView):
                 instances_by_group[group_name]
             )
 
-        self._update_ordered_group_nameS()
+        self._update_ordered_group_names()
 
-    def _update_ordered_group_nameS(self):
+    def has_items(self):
+        if self._convertor_items_group is not None:
+            return True
+        if self._widgets_by_group:
+            return True
+        return False
+
+    def _update_ordered_group_names(self):
         ordered_group_names = [CONTEXT_GROUP]
         for idx in range(self._content_layout.count()):
             if idx > 0:
@@ -748,11 +749,11 @@ class InstanceCardView(AbstractInstanceView):
                 group_widget = self._widgets_by_group[group_name]
             new_widget = group_widget.get_widget_by_item_id(instance_id)
 
-        if selection_type is SelectionTypes.clear:
+        if selection_type == SelectionTypes.clear:
             self._select_item_clear(instance_id, group_name, new_widget)
-        elif selection_type is SelectionTypes.extend:
+        elif selection_type == SelectionTypes.extend:
             self._select_item_extend(instance_id, group_name, new_widget)
-        elif selection_type is SelectionTypes.extend_to:
+        elif selection_type == SelectionTypes.extend_to:
             self._select_item_extend_to(instance_id, group_name, new_widget)
 
         self.selection_changed.emit()

@@ -86,6 +86,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             first_file = task_data["files"][0]
 
             _, extension = os.path.splitext(first_file)
+            extension = extension.lower()
             family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
@@ -180,6 +181,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     def _get_single_repre(self, task_dir, files, tags):
         _, ext = os.path.splitext(files[0])
+        ext = ext.lower()
         repre_data = {
             "name": ext[1:],
             "ext": ext[1:],
@@ -199,6 +201,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         frame_start = list(collections[0].indexes)[0]
         frame_end = list(collections[0].indexes)[-1]
         ext = collections[0].tail
+        ext = ext.lower()
         repre_data = {
             "frameStart": frame_start,
             "frameEnd": frame_end,
@@ -244,8 +247,17 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         for config in families_config:
             if is_sequence != config["is_sequence"]:
                 continue
-            if (extension in config["extensions"] or
-                    '' in config["extensions"]):  # all extensions setting
+            extensions = config.get("extensions") or []
+            lower_extensions = set()
+            for ext in extensions:
+                if ext:
+                    ext = ext.lower()
+                    if ext.startswith("."):
+                        ext = ext[1:]
+                    lower_extensions.add(ext)
+
+            # all extensions setting
+            if not lower_extensions or extension in lower_extensions:
                 found_family = config["result_family"]
                 break
 

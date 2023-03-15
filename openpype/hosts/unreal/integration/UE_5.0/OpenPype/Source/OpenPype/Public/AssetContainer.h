@@ -5,23 +5,23 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/AssetUserData.h"
-#include "AssetData.h"
+#include "AssetRegistry/AssetData.h"
 #include "AssetContainer.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS(Blueprintable)
 class OPENPYPE_API UAssetContainer : public UAssetUserData
 {
 	GENERATED_BODY()
-	
+
 public:
 
 	UAssetContainer(const FObjectInitializer& ObjectInitalizer);
 	// ~UAssetContainer();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Assets")
 		TArray<FString> assets;
 
 	// There seems to be no reflection option to expose array of FAssetData
@@ -35,5 +35,3 @@ private:
 	void OnAssetRemoved(const FAssetData& AssetData);
 	void OnAssetRenamed(const FAssetData& AssetData, const FString& str);
 };
-
-

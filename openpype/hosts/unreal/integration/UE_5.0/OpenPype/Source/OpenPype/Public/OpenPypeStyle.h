@@ -1,3 +1,4 @@
+// Copyright 2023, Ayon, All rights reserved.
 #pragma once
 #include "CoreMinimal.h"
 #include "Styling/SlateStyle.h"

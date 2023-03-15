@@ -4,7 +4,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (
@@ -26,7 +26,7 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
         self.setObjectName("ValidationErrorInstanceList")
 
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     def minimumSizeHint(self):
         return self.sizeHint()
@@ -511,7 +511,7 @@ class ValidationsWidget(QtWidgets.QFrame):
         )
         # After success publishing
         publish_started_widget = ValidationArtistMessage(
-            "Publishing went smoothly", self
+            "So far so good", self
         )
         # After success publishing
         publish_stop_ok_widget = ValidationArtistMessage(

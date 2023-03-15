@@ -171,7 +171,6 @@ class ShotMetadataSolver:
                 _index == 0
                 and parents[-1]["entity_name"] == parent_name
             ):
-                self.log.debug(f" skipping : {parent_name}")
                 continue
 
             # in case first parent is project then start parents from start
@@ -179,7 +178,6 @@ class ShotMetadataSolver:
                 _index == 0
                 and parent_token_type == "Project"
             ):
-                self.log.debug("rebuilding parents from scratch")
                 project_parent = parents[0]
                 parents = [project_parent]
                 continue
@@ -188,8 +186,6 @@ class ShotMetadataSolver:
                 "entity_type": parent_token_type,
                 "entity_name": parent_name
             })
-
-        self.log.debug(f"__ parents: {parents}")
 
         return parents
 
@@ -297,7 +293,6 @@ class ShotMetadataSolver:
         Returns:
             (str, dict): shot name and hierarchy data
         """
-        self.log.info(f"_ source_data: {source_data}")
 
         tasks = {}
         asset_doc = source_data["selected_asset_doc"]

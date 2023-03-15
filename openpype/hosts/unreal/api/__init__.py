@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Unreal Editor OpenPype host API."""
 
-from .plugin import Loader
+from .plugin import (
+    UnrealActorCreator,
+    UnrealAssetCreator,
+    Loader
+)
 
 from .pipeline import (
     install,
@@ -16,6 +20,7 @@ from .pipeline import (
     show_experimental_tools,
     instantiate,
     UnrealHost,
+    maintained_selection
 )
 
 __all__ = [
@@ -32,4 +37,5 @@ __all__ = [
     "show_experimental_tools",
     "instantiate",
     "UnrealHost",
+    "maintained_selection"
 ]

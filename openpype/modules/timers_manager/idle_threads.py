@@ -1,5 +1,5 @@
 import time
-from Qt import QtCore
+from qtpy import QtCore
 from pynput import mouse, keyboard
 
 from openpype.lib import Logger

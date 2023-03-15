@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import hiero
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qargparse
 
 from openpype.settings import get_current_project_settings
@@ -170,7 +170,10 @@ class CreatorWidget(QtWidgets.QDialog):
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
-                func_attr(val)
+                if isinstance(val, tuple):
+                    func_attr(*val)
+                else:
+                    func_attr(val)
 
         # add to layout
         layout.addRow(label, item)

@@ -64,139 +64,168 @@ def _print(msg: str, message_type: int = 0) -> None:
     else:
         header = term.darkolivegreen3("--- ")
 
-    print("{}{}".format(header, msg))
-
-start_time = time.time_ns()
-openpype_root = Path(os.path.dirname(__file__)).parent
-pyproject = toml.load(openpype_root / "pyproject.toml")
-_print("Handling PySide2 Qt framework ...")
-pyside2_version = None
-try:
-    pyside2_version = pyproject["openpype"]["pyside2"]["version"]
-    _print("We'll install PySide2{}".format(pyside2_version))
-except AttributeError:
-    _print("No PySide2 version was specified, using latest available.", 2)
-
-pyside2_arg = "PySide2" if not pyside2_version else "PySide2{}".format(pyside2_version)  # noqa: E501
-python_vendor_dir = openpype_root / "vendor" / "python"
-try:
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "--upgrade",
-         pyside2_arg, "-t", str(python_vendor_dir)],
-        check=True, stdout=subprocess.DEVNULL)
-except subprocess.CalledProcessError as e:
-    _print("Error during PySide2 installation.", 1)
-    _print(str(e), 1)
-    sys.exit(1)
-
-# Remove libraries for QtSql which don't have available libraries
-#   by default and Postgre library would require to modify rpath of dependency
-platform_name = platform.system().lower()
-if platform_name == "darwin":
-    pyside2_sqldrivers_dir = (
-        python_vendor_dir / "PySide2" / "Qt" / "plugins" / "sqldrivers"
-    )
-    for filepath in pyside2_sqldrivers_dir.iterdir():
-        os.remove(str(filepath))
-
-_print("Processing third-party dependencies ...")
-
-try:
-    thirdparty = pyproject["openpype"]["thirdparty"]
-except AttributeError:
-    _print("No third-party libraries specified in pyproject.toml", 1)
-    sys.exit(1)
-
-for k, v in thirdparty.items():
-    _print(f"processing {k}")
-    destination_path = openpype_root / "vendor" / "bin" / k
+    print(f"{header}{msg}")
 
 
-    if not v.get(platform_name):
-        _print(("missing definition for current "
-                f"platform [ {platform_name} ]"), 2)
-        _print("trying to get universal url for all platforms")
-        url = v.get("url")
-        if not url:
-            _print("cannot get url", 1)
-            sys.exit(1)
-    else:
-        url = v.get(platform_name).get("url")
-        destination_path = destination_path / platform_name
+def install_qtbinding(pyproject, openpype_root, platform_name):
+    _print("Handling Qt binding framework ...")
+    qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
+    package = qtbinding_def["package"]
+    version = qtbinding_def.get("version")
 
-    parsed_url = urlparse(url)
+    qtbinding_arg = None
+    if package and version:
+        qtbinding_arg = f"{package}=={version}"
+    elif package:
+        qtbinding_arg = package
 
-    # check if file is already extracted in /vendor/bin
-    if destination_path.exists():
-        _print("destination path already exists, deleting ...", 2)
-        if destination_path.is_dir():
-            try:
-                shutil.rmtree(destination_path)
-            except OSError as e:
-                _print("cannot delete folder.", 1)
-                raise SystemExit(e)
+    if not qtbinding_arg:
+        _print("Didn't find Qt binding to install")
+        sys.exit(1)
 
-    # download file
-    _print(f"Downloading {url} ...")
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_file = Path(temp_dir) / Path(parsed_url.path).name
+    _print(f"We'll install {qtbinding_arg}")
 
-        r = requests.get(url, stream=True)
-        content_len = int(r.headers.get('Content-Length', '0')) or None
-        with manager.counter(color='green',
-                             total=content_len and math.ceil(content_len / 2 ** 20),  # noqa: E501
-                             unit='MiB', leave=False) as counter:
-            with open(temp_file, 'wb', buffering=2 ** 24) as file_handle:
-                for chunk in r.iter_content(chunk_size=2 ** 20):
-                    file_handle.write(chunk)
-                    counter.update()
+    python_vendor_dir = openpype_root / "vendor" / "python"
+    try:
+        subprocess.run(
+            [
+                sys.executable,
+                "-m", "pip", "install", "--upgrade", qtbinding_arg,
+                "-t", str(python_vendor_dir)
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL
+        )
+    except subprocess.CalledProcessError as e:
+        _print("Error during PySide2 installation.", 1)
+        _print(str(e), 1)
+        sys.exit(1)
 
-        # get file with checksum
-        _print("Calculating sha256 ...", 2)
-        calc_checksum = sha256_sum(temp_file)
+    # Remove libraries for QtSql which don't have available libraries
+    #   by default and Postgre library would require to modify rpath of
+    #   dependency
+    if platform_name == "darwin":
+        sqldrivers_dir = (
+            python_vendor_dir / package / "Qt" / "plugins" / "sqldrivers"
+        )
+        for filepath in sqldrivers_dir.iterdir():
+            os.remove(str(filepath))
 
-        if v.get(platform_name):
-            item_hash = v.get(platform_name).get("hash")
+
+def install_thirdparty(pyproject, openpype_root, platform_name):
+    _print("Processing third-party dependencies ...")
+    try:
+        thirdparty = pyproject["openpype"]["thirdparty"]
+    except AttributeError:
+        _print("No third-party libraries specified in pyproject.toml", 1)
+        sys.exit(1)
+
+    for k, v in thirdparty.items():
+        _print(f"processing {k}")
+        destination_path = openpype_root / "vendor" / "bin" / k
+
+        if not v.get(platform_name):
+            _print(("missing definition for current "
+                    f"platform [ {platform_name} ]"), 2)
+            _print("trying to get universal url for all platforms")
+            url = v.get("url")
+            if not url:
+                _print("cannot get url for all platforms", 1)
+                _print((f"Warning: {k} is not installed for current platform "
+                       "and it might be missing in the build"), 1)
+                continue
         else:
-            item_hash = v.get("hash")
+            url = v.get(platform_name).get("url")
+            destination_path = destination_path / platform_name
 
-        if item_hash != calc_checksum:
-            _print("Downloaded files checksum invalid.")
-            sys.exit(1)
+        parsed_url = urlparse(url)
 
-        _print("File OK", 3)
-        if not destination_path.exists():
-            destination_path.mkdir(parents=True)
+        # check if file is already extracted in /vendor/bin
+        if destination_path.exists():
+            _print("destination path already exists, deleting ...", 2)
+            if destination_path.is_dir():
+                try:
+                    shutil.rmtree(destination_path)
+                except OSError as e:
+                    _print("cannot delete folder.", 1)
+                    raise SystemExit(e)
 
-        # extract to destination
-        archive_type = temp_file.suffix.lstrip(".")
-        _print(f"Extracting {archive_type} file to {destination_path}")
-        if archive_type in ['zip']:
-            zip_file = zipfile.ZipFile(temp_file)
-            zip_file.extractall(destination_path)
-            zip_file.close()
+        # download file
+        _print(f"Downloading {url} ...")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = Path(temp_dir) / Path(parsed_url.path).name
 
-        elif archive_type in [
-            'tar', 'tgz', 'tar.gz', 'tar.xz', 'tar.bz2'
-        ]:
-            if archive_type == 'tar':
-                tar_type = 'r:'
-            elif archive_type.endswith('xz'):
-                tar_type = 'r:xz'
-            elif archive_type.endswith('gz'):
-                tar_type = 'r:gz'
-            elif archive_type.endswith('bz2'):
-                tar_type = 'r:bz2'
+            r = requests.get(url, stream=True)
+            content_len = int(r.headers.get('Content-Length', '0')) or None
+            with manager.counter(
+                color='green',
+                total=content_len and math.ceil(content_len / 2 ** 20),
+                unit='MiB',
+                leave=False
+            ) as counter:
+                with open(temp_file, 'wb', buffering=2 ** 24) as file_handle:
+                    for chunk in r.iter_content(chunk_size=2 ** 20):
+                        file_handle.write(chunk)
+                        counter.update()
+
+            # get file with checksum
+            _print("Calculating sha256 ...", 2)
+            calc_checksum = sha256_sum(temp_file)
+
+            if v.get(platform_name):
+                item_hash = v.get(platform_name).get("hash")
             else:
-                tar_type = 'r:*'
-            try:
-                tar_file = tarfile.open(temp_file, tar_type)
-            except tarfile.ReadError:
-                raise SystemExit("corrupted archive")
-            tar_file.extractall(destination_path)
-            tar_file.close()
-        _print("Extraction OK", 3)
+                item_hash = v.get("hash")
 
-end_time = time.time_ns()
-total_time = (end_time - start_time) / 1000000000
-_print(f"Downloading and extracting took {total_time} secs.")
+            if item_hash != calc_checksum:
+                _print("Downloaded files checksum invalid.")
+                sys.exit(1)
+
+            _print("File OK", 3)
+            if not destination_path.exists():
+                destination_path.mkdir(parents=True)
+
+            # extract to destination
+            archive_type = temp_file.suffix.lstrip(".")
+            _print(f"Extracting {archive_type} file to {destination_path}")
+            if archive_type in ['zip']:
+                zip_file = zipfile.ZipFile(temp_file)
+                zip_file.extractall(destination_path)
+                zip_file.close()
+
+            elif archive_type in [
+                'tar', 'tgz', 'tar.gz', 'tar.xz', 'tar.bz2'
+            ]:
+                if archive_type == 'tar':
+                    tar_type = 'r:'
+                elif archive_type.endswith('xz'):
+                    tar_type = 'r:xz'
+                elif archive_type.endswith('gz'):
+                    tar_type = 'r:gz'
+                elif archive_type.endswith('bz2'):
+                    tar_type = 'r:bz2'
+                else:
+                    tar_type = 'r:*'
+                try:
+                    tar_file = tarfile.open(temp_file, tar_type)
+                except tarfile.ReadError:
+                    raise SystemExit("corrupted archive")
+                tar_file.extractall(destination_path)
+                tar_file.close()
+            _print("Extraction OK", 3)
+
+
+def main():
+    start_time = time.time_ns()
+    openpype_root = Path(os.path.dirname(__file__)).parent
+    pyproject = toml.load(openpype_root / "pyproject.toml")
+    platform_name = platform.system().lower()
+    install_qtbinding(pyproject, openpype_root, platform_name)
+    install_thirdparty(pyproject, openpype_root, platform_name)
+    end_time = time.time_ns()
+    total_time = (end_time - start_time) / 1000000000
+    _print(f"Downloading and extracting took {total_time} secs.")
+
+
+if __name__ == "__main__":
+    main()

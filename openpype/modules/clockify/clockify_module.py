@@ -183,7 +183,7 @@ class ClockifyModule(
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
         # Menu for Tray App
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         menu = QtWidgets.QMenu("Clockify", parent_menu)
         menu.setProperty("submenu", "on")
 

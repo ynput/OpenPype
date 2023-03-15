@@ -1,3 +1,4 @@
+// Copyright 2023, Ayon, All rights reserved.
 #include "OpenPypeStyle.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyle.h"
@@ -43,7 +44,7 @@ const FVector2D Icon40x40(40.0f, 40.0f);
 TUniquePtr< FSlateStyleSet > FOpenPypeStyle::Create()
 {
 	TUniquePtr< FSlateStyleSet > Style = MakeUnique<FSlateStyleSet>(GetStyleSetName());
-	Style->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("OpenPype/Resources"));
+	Style->SetContentRoot(FPaths::EnginePluginsDir() / TEXT("Marketplace/OpenPype/Resources"));
 
 	return Style;
 }
@@ -65,6 +66,5 @@ void FOpenPypeStyle::SetIcon(const FString& StyleName, const FString& ResourcePa
 const ISlateStyle& FOpenPypeStyle::Get()
 {
 	check(OpenPypeStyleInstance);
-	return *OpenPypeStyleInstance;
 	return *OpenPypeStyleInstance;
 }

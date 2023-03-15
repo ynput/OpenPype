@@ -908,24 +908,25 @@ class ApplicationLaunchContext:
             self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
-        env = self.data.pop("env", None)
-        if env is not None and not isinstance(env, dict):
+        src_env = self.data.pop("env", None)
+        if src_env is not None and not isinstance(src_env, dict):
             self.log.warning((
                 "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
                 " Using `os.environ` instead."
-            ).format(str(type(env))))
-            env = None
+            ).format(str(type(src_env))))
+            src_env = None
 
-        if env is None:
-            env = os.environ
+        if src_env is None:
+            src_env = os.environ
 
-        # subprocess.Popen keyword arguments
-        self.kwargs = {
-            "env": {
-                key: str(value)
-                for key, value in env.items()
-            }
+        ignored_env = {"QT_API", }
+        env = {
+            key: str(value)
+            for key, value in src_env.items()
+            if key not in ignored_env
         }
+        # subprocess.Popen keyword arguments
+        self.kwargs = {"env": env}
 
         if platform.system().lower() == "windows":
             # Detach new process from currently running process on Windows
@@ -1368,6 +1369,7 @@ def get_app_environments_for_context(
 
     from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
+    from openpype.lib.openpype_version import is_running_staging
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1404,6 +1406,8 @@ def get_app_environments_for_context(
         "env": env
     })
     data["env"].update(anatomy.root_environments())
+    if is_running_staging():
+        data["env"]["OPENPYPE_IS_STAGING"] = "1"
 
     prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group, modules_manager)

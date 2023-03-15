@@ -16,6 +16,7 @@ import pyblish.api
 from openpype.lib import source_hash, run_subprocess
 from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 
 # Modes for transfer
 COPY = 1
@@ -90,7 +91,7 @@ def maketx(source, destination, args, logger):
 
     maketx_path = get_oiio_tools_path("maketx")
 
-    if not os.path.exists(maketx_path):
+    if not maketx_path:
         print(
             "OIIO tool not found in {}".format(maketx_path))
         raise AssertionError("OIIO tool not found")
@@ -367,16 +368,25 @@ class ExtractLook(publish.Extractor):
         for filepath in files_metadata:
 
             linearize = False
-            if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
-                linearize = True
-                # set its file node to 'raw' as tx will be linearized
-                files_metadata[filepath]["color_space"] = "Raw"
+            # if OCIO color management enabled
+            # it won't take the condition of the files_metadata
+
+            ocio_maya = cmds.colorManagementPrefs(q=True,
+                                                  cmConfigFileEnabled=True,
+                                                  cmEnabled=True)
+
+            if do_maketx and not ocio_maya:
+                if files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
+                    linearize = True
+                    # set its file node to 'raw' as tx will be linearized
+                    files_metadata[filepath]["color_space"] = "Raw"
 
             # if do_maketx:
             #     color_space = "Raw"
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
+                resource,
                 do_maketx,
                 staging=staging_dir,
                 linearize=linearize,
@@ -482,7 +492,8 @@ class ExtractLook(publish.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, resource,
+                         do_maketx, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -524,10 +535,47 @@ class ExtractLook(publish.Extractor):
                 texture_hash
             ]
             if linearize:
-                self.log.info("tx: converting sRGB -> linear")
-                additional_args.extend(["--colorconvert", "sRGB", "linear"])
+                if cmds.colorManagementPrefs(query=True, cmEnabled=True):
+                    render_colorspace = cmds.colorManagementPrefs(query=True,
+                                                                  renderingSpaceName=True)  # noqa
+                    config_path = cmds.colorManagementPrefs(query=True,
+                                                            configFilePath=True) # noqa
+                    if not os.path.exists(config_path):
+                        raise RuntimeError("No OCIO config path found!")
 
-            config_path = get_ocio_config_path("nuke-default")
+                    color_space_attr = resource["node"] + ".colorSpace"
+                    try:
+                        color_space = cmds.getAttr(color_space_attr)
+                    except ValueError:
+                        # node doesn't have color space attribute
+                        if cmds.loadPlugin("mtoa", quiet=True):
+                            img_info = image_info(filepath)
+                            color_space = guess_colorspace(img_info)
+                        else:
+                            color_space = "Raw"
+                    self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
+
+                    additional_args.extend(["--colorconvert",
+                                            color_space,
+                                            render_colorspace])
+                else:
+
+                    if cmds.loadPlugin("mtoa", quiet=True):
+                        img_info = image_info(filepath)
+                        color_space = guess_colorspace(img_info)
+                        if color_space == "sRGB":
+                            self.log.info("tx: converting sRGB -> linear")
+                            additional_args.extend(["--colorconvert",
+                                                    "sRGB",
+                                                    "Raw"])
+                        else:
+                            self.log.info("tx: texture's colorspace "
+                                          "is already linear")
+                    else:
+                        self.log.warning("cannot guess the colorspace"
+                                         "color conversion won't be available!")    # noqa
+
+
             additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
