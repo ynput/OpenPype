@@ -58,7 +58,7 @@ class ConnectYetiRig(InventoryAction):
         target_ids = {}
         inputs = []
         for family, containers in containers_by_family.items():
-            if family in ["animation", "pointcache"]:
+            if family != "yetiRig":
                 continue
 
             for container in containers:
