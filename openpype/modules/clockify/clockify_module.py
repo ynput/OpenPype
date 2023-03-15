@@ -112,9 +112,9 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
                     current_timer = self.clockapi.get_in_progress()
-                    if not current_timer:
+                    if current_timer is None:
                         continue
-                    current_proj_id = current_timer["projectId"]
+                    current_proj_id = current_timer.get("projectId")
                     if not current_proj_id:
                         continue
 
@@ -122,9 +122,9 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     if project and project.get("code") == 501:
                         continue
 
-                    project_name = project["name"]
+                    project_name = project.get("name")
 
-                    current_timer_hierarchy = current_timer["description"]
+                    current_timer_hierarchy = current_timer.get("description")
                     hierarchy_items = current_timer_hierarchy.split("/")
                     # Each pype timer must have at least 2 items!
                     if len(hierarchy_items) < 2:
@@ -207,28 +207,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         """Called from TimersManager to stop timer."""
         self.clockapi.finish_time_entry()
 
-    def start_timer(self, input_data):
-        """Called from TimersManager to start timer."""
-        # If not api key is not entered then skip
-        if not self.clockapi.get_api_key():
-            return
-        # get running timer to check if we need to start it
-        # TODO: Check running is not working here
-        current_timer_hierarchy = None
-        current_project_id = None
-
-        current_timer = self.clockapi.get_in_progress()
-
-        if current_timer:
-            current_timer_hierarchy = current_timer.get("description")
-            current_project_id = current_timer.get("projectId")
-
-        # Concatenate hierarchy and task to get description
-        description_items = list(input_data.get("hierarchy", []))
-        description_items.append(input_data["task_name"])
-        description = "/".join(description_items)
-        # Check project existence
-        project_name = input_data["project_name"]
+    def verify_project_excists(self, project_name):
         project_id = self.clockapi.get_project_id(project_name)
         if not project_id:
             self.log.warning(
@@ -249,27 +228,37 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
             )
             self.message_widget.closed.connect(self.on_message_widget_close)
             self.message_widget.show()
+            return False
+        return project_id
 
+    def start_timer(self, input_data):
+        """Called from TimersManager to start timer."""
+        # If not api key is not entered then skip
+        if not self.clockapi.get_api_key():
             return
 
-        # DO not restart the timer, if it is already running for curent task
-        # TODO: This check is not working.
-        if (
-            current_timer is not None
-            and description == current_timer_hierarchy
-            and project_id == current_project_id
-        ):
-            self.log.info("Timer for the current project is already running")
+        # Concatenate hierarchy and task to get description
+        description_items = list(input_data.get("hierarchy", []))
+        description_items.append(input_data["task_name"])
+        description = "/".join(description_items)
+
+        # Check project existence
+        project_name = input_data["project_name"]
+        project_id = self.verify_project_excists(project_name)
+        if not project_id:
             return
+        # Setup timer tags
         tag_ids = []
         tag_name = input_data["task_type"]
         task_tag_id = self.clockapi.get_tag_id(tag_name)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
+
+        # Start timer
         self.clockapi.start_time_entry(
             description,
             project_id,
             tag_ids=tag_ids,
             workspace_id=self.clockapi.workspace_id,
-            user_id=self.clockapi.user_id
+            user_id=self.clockapi.user_id,
         )
