@@ -57,7 +57,7 @@ class ConnectYetiRig(InventoryAction):
         target_ids = {}
         inputs = []
         for family, containers in containers_by_family.items():
-            if family in ["animation", "pointcache"]:
+            if family != "yetiRig":
                 continue
 
             for container in containers:
@@ -87,10 +87,25 @@ class ConnectYetiRig(InventoryAction):
                     json.dumps(input, indent=4, sort_keys=True)
                 )
                 continue
-
+            source_attr, target_attr = input["connections"]
+            
+            if not cmds.attributeQuery(source_attr, node=source_node, exists=True):
+                self.log.debug(
+                    "Could not find attribute {} on node {} for input:\n{}".format(
+                    source_attr, source_node, json.dumps(input, indent=4, sort_keys=True)
+                )
+                continue
+            
+            if not cmds.attributeQuery(target_node, node=target_attr, exists=True):
+                self.log.debug(
+                    "Could not find attribute {} on node {} for input:\n{}".format(
+                    target_attr, target_node, json.dumps(input, indent=4, sort_keys=True)
+                )
+                continue
+            
             cmds.connectAttr(
-                "{}.{}".format(source_node, input["connections"][0]),
-                "{}.{}".format(target_node, input["connections"][1])
+                "{}.{}".format(source_node, source_attr),
+                "{}.{}".format(target_node, target_attr)
             )
 
     def nodes_by_id(self, container):
@@ -110,7 +125,7 @@ class ConnectYetiRig(InventoryAction):
             bool
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         if show_cancel:

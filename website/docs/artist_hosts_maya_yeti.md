@@ -114,4 +114,4 @@ To connect the Yeti Rig with published animation, we'll load in the animation an
 
 ![Maya - Yeti Publish Setup](assets/maya-yeti_load_connections.png)
 
-The Yeti Rig should now be following the animation :tada:
+The Yeti Rig should now be following the animation. :tada:
