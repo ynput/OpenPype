@@ -3,6 +3,7 @@ import threading
 import time
 
 from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
+from openpype.client import get_asset_by_name
 
 from .clockify_api import ClockifyAPI
 from .constants import CLOCKIFY_FTRACK_USER_PATH, CLOCKIFY_FTRACK_SERVER_PATH
@@ -237,19 +238,32 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         if not self.clockapi.get_api_key():
             return
 
+        task_name = input_data.get("task_name")
+
         # Concatenate hierarchy and task to get description
         description_items = list(input_data.get("hierarchy", []))
-        description_items.append(input_data["task_name"])
+        description_items.append(task_name)
         description = "/".join(description_items)
 
         # Check project existence
-        project_name = input_data["project_name"]
-        project_id = self._verify_project_exists(project_name)
+        project_name = input_data.get("project_name")
+        project_id = self._verify_project_exists(project_name)             
         if not project_id:
             return
+
         # Setup timer tags
         tag_ids = []
-        tag_name = input_data["task_type"]
+        tag_name = input_data.get("task_type")
+        if not tag_name:
+            # no task_type found in the input data
+            # if the timer is restarted by idle time (bug?)
+            asset_name = input_data["hierarchy"][-1]
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            task_info = asset_doc["data"]["tasks"][task_name]
+            tag_name = task_info.get("type", "")
+            if not tag_name:
+                self.log.info("No tag information found for the timer")
+
         task_tag_id = self.clockapi.get_tag_id(tag_name)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
