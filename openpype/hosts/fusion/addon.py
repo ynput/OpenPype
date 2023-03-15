@@ -4,6 +4,8 @@ from openpype.modules import OpenPypeModule, IHostAddon
 from openpype.lib import Logger
 
 FUSION_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
+FUSION16_PROFILE_VERSIONS = (16, 17, 18)
+FUSION9_PROFILE_VERSION = 9
 
 
 def get_fusion_profile_number(module: str, app_data: str) -> int:
@@ -15,8 +17,10 @@ def get_fusion_profile_number(module: str, app_data: str) -> int:
     The variable is added in case the version number will be
     updated or deleted so we could easily change the version or disable it.
 
-    app_data derives from `launch_context.env.get("AVALON_APP_NAME")`. 
-    For the time being we will encourage user to set a version number 
+    Currently valid Fusion versions are stored in FUSION16_PROFILE_VERSIONS
+
+    app_data derives from `launch_context.env.get("AVALON_APP_NAME")`.
+    For the time being we will encourage user to set a version number
     set in the system settings key for the Blackmagic Fusion.
     """
 
@@ -24,16 +28,18 @@ def get_fusion_profile_number(module: str, app_data: str) -> int:
 
     if not app_data:
         return
-    fusion16_profile_versions = ("16", "17", "18")
+
     try:
         app_version = re.search(r"fusion/(\d+)", app_data).group(1)
-        log.info(f"{module} found Fusion profile version: {app_version}")
-        if app_version in fusion16_profile_versions:
+        log.debug(f"{module} found Fusion profile version: {app_version}")
+        if app_version in map(str, FUSION16_PROFILE_VERSIONS):
             return 16
-        elif app_version == "9":
+        elif app_version == str(FUSION9_PROFILE_VERSION):
             return 9
+        else:
+            log.info(f"Found unsupported Fusion version: {app_version}")
     except AttributeError:
-        log.info("Fusion version was not found in the app data")
+        log.info("Fusion version was not found in the AVALON_APP_NAME data")
 
 
 class FusionAddon(OpenPypeModule, IHostAddon):
