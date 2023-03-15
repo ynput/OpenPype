@@ -143,7 +143,7 @@ class TimersManager(
         widget_user_idle = WidgetUserIdle(self)
         widget_user_idle.set_countdown_start(
             self.time_stop_timer - self.time_show_message
-            )
+        )
 
         idle_manager.signal_reset_timer.connect(
             widget_user_idle.reset_countdown
