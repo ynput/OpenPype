@@ -207,7 +207,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         """Called from TimersManager to stop timer."""
         self.clockapi.finish_time_entry()
 
-    def verify_project_excists(self, project_name):
+    def _verify_project_exists(self, project_name):
         project_id = self.clockapi.get_project_id(project_name)
         if not project_id:
             self.log.warning(
@@ -244,7 +244,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
         # Check project existence
         project_name = input_data["project_name"]
-        project_id = self.verify_project_excists(project_name)
+        project_id = self._verify_project_exists(project_name)
         if not project_id:
             return
         # Setup timer tags
