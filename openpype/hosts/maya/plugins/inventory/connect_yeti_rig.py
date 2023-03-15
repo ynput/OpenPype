@@ -1,11 +1,13 @@
 import os
 import json
+from collections import defaultdict
 
 from maya import cmds
 
 from openpype.pipeline import (
     InventoryAction, get_representation_context, get_representation_path
 )
+from openpype.hosts.maya.api.lib import get_container_members, get_id
 
 
 class ConnectYetiRig(InventoryAction):
@@ -25,15 +27,12 @@ class ConnectYetiRig(InventoryAction):
             return
 
         # Categorize containers by family.
-        containers_by_family = {}
+        containers_by_family = defaultdict(list)
         for container in containers:
             family = get_representation_context(
                 container["representation"]
             )["subset"]["data"]["family"]
-            try:
-                containers_by_family[family].append(container)
-            except KeyError:
-                containers_by_family[family] = [container]
+            containers_by_family[family].append(container)
 
         # Validate to only 1 source container.
         source_containers = containers_by_family.get("animation", [])
@@ -52,7 +51,7 @@ class ConnectYetiRig(InventoryAction):
             return
 
         source_container = source_containers[0]
-        source_ids = self.index_by_id(source_container)
+        source_ids = self.nodes_by_id(source_container)
 
         # Target containers.
         target_ids = {}
@@ -62,7 +61,7 @@ class ConnectYetiRig(InventoryAction):
                 continue
 
             for container in containers:
-                target_ids.update(self.index_by_id(container))
+                target_ids.update(self.nodes_by_id(container))
 
                 maya_file = get_representation_path(
                     get_representation_context(
@@ -94,15 +93,13 @@ class ConnectYetiRig(InventoryAction):
                 "{}.{}".format(target_node, input["connections"][1])
             )
 
-    def index_by_id(self, container):
-        reference_node = cmds.sets(container["objectName"], query=True)
-        members = cmds.referenceQuery(reference_node, nodes=True, dagPath=True)
-
+    def nodes_by_id(self, container):
         ids = {}
-        for member in members:
-            if not cmds.objExists(member + ".cbId"):
+        for member in get_container_members(container):
+            id = get_id(member)
+            if not id:
                 continue
-            ids[cmds.getAttr(member + ".cbId")] = member
+            ids[id] = member
 
         return ids
 

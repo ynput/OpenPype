@@ -76,7 +76,11 @@ We'll need to prepare the scene a bit. We want some Yeti hair on the ball geomet
 
 ![Maya - Yeti Hair Setup](assets/maya-yeti_hair_setup.png)
 
-Now we need to connect the Yeti Rig with the animation rig. Yeti Rigs work by publishing the attribute connections from its input nodes and reconnect them later in the pipeline. This means we can only use attribute connections to get the animation from the rig to the Yeti Rig. Constraints or blendshapes are not supported. We'll connnect the Yeti Rig geometry to the animation rig, with the transform and mesh attributes.
+:::note yeti nodes and types
+You can use any number of Yeti nodes and types, but they have to have unique names.
+:::
+
+Now we need to connect the Yeti Rig with the animation rig. Yeti Rigs work by publishing the attribute connections from its input nodes and reconnect them later in the pipeline. This means we can only use attribute connections to from outside of the Yeti Rig hierarchy. Internal to the Yeti Rig hierarchy, we can use any complexity of node connections. We'll connnect the Yeti Rig geometry to the animation rig, with the transform and mesh attributes.
 
 ![Maya - Yeti Rig Setup](assets/maya-yeti_rig_setup.png)
 
