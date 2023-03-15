@@ -1227,12 +1227,15 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         version_ids = list()
 
-        version_docs_by_parent_id = {}
+        version_docs_by_parent_and_name = collections.defaultdict(dict)
+        last_version_docs_by_parent_id = {}
         for version_doc in version_docs:
             parent_id = version_doc["parent"]
-            if parent_id not in version_docs_by_parent_id:
-                version_ids.append(version_doc["_id"])
-                version_docs_by_parent_id[parent_id] = version_doc
+            version_ids.append(version_doc["_id"])
+            name = version_doc["name"]
+            version_docs_by_parent_and_name[parent_id][name] = version_doc
+            if parent_id not in last_version_docs_by_parent_id:
+                last_version_docs_by_parent_id[parent_id] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
@@ -1254,6 +1257,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             container_version_id = container_repre["parent"]
             container_version = self.content_versions[container_version_id]
+            container_version_name = container_version["name"]
 
             container_subset_id = container_version["parent"]
             container_subset = self.content_subsets[container_subset_id]
@@ -1290,7 +1294,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                         repre_doc = _repres.get(container_repre_name)
 
             if not repre_doc:
-                version_doc = version_docs_by_parent_id[subset_id]
+                version_by_name = version_docs_by_parent_and_name[subset_id]
+                if selected_asset or selected_subset:
+                    version_doc = last_version_docs_by_parent_id[subset_id]
+                else:
+                    version_doc = version_by_name[container_version_name]
                 version_id = version_doc["_id"]
                 repres_by_name = repre_docs_by_parent_id_by_name[version_id]
                 if selected_representation:
