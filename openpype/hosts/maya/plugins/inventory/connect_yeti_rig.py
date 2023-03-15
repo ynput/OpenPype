@@ -88,21 +88,33 @@ class ConnectYetiRig(InventoryAction):
                 )
                 continue
             source_attr, target_attr = input["connections"]
-            
-            if not cmds.attributeQuery(source_attr, node=source_node, exists=True):
+
+            if not cmds.attributeQuery(
+                source_attr, node=source_node, exists=True
+            ):
                 self.log.debug(
-                    "Could not find attribute {} on node {} for input:\n{}".format(
-                    source_attr, source_node, json.dumps(input, indent=4, sort_keys=True)
+                    "Could not find attribute {} on node {} for "
+                    "input:\n{}".format(
+                        source_attr,
+                        source_node,
+                        json.dumps(input, indent=4, sort_keys=True)
+                    )
                 )
                 continue
-            
-            if not cmds.attributeQuery(target_node, node=target_attr, exists=True):
+
+            if not cmds.attributeQuery(
+                target_node, node=target_attr, exists=True
+            ):
                 self.log.debug(
-                    "Could not find attribute {} on node {} for input:\n{}".format(
-                    target_attr, target_node, json.dumps(input, indent=4, sort_keys=True)
+                    "Could not find attribute {} on node {} for "
+                    "input:\n{}".format(
+                        target_attr,
+                        target_node,
+                        json.dumps(input, indent=4, sort_keys=True)
+                    )
                 )
                 continue
-            
+
             cmds.connectAttr(
                 "{}.{}".format(source_node, source_attr),
                 "{}.{}".format(target_node, target_attr)
