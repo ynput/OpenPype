@@ -22,10 +22,10 @@ https://openpype.io/docs
 
 #>
 
-$arguments = $ARGS
-$disable_submodule_update = ""
-if ($arguments -eq "--no-submodule-update") {
-    $disable_submodule_update = $true
+$arguments=$ARGS
+$disable_submodule_update=""
+if($arguments -eq "--no-submodule-update") {
+    $disable_submodule_update=$true
 }
 
 $current_dir = Get-Location
@@ -45,11 +45,13 @@ function Start-Progress {
 
     # $origpos.Y -= 1
 
-    while (($job.State -eq "Running") -and ($job.State -ne "NotStarted")) {
+    while (($job.State -eq "Running") -and ($job.State -ne "NotStarted"))
+    {
         $host.UI.RawUI.CursorPosition = $origpos
         Write-Host $scroll[$idx] -NoNewline
         $idx++
-        if ($idx -ge $scroll.Length) {
+        if ($idx -ge $scroll.Length)
+        {
             $idx = 0
         }
         Start-Sleep -Milliseconds 100
@@ -57,7 +59,7 @@ function Start-Progress {
     # It's over - clear the activity indicator.
     $host.UI.RawUI.CursorPosition = $origpos
     Write-Host ' '
-    <#
+  <#
   .SYNOPSIS
   Display spinner for running job
   .PARAMETER code
@@ -67,17 +69,17 @@ function Start-Progress {
 
 
 function Exit-WithCode($exitcode) {
-    # Only exit this host process if it's a child of another PowerShell parent process...
-    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
-    $parentProcName = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$parentPID" | Select-Object -Property Name).Name
-    if ('powershell.exe' -eq $parentProcName) { $host.SetShouldExit($exitcode) }
+   # Only exit this host process if it's a child of another PowerShell parent process...
+   $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
+   $parentProcName = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$parentPID" | Select-Object -Property Name).Name
+   if ('powershell.exe' -eq $parentProcName) { $host.SetShouldExit($exitcode) }
 
-    exit $exitcode
+   exit $exitcode
 }
 
 function Show-PSWarning() {
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Write-Color -Text "!!! ", "You are using old version of PowerShell - ", "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)" -Color Red, Yellow, White
+        Write-Color -Text "!!! ", "You are using old version of PowerShell - ",  "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)" -Color Red, Yellow, White
         Write-Color -Text "    Please update to at least 7.0 - ", "https://github.com/PowerShell/PowerShell/releases" -Color Yellow, White
         Exit-WithCode 1
     }
@@ -85,7 +87,7 @@ function Show-PSWarning() {
 
 function Install-Poetry() {
     Write-Color -Text ">>> ", "Installing Poetry ... " -Color Green, Gray
-    $env:POETRY_HOME = "$openpype_root\.poetry"
+    $env:POETRY_HOME="$openpype_root\.poetry"
     (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 }
 
@@ -124,8 +126,8 @@ $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
-    Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
-    Exit-WithCode 1
+  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
+  Exit-WithCode 1
 }
 
 # Create build directory if not exist
@@ -145,8 +147,7 @@ catch {
 if (-not $disable_submodule_update) {
     Write-Color -Text ">>> ", "Making sure submodules are up-to-date ..." -Color Green, Gray
     & git submodule update --init --recursive
-}
-else {
+} else {
     Write-Color -Text "*** ", "Not updating submodules ..." -Color Green, Gray
 }
 
@@ -157,8 +158,7 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "NOT FOUND" -Color Yellow
     Write-Color -Text "*** ", "We need to install Poetry create virtual env first ..." -Color Yellow, Gray
     & "$openpype_root\tools\create_env.ps1"
-}
-else {
+} else {
     Write-Color -Text "OK" -Color Green
 }
 
@@ -173,7 +173,8 @@ $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
 $out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
 Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
-if ($LASTEXITCODE -ne 0) {
+if ($LASTEXITCODE -ne 0)
+{
     Write-Color -Text "------------------------------------------" -Color Red
     Get-Content "$($openpype_root)\build\build.log"
     Write-Color -Text "------------------------------------------" -Color Yellow
@@ -188,8 +189,8 @@ Write-Color -Text ">>> ", "Restoring current directory" -Color Green, Gray
 Set-Location -Path $current_dir
 
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
-try {
+try
+{
     New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done in $( $endTime - $startTime ) secs. You will find OpenPype and build log in build directory."
-}
-catch {}
+} catch {}
 Write-Color -Text "*** ", "All done in ", $($endTime - $startTime), " secs. You will find OpenPype and build log in ", "'.\build'", " directory." -Color Green, Gray, White, Gray, White, Gray
