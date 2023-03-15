@@ -57,7 +57,7 @@
                             "type": "dict",
                             "collapsible": true,
                             "checkbox_key": "enabled",
-                            "key": "CustomCommentTemplate",
+                            "key": "custom_comment_template",
                             "label": "Custom Comment Template",
                             "children": [
                                 {
@@ -67,7 +67,7 @@
                                 },
                                 {
                                     "type": "label",
-                                    "label": "Kitsu supports markdown and here you can create a custom comment template.<br/>You can use data from your instance's anatomy."
+                                    "label": "Kitsu supports markdown and here you can create a custom comment template.<br/>You can use data from your publishing instance's data."
                                 },
                                 {
                                     "key": "comment_template",
