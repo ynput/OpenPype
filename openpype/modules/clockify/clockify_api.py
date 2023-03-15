@@ -249,6 +249,7 @@ class ClockifyAPI:
         current_timer = self.get_in_progress()
         current_timer_hierarchy = None
         current_project_id = None
+        current_task_id = None
 
         # Check if is currently run another times and has same values
         # DO not restart the timer, if it is already running for curent task
@@ -261,6 +262,7 @@ class ClockifyAPI:
                 and current_timer is not None
                 and description == current_timer_hierarchy
                 and project_id == current_project_id
+                and task_id == current_task_id
             ):
                 self.log.info(
                     "Timer for the current project is already running"
