@@ -6,6 +6,14 @@ from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 import hou
+import os
+
+import pyblish.api
+
+from openpype.pipeline import publish
+from openpype.hosts.houdini.api.lib import render_rop
+
+import hou
 
 
 class ExtractBGEO(publish.Extractor):
@@ -39,9 +47,9 @@ class ExtractBGEO(publish.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'bgeo',
-            'ext': instance.data["bgeo_type"],
-            'files': output,
+            "name": "bgeo",
+            "ext": instance.data["bgeo_type"],
+            "files": output,
             "stagingDir": staging_dir,
             "frameStart": instance.data["frameStart"],
             "frameEnd": instance.data["frameEnd"]
