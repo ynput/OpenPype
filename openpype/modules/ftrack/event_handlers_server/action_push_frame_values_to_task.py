@@ -195,7 +195,7 @@ class PushHierValuesToNonHier(ServerAction):
         output = {}
         for entity_id in non_task_entity_ids:
             output[entity_id] = {}
-            for attr_id, attr in hier_attrs_key_by_id.items():
+            for attr in hier_attrs_key_by_id.values():
                 key = attr["key"]
                 value = hier_values_per_entity_id[entity_id][key]
                 tried_ids = set()

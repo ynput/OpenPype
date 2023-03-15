@@ -1,8 +1,6 @@
 import collections
-import contextlib
-import datetime
 import copy
-from typing import Any, Union
+from typing import Any
 
 import ftrack_api
 from openpype_modules.ftrack.lib import (
@@ -190,7 +188,6 @@ class PushHierValuesToNonHierEvent(BaseEvent):
         new_entities_info = []
         for entity_info in entities_info:
             entity_type_low = entity_info["entity_type"].lower()
-            obj_id = entity_info["objectTypeId"]
 
             changes = entity_info["changes"]
             # SPECIAL CASE: Capture changes of task created/moved under
