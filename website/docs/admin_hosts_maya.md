@@ -142,7 +142,7 @@ Fill in the necessary fields (the optional fields are regex filters)
 ![new place holder](assets/maya-placeholder_new.png)
 
 
-    - Builder type: Wether the the placeholder should load current asset representations or linked assets representations
+    - Builder type: Whether the the placeholder should load current asset representations or linked assets representations
 
     - Representation: Representation that will be loaded (ex: ma, abc, png, etc...)
 
