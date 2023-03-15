@@ -77,11 +77,11 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
-        families = set(
+        families = {
             instance.data.get("kitsu_task")
             for instance in context
             if instance.data.get("publish")
-        )
+        }
 
         for instance in context:
             kitsu_task = instance.data.get("kitsu_task")
