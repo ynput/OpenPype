@@ -348,10 +348,11 @@ def download_last_published_workfile(
             workfile_representation,
             anatomy=anatomy,
         )
+    project_doc = get_project(project_name)
 
     # Get workfile data
-    workfile_data = get_template_data_with_names(
-        project_name, asset_name, task_name, host_name
+    workfile_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
     )
 
     extension = last_published_workfile_path.split(".")[-1]
@@ -364,7 +365,7 @@ def download_last_published_workfile(
     # Get local workfile version number
     _, last_local_workfile_version = get_last_workfile_with_version(
         get_workdir(
-            get_project(project_name),
+            project_doc,
             asset_doc,
             task_name,
             host_name,
