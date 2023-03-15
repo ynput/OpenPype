@@ -263,6 +263,8 @@ class PushHierValuesToNonHierEvent(BaseEvent):
         for entity_info in entities_info:
             entity_id = entity_info["entityId"]
             obj_id = entity_info["objectTypeId"]
+            # Skip attributes sync if does not have object specific custom
+            #   attribute
             if obj_id not in attrs_keys_by_obj_id:
                 continue
             attr_keys = attrs_keys_by_obj_id[obj_id]
@@ -306,6 +308,8 @@ class PushHierValuesToNonHierEvent(BaseEvent):
                 real_hier_value = real_values.get(hier_id)
                 real_std_value = real_values.get(std_id)
                 hier_value = hier_values[hier_id]
+                # Get right type of value for conversion
+                #   - values in event are strings
                 type_value = real_hier_value
                 if type_value is None:
                     type_value = real_std_value
