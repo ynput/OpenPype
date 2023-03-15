@@ -7,13 +7,14 @@ import concurrent.futures
 from time import sleep
 from concurrent.futures._base import CancelledError
 
+from openpype.pipeline.template_data import get_template_data
+
 from .providers import lib
 from openpype.client.entity_links import get_linked_representation_id
 from openpype.lib import Logger
 from openpype.lib.local_settings import get_local_site_id
 from openpype.modules.base import ModulesManager
 from openpype.pipeline import Anatomy
-from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.pipeline.workfile.path_resolving import (
     get_last_workfile_with_version,
@@ -204,42 +205,6 @@ def _site_is_working(module, project_name, site_name, site_config):
     return handler.is_active()
 
 
-def get_last_published_workfile_path(
-    host_name: str,
-    project_name: str,
-    task_name: str,
-    workfile_representation: dict,
-    anatomy: Anatomy = None,
-) -> str:
-    """Get last published workfile path.
-
-    Args:
-        host_name (str): Host name.
-        project_name (str): Project name.
-        task_name (str): Task name.
-        workfile_representation (dict): Workfile representation.
-        anatomy (Anatomy, optional): Anatomy (Used for optimization).
-            Defaults to None.
-
-    Returns:
-        str: Last published workfile path.
-    """
-    if not anatomy:
-        anatomy = Anatomy(project_name)
-
-    if not workfile_representation:
-        print(
-            "No published workfile for task '{}' and host '{}'.".format(
-                task_name, host_name
-            )
-        )
-        return
-
-    return get_representation_path_with_anatomy(
-        workfile_representation, anatomy
-    )
-
-
 def download_last_published_workfile(
     host_name: str,
     project_name: str,
@@ -341,12 +306,8 @@ def download_last_published_workfile(
         sleep(5)
 
     if not last_published_workfile_path:
-        last_published_workfile_path = get_last_published_workfile_path(
-            host_name,
-            project_name,
-            task_name,
-            workfile_representation,
-            anatomy=anatomy,
+        last_published_workfile_path = get_representation_path_with_anatomy(
+            workfile_representation, anatomy
         )
     project_doc = get_project(project_name)
 

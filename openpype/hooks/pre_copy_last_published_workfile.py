@@ -7,9 +7,9 @@ from openpype.client.entities import (
 
 from openpype.lib import PreLaunchHook
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.settings.lib import get_project_settings
 from openpype.modules.sync_server.sync_server import (
-    get_last_published_workfile_path,
     download_last_published_workfile,
 )
 
@@ -167,12 +167,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             return
 
         # Get last published
-        published_workfile_path = get_last_published_workfile_path(
-            host_name,
-            project_name,
-            task_name,
-            workfile_representation,
-            anatomy=anatomy,
+        published_workfile_path = get_representation_path_with_anatomy(
+            workfile_representation, anatomy
         )
 
         # Copy file and substitute path
