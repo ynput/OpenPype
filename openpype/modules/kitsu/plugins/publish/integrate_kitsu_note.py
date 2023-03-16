@@ -22,21 +22,24 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     }
 
     def safe_format(self, msg, **kwargs):
-        """If key is not found in kwargs, set None instead"""
+        """Pars the msg thourgh a custom format code.
+        It makes sure non existing keys gets None returned instead of error
+        """
 
-        def replace_missing(match):
+        def replace_missing_key(match):
+            """If key is not found in kwargs, set None instead"""
             key = match.group(1)
             if key not in kwargs:
                 self.log.warning(
-                    "Key `{}` was not found in instance.data "
-                    "and will be rendered as `` in the comment".format(key)
+                    "Key '{}' was not found in instance.data "
+                    "and will be rendered as '' in the comment".format(key)
                 )
                 return ""
             else:
                 return str(kwargs[key])
 
         pattern = r"\{([^}]*)\}"
-        return re.sub(pattern, replace_missing, msg)
+        return re.sub(pattern, replace_missing_key, msg)
 
     def process(self, context):
         # Get comment text body
