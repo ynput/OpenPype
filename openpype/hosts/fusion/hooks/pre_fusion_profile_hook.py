@@ -46,7 +46,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
             ).expanduser()
         elif platform.system() == "Linux":
             profile_source = Path("~/.fusion", fu_prefs_dir).expanduser()
-        self.log.info(f"Got Fusion prefs file: {profile_source}")
+        self.log.info(f"Locating source Fusion prefs directory: {profile_source}")
         return profile_source
 
     def get_copy_fusion_prefs_settings(self):
