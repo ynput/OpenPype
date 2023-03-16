@@ -51,6 +51,7 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
         representations.update(instance.data.get("hero_representations", {}))
 
         # Run commands for all published representations
+        instance.data.setdefault("representations_futures", [])
         for representation in representations.values():
             representation = representation["representation"]
             published_path = representation.get("data", {}).get("path")
@@ -66,17 +67,19 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                 sync_server_module.pause_representation(
                     project_name, repre_id, site
                 )
-                
+
                 if use_path_management:
                     self.log.info(
                         f"Running {make_paths_relative.__file__}"
                         f"to {published_path}..."
                     )
                     # Make paths relative
-                    main_command.extend([
-                        "-P",
-                        make_paths_relative.__file__,
-                    ])
+                    main_command.extend(
+                        [
+                            "-P",
+                            make_paths_relative.__file__,
+                        ]
+                    )
 
                 self.log.info(
                     f"Running {update_representations.__file__}"
@@ -100,7 +103,9 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                         str(repre_id),
                     ]
                 )
-                main_command.extend(["--published_time", instance.context.data["time"]])
+                main_command.extend(
+                    ["--published_time", instance.context.data["time"]]
+                )
 
                 # Build function to callback
                 def callback(id: ObjectId, future: Future):
@@ -112,8 +117,13 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                         )
 
                 # Submit command to pool
-                f = pool.submit(subprocess.check_call, main_command, shell=False)
+                f = pool.submit(
+                    subprocess.check_call, main_command, shell=False
+                )
                 f.add_done_callback(partial(callback, repre_id))
+
+                # Keep future for waiting for it to finish at unpause
+                instance.data["representations_futures"].append(f)
 
         # Go asynchrone
         pool.shutdown(wait=False)
