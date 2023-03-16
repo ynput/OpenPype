@@ -7,8 +7,8 @@ FUSION_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # FUSION_VERSIONS_DICT is used by the pre-launch hooks
 # The keys correspond to all currently supported Fusion versions
-# Values is the list of corresponding python_home variables and a profile
-# number, which is used to specify pufion profile derectory variable.
+# Each value is a list of corresponding Python home variables and a profile
+# number, which is used by the profile hook to set Fusion profile variables.
 FUSION_VERSIONS_DICT = {
     9: ["FUSION_PYTHON36_HOME", 9],
     16: ["FUSION16_PYTHON36_HOME", 16],
