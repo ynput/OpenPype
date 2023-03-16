@@ -134,6 +134,11 @@
                 },
                 {
                     "type": "boolean",
+                    "key": "include_parent_hierarchy",
+                    "label": "Include Parent Hierarchy"
+                },
+                {
+                    "type": "boolean",
                     "key": "include_user_defined_attributes",
                     "label": "Include User Defined Attributes"
                 },
