@@ -24,8 +24,8 @@ class IntegrateJson(pyblish.api.InstancePlugin):
                 continue
 
             if "renderLayer" in instance.data.get('families') and\
-                    'custom_published_path' not in instance.context.data.keys():
-                instance.context.data['custom_published_path'] = repre['published_path']
+                    'custom_published_path' not in instance.context.data.keys():  # noqa
+                instance.context.data['custom_published_path'] = repre['published_path']  # noqa
                 continue
 
             layer_name = instance.data.get('layer_names')
@@ -53,13 +53,13 @@ class IntegrateJson(pyblish.api.InstancePlugin):
                     published_layer_data
                 )
 
-                for index, layer in enumerate(published_data['project']['clip']['layers']):
+                for index, layer in enumerate(
+                    published_data['project']['clip']['layers']
+                ):
                     if layer['name'] not in instance_layers:
                         published_data['project']['clip']['layers'].pop(index)
-                        self.log.debug(
-                            "The layer {} was successfully removed from published data".format(
-                                layer['name']
-                            )
+                        self.log.debug("The layer {} was successfully removed from \
+published data".format(layer['name'])
                         )
 
                 new_publish_json.seek(0)
@@ -74,13 +74,15 @@ class IntegrateJson(pyblish.api.InstancePlugin):
             self.log.debug("New representation: {}".format(repre))
             os.remove(json_publish_path)
 
-    def _update_with_published_file(self, layer_data, publish_path, layer_name):
+    def _update_with_published_file(self, layer_data, publish_path, layer_name):  # noqa
         """Update published file path in the json file extracted.
         """
         for layer in layer_data:
             if layer['name'] == layer_name:
                 for link in layer['link']:
-                    link_frame = re.search(r'\.(\d*)\.png$', link['file']).groups()[0]
+                    link_frame = re.search(
+                        r'\.(\d*)\.png$', link['file']
+                    ).groups()[0]
                     new_file_path = re.sub(
                         r'(.*\.)(\d*)(\.png)$',
                         '\g<1>{}\g<3>'.format(link_frame),
