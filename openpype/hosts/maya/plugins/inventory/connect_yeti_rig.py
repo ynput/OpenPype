@@ -103,7 +103,7 @@ class ConnectYetiRig(InventoryAction):
                 continue
 
             if not cmds.attributeQuery(
-                target_node, node=target_attr, exists=True
+                target_attr, node=target_node, exists=True
             ):
                 self.log.debug(
                     "Could not find attribute {} on node {} for "
