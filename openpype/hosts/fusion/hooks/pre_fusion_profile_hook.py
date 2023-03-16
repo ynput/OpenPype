@@ -18,7 +18,6 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         - enable the OpenPype menu
         - force Python 3 over Python 2
         - force English interface
-        - force grey color scheme (because it is better that the purple one!)
     Master.prefs is defined in openpype/hosts/fusion/deploy/fusion_shared.prefs
     """
 

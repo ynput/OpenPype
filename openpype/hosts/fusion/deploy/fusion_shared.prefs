@@ -13,7 +13,6 @@ Global = {
     Python3Forced = true
     },
   UserInterface = {
-    Skin = "Neutral",
     Language = "en_US"
     },
   },
