@@ -34,7 +34,7 @@ def get_fusion_version(app_data):
     if not app_data:
         return
 
-    app_version_candidates = re.findall("\d+", app_data)
+    app_version_candidates = re.findall(r"\d+", app_data)
     for app_version in app_version_candidates:
         if int(app_version) in FUSION_VERSIONS_DICT:
             return int(app_version)
