@@ -458,7 +458,14 @@
                             {
                                 "key": "transient_dir_persistent",
                                 "label": "Transient Folder Persistent",
-                                "type": "boolean"
+                                "type": "boolean",
+                                "default": false
+                            },
+                            {
+                                "key": "template_name",
+                                "label": "Template Name",
+                                "type": "text",
+                                "placeholder": "transient"
                             }
                         ]
                     }

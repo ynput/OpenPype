@@ -741,26 +741,27 @@ def get_transient_dir_info(project_name, host_name, family, task_name,
     if not anatomy:
         anatomy = Anatomy(project_name)
 
-    _validate_transient_template(project_name, anatomy)
+    template_name = profile["template_name"] or TRANSIENT_DIR_TEMPLATE
+    _validate_transient_template(project_name, template_name, anatomy)
 
-    transient_dir = anatomy.templates[TRANSIENT_DIR_TEMPLATE]["folder"]
+    transient_dir = anatomy.templates[template_name]["folder"]
     is_persistent = profile["transient_dir_persistent"]
 
     return transient_dir, is_persistent
 
 
-def _validate_transient_template(project_name, anatomy):
+def _validate_transient_template(project_name, template_name, anatomy):
     """Check that transient template is correctly configured.
 
     Raises:
         ValueError - if misconfigured template
     """
-    if TRANSIENT_DIR_TEMPLATE not in anatomy.templates:
+    if template_name not in anatomy.templates:
         raise ValueError(("!!! Anatomy of project \"{}\" does not have set"
                           " \"{}\" template key!"
-                          ).format(project_name, TRANSIENT_DIR_TEMPLATE))
+                          ).format(project_name, template_name))
 
-    if "folder" not in anatomy.templates[TRANSIENT_DIR_TEMPLATE]:
+    if "folder" not in anatomy.templates[template_name]:
         raise ValueError(("!!! There is not set \"folder\" template in \"{}\" anatomy"  # noqa
                              " for project \"{}\"."
-                         ).format(TRANSIENT_DIR_TEMPLATE, project_name))
+                         ).format(template_name, project_name))
