@@ -4,9 +4,7 @@ from maya import cmds
 import arnold
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import (
-    maintained_selection, attribute_values, delete_after
-)
+from openpype.hosts.maya.api import lib
 
 
 class ExtractArnoldSceneSource(publish.Extractor):
@@ -119,7 +117,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
         filenames = []
         # Duplicating nodes so they are direct children of the world. This
         # makes the hierarchy of any exported ass file the same.
-        with delete_after() as delete_bin:
+        with lib.delete_after() as delete_bin:
             duplicate_nodes = []
             for node in nodes:
                 parent = cmds.listRelatives(node, parent=True, fullPath=True)[0]
@@ -145,32 +143,12 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 duplicate_nodes.append(duplicate_transform)
                 delete_bin.append(duplicate_transform)
 
-                # Copy cbId from original to mtoa_constant.
-                attr_name = "mtoa_constant_cbId"
-                duplicate_shapes = cmds.listRelatives(
-                    duplicate_transform, shapes=True, fullPath=True
-                )
-                original_shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
-                for duplicate_shape in duplicate_shapes:
-                    duplicate_path = (
-                        duplicate_transform + "|" + duplicate_shape
-                    )
-                    for original_shape in original_shapes:
-                        original_path = node + "|" + original_shape
-                        if duplicate_shape == original_shape:
-                            cmds.addAttr(
-                                duplicate_path,
-                                longName=attr_name,
-                                dataType="string"
-                            )
-                            cmds.setAttr(
-                                duplicate_path + "." + attr_name,
-                                cmds.getAttr(original_path + ".cbId"),
-                                type="string"
-                            )
+            # Copy cbId to mtoa_constant.
+            for node in duplicate_nodes:
+                lib.set_attribute("mtoa_constant_cbId", lib.get_id(node))
 
-            with attribute_values(attribute_data):
-                with maintained_selection():
+            with lib.attribute_values(attribute_data):
+                with lib.maintained_selection():
                     self.log.info(
                         "Writing: {}".format(duplicate_nodes)
                     )
