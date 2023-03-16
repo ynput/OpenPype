@@ -99,7 +99,7 @@ class LoadClip(plugin.NukeLoader):
             representation = self._representation_with_hash_in_frame(
                 representation
             )
-        filepath = self.filepath_from_context(representation)
+        filepath = self.filepath_from_context(context)
         filepath = filepath.replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
 
