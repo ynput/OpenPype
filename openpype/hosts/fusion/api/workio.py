@@ -1,5 +1,4 @@
 """Host API required Work Files tool"""
-import sys
 import os
 
 from .lib import get_fusion_module, get_current_comp
