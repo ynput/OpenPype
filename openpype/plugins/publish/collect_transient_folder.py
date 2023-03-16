@@ -8,6 +8,7 @@ Provides:
                       -> stagingDir_persistent (bool)
 """
 import copy
+import os.path
 
 import pyblish.api
 
@@ -57,9 +58,9 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
         result_str = "Not adding"
         if transient_tml:
             anatomy_data["root"] = anatomy.roots
-            scene_name = instance.context.get("currentFile")
+            scene_name = instance.context.data.get("currentFile")
             if scene_name:
-                anatomy_data["scene_name"] = scene_name
+                anatomy_data["scene_name"] = os.path.basename(scene_name)
             transient_dir = transient_tml.format(**anatomy_data)
             instance.data["stagingDir"] = transient_dir
 
