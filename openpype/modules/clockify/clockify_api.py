@@ -253,7 +253,7 @@ class ClockifyAPI:
 
         # Check if is currently run another times and has same values
         # DO not restart the timer, if it is already running for curent task
-        if current_timer and current_timer is not None:
+        if current_timer:
             current_timer_hierarchy = current_timer.get("description")
             current_project_id = current_timer.get("projectId")
             current_task_id = current_timer.get("taskId")
