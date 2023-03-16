@@ -482,10 +482,10 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
             return True
 
         # Filter by regex
-        if hasattr(self, "filterRegularExpression"):
-            regex = self.filterRegularExpression()
-        else:
+        if hasattr(self, "filterRegExp"):
             regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
         pattern = regex.pattern()
         if pattern:
             pattern = re.escape(pattern)
