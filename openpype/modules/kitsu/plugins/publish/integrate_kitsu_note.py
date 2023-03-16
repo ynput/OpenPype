@@ -21,25 +21,27 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         "comment_template": "{comment}",
     }
 
-    def safe_format(self, msg, **kwargs):
-        """Pars the msg thourgh a custom format code.
-        It makes sure non existing keys gets None returned instead of error
-        """
+    def format_publish_comment(self, instance):
+        """Format the instance's publish comment
 
+        Formats `instance.data` against the custom template.
+        """
+        
         def replace_missing_key(match):
             """If key is not found in kwargs, set None instead"""
             key = match.group(1)
-            if key not in kwargs:
+            if key not in instance.data:
                 self.log.warning(
-                    "Key '{}' was not found in instance.data "
-                    "and will be rendered as '' in the comment".format(key)
+                    "Key "{}" was not found in instance.data "
+                    "and will be rendered as "" in the comment".format(key)
                 )
                 return ""
             else:
-                return str(kwargs[key])
+                return str(instance.data[key])
 
+        template = self.custom_comment_template["comment_template"]
         pattern = r"\{([^}]*)\}"
-        return re.sub(pattern, replace_missing_key, msg)
+        return re.sub(pattern, replace_missing_key, template)
 
     def process(self, context):
         # Get comment text body
@@ -75,10 +77,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # If custom comment, create it
             if self.custom_comment_template["enabled"]:
-                publish_comment = self.safe_format(
-                    self.custom_comment_template["comment_template"],
-                    **instance.data,
-                )
+                publish_comment = self.format_publish_comment(instance)
 
             self.log.debug("Comment is `{}`".format(publish_comment))
 
