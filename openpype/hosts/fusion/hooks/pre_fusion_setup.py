@@ -54,8 +54,8 @@ class FusionPrelaunch(PreLaunchHook):
         self.launch_context.env[py3_var] = py3_dir
 
         # Fusion 18+ requires FUSION_PYTHON3_HOME to also be on PATH
-        if app_version > 17:
-            self.launch_context.env["PATH"] += ";" + py3_dir
+        if app_version >= 18:
+            self.launch_context.env["PATH"] += os.pathsep + py3_dir
 
         self.launch_context.env[py3_var] = py3_dir
 
