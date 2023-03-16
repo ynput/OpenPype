@@ -14,12 +14,13 @@ import pyblish.api
 from openpype.lib import filter_profiles
 
 
-class CollectTransientStaging(pyblish.api.InstancePlugin):
-    """
-        Looks through profiles if stagingDir should be persistent.
+class CollectTransientFolder(pyblish.api.InstancePlugin):
+    """Looks through profiles if stagingDir should be persistent and in special
+    location.
 
     Transient staging dir could be useful in specific use cases where is
-    desirable to have temporary renders in specific, persistent folders.
+    desirable to have temporary renders in specific, persistent folders, could
+    be on disks optimized for speed for example.
 
     It is studio responsibility to clean up obsolete folders with data.
 
@@ -27,7 +28,7 @@ class CollectTransientStaging(pyblish.api.InstancePlugin):
     ('transient' key is expected, with 'folder' key)
 
     Which family/task type/subset is applicable is configured in:
-    `project_settings/global/publish/CollectTransientStaging`
+    `project_settings/global/publish/CollectTransientFolder`
 
     """
     label = "Collect Transient Staging Dir"

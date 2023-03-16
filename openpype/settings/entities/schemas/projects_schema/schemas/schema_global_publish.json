@@ -84,7 +84,7 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "CollectTransientStaging",
+            "key": "CollectTransientFolder",
             "label": "Collect Transient Staging Dir",
             "checkbox_key": "enabled",
             "is_group": true,

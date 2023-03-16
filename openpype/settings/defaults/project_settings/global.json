@@ -46,7 +46,7 @@
             "enabled": false,
             "families": []
         },
-        "CollectTransientStaging": {
+        "CollectTransientFolder": {
             "enabled": true,
             "transient_staging_profiles": []
         },
