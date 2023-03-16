@@ -10,7 +10,7 @@ def get_resource_path(*args):
 
 
 def get_icon_path():
-    return get_resource_path("openpype_icon.png")
+    return get_resource_path("AYON.png")
 
 
 def load_stylesheet():
