@@ -10,11 +10,11 @@ from openpype.hosts.fusion import (
 class FusionPrelaunch(PreLaunchHook):
     """
     Prepares OpenPype Fusion environment.
-    Requires correct Python home variable to be defined in the environment 
+    Requires correct Python home variable to be defined in the environment
     settings for Fusion to point at a valid Python 3 build for Fusion.
     Python3 versions that are supported by Fusion:
     Fusion 9, 16, 17 : Python 3.6
-    Fusion 18        : Python 3.6 - 3.10 
+    Fusion 18        : Python 3.6 - 3.10
     """
 
     app_groups = ["fusion"]
