@@ -5,7 +5,6 @@ import time
 from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
 from openpype.client import get_asset_by_name
 
-from .clockify_api import ClockifyAPI
 from .constants import CLOCKIFY_FTRACK_USER_PATH, CLOCKIFY_FTRACK_SERVER_PATH
 
 
@@ -23,13 +22,20 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.timer_manager = None
         self.MessageWidgetClass = None
         self.message_widget = None
-
-        self.clockapi = ClockifyAPI(master_parent=self)
+        self._clockify_api = None
 
         # TimersManager attributes
         # - set `timers_manager_connector` only in `tray_init`
         self.timers_manager_connector = None
         self._timers_manager_module = None
+
+    @property
+    def clockify_api(self):
+        if self._clockify_api is None:
+            from .clockify_api import ClockifyAPI
+
+            self._clockify_api = ClockifyAPI(master_parent=self)
+        return self._clockify_api
 
     def get_global_environments(self):
         return {"CLOCKIFY_WORKSPACE": self.workspace_name}
@@ -40,7 +46,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.MessageWidgetClass = MessageWidget
 
         self.message_widget = None
-        self.widget_settings = ClockifySettings(self.clockapi)
+        self.widget_settings = ClockifySettings(self.clockify_api)
         self.widget_settings_required = None
 
         self.thread_timer_check = None
@@ -49,7 +55,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.bool_api_key_set = False
         self.bool_workspace_set = False
         self.bool_timer_run = False
-        self.bool_api_key_set = self.clockapi.set_api()
+        self.bool_api_key_set = self.clockify_api.set_api()
 
         # Define itself as TimersManager connector
         self.timers_manager_connector = self
@@ -59,7 +65,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
             self.show_settings()
             return
 
-        self.bool_workspace_set = self.clockapi.workspace_id is not None
+        self.bool_workspace_set = self.clockify_api.workspace_id is not None
         if self.bool_workspace_set is False:
             return
 
@@ -105,21 +111,23 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
     def check_running(self):
         while self.bool_thread_check_running is True:
             bool_timer_run = False
-            if self.clockapi.get_in_progress() is not None:
+            if self.clockify_api.get_in_progress() is not None:
                 bool_timer_run = True
 
             if self.bool_timer_run != bool_timer_run:
                 if self.bool_timer_run is True:
                     self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
-                    current_timer = self.clockapi.get_in_progress()
+                    current_timer = self.clockify_api.get_in_progress()
                     if current_timer is None:
                         continue
                     current_proj_id = current_timer.get("projectId")
                     if not current_proj_id:
                         continue
 
-                    project = self.clockapi.get_project_by_id(current_proj_id)
+                    project = self.clockify_api.get_project_by_id(
+                        current_proj_id
+                    )
                     if project and project.get("code") == 501:
                         continue
 
@@ -183,7 +191,9 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         parent_menu.addMenu(menu)
 
     def show_settings(self):
-        self.widget_settings.input_api_key.setText(self.clockapi.get_api_key())
+        self.widget_settings.input_api_key.setText(
+            self.clockify_api.get_api_key()
+        )
         self.widget_settings.show()
 
     def set_menu_visibility(self):
@@ -206,10 +216,10 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     def stop_timer(self):
         """Called from TimersManager to stop timer."""
-        self.clockapi.finish_time_entry()
+        self.clockify_api.finish_time_entry()
 
     def _verify_project_exists(self, project_name):
-        project_id = self.clockapi.get_project_id(project_name)
+        project_id = self.clockify_api.get_project_id(project_name)
         if not project_id:
             self.log.warning(
                 'Project "{}" was not found in Clockify. Timer won\'t start.'
@@ -222,7 +232,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                 'Project <b>"{}"</b> is not'
                 ' in Clockify Workspace <b>"{}"</b>.'
                 "<br><br>Please inform your Project Manager."
-            ).format(project_name, str(self.clockapi.workspace_name))
+            ).format(project_name, str(self.clockify_api.workspace_name))
 
             self.message_widget = self.MessageWidgetClass(
                 msg, "Clockify - Info Message"
@@ -235,7 +245,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
     def start_timer(self, input_data):
         """Called from TimersManager to start timer."""
         # If not api key is not entered then skip
-        if not self.clockapi.get_api_key():
+        if not self.clockify_api.get_api_key():
             return
 
         task_name = input_data.get("task_name")
@@ -264,15 +274,15 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
             if not tag_name:
                 self.log.info("No tag information found for the timer")
 
-        task_tag_id = self.clockapi.get_tag_id(tag_name)
+        task_tag_id = self.clockify_api.get_tag_id(tag_name)
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
 
         # Start timer
-        self.clockapi.start_time_entry(
+        self.clockify_api.start_time_entry(
             description,
             project_id,
             tag_ids=tag_ids,
-            workspace_id=self.clockapi.workspace_id,
-            user_id=self.clockapi.user_id,
+            workspace_id=self.clockify_api.workspace_id,
+            user_id=self.clockify_api.user_id,
         )
