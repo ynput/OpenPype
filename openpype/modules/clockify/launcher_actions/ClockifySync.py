@@ -54,7 +54,9 @@ class ClockifySync(LauncherAction):
             if project_name in clockify_projects:
                 continue
 
-            response = self.clockify_api.add_project(project_name, workspace_id)
+            response = self.clockify_api.add_project(
+                project_name, workspace_id
+            )
             if "id" not in response:
                 self.log.error(
                     "Project {} can't be created".format(project_name)
@@ -64,7 +66,9 @@ class ClockifySync(LauncherAction):
             clockify_workspace_tags = self.clockify_api.get_tags(workspace_id)
             for task_type in task_types:
                 if task_type not in clockify_workspace_tags:
-                    response = self.clockify_api.add_tag(task_type, workspace_id)
+                    response = self.clockify_api.add_tag(
+                        task_type, workspace_id
+                    )
                     if "id" not in response:
                         self.log.error(
                             "Task {} can't be created".format(task_type)

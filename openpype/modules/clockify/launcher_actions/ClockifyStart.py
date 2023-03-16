@@ -40,7 +40,9 @@ class ClockifyStart(LauncherAction):
             description_items.append(task_name)
             description = "/".join(description_items)
 
-        project_id = self.clockify_api.get_project_id(project_name, workspace_id)
+        project_id = self.clockify_api.get_project_id(
+            project_name, workspace_id
+        )
         tag_ids = []
         tag_name = task_type
         tag_ids.append(self.clockify_api.get_tag_id(tag_name, workspace_id))
