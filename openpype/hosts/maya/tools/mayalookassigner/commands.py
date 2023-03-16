@@ -108,7 +108,7 @@ def create_asset_id_hash(nodes):
     """
     node_id_hash = defaultdict(list)
     for node in nodes:
-        shapes = cmds.ls(cmds.listRelatives(node, shapes=True), long=True)
+        shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
