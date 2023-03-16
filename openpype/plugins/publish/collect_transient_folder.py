@@ -11,7 +11,7 @@ import copy
 
 import pyblish.api
 
-from openpype.lib import filter_profiles
+from openpype.pipeline.publish.lib import get_transient_dir_info
 
 
 class CollectTransientFolder(pyblish.api.InstancePlugin):
@@ -36,72 +36,33 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
 
     template_key = "transient"
 
-    # configurable in Settings
-    transient_staging_profiles = None
-
     def process(self, instance):
-        if not self.transient_staging_profiles:
-            self.log.debug("No profiles present for transient staging")
-            return
-
-        transient_staging = False
         family = instance.data["family"]
         subset_name = instance.data["subset"]
         host_name = instance.context.data["hostName"]
         project_name = instance.context.data["projectName"]
 
+        anatomy = instance.context.data["anatomy"]
         anatomy_data = copy.deepcopy(instance.data["anatomyData"])
         task = anatomy_data.get("task", {})
 
-        filtering_criteria = {
-            "hosts": host_name,
-            "families": family,
-            "task_names": task.get("name"),
-            "task_types": task.get("type"),
-            "subsets": subset_name
-        }
-        profile = filter_profiles(self.transient_staging_profiles,
-                                  filtering_criteria,
-                                  logger=self.log)
-
-        if profile:
-            transient_staging = profile["transient_staging"]
-
-            if transient_staging:
-                anatomy = instance.context.data["anatomy"]
-                is_config = self._is_valid_configuration(anatomy,
-                                                         self.template_key,
-                                                         project_name)
-                if not is_config:
-                    return
-
-                anatomy_filled = anatomy.format(anatomy_data)
-                staging_dir = anatomy_filled[self.template_key]["folder"]
-
-                instance.data["stagingDir"] = staging_dir
-                instance.data["stagingDir_persistent"] = True
-
+        transient_tml, is_persistent = get_transient_dir_info(project_name,
+                                                              host_name,
+                                                              family,
+                                                              task.get("name"),
+                                                              task.get("type"),
+                                                              subset_name,
+                                                              anatomy,
+                                                              log=self.log)
         result_str = "Not adding"
-        if transient_staging:
-            result_str = "Adding '{}' as".format(staging_dir)
+        if transient_tml:
+            anatomy_data["root"] = anatomy.roots
+            transient_dir = transient_tml.format(**anatomy_data)
+            instance.data["stagingDir"] = transient_dir
+
+            instance.data["stagingDir_persistent"] = is_persistent
+            result_str = "Adding '{}' as".format(transient_dir)
+
         self.log.info("{} transient staging dir for instance with '{}'".format(
             result_str, family
         ))
-
-    def _is_valid_configuration(self, anatomy, template_key, project_name):
-        is_valid = True
-        if self.template_key not in anatomy.templates:
-            self.log.warning((
-                "!!! Anatomy of project \"{}\" does not have set"
-                " \"{}\" template key!"
-            ).format(project_name, template_key))
-            is_valid = False
-
-        if is_valid and "folder" not in anatomy.templates[template_key]:  # noqa
-            self.log.warning((
-                "!!! There is not set \"folder\" template in \"{}\" anatomy"
-                " for project \"{}\"."
-            ).format(template_key, project_name))
-            is_valid = False
-
-        return is_valid
