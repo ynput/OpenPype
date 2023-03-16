@@ -57,6 +57,9 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
         result_str = "Not adding"
         if transient_tml:
             anatomy_data["root"] = anatomy.roots
+            scene_name = instance.context.get("currentFile")
+            if scene_name:
+                anatomy_data["scene_name"] = scene_name
             transient_dir = transient_tml.format(**anatomy_data)
             instance.data["stagingDir"] = transient_dir
 
