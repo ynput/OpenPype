@@ -29,7 +29,7 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
 
     def get_invalid_couples(self, instance):
         content_nodes_by_name = self._get_nodes_data(
-            instance.data["setMembers"]
+            instance.data["contentMembers"]
         )
         proxy_nodes_by_name = self._get_nodes_data(
             instance.data.get("proxy", [])

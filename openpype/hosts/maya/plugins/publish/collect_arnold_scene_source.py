@@ -23,7 +23,7 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                 continue
             if objset.endswith("content_SET"):
                 set_members = get_all_children(cmds.ls(members, long=True))
-                instance.data["setMembers"] = set_members
+                instance.data["contentMembers"] = set_members
                 self.log.debug("content members: {}".format(set_members))
             elif objset.endswith("proxy_SET"):
                 set_members = get_all_children(cmds.ls(members, long=True))
@@ -35,7 +35,7 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
         cameras = cmds.ls(type="camera", long=True)
         renderable = [c for c in cameras if cmds.getAttr("%s.renderable" % c)]
         camera = renderable[0]
-        for node in instance.data["setMembers"]:
+        for node in instance.data["contentMembers"]:
             camera_shapes = cmds.listRelatives(
                 node, shapes=True, type="camera"
             )

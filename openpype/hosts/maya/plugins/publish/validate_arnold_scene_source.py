@@ -43,7 +43,7 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = self._get_nodes_data(
-            instance.data["setMembers"]
+            instance.data["contentMembers"]
         )
         ungrouped_nodes.extend(nodes)
 
@@ -64,11 +64,11 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
             return
 
         # Validate for content and proxy nodes amount being the same.
-        if len(instance.data["setMembers"]) != len(instance.data["proxy"]):
+        if len(instance.data["contentMembers"]) != len(instance.data["proxy"]):
             raise PublishValidationError(
                 "Amount of content nodes ({}) and proxy nodes ({}) needs to "
                 "be the same.".format(
-                    len(instance.data["setMembers"]),
+                    len(instance.data["contentMembers"]),
                     len(instance.data["proxy"])
                 )
             )

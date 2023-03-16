@@ -72,7 +72,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
         }
 
         filenames = self._extract(
-            instance.data["setMembers"], attribute_data, kwargs
+            instance.data["contentMembers"], attribute_data, kwargs
         )
 
         if "representations" not in instance.data:
