@@ -28,8 +28,8 @@ class FusionPrelaunch(PreLaunchHook):
         if not app_version:
             raise ApplicationLaunchFailed(
                 "Fusion version information not found in System settings.\n"
-                "The key field in the 'applications/fusion/variants' "
-                "should consist a number, corresponding to the Fusion version"
+                "The key field in the 'applications/fusion/variants' should "
+                "consist a number, corresponding to major Fusion version."
             )
         py3_var, _ = FUSION_VERSIONS_DICT[app_version]
         fusion_python3_home = self.launch_context.env.get(py3_var, "")
