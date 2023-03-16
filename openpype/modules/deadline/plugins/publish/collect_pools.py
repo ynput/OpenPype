@@ -10,7 +10,11 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.420
     label = "Collect Deadline Pools"
-    families = ["rendering", "render.farm", "renderFarm", "renderlayer"]
+    families = ["rendering",
+                "render.farm",
+                "renderFarm",
+                "renderlayer",
+                "maxrender"]
 
     primary_pool = None
     secondary_pool = None
