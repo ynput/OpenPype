@@ -101,7 +101,9 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.getNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                rt.delete(rt.getNodeByName(instance_node))
+                rt.select(instance_node)
+                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
+                rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
 

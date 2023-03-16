@@ -1,5 +1,3 @@
-import os
-
 import pyblish.api
 
 from openpype.hosts.fusion.api import get_current_comp

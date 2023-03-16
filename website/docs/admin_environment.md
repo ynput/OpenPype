@@ -27,4 +27,4 @@ import TabItem from '@theme/TabItem';
 - for more details on how to use it go [here](admin_use#check-for-mongodb-database-connection)
 
 ## OPENPYPE_USERNAME
-- if set it overides system created username
+- if set it overrides system created username

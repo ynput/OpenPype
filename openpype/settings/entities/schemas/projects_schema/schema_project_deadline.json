@@ -286,11 +286,6 @@
                             "label": "Active"
                         },
                         {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
-                        },
-                        {
                             "type": "splitter"
                         },
                         {
