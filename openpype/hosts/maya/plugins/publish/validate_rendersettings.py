@@ -13,6 +13,22 @@ from openpype.pipeline.publish import (
 from openpype.hosts.maya.api import lib
 
 
+def convert_to_int_or_float(string_value):
+    # Order of types are important here since float can convert string
+    # representation of integer.
+    types = [int, float]
+    for t in types:
+        try:
+            result = t(string_value)
+        except ValueError:
+            continue
+        else:
+            return result
+
+    # Neither integer or float.
+    return string_value
+
+
 def get_redshift_image_format_labels():
     """Return nice labels for Redshift image formats."""
     var = "$g_redshiftImageFormatLabels"
@@ -259,6 +275,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
         for attribute, data in cls.get_nodes(instance, renderer).items():
+            # Validate the settings has values.
+            if not data["values"]:
+                cls.log.error(
+                    "Settings for {}.{} is missing values.".format(
+                        node, attribute
+                    )
+                )
+                continue
+
             for node in data["nodes"]:
                 try:
                     render_value = cmds.getAttr(
@@ -270,7 +295,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         "Cannot get value of {}.{}".format(node, attribute)
                     )
                 else:
-                    if str(render_value) not in data["values"]:
+                    if render_value not in data["values"]:
                         invalid = True
                         cls.log.error(
                             "Invalid value {} set on {}.{}. Expecting "
@@ -299,6 +324,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 )
                 continue
 
+            values = [convert_to_int_or_float(v) for v in values]
+
             node_type, attribute_name = attr.split(".", 1)
 
             # first get node of that type
@@ -326,6 +353,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         )
 
         for attribute, data in cls.get_nodes(instance, renderer).items():
+            if not data["values"]:
+                continue
             for node in data["nodes"]:
                 lib.set_attribute(attribute, data["values"][0], node)
 
