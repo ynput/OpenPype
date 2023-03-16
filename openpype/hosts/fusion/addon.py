@@ -26,7 +26,7 @@ def get_fusion_version(app_data):
 
     To get a correct Fusion version, a version number should be present
     in the `applications/fusion/variants` key
-    int the Blackmagic Fusion Application Settings.
+    of the Blackmagic Fusion Application Settings.
     """
 
     log = Logger.get_logger(__name__)
@@ -35,6 +35,8 @@ def get_fusion_version(app_data):
         return
 
     app_version_candidates = re.findall(r"\d+", app_data)
+    if not app_version_candidates:
+        return
     for app_version in app_version_candidates:
         if int(app_version) in FUSION_VERSIONS_DICT:
             return int(app_version)
