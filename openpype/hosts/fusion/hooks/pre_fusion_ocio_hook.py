@@ -7,7 +7,6 @@ from openpype.pipeline.template_data import get_template_data_with_names
 class FusionPreLaunchOCIO(PreLaunchHook):
     """Set OCIO environment variable for Fusion"""
     app_groups = ["fusion"]
-    order = 3
 
     def execute(self):
         """Hook entry method."""
