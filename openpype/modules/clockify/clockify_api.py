@@ -7,8 +7,6 @@ import requests
 from .constants import (
     CLOCKIFY_ENDPOINT,
     ADMIN_PERMISSION_NAMES,
-    MAX_CALLS,
-    PERIOD,
 )
 
 from openpype.lib.local_settings import OpenPypeSecureRegistry
@@ -258,9 +256,7 @@ class ClockifyAPI:
             current_project_id = current_timer.get("projectId")
             current_task_id = current_timer.get("taskId")
             if (
-                current_timer
-                and current_timer is not None
-                and description == current_timer_hierarchy
+                description == current_timer_hierarchy
                 and project_id == current_project_id
                 and task_id == current_task_id
             ):
