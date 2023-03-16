@@ -23,20 +23,22 @@ class ClockifyStart(LauncherAction):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
+        description = asset_name
+
+        # fetch asset docs
         asset_doc = get_asset_by_name(project_name, asset_name)
+
+        # get task type to fill the timer tag
         task_info = asset_doc["data"]["tasks"][task_name]
         task_type = task_info["type"]
 
-        description = asset_name
-        parents_data = get_asset_by_name(
-            project_name, asset_name, fields=["data.parents"]
-        )
-
+        # check if the task has hierarchy and fill the
+        parents_data = asset_doc["data"]
         if parents_data is not None:
-            desc_items = parents_data.get("data", {}).get("parents", [])
-            desc_items.append(asset_name)
-            desc_items.append(task_name)
-            description = "/".join(desc_items)
+            description_items = parents_data.get("parents", [])
+            description_items.append(asset_name)
+            description_items.append(task_name)
+            description = "/".join(description_items)
 
         project_id = self.clockapi.get_project_id(project_name, workspace_id)
         tag_ids = []
