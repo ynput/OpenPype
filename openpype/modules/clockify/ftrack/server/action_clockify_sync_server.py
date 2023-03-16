@@ -18,8 +18,8 @@ class SyncClockifyServer(ServerAction):
 
         workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
         api_key = os.environ.get("CLOCKIFY_API_KEY")
-        self.clockapi = ClockifyAPI(api_key)
-        self.clockapi.set_workspace(workspace_name)
+        self.clockify_api = ClockifyAPI(api_key)
+        self.clockify_api.set_workspace(workspace_name)
         if api_key is None:
             modified_key = "None"
         else:
@@ -48,15 +48,15 @@ class SyncClockifyServer(ServerAction):
         return True
 
     def launch(self, session, entities, event):
-        self.clockapi.set_api()
-        if self.clockapi.workspace_id is None:
+        self.clockify_api.set_api()
+        if self.clockify_api.workspace_id is None:
             return {
                 "success": False,
                 "message": "Clockify Workspace or API key are not set!"
             }
 
-        if not self.clockapi.validate_workspace_permissions(
-            self.clockapi.workspace_id, self.clockapi.user_id
+        if not self.clockify_api.validate_workspace_permissions(
+            self.clockify_api.workspace_id, self.clockify_api.user_id
         ):
             return {
                 "success": False,
@@ -91,9 +91,9 @@ class SyncClockifyServer(ServerAction):
             task_type["name"] for task_type in task_types
         ]
         try:
-            clockify_projects = self.clockapi.get_projects()
+            clockify_projects = self.clockify_api.get_projects()
             if project_name not in clockify_projects:
-                response = self.clockapi.add_project(project_name)
+                response = self.clockify_api.add_project(project_name)
                 if "id" not in response:
                     self.log.warning(
                         "Project \"{}\" can't be created. Response: {}".format(
@@ -108,7 +108,7 @@ class SyncClockifyServer(ServerAction):
                         ).format(project_name)
                     }
 
-            clockify_workspace_tags = self.clockapi.get_tags()
+            clockify_workspace_tags = self.clockify_api.get_tags()
             for task_type_name in task_type_names:
                 if task_type_name in clockify_workspace_tags:
                     self.log.debug(
@@ -116,7 +116,7 @@ class SyncClockifyServer(ServerAction):
                     )
                     continue
 
-                response = self.clockapi.add_tag(task_type_name)
+                response = self.clockify_api.add_tag(task_type_name)
                 if "id" not in response:
                     self.log.warning(
                         "Task \"{}\" can't be created. Response: {}".format(

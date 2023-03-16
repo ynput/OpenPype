@@ -8,7 +8,7 @@ class ClockifyStart(LauncherAction):
     label = "Clockify - Start Timer"
     icon = "app_icons/clockify.png"
     order = 500
-    clockapi = ClockifyAPI()
+    clockify_api = ClockifyAPI()
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
@@ -17,9 +17,9 @@ class ClockifyStart(LauncherAction):
         return False
 
     def process(self, session, **kwargs):
-        self.clockapi.set_api()
-        user_id = self.clockapi.user_id
-        workspace_id = self.clockapi.workspace_id
+        self.clockify_api.set_api()
+        user_id = self.clockify_api.user_id
+        workspace_id = self.clockify_api.workspace_id
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
@@ -40,11 +40,11 @@ class ClockifyStart(LauncherAction):
             description_items.append(task_name)
             description = "/".join(description_items)
 
-        project_id = self.clockapi.get_project_id(project_name, workspace_id)
+        project_id = self.clockify_api.get_project_id(project_name, workspace_id)
         tag_ids = []
         tag_name = task_type
-        tag_ids.append(self.clockapi.get_tag_id(tag_name, workspace_id))
-        self.clockapi.start_time_entry(
+        tag_ids.append(self.clockify_api.get_tag_id(tag_name, workspace_id))
+        self.clockify_api.start_time_entry(
             description,
             project_id,
             tag_ids=tag_ids,
