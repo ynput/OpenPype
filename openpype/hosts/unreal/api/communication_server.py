@@ -328,7 +328,8 @@ class QtUnrealRpc(BaseUnrealRpc):
 
     async def creator_tool(self):
         log.info("Triggering Creator tool")
-        item = MainThreadItem(self.tools_helper.show_creator)
+        item = MainThreadItem(
+            self.tools_helper.show_publisher_tool, tab="create")
         await self._async_execute_in_main_thread(item, wait=False)
 
     async def subset_manager_tool(self):
@@ -340,7 +341,8 @@ class QtUnrealRpc(BaseUnrealRpc):
 
     async def publish_tool(self):
         log.info("Triggering Publish tool")
-        item = MainThreadItem(self.tools_helper.show_publish)
+        item = MainThreadItem(
+            self.tools_helper.show_publisher_tool, tab="publish")
         self._execute_in_main_thread(item)
         return
 
