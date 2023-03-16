@@ -1197,7 +1197,8 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     lookup = None
     if nodes is None:
         # Consider all nodes
-        nodes = cmds.ls(allPaths=True)
+        nodes = cmds.ls()
+        nodes = cmds.ls(nodes, allPaths=True)
     else:
         # Build a lookup for the only allowed nodes in output based
         # on `nodes` input of the function (+ ensure long names)
@@ -1216,7 +1217,9 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
 
     ignore = set()
     if not referenced_nodes:
-        ignore |= set(cmds.ls(long=True, referencedNodes=True))
+        referenced_nodes = cmds.ls(long=True, referencedNodes=True)
+        referenced_nodes = cmds.ls(referenced_nodes, long=True, allPaths=True)
+        ignore |= set(referenced_nodes)
 
     # list all defaultNodes to filter out from the rest
     ignore |= set(cmds.ls(long=True, defaultNodes=True))
