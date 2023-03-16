@@ -59,7 +59,7 @@
             "path": "{@folder}/{@file}"
         },
         "transient": {
-            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{family}/{subset}/{@version}"
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{family}/{subset}"
         },
         "__dynamic_keys_labels__": {
             "maya2unreal": "Maya to Unreal",
