@@ -1,13 +1,5 @@
-from pipeline import (
-    ls,
-    containerise,
-    instantiate,
-    create_container,
-    imprint,
-)
-
-from plugins.load import (
-    create_unique_asset_name,
+from functions import (
+    delete_asset,
     does_asset_exist,
     does_directory_exist,
     make_directory,
@@ -15,6 +7,25 @@ from plugins.load import (
     load_level,
     save_current_level,
     save_all_dirty_levels,
+    get_selected_assets,
+)
+
+from pipeline import (
+    log,
+    ls,
+    containerise,
+    instantiate,
+    project_content_dir,
+    create_container,
+    imprint,
+)
+
+from plugins.create import (
+    new_publish_instance,
+)
+
+from plugins.load import (
+    create_unique_asset_name,
     add_level_to_world,
     list_assets,
     get_assets_of_class,

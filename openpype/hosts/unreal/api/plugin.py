@@ -8,11 +8,7 @@ from abc import (
     ABCMeta,
 )
 
-import unreal
-
 from .pipeline import (
-    create_publish_instance,
-    imprint,
     ls_inst,
     UNREAL_VERSION
 )
@@ -26,6 +22,7 @@ from openpype.pipeline import (
     CreatorError,
     CreatedInstance
 )
+from openpype.hosts.unreal.api import pipeline as up
 
 
 @six.add_metaclass(ABCMeta)
@@ -73,7 +70,6 @@ class UnrealBaseCreator(Creator):
     def create(self, subset_name, instance_data, pre_create_data):
         try:
             instance_name = f"{subset_name}{self.suffix}"
-            pub_instance = create_publish_instance(instance_name, self.root)
 
             instance_data["subset"] = subset_name
             instance_data["instance_path"] = f"{self.root}/{instance_name}"
@@ -85,16 +81,11 @@ class UnrealBaseCreator(Creator):
                 self)
             self._add_instance_to_context(instance)
 
-            pub_instance.set_editor_property('add_external_assets', True)
-            assets = pub_instance.get_editor_property('asset_data_external')
-
-            ar = unreal.AssetRegistryHelpers.get_asset_registry()
-
-            for member in pre_create_data.get("members", []):
-                obj = ar.get_asset_by_object_path(member).get_asset()
-                assets.add(obj)
-
-            imprint(f"{self.root}/{instance_name}", instance.data_to_store())
+            up.send_request(
+                "new_publish_instance",
+                params=[
+                    instance_name, self.root, instance.data_to_store(),
+                    pre_create_data.get("members", [])])
 
             return instance
 
@@ -122,24 +113,24 @@ class UnrealBaseCreator(Creator):
             instance_node = created_inst.get("instance_path", "")
 
             if not instance_node:
-                unreal.log_warning(
-                    f"Instance node not found for {created_inst}")
+                up.send_request(
+                    "log",
+                    params=[
+                        f"Instance node not found for {created_inst}",
+                        "warning"])
                 continue
 
             new_values = {
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
-            imprint(
-                instance_node,
-                new_values
-            )
+            up.send_request("imprint", params=[instance_node, new_values])
 
     def remove_instances(self, instances):
         for instance in instances:
             instance_node = instance.data.get("instance_path", "")
             if instance_node:
-                unreal.EditorAssetLibrary.delete_asset(instance_node)
+                up.send_request("delete_asset", params=[instance_node])
 
             self._remove_instance_from_context(instance)
 
@@ -166,10 +157,8 @@ class UnrealAssetCreator(UnrealBaseCreator):
                 pre_create_data["members"] = []
 
                 if pre_create_data.get("use_selection"):
-                    utilib = unreal.EditorUtilityLibrary
-                    sel_objects = utilib.get_selected_assets()
-                    pre_create_data["members"] = [
-                        a.get_path_name() for a in sel_objects]
+                    pre_create_data["members"] = up.send_request(
+                        "get_selected_assets")
 
             super(UnrealAssetCreator, self).create(
                 subset_name,
@@ -204,26 +193,20 @@ class UnrealActorCreator(UnrealBaseCreator):
             CreatedInstance: Created instance.
         """
         try:
-            if UNREAL_VERSION.major == 5:
-                world = unreal.UnrealEditorSubsystem().get_editor_world()
-            else:
-                world = unreal.EditorLevelLibrary.get_editor_world()
+            world = up.send_request("get_editor_world")
 
             # Check if the level is saved
-            if world.get_path_name().startswith("/Temp/"):
+            if world.startswith("/Temp/"):
                 raise CreatorError(
                     "Level must be saved before creating instances.")
 
             # Check if instance data has members, filled by the plugin.
             # If not, use selection.
             if not instance_data.get("members"):
-                actor_subsystem = unreal.EditorActorSubsystem()
-                sel_actors = actor_subsystem.get_selected_level_actors()
-                selection = [a.get_path_name() for a in sel_actors]
+                instance_data["members"] = up.send_request(
+                    "get_selected_actors")
 
-                instance_data["members"] = selection
-
-            instance_data["level"] = world.get_path_name()
+            instance_data["level"] = world
 
             super(UnrealActorCreator, self).create(
                 subset_name,

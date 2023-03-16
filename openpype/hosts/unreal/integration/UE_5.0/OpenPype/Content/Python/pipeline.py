@@ -1,7 +1,29 @@
+import os
 import ast
+import semver
 from typing import List
 
 import unreal
+
+UNREAL_VERSION = semver.VersionInfo(
+    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+)
+
+
+def log(message: str, level: str = "info"):
+    """Log message to Unreal Editor.
+
+    Args:
+        message (str): Message to log.
+        level (str): Log level. Defaults to "info".
+
+    """
+    if level == "info":
+        unreal.log(message)
+    elif level == "warning":
+        unreal.log_warning(message)
+    elif level == "error":
+        unreal.log_error(message)
 
 
 def cast_map_to_str_dict(umap) -> dict:
@@ -123,6 +145,16 @@ def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
     return name
 
 
+def project_content_dir():
+    """Get project content directory.
+
+    Returns:
+        str: path to project content directory
+
+    """
+    return unreal.Paths.project_content_dir()
+
+
 def create_container(container: str, path: str) -> unreal.Object:
     """Helper function to create Asset Container class on given path.
 
@@ -208,7 +240,14 @@ def ls():
 
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    openpype_containers = ar.get_assets_by_class("AssetContainer", True)
+    class_name = [
+        "/Script/OpenPype",
+        "AssetContainer"
+    ] if (
+            UNREAL_VERSION.major == 5
+            and UNREAL_VERSION.minor > 0
+    ) else "AssetContainer"  # noqa
+    openpype_containers = ar.get_assets_by_class(class_name, True)
 
     containers = []
 
@@ -227,8 +266,37 @@ def ls():
     return containers
 
 
+def ls_inst():
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    # UE 5.1 changed how class name is specified
+    class_name = [
+        "/Script/OpenPype",
+        "OpenPypePublishInstance"
+    ] if (
+            UNREAL_VERSION.major == 5
+            and UNREAL_VERSION.minor > 0
+    ) else "OpenPypePublishInstance"  # noqa
+    instances = ar.get_assets_by_class(class_name, True)
+
+    containers = []
+
+    # get_asset_by_class returns AssetData. To get all metadata we need to
+    # load asset. get_tag_values() work only on metadata registered in
+    # Asset Registry Project settings (and there is no way to set it with
+    # python short of editing ini configuration file).
+    for asset_data in instances:
+        asset = asset_data.get_asset()
+        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+        data["objectName"] = asset_data.asset_name
+        data = cast_map_to_str_dict(data)
+
+        containers.append(data)
+
+    return containers
+
+
 def containerise(
-    name, namespc, str_nodes, str_context, loader="", suffix="_CON"
+        name, namespc, str_nodes, str_context, loader="", suffix="_CON"
 ):
     """Bundles *nodes* (assets) into a *container* and add metadata to it.
 

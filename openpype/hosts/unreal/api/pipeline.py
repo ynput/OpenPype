@@ -24,7 +24,6 @@ from openpype.hosts.unreal.api.communication_server import (
     CommunicationWrapper
 )
 
-
 logger = logging.getLogger("openpype.hosts.unreal")
 
 OPENPYPE_CONTAINERS = "OpenPypeContainers"
@@ -56,18 +55,8 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
     def get_containers(self):
         return ls()
 
-    def show_tools_popup(self):
-        """Show tools popup with actions leading to show other tools."""
-
-        show_tools_popup()
-
-    def show_tools_dialog(self):
-        """Show tools dialog with actions leading to show other tools."""
-
-        show_tools_dialog()
-
     def update_context_data(self, data, changes):
-        content_path = unreal.Paths.project_content_dir()
+        content_path = send_request("project_content_dir")
         op_ctx = content_path + CONTEXT_CONTAINER
         attempts = 3
         for i in range(attempts):
@@ -78,13 +67,17 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
             except IOError:
                 if i == attempts - 1:
                     raise Exception("Failed to write context data. Aborting.")
-                unreal.log_warning("Failed to write context data. Retrying...")
+                send_request(
+                    "log",
+                    params=[
+                        "Failed to write context data. Retrying..."
+                        "warning"])
                 i += 1
                 time.sleep(3)
                 continue
 
     def get_context_data(self):
-        content_path = unreal.Paths.project_content_dir()
+        content_path = send_request("project_content_dir")
         op_ctx = content_path + CONTEXT_CONTAINER
         if not os.path.isfile(op_ctx):
             return {}
@@ -172,6 +165,16 @@ def ls():
     return send_request_literal("ls")
 
 
+def ls_inst():
+    """List all containers.
+
+    List all found in *Content Manager* of Unreal and return
+    metadata from them. Adding `objectName` to set.
+
+    """
+    return send_request_literal("ls_inst")
+
+
 def publish():
     """Shorthand to publish from within host."""
     import pyblish.util
@@ -241,3 +244,15 @@ def show_manager():
 
 def show_experimental_tools():
     host_tools.show_experimental_tools_dialog()
+
+
+@contextmanager
+def maintained_selection():
+    """Stub to be either implemented or replaced.
+    This is needed for old publisher implementation, but
+    it is not supported (yet) in UE.
+    """
+    try:
+        yield
+    finally:
+        pass

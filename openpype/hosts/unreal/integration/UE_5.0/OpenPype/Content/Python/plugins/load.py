@@ -18,34 +18,6 @@ def create_unique_asset_name(root, asset, name, version="", suffix=""):
         f"{root}/{asset}/{subset}", suffix)
 
 
-def does_asset_exist(asset_path):
-    return unreal.EditorAssetLibrary.does_asset_exist(asset_path)
-
-
-def does_directory_exist(directory_path):
-    return unreal.EditorAssetLibrary.does_directory_exist(directory_path)
-
-
-def make_directory(directory_path):
-    unreal.EditorAssetLibrary.make_directory(directory_path)
-
-
-def new_level(level_path):
-    unreal.EditorLevelLibrary.new_level(level_path)
-
-
-def load_level(level_path):
-    unreal.EditorLevelLibrary.load_level(level_path)
-
-
-def save_current_level():
-    unreal.EditorLevelLibrary.save_current_level()
-
-
-def save_all_dirty_levels():
-    unreal.EditorLevelLibrary.save_all_dirty_levels()
-
-
 def get_current_level():
     curr_level = unreal.LevelEditorSubsystem().get_current_level()
     curr_level_path = curr_level.get_outer().get_path_name()
@@ -730,7 +702,6 @@ def remove_layout(
                 for i, section in enumerate(sections):
                     section.set_row_index(i)
 
-
             if visibility_track:
                 sections = visibility_track.get_sections()
                 for section in sections:
@@ -758,7 +729,8 @@ def remove_layout(
         unreal.EditorLevelLibrary.save_all_dirty_levels()
         unreal.EditorAssetLibrary.make_directory(f"{root}/tmp")
         tmp_level = f"{root}/tmp/temp_map"
-        if not unreal.EditorAssetLibrary.does_asset_exist(f"{tmp_level}.temp_map"):
+        if not unreal.EditorAssetLibrary.does_asset_exist(
+                f"{tmp_level}.temp_map"):
             unreal.EditorLevelLibrary.new_level(tmp_level)
         else:
             unreal.EditorLevelLibrary.load_level(tmp_level)
