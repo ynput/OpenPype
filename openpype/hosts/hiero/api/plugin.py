@@ -12,6 +12,7 @@ from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.load import get_representation_path_from_context
 from . import lib
 
 log = Logger.get_logger(__name__)
@@ -450,7 +451,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
-        file = self.filepath_from_context(repr_cntx)
+        file = get_representation_path_from_context(repr_cntx)
         if not file:
             repr_id = repr["_id"]
             log.warning(
