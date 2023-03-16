@@ -66,41 +66,7 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
         for _ids, members in _iteritems():
 
             if cls.allow_instances:
-                # Filter to all unique members that are not instances of itself
-                # to only invalidate when multiple nodes are found not of the
-                # same instance.
-                unique_members = []
-                processed_instance_paths = set()
-                instance_groups = defaultdict(set)
-                for member in members:
-                    all_paths = cmds.ls(member, allPaths=True, long=True)
-
-                    # Get all instance paths for this node
-                    if member in processed_instance_paths:
-                        instance_groups[tuple(all_paths)].add(member)
-                        continue
-
-                    if len(all_paths) > 1:
-                        processed_instance_paths.update(all_paths)
-                        instance_groups[tuple(all_paths)].add(member)
-                    unique_members.append(member)
-
-                for _instance_grp, instance_members in instance_groups.items():
-                    if len(instance_members) < 2:
-                        # Ignore nodes that are instances but their instances
-                        # don't appear in the export
-                        continue
-
-                    # Log to the user about the usage of instances. They are
-                    # set to be allowed but can cause issues with lookdev since
-                    # they cannot have unique shader assignments due to how
-                    # the `cbId` attribute is shared between the instances
-                    cls.log.warning("Instanced members detected. This is ok, "
-                                    "but can introduce issues due to not "
-                                    "having a unique `cbId` for each node. "
-                                    "Instanced nodes: "
-                                    "{}".format(instance_members))
-
+                unique_members = cls._get_unique_instanced_members(members)
             else:
                 unique_members = members
 
@@ -109,3 +75,46 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                 invalid.extend(members)
 
         return invalid
+
+    @classmethod
+    def _get_unique_instanced_members(cls, members):
+        """Filter instanced meshes to only be present once."""
+
+        from maya import cmds
+
+        # Filter to all unique members that are not instances of itself
+        # to only invalidate when multiple nodes are found not of the
+        # same instance.
+        unique_members = []
+        processed_instance_paths = set()
+        instance_groups = defaultdict(set)
+        for member in members:
+            all_paths = cmds.ls(member, allPaths=True, long=True)
+
+            # Get all instance paths for this node
+            if member in processed_instance_paths:
+                instance_groups[tuple(all_paths)].add(member)
+                continue
+
+            if len(all_paths) > 1:
+                processed_instance_paths.update(all_paths)
+                instance_groups[tuple(all_paths)].add(member)
+            unique_members.append(member)
+
+        for _instance_grp, instance_members in instance_groups.items():
+            if len(instance_members) < 2:
+                # Ignore nodes that are instances but their instances
+                # don't appear in the export
+                continue
+
+            # Log to the user about the usage of instances. They are
+            # set to be allowed but can cause issues with lookdev since
+            # they cannot have unique shader assignments due to how
+            # the `cbId` attribute is shared between the instances
+            cls.log.warning("Instanced members detected. This is ok, "
+                            "but can introduce issues due to not "
+                            "having a unique `cbId` for each node. "
+                            "Instanced nodes: "
+                            "{}".format(instance_members))
+
+        return unique_members
