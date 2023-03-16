@@ -68,7 +68,6 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         result_str = "Not adding"
         if add_ftrack_family:
             result_str = "Adding"
-            self.log.debug("Adding ftrack family for '{}'".format(family))
             if "ftrack" not in families:
                 families.append("ftrack")
 
