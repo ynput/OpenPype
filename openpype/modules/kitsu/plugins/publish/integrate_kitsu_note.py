@@ -8,7 +8,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
-    families = ["render", "kitsu"]
+    families = ["render", "review"]
     set_status_note = False
     note_status_shortname = "wfa"
 
@@ -21,6 +21,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         self.log.debug("Comment is `{}`".format(publish_comment))
 
         for instance in context:
+            # Skip if not in families
+            if instance.data.get("family") not in self.families:
+                continue
+
             kitsu_task = instance.data.get("kitsu_task")
             if kitsu_task is None:
                 continue
