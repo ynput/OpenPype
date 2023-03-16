@@ -1197,7 +1197,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     lookup = None
     if nodes is None:
         # Consider all nodes
-        nodes = cmds.ls()
+        nodes = cmds.ls(long=True, allPaths=True)
     else:
         # Build a lookup for the only allowed nodes in output based
         # on `nodes` input of the function (+ ensure long names)
