@@ -3,6 +3,14 @@ from openpype_modules.clockify.clockify_api import ClockifyAPI
 from openpype.pipeline import LauncherAction
 
 
+class ClockifyPermissionsCheckFailed(Exception):
+    """Timer start failed due to user permissions check.
+    Message should be self explanatory as traceback won't be shown.
+    """
+
+    pass
+
+
 class ClockifySync(LauncherAction):
     name = "sync_to_clockify"
     label = "Sync to Clockify"
@@ -25,8 +33,9 @@ class ClockifySync(LauncherAction):
         if not self.clockapi.validate_workspace_permissions(
             workspace_id, user_id
         ):
-            self.log.info("Missing permissions for this action!")
-            return
+            raise ClockifyPermissionsCheckFailed(
+                "Current CLockify user is missing permissions for this action!"
+            )
         project_name = session.get("AVALON_PROJECT") or ""
 
         projects_to_sync = []
