@@ -46,10 +46,6 @@
             "enabled": false,
             "families": []
         },
-        "CollectTransientFolder": {
-            "enabled": true,
-            "transient_staging_profiles": []
-        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -594,6 +590,21 @@
                     "task_types": [],
                     "task_names": [],
                     "template_name": "simpleUnrealTextureHero"
+                }
+            ],
+            "transient_dir_profiles": [
+                {
+                    "hosts": [
+                        "nuke"
+                    ],
+                    "task_types": [],
+                    "task_names": [
+                        "transient_staging"
+                    ],
+                    "families": [],
+                    "subsets": [],
+                    "use_transient_dir": true,
+                    "transient_dir_persistent": true
                 }
             ]
         }

@@ -408,6 +408,60 @@
                             }
                         ]
                     }
+                },
+                {
+                    "type": "list",
+                    "key": "transient_dir_profiles",
+                    "label": "Transient Dir Profiles",
+                    "use_label_wrap": true,
+                    "docstring": "Profiles to specify special location and persistence for staging dir. Could be used in Creators and Publish phase!",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Host names",
+                                "type": "hosts-enum",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "subsets",
+                                "label": "Subset names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "key": "use_transient_dir",
+                                "label": "Use Transient Folder",
+                                "type": "boolean"
+                            },
+                            {
+                                "key": "transient_dir_persistent",
+                                "label": "Transient Folder Persistent",
+                                "type": "boolean"
+                            }
+                        ]
+                    }
                 }
             ]
         }
