@@ -26,14 +26,15 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
         Formats `instance.data` against the custom template.
         """
-        
+
         def replace_missing_key(match):
             """If key is not found in kwargs, set None instead"""
             key = match.group(1)
             if key not in instance.data:
                 self.log.warning(
-                    "Key "{}" was not found in instance.data "
-                    "and will be rendered as "" in the comment".format(key)
+                    "Key '{}' was not found in instance.data "
+                    "and will be rendered as "
+                    " in the comment".format(key)
                 )
                 return ""
             else:
