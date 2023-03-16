@@ -28,6 +28,15 @@ def parse_prj_progress(line: str, progress_signal: QtCore.Signal(int)) -> int:
         progress_signal.emit(int(percent_match.group()))
 
 
+def retrieve_exit_code(line: str):
+    match = re.search('ExitCode=\d+', line)
+    if match is not None:
+        split: list[str] = match.group().split('=')
+        return int(split[1])
+
+    return None
+
+
 class UEProjectGenerationWorker(QtCore.QObject):
     finished = QtCore.Signal(str)
     failed = QtCore.Signal(str)
@@ -225,9 +234,30 @@ class UEProjectGenerationWorker(QtCore.QObject):
             msg = f"Unreal Python not found at {python_path}"
             self.failed.emit(msg, 1)
             raise RuntimeError(msg)
-        subprocess.check_call(
-            [python_path.as_posix(), "-m", "pip", "install", "pyside2"]
-        )
+        pyside_cmd = [python_path.as_posix(),
+                      "-m",
+                      "pip",
+                      "install",
+                      "pyside2"]
+
+        pyside_install = subprocess.Popen(pyside_cmd,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE)
+
+        for line in pyside_install.stdout:
+            decoded_line: str = line.decode(errors='replace')
+            print(decoded_line, end='')
+            self.log.emit(decoded_line)
+
+        pyside_install.stdout.close()
+        return_code = pyside_install.wait()
+
+        if return_code and return_code != 0:
+            msg = 'Failed to create the project! ' \
+                  f'The installation of PySide2 has failed!'
+            self.failed.emit(msg, return_code)
+            raise RuntimeError(msg)
+
         self.progress.emit(100)
         self.finished.emit("Project successfully built!")
 
@@ -274,18 +304,22 @@ class UEPluginInstallWorker(QtCore.QObject):
         build_proc = subprocess.Popen(build_plugin_cmd,
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE)
+        return_code: int = None
         for line in build_proc.stdout:
             decoded_line: str = line.decode(errors='replace')
             print(decoded_line, end='')
             self.log.emit(decoded_line)
+            if return_code is None:
+                return_code = retrieve_exit_code(decoded_line)
             parse_comp_progress(decoded_line, self.progress)
 
         build_proc.stdout.close()
-        return_code = build_proc.wait()
+        build_proc.wait()
 
         if return_code and return_code != 0:
             msg = 'Failed to build plugin' \
                   f' project! Exited with return code {return_code}'
+            dir_util.remove_tree(temp_dir.as_posix())
             self.failed.emit(msg, return_code)
             raise RuntimeError(msg)
 
