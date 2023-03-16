@@ -148,9 +148,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 # Copy cbId from original to mtoa_constant.
                 attr_name = "mtoa_constant_cbId"
                 duplicate_shapes = cmds.listRelatives(
-                    duplicate_transform, shapes=True
+                    duplicate_transform, shapes=True, fullPath=True
                 )
-                original_shapes = cmds.listRelatives(node, shapes=True)
+                original_shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
                 for duplicate_shape in duplicate_shapes:
                     duplicate_path = (
                         duplicate_transform + "|" + duplicate_shape
