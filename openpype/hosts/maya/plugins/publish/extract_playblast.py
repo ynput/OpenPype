@@ -118,7 +118,6 @@ class ExtractPlayblast(publish.Extractor):
 
         # Need to explicitly enable some viewport changes so the viewport is
         # refreshed ahead of playblasting.
-        panel = cmds.getPanel(withFocus=True)
         keys = [
             "useDefaultMaterial",
             "wireframeOnShaded",
@@ -129,10 +128,12 @@ class ExtractPlayblast(publish.Extractor):
         viewport_defaults = {}
         for key in keys:
             viewport_defaults[key] = cmds.modelEditor(
-                panel, query=True, **{key: True}
+                instance.data["panel"], query=True, **{key: True}
             )
             if preset["viewport_options"][key]:
-                cmds.modelEditor(panel, edit=True, **{key: True})
+                cmds.modelEditor(
+                    instance.data["panel"], edit=True, **{key: True}
+                )
 
         override_viewport_options = (
             capture_presets['Viewport Options']['override_viewport_options']
@@ -147,12 +148,10 @@ class ExtractPlayblast(publish.Extractor):
 
             # Update preset with current panel setting
             # if override_viewport_options is turned off
-            panel = cmds.getPanel(withFocus=True) or ""
-            if not override_viewport_options and "modelPanel" in panel:
-                panel_preset = capture.parse_active_view()
+            if not override_viewport_options:
+                panel_preset = capture.parse_view(instance.data["panel"])
                 panel_preset.pop("camera")
                 preset.update(panel_preset)
-                cmds.setFocus(panel)
 
             self.log.info(
                 "Using preset:\n{}".format(
@@ -163,7 +162,10 @@ class ExtractPlayblast(publish.Extractor):
             path = capture.capture(log=self.log, **preset)
 
         # Restoring viewport options.
-        cmds.modelEditor(panel, edit=True, **viewport_defaults)
+        if viewport_defaults:
+            cmds.modelEditor(
+                instance.data["panel"], edit=True, **viewport_defaults
+            )
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 

@@ -134,6 +134,8 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
                     project_name = project.get("name")
 
                     current_timer_hierarchy = current_timer.get("description")
+                    if not current_timer_hierarchy:
+                        continue
                     hierarchy_items = current_timer_hierarchy.split("/")
                     # Each pype timer must have at least 2 items!
                     if len(hierarchy_items) < 2:

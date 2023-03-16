@@ -12,6 +12,7 @@ from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
+from ..tools import show_look_assigner
 
 from .workfile_template_builder import (
     create_placeholder,
@@ -111,12 +112,12 @@ def install():
         )
 
         cmds.menuItem(
-            "Reset Frame Range",
+            "Set Frame Range",
             command=lambda *args: lib.reset_frame_range()
         )
 
         cmds.menuItem(
-            "Reset Resolution",
+            "Set Resolution",
             command=lambda *args: lib.reset_scene_resolution()
         )
 
@@ -139,7 +140,7 @@ def install():
 
         cmds.menuItem(
             "Look assigner...",
-            command=lambda *args: host_tools.show_look_assigner(
+            command=lambda *args: show_look_assigner(
                 parent_widget
             )
         )
