@@ -161,8 +161,12 @@ def _convert_ftrack_system_settings(ayon_settings, output):
 
 
 def _convert_shotgrid_system_settings(ayon_settings, output):
-    shotgrid_settings = output["modules"]["shotgrid"]
     ayon_shotgrid = ayon_settings["shotgrid"]
+    # Skip conversion if different ayon addon is used
+    if "leecher_manager_url" not in ayon_shotgrid:
+        return
+
+    shotgrid_settings = output["modules"]["shotgrid"]
     for key in (
         "leecher_manager_url",
         "leecher_backend_url",
