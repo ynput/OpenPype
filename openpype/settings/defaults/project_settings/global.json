@@ -592,21 +592,7 @@
                     "template_name": "simpleUnrealTextureHero"
                 }
             ],
-            "transient_dir_profiles": [
-                {
-                    "hosts": [
-                        "nuke"
-                    ],
-                    "task_types": [],
-                    "task_names": [
-                        "transient_staging"
-                    ],
-                    "families": [],
-                    "subsets": [],
-                    "use_transient_dir": true,
-                    "transient_dir_persistent": true
-                }
-            ]
+            "transient_dir_profiles": []
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",
