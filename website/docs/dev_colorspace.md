@@ -24,8 +24,8 @@ It's up to the Loaders to read these values and apply the correct expected color
 ### Keys
 - **colorspace** - string value used in other publish plugins and loaders
 - **config** - storing two versions of path.
-  - **path** - is formated and with baked platform root. It is used for posible need to find out where we were sourcing color config during publishing.
-  - **template** - unformated tempate resolved from settings. It is used for other plugins targeted to remote publish which could be processed at different platform.
+  - **path** - is formatted and with baked platform root. It is used for possible need to find out where we were sourcing color config during publishing.
+  - **template** - unformatted template resolved from settings. It is used for other plugins targeted to remote publish which could be processed at different platform.
 
 ### Example
     {
