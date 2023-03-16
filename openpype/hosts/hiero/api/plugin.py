@@ -451,7 +451,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
-        file = get_representation_path_from_context(repr_cntx)
+        file = get_representation_path_from_context(self.context)
         if not file:
             repr_id = repr["_id"]
             log.warning(
