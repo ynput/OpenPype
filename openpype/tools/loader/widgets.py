@@ -295,10 +295,10 @@ class SubsetWidget(QtWidgets.QWidget):
             self.model.set_grouping(state)
 
     def _subset_changed(self, text):
-        if hasattr(self.proxy, "setFilterRegularExpression"):
-            self.proxy.setFilterRegularExpression(text)
-        else:
+        if hasattr(self.proxy, "setFilterRegExp"):
             self.proxy.setFilterRegExp(text)
+        else:
+            self.proxy.setFilterRegularExpression(text)
         self.view.expandAll()
 
     def set_loading_state(self, loading, empty):
@@ -339,7 +339,7 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_docs = get_representations(
             project_name,
             version_ids=version_ids,
-            fields=["name", "parent"]
+            fields=["name", "parent", "data", "context"]
         )
 
         repre_docs_by_version_id = {
@@ -1264,7 +1264,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         repre_docs = list(get_representations(
             project_name,
             representation_ids=repre_ids,
-            fields=["name", "parent"]
+            fields=["name", "parent", "data", "context"]
         ))
 
         version_ids = [
@@ -1480,23 +1480,21 @@ class RepresentationWidget(QtWidgets.QWidget):
         repre_ids = []
         data_by_repre_id = {}
         selected_side = action_representation.get("selected_side")
+        site_name = "{}_site_name".format(selected_side)
 
         is_sync_loader = tools_lib.is_sync_loader(loader)
         for item in items:
-            item_id = item.get("_id")
-            repre_ids.append(item_id)
+            repre_id = item["_id"]
+            repre_ids.append(repre_id)
             if not is_sync_loader:
                 continue
 
-            site_name = "{}_site_name".format(selected_side)
             data_site_name = item.get(site_name)
             if not data_site_name:
                 continue
 
-            data_by_repre_id[item_id] = {
-                "_id": item_id,
-                "site_name": data_site_name,
-                "project_name": self.dbcon.active_project()
+            data_by_repre_id[repre_id] = {
+                "site_name": data_site_name
             }
 
         repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
@@ -1586,8 +1584,8 @@ def _load_representations_by_loader(loader, repre_contexts,
             version_name = version_doc.get("name")
         try:
             if data_by_repre_id:
-                _id = repre_context["representation"]["_id"]
-                data = data_by_repre_id.get(_id)
+                repre_id = repre_context["representation"]["_id"]
+                data = data_by_repre_id.get(repre_id)
                 options.update(data)
             load_with_repre_context(
                 loader,

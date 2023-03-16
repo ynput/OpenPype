@@ -46,7 +46,6 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
 
         hierarchy = members + descendants
 
-
         # Ignore certain node types (e.g. constraints)
         ignore = cmds.ls(hierarchy, type=self.ignore_type, long=True)
         if ignore:
@@ -58,3 +57,18 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
 
         if instance.data.get("farm"):
             instance.data["families"].append("publish.farm")
+
+        # Collect user defined attributes.
+        if not instance.data.get("includeUserDefinedAttributes", False):
+            return
+
+        user_defined_attributes = set()
+        for node in hierarchy:
+            attrs = cmds.listAttr(node, userDefined=True) or list()
+            shapes = cmds.listRelatives(node, shapes=True) or list()
+            for shape in shapes:
+                attrs.extend(cmds.listAttr(shape, userDefined=True) or list())
+
+            user_defined_attributes.update(attrs)
+
+        instance.data["userDefinedAttributes"] = list(user_defined_attributes)

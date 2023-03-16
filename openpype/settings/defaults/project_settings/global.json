@@ -68,6 +68,10 @@
                 "output": []
             }
         },
+        "ExtractOIIOTranscode": {
+            "enabled": true,
+            "profiles": []
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [
@@ -135,7 +139,8 @@
                             "ext": "mp4",
                             "tags": [
                                 "burnin",
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {

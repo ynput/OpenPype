@@ -146,6 +146,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._subset_list_view = subset_list_view
         self._subset_views_layout = subset_views_layout
 
+        self._create_btn = create_btn
         self._delete_btn = delete_btn
 
         self._subset_attributes_widget = subset_attributes_widget
@@ -388,11 +389,13 @@ class OverviewWidget(QtWidgets.QFrame):
     def _on_publish_start(self):
         """Publish started."""
 
+        self._create_btn.setEnabled(False)
         self._subset_attributes_wrap.setEnabled(False)
 
     def _on_publish_reset(self):
         """Context in controller has been refreshed."""
 
+        self._create_btn.setEnabled(True)
         self._subset_attributes_wrap.setEnabled(True)
         self._subset_content_widget.setEnabled(self._controller.host_is_valid)
 

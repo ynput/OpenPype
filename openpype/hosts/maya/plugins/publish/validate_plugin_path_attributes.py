@@ -24,7 +24,7 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
         validate_path = (
             instance.context.data["project_settings"]["maya"]["publish"]
         )
-        file_attr = validate_path["ValidatePathForPlugin"]["attribute"]
+        file_attr = validate_path["ValidatePluginPathAttributes"]["attribute"]
         if not file_attr:
             return invalid
 
@@ -39,7 +39,7 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
                 filepath = cmds.getAttr(file_attr)
 
                 if filepath and not os.path.exists(filepath):
-                    self.log.error("File {0} not exists".format(filepath)) # noqa
+                    self.log.error("File {0} not exists".format(filepath))  # noqa
                     invalid.append(target)
 
         return invalid

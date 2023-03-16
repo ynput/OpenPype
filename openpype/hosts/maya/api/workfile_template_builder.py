@@ -2,7 +2,7 @@ import json
 
 from maya import cmds
 
-from openpype.pipeline import registered_host
+from openpype.pipeline import registered_host, get_current_asset_name
 from openpype.pipeline.workfile.workfile_template_builder import (
     TemplateAlreadyImported,
     AbstractTemplateBuilder,
@@ -21,6 +21,8 @@ PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
 class MayaTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for maya"""
+
+    use_legacy_creators = True
 
     def import_template(self, path):
         """Import template into current scene.
@@ -41,9 +43,26 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             ))
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
-        cmds.file(path, i=True, returnNewNodes=True)
+        new_nodes = cmds.file(path, i=True, returnNewNodes=True)
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
+
+        imported_sets = cmds.ls(new_nodes, set=True)
+        if not imported_sets:
+            return True
+
+        # update imported sets information
+        asset_name = get_current_asset_name()
+        for node in imported_sets:
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                continue
+            if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
+                continue
+            if not cmds.attributeQuery("asset", node=node, exists=True):
+                continue
+
+            cmds.setAttr(
+                "{}.asset".format(node), asset_name, type="string")
 
         return True
 

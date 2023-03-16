@@ -58,23 +58,23 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(self.attributes.keys()))
+            families = list(set(families) & set(cls.attributes.keys()))
             if not families:
                 continue
 
             # Get all attributes to validate.
             attributes = {}
             for family in families:
-                for preset in self.attributes[family]:
+                for preset in cls.attributes[family]:
                     [node_name, attribute_name] = preset.split(".")
                     try:
                         attributes[node_name].update(
-                            {attribute_name: self.attributes[family][preset]}
+                            {attribute_name: cls.attributes[family][preset]}
                         )
                     except KeyError:
                         attributes.update({
                             node_name: {
-                                attribute_name: self.attributes[family][preset]
+                                attribute_name: cls.attributes[family][preset]
                             }
                         })
 
