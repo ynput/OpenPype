@@ -2,17 +2,11 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api.lib import pairwise
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
 )
-
-
-def pairs(iterable):
-    """Iterate over iterable per group of two"""
-    a = iter(iterable)
-    for i, y in zip(a, a):
-        yield i, y
 
 
 def get_invalid_sets(shapes):
@@ -34,14 +28,18 @@ def get_invalid_sets(shapes):
     for shape in shapes:
         invalid_sets = []
         sets = cmds.listSets(object=shape, t=1, extendToShape=False) or []
-        for set_ in sets:
+        for set_ in set(sets):
 
             members = cache.get(set_, None)
             if members is None:
-                members = set(cmds.ls(cmds.sets(set_,
-                                                query=True,
-                                                nodesOnly=True), long=True))
-                cache[set_] = members
+                # Bugfix: When querying `maya.cmds.sets` with `nodesOnly=True`
+                # instanced members will always return the first instance path
+                # even though that might not be the actual member of the set
+                # To resolve this we `maya.cmds.sets` regularly and filter to
+                # objects using `maya.cmds.ls` with `objectsOnly`
+                members = cmds.sets(set_, query=True)
+                members = cmds.ls(members, objectsOnly=True, long=True)
+                cache[set_] = set(members)
 
             # If the shape is not actually present as a member of the set
             # consider it invalid
@@ -63,7 +61,7 @@ def disconnect(node_a, node_b):
                                    connections=True,
                                    source=False,
                                    destination=True)
-    for output, destination in pairs(outputs):
+    for output, destination in pairwise(outputs):
         if destination.split(".", 1)[0] == node_b:
             cmds.disconnectAttr(output, destination)
 
@@ -73,7 +71,7 @@ def disconnect(node_a, node_b):
                                   connections=True,
                                   source=True,
                                   destination=False)
-    for input, source in pairs(inputs):
+    for input, source in pairwise(inputs):
         if source.split(".", 1)[0] == node_b:
             cmds.disconnectAttr(source, input)
 
@@ -105,14 +103,19 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
             raise RuntimeError("Shapes found with invalid shader "
                                "connections: {0}".format(invalid))
 
-    @staticmethod
-    def get_invalid(instance):
+    @classmethod
+    def get_invalid(cls, instance):
 
         nodes = instance[:]
         shapes = cmds.ls(nodes, noIntermediate=True, long=True, type="mesh")
-        invalid = get_invalid_sets(shapes).keys()
 
-        return invalid
+        invalid_sets = get_invalid_sets(shapes)
+        for node, sets in invalid_sets.items():
+            cls.log.info("Node {} has invalid shader connection to: {}".format(
+                node, sets
+            ))
+
+        return list(invalid_sets.keys())
 
     @classmethod
     def repair(cls, instance):
