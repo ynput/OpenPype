@@ -25,9 +25,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         # Check if FUSION_PROFILE_DIR exists
         if fusion_var_prefs_dir and Path(fusion_var_prefs_dir).is_dir():
             fu_prefs_dir = Path(fusion_var_prefs_dir, fusion_profile)
-            self.log.info(
-                f"{fusion_var_prefs_dir} is set to {fu_prefs_dir}"
-            )
+            self.log.info(f"{fusion_var_prefs_dir} is set to {fu_prefs_dir}")
             return fu_prefs_dir
 
     def get_profile_source(self, app_version) -> Path:
@@ -106,7 +104,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         ) = self.get_copy_fusion_prefs_settings()
 
         # Get launched application context and return correct app version
-        app_data = self.launch_context.env.get("AVALON_APP_NAME", "fusion/18")
+        app_data = self.launch_context.env.get("AVALON_APP_NAME")
         app_version = get_fusion_profile_number(__name__, app_data)
         fu_profile = self.get_fusion_profile_name(app_version)
 
@@ -122,8 +120,9 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {fu_profile_dir_variable}: {fu_profile_dir}")
         self.launch_context.env[fu_profile_dir_variable] = str(fu_profile_dir)
 
-        # setup masterprefs file to partially alter existing or newly generated
-        # Fusion profile, to add OpenPype menu, scripts and and config files.
+        # Add custom Fusion Master Prefs and the temporary
+        # profile directory variables to customize Fusion
+        # to define where it can read custom scripts and tools from
         master_prefs_variable = f"FUSION{app_version}_MasterPrefs"
         master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
