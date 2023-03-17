@@ -26,6 +26,7 @@ from pipeline import (
 
 from plugins.create import (
     new_publish_instance,
+    create_look,
 )
 
 from plugins.load import (
