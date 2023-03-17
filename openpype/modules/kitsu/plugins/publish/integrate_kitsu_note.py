@@ -33,8 +33,8 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             if key not in instance.data:
                 self.log.warning(
                     "Key '{}' was not found in instance.data "
-                    "and will be rendered as "
-                    " in the comment".format(key)
+                    "and will be rendered as an empty string "
+                    "in the comment".format(key)
                 )
                 return ""
             else:
