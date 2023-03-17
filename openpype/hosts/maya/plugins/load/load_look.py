@@ -32,8 +32,10 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         from maya import cmds
 
         with lib.maintained_selection():
-            file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["name"])
+            file_url = self.prepare_root_value(
+                file_url=self.filepath_from_context(context),
+                project_name=context["project"]["name"]
+            )
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,

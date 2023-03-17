@@ -46,8 +46,10 @@ class VRaySceneLoader(load.LoaderPlugin):
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, root_node = self.create_vray_scene(name,
-                                                          filename=self.fname)
+                nodes, root_node = self.create_vray_scene(
+                    name,
+                    filename=self.filepath_from_context(context)
+                )
 
         self[:] = nodes
         if not nodes:

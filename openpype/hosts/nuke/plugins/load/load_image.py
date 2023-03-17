@@ -86,7 +86,7 @@ class LoadImage(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname
+        file = self.filepath_from_context(context)
 
         if not file:
             repr_id = context["representation"]["_id"]

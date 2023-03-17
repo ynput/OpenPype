@@ -122,9 +122,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            file_url = self.prepare_root_value(self.fname,
+            file_url = self.prepare_root_value(path,
                                                context["project"]["name"])
 
             nodes = cmds.file(file_url,
