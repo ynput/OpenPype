@@ -79,6 +79,10 @@ class SubsetConvertorPlugin(object):
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
+    @property
+    def host(self):
+        return self._create_context.host
+
     @abstractproperty
     def identifier(self):
         """Converted identifier.

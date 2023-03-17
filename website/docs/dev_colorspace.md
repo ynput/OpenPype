@@ -24,8 +24,8 @@ It's up to the Loaders to read these values and apply the correct expected color
 ### Keys
 - **colorspace** - string value used in other publish plugins and loaders
 - **config** - storing two versions of path.
-  - **path** - is formated and with baked platform root. It is used for posible need to find out where we were sourcing color config during publishing.
-  - **template** - unformated tempate resolved from settings. It is used for other plugins targeted to remote publish which could be processed at different platform.
+  - **path** - is formatted and with baked platform root. It is used for possible need to find out where we were sourcing color config during publishing.
+  - **template** - unformatted template resolved from settings. It is used for other plugins targeted to remote publish which could be processed at different platform.
 
 ### Example
     {
@@ -63,7 +63,7 @@ It's up to the Loaders to read these values and apply the correct expected color
 	- set the `OCIO` environment variable before launching the host via a prelaunch hook
 	- or (if the host allows) to set the workfile OCIO config path using the host's API
 
-3. Each Extractor exporting pixel data (e.g. image or video) has to use parent class `openpype.pipeline.publish.publish_plugins.ExtractorColormanaged` and use `self.set_representation_colorspace` on the representations to be integrated.
+3. Each Extractor exporting pixel data (e.g. image or video) has to inherit from the mixin class `openpype.pipeline.publish.publish_plugins.ColormanagedPyblishPluginMixin` and use `self.set_representation_colorspace` on the representations to be integrated.
 
 The **set_representation_colorspace** method adds `colorspaceData` to the representation. If the `colorspace` passed is not `None` then it is added directly to the representation with resolved config path otherwise a color space is assumed using the configured file rules. If no file rule matches the `colorspaceData` is **not** added to the representation.
 

@@ -561,7 +561,8 @@ class PublisherWindow(QtWidgets.QDialog):
         return self._tabs_widget.is_current_tab(identifier)
 
     def _go_to_create_tab(self):
-        self._set_current_tab("create")
+        if self._create_tab.isEnabled():
+            self._set_current_tab("create")
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")

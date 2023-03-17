@@ -14,7 +14,7 @@ from openpype.settings import (
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.hosts.maya.api.commands import reset_frame_range
+from openpype.hosts.maya.api.lib import reset_frame_range
 
 
 class RenderSettings(object):
@@ -23,7 +23,8 @@ class RenderSettings(object):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
@@ -157,7 +158,7 @@ class RenderSettings(object):
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
         self._additional_attribs_setter(additional_options)
-        reset_frame_range()
+        reset_frame_range(playback=False, fps=False, render=True)
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
@@ -335,7 +336,8 @@ class RenderSettings(object):
         )
 
         # Set render file format to exr
-        cmds.setAttr("{}.imageFormatStr".format(node), "exr", type="string")
+        ext = vray_render_presets["image_format"]
+        cmds.setAttr("{}.imageFormatStr".format(node), ext, type="string")
 
         # animType
         cmds.setAttr("{}.animType".format(node), 1)
