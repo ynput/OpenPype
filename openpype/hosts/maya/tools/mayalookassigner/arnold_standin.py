@@ -189,16 +189,16 @@ def assign_look(standin, subset):
                     continue
 
                 shading_engine_assignments(
-                    edit["shader"],
-                    "surfaceShader",
-                    edit["nodes"],
-                    node_assignments
+                    shading_engine=edit["shader"],
+                    attr="surfaceShader",
+                    nodes=edit["nodes"],
+                    assignments=node_assignments
                 )
                 shading_engine_assignments(
-                    edit["shader"],
-                    "displacementShader",
-                    edit["nodes"],
-                    node_assignments
+                    shading_engine=edit["shader"],
+                    attr="displacementShader",
+                    nodes=edit["nodes"],
+                    assignments=node_assignments
                 )
 
             if edit["action"] == "setattr":
