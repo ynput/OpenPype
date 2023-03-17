@@ -38,7 +38,6 @@ class CreateAnimation(plugin.Creator):
         self.data["visibleOnly"] = False
 
         # Include the groups above the out_SET content
-        # Include parent groups
         self.data["includeParentHierarchy"] = self.include_parent_hierarchy
 
         # Default to exporting world-space
