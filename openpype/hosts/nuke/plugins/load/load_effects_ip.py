@@ -73,7 +73,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
