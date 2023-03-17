@@ -25,7 +25,8 @@ from .user_settings import (
 from .tools import (
     get_openpype_global_settings,
     get_openpype_path_from_settings,
-    get_expected_studio_version_str
+    get_expected_studio_version_str,
+    get_local_openpype_path_from_settings
 )
 
 
@@ -553,6 +554,15 @@ class BootstrapRepos:
         if not progress_callback:
             progress_callback = empty_progress
         self._progress_callback = progress_callback
+
+    def set_data_dir(self, settings):
+        if not settings:
+            return
+
+        overridden_path = get_local_openpype_path_from_settings(settings)
+        if overridden_path:
+            self._print(f"overriding local folder: {overridden_path}")
+            self.data_dir = overridden_path
 
     @staticmethod
     def get_version_path_from_list(

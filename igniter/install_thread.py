@@ -14,7 +14,7 @@ from .bootstrap_repos import (
     OpenPypeVersion
 )
 
-from .tools import validate_mongo_connection
+from .tools import get_openpype_global_settings, validate_mongo_connection
 
 
 class InstallThread(QtCore.QThread):
@@ -80,6 +80,10 @@ class InstallThread(QtCore.QThread):
                 return
         os.environ["OPENPYPE_MONGO"] = self._mongo
 
+        if not validate_mongo_connection(self._mongo):
+            raise RuntimeError(f"Cannot connect to {self._mongo}")
+        global_settings = get_openpype_global_settings(self._mongo)
+        bs.set_data_dir(global_settings)
         self.message.emit(
             f"Detecting installed OpenPype versions in {bs.data_dir}",
             False)
