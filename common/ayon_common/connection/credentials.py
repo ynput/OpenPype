@@ -247,7 +247,10 @@ def store_token(url: str, token: str):
     TokenKeyring(url).set_value(token)
 
 
-def ask_to_login_ui(url: Optional[str] = None) -> tuple[str, str, str]:
+def ask_to_login_ui(
+    url: Optional[str] = None,
+    always_on_top: Optional[bool] = False
+) -> tuple[str, str, str]:
     """Ask user to login using UI.
 
     This should be used only when user is not yet logged in at all or available
@@ -256,6 +259,8 @@ def ask_to_login_ui(url: Optional[str] = None) -> tuple[str, str, str]:
 
     Args:
         url (Optional[str]): Server url that could be prefilled in UI.
+        always_on_top (Optional[bool]): Window will be drawn on top of
+            other windows.
 
     Returns:
         tuple[str, str, str]: Url, user's token and username.
@@ -266,7 +271,7 @@ def ask_to_login_ui(url: Optional[str] = None) -> tuple[str, str, str]:
     if url is None:
         url = get_last_server()
     username = get_last_username_by_url(url)
-    return ask_to_login(url, username)
+    return ask_to_login(url, username, always_on_top=always_on_top)
 
 
 def change_user_ui() -> ChangeUserResult:

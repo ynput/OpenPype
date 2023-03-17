@@ -630,13 +630,16 @@ class ServerLoginWindow(QtWidgets.QDialog):
             self.set_allow_logout(False)
 
 
-def ask_to_login(url=None, username=None):
+def ask_to_login(url=None, username=None, always_on_top=False):
     """Ask user to login using Qt dialog.
 
     Function creates new QApplication if is not created yet.
 
     Args:
-        url (str): Server url that will be prefilled in dialog.
+        url (Optional[str]): Server url that will be prefilled in dialog.
+        username (Optional[str]): Username that will be prefilled in dialog.
+        always_on_top (Optional[bool]): Window will be drawn on top of
+            other windows.
 
     Returns:
         tuple[str, str, str]: Returns Url, user's token and username. Url can
@@ -655,6 +658,12 @@ def ask_to_login(url=None, username=None):
         app_instance = QtWidgets.QApplication([])
 
     window = ServerLoginWindow()
+    if always_on_top:
+        window.setWindowFlags(
+            window.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+
     if url:
         window.set_url(url)
 
@@ -662,6 +671,7 @@ def ask_to_login(url=None, username=None):
         window.set_username(username)
 
     _output = {"out": None}
+
     def _exec_window():
         window.exec_()
         result = window.result()
@@ -685,13 +695,17 @@ def ask_to_login(url=None, username=None):
     return _output["out"]
 
 
-def change_user(url, username, api_key):
+def change_user(url, username, api_key, always_on_top=False):
     """Ask user to login using Qt dialog.
 
     Function creates new QApplication if is not created yet.
 
     Args:
         url (str): Server url that will be prefilled in dialog.
+        username (str): Username that will be prefilled in dialog.
+        api_key (str): API key that will be prefilled in dialog.
+        always_on_top (Optional[bool]): Window will be drawn on top of
+            other windows.
 
     Returns:
         Tuple[str, str]: Returns Url and user's token. Url can be changed
@@ -710,6 +724,11 @@ def change_user(url, username, api_key):
         app_instance = QtWidgets.QApplication([])
 
     window = ServerLoginWindow()
+    if always_on_top:
+        window.setWindowFlags(
+            window.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
     window.set_logged_in(True, url, username, api_key)
 
     _output = {"out": None}
