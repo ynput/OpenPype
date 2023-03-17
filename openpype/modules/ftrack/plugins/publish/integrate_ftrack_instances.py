@@ -56,6 +56,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "reference": "reference"
     }
     keep_first_subset_name_for_review = True
+    upload_reviewable_with_origin_name = False
     asset_versions_status_profiles = []
     additional_metadata_keys = []
 
@@ -294,6 +295,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
             # Add item to component list
             component_list.append(review_item)
+            if self.upload_reviewable_with_origin_name:
+                origin_name_component = copy.deepcopy(review_item)
+                filename = os.path.basename(repre_path)
+                origin_name_component["component_data"]["name"] = (
+                    os.path.splitext(filename)[0]
+                )
+                component_list.append(origin_name_component)
 
         # Duplicate thumbnail component for all not first reviews
         if first_thumbnail_component is not None:

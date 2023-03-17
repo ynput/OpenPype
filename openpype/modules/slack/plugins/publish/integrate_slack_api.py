@@ -187,7 +187,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 repre_review_path = get_publish_repre_path(
                     instance, repre, False
                 )
-                if os.path.exists(repre_review_path):
+                if repre_review_path and os.path.exists(repre_review_path):
                     review_path = repre_review_path
                 if "burnin" in tags:  # burnin has precedence if exists
                     break

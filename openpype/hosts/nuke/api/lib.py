@@ -48,8 +48,8 @@ from openpype.pipeline.colorspace import (
     get_imageio_config
 )
 from openpype.pipeline.workfile import BuildWorkfile
-
 from . import gizmo_menu
+from .constants import ASSIST
 
 from .workio import (
     save_file,
@@ -215,7 +215,7 @@ def update_node_data(node, knobname, data):
 
 
 class Knobby(object):
-    """[DEPRICATED] For creating knob which it's type isn't
+    """[DEPRECATED] For creating knob which it's type isn't
                     mapped in `create_knobs`
 
     Args:
@@ -249,7 +249,7 @@ class Knobby(object):
 
 
 def create_knobs(data, tab=None):
-    """[DEPRICATED] Create knobs by data
+    """Create knobs by data
 
     Depending on the type of each dict value and creates the correct Knob.
 
@@ -343,7 +343,7 @@ def create_knobs(data, tab=None):
 
 
 def imprint(node, data, tab=None):
-    """[DEPRICATED] Store attributes with value on node
+    """Store attributes with value on node
 
     Parse user data into Node knobs.
     Use `collections.OrderedDict` to ensure knob order.
@@ -398,8 +398,9 @@ def imprint(node, data, tab=None):
         node.addKnob(knob)
 
 
+@deprecated
 def add_publish_knob(node):
-    """[DEPRICATED] Add Publish knob to node
+    """[DEPRECATED] Add Publish knob to node
 
     Arguments:
         node (nuke.Node): nuke node to be processed
@@ -416,8 +417,9 @@ def add_publish_knob(node):
     return node
 
 
+@deprecated
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
-    """[DEPRICATED] Sets data into nodes's avalon knob
+    """[DEPRECATED] Sets data into nodes's avalon knob
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -478,8 +480,9 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
+@deprecated
 def get_avalon_knob_data(node, prefix="avalon:", create=True):
-    """[DEPRICATED]  Gets a data from nodes's avalon knob
+    """[DEPRECATED]  Gets a data from nodes's avalon knob
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -521,8 +524,9 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
     return data
 
 
+@deprecated
 def fix_data_for_node_create(data):
-    """[DEPRICATED] Fixing data to be used for nuke knobs
+    """[DEPRECATED] Fixing data to be used for nuke knobs
     """
     for k, v in data.items():
         if isinstance(v, six.text_type):
@@ -532,8 +536,9 @@ def fix_data_for_node_create(data):
     return data
 
 
+@deprecated
 def add_write_node_legacy(name, **kwarg):
-    """[DEPRICATED] Adding nuke write node
+    """[DEPRECATED] Adding nuke write node
     Arguments:
         name (str): nuke node name
         kwarg (attrs): data for nuke knobs
@@ -697,7 +702,7 @@ def get_nuke_imageio_settings():
 
 @deprecated("openpype.hosts.nuke.api.lib.get_nuke_imageio_settings")
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
-    '''[DEPRICATED]  Get preset data for dataflow (fileType, compression, bitDepth)
+    '''[DEPRECATED]  Get preset data for dataflow (fileType, compression, bitDepth)
     '''
 
     assert any([creator, nodeclass]), nuke.message(
@@ -1241,7 +1246,7 @@ def create_write_node(
             nodes to be created before write with dependency
         review (bool)[optional]: adding review knob
         farm (bool)[optional]: rendering workflow target
-        kwargs (dict)[optional]: additional key arguments for formating
+        kwargs (dict)[optional]: additional key arguments for formatting
 
     Example:
         prenodes = {
@@ -2258,14 +2263,20 @@ class WorkfileSettings(object):
             node['frame_range'].setValue(range)
             node['frame_range_lock'].setValue(True)
 
-        set_node_data(
-            self._root_node,
-            INSTANCE_DATA_KNOB,
-            {
-                "handleStart": int(handle_start),
-                "handleEnd": int(handle_end)
-            }
-        )
+        if not ASSIST:
+            set_node_data(
+                self._root_node,
+                INSTANCE_DATA_KNOB,
+                {
+                    "handleStart": int(handle_start),
+                    "handleEnd": int(handle_end)
+                }
+            )
+        else:
+            log.warning(
+                "NukeAssist mode is not allowing "
+                "updating custom knobs..."
+            )
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
@@ -2666,6 +2677,18 @@ def process_workfile_builder():
     open_file(last_workfile_path)
 
 
+def start_workfile_template_builder():
+    from .workfile_template_builder import (
+        build_workfile_template
+    )
+
+    # to avoid looping of the callback, remove it!
+    log.info("Starting workfile template builder...")
+    build_workfile_template(workfile_creation_enabled=True)
+
+    # remove callback since it would be duplicating the workfile
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
+
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):
     """Recreate input instance to different data
@@ -2838,10 +2861,10 @@ class NukeDirmap(HostDirmap):
         pass
 
     def dirmap_routine(self, source_path, destination_path):
-        log.debug("{}: {}->{}".format(self.file_name,
-                                      source_path, destination_path))
         source_path = source_path.lower().replace(os.sep, '/')
         destination_path = destination_path.lower().replace(os.sep, '/')
+        log.debug("Map: {} with: {}->{}".format(self.file_name,
+                                                source_path, destination_path))
         if platform.system().lower() == "windows":
             self.file_name = self.file_name.lower().replace(
                 source_path, destination_path)
@@ -2855,6 +2878,7 @@ class DirmapCache:
     _project_name = None
     _project_settings = None
     _sync_module = None
+    _mapping = None
 
     @classmethod
     def project_name(cls):
@@ -2873,6 +2897,36 @@ class DirmapCache:
         if cls._sync_module is None:
             cls._sync_module = ModulesManager().modules_by_name["sync_server"]
         return cls._sync_module
+
+    @classmethod
+    def mapping(cls):
+        return cls._mapping
+
+    @classmethod
+    def set_mapping(cls, mapping):
+        cls._mapping = mapping
+
+
+def dirmap_file_name_filter(file_name):
+    """Nuke callback function with single full path argument.
+
+        Checks project settings for potential mapping from source to dest.
+    """
+
+    dirmap_processor = NukeDirmap(
+        file_name,
+        "nuke",
+        DirmapCache.project_name(),
+        DirmapCache.project_settings(),
+        DirmapCache.sync_module(),
+    )
+    if not DirmapCache.mapping():
+        DirmapCache.set_mapping(dirmap_processor.get_mappings())
+
+    dirmap_processor.process_dirmap(DirmapCache.mapping())
+    if os.path.exists(dirmap_processor.file_name):
+        return dirmap_processor.file_name
+    return file_name
 
 
 @contextlib.contextmanager
@@ -2917,25 +2971,6 @@ def duplicate_node(node):
     reset_selection()
 
     return dupli_node
-
-
-def dirmap_file_name_filter(file_name):
-    """Nuke callback function with single full path argument.
-
-        Checks project settings for potential mapping from source to dest.
-    """
-
-    dirmap_processor = NukeDirmap(
-        file_name,
-        "nuke",
-        DirmapCache.project_name(),
-        DirmapCache.project_settings(),
-        DirmapCache.sync_module(),
-    )
-    dirmap_processor.process_dirmap()
-    if os.path.exists(dirmap_processor.file_name):
-        return dirmap_processor.file_name
-    return file_name
 
 
 def get_group_io_nodes(nodes):

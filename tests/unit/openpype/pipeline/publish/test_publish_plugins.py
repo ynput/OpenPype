@@ -135,7 +135,7 @@ class TestPipelinePublishPlugins(TestPipeline):
         }
 
         # load plugin function for testing
-        plugin = publish_plugins.ExtractorColormanaged()
+        plugin = publish_plugins.ColormanagedPyblishPluginMixin()
         plugin.log = log
         config_data, file_rules = plugin.get_colorspace_settings(context)
 
@@ -175,14 +175,14 @@ class TestPipelinePublishPlugins(TestPipeline):
         }
 
         # load plugin function for testing
-        plugin = publish_plugins.ExtractorColormanaged()
+        plugin = publish_plugins.ColormanagedPyblishPluginMixin()
         plugin.log = log
         plugin.set_representation_colorspace(
             representation_nuke, context,
             colorspace_settings=(config_data_nuke, file_rules_nuke)
         )
         # load plugin function for testing
-        plugin = publish_plugins.ExtractorColormanaged()
+        plugin = publish_plugins.ColormanagedPyblishPluginMixin()
         plugin.log = log
         plugin.set_representation_colorspace(
             representation_hiero, context,

@@ -37,9 +37,9 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             self.log.info("Use existing Shotgrid version: {}".format(version))
 
         data_to_update = {}
-        status = context.data.get("intent", {}).get("value")
-        if status:
-            data_to_update["sg_status_list"] = status
+        intent = context.data.get("intent")
+        if intent:
+            data_to_update["sg_status_list"] = intent["value"]
 
         for representation in instance.data.get("representations", []):
             local_path = get_publish_repre_path(

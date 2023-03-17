@@ -12,6 +12,7 @@ import pyblish.api
 
 from openpype.lib import (
     Logger,
+    import_filepath,
     filter_profiles
 )
 from openpype.settings import (
@@ -301,12 +302,8 @@ def publish_plugins_discover(paths=None):
             if not mod_ext == ".py":
                 continue
 
-            module = types.ModuleType(mod_name)
-            module.__file__ = abspath
-
             try:
-                with open(abspath, "rb") as f:
-                    six.exec_(f.read(), module.__dict__)
+                module = import_filepath(abspath, mod_name)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
@@ -683,6 +680,12 @@ def get_publish_repre_path(instance, repre, only_published=False):
     staging_dir = repre.get("stagingDir")
     if not staging_dir:
         staging_dir = get_instance_staging_dir(instance)
+
+    # Expand the staging dir path in case it's been stored with the root
+    # template syntax
+    anatomy = instance.context.data["anatomy"]
+    staging_dir = anatomy.fill_root(staging_dir)
+
     src_path = os.path.normpath(os.path.join(staging_dir, filename))
     if os.path.exists(src_path):
         return src_path

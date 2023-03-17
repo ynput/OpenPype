@@ -81,11 +81,14 @@ def run_subprocess(*args, **kwargs):
 
     Entered arguments and keyword arguments are passed to subprocess Popen.
 
+    On windows are 'creationflags' filled with flags that should cause ignore
+    creation of new window.
+
     Args:
-        *args: Variable length arument list passed to Popen.
+        *args: Variable length argument list passed to Popen.
         **kwargs : Arbitrary keyword arguments passed to Popen. Is possible to
-            pass `logging.Logger` object under "logger" if want to use
-            different than lib's logger.
+            pass `logging.Logger` object under "logger" to use custom logger
+            for output.
 
     Returns:
         str: Full output of subprocess concatenated stdout and stderr.
@@ -94,6 +97,17 @@ def run_subprocess(*args, **kwargs):
         RuntimeError: Exception is raised if process finished with nonzero
             return code.
     """
+
+    # Modify creation flags on windows to hide console window if in UI mode
+    if (
+        platform.system().lower() == "windows"
+        and "creationflags" not in kwargs
+    ):
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
@@ -107,10 +121,10 @@ def run_subprocess(*args, **kwargs):
         logger = Logger.get_logger("run_subprocess")
 
     # set overrides
-    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
-    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
-    kwargs['env'] = filtered_env
+    kwargs["stdout"] = kwargs.get("stdout", subprocess.PIPE)
+    kwargs["stderr"] = kwargs.get("stderr", subprocess.PIPE)
+    kwargs["stdin"] = kwargs.get("stdin", subprocess.PIPE)
+    kwargs["env"] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 

@@ -23,8 +23,9 @@ from openpype.hosts.nuke.api import (
 class LoadEffectsInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["effectJson"]
     families = ["effect"]
+    representations = ["*"]
+    extension = {"json"}
 
     label = "Load Effects - Input Process"
     order = 0
