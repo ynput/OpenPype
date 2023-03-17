@@ -118,9 +118,25 @@ class ConnectYetiRig(InventoryAction):
                 )
                 continue
 
-            cmds.connectAttr(
-                "{}.{}".format(source_node, source_attr),
-                "{}.{}".format(target_node, target_attr)
+            source_plug = "{}.{}".format(source_node, 
+                                         source_attr)
+            target_plug = "{}.{}".format(target_node, 
+                                         target_attr)
+            if cmds.isConnected(source_plug, 
+                                target_plug,
+                                ignoreUnitConversion=True):
+                self.log.debug(
+                    "Connection already exists: {} -> {}".format(
+                        source_plug, target_plug
+                    )
+                )
+                continue
+
+            cmds.connectAttr(source_plug, target_plug, force=True)
+            self.log.debug(
+                "Connected attributes: {} -> {}".format(
+                    source_plug, target_plug
+                )
             )
 
     def nodes_by_id(self, container):
