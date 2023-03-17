@@ -8,7 +8,7 @@ class ExtractGPUCache(publish.Extractor):
 
     label = "GPU Cache"
     hosts = ["maya"]
-    families = ["model"]
+    families = ["model", "animation", "pointcache"]
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
