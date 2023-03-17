@@ -834,15 +834,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Prepare which hole is filled with what frame
         #   - the frame is filled only with already existing frames
-        first_frame = col.indexes[0]
-        prev_frame = None
+        prev_frame = next(iter(col.indexes))
         hole_frame_to_nearest = {}
         for frame in range(int(start_frame), int(end_frame) + 1):
             if frame in col.indexes:
                 prev_frame = frame
-            elif prev_frame is None:
-                # Use first frame if previous frame was not yet filled
-                hole_frame_to_nearest[frame] = first_frame
             else:
                 # Use previous frame as source for hole
                 hole_frame_to_nearest[frame] = prev_frame
