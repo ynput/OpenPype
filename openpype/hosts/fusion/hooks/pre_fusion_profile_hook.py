@@ -93,8 +93,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
                 "Destination Fusion preferences folder already exists"
             )
             return
-        self.log.info(f"Starting copying Fusion preferences")
-        self.log.info(f"force_sync option is set to {force_sync}")
+        self.log.info("Starting copying Fusion preferences")
+        self.log.debug(f"force_sync option is set to {force_sync}")
         try:
             copy_to.mkdir(exist_ok=True, parents=True)
         except PermissionError:
