@@ -72,7 +72,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it

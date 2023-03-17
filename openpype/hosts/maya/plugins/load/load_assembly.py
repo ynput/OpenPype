@@ -29,7 +29,7 @@ class AssemblyLoader(load.LoaderPlugin):
         from openpype.hosts.maya.api import setdress
 
         containers = setdress.load_package(
-            filepath=self.fname,
+            filepath=self.filepath_from_context(context),
             name=name,
             namespace=namespace
         )
