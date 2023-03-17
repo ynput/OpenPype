@@ -23,6 +23,7 @@ from openpype.lib.transcoding import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
 )
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -821,12 +822,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 is done.
 
         Raises:
-            AssertionError: if more then one collection is obtained.
-
+            KnownPublishError: if more than one collection is obtained.
         """
+
         collections = clique.assemble(files)[0]
-        msg = "Multiple collections {} found.".format(collections)
-        assert len(collections) == 1, msg
+        if len(collections) != 1:
+            raise KnownPublishError(
+                "Multiple collections {} found.".format(collections))
+
         col = collections[0]
 
         start_frame = int(start_frame)
