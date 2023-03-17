@@ -258,7 +258,7 @@ def _connect_to_ayon_server():
         sys.exit(1)
 
     current_url = os.environ.get("AYON_SERVER_URL")
-    url, token, username = ask_to_login_ui(current_url)
+    url, token, username = ask_to_login_ui(current_url, always_on_top=True)
     if url is not None and token is not None:
         confirm_server_login(url, token, username)
         return
