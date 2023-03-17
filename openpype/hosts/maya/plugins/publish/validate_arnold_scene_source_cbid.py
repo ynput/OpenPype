@@ -67,8 +67,4 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
         for content_node, proxy_node in cls.get_invalid_couples(cls, instance):
-            cmds.setAttr(
-                proxy_node + ".cbId",
-                cmds.getAttr(content_node + ".cbId"),
-                type="string"
-            )
+            lib.set_id(proxy_node, lib.get_id(content_node), overwrite=False)
