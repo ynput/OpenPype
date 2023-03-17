@@ -1,7 +1,6 @@
 from maya import mel
 from openpype.pipeline import load
 
-
 class MatchmoveLoader(load.LoaderPlugin):
     """
     This will run matchmove script to create track in scene.
@@ -18,11 +17,12 @@ class MatchmoveLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        if self.fname.lower().endswith(".py"):
-            exec(open(self.fname).read())
+        path = self.filepath_from_context(context)
+        if path.lower().endswith(".py"):
+            exec(open(path).read())
 
-        elif self.fname.lower().endswith(".mel"):
-            mel.eval('source "{}"'.format(self.fname))
+        elif path.lower().endswith(".mel"):
+            mel.eval('source "{}"'.format(path))
 
         else:
             self.log.error("Unsupported script type")

@@ -33,8 +33,10 @@ class OpenInDJV(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        directory = os.path.dirname(self.fname)
         import clique
+
+        path = self.filepath_from_context(context)
+        directory = os.path.dirname(path)
 
         pattern = clique.PATTERNS["frames"]
         files = os.listdir(directory)
@@ -48,7 +50,7 @@ class OpenInDJV(load.LoaderPlugin):
             sequence = collections[0]
             first_image = list(sequence)[0]
         else:
-            first_image = self.fname
+            first_image = path
         filepath = os.path.normpath(os.path.join(directory, first_image))
 
         self.log.info("Opening : {}".format(filepath))

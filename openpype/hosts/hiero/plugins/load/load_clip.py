@@ -87,7 +87,8 @@ class LoadClip(phiero.SequenceLoader):
             })
 
         # load clip to timeline and get main variables
-        track_item = phiero.ClipLoader(self, context, **options).load()
+        path = self.filepath_from_context(context)
+        track_item = phiero.ClipLoader(self, context, path, **options).load()
         namespace = namespace or track_item.name()
         version = context['version']
         version_data = version.get("data", {})

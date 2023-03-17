@@ -137,8 +137,9 @@ class ImportMayaLoader(load.LoaderPlugin):
             suffix="_",
         )
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
-            nodes = cmds.file(self.fname,
+            nodes = cmds.file(path,
                               i=True,
                               preserveReferences=True,
                               namespace=namespace,
