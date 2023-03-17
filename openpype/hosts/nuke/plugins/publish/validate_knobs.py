@@ -61,16 +61,10 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
         invalid_knobs = []
 
         for instance in context:
-            # Filter publisable instances.
-            if not instance.data["publish"]:
-                continue
 
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-
-            if not families:
-                continue
 
             # Get all knobs to validate.
             knobs = {}

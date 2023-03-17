@@ -18,7 +18,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [3.9]
 
     steps:
     - name: 🚛 Checkout Code
@@ -28,7 +28,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: 🧵 Install Requirements
       shell: pwsh
       run: |
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [3.9]
 
     steps:
     - name: 🚛 Checkout Code
@@ -64,27 +64,3 @@ jobs:
       run: |
         export SKIP_THIRD_PARTY_VALIDATION="1"
         ./tools/build.sh
-
-  # MacOS-latest:
-
-  #   runs-on: macos-latest
-  #   strategy:
-  #     matrix:
-  #       python-version: [3.7]
-
-  #   steps:
-  #   - name: 🚛 Checkout Code
-  #     uses: actions/checkout@v2
-
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v2
-  #     with:
-  #       python-version: ${{ matrix.python-version }}
-
-  #   - name: 🧵 Install Requirements
-  #     run: |
-  #       ./tools/create_env.sh
-
-  #   - name: 🔨 Build
-  #     run: |
-  #       ./tools/build.sh

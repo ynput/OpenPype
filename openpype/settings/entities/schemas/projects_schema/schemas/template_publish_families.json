@@ -28,6 +28,7 @@
              {"nukenodes": "nukenodes"},
              {"plate": "plate"},
              {"pointcache": "pointcache"},
+             {"proxyAbc": "proxyAbc"},
              {"prerender": "prerender"},
              {"redshiftproxy": "redshiftproxy"},
              {"reference": "reference"},

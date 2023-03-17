@@ -1,6 +1,9 @@
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
-from openpype.hosts.tvpaint.api import save_file
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    PublishValidationError,
+    registered_host,
+)
 
 
 class ValidateWorkfileMetadataRepair(pyblish.api.Action):
@@ -13,8 +16,9 @@ class ValidateWorkfileMetadataRepair(pyblish.api.Action):
     def process(self, context, _plugin):
         """Save current workfile which should trigger storing of metadata."""
         current_file = context.data["currentFile"]
+        host = registered_host()
         # Save file should trigger
-        save_file(current_file)
+        host.save_workfile(current_file)
 
 
 class ValidateWorkfileMetadata(pyblish.api.ContextPlugin):
@@ -27,13 +31,18 @@ class ValidateWorkfileMetadata(pyblish.api.ContextPlugin):
 
     actions = [ValidateWorkfileMetadataRepair]
 
-    required_keys = {"project", "asset", "task"}
+    required_keys = {"project_name", "asset_name", "task_name"}
 
     def process(self, context):
         workfile_context = context.data["workfile_context"]
         if not workfile_context:
-            raise AssertionError(
-                "Current workfile is missing whole metadata about context."
+            raise PublishValidationError(
+                "Current workfile is missing whole metadata about context.",
+                "Missing context",
+                (
+                    "Current workfile is missing metadata about task."
+                    " To fix this issue save the file using Workfiles tool."
+                )
             )
 
         missing_keys = []

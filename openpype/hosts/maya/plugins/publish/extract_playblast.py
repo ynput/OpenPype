@@ -1,4 +1,5 @@
 import os
+import json
 
 import clique
 import capture
@@ -44,10 +45,6 @@ class ExtractPlayblast(publish.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
-        override_viewport_options = (
-            self.capture_preset['Viewport Options']
-                               ['override_viewport_options']
-        )
         preset = lib.load_capture_preset(data=self.capture_preset)
         # Grab capture presets from the project settings
         capture_presets = self.capture_preset
@@ -77,8 +74,10 @@ class ExtractPlayblast(publish.Extractor):
             preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
-        camera_option = preset.get("camera_option", {})
-        camera_option["depthOfField"] = cmds.getAttr(
+
+        # Enforce persisting camera depth of field
+        camera_options = preset.setdefault("camera_options", {})
+        camera_options["depthOfField"] = cmds.getAttr(
             "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
@@ -113,6 +112,32 @@ class ExtractPlayblast(publish.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
+
+        # Need to explicitly enable some viewport changes so the viewport is
+        # refreshed ahead of playblasting.
+        keys = [
+            "useDefaultMaterial",
+            "wireframeOnShaded",
+            "xray",
+            "jointXray",
+            "backfaceCulling"
+        ]
+        viewport_defaults = {}
+        for key in keys:
+            viewport_defaults[key] = cmds.modelEditor(
+                instance.data["panel"], query=True, **{key: True}
+            )
+            if preset["viewport_options"][key]:
+                cmds.modelEditor(
+                    instance.data["panel"], edit=True, **{key: True}
+                )
+
+        override_viewport_options = (
+            capture_presets['Viewport Options']['override_viewport_options']
+        )
         with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -121,23 +146,36 @@ class ExtractPlayblast(publish.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
-            self.log.info('using viewport preset: {}'.format(preset))
-
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
-                panel = cmds.getPanel(withFocus=True)
-                panel_preset = capture.parse_active_view()
+                panel_preset = capture.parse_view(instance.data["panel"])
+                panel_preset.pop("camera")
                 preset.update(panel_preset)
-                cmds.setFocus(panel)
 
-            path = capture.capture(**preset)
+            self.log.info(
+                "Using preset:\n{}".format(
+                    json.dumps(preset, sort_keys=True, indent=4)
+                )
+            )
+
+            path = capture.capture(log=self.log, **preset)
+
+        # Restoring viewport options.
+        if viewport_defaults:
+            cmds.modelEditor(
+                instance.data["panel"], edit=True, **viewport_defaults
+            )
+
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
+        patterns = [clique.PATTERNS["frames"]]
         collections, remainder = clique.assemble(collected_files,
-                                                 minimum_items=1)
+                                                 minimum_items=1,
+                                                 patterns=patterns)
 
         self.log.debug("filename {}".format(filename))
         frame_collection = None

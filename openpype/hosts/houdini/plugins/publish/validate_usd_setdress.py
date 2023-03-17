@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 import openpype.hosts.houdini.api.usd as hou_usdlib
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateUsdSetDress(pyblish.api.InstancePlugin):
@@ -20,8 +22,9 @@ class ValidateUsdSetDress(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         from pxr import UsdGeom
+        import hou
 
-        rop = instance[0]
+        rop = hou.node(instance.data.get("instance_node"))
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 
@@ -47,8 +50,9 @@ class ValidateUsdSetDress(pyblish.api.InstancePlugin):
                     invalid.append(node)
 
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError((
                 "SetDress contains local geometry. "
                 "This is not allowed, it must be an assembly "
-                "of referenced assets."
+                "of referenced assets."),
+                title=self.label
             )

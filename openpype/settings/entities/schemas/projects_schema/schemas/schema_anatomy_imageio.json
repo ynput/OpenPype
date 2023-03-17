@@ -1,10 +1,14 @@
 {
     "type": "dict",
     "key": "imageio",
-    "label": "Color Management and Output Formats",
+    "label": "Color Management and Output Formats (Deprecated)",
     "is_file": true,
     "is_group": true,
     "children": [
+        {
+            "type": "label",
+            "label": "These settings are deprecated and have moved to: <i>project_settings/{app}/imageio</i>.<br>You can right click to copy each host's values and paste them to apply to each host as needed.<br>Changing these values here will not do anything."
+        },
         {
             "key": "hiero",
             "type": "dict",

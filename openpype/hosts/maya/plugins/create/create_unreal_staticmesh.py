@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Static Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from maya import cmds  # noqa
 

@@ -11,7 +11,7 @@ import numbers
 import copy
 import collections
 
-from Qt import QtCore
+from qtpy import QtCore
 from six import text_type
 import pyblish.api
 

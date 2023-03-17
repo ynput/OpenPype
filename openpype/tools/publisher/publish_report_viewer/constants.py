@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1

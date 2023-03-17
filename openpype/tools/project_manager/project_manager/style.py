@@ -1,5 +1,5 @@
 import os
-from Qt import QtGui
+from qtpy import QtGui
 
 import qtawesome
 from openpype.tools.utils import paint_image_with_color

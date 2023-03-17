@@ -1,7 +1,7 @@
 import os
+import re
 import logging
 import platform
-import six
 
 from openpype.settings import get_project_settings
 
@@ -9,16 +9,10 @@ import hou
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
 
-if six.PY2:
-    FileNotFoundError = IOError
-
 
 def generate_shelves():
     """This function generates complete shelves from shelf set to tools
     in Houdini from openpype project settings houdini shelf definition.
-
-    Raises:
-        FileNotFoundError: Raised when the shelf set filepath does not exist
     """
     current_os = platform.system().lower()
 
@@ -27,51 +21,41 @@ def generate_shelves():
     shelves_set_config = project_settings["houdini"]["shelves"]
 
     if not shelves_set_config:
-        log.debug(
-            "No custom shelves found in project settings."
-        )
+        log.debug("No custom shelves found in project settings.")
         return
 
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
+        shelf_set_os_filepath = shelf_set_filepath[current_os]
+        if shelf_set_os_filepath:
+            if not os.path.isfile(shelf_set_os_filepath):
+                log.error("Shelf path doesn't exist - "
+                          "{}".format(shelf_set_os_filepath))
+                continue
 
-        if shelf_set_filepath[current_os]:
-            if not os.path.isfile(shelf_set_filepath[current_os]):
-                raise FileNotFoundError(
-                    "This path doesn't exist - {}".format(
-                        shelf_set_filepath[current_os]
-                    )
-                )
-
-            hou.shelves.newShelfSet(file_path=shelf_set_filepath[current_os])
+            hou.shelves.newShelfSet(file_path=shelf_set_os_filepath)
             continue
 
         shelf_set_name = shelf_set_config.get('shelf_set_name')
         if not shelf_set_name:
-            log.warning(
-                "No name found in shelf set definition."
-            )
-            return
-
-        shelf_set = get_or_create_shelf_set(shelf_set_name)
+            log.warning("No name found in shelf set definition.")
+            continue
 
         shelves_definition = shelf_set_config.get('shelf_definition')
-
         if not shelves_definition:
             log.debug(
                 "No shelf definition found for shelf set named '{}'".format(
                     shelf_set_name
                 )
             )
-            return
+            continue
 
+        shelf_set = get_or_create_shelf_set(shelf_set_name)
         for shelf_definition in shelves_definition:
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
-                log.warning(
-                    "No name found in shelf definition."
-                )
-                return
+                log.warning("No name found in shelf definition.")
+                continue
 
             shelf = get_or_create_shelf(shelf_name)
 
@@ -81,9 +65,9 @@ def generate_shelves():
                         shelf_name
                     )
                 )
-                return
+                continue
 
-            mandatory_attributes = {'name', 'script'}
+            mandatory_attributes = {'label', 'script'}
             for tool_definition in shelf_definition.get('tools_list'):
                 # We verify that the name and script attibutes of the tool
                 # are set
@@ -91,14 +75,14 @@ def generate_shelves():
                     tool_definition[key] for key in mandatory_attributes
                 ):
                     log.warning(
-                        "You need to specify at least the name and \
-the script path of the tool.")
+                        "You need to specify at least the name and the "
+                        "script path of the tool.")
                     continue
 
                 tool = get_or_create_tool(tool_definition, shelf)
 
                 if not tool:
-                    return
+                    continue
 
                 # Add the tool to the shelf if not already in it
                 if tool not in shelf.tools():
@@ -121,12 +105,10 @@ def get_or_create_shelf_set(shelf_set_label):
     """
     all_shelves_sets = hou.shelves.shelfSets().values()
 
-    shelf_sets = [
-        shelf for shelf in all_shelves_sets if shelf.label() == shelf_set_label
-    ]
-
-    if shelf_sets:
-        return shelf_sets[0]
+    shelf_set = next((shelf for shelf in all_shelves_sets if
+                      shelf.label() == shelf_set_label), None)
+    if shelf_set:
+        return shelf_set
 
     shelf_set_name = shelf_set_label.replace(' ', '_').lower()
     new_shelf_set = hou.shelves.newShelfSet(
@@ -148,10 +130,9 @@ def get_or_create_shelf(shelf_label):
     """
     all_shelves = hou.shelves.shelves().values()
 
-    shelf = [s for s in all_shelves if s.label() == shelf_label]
-
+    shelf = next((s for s in all_shelves if s.label() == shelf_label), None)
     if shelf:
-        return shelf[0]
+        return shelf
 
     shelf_name = shelf_label.replace(' ', '_').lower()
     new_shelf = hou.shelves.newShelf(
@@ -172,33 +153,32 @@ def get_or_create_tool(tool_definition, shelf):
     Returns:
         hou.Tool: The tool updated or the new one
     """
-    existing_tools = shelf.tools()
-    tool_label = tool_definition.get('label')
 
-    existing_tool = [
-        tool for tool in existing_tools if tool.label() == tool_label
-    ]
-
-    if existing_tool:
-        tool_definition.pop('name', None)
-        tool_definition.pop('label', None)
-        existing_tool[0].setData(**tool_definition)
-        return existing_tool[0]
-
-    tool_name = tool_label.replace(' ', '_').lower()
-
-    if not os.path.exists(tool_definition['script']):
-        log.warning(
-            "This path doesn't exist - {}".format(
-                tool_definition['script']
-            )
-        )
+    tool_label = tool_definition.get("label")
+    if not tool_label:
+        log.warning("Skipped shelf without label")
         return
 
-    with open(tool_definition['script']) as f:
-        script = f.read()
-        tool_definition.update({'script': script})
+    script_path = tool_definition["script"]
+    if not script_path or not os.path.exists(script_path):
+        log.warning("This path doesn't exist - {}".format(script_path))
+        return
 
-    new_tool = hou.shelves.newTool(name=tool_name, **tool_definition)
+    existing_tools = shelf.tools()
+    existing_tool = next(
+        (tool for tool in existing_tools if tool.label() == tool_label),
+        None
+    )
 
-    return new_tool
+    with open(script_path) as stream:
+        script = stream.read()
+
+    tool_definition["script"] = script
+
+    if existing_tool:
+        tool_definition.pop("label", None)
+        existing_tool.setData(**tool_definition)
+        return existing_tool
+
+    tool_name = re.sub(r"[^\w\d]+", "_", tool_label).lower()
+    return hou.shelves.newTool(name=tool_name, **tool_definition)

@@ -5,6 +5,7 @@ import json
 import collections
 import tempfile
 import subprocess
+import platform
 
 import xml.etree.ElementTree
 
@@ -42,6 +43,28 @@ XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
+IMAGE_EXTENSIONS = {
+    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
+    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
+    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
+    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
+    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
+    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
+    ".xpm", ".xwd"
+}
+
+VIDEO_EXTENSIONS = {
+    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
+    ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
+    ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
+    ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
+    ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
+}
+
 
 def get_transcode_temp_directory():
     """Creates temporary folder for transcoding.
@@ -55,26 +78,38 @@ def get_transcode_temp_directory():
     )
 
 
-def get_oiio_info_for_input(filepath, logger=None):
+def get_oiio_info_for_input(filepath, logger=None, subimages=False):
     """Call oiiotool to get information about input and return stdout.
 
     Stdout should contain xml format string.
     """
     args = [
-        get_oiio_tools_path(), "--info", "-v", "-i:infoformat=xml", filepath
+        get_oiio_tools_path(),
+        "--info",
+        "-v"
     ]
+    if subimages:
+        args.append("-a")
+
+    args.extend(["-i:infoformat=xml", filepath])
+
     output = run_subprocess(args, logger=logger)
     output = output.replace("\r\n", "\n")
 
     xml_started = False
+    subimages_lines = []
     lines = []
     for line in output.split("\n"):
         if not xml_started:
             if not line.startswith("<"):
                 continue
             xml_started = True
+
         if xml_started:
             lines.append(line)
+            if line == "</ImageSpec>":
+                subimages_lines.append(lines)
+                lines = []
 
     if not xml_started:
         raise ValueError(
@@ -83,12 +118,19 @@ def get_oiio_info_for_input(filepath, logger=None):
             )
         )
 
-    xml_text = "\n".join(lines)
-    return parse_oiio_xml_output(xml_text, logger=logger)
+    output = []
+    for subimage_lines in subimages_lines:
+        xml_text = "\n".join(subimage_lines)
+        output.append(parse_oiio_xml_output(xml_text, logger=logger))
+
+    if subimages:
+        return output
+    return output[0]
 
 
 class RationalToInt:
     """Rational value stored as division of 2 integers using string."""
+
     def __init__(self, string_value):
         parts = string_value.split("/")
         top = float(parts[0])
@@ -135,16 +177,16 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "int":
         return int(value)
 
-    if value_type == "float":
+    if value_type in ("float", "double"):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type in ("vec2f", "float2"):
+    if value_type in ("vec2f", "float2", "float2d"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
     # - are returned as list of lists
-    if value_type == "matrix":
+    if value_type in ("matrix", "matrixd"):
         output = []
         current_index = -1
         parts = value.split(",")
@@ -176,7 +218,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "rational2i":
         return RationalToInt(value)
 
-    if value_type == "vector":
+    if value_type in ("vector", "vectord"):
         parts = [part.strip() for part in value.split(",")]
         output = []
         for part in parts:
@@ -358,6 +400,10 @@ def should_convert_for_ffmpeg(src_filepath):
     if not input_info:
         return None
 
+    subimages = input_info.get("subimages")
+    if subimages is not None and subimages > 1:
+        return True
+
     # Check compression
     compression = input_info["attribs"].get("compression")
     if compression in ("dwaa", "dwab"):
@@ -431,7 +477,7 @@ def convert_for_ffmpeg(
     if input_frame_start is not None and input_frame_end is not None:
         is_sequence = int(input_frame_end) != int(input_frame_start)
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -466,13 +512,21 @@ def convert_for_ffmpeg(
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
 
-    oiio_cmd.extend([
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
         # Tell oiiotool which channels should be loaded
         # - other channels are not loaded to memory so helps to avoid memory
         #       leak issues
-        "-i:ch={}".format(input_channels_str), first_input_path,
+        # - this option is crashing if used on multipart/subimages exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    oiio_cmd.extend([
+        input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
-        "--ch", channels_arg
+        "--ch", channels_arg,
+        # Use first subimage
+        "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -566,7 +620,7 @@ def convert_input_paths_for_ffmpeg(
             " \".exr\" extension. Got \"{}\"."
         ).format(ext))
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -584,11 +638,21 @@ def convert_input_paths_for_ffmpeg(
 
     red, green, blue, alpha = review_channels
     input_channels = [red, green, blue]
+    # TODO find subimage inder where rgba is available for multipart exrs
     channels_arg = "R={},G={},B={}".format(red, green, blue)
     if alpha is not None:
         channels_arg += ",A={}".format(alpha)
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
+
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
 
     for input_path in input_paths:
         # Prepare subprocess arguments
@@ -603,13 +667,12 @@ def convert_input_paths_for_ffmpeg(
             oiio_cmd.extend(["--compression", compression])
 
         oiio_cmd.extend([
-            # Tell oiiotool which channels should be loaded
-            # - other channels are not loaded to memory so helps to
-            #       avoid memory leak issues
-            "-i:ch={}".format(input_channels_str), input_path,
+            input_arg, input_path,
             # Tell oiiotool which channels should be put to top stack
             #   (and output)
-            "--ch", channels_arg
+            "--ch", channels_arg,
+            # Use first subimage
+            "--subimage", "0"
         ])
 
         for attr_name, attr_value in input_info["attribs"].items():
@@ -683,11 +746,18 @@ def get_ffprobe_data(path_to_file, logger=None):
     logger.debug("FFprobe command: {}".format(
         subprocess.list2cmdline(args)
     ))
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    kwargs = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+    }
+    if platform.system().lower() == "windows":
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+
+    popen = subprocess.Popen(args, **kwargs)
 
     popen_stdout, popen_stderr = popen.communicate()
     if popen_stdout:
@@ -975,3 +1045,90 @@ def convert_ffprobe_fps_to_float(value):
     if divisor == 0.0:
         return 0.0
     return dividend / divisor
+
+
+def convert_colorspace(
+    input_path,
+    output_path,
+    config_path,
+    source_colorspace,
+    target_colorspace=None,
+    view=None,
+    display=None,
+    additional_command_args=None,
+    logger=None
+):
+    """Convert source file from one color space to another.
+
+    Args:
+        input_path (str): Path that should be converted. It is expected that
+            contains single file or image sequence of same type
+            (sequence in format 'file.FRAMESTART-FRAMEEND#.ext', see oiio docs,
+            eg `big.1-3#.tif`)
+        output_path (str): Path to output filename.
+            (must follow format of 'input_path', eg. single file or
+             sequence in 'file.FRAMESTART-FRAMEEND#.ext', `output.1-3#.tif`)
+        config_path (str): path to OCIO config file
+        source_colorspace (str): ocio valid color space of source files
+        target_colorspace (str): ocio valid target color space
+                    if filled, 'view' and 'display' must be empty
+        view (str): name for viewer space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
+        display (str): name for display-referred reference space (ocio valid)
+        additional_command_args (list): arguments for oiiotool (like binary
+            depth for .dpx)
+        logger (logging.Logger): Logger used for logging.
+    Raises:
+        ValueError: if misconfigured
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    oiio_cmd = [
+        get_oiio_tools_path(),
+        input_path,
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+        "--colorconfig", config_path
+    ]
+
+    if all([target_colorspace, view, display]):
+        raise ValueError("Colorspace and both screen and display"
+                         " cannot be set together."
+                         "Choose colorspace or screen and display")
+    if not target_colorspace and not all([view, display]):
+        raise ValueError("Both screen and display must be set.")
+
+    if additional_command_args:
+        oiio_cmd.extend(additional_command_args)
+
+    if target_colorspace:
+        oiio_cmd.extend(["--colorconvert",
+                         source_colorspace,
+                         target_colorspace])
+    if view and display:
+        oiio_cmd.extend(["--iscolorspace", source_colorspace])
+        oiio_cmd.extend(["--ociodisplay", display, view])
+
+    oiio_cmd.extend(["-o", output_path])
+
+    logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+    run_subprocess(oiio_cmd, logger=logger)
+
+
+def split_cmd_args(in_args):
+    """Makes sure all entered arguments are separated in individual items.
+
+    Split each argument string with " -" to identify if string contains
+    one or more arguments.
+    Args:
+        in_args (list): of arguments ['-n', '-d uint10']
+    Returns
+        (list): ['-n', '-d', 'unint10']
+    """
+    splitted_args = []
+    for arg in in_args:
+        if not arg.strip():
+            continue
+        splitted_args.extend(arg.split(" "))
+    return splitted_args

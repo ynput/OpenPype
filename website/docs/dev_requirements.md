@@ -14,7 +14,7 @@ The main things you will need to run and build pype are:
 - **Terminal** in your OS
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
-- [**Python 3.7.9**](#python) or higher
+- [**Python 3.9.x**](#python)
 - [**MongoDB**](#database)
 
 
@@ -39,13 +39,13 @@ Pype needs site-wide installation of **MongoDB**. It should be installed on
 reliable server, that all workstations (and possibly render nodes) can connect. This
 server holds **Avalon** database that is at the core of everything
 
-Depending on project size and number of artists working connection speed and
+Depending on project size and number of artists working, connection speed and
 latency influence performance experienced by artists. If remote working is required, this mongodb
 server must be accessible from Internet or cloud solution can be used. Reasonable backup plan
 or high availability options are recommended. *Replication* feature of MongoDB should be considered. This is beyond the
 scope of this documentation, please refer to [MongoDB Documentation](https://docs.mongodb.com/manual/replication/).
 
-Pype can run it's own instance of mongodb, mostly for testing and development purposes.
+Pype can run its own instance of mongodb, mostly for testing and development purposes.
 For that it uses locally installed MongoDB.
 
 Download it from [mognoDB website](https://www.mongodb.com/download-center/community), install it and
@@ -55,13 +55,14 @@ To run mongoDB on server, use your server distribution tools to set it up (on Li
 
 ## Python
 
-**Python 3.7.8** is the recommended version to use (as per [VFX platform CY2021](https://vfxplatform.com/)).
+**Python 3.9.x** is the recommended version to use (as per [VFX platform CY2022](https://vfxplatform.com/)).
+**Note**: We do not support 3.9.0 because of [this bug](https://github.com/python/cpython/pull/22670). Please, use higher versions of 3.9.x.
 
-If you're planning to run openPYPE on workstations from built executables (highly recommended), you will only need python for building and development, however, if you'd like to run from source centrally, every user will need python installed. 
+If you're planning to run openPYPE on workstations from built executables (highly recommended), you will only need python for building and development, however, if you'd like to run from source centrally, every user will need python installed.
 
 ## Hardware
 
-openPYPE should be installed on all workstations that need to use it, the same as any other application. 
+openPYPE should be installed on all workstations that need to use it, the same as any other application.
 
 There are no specific requirements for the hardware. If the workstation can run
 the major DCCs, it most probably can run openPYPE.
@@ -69,7 +70,7 @@ the major DCCs, it most probably can run openPYPE.
 Installed, it takes around 400MB of space, depending on the platform
 
 
-For well functioning ftrack event server, we recommend a linux virtual server with Ubuntu or CentOS. CPU and RAM allocation needs differ based on the studio size, but a 2GB of ram, with a dual core CPU and around 4GB of storage should suffice
+For a well functioning ftrack event server, we recommend a linux virtual server with Ubuntu or CentOS. CPU and RAM allocation needs differ based on the studio size, but a 2GB of ram, with a dual core CPU and around 4GB of storage should suffice
 
 
 ## Deployment

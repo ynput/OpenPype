@@ -1,11 +1,11 @@
 import os
 import tempfile
 import pyblish.api
-import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_ffprobe_streams,
     path_to_subprocess_arg,
+    run_subprocess,
 )
 
 
@@ -96,7 +96,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         # run subprocess
         self.log.debug("Executing: {}".format(subprocess_jpeg))
-        openpype.api.run_subprocess(
+        run_subprocess(
             subprocess_jpeg, shell=True, logger=self.log
         )
 
@@ -118,6 +118,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             'files': filename,
             "stagingDir": staging_dir,
             "tags": ["thumbnail", "delete"],
+            "thumbnail": True
         }
         if width and height:
             representation["width"] = width

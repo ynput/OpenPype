@@ -132,6 +132,11 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "import_reference",
+                            "label": "Use Scene with Imported Reference"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "asset_dependencies",
                             "label": "Use Asset dependencies"
                         },
@@ -190,6 +195,71 @@
                                 ]
 
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "strict_error_checking",
+                            "label": "Strict Error Checking",
+                            "default": true
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "MaxSubmitDeadline",
+                    "label": "3dsMax Submit to Deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_published",
+                            "label": "Use Published scene"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Chunk Size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool_secondary",
+                            "label": "Deadline pool (secondary)"
+                        },
+                        {
+                            "type": "number",
+                            "key": "framePerTask",
+                            "label": "Frame Per Task"
                         }
                     ]
                 },
@@ -214,11 +284,6 @@
                             "type": "boolean",
                             "key": "active",
                             "label": "Active"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
                         },
                         {
                             "type": "splitter"
@@ -384,6 +449,56 @@
                             "type": "boolean",
                             "key": "multiprocess",
                             "label": "Multiprocess"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CelactionSubmitDeadline",
+                    "label": "Celaction Submit Deadline",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline apartment"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool_secondary",
+                            "label": "Deadline pool (secondary)"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_job_delay",
+                            "label": "Delay job (timecode dd:hh:mm:ss)"
                         }
                     ]
                 },

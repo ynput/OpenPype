@@ -88,12 +88,10 @@ class ExperimentalTools:
                 "publisher",
                 "New publisher",
                 "Combined creation and publishing into one tool.",
-                self._show_publisher
-            ),
-            ExperimentalTool(
-                "traypublisher",
-                "New Standalone Publisher",
-                "Standalone publisher using new publisher. Requires restart"
+                self._show_publisher,
+                hosts_filter=["blender", "maya", "nuke", "celaction", "flame",
+                              "fusion", "harmony", "hiero", "resolve",
+                              "tvpaint", "unreal"]
             )
         ]
 
@@ -164,9 +162,9 @@ class ExperimentalTools:
 
     def _show_publisher(self):
         if self._publisher_tool is None:
-            from openpype.tools import publisher
+            from openpype.tools.publisher.window import PublisherWindow
 
-            self._publisher_tool = publisher.PublisherWindow(
+            self._publisher_tool = PublisherWindow(
                 parent=self._parent_widget
             )
 

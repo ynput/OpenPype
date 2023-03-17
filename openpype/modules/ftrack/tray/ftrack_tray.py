@@ -3,9 +3,9 @@ import time
 import datetime
 import threading
 
-from Qt import QtCore, QtWidgets, QtGui
-
 import ftrack_api
+from qtpy import QtCore, QtWidgets, QtGui
+
 from openpype import resources
 from openpype.lib import Logger
 from openpype_modules.ftrack import resolve_ftrack_url, FTRACK_MODULE_DIR
@@ -199,7 +199,7 @@ class FtrackTrayWrapper:
                     failed_count = 0
 
             # If thread failed test Ftrack and Mongo connection
-            elif not self.thread_socket_server.isAlive():
+            elif not self.thread_socket_server.is_alive():
                 self.thread_socket_server.join()
                 self.thread_socket_server = None
                 ftrack_accessible = False

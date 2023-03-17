@@ -6,6 +6,23 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "list",
             "collapsible": true,
             "key": "simple_creators",
@@ -309,6 +326,24 @@
                     "collapsible_key": true,
                     "collapsed": false,
                     "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_validate_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateFrameRange",
+                            "label": "Validate frame range"
+                        }
+                    ]
                 }
             ]
         }

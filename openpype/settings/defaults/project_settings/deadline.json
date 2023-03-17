@@ -2,7 +2,7 @@
     "deadline_servers": [],
     "publish": {
         "CollectDefaultDeadlineServer": {
-            "pass_mongo_url": false
+            "pass_mongo_url": true
         },
         "CollectDeadlinePools": {
             "primary_pool": "",
@@ -25,6 +25,7 @@
             "active": true,
             "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
+            "import_reference": false,
             "asset_dependencies": true,
             "priority": 50,
             "tile_priority": 50,
@@ -32,13 +33,25 @@
             "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
-            "scene_patches": []
+            "scene_patches": [],
+            "strict_error_checking": true
+        },
+        "MaxSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "use_published": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "group": "none",
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "framePerTask": 1
         },
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
-            "use_published": true,
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
@@ -70,6 +83,16 @@
             "department": "",
             "multiprocess": true
         },
+        "CelactionSubmitDeadline": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_priority": 50,
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 10,
+            "deadline_job_delay": "00:00:00:00"
+        },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
             "deadline_department": "",
@@ -90,6 +113,9 @@
                     ".*"
                 ],
                 "harmony": [
+                    ".*"
+                ],
+                "max": [
                     ".*"
                 ]
             }

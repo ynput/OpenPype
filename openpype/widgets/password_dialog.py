@@ -1,9 +1,9 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.resources import get_resource
 
-from openpype.api import get_system_settings
+from openpype.settings import get_system_settings
 from openpype.settings.lib import (
     get_local_settings,
     save_local_settings

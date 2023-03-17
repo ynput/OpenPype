@@ -20,7 +20,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = ValidateContentsOrder
-    families = ['animation', "pointcache"]
+    families = ['animation', "pointcache", "proxyAbc"]
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
     actions = [

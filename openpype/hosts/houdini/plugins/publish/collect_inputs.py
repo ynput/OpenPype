@@ -1,5 +1,3 @@
-from bson.objectid import ObjectId
-
 import pyblish.api
 
 from openpype.pipeline import registered_host
@@ -106,7 +104,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             # If no valid output node is set then ignore it as validation
             # will be checking those cases.
             self.log.debug(
-                "No output node found, skipping " "collecting of inputs.."
+                "No output node found, skipping collecting of inputs.."
             )
             return
 
@@ -117,7 +115,6 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
         # Collect containers for the given set of nodes
         containers = collect_input_containers(nodes)
 
-        inputs = [ObjectId(c["representation"]) for c in containers]
+        inputs = [c["representation"] for c in containers]
         instance.data["inputRepresentations"] = inputs
-
         self.log.info("Collected inputs: %s" % inputs)

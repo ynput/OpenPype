@@ -9,7 +9,9 @@ import os
 import logging
 import collections
 
-from openpype.lib import get_subset_name
+from openpype.client import get_asset_by_id
+
+from .subset_name import get_subset_name
 
 
 class LegacyCreator(object):
@@ -18,6 +20,7 @@ class LegacyCreator(object):
     family = None
     defaults = None
     maintain_selection = True
+    enabled = True
 
     dynamic_subset_keys = []
 
@@ -74,11 +77,10 @@ class LegacyCreator(object):
         print(">>> We have preset for {}".format(plugin_name))
         for option, value in plugin_settings.items():
             if option == "enabled" and value is False:
-                setattr(cls, "active", False)
                 print("  - is disabled by preset")
             else:
-                setattr(cls, option, value)
                 print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
 
     def process(self):
         pass
@@ -147,11 +149,15 @@ class LegacyCreator(object):
             variant, task_name, asset_id, project_name, host_name
         )
 
+        asset_doc = get_asset_by_id(
+            project_name, asset_id, fields=["data.tasks"]
+        )
+
         return get_subset_name(
             cls.family,
             variant,
             task_name,
-            asset_id,
+            asset_doc,
             project_name,
             host_name,
             dynamic_data=dynamic_data

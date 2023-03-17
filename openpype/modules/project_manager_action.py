@@ -1,5 +1,4 @@
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayAction
+from openpype.modules import OpenPypeModule, ITrayAction
 
 
 class ProjectManagerAction(OpenPypeModule, ITrayAction):

@@ -82,7 +82,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         if len(instance_names) != len(set(instance_names)):
             self.log.warning("Duplicate instances found. " +
-                             "Remove unwanted via SubsetManager")
+                             "Remove unwanted via Publisher")
 
         if len(instance_names) == 0 and self.flatten_subset_template:
             project_name = context.data["projectEntity"]["name"]

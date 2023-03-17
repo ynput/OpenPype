@@ -2,7 +2,7 @@ import json
 
 import pyblish.api
 from openpype.pipeline import PublishXmlValidationError
-from openpype.hosts.tvpaint.api import lib
+from openpype.hosts.tvpaint.api.lib import execute_george
 
 
 class ValidateMarksRepair(pyblish.api.Action):
@@ -15,10 +15,10 @@ class ValidateMarksRepair(pyblish.api.Action):
     def process(self, context, plugin):
         expected_data = ValidateMarks.get_expected_data(context)
 
-        lib.execute_george(
+        execute_george(
             "tv_markin {} set".format(expected_data["markIn"])
         )
-        lib.execute_george(
+        execute_george(
             "tv_markout {} set".format(expected_data["markOut"])
         )
 
@@ -39,7 +39,7 @@ class ValidateMarks(pyblish.api.ContextPlugin):
     def get_expected_data(context):
         scene_mark_in = context.data["sceneMarkIn"]
 
-        # Data collected in `CollectAvalonEntities`
+        # Data collected in `CollectContextEntities`
         frame_end = context.data["frameEnd"]
         frame_start = context.data["frameStart"]
         handle_start = context.data["handleStart"]

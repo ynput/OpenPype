@@ -422,7 +422,7 @@ class TemplateResult(str):
 
         cls = self.__class__
         return cls(
-            os.path.normpath(self),
+            os.path.normpath(self.replace("\\", "/")),
             self.template,
             self.solved,
             self.used_values,

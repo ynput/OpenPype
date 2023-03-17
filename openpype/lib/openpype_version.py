@@ -57,15 +57,66 @@ def is_running_from_build():
     return True
 
 
+def is_staging_enabled():
+    return os.environ.get("OPENPYPE_USE_STAGING") == "1"
+
+
 def is_running_staging():
     """Currently used OpenPype is staging version.
 
+    This function is not 100% proper check of staging version. It is possible
+    to have enabled to use staging version but be in different one.
+
+    The function is based on 4 factors:
+    - env 'OPENPYPE_IS_STAGING' is set
+    - current production version
+    - current staging version
+    - use staging is enabled
+
+    First checks for 'OPENPYPE_IS_STAGING' environment which can be set to '1'.
+    The value should be set only when a process without access to
+    OpenPypeVersion is launched (e.g. in DCCs). If current version is same
+    as production version it is expected that it is not staging, and it
+    doesn't matter what would 'is_staging_enabled' return. If current version
+    is same as staging version it is expected we're in staging. In all other
+    cases 'is_staging_enabled' is used as source of outpu value.
+
+    The function is used to decide which icon is used. To check e.g. updates
+    the output should be combined with other functions from this file.
+
     Returns:
-        bool: True if openpype version containt 'staging'.
+        bool: Using staging version or not.
     """
-    if "staging" in get_openpype_version():
+
+    if os.environ.get("OPENPYPE_IS_STAGING") == "1":
         return True
-    return False
+
+    if not op_version_control_available():
+        return False
+
+    from openpype.settings import get_global_settings
+
+    global_settings = get_global_settings()
+    production_version = global_settings["production_version"]
+    latest_version = None
+    if not production_version or production_version == "latest":
+        latest_version = get_latest_version(local=False, remote=True)
+        production_version = latest_version
+
+    current_version = get_openpype_version()
+    if current_version == production_version:
+        return False
+
+    staging_version = global_settings["staging_version"]
+    if not staging_version or staging_version == "latest":
+        if latest_version is None:
+            latest_version = get_latest_version(local=False, remote=True)
+        staging_version = latest_version
+
+    if current_version == production_version:
+        return True
+
+    return is_staging_enabled()
 
 
 # ----------------------------------------
@@ -131,13 +182,11 @@ def get_remote_versions(*args, **kwargs):
     return None
 
 
-def get_latest_version(staging=None, local=None, remote=None):
+def get_latest_version(local=None, remote=None):
     """Get latest version from repository path."""
-    if staging is None:
-        staging = is_running_staging()
+
     if op_version_control_available():
         return get_OpenPypeVersion().get_latest_version(
-            staging=staging,
             local=local,
             remote=remote
         )
@@ -146,9 +195,9 @@ def get_latest_version(staging=None, local=None, remote=None):
 
 def get_expected_studio_version(staging=None):
     """Expected production or staging version in studio."""
-    if staging is None:
-        staging = is_running_staging()
     if op_version_control_available():
+        if staging is None:
+            staging = is_staging_enabled()
         return get_OpenPypeVersion().get_expected_studio_version(staging)
     return None
 
@@ -158,7 +207,7 @@ def get_expected_version(staging=None):
     if expected_version is None:
         # Look for latest if expected version is not set in settings
         expected_version = get_latest_version(
-            staging=staging,
+            local=False,
             remote=True
         )
     return expected_version

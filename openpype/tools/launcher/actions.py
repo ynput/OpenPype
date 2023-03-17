@@ -1,11 +1,12 @@
 import os
 
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 from openpype import PLUGINS_DIR
 from openpype import style
-from openpype.api import Logger, resources
+from openpype import resources
 from openpype.lib import (
+    Logger,
     ApplictionExecutableNotFound,
     ApplicationLaunchFailed
 )

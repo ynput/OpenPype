@@ -19,12 +19,12 @@ from .publish_plugins import (
     RepairContextAction,
 
     Extractor,
+    ColormanagedPyblishPluginMixin
 )
 
 from .lib import (
     get_publish_template_name,
 
-    DiscoverResult,
     publish_plugins_discover,
     load_help_content_from_plugin,
     load_help_content_from_filepath,
@@ -35,6 +35,7 @@ from .lib import (
     filter_instances_for_context_plugin,
     context_plugin_should_run,
     get_instance_staging_dir,
+    get_publish_repre_path,
 )
 
 from .abstract_expected_files import ExpectedFiles
@@ -63,10 +64,10 @@ __all__ = (
     "RepairContextAction",
 
     "Extractor",
+    "ColormanagedPyblishPluginMixin",
 
     "get_publish_template_name",
 
-    "DiscoverResult",
     "publish_plugins_discover",
     "load_help_content_from_plugin",
     "load_help_content_from_filepath",
@@ -77,6 +78,7 @@ __all__ = (
     "filter_instances_for_context_plugin",
     "context_plugin_should_run",
     "get_instance_staging_dir",
+    "get_publish_repre_path",
 
     "ExpectedFiles",
 

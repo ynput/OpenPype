@@ -1,6 +1,7 @@
 from .utils import (
     HeroVersionType,
 
+    LoadError,
     IncompatibleLoaderError,
     InvalidRepresentationContext,
 
@@ -51,6 +52,7 @@ __all__ = (
     # utils.py
     "HeroVersionType",
 
+    "LoadError",
     "IncompatibleLoaderError",
     "InvalidRepresentationContext",
 

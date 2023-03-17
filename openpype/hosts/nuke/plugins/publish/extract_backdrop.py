@@ -26,8 +26,14 @@ class ExtractBackdropNode(publish.Extractor):
     families = ["nukenodes"]
 
     def process(self, instance):
-        tmp_nodes = list()
-        nodes = instance[1:]
+        tmp_nodes = []
+        child_nodes = instance.data["transientData"]["childNodes"]
+        # all connections outside of backdrop
+        connections_in = instance.data["transientData"]["nodeConnectionsIn"]
+        connections_out = instance.data["transientData"]["nodeConnectionsOut"]
+        self.log.debug("_ connections_in: `{}`".format(connections_in))
+        self.log.debug("_ connections_out: `{}`".format(connections_out))
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = "{0}.nk".format(instance.name)
@@ -35,20 +41,14 @@ class ExtractBackdropNode(publish.Extractor):
 
         # maintain selection
         with maintained_selection():
-            # all connections outside of backdrop
-            connections_in = instance.data["nodeConnectionsIn"]
-            connections_out = instance.data["nodeConnectionsOut"]
-            self.log.debug("_ connections_in: `{}`".format(connections_in))
-            self.log.debug("_ connections_out: `{}`".format(connections_out))
-
-            # create input nodes and name them as passing node (*_INP)
+            # create input child_nodes and name them as passing node (*_INP)
             for n, inputs in connections_in.items():
                 for i, input in inputs:
                     inpn = nuke.createNode("Input")
                     inpn["name"].setValue("{}_{}_INP".format(n.name(), i))
                     n.setInput(i, inpn)
                     inpn.setXYpos(input.xpos(), input.ypos())
-                    nodes.append(inpn)
+                    child_nodes.append(inpn)
                     tmp_nodes.append(inpn)
 
             reset_selection()
@@ -63,13 +63,13 @@ class ExtractBackdropNode(publish.Extractor):
                           if d.name() in n.name()), 0), opn)
                 opn.setInput(0, n)
                 opn.autoplace()
-                nodes.append(opn)
+                child_nodes.append(opn)
                 tmp_nodes.append(opn)
                 reset_selection()
 
-            # select nodes to copy
+            # select child_nodes to copy
             reset_selection()
-            select_nodes(nodes)
+            select_nodes(child_nodes)
             # create tmp nk file
             # save file to the path
             nuke.nodeCopy(path)
@@ -104,6 +104,3 @@ class ExtractBackdropNode(publish.Extractor):
 
         self.log.info("Extracted instance '{}' to: {}".format(
             instance.name, path))
-
-        self.log.info("Data {}".format(
-            instance.data))

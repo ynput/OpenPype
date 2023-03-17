@@ -4,18 +4,19 @@ import shutil
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
-from Qt import QtCore, QtWidgets
-
-import openpype.api as openpype
 import qargparse
+from qtpy import QtCore, QtWidgets
+
 from openpype import style
+from openpype.lib import Logger, StringTemplate
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.settings import get_current_project_settings
 
 from . import constants
 from . import lib as flib
 from . import pipeline as fpipeline
 
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -305,7 +306,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "flame"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context flame objects
@@ -595,18 +596,28 @@ class PublishableClip:
         if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), hero_data in self.vertical_clip_match.items():
-                hero_data.update({"heroTrack": False})
-                if _in == self.clip_in and _out == self.clip_out:
+                """
+                Since only one instance of hero clip is expected in
+                `self.vertical_clip_match`, this will loop only once
+                until none hero clip will be matched with hero clip.
+
+                `tag_hierarchy_data` will be set only once for every
+                clip which is not hero clip.
+                """
+                _hero_data = deepcopy(hero_data)
+                _hero_data.update({"heroTrack": False})
+                if _in <= self.clip_in and _out >= self.clip_out:
                     data_subset = hero_data["subset"]
                     # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        hero_data["subset"] = self.subset + str(
+                        _hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        hero_data["subset"] = self.subset
+                        _hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = hero_data
+                    tag_hierarchy_data = _hero_data
+                    break
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
@@ -689,6 +700,85 @@ class ClipLoader(LoaderPlugin):
         )
     ]
 
+    _mapping = None
+
+    def apply_settings(cls, project_settings, system_settings):
+
+        plugin_type_settings = (
+            project_settings
+            .get("flame", {})
+            .get("load", {})
+        )
+
+        if not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                print("  - is disabled by preset")
+            elif option == "representations":
+                continue
+            else:
+                print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
+
+    def get_colorspace(self, context):
+        """Get colorspace name
+
+        Look either to version data or representation data.
+
+        Args:
+            context (dict): version context data
+
+        Returns:
+            str: colorspace name or None
+        """
+        version = context['version']
+        version_data = version.get("data", {})
+        colorspace = version_data.get(
+            "colorspace", None
+        )
+
+        if (
+            not colorspace
+            or colorspace == "Unknown"
+        ):
+            colorspace = context["representation"]["data"].get(
+                "colorspace", None)
+
+        return colorspace
+
+    @classmethod
+    def get_native_colorspace(cls, input_colorspace):
+        """Return native colorspace name.
+
+        Args:
+            input_colorspace (str | None): colorspace name
+
+        Returns:
+            str: native colorspace name defined in mapping or None
+        """
+        if not cls._mapping:
+            settings = get_current_project_settings()["flame"]
+            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            cls._mapping = {
+                input["ocioName"]: input["flameName"]
+                for input in mapping
+            }
+
+        return cls._mapping.get(input_colorspace)
+
 
 class OpenClipSolver(flib.MediaInfoFile):
     create_new_clip = False
@@ -715,6 +805,11 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.feed_version_name = feed_data["version"]
         self.feed_colorspace = feed_data.get("colorspace")
         self.log.debug("feed_version_name: {}".format(self.feed_version_name))
+
+        # layer rename variables
+        self.layer_rename_template = feed_data["layer_rename_template"]
+        self.layer_rename_patterns = feed_data["layer_rename_patterns"]
+        self.context_data = feed_data["context_data"]
 
         # derivate other feed variables
         self.feed_basename = os.path.basename(feed_path)
@@ -754,9 +849,11 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     def _create_new_open_clip(self):
         self.log.info("Building new openClip")
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
         for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
+
             tmp_xml_feeds = tmp_xml_track.find('feeds')
             tmp_xml_feeds.set('currentVersion', self.feed_version_name)
 
@@ -791,6 +888,48 @@ class OpenClipSolver(flib.MediaInfoFile):
             if uid == track_uid:
                 return xml_track
 
+    def _rename_track_name(self, xml_track_data):
+        layer_uid = xml_track_data.get("uid")
+        name_obj = xml_track_data.find("name")
+        layer_name = name_obj.text
+
+        if (
+            self.layer_rename_patterns
+            and not any(
+                re.search(lp_.lower(), layer_name.lower())
+                for lp_ in self.layer_rename_patterns
+            )
+        ):
+            return
+
+        formating_data = self._update_formating_data(
+            layerName=layer_name,
+            layerUID=layer_uid
+        )
+        name_obj.text = StringTemplate(
+            self.layer_rename_template
+        ).format(formating_data)
+
+    def _update_formating_data(self, **kwargs):
+        """ Updating formating data for layer rename
+
+        Attributes:
+            key=value (optional): will be included to formating data
+                                  as {key: value}
+        Returns:
+            dict: anatomy context data for formating
+        """
+        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
+        clip_name_obj = self.clip_data.find("name")
+        data = {
+            "originalBasename": clip_name_obj.text
+        }
+        # include version context data
+        data.update(self.context_data)
+        # include input kwargs data
+        data.update(kwargs)
+        return data
+
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
@@ -798,11 +937,12 @@ class OpenClipSolver(flib.MediaInfoFile):
         out_xml = out_xml.getroot()
 
         self.log.debug(">> out_xml: {}".format(out_xml))
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
-
         # loop tmp tracks
         updated_any = False
         for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
+
             # get tmp track uid
             tmp_track_uid = tmp_xml_track.get("uid")
             self.log.debug(">> tmp_track_uid: {}".format(tmp_track_uid))

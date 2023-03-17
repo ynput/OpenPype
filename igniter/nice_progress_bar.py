@@ -1,4 +1,4 @@
-from Qt import QtCore, QtGui, QtWidgets  # noqa
+from qtpy import QtWidgets
 
 
 class NiceProgressBar(QtWidgets.QProgressBar):

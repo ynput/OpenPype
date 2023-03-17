@@ -1,5 +1,5 @@
 import uuid
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 import pyblish.api
 

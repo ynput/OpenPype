@@ -6,6 +6,97 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "open_workfile_post_initialization",
+            "label": "Open Workfile Post Initialization"
+        },
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                },
+                {
+                    "key": "colorManagementPreference_v2",
+                    "type": "dict",
+                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Use Color Management Preference v2"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "displayName",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewName",
+                            "label": "View"
+                        }
+                    ]
+                },
+                {
+                    "key": "colorManagementPreference",
+                    "type": "dict",
+                    "label": "Color Management Preference (legacy)",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewTransform",
+                            "label": "Viewer Transform"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "text",
             "multiline" : true,
             "use_label_wrap": true,

@@ -23,7 +23,7 @@ class ValidateContainers(OptionalPyblishPluginMixin,
 
     """Containers are must be updated to latest version on publish."""
 
-    label = "Validate Containers"
+    label = "Validate Outdated Containers"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects"]
     optional = True

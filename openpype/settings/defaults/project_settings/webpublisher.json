@@ -1,4 +1,14 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "timeout_profiles": [
         {
             "hosts": [
@@ -10,6 +20,7 @@
     ],
     "publish": {
         "CollectPublishedFiles": {
+            "sync_next_version": false,
             "task_type_to_family": {
                 "Animation": [
                     {

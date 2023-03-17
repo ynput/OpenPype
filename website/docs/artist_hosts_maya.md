@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## OpenPype global tools
 
--   [Set Context](artist_tools.md#set-context)
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Set Context](artist_tools_context_manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Working with OpenPype in Maya
 
@@ -55,7 +55,7 @@ low resolution stuff. See [Subset](artist_concepts.md#subset).
 :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools_inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -85,7 +85,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/maya-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools.md#publisher).
+For more detail see [Publisher](artist_tools_publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. Green square indicate they are ready for
@@ -139,7 +139,7 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools_loader) - **OpenPype → Load...**.
 There you should see your model, named `modelMain`.
 
 ## Look development
@@ -200,8 +200,8 @@ there are few yellow icons in left shelf:
 
 ![Maya - shortcut icons](assets/maya-shortcut_buttons.jpg)
 
-Those are shortcuts for **Look Manager**, [Work Files](artist_tools.md#workfiles),
-[Load](artist_tools.md#loader), and [Manage (Inventory)](artist_tools.md#inventory).
+Those are shortcuts for **Look Manager**, [Work Files](artist_tools_workfiles),
+[Load](artist_tools_loader), and [Manage (Inventory)](artist_tools_inventory).
 
 Those can be found even in top menu, but that depends on your studio setup.
 
@@ -230,8 +230,8 @@ Maya settings concerning framerate, resolution and frame range are handled by
 OpenPype. If set correctly in Ftrack, Maya will validate you have correct fps on
 scene save and publishing offering way to fix it for you.
 
-For resolution and frame range, use **OpenPype → Reset Frame Range** and
-**OpenPype → Reset Resolution**
+For resolution and frame range, use **OpenPype → Set Frame Range** and
+**OpenPype → Set Resolution**
 
 
 ## Creating rigs with OpenPype
@@ -294,7 +294,7 @@ have any missing dependencies.
 
 ### Loading rigs
 
-You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and **Reference** it.
 
 ## Point caches
@@ -308,13 +308,25 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
 
-:::note Publish on farm
-If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
-Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+#### Options
+
+- **Frame Start**: which frame to start the export at.
+- **Frame End**: which frame to end the export at.
+- **Handle Start**: additional frames to export at frame start. Ei. frame start - handle start = export start.
+- **Handle Start**: additional frames to export at frame end. Ei. frame end + handle end = export end.
+- **Step**: frequency of sampling the export. For example when dealing with quick movements for motion blur, a step size of less than 1 might be better.
+- **Refresh**: refresh the viewport when exporting the pointcache. For performance is best to leave off, but certain situations can require to refresh the viewport, for example using the Bullet plugin.
+- **Attr**: specific attributes to publish separated by `;`.
+- **AttrPrefix**: specific attributes which start with this prefix to publish separated by `;`.
+- **Include User Defined Attribudes**: include all user defined attributes in the publish.
+- **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
+- **Priority**: Farm priority.
 
 ### Loading Point Caches
 
@@ -332,7 +344,7 @@ OpenPype allows to version and manage those sets.
 ### Publishing Set dress / Layout
 
 Working with Set dresses is very easy. Just load your assets into scene with
-[Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
+[Loader](artist_tools_loader) (**OpenPype → Load...**). Populate your scene as
 you wish, translate each piece to fit your need. When ready, select all imported
 stuff and go **OpenPype → Create...** and select **Set Dress** or **Layout**.
 This will create set containing your selection and marking it for publishing.
@@ -345,7 +357,7 @@ Now you can publish is with **OpenPype → Publish**.
 
 ### Loading Set dress / Layout
 
-You can load Set dress / Layout using [Loader](artist_tools.md#loader)
+You can load Set dress / Layout using [Loader](artist_tools_loader)
 (**OpenPype → Load...**). Select you layout or set dress, right click on it and
 select **Reference Maya Ascii (ma)**. This will populate your scene with all those
 models you've put into layout.
@@ -374,7 +386,7 @@ Lets start with empty scene. First I'll pull in my favorite Buddha model.
 there just click on **Reference (abc)**.
 
 Next, I want to be sure that I have same frame range as is set on shot I am working
-on. To do this just **OpenPype → Reset Frame Range**. This should set Maya timeline to same
+on. To do this just **OpenPype → Set Frame Range**. This should set Maya timeline to same
 values as they are set on shot in *Ftrack* for example.
 
 I have my time set, so lets create some animation. We'll turn Buddha model around for
@@ -488,7 +500,7 @@ and for vray:
 maya/<Layer>/<Layer>
 ```
 
-Doing **OpenPype → Reset Resolution** will set correct resolution on camera.
+Doing **OpenPype → Set Resolution** will set correct resolution on camera.
 
 Scene is now ready for submission and should publish without errors.
 
@@ -601,3 +613,20 @@ about customizing review process refer to [admin section](project_settings/setti
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
+
+
+## Inventory Actions
+
+### Connect Geometry
+
+This action will connect geometries between containers.
+
+#### Usage
+
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
+
+#### Details
+
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
+
+The connection between geometries is done with a live blendshape.

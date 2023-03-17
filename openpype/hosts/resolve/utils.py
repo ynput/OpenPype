@@ -9,7 +9,8 @@ def setup(env):
     log = Logger.get_logger("ResolveSetup")
     scripts = {}
     us_env = env.get("RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR")
-    us_dir = env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
+    us_dir = env["RESOLVE_UTILITY_SCRIPTS_DIR"]
+
     us_paths = [os.path.join(
         RESOLVE_ROOT_DIR,
         "utility_scripts"

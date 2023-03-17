@@ -16,7 +16,7 @@ from openpype.tools.utils import (
     get_warning_pixmap
 )
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 
 class NameTextEdit(QtWidgets.QLineEdit):

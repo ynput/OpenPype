@@ -5,7 +5,7 @@ import collections
 from code import InteractiveInterpreter
 
 import appdirs
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import resources
 from openpype.style import load_stylesheet

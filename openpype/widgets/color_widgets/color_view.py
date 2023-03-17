@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 
 def draw_checkerboard_tile(piece_size=None, color_1=None, color_2=None):

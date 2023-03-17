@@ -25,8 +25,21 @@
                     {
                         "key": "path",
                         "label": "Path to template",
-                        "type": "text",
-                        "object_type": "text"
+                        "type": "path",
+                        "multiplatform": false,
+                        "multipath": false
+                    },
+                    {
+                        "key": "keep_placeholder",
+                        "label": "Keep placeholders",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    {
+                        "key": "create_first_version",
+                        "label": "Create first version",
+                        "type": "boolean",
+                        "default": true
                     }
                 ]
             }
