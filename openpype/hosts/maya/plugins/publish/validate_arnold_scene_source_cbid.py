@@ -1,6 +1,5 @@
-import maya.cmds as cmds
-
 import pyblish.api
+from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     ValidateContentsOrder, PublishValidationError, RepairAction
 )
@@ -40,7 +39,11 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
             proxy_node = proxy_nodes_by_name.get(content_name, None)
 
             if not proxy_node:
-                self.log.debug("Content node '{}' has no matching proxy node.".format(content_node))
+                self.log.debug(
+                    "Content node '{}' has no matching proxy node.".format(
+                        content_node
+                    )
+                )
                 continue
 
             content_id = lib.get_id(content_node)

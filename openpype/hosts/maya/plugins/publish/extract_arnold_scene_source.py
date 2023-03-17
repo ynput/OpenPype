@@ -120,7 +120,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
         with lib.delete_after() as delete_bin:
             duplicate_nodes = []
             for node in nodes:
-                parent = cmds.listRelatives(node, parent=True, fullPath=True)[0]
+                parent = cmds.listRelatives(
+                    node, parent=True, fullPath=True
+                )[0]
                 duplicate_transform = cmds.duplicate(node)[0]
                 duplicate_transform = "{}|{}".format(
                     parent, duplicate_transform
@@ -138,7 +140,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 )[0]
 
                 basename = node.split("|")[-1].split(":")[-1]
-                duplicate_transform  = cmds.rename(duplicate_transform, basename)
+                duplicate_transform = cmds.rename(
+                    duplicate_transform, basename
+                )
 
                 duplicate_nodes.append(duplicate_transform)
                 delete_bin.append(duplicate_transform)
