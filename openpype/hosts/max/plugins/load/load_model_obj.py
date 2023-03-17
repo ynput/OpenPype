@@ -41,7 +41,7 @@ class ObjLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        objects = self.get_container_children(node)
+        objects = node.Children
         for obj in objects:
             obj.source = path
 

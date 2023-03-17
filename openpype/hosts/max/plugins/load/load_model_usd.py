@@ -41,7 +41,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        usd_objects = self.get_container_children(node)
+        usd_objects = node.Children
         for usd_object in usd_objects:
             usd_object.source = path
 
