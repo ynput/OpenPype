@@ -124,6 +124,13 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 if cmds.nodeType(node) != "transform":
                     continue
 
+                # Only interested in transforms with shapes.
+                shapes = cmds.listRelatives(
+                    node, shapes=True, fullPath=True
+                ) or []
+                if not shapes:
+                    continue
+
                 parent = cmds.listRelatives(
                     node, parent=True, fullPath=True
                 )[0]
