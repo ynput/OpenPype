@@ -90,7 +90,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         """
         if copy_to.exists() and not force_sync:
             self.log.info(
-                "Destination Fusion preferences folder already exists"
+                "Destination Fusion preferences folder already exists: "
+                f"{copy_to} "
             )
             return
         self.log.info("Starting copying Fusion preferences")
