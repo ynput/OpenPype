@@ -9,7 +9,7 @@ from openpype.client.entities import (
 from openpype.lib import PreLaunchHook
 from openpype.lib.local_settings import get_local_site_id
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.pipeline.load.utils import get_representation_path
+from openpype.pipeline import get_representation_path
 from openpype.settings.lib import get_project_settings
 
 

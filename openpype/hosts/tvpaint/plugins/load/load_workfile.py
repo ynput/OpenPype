@@ -31,17 +31,17 @@ class LoadWorkfile(plugin.Loader):
     def load(self, context, name, namespace, options):
         # Load context of current workfile as first thing
         #   - which context and extension has
-        host = registered_host()
-        current_file = host.get_current_workfile()
-
-        context = get_current_workfile_context()
-
-        filepath = self.fname.replace("\\", "/")
+        filepath = self.filepath_from_context(context)
+        filepath = filepath.replace("\\", "/")
 
         if not os.path.exists(filepath):
             raise FileExistsError(
                 "The loaded file does not exist. Try downloading it first."
             )
+
+        host = registered_host()
+        current_file = host.get_current_workfile()
+        work_context = get_current_workfile_context()
 
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
             filepath
@@ -50,10 +50,10 @@ class LoadWorkfile(plugin.Loader):
 
         # Save workfile.
         host_name = "tvpaint"
-        project_name = context.get("project")
-        asset_name = context.get("asset")
-        task_name = context.get("task")
-        # Far cases when there is workfile without context
+        project_name = work_context.get("project")
+        asset_name = work_context.get("asset")
+        task_name = work_context.get("task")
+        # Far cases when there is workfile without work_context
         if not asset_name:
             project_name = legacy_io.active_project()
             asset_name = legacy_io.Session["AVALON_ASSET"]
