@@ -56,88 +56,91 @@ class ConnectYetiRig(InventoryAction):
         # Target containers.
         target_ids = {}
         inputs = []
-    yeti_rig_containers = containers_by_family.get("yetiRig")
-    if not yeti_rig_containers:
-        self.display_warning(
-            "Select at least one yetiRig container"
-        )
-        return
 
-    for container in yeti_rig_containers:
-        target_ids.update(self.nodes_by_id(container))
+        yeti_rig_containers = containers_by_family.get("yetiRig")
+        if not yeti_rig_containers:
+            self.display_warning(
+                "Select at least one yetiRig container"
+            )
+            return
 
-        maya_file = get_representation_path(
-            get_representation_context(
-                container["representation"]
-            )["representation"]
-        )
-        _, ext = os.path.splitext(maya_file)
-        settings_file = maya_file.replace(ext, ".rigsettings")
-        if not os.path.exists(settings_file):
-            continue
+        for container in yeti_rig_containers:
+            target_ids.update(self.nodes_by_id(container))
 
-        with open(settings_file) as f:
-            inputs.extend(json.load(f)["inputs"])
-
-        # Compare loaded connections to scene.
-        for input in inputs:
-            source_node = source_ids.get(input["sourceID"])
-            target_node = target_ids.get(input["destinationID"])
-
-            if not source_node or not target_node:
-                self.log.debug(
-                    "Could not find nodes for input:\n" +
-                    json.dumps(input, indent=4, sort_keys=True)
-                )
+            maya_file = get_representation_path(
+                get_representation_context(
+                    container["representation"]
+                )["representation"]
+            )
+            _, ext = os.path.splitext(maya_file)
+            settings_file = maya_file.replace(ext, ".rigsettings")
+            if not os.path.exists(settings_file):
                 continue
-            source_attr, target_attr = input["connections"]
 
-            if not cmds.attributeQuery(
-                source_attr, node=source_node, exists=True
-            ):
-                self.log.debug(
-                    "Could not find attribute {} on node {} for "
-                    "input:\n{}".format(
-                        source_attr,
-                        source_node,
+            with open(settings_file) as f:
+                inputs.extend(json.load(f)["inputs"])
+
+            # Compare loaded connections to scene.
+            for input in inputs:
+                source_node = source_ids.get(input["sourceID"])
+                target_node = target_ids.get(input["destinationID"])
+
+                if not source_node or not target_node:
+                    self.log.debug(
+                        "Could not find nodes for input:\n" +
                         json.dumps(input, indent=4, sort_keys=True)
                     )
-                )
-                continue
+                    continue
+                source_attr, target_attr = input["connections"]
 
-            if not cmds.attributeQuery(
-                target_attr, node=target_node, exists=True
-            ):
-                self.log.debug(
-                    "Could not find attribute {} on node {} for "
-                    "input:\n{}".format(
-                        target_attr,
-                        target_node,
-                        json.dumps(input, indent=4, sort_keys=True)
+                if not cmds.attributeQuery(
+                    source_attr, node=source_node, exists=True
+                ):
+                    self.log.debug(
+                        "Could not find attribute {} on node {} for "
+                        "input:\n{}".format(
+                            source_attr,
+                            source_node,
+                            json.dumps(input, indent=4, sort_keys=True)
+                        )
                     )
-                )
-                continue
+                    continue
 
-            source_plug = "{}.{}".format(source_node, 
-                                         source_attr)
-            target_plug = "{}.{}".format(target_node, 
-                                         target_attr)
-            if cmds.isConnected(source_plug, 
-                                target_plug,
-                                ignoreUnitConversion=True):
+                if not cmds.attributeQuery(
+                    target_attr, node=target_node, exists=True
+                ):
+                    self.log.debug(
+                        "Could not find attribute {} on node {} for "
+                        "input:\n{}".format(
+                            target_attr,
+                            target_node,
+                            json.dumps(input, indent=4, sort_keys=True)
+                        )
+                    )
+                    continue
+
+                source_plug = "{}.{}".format(
+                    source_node, source_attr
+                )
+                target_plug = "{}.{}".format(
+                    target_node, target_attr
+                )
+                if cmds.isConnected(
+                    source_plug, target_plug, ignoreUnitConversion=True
+                ):
+                    self.log.debug(
+                        "Connection already exists: {} -> {}".format(
+                            source_plug, target_plug
+                        )
+                    )
+                    continue
+
+                cmds.connectAttr(source_plug, target_plug, force=True)
                 self.log.debug(
-                    "Connection already exists: {} -> {}".format(
+                    "Connected attributes: {} -> {}".format(
                         source_plug, target_plug
                     )
                 )
-                continue
-
-            cmds.connectAttr(source_plug, target_plug, force=True)
-            self.log.debug(
-                "Connected attributes: {} -> {}".format(
-                    source_plug, target_plug
-                )
-            )
 
     def nodes_by_id(self, container):
         ids = {}
