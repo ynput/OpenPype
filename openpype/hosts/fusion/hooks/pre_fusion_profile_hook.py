@@ -114,7 +114,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
                 # convert Path to str to be compatible with Python 3.6+
                 shutil.copy(str(file), str(copy_to))
         self.log.info(
-            f"successfully copied preferences:\n {copy_from} to {copy_to}"
+            f"Successfully copied preferences: {copy_from} to {copy_to}"
         )
 
     def execute(self):
