@@ -120,6 +120,10 @@ class ExtractArnoldSceneSource(publish.Extractor):
         with lib.delete_after() as delete_bin:
             duplicate_nodes = []
             for node in nodes:
+                # Only interested in transforms:
+                if cmds.nodeType(node) != "transform":
+                    continue
+
                 parent = cmds.listRelatives(
                     node, parent=True, fullPath=True
                 )[0]
@@ -127,13 +131,6 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 duplicate_transform = "{}|{}".format(
                     parent, duplicate_transform
                 )
-
-                # Discard the children.
-                shapes = cmds.listRelatives(duplicate_transform, shapes=True)
-                children = cmds.listRelatives(
-                    duplicate_transform, children=True
-                )
-                cmds.delete(set(children) - set(shapes))
 
                 duplicate_transform = cmds.parent(
                     duplicate_transform, world=True
@@ -144,12 +141,22 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     duplicate_transform, basename
                 )
 
+                # Discard the children.
+                shapes = cmds.listRelatives(
+                    duplicate_transform, shapes=True, fullPath=True
+                )
+                children = cmds.listRelatives(
+                    duplicate_transform, children=True, fullPath=True
+                )
+                cmds.delete(set(children) - set(shapes))
+
                 duplicate_nodes.append(duplicate_transform)
+                duplicate_nodes.extend(shapes)
                 delete_bin.append(duplicate_transform)
 
             # Copy cbId to mtoa_constant.
             for node in duplicate_nodes:
-                lib.set_attribute("mtoa_constant_cbId", lib.get_id(node))
+                lib.set_attribute("mtoa_constant_cbId", lib.get_id(node), node)
 
             with lib.attribute_values(attribute_data):
                 with lib.maintained_selection():
