@@ -43,8 +43,8 @@ class LinkAsGroup(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname.replace("\\", "/")
-        self.log.info("file: {}\n".format(self.fname))
+        file = self.filepath_from_context(context).replace("\\", "/")
+        self.log.info("file: {}\n".format(file))
 
         precomp_name = context["representation"]["context"]["subset"]
 

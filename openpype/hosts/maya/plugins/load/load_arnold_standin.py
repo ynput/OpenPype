@@ -83,11 +83,12 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.parent(standin, root)
 
             # Set the standin filepath
+            repre_path = self.filepath_from_context(context)
             path, operator = self._setup_proxy(
-                standin_shape, self.fname, namespace
+                standin_shape, repre_path, namespace
             )
             cmds.setAttr(standin_shape + ".dso", path, type="string")
-            sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
+            sequence = is_sequence(os.listdir(os.path.dirname(repre_path)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
         nodes = [root, standin, standin_shape]
