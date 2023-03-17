@@ -68,7 +68,7 @@ Add `--headless` to run OpenPype without graphical UI (useful on server or on au
 
 `--verbose` `<level>` - change log verbose level of OpenPype loggers.
 
-Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"ciritcal" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
+Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"critical" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
 
 ```shell
 openpype_console --verbose debug

@@ -149,7 +149,7 @@ class ConnectXgen(InventoryAction):
             bool
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         if show_cancel:

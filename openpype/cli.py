@@ -367,11 +367,15 @@ def run(script):
               "--timeout",
               help="Provide specific timeout value for test case",
               default=None)
+@click.option("-so",
+              "--setup_only",
+              help="Only create dbs, do not run tests",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout):
+             timeout, setup_only):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout)
+                             persist, app_variant, timeout, setup_only)
 
 
 @main.command()

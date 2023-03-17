@@ -10,7 +10,7 @@
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_creator(parent)
+host_tools.show_publisher(parent, tab="create")
 ]]></scriptCode>
             </scriptItem>
 
@@ -30,7 +30,7 @@ host_tools.show_loader(parent=parent, use_context=True)
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_publisher(parent)
+host_tools.show_publisher(parent, tab="publish")
 ]]></scriptCode>
             </scriptItem>
 
@@ -66,8 +66,8 @@ host_tools.show_workfiles(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="reset_frame_range">
-                <label>Reset Frame Range</label>
+            <scriptItem id="set_frame_range">
+                <label>Set Frame Range</label>
                 <scriptCode><![CDATA[
 import openpype.hosts.houdini.api.lib
 openpype.hosts.houdini.api.lib.reset_framerange()
