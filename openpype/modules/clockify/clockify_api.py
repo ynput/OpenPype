@@ -245,9 +245,6 @@ class ClockifyAPI:
 
         # get running timer to check if we need to start it
         current_timer = self.get_in_progress()
-        current_timer_hierarchy = None
-        current_project_id = None
-        current_task_id = None
 
         # Check if is currently run another times and has same values
         # DO not restart the timer, if it is already running for curent task
@@ -288,10 +285,9 @@ class ClockifyAPI:
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url, headers=self.headers, json=body
         )
-        success = False
         if response.status_code < 300:
-            success = True
-        return success
+            return True
+        return False
 
     def _get_current_timer_values(self, response):
         if response is None:
