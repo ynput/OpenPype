@@ -56,25 +56,28 @@ class ConnectYetiRig(InventoryAction):
         # Target containers.
         target_ids = {}
         inputs = []
-        for family, containers in containers_by_family.items():
-            if family != "yetiRig":
-                continue
+    yeti_rig_containers = containers_by_family.get("yetiRig")
+    if not yeti_rig_containers:
+        self.display_warning(
+            "Select at least one yetiRig container"
+        )
+        return
 
-            for container in containers:
-                target_ids.update(self.nodes_by_id(container))
+    for container in yeti_rig_containers:
+        target_ids.update(self.nodes_by_id(container))
 
-                maya_file = get_representation_path(
-                    get_representation_context(
-                        container["representation"]
-                    )["representation"]
-                )
-                _, ext = os.path.splitext(maya_file)
-                settings_file = maya_file.replace(ext, ".rigsettings")
-                if not os.path.exists(settings_file):
-                    continue
+        maya_file = get_representation_path(
+            get_representation_context(
+                container["representation"]
+            )["representation"]
+        )
+        _, ext = os.path.splitext(maya_file)
+        settings_file = maya_file.replace(ext, ".rigsettings")
+        if not os.path.exists(settings_file):
+            continue
 
-                with open(settings_file) as f:
-                    inputs.extend(json.load(f)["inputs"])
+        with open(settings_file) as f:
+            inputs.extend(json.load(f)["inputs"])
 
         # Compare loaded connections to scene.
         for input in inputs:
