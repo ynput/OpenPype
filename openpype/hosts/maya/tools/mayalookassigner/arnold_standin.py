@@ -224,22 +224,7 @@ def assign_look(standin, subset):
                         node_assignments[node].append(assignment)
 
                 if visibility:
-                    # https://arnoldsupport.com/2018/11/21/backdoor-setting-visibility/
-                    mapping = {
-                        "primaryVisibility": 1,  # Camera
-                        "castsShadows": 2,  # Shadow
-                        "aiVisibleInDiffuseTransmission": 4,
-                        "aiVisibleInSpecularTransmission": 8,
-                        "aiVisibleInVolume": 16,
-                        "aiVisibleInDiffuseReflection": 32,
-                        "aiVisibleInSpecularReflection": 64
-                    }
-                    mask = 255
-                    for attr, value in mapping.items():
-                        if edit["attributes"].get(attr, True):
-                            continue
-                        mask -= value
-
+                    mask = calculate_visibility_mask(edit["attributes"])
                     assignment = "visibility={}".format(mask)
 
                     for node in edit["nodes"]:
