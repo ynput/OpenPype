@@ -251,12 +251,23 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
                         vrayproxy_assign_look(vp, subset_name)
 
                 nodes = list(set(item["nodes"]).difference(vray_proxies))
+            else:
+                self.echo(
+                    "Could not assign to VRayProxy because vrayformaya plugin "
+                    "is not loaded."
+                )
 
             # Assign Arnold Standin look.
-            arnold_standins = set(cmds.ls(type="aiStandIn", long=True))
-            for standin in arnold_standins:
-                if standin in nodes:
-                    arnold_standin.assign_look(standin, subset_name)
+            if cmds.pluginInfo("mtoa", query=True, loaded=True):
+                arnold_standins = set(cmds.ls(type="aiStandIn", long=True))
+                for standin in arnold_standins:
+                    if standin in nodes:
+                        arnold_standin.assign_look(standin, subset_name)
+            else:
+                self.echo(
+                    "Could not assign to aiStandIn because mtoa plugin is not "
+                    "loaded."
+                )
 
             nodes = list(set(item["nodes"]).difference(arnold_standins))
 
