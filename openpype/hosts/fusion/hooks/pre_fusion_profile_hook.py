@@ -98,7 +98,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         try:
             copy_to.mkdir(exist_ok=True, parents=True)
         except PermissionError:
-            self.log.warn(f"Creating the folder not permitted at {copy_to}")
+            self.log.warning(f"Creating the folder not permitted at {copy_to}")
             return
         if not copy_from.exists():
             self.log.warning(f"Fusion preferences not found in {copy_from}")
