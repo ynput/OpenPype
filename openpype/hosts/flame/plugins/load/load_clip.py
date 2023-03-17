@@ -82,8 +82,9 @@ class LoadClip(opfapi.ClipLoader):
             os.makedirs(openclip_dir)
 
         # prepare clip data from context ad send it to openClipLoader
+        path = self.filepath_from_context(context)
         loading_context = {
-            "path": self.fname.replace("\\", "/"),
+            "path": path.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,

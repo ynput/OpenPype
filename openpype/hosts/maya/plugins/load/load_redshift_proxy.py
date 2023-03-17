@@ -46,11 +46,11 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         # Ensure Redshift for Maya is loaded.
         cmds.loadPlugin("redshift4maya", quiet=True)
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, group_node = self.create_rs_proxy(
-                    name, self.fname)
+                nodes, group_node = self.create_rs_proxy(name, path)
 
         self[:] = nodes
         if not nodes:
