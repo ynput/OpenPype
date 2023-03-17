@@ -49,6 +49,7 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         self.menu = OpenPypeMenu()
 
         self._has_been_setup = True
+
         def context_setting():
             return lib.set_context_setting()
         rt.callbacks.addScript(rt.Name('systemPostNew'),
