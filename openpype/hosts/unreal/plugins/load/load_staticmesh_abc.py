@@ -98,8 +98,9 @@ class StaticMeshAlembicLoader(plugin.Loader):
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
 
+            path = self.filepath_from_context(context)
             task = self.get_task(
-                self.fname, asset_dir, asset_name, False, default_conversion)
+                path, asset_dir, asset_name, False, default_conversion)
 
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 

@@ -88,8 +88,9 @@ class LoadVDBtoVRay(load.LoaderPlugin):
         from openpype.hosts.maya.api.lib import unique_namespace
         from openpype.hosts.maya.api.pipeline import containerise
 
-        assert os.path.exists(self.fname), (
-            "Path does not exist: %s" % self.fname
+        path = self.filepath_from_context(context)
+        assert os.path.exists(path), (
+            "Path does not exist: %s" % path
         )
 
         try:
@@ -146,7 +147,7 @@ class LoadVDBtoVRay(load.LoaderPlugin):
         cmds.connectAttr("time1.outTime", grid_node + ".currentTime")
 
         # Set path
-        self._set_path(grid_node, self.fname, show_preset_popup=True)
+        self._set_path(grid_node, path, show_preset_popup=True)
 
         # Lock the shape node so the user can't delete the transform/shape
         # as if it was referenced

@@ -200,12 +200,13 @@ class CameraLoader(plugin.Loader):
         settings.set_editor_property('reduce_keys', False)
 
         if cam_seq:
+            path = self.filepath_from_context(context)
             self._import_camera(
                 EditorLevelLibrary.get_editor_world(),
                 cam_seq,
                 cam_seq.get_bindings(),
                 settings,
-                self.fname
+                path
             )
 
         # Set range of all sections

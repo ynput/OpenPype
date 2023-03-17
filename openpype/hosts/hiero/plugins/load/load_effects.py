@@ -59,7 +59,8 @@ class LoadEffects(load.LoaderPlugin):
         }
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context)
+        file = file.replace("\\", "/")
 
         if self._shared_loading(
             file,
