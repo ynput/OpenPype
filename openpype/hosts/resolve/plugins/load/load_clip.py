@@ -55,8 +55,9 @@ class LoadClip(plugin.TimelineItemLoader):
             })
 
         # load clip to timeline and get main variables
+        path = self.filepath_from_context(context)
         timeline_item = plugin.ClipLoader(
-            self, context, **options).load()
+            self, context, path, **options).load()
         namespace = namespace or timeline_item.GetName()
         version = context['version']
         version_data = version.get("data", {})
@@ -115,10 +116,10 @@ class LoadClip(plugin.TimelineItemLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        self.fname = get_representation_path(representation)
+        path = get_representation_path(representation)
         context["version"] = {"data": version_data}
 
-        loader = plugin.ClipLoader(self, context)
+        loader = plugin.ClipLoader(self, context, path)
         timeline_item = loader.update(timeline_item)
 
         # add additional metadata from the version to imprint Avalon knob

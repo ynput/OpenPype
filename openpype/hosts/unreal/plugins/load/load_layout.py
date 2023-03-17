@@ -618,7 +618,8 @@ class LayoutLoader(plugin.Loader):
 
             EditorLevelLibrary.load_level(level)
 
-        loaded_assets = self._process(self.fname, asset_dir, shot)
+        path = self.filepath_from_context(context)
+        loaded_assets = self._process(path, asset_dir, shot)
 
         for s in sequences:
             EditorAssetLibrary.save_asset(s.get_path_name())

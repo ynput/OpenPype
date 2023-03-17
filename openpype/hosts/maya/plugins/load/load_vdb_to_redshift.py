@@ -85,7 +85,7 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
                                       parent=root)
 
         self._set_path(volume_node,
-                       path=self.fname,
+                       path=self.filepath_from_context(context),
                        representation=context["representation"])
 
         nodes = [root, volume_node]

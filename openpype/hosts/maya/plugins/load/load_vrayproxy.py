@@ -53,7 +53,9 @@ class VRayProxyLoader(load.LoaderPlugin):
             family = "vrayproxy"
 
         #  get all representations for this version
-        self.fname = self._get_abc(context["version"]["_id"]) or self.fname
+        filename = self._get_abc(context["version"]["_id"])
+        if not filename:
+            filename = self.filepath_from_context(context)
 
         asset_name = context['asset']["name"]
         namespace = namespace or unique_namespace(
@@ -69,7 +71,7 @@ class VRayProxyLoader(load.LoaderPlugin):
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
                 nodes, group_node = self.create_vray_proxy(
-                    name, filename=self.fname)
+                    name, filename=filename)
 
         self[:] = nodes
         if not nodes:
@@ -190,7 +192,7 @@ class VRayProxyLoader(load.LoaderPlugin):
         if abc_rep:
             self.log.debug("Found, we'll link alembic to vray proxy.")
             file_name = get_representation_path(abc_rep)
-            self.log.debug("File: {}".format(self.fname))
+            self.log.debug("File: {}".format(file_name))
             return file_name
 
         return ""
