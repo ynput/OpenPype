@@ -60,7 +60,8 @@ class YetiCacheLoader(load.LoaderPlugin):
             cmds.loadPlugin("pgYetiMaya", quiet=True)
 
         # Create Yeti cache nodes according to settings
-        settings = self.read_settings(self.fname)
+        path = self.filepath_from_context(context)
+        settings = self.read_settings(path)
         nodes = []
         for node in settings["nodes"]:
             nodes.extend(self.create_node(namespace, node))

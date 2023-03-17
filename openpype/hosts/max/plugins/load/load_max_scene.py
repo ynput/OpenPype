@@ -20,7 +20,9 @@ class MaxSceneLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-        path = os.path.normpath(self.fname)
+
+        path = self.filepath_from_context(context)
+        path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
 
