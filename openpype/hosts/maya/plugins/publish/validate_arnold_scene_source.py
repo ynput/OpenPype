@@ -26,6 +26,7 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         ungrouped_nodes = []
         nodes_by_name = {}
         parents = []
+        same_named_nodes = []
         for node in nodes:
             node_split = node.split("|")
             if len(node_split) == 2:
@@ -35,7 +36,21 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
             if parent:
                 parents.append(parent)
 
-            nodes_by_name[node_split[-1].split(":")[-1]] = node
+            node_name = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
+
+            # Check for same same nodes, which can happen in different
+            # hierarchies.
+            if node_name in nodes_by_name:
+                same_named_nodes.append((node, nodes_by_name[node_name]))
+
+            nodes_by_name[node_name] = node
+
+        if same_named_nodes:
+            raise PublishValidationError(
+                "Found nodes with the same name:\n{}".format(
+                    "\n".join(["{}".format(n) for n in same_named_nodes])
+                )
+            )
 
         return ungrouped_nodes, nodes_by_name, parents
 
