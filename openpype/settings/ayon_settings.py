@@ -102,7 +102,7 @@ def _convert_applications_groups(groups, clear_metadata):
         group["variants"] = variants
 
         if not clear_metadata:
-            group["__dynamic_keys_labels__"] = variant_dynamic_labels
+            variants["__dynamic_keys_labels__"] = variant_dynamic_labels
         output[group_name] = group
 
     if not clear_metadata:
