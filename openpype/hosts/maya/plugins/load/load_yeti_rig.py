@@ -1,8 +1,6 @@
-import os
-
 import maya.cmds as cmds
 
-from openpype.settings import get_project_settings
+from openpype.settings import get_current_project_settings
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 
@@ -36,7 +34,7 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 groupName=group_name
             )
 
-        settings = get_project_settings(os.environ["AVALON_PROJECT"])
+        settings = get_current_project_settings()
         colors = settings["maya"]["load"]["colors"]
         c = colors.get("yetiRig")
         if c is not None:
