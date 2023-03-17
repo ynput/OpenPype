@@ -2,7 +2,7 @@ import os
 import shutil
 import platform
 from pathlib import Path
-from openpype.lib import PreLaunchHook
+from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import (
     FUSION_HOST_DIR,
     FUSION_VERSIONS_DICT,
@@ -127,6 +127,15 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         # Get launched application context and return correct app version
         app_name = self.launch_context.env.get("AVALON_APP_NAME")
         app_version = get_fusion_version(app_name)
+        if app_version is None or True:
+            version_names = ", ".join(str(x) for x in FUSION_VERSIONS_DICT)
+            raise ApplicationLaunchFailed(
+                "Unable to detect valid Fusion version number from app "
+                f"name: {app_name}.\nMake sure to include at least a digit "
+                "to indicate the Fusion version like '18'.\n"
+                f"Detectable Fusion versions are: {version_names}"
+            )
+
         _, profile_version = FUSION_VERSIONS_DICT[app_version]
         fu_profile = self.get_fusion_profile_name(profile_version)
 
