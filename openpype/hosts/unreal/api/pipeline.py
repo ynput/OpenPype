@@ -56,7 +56,14 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
         return ls()
 
     def update_context_data(self, data, changes):
-        content_path = send_request("project_content_dir")
+        content_path = send_request_literal("project_content_dir")
+
+        # The context json will be stored in the OpenPype folder, so we need
+        # to create it if it doesn't exist.
+        if not send_request_literal(
+                "does_directory_exist", params=["/Game/OpenPype"]):
+            send_request("make_directory", params=["/Game/OpenPype"])
+
         op_ctx = content_path + CONTEXT_CONTAINER
         attempts = 3
         for i in range(attempts):
@@ -64,13 +71,14 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
                 with open(op_ctx, "w+") as f:
                     json.dump(data, f)
                 break
-            except IOError:
+            except IOError as e:
                 if i == attempts - 1:
-                    raise Exception("Failed to write context data. Aborting.")
+                    raise IOError(
+                        "Failed to write context data. Aborting.") from e
                 send_request(
                     "log",
                     params=[
-                        "Failed to write context data. Retrying..."
+                        "Failed to write context data. Retrying...",
                         "warning"])
                 i += 1
                 time.sleep(3)
@@ -137,7 +145,7 @@ def format_string(input):
     string = input.replace('\\', '/')
     string = string.replace('"', '\\"')
     string = string.replace("'", "\\'")
-    return '"' + string + '"'
+    return f'"{string}"'
 
 
 def send_request(request, params=None):

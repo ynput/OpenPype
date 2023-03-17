@@ -54,3 +54,11 @@ def get_selected_actors():
     sel_actors = unreal.EditorUtilityLibrary.get_selected_level_actors()
 
     return [actor.get_path_name() for actor in sel_actors]
+
+
+def get_system_path(asset_path):
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    asset = ar.get_asset_by_object_path(asset_path).get_asset()
+
+    return unreal.SystemLibrary.get_system_path(asset)
