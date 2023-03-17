@@ -7,11 +7,11 @@ from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 
 
-class FbxLoader(load.LoaderPlugin):
-    """Fbx Loader"""
+class ObjLoader(load.LoaderPlugin):
+    """Obj Loader"""
 
-    families = ["camera"]
-    representations = ["fbx"]
+    families = ["model"]
+    representations = ["obj"]
     order = -9
     icon = "code-fork"
     color = "white"
@@ -20,21 +20,15 @@ class FbxLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         filepath = os.path.normpath(self.fname)
+        self.log.debug(f"Executing command to import..")
 
-        fbx_import_cmd = (
-            f"""
-
-FBXImporterSetParam "Animation" true
-FBXImporterSetParam "Cameras" true
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-importFile @"{filepath}" #noPrompt using:FBXIMP
-        """)
-
-        self.log.debug(f"Executing command: {fbx_import_cmd}")
-        rt.execute(fbx_import_cmd)
+        rt.execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
+        # get current selection
+        for selection in rt.getCurrentSelection():
+            # create "missing" container for obj import
+            container = rt.container()
+            container.name = f"{name}"
+            selection.Parent = container
 
         asset = rt.getNodeByName(f"{name}")
 
@@ -47,9 +41,9 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        fbx_objects = self.get_container_children(node)
-        for fbx_object in fbx_objects:
-            fbx_object.source = path
+        objects = self.get_container_children(node)
+        for obj in objects:
+            obj.source = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
