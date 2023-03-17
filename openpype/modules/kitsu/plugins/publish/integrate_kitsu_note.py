@@ -45,11 +45,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         return re.sub(pattern, replace_missing_key, template)
 
     def process(self, context):
-        # Get comment text body
-        publish_comment = context.data.get("comment")
-        if not publish_comment:
-            self.log.info("Comment is not set.")
-
         for instance in context:
             # Check if instance is a review by checking its family
             if "review" not in instance.data["families"]:
@@ -76,11 +71,15 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                         "changed!".format(self.note_status_shortname)
                     )
 
-            # If custom comment, create it
+            # Get comment text body
+            publish_comment = instance.data.get("comment")
             if self.custom_comment_template["enabled"]:
                 publish_comment = self.format_publish_comment(instance)
 
-            self.log.debug("Comment is `{}`".format(publish_comment))
+            if not publish_comment:
+                self.log.info("Comment is not set.")
+            else:
+                self.log.debug("Comment is `{}`".format(publish_comment))
 
             # Add comment to kitsu task
             task_id = kitsu_task["id"]
