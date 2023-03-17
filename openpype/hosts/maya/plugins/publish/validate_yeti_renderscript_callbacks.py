@@ -48,8 +48,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
         yeti_loaded = cmds.pluginInfo("pgYetiMaya", query=True, loaded=True)
 
-        yeti_nodes = cmds.ls(type="pgYetiMaya")
-        if not yeti_nodes:
+        if not yeti_loaded or not cmds.ls(type="pgYetiMaya"):
             cls.log.info("No yeti nodes found.")
             return False
 
