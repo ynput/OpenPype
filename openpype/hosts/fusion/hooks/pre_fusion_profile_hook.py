@@ -127,7 +127,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         # Get launched application context and return correct app version
         app_name = self.launch_context.env.get("AVALON_APP_NAME")
         app_version = get_fusion_version(app_name)
-        if app_version is None or True:
+        if app_version is None:
             version_names = ", ".join(str(x) for x in FUSION_VERSIONS_DICT)
             raise ApplicationLaunchFailed(
                 "Unable to detect valid Fusion version number from app "
