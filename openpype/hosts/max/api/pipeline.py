@@ -49,6 +49,10 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         self.menu = OpenPypeMenu()
 
         self._has_been_setup = True
+        def context_setting():
+            return lib.set_context_setting()
+        rt.callbacks.addScript(rt.Name('systemPostNew'),
+                               context_setting)
 
     def has_unsaved_changes(self):
         # TODO: how to get it from 3dsmax?

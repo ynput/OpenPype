@@ -6,6 +6,13 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
+from openpype.client import (
+    get_project
+)
+from openpype.pipeline import legacy_io
+
+from openpype.pipeline.context_tools import get_current_project_asset
+
 
 JSON_PREFIX = "JSON::"
 
@@ -155,6 +162,63 @@ def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
+
+def set_scene_resolution(width, height):
+    """Set the render resolution
+
+    Args:
+        width(int): value of the width
+        height(int): value of the height
+
+    Returns:
+        None
+
+    """
+    rt.renderWidth = width
+    rt.renderHeight = height
+
+
+def reset_scene_resolution():
+    """Apply the scene resolution from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+
+    Returns:
+        None
+    """
+    project_name = legacy_io.active_project()
+    project_doc = get_project(project_name)
+    project_data = project_doc["data"]
+    asset_data = get_current_project_asset()["data"]
+
+    # Set project resolution
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
+    proj_width_key = project_data.get(width_key, 1920)
+    proj_height_key = project_data.get(height_key, 1080)
+
+    width = asset_data.get(width_key, proj_width_key)
+    height = asset_data.get(height_key, proj_height_key)
+
+    set_scene_resolution(width, height)
+
+
+def set_context_setting():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        frame range
+        resolution
+
+    Returns:
+        None
+    """
+    reset_scene_resolution()
 
 
 def get_max_version():
