@@ -109,13 +109,13 @@ def get_standin_path(node):
     return path
 
 
-def shading_engine_assignments(shading_engine, attr, nodes, assignments):
+def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
     shader_inputs = cmds.listConnections(
-        shading_engine + "." + attr, source=True)
+        shading_engine + "." + attribute, source=True)
     if not shader_inputs:
         log.info(
             "Shading engine \"{}\" missing input \"{}\"".format(
-                shading_engine, attr
+                shading_engine, attribute
             )
         )
 
@@ -128,7 +128,7 @@ def shading_engine_assignments(shading_engine, attr, nodes, assignments):
                  "{}").format(node))
             nodes[i] = node.split(".")[0]
 
-    shader_type = "shader" if attr == "surfaceShader" else "disp_map"
+    shader_type = "shader" if attribute == "surfaceShader" else "disp_map"
     assignment = "{}='{}'".format(shader_type, shader_inputs[0])
     for node in nodes:
         assignments[node].append(assignment)
@@ -190,13 +190,13 @@ def assign_look(standin, subset):
 
                 shading_engine_assignments(
                     shading_engine=edit["shader"],
-                    attr="surfaceShader",
+                    attribute="surfaceShader",
                     nodes=edit["nodes"],
                     assignments=node_assignments
                 )
                 shading_engine_assignments(
                     shading_engine=edit["shader"],
-                    attr="displacementShader",
+                    attribute="displacementShader",
                     nodes=edit["nodes"],
                     assignments=node_assignments
                 )
