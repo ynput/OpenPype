@@ -380,7 +380,8 @@ class ExistingLayoutLoader(plugin.Loader):
             raise AssertionError("Current level not saved")
 
         project_name = context["project"]["name"]
-        containers = self._process(self.fname, project_name)
+        path = self.filepath_from_context(context)
+        containers = self._process(path, project_name)
 
         curr_level_path = Path(
             curr_level.get_outer().get_path_name()).parent.as_posix()

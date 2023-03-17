@@ -55,7 +55,7 @@ class AlembicModelLoader(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         with maintained_selection():
             model_node = nuke.createNode(
