@@ -65,8 +65,9 @@ class LoadVDBtoArnold(load.LoaderPlugin):
                                     name="{}Shape".format(root),
                                     parent=root)
 
+        path = self.filepath_from_context(context)
         self._set_path(grid_node,
-                       path=self.fname,
+                       path=path,
                        representation=context["representation"])
 
         # Lock the shape node so the user can't delete the transform/shape

@@ -80,7 +80,7 @@ from openpype.pipeline.colorspace import (
 
 class YourLoader(api.Loader):
   def load(self, context, name=None, namespace=None, options=None):
-    path = self.fname
+    path = self.filepath_from_context(context)
     colorspace_data = context["representation"]["data"].get("colorspaceData", {})
     colorspace = (
       colorspace_data.get("colorspace")

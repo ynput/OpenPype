@@ -39,9 +39,6 @@ class LoaderPlugin(list):
     log = logging.getLogger("SubsetLoader")
     log.propagate = True
 
-    def __init__(self, context):
-        self.fname = self.filepath_from_context(context)
-
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         host_name = os.environ.get("AVALON_APP")
@@ -245,9 +242,6 @@ class SubsetLoaderPlugin(LoaderPlugin):
         name (str, optional): Use pre-defined name
         namespace (str, optional): Use pre-defined namespace
     """
-
-    def __init__(self, context):
-        pass
 
 
 def discover_loader_plugins(project_name=None):
