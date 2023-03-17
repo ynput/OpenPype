@@ -47,6 +47,13 @@
             ]
         },
         {
+            "type": "text",
+            "multiline" : true,
+            "use_label_wrap": true,
+            "key": "masterprefs",
+            "label": "Fusion MasterPrefs"
+         },
+        {
             "type": "dict",
             "key": "copy_fusion_settings",
             "collapsible": true,

@@ -152,10 +152,34 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {fu_profile_dir_variable}: {fu_profile_dir}")
         self.launch_context.env[fu_profile_dir_variable] = str(fu_profile_dir)
 
+        self.set_masterprefs(
+            # TODO: Maybe this shouldn't be inside the profile directory?
+            folder=fu_profile_dir,
+            profile_version=profile_version
+        )
+
+    def set_masterprefs(self, folder, profile_version):
+        """Write the MasterPrefs file and set the environment variable"""
+
+        # Write the masterprefs for Fusion
+        try:
+            Path(folder).mkdir(exist_ok=True, parents=True)
+        except PermissionError:
+            raise ApplicationLaunchFailed(
+                f"Unable to create folder for Fusion master prefs at {folder}"
+            )
+
+        master_pref_contents = self.data["project_settings"]["fusion"].get(
+            "masterprefs", ""
+        )
+        master_pref_path = Path(folder, "fusion_masterprefs.prefs")
+        self.log.info(f"Writing {master_pref_path}..")
+        with open(master_pref_path, "w") as f:
+            f.write(master_pref_contents)
+
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
         # to define where it can read custom scripts and tools from
         master_prefs_variable = f"FUSION{profile_version}_MasterPrefs"
-        master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
-        self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
-        self.launch_context.env[master_prefs_variable] = str(master_prefs)
+        self.log.info(f"Setting {master_prefs_variable}: {master_pref_path}")
+        self.launch_context.env[master_prefs_variable] = str(master_pref_path)

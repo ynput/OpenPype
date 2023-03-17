@@ -17,6 +17,7 @@
             }
         }
     },
+    "masterprefs": "{\nLocked = true,\nGlobal = {\n  Paths = {\n    Map = {\n      [\"OpenPype:\"] = \"$(OPENPYPE_FUSION)/deploy\",\n      [\"Config:\"] = \"UserPaths:Config;OpenPype:Config\",\n      [\"Scripts:\"] = \"UserPaths:Scripts;Reactor:System/Scripts;OpenPype:Scripts\",\n    },\n  },\n  Script = {\n    PythonVersion = 3,\n    Python3Forced = true\n    },\n  UserInterface = {\n    Language = \"en_US\"\n    },\n  },\n}",
     "copy_fusion_settings": {
         "copy_path": "~/.openpype/hosts/fusion/profiles",
         "copy_status": false,
