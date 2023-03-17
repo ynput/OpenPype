@@ -832,45 +832,32 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         col = collections[0]
 
-        start_frame = int(start_frame)
-        end_frame = int(end_frame)
-        missing_indexes = [
-            frame for frame in range(start_frame, end_frame + 1)
-            if frame not in col.indexes
-        ]
-        if not missing_indexes:
-            return []
+        # Prepare which hole is filled with what frame
+        #   - the frame is filled only with already existing frames
+        first_frame = col.indexes[0]
+        prev_frame = None
+        hole_frame_to_nearest = {}
+        for frame in range(int(start_frame), int(end_frame) + 1):
+            if frame in col.indexes:
+                prev_frame = frame
+            elif prev_frame is None:
+                # Use first frame if previous frame was not yet filled
+                hole_frame_to_nearest[frame] = first_frame
+            else:
+                # Use previous frame as source for hole
+                hole_frame_to_nearest[frame] = prev_frame
 
-        # Both collection frame indexes and the missing indexes are sorted
-        # so we can keep track of the nearest existing frame with an iterator
-        existing_indices_iter = iter(col.indexes)
-        prev_idx = next(existing_indices_iter, None)
-        next_idx = next(existing_indices_iter, prev_idx)
-        if prev_idx is None:
-            raise RuntimeError("No indices in input collection. This is a bug")
-
-        # For each missing filepath collect the nearest existing index filepath
-        col_format = col.format("{head}{padding}{tail}")
-        holes_to_nearest = {}
-        for missing_idx in missing_indexes:
-            while abs(missing_idx - prev_idx) > abs(missing_idx - next_idx):
-                prev_idx = next_idx
-                next_idx = next(existing_indices_iter, prev_idx)
-
-            nearest_fname = col_format % prev_idx
-            hole_fname = col_format % missing_idx
-
-            nearest_fpath = os.path.join(staging_dir, nearest_fname)
-            hole_fpath = os.path.join(staging_dir, hole_fname)
-            if not os.path.isfile(nearest_fpath):
-                raise RuntimeError("Missing previously detected file: "
-                                   "{}".format(nearest_fpath))
-
-            holes_to_nearest[hole_fpath] = nearest_fpath
-
+        # Calculate paths
         added_files = []
-        for hole_fpath, nearest_fpath in holes_to_nearest.items():
-            speedcopy.copyfile(nearest_fpath, hole_fpath)
+        col_format = col.format("{head}{padding}{tail}")
+        for hole_frame, src_frame in hole_frame_to_nearest.items():
+            hole_fpath = os.path.join(staging_dir, col_format % hole_frame)
+            src_fpath = os.path.join(staging_dir, col_format % src_frame)
+            if not os.path.isfile(src_fpath):
+                raise KnownPublishError(
+                    "Missing previously detected file: {}".format(src_fpath))
+
+            speedcopy.copyfile(src_fpath, hole_fpath)
             added_files.append(hole_fpath)
 
         return added_files
