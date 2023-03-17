@@ -17,11 +17,11 @@ FUSION_VERSIONS_DICT = {
 }
 
 
-def get_fusion_version(app_data):
+def get_fusion_version(app_name):
     """
     The function is triggered by the prelaunch hooks to get the fusion version.
 
-    `app_data` is obtained by prelaunch hooks from the
+    `app_name` is obtained by prelaunch hooks from the
     `launch_context.env.get("AVALON_APP_NAME")`.
 
     To get a correct Fusion version, a version number should be present
@@ -31,10 +31,10 @@ def get_fusion_version(app_data):
 
     log = Logger.get_logger(__name__)
 
-    if not app_data:
+    if not app_name:
         return
 
-    app_version_candidates = re.findall(r"\d+", app_data)
+    app_version_candidates = re.findall(r"\d+", app_name)
     if not app_version_candidates:
         return
     for app_version in app_version_candidates:

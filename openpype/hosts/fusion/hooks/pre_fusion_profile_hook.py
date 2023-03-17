@@ -125,8 +125,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         ) = self.get_copy_fusion_prefs_settings()
 
         # Get launched application context and return correct app version
-        app_data = self.launch_context.env.get("AVALON_APP_NAME")
-        app_version = get_fusion_version(app_data)
+        app_name = self.launch_context.env.get("AVALON_APP_NAME")
+        app_version = get_fusion_version(app_name)
         _, profile_version = FUSION_VERSIONS_DICT[app_version]
         fu_profile = self.get_fusion_profile_name(profile_version)
 
