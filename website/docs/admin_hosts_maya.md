@@ -50,6 +50,10 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
+:::info getting attribute values
+If you do not know what an attributes value is supposed to be, for example for dropdown menu (enum), try changing the attribute and look in the script editor where it should log what the attribute was set to.
+:::
+
 ### Model Name Validator
 
 `ValidateRenderSettings`
