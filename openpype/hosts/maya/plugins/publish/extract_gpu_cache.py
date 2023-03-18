@@ -53,7 +53,7 @@ class ExtractGPUCache(publish.Extractor):
             "ext": "abc",
             "files": filename + ".abc",
             "stagingDir": staging_dir,
-            #"outputName": "gpu_cache"
+            "outputName": "gpu_cache"
         }
 
         instance.data["representations"].append(representation)
