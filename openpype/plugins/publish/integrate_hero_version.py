@@ -306,7 +306,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 anatomy_filled = anatomy.format(anatomy_data)
                 template_filled = anatomy_filled[template_key]["path"]
 
-                # Prepare new repre
                 repre_data = {
                     "path": str(template_filled),
                     "template": hero_template
@@ -317,6 +316,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     if value is not None:
                         repre_context[key] = value
 
+                # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])
                 repre["parent"] = new_hero_version["_id"]
                 repre["context"] = repre_context
