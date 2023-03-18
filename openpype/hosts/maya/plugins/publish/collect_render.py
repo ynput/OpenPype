@@ -47,6 +47,7 @@ from maya import cmds
 
 import pyblish.api
 
+from openpype.pipeline import KnownPublishError
 from openpype.lib import get_formatted_current_time
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
@@ -150,7 +151,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         # append full path
         aov_dict = {}
-        default_render_file = context.data.get('project_settings')\
+        default_render_folder = context.data.get('project_settings')\
             .get('maya')\
             .get('RenderSettings')\
             .get('default_render_image_folder') or ""
@@ -161,13 +162,21 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             full_paths = []
             aov_first_key = list(aov.keys())[0]
             for file in aov[aov_first_key]:
-                full_path = os.path.join(workspace, default_render_file,
+                full_path = os.path.join(workspace, default_render_folder,
                                          file)
                 full_path = full_path.replace("\\", "/")
                 full_paths.append(full_path)
                 publish_meta_path = os.path.dirname(full_path)
             aov_dict[aov_first_key] = full_paths
         full_exp_files = [aov_dict]
+        self.log.info(full_exp_files)
+
+        if publish_meta_path is None:
+            raise KnownPublishError("Unable to detect any expected output "
+                                    "images for: {}. Make sure you have a "
+                                    "renderable camera and a valid frame "
+                                    "range set for your renderlayer."
+                                    "".format(instance.name))
 
         frame_start_render = int(self.get_render_attribute(
             "startFrame", layer=layer_name))
@@ -215,22 +224,15 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         self.log.info(
             "Publish meta path: {}".format(common_publish_meta_path))
 
-        self.log.info(full_exp_files)
-        self.log.info("collecting layer: {}".format(layer_name))
         # Get layer specific settings, might be overrides
         colorspace_data = lib.get_color_management_preferences()
         data = {
-            # TODO: Why do we need to explicitly add this - does this not exist
-            #       on the instance by itself?
-            "publish": True,
-
             "attachTo": attach_to,
-
-            # The legacy renderlayer node
-            "setMembers": layer._getLegacyNodeName(),
 
             "multipartExr": multipart,
             "review": instance.data.get("review") or False,
+
+            # Frame range
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "frameStart": frame_start,
@@ -240,9 +242,11 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "byFrameStep": int(
                 self.get_render_attribute("byFrameStep",
                                           layer=layer_name)),
+
+            # Renderlayer
             "renderer": self.get_render_attribute(
                 "currentRenderer", layer=layer_name).lower(),
-
+            "setMembers": layer._getLegacyNodeName(),  # legacy renderlayer
             "renderlayer": layer_name,
 
             # todo: is `time` and `author` still needed?
