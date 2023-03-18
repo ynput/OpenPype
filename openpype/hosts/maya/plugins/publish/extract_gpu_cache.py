@@ -21,7 +21,7 @@ class ExtractGPUCache(publish.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filename = "{}.abc".format(instance.name)
+        filename = "{}_gpu_cache".format(instance.name)
 
         # Write out GPU cache file.
         kwargs = {
@@ -51,9 +51,9 @@ class ExtractGPUCache(publish.Extractor):
         representation = {
             "name": "gpu_cache",
             "ext": "abc",
-            "files": filename,
+            "files": filename + ".abc",
             "stagingDir": staging_dir,
-            "outputName": "gpu_cache"
+            #"outputName": "gpu_cache"
         }
 
         instance.data["representations"].append(representation)
