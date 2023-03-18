@@ -8,7 +8,6 @@ from openpype.lib import (
 )
 
 
-
 class CreateArnoldSceneSource(plugin.MayaCreator):
     """Arnold Scene Source"""
 
