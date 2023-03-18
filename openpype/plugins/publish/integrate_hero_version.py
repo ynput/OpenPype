@@ -18,7 +18,7 @@ from openpype.client.operations import (
     prepare_hero_version_update_data,
     prepare_representation_update_data,
 )
-from openpype.lib import create_hard_link, StringTemplate
+from openpype.lib import create_hard_link
 from openpype.pipeline import (
     schema
 )
