@@ -375,7 +375,7 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     # Look to PATH for the tool
     if not tool_executable_path:
         from_path = find_executable(tool)
-        if from_path and _oiio_executable_validation(from_path):
+        if from_path and _ffmpeg_executable_validation(from_path):
             tool_executable_path = from_path
 
     CachedToolPaths.cache_executable_path(tool, tool_executable_path)

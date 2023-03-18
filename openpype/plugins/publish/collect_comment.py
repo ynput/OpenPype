@@ -29,7 +29,7 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
 class CollectInstanceCommentDef(
-    pyblish.api.ContextPlugin,
+    pyblish.api.InstancePlugin,
     OpenPypePyblishPluginMixin
 ):
     label = "Comment per instance"

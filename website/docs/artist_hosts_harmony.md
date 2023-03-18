@@ -44,7 +44,7 @@ Because the saving to the network location happens in the background, be careful
 
 `OpenPype > Create`
 
-![Creator](assets/harmony_creator.PNG)
+![Creator](assets/harmony_creator.png)
 
 These are the families supported in Harmony:
 
