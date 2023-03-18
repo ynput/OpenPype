@@ -2,11 +2,11 @@ import pyblish.api
 import os
 
 
-class CollectFusionRenders(pyblish.api.InstancePlugin):
-    """Collect all frames needed to publish existing frames"""
+class CollectFusionExpectedFrames(pyblish.api.InstancePlugin):
+    """Collect all frames needed to publish expected frames"""
 
     order = pyblish.api.CollectorOrder + 0.5
-    label = "Collect Existing Frames"
+    label = "Collect Expected Frames"
     hosts = ["fusion"]
     families = ["render.frames"]
 
