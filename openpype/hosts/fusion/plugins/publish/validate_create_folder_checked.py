@@ -21,10 +21,6 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        active = instance.data.get("active", instance.data.get("publish"))
-        if not active:
-            return []
-
         tool = instance[0]
         create_dir = tool.GetInput("CreateDir")
         if create_dir == 0.0:

@@ -23,10 +23,6 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
         if non_existing_frames is None:
             non_existing_frames = []
 
-        active = instance.data.get("active", instance.data.get("publish"))
-        if not active:
-            return []
-
         if instance.data.get("render_target") == "frames":
             tool = instance[0]
 
