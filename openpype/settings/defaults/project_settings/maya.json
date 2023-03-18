@@ -923,6 +923,21 @@
             "enabled": true,
             "active": true,
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
+        },
+        "ExtractGPUCache": {
+            "enabled": true,
+            "families": [
+                "model",
+                "animation",
+                "pointcache"
+            ],
+            "simulationRate": 0.0,
+            "sampleMultiplier": 0,
+            "optimize": true,
+            "optimizationThreshold": 40000,
+            "optimizeAnimationsForMotionBlur": true,
+            "writeMaterials": true,
+            "useBaseTessellation": true
         }
     },
     "load": {

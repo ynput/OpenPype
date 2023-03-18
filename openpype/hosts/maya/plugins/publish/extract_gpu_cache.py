@@ -1,3 +1,5 @@
+import json
+
 from maya import cmds
 
 from openpype.pipeline import publish
@@ -9,18 +11,39 @@ class ExtractGPUCache(publish.Extractor):
     label = "GPU Cache"
     hosts = ["maya"]
     families = ["model", "animation", "pointcache"]
+    simulationRate = 1.0
+    sampleMultiplier = 1
+    optimize = True
+    optimizationThreshold = 40000
+    optimizeAnimationsForMotionBlur = True
+    writeMaterials = True
+    useBaseTessellation = True
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         filename = "{}.abc".format(instance.name)
 
         # Write out GPU cache file.
-        cmds.gpuCache(
-            instance[:],
-            directory=staging_dir,
-            fileName=filename,
-            saveMultipleFiles=False
+        kwargs = {
+            "directory": staging_dir,
+            "fileName": filename,
+            "saveMultipleFiles": False,
+            "simulationRate": self.simulationRate,
+            "sampleMultiplier": self.sampleMultiplier,
+            "optimize": self.optimize,
+            "optimizationThreshold": self.optimizationThreshold,
+            "optimizeAnimationsForMotionBlur": (
+                self.optimizeAnimationsForMotionBlur
+            ),
+            "writeMaterials": self.writeMaterials,
+            "useBaseTessellation": self.useBaseTessellation
+        }
+        self.log.debug(
+            "Extract {} with:\n{}".format(
+                instance[:], json.dumps(kwargs, indent=4, sort_keys=True)
+            )
         )
+        cmds.gpuCache(instance[:], **kwargs)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
