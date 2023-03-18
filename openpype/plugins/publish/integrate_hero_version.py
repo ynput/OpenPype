@@ -306,22 +306,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 anatomy_filled = anatomy.format(anatomy_data)
                 template_filled = anatomy_filled[template_key]["path"]
 
-                # For representations that have the same extension, an
-                # additional suffix can be available to make the destination
-                # filename different.
-                hero_suffix = repre_info["representation"]["data"].get(
-                    "heroSuffix"
-                )
-                if hero_suffix:
-                    fill_data = copy.deepcopy(template_filled.used_values)
-                    template_filled.template = template_filled.replace(
-                        "." + fill_data["ext"],
-                        "_{}.{}".format(hero_suffix, fill_data["ext"])
-                    )
-                    template_filled = StringTemplate(
-                        template_filled.template
-                    ).format(fill_data)
-
                 # Prepare new repre
                 repre_data = {
                     "path": str(template_filled),

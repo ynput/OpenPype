@@ -53,7 +53,6 @@ class ExtractGPUCache(publish.Extractor):
             "ext": "abc",
             "files": filename,
             "stagingDir": staging_dir,
-            "data": {"heroSuffix": "gpu_cache"},
             "outputName": "gpu_cache"
         }
 
