@@ -158,7 +158,7 @@ class RenderSettings(object):
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
         self._additional_attribs_setter(additional_options)
-        reset_frame_range()
+        reset_frame_range(playback=False, fps=False, render=True)
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
