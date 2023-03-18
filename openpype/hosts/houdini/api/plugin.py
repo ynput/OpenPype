@@ -113,7 +113,7 @@ class HoudiniCreatorBase(object):
             Dict[str, Any]: Shared data dictionary.
 
         """
-        if shared_data.get("houdini_cached_subsets") is not None:
+        if shared_data.get("houdini_cached_subsets") is None:
             cache = dict()
             cache_legacy = dict()
 
@@ -225,12 +225,12 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = hou.node(created_inst.get("instance_node"))
 
             new_values = {
-                key: new_value
-                for key, (_old_value, new_value) in _changes.items()
+                key: changes[key].new_value
+                for key in changes.changed_keys
             }
             imprint(
                 instance_node,

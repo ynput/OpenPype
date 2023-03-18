@@ -230,8 +230,8 @@ Maya settings concerning framerate, resolution and frame range are handled by
 OpenPype. If set correctly in Ftrack, Maya will validate you have correct fps on
 scene save and publishing offering way to fix it for you.
 
-For resolution and frame range, use **OpenPype → Reset Frame Range** and
-**OpenPype → Reset Resolution**
+For resolution and frame range, use **OpenPype → Set Frame Range** and
+**OpenPype → Set Resolution**
 
 
 ## Creating rigs with OpenPype
@@ -308,13 +308,25 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
 
-:::note Publish on farm
-If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
-Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+#### Options
+
+- **Frame Start**: which frame to start the export at.
+- **Frame End**: which frame to end the export at.
+- **Handle Start**: additional frames to export at frame start. Ei. frame start - handle start = export start.
+- **Handle Start**: additional frames to export at frame end. Ei. frame end + handle end = export end.
+- **Step**: frequency of sampling the export. For example when dealing with quick movements for motion blur, a step size of less than 1 might be better.
+- **Refresh**: refresh the viewport when exporting the pointcache. For performance is best to leave off, but certain situations can require to refresh the viewport, for example using the Bullet plugin.
+- **Attr**: specific attributes to publish separated by `;`.
+- **AttrPrefix**: specific attributes which start with this prefix to publish separated by `;`.
+- **Include User Defined Attribudes**: include all user defined attributes in the publish.
+- **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
+- **Priority**: Farm priority.
 
 ### Loading Point Caches
 
@@ -374,7 +386,7 @@ Lets start with empty scene. First I'll pull in my favorite Buddha model.
 there just click on **Reference (abc)**.
 
 Next, I want to be sure that I have same frame range as is set on shot I am working
-on. To do this just **OpenPype → Reset Frame Range**. This should set Maya timeline to same
+on. To do this just **OpenPype → Set Frame Range**. This should set Maya timeline to same
 values as they are set on shot in *Ftrack* for example.
 
 I have my time set, so lets create some animation. We'll turn Buddha model around for
@@ -488,7 +500,7 @@ and for vray:
 maya/<Layer>/<Layer>
 ```
 
-Doing **OpenPype → Reset Resolution** will set correct resolution on camera.
+Doing **OpenPype → Set Resolution** will set correct resolution on camera.
 
 Scene is now ready for submission and should publish without errors.
 
@@ -503,6 +515,22 @@ You can create render that will be attached to another subset you are publishing
 In the scene from where you want to publish your model create *Render subset*. Prepare your render layer as needed and then drag
 model subset (Maya set node) under corresponding `LAYER_` set under *Render instance*. During publish, it will submit this render to farm and
 after it is rendered, it will be attached to your model subset.
+
+### Tile Rendering
+:::note Deadline
+This feature is only supported when using Deadline. See [here](module_deadline#openpypetileassembler-plugin) for setup.
+:::
+On the render instance objectset you'll find:
+
+* `Tile Rendering` - for enabling tile rendering.
+* `Tile X` - number of tiles in the X axis.
+* `Tile Y` - number of tiles in the Y axis.
+
+When submittig to Deadline, you'll get:
+
+- for each frame a tile rendering job, to render each from Maya.
+- for each frame a tile assembly job, to assemble the rendered tiles.
+- job to publish the assembled frames.
 
 ## Render Setups
 
@@ -601,3 +629,20 @@ about customizing review process refer to [admin section](project_settings/setti
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
+
+
+## Inventory Actions
+
+### Connect Geometry
+
+This action will connect geometries between containers.
+
+#### Usage
+
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
+
+#### Details
+
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
+
+The connection between geometries is done with a live blendshape.

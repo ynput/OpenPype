@@ -23,9 +23,7 @@ class ExtractAlembic(publish.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["pointcache",
-                "model",
-                "vrayproxy"]
+    families = ["pointcache", "model", "vrayproxy.alembic"]
     targets = ["local", "remote"]
 
     def process(self, instance):
@@ -41,6 +39,7 @@ class ExtractAlembic(publish.Extractor):
 
         attrs = instance.data.get("attr", "").split(";")
         attrs = [value for value in attrs if value.strip()]
+        attrs += instance.data.get("userDefinedAttributes", [])
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
@@ -87,6 +86,7 @@ class ExtractAlembic(publish.Extractor):
                                                      end=end))
 
         suspend = not instance.data.get("refresh", False)
+        self.log.info(nodes)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
@@ -101,9 +101,9 @@ class ExtractAlembic(publish.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': filename,
+            "name": "abc",
+            "ext": "abc",
+            "files": filename,
             "stagingDir": dirname
         }
         instance.data["representations"].append(representation)
@@ -111,6 +111,37 @@ class ExtractAlembic(publish.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
+
+        # Extract proxy.
+        if not instance.data.get("proxy"):
+            self.log.info("No proxy nodes found. Skipping proxy extraction.")
+            return
+
+        path = path.replace(".abc", "_proxy.abc")
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data["proxyRoots"]
+
+        with suspended_refresh(suspend=suspend):
+            with maintained_selection():
+                cmds.select(instance.data["proxy"])
+                extract_alembic(
+                    file=path,
+                    startFrame=start,
+                    endFrame=end,
+                    **options
+                )
+
+        representation = {
+            "name": "proxy",
+            "ext": "abc",
+            "files": os.path.basename(path),
+            "stagingDir": dirname,
+            "outputName": "proxy"
+        }
+        instance.data["representations"].append(representation)
 
     def get_members_and_roots(self, instance):
         return instance[:], instance.data.get("setMembers")

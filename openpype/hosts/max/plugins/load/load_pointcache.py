@@ -15,7 +15,10 @@ from openpype.hosts.max.api import lib
 class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
-    families = ["model", "animation", "pointcache"]
+    families = ["model",
+                "camera",
+                "animation",
+                "pointcache"]
     label = "Load Alembic"
     representations = ["abc"]
     order = -10
@@ -77,7 +80,7 @@ importFile @"{file_path}" #noPrompt
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = container["node"]
+        node = rt.getNodeByName(container["instance_node"])
         rt.delete(node)
 
     @staticmethod

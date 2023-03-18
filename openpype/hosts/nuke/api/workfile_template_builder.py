@@ -1,7 +1,5 @@
 import collections
-
 import nuke
-
 from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
@@ -14,7 +12,6 @@ from openpype.pipeline.workfile.workfile_template_builder import (
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
-
 from .lib import (
     find_free_space_to_paste_nodes,
     get_extreme_positions,
@@ -45,7 +42,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was succesfully imported or not
+            bool: Wether the template was successfully imported or not
         """
 
         # TODO check if the template is already imported
@@ -54,7 +51,6 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
         reset_selection()
 
         return True
-
 
 class NukePlaceholderPlugin(PlaceholderPlugin):
     node_color = 4278190335
@@ -947,9 +943,9 @@ class NukePlaceholderCreatePlugin(
         siblings_input.setInput(0, copy_output)
 
 
-def build_workfile_template(*args):
+def build_workfile_template(*args, **kwargs):
     builder = NukeTemplateBuilder(registered_host())
-    builder.build_template()
+    builder.build_template(*args, **kwargs)
 
 
 def update_workfile_template(*args):

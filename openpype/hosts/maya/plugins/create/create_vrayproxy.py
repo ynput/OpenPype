@@ -13,6 +13,9 @@ class CreateVrayProxy(plugin.MayaCreator):
     family = "vrayproxy"
     icon = "gears"
 
+    vrmesh = True
+    alembic = True
+
     def get_instance_attr_defs(self):
 
         defs = [
@@ -32,6 +35,16 @@ class CreateVrayProxy(plugin.MayaCreator):
                     label="Write vertex colors",
                     tooltip="Write vertex colors with the geometry",
                     default=False),
+            BoolDef("vrmesh",
+                    label="Export VRayMesh",
+                    tooltip="Publish a .vrmesh (VRayMesh) file for "
+                            "this VRayProxy",
+                    default=self.vrmesh),
+            BoolDef("alembic",
+                    label="Export Alembic",
+                    tooltip="Publish a .abc (Alembic) file for "
+                            "this VRayProxy",
+                    default=self.alembic),
         ])
 
         return defs

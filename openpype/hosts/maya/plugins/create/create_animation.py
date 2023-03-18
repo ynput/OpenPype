@@ -18,6 +18,8 @@ class CreateAnimation(plugin.MayaCreator):
 
     write_color_sets = False
     write_face_sets = False
+    include_parent_hierarchy = False
+    include_user_defined_attributes = False
 
     # TODO: Would be great if we could visually hide this from the creator
     #       by default but do allow to generate it through code.
@@ -52,10 +54,13 @@ class CreateAnimation(plugin.MayaCreator):
                     label="Include Parent Hierarchy",
                     tooltip="Whether to include parent hierarchy of nodes in "
                             "the publish instance",
-                    default=False),
+                    default=self.include_parent_hierarchy),
             BoolDef("worldSpace",
                     label="World-Space Export",
                     default=True),
+            BoolDef("includeUserDefinedAttributes",
+                    label="Include User Defined Attributes",
+                    default=self.include_user_defined_attributes),
             TextDef("attr",
                     label="Custom Attributes",
                     default="",

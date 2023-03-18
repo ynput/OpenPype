@@ -6,6 +6,7 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -97,9 +98,13 @@ class MayaSubmitRemotePublishDeadline(
         keys = [
             "FTRACK_API_USER",
             "FTRACK_API_KEY",
-            "FTRACK_SERVER",
-            "OPENPYPE_VERSION"
+            "FTRACK_SERVER"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 

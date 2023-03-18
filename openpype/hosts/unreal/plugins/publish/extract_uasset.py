@@ -22,7 +22,13 @@ class ExtractUAsset(publish.Extractor):
         staging_dir = self.staging_dir(instance)
         filename = "{}.uasset".format(instance.name)
 
-        obj = instance[0]
+        members = instance.data.get("members", [])
+
+        if not members:
+            raise RuntimeError("No members found in instance.")
+
+        # UAsset publishing supports only one member
+        obj = members[0]
 
         asset = ar.get_asset_by_object_path(obj).get_asset()
         sys_path = unreal.SystemLibrary.get_system_path(asset)

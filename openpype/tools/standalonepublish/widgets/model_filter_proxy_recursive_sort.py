@@ -5,10 +5,10 @@ from qtpy import QtCore
 class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     """Filters to the regex if any of the children matches allow parent"""
     def filterAcceptsRow(self, row, parent):
-        if hasattr(self, "filterRegularExpression"):
-            regex = self.filterRegularExpression()
-        else:
+        if hasattr(self, "filterRegExp"):
             regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
         pattern = regex.pattern()
         if pattern:
             model = self.sourceModel()

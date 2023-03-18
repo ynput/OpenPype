@@ -26,9 +26,26 @@ class CreateReview(plugin.MayaCreator):
     family = "review"
     icon = "video-camera"
 
+    use_maya_timeline = True
+
     def get_instance_attr_defs(self):
 
         defs = lib.collect_animation_defs()
+
+        # Option for using Maya or asset frame range in settings.
+        if not self.use_maya_timeline:
+            # Update the defaults to be the asset frame range
+            frame_range = lib.get_frame_range()
+            defs_by_key = {attr_def.key: attr_def for attr_def in defs}
+            for key, value in frame_range.items():
+                if key not in defs_by_key:
+                    raise RuntimeError("Attribute definition not found to be "
+                                       "updated for key: {}".format(key))
+                attr_def = defs_by_key[key]
+                attr_def.default = value
+
+        for key, value in frame_range.items():
+            data[key] = value
 
         defs.extend([
             NumberDef("review_width",

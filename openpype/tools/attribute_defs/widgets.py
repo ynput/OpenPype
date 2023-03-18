@@ -4,7 +4,7 @@ import copy
 from qtpy import QtWidgets, QtCore
 
 from openpype.lib.attribute_definitions import (
-    AbtractAttrDef,
+    AbstractAttrDef,
     UnknownDef,
     HiddenDef,
     NumberDef,
@@ -16,7 +16,11 @@ from openpype.lib.attribute_definitions import (
     UISeparatorDef,
     UILabelDef
 )
-from openpype.tools.utils import CustomTextComboBox
+from openpype.tools.utils import (
+    CustomTextComboBox,
+    FocusSpinBox,
+    FocusDoubleSpinBox,
+)
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
 from .files_widget import FilesWidget
@@ -33,9 +37,9 @@ def create_widget_for_attr_def(attr_def, parent=None):
 
 
 def _create_widget_for_attr_def(attr_def, parent=None):
-    if not isinstance(attr_def, AbtractAttrDef):
+    if not isinstance(attr_def, AbstractAttrDef):
         raise TypeError("Unexpected type \"{}\" expected \"{}\"".format(
-            str(type(attr_def)), AbtractAttrDef
+            str(type(attr_def)), AbstractAttrDef
         ))
 
     if isinstance(attr_def, NumberDef):
@@ -142,6 +146,9 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
             if attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
                 layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -179,7 +186,7 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
 class _BaseAttrDefWidget(QtWidgets.QWidget):
     # Type 'object' may not work with older PySide versions
-    value_changed = QtCore.Signal(object, uuid.UUID)
+    value_changed = QtCore.Signal(object, str)
 
     def __init__(self, attr_def, parent):
         super(_BaseAttrDefWidget, self).__init__(parent)
@@ -243,10 +250,10 @@ class NumberAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         decimals = self.attr_def.decimals
         if decimals > 0:
-            input_widget = QtWidgets.QDoubleSpinBox(self)
+            input_widget = FocusDoubleSpinBox(self)
             input_widget.setDecimals(decimals)
         else:
-            input_widget = QtWidgets.QSpinBox(self)
+            input_widget = FocusSpinBox(self)
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)

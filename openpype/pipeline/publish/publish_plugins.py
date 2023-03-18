@@ -3,7 +3,7 @@ from abc import ABCMeta
 from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
-
+from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 from openpype.lib import BoolDef
 
 from .lib import (
@@ -118,7 +118,7 @@ class OpenPypePyblishPluginMixin:
 
         Attributes available for all families in plugin's `families` attribute.
         Returns:
-            list<AbtractAttrDef>: Attribute definitions for plugin.
+            list<AbstractAttrDef>: Attribute definitions for plugin.
         """
 
         return []
@@ -288,28 +288,29 @@ class Extractor(pyblish.api.InstancePlugin):
         return get_instance_staging_dir(instance)
 
 
-class ExtractorColormanaged(Extractor):
-    """Extractor base for color managed image data.
+class ColormanagedPyblishPluginMixin(object):
+    """Mixin for colormanaged plugins.
 
-    Each Extractor intended to export pixel data representation
-    should inherit from this class to allow color managed data.
-    Class implements "get_colorspace_settings" and
-    "set_representation_colorspace" functions used
-    for injecting colorspace data to representation data for farther
-    integration into db document.
-
+    This class is used to set colorspace data to a publishing
+    representation. It contains a static method,
+    get_colorspace_settings, which returns config and
+    file rules data for the host context.
+    It also contains a method, set_representation_colorspace,
+    which sets colorspace data to the representation.
+    The allowed file extensions are listed in the allowed_ext variable.
+    The method first checks if the file extension is in
+    the list of allowed extensions. If it is, it then gets the
+    colorspace settings from the host context and gets a
+    matching colorspace from rules. Finally, it infuses this
+    data into the representation.
     """
-
-    allowed_ext = [
-        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
-        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
-        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
-        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
-    ]
+    allowed_ext = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     @staticmethod
     def get_colorspace_settings(context):
-        """Retuns solved settings for the host context.
+        """Returns solved settings for the host context.
 
         Args:
             context (publish.Context): publishing context
@@ -375,7 +376,10 @@ class ExtractorColormanaged(Extractor):
         ext = representation["ext"]
         # check extension
         self.log.debug("__ ext: `{}`".format(ext))
-        if ext.lower() not in self.allowed_ext:
+
+        # check if ext in lower case is in self.allowed_ext
+        if ext.lstrip(".").lower() not in self.allowed_ext:
+            self.log.debug("Extension is not in allowed extensions.")
             return
 
         if colorspace_settings is None:

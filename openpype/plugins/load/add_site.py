@@ -34,12 +34,24 @@ class AddSyncSite(load.LoaderPlugin):
         return self._sync_server
 
     def load(self, context, name=None, namespace=None, data=None):
-        self.log.info("Adding {} to representation: {}".format(
-            data["site_name"], data["_id"]))
-        family = context["representation"]["context"]["family"]
-        project_name = data["project_name"]
-        repre_id = data["_id"]
+        """"Adds site skeleton information on representation_id
+
+        Looks for loaded containers for workfile, adds them site skeleton too
+        (eg. they should be downloaded too).
+        Args:
+            context (dict):
+            name (str):
+            namespace (str):
+            data (dict): expects {"site_name": SITE_NAME_TO_ADD}
+        """
+        # self.log wont propagate
+        project_name = context["project"]["name"]
+        repre_doc = context["representation"]
+        family = repre_doc["context"]["family"]
+        repre_id = repre_doc["_id"]
         site_name = data["site_name"]
+        print("Adding {} to representation: {}".format(
+              data["site_name"], repre_id))
 
         self.sync_server.add_site(project_name, repre_id, site_name,
                                   force=True)
@@ -52,6 +64,8 @@ class AddSyncSite(load.LoaderPlugin):
             )
             for link_repre_id in links:
                 try:
+                    print("Adding {} to linked representation: {}".format(
+                        data["site_name"], link_repre_id))
                     self.sync_server.add_site(project_name, link_repre_id,
                                               site_name,
                                               force=False)

@@ -25,9 +25,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "camera",
                 "rig",
                 "camerarig",
-                "xgen",
                 "staticMesh",
+                "skeletalMesh",
                 "mvLook"]
+
     representations = ["ma", "abc", "fbx", "mb"]
 
     label = "Reference"
