@@ -1,14 +1,17 @@
 import pyblish.api
+from openpype.pipeline import publish
 import os
 
 
-class CollectFusionExpectedFrames(pyblish.api.InstancePlugin):
+class CollectFusionExpectedFrames(
+    pyblish.api.InstancePlugin, publish.ColormanagedPyblishPluginMixin
+):
     """Collect all frames needed to publish expected frames"""
 
     order = pyblish.api.CollectorOrder + 0.5
     label = "Collect Expected Frames"
     hosts = ["fusion"]
-    families = ["render.frames"]
+    families = ["render"]
 
     def process(self, instance):
         context = instance.context
