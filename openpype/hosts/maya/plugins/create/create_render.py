@@ -72,7 +72,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
         # would only ever be called to say, 'hey, please refresh collect'
 
         # Only allow a single render instance to exist
-        if not self._get_singleton_node():
+        if self._get_singleton_node():
             raise CreatorError("A Render instance already exists - only "
                                "one can be configured.")
 
