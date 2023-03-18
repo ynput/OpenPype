@@ -1,12 +1,9 @@
 import os
 from maya import cmds
 
+from openpype.pipeline import registered_host
+from openpype.pipeline.create import CreateContext
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import maintained_selection
 
@@ -150,21 +147,19 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = legacy_io.Session["AVALON_ASSET"]
-        dependency = str(context["representation"]["_id"])
-
         self.log.info("Creating subset: {}".format(namespace))
 
+        # Fill creator identifier
+        creator_identifier = "io.openpype.creators.maya.animation"
+
+        host = registered_host()
+        context = CreateContext(host)
+
         # Create the animation instance
-        creator_plugin = get_legacy_creator_by_name(
-            self.animation_creator_name
-        )
         with maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
-            legacy_create(
-                creator_plugin,
-                name=namespace,
-                asset=asset,
-                options={"useSelection": True},
-                data={"dependencies": dependency}
+            context.create(
+                creator_identifier=creator_identifier,
+                variant=namespace,
+                pre_create_data={"use_selection": True}
             )
