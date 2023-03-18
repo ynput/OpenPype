@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
 import os
-import sys
 import json
 import tempfile
 import platform
 import contextlib
-import subprocess
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -21,6 +19,15 @@ from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 # Modes for transfer
 COPY = 1
 HARDLINK = 2
+
+
+def _has_arnold():
+    """Return whether the arnold package is available and can be imported."""
+    try:
+        import arnold  # noqa: F401
+        return True
+    except (ImportError, ModuleNotFoundError):
+        return False
 
 
 def escape_space(path):
@@ -548,7 +555,7 @@ class ExtractLook(publish.Extractor):
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        if cmds.loadPlugin("mtoa", quiet=True):
+                        if _has_arnold():
                             img_info = image_info(filepath)
                             color_space = guess_colorspace(img_info)
                         else:
@@ -560,7 +567,7 @@ class ExtractLook(publish.Extractor):
                                             render_colorspace])
                 else:
 
-                    if cmds.loadPlugin("mtoa", quiet=True):
+                    if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
                         if color_space == "sRGB":
