@@ -153,6 +153,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         data = cmds.fileInfo("OpenPypeContext", query=True)
         if not data:
             return {}
+
+        data = data[0]  # Maya seems to return a list
         decoded = base64.b64decode(data).decode("utf-8")
         return json.loads(decoded)
 
