@@ -44,9 +44,6 @@ class CreateReview(plugin.MayaCreator):
                 attr_def = defs_by_key[key]
                 attr_def.default = value
 
-        for key, value in frame_range.items():
-            data[key] = value
-
         defs.extend([
             NumberDef("review_width",
                       label="Review width",
