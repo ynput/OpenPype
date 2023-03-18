@@ -31,8 +31,10 @@ import attr
 from maya import cmds
 
 from openpype.pipeline import legacy_io
-from openpype.lib import NumberDef
-
+from openpype.lib import (
+    BoolDef,
+    NumberDef
+)
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 
@@ -107,6 +109,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = "none"
+    strict_error_checking = True
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
@@ -122,6 +125,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
         cls.limit = settings.get("limit", cls.limit)
         cls.group = settings.get("group", cls.group)
+        cls.strict_error_checking = settings.get("strict_error_checking",
+                                                 cls.strict_error_checking)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -242,7 +247,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
         strict_error_checking = instance.data.get("strict_error_checking",
-                                                  True)
+                                                  self.strict_error_checking)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -795,7 +800,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             NumberDef("tile_priority",
                       label="Tile Assembler Priority",
                       decimals=0,
-                      default=cls.tile_priority)
+                      default=cls.tile_priority),
+            BoolDef("strict_error_checking",
+                    label="Strict Error Checking",
+                    default=cls.strict_error_checking),
+
         ])
 
         return defs
