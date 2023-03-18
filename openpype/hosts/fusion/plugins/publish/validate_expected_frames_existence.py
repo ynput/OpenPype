@@ -9,11 +9,11 @@ from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     """Checks if files for savers that's set
-    to publish existing frames exists
+    to publish expected frames exists
     """
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Existing Frames Exists"
+    label = "Validate Expected Frames Exists"
     families = ["render"]
     hosts = ["fusion"]
     actions = [RepairAction, SelectInvalidAction]
@@ -71,13 +71,12 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         if invalid:
-            data = invalid[0].GetData("openpype")
+            tool = invalid[0]
 
             # Change render target to local to render locally
-            data["creator_attributes"]["render_target"] = "local"
+            tool.SetData("openpype.creator_attributes.render_target", "local")
 
-            invalid[0].SetData("openpype", data)
-            cls.log.error(
-                f"Reload the publisher and {invalid[0].Name} "
+            cls.log.info(
+                f"Reload the publisher and {tool.Name} "
                 "will be set to render locally"
             )
