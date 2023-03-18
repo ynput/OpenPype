@@ -546,3 +546,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+# TODO: Remove hack to avoid this plug-in in new publisher
+#       This plug-in should actually be in dedicated module
+if not os.environ.get("MUSTER_REST_URL"):
+    del MayaSubmitMuster

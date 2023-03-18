@@ -661,21 +661,21 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
     @staticmethod
     def _get_workfile_instance(context):
         """Find workfile instance in context"""
-        for i in context:
+        for instance in context:
 
             is_workfile = (
-                "workfile" in i.data.get("families", []) or
-                i.data["family"] == "workfile"
+                "workfile" in instance.data.get("families", []) or
+                instance.data["family"] == "workfile"
             )
             if not is_workfile:
                 continue
 
             # test if there is instance of workfile waiting
             # to be published.
-            assert i.data["publish"] is True, (
+            assert instance.data.get("publish", True) is True, (
                 "Workfile (scene) must be published along")
 
-            return i
+            return instance
 
     @classmethod
     def get_attribute_defs(cls):
