@@ -227,6 +227,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         # Get layer specific settings, might be overrides
         colorspace_data = lib.get_color_management_preferences()
         data = {
+            "farm": True,
             "attachTo": attach_to,
 
             "multipartExr": multipart,
@@ -274,7 +275,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "tileRendering": instance.data.get("tileRendering") or False,  # noqa: E501
             "tilesX": instance.data.get("tilesX") or 2,
             "tilesY": instance.data.get("tilesY") or 2,
-            "priority": instance.data.get("priority"),
             "convertToScanline": instance.data.get(
                 "convertToScanline") or False,
             "useReferencedAovs": instance.data.get(
@@ -287,9 +287,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "colorspaceConfig": colorspace_data["config"],
             "colorspaceDisplay": colorspace_data["display"],
             "colorspaceView": colorspace_data["view"],
-            "strict_error_checking": instance.data.get(
-                "strict_error_checking", True
-            )
         }
 
         if self.sync_workfile_version:
@@ -298,70 +295,21 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
                 if instance.data['family'] == "workfile":
                     instance.data["version"] = context.data["version"]
 
-        # Include (optional) global settings
-        # Get global overrides and translate to Deadline values
-        # TODO: Re-implement render globals instance data logic
-        # TODO: Re-implement extend frames
-        # overrides = self.parse_options(str(render_globals))
-        # data.update(**overrides)
-
         # Define nice label
         label = "{0} ({1})".format(layer_name, instance.data["asset"])
         label += "  [{0}-{1}]".format(
             int(data["frameStartHandle"]), int(data["frameEndHandle"])
         )
-
-        instance.data["label"] = label
-        instance.data["farm"] = True
-        instance.data.update(data)
-
-    def parse_options(self, render_globals):
-        """Get all overrides with a value, skip those without.
-
-        Here's the kicker. These globals override defaults in the submission
-        integrator, but an empty value means no overriding is made.
-        Otherwise, Frames would override the default frames set under globals.
-
-        Args:
-            render_globals (str): collection of render globals
-
-        Returns:
-            dict: only overrides with values
-
-        """
-        attributes = lib.read(render_globals)
-
-        options = {"renderGlobals": {}}
-        options["renderGlobals"]["Priority"] = attributes["priority"]
-
-        # Check for specific pools
-        pool_a, pool_b = self._discover_pools(attributes)
-        options["renderGlobals"].update({"Pool": pool_a})
-        if pool_b:
-            options["renderGlobals"].update({"SecondaryPool": pool_b})
-
-        # Machine list
-        machine_list = attributes["machineList"]
-        if machine_list:
-            key = "Whitelist" if attributes["whitelist"] else "Blacklist"
-            options["renderGlobals"][key] = machine_list
-
-        # Suspend publish job
-        state = "Suspended" if attributes["suspendPublishJob"] else "Active"
-        options["publishJobState"] = state
-
-        chunksize = attributes.get("framesPerTask", 1)
-        options["renderGlobals"]["ChunkSize"] = chunksize
+        data["label"] = label
 
         # Override frames should be False if extendFrames is False. This is
         # to ensure it doesn't go off doing crazy unpredictable things
-        override_frames = False
-        extend_frames = attributes.get("extendFrames", False)
-        if extend_frames:
-            override_frames = attributes.get("overrideExistingFrame", False)
+        extend_frames = instance.data.get("extendFrames", False)
+        if not extend_frames:
+            instance.data["overrideExistingFrame"] = False
 
-        options["extendFrames"] = extend_frames
-        options["overrideExistingFrame"] = override_frames
+        # Update the instace
+        instance.data.update(data)
 
     @staticmethod
     def get_render_attribute(attr, layer):

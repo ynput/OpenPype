@@ -30,10 +30,15 @@ import attr
 
 from maya import cmds
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import (
+    legacy_io,
+    OpenPypePyblishPluginMixin
+)
 from openpype.lib import (
     BoolDef,
-    NumberDef
+    NumberDef,
+    TextDef,
+    EnumDef
 )
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
@@ -95,7 +100,8 @@ class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
 
 
-class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                         OpenPypePyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -163,16 +169,26 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
         if self.limit:
             job_info.LimitGroups = ",".join(self.limit)
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        render_globals = instance.data.setdefault("renderGlobals", dict())
+        machine_list = attr_values.get("machineList", "")
+        if machine_list:
+            if attr_values.get("whitelist", True):
+                machine_list_key = "Whitelist"
+            else:
+                machine_list_key = "Blacklist"
+            render_globals[machine_list_key] = machine_list
+
+        job_info.Priority = attr_values.get("priority")
+        job_info.ChunkSize = attr_values.get("chunkSize")
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -246,8 +262,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
-        strict_error_checking = instance.data.get("strict_error_checking",
-                                                  self.strict_error_checking)
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        strict_error_checking = attr_values.get("strict_error_checking",
+                                                self.strict_error_checking)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -797,6 +815,27 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         defs = super(MayaSubmitDeadline, cls).get_attribute_defs()
 
         defs.extend([
+            NumberDef("priority",
+                      label="Priority",
+                      default=cls.default_priority,
+                      decimals=0),
+            NumberDef("chunkSize",
+                      label="Frames Per Task",
+                      default=1,
+                      decimals=0,
+                      minimum=1,
+                      maximum=1000),
+            TextDef("machineList",
+                    label="Machine List",
+                    default="",
+                    placeholder="machine1,machine2"),
+            EnumDef("whitelist",
+                    label="Machine List (Allow/Deny)",
+                    items={
+                        True: "Allow List",
+                        False: "Deny List",
+                    },
+                    default=False),
             NumberDef("tile_priority",
                       label="Tile Assembler Priority",
                       decimals=0,

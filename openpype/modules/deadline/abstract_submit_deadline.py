@@ -22,11 +22,6 @@ from openpype.pipeline.publish import (
     KnownPublishError,
     OpenPypePyblishPluginMixin
 )
-from openpype.lib import (
-    NumberDef,
-    TextDef,
-    EnumDef
-)
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
@@ -676,29 +671,3 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
                 "Workfile (scene) must be published along")
 
             return instance
-
-    @classmethod
-    def get_attribute_defs(cls):
-        return [
-            NumberDef("priority",
-                      label="Priority",
-                      default=cls.default_priority,
-                      decimals=0),
-            NumberDef("framesPerTask",
-                      label="Frames Per Task",
-                      default=1,
-                      decimals=0,
-                      minimum=1,
-                      maximum=1000),
-            TextDef("machineList",
-                    label="Machine List",
-                    default="",
-                    placeholder="machine1,machine2"),
-            EnumDef("whitelist",
-                    label="Machine List (Allow/Deny)",
-                    items={
-                        True: "Allow List",
-                        False: "Deny List",
-                    },
-                    default=False)
-        ]
