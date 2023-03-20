@@ -38,6 +38,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 OPENPYPE_METADATA_KEY = "OpenPype"
 OPENPYPE_METADATA_CONTAINERS_KEY = "containers"  # child key
+OPENPYPE_METADATA_CONTEXT_KEY = "context"        # child key
 
 
 class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
@@ -140,15 +141,21 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 container["objectName"] = key
                 yield container
 
-    @staticmethod
-    def create_context_node():
-        pass
-
     def update_context_data(self, data, changes):
-        pass
+
+        if not substance_painter.project.is_open():
+            return
+
+        metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+        metadata.set(OPENPYPE_METADATA_CONTEXT_KEY, data)
 
     def get_context_data(self):
-        pass
+
+        if not substance_painter.project.is_open():
+            return
+
+        metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+        return metadata.get(OPENPYPE_METADATA_CONTEXT_KEY) or {}
 
     def _install_menu(self):
         from PySide2 import QtWidgets
