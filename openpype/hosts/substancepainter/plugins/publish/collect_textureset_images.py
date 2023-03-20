@@ -9,6 +9,8 @@ from openpype.hosts.substancepainter.api.lib import (
     get_parsed_export_maps,
     strip_template
 )
+from openpype.pipeline.create import get_subset_name
+from openpype.client import get_asset_by_name
 
 
 class CollectTextureSet(pyblish.api.InstancePlugin):
@@ -24,6 +26,10 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         config = self.get_export_config(instance)
+        asset_doc = get_asset_by_name(
+            project_name=instance.context.data["projectName"],
+            asset_name=instance.data["asset"]
+        )
 
         instance.data["exportConfig"] = config
         maps = get_parsed_export_maps(config)
@@ -34,9 +40,11 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             self.log.info(f"Processing {texture_set_name}/{stack_name}")
             for template, outputs in template_maps.items():
                 self.log.info(f"Processing {template}")
-                self.create_image_instance(instance, template, outputs)
+                self.create_image_instance(instance, template, outputs,
+                                           asset_doc=asset_doc)
 
-    def create_image_instance(self, instance, template, outputs):
+    def create_image_instance(self, instance, template, outputs,
+                              asset_doc):
         """Create a new instance per image or UDIM sequence.
 
         The new instances will be of family `image`.
@@ -53,8 +61,17 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Define the suffix we want to give this particular texture
         # set and set up a remapped subset naming for it.
         suffix = f".{map_identifier}"
-        image_subset = instance.data["subset"][len("textureSet"):]
-        image_subset = "texture" + image_subset + suffix
+        image_subset = get_subset_name(
+            # TODO: The family actually isn't 'texture' currently but for now
+            #       this is only done so the subset name starts with 'texture'
+            family="texture",
+            variant=instance.data["variant"] + suffix,
+            task_name=instance.data.get("task"),
+            asset_doc=asset_doc,
+            project_name=context.data["projectName"],
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
+        )
 
         # Prepare representation
         representation = {
