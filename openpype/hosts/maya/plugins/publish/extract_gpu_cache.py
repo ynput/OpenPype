@@ -6,7 +6,7 @@ from openpype.pipeline import publish
 
 
 class ExtractGPUCache(publish.Extractor):
-    """Extract the content of the instance to an CPU cache file."""
+    """Extract the content of the instance to a GPU cache file."""
 
     label = "GPU Cache"
     hosts = ["maya"]
