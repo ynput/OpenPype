@@ -80,9 +80,7 @@ def get_all_asset_nodes():
     Returns:
         list: list of dictionaries
     """
-    nodes = cmds.ls(dag=True, noIntermediate=True, long=True)
-    items = create_items_from_nodes(nodes)
-    return items
+    return cmds.ls(dag=True, noIntermediate=True, long=True)
 
 
 def create_asset_id_hash(nodes):
