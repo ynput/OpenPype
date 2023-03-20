@@ -87,6 +87,12 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             # strings. See CollectTextures plug-in and Integrators.
             representation["udim"] = [output["udim"] for output in outputs]
 
+        # Set up the representation for thumbnail generation
+        # TODO: Simplify this once thumbnail extraction is refactored
+        staging_dir = os.path.dirname(first_filepath)
+        representation["tags"] = ["review"]
+        representation["stagingDir"] = staging_dir
+
         # Clone the instance
         image_instance = context.create_instance(instance.name)
         image_instance[:] = instance[:]
@@ -107,12 +113,6 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         if colorspace:
             self.log.debug(f"{image_subset} colorspace: {colorspace}")
             image_instance.data["colorspace"] = colorspace
-
-        # Set up the representation for thumbnail generation
-        # TODO: Simplify this once thumbnail extraction is refactored
-        staging_dir = os.path.dirname(first_filepath)
-        image_instance.data["representations"][0]["tags"] = ["review"]
-        image_instance.data["representations"][0]["stagingDir"] = staging_dir
 
         # Store the instance in the original instance as a member
         instance.append(image_instance)
