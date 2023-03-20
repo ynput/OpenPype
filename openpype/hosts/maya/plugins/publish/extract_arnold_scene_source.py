@@ -150,7 +150,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     duplicate_transform, basename
                 )
 
-                # Discard the children.
+                # Discard children nodes that are not shapes
                 shapes = cmds.listRelatives(
                     duplicate_transform, shapes=True, fullPath=True
                 )
