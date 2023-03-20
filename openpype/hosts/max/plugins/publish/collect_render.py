@@ -47,13 +47,11 @@ class CollectRender(pyblish.api.InstancePlugin):
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int
 
-        creator_attr = instance.data["creator_attributes"]
-
         # setup the plugin as 3dsmax for the internal renderer
         data = {
             "subset": instance.name,
             "asset": asset,
-            "publish": creator_attr["use_published"],
+            "publish": True,
             "maxversion": str(get_max_version()),
             "imageFormat": img_format,
             "family": 'maxrender',
@@ -64,11 +62,6 @@ class CollectRender(pyblish.api.InstancePlugin):
             "frameStart": context.data['frameStart'],
             "frameEnd": context.data['frameEnd'],
             "version": version_int,
-            "priority": creator_attr["priority"],
-            "chunkSize": creator_attr["chunkSize"],
-            "group": creator_attr["group"],
-            "primaryPool": creator_attr["deadline_pool"],
-            "secondaryPool": creator_attr["deadline_pool_secondary"]
         }
         self.log.info("data: {0}".format(data))
         instance.data.update(data)

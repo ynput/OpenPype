@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating camera."""
 from openpype.hosts.max.api import plugin
-from openpype.lib import (
-    TextDef,
-    BoolDef,
-    NumberDef,
-)
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
@@ -15,17 +10,6 @@ class CreateRender(plugin.MaxCreator):
     label = "Render"
     family = "maxrender"
     icon = "gear"
-
-    def apply_settings(self, project_settings, system_settings):
-        plugin_settings = (
-            project_settings["deadline"]["publish"]["MaxSubmitDeadline"]
-        )
-        self.use_published = plugin_settings["use_published"]
-        self.priority = plugin_settings["priority"]
-        self.chunkSize = plugin_settings["chunk_size"]
-        self.group = plugin_settings["group"]
-        self.deadline_pool = plugin_settings["deadline_pool"]
-        self.pool_secondary = plugin_settings["deadline_pool_secondary"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
@@ -47,39 +31,3 @@ class CreateRender(plugin.MaxCreator):
         RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
-
-    def get_instance_attr_defs(self):
-        return [
-            BoolDef("use_published",
-                    default=self.use_published,
-                    label="Use Published Scene"),
-
-            NumberDef("priority",
-                      minimum=1,
-                      maximum=250,
-                      decimals=0,
-                      default=self.priority,
-                      label="Priority"),
-
-            NumberDef("chunkSize",
-                      minimum=1,
-                      maximum=50,
-                      decimals=0,
-                      default=self.chunkSize,
-                      label="Chunk Size"),
-
-            TextDef("group",
-                    default=self.group,
-                    label="Group Name"),
-
-            TextDef("deadline_pool",
-                    default=self.deadline_pool,
-                    label="Deadline Pool"),
-
-            TextDef("deadline_pool_secondary",
-                    default=self.pool_secondary,
-                    label="Deadline Pool Secondary")
-        ]
-
-    def get_pre_create_attr_defs(self):
-        return self.get_instance_attr_defs()

@@ -3,9 +3,14 @@ import getpass
 import copy
 
 import attr
+from openpype.lib import (
+    TextDef,
+    BoolDef,
+    NumberDef,
+)
 from openpype.pipeline import (
     legacy_io,
-    OptionalPyblishPluginMixin
+    OpenPypePyblishPluginMixin
 )
 from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
@@ -26,7 +31,7 @@ class MaxPluginInfo(object):
 
 
 class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
-                        OptionalPyblishPluginMixin):
+                        OpenPypePyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["max"]
@@ -36,7 +41,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     use_published = True
     priority = 50
     tile_priority = 50
-    chunk_size = 1
+    chunkSize = 1
     jobInfo = {}
     pluginInfo = {}
     group = None
@@ -44,6 +49,22 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     deadline_pool_secondary = None
     framePerTask = 1
     optional = True
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["MaxSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.use_published = settings.get("use_published",
+                                         cls.use_published)
+        cls.priority = settings.get("priority",
+                                    cls.priority)
+        cls.chunkSize = settings.get("chunk_size", cls.chunkSize)
+        cls.group = settings.get("group", cls.group)
+        cls.deadline_pool = settings.get("deadline_pool",
+                                         cls.deadline_pool)
+        cls.deadline_pool_secondary = settings.get("deadline_pool_secondary",
+                                                   cls.deadline_pool_secondary)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
@@ -54,8 +75,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         instance = self._instance
         context = instance.context
-        if not self.is_active(instance.data):
-            return
         # Always use the original work file name for the Job name even when
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
@@ -76,12 +95,22 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        job_info.Pool = instance.data.get("primaryPool")
-        job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 1)
+        attr_values = self.get_attr_values_from_data(instance.data)
+
+        if attr_values.get("deadline_pool"):
+            job_info.Pool = attr_values.get("deadline_pool")
+        else:
+            job_info.Pool = instance.data.get("primaryPool")
+        if attr_values.get("deadline_pool_secondary"):
+            job_info.SecondaryPool = attr_values.get("deadline_pool_secondary")
+        else:
+            job_info.SecondaryPool = instance.data.get("secondaryPool",
+                                                       self.deadline_pool_secondary)
+
+        job_info.ChunkSize = attr_values.get("chunkSize", 1)
         job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.Group = instance.data.get("group", self.group)
+        job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.Group = attr_values.get("group", self.group)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -220,3 +249,40 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(MaxSubmitDeadline, cls).get_attribute_defs()
+        defs.extend([
+            BoolDef("use_published",
+                    default=cls.use_published,
+                    label="Use Published Scene"),
+
+            NumberDef("priority",
+                      minimum=1,
+                      maximum=250,
+                      decimals=0,
+                      default=cls.priority,
+                      label="Priority"),
+
+            NumberDef("chunkSize",
+                      minimum=1,
+                      maximum=50,
+                      decimals=0,
+                      default=cls.chunkSize,
+                      label="Frame Per Task"),
+
+            TextDef("group",
+                    default=cls.group,
+                    label="Group Name"),
+
+            TextDef("deadline_pool",
+                    default=cls.deadline_pool,
+                    label="Deadline Pool"),
+
+            TextDef("deadline_pool_secondary",
+                    default=cls.deadline_pool_secondary,
+                    label="Deadline Pool Secondary")
+        ])
+
+        return defs
