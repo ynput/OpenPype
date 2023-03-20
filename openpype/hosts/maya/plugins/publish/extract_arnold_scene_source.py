@@ -139,7 +139,6 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     parent, duplicate_transform
                 )
 
-
                 if cmds.listRelatives(duplicate_transform, parent=True):
                     duplicate_transform = cmds.parent(
                         duplicate_transform, world=True
