@@ -60,6 +60,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
 
         # Define the suffix we want to give this particular texture
         # set and set up a remapped subset naming for it.
+        # TODO (Critical) Support needs to be added to have multiple materials
+        #      with each their own maps. So we might need to include the
+        #      material or alike in the variant suffix too?
         suffix = f".{map_identifier}"
         image_subset = get_subset_name(
             # TODO: The family actually isn't 'texture' currently but for now
