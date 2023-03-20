@@ -121,7 +121,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "OpenPypeTileAssembler": "Open Image IO"
+                                    "OpenPypeTileAssembler": "OpenPype Tile Assembler"
                                 }
                             ]
                         },
