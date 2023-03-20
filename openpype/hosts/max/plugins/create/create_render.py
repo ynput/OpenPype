@@ -25,7 +25,7 @@ class CreateRender(plugin.MaxCreator):
         self.chunkSize = plugin_settings["chunk_size"]
         self.group = plugin_settings["group"]
         self.deadline_pool = plugin_settings["deadline_pool"]
-        self.deadline_pool_secondary = plugin_settings["deadline_pool_secondary"]
+        self.pool_secondary = plugin_settings["deadline_pool_secondary"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
@@ -77,7 +77,7 @@ class CreateRender(plugin.MaxCreator):
                     label="Deadline Pool"),
 
             TextDef("deadline_pool_secondary",
-                    default=self.deadline_pool_secondary,
+                    default=self.pool_secondary,
                     label="Deadline Pool Secondary")
         ]
 
