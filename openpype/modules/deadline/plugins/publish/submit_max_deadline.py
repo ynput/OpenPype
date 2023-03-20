@@ -3,7 +3,10 @@ import getpass
 import copy
 
 import attr
-from openpype.pipeline import legacy_io
+from openpype.pipeline import (
+    legacy_io,
+    OptionalPyblishPluginMixin
+)
 from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
@@ -21,8 +24,8 @@ class MaxPluginInfo(object):
     SaveFile = attr.ib(default=True)
     IgnoreInputs = attr.ib(default=True)
 
-#TODO: add the optional attirbute
-class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                        OptionalPyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["max"]
@@ -39,6 +42,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     deadline_pool = None
     deadline_pool_secondary = None
     framePerTask = 1
+    optional = True
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
@@ -49,6 +53,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         instance = self._instance
         context = instance.context
+        if not self.is_active(instance.data):
+            return
         # Always use the original work file name for the Job name even when
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
