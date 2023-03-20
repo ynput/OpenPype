@@ -26,11 +26,12 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
 
         return nodes_by_name
 
-    def get_invalid_couples(self, instance):
-        content_nodes_by_name = self._get_nodes_by_name(
+    @classmethod
+    def get_invalid_couples(cls, instance):
+        content_nodes_by_name = cls._get_nodes_by_name(
             instance.data["contentMembers"]
         )
-        proxy_nodes_by_name = self._get_nodes_by_name(
+        proxy_nodes_by_name = cls._get_nodes_by_name(
             instance.data.get("proxy", [])
         )
 
@@ -39,7 +40,7 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
             proxy_node = proxy_nodes_by_name.get(content_name, None)
 
             if not proxy_node:
-                self.log.debug(
+                cls.log.debug(
                     "Content node '{}' has no matching proxy node.".format(
                         content_node
                     )
