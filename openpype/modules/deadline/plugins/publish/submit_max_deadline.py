@@ -105,7 +105,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             job_info.SecondaryPool = attr_values.get("deadline_pool_secondary")
         else:
             job_info.SecondaryPool = instance.data.get("secondaryPool",
-                                                       self.deadline_pool_secondary)
+                                                       self.deadline_pool_secondary)    # noqa
 
         job_info.ChunkSize = attr_values.get("chunkSize", 1)
         job_info.Comment = context.data.get("comment")
