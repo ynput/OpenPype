@@ -369,7 +369,8 @@
                     "label": "Arnold Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -379,7 +380,8 @@
                     "label": "Vray Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -389,7 +391,8 @@
                     "label": "Redshift Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -399,7 +402,8 @@
                     "label": "Renderman Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 }
             ]
