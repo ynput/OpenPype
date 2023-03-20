@@ -18,7 +18,7 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
     actions = [RepairAction]
 
     @staticmethod
-    def _get_nodes_data(nodes):
+    def _get_nodes_by_name(nodes):
         nodes_by_name = {}
         for node in nodes:
             node_name = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
@@ -27,10 +27,10 @@ class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
         return nodes_by_name
 
     def get_invalid_couples(self, instance):
-        content_nodes_by_name = self._get_nodes_data(
+        content_nodes_by_name = self._get_nodes_by_name(
             instance.data["contentMembers"]
         )
-        proxy_nodes_by_name = self._get_nodes_data(
+        proxy_nodes_by_name = self._get_nodes_by_name(
             instance.data.get("proxy", [])
         )
 
