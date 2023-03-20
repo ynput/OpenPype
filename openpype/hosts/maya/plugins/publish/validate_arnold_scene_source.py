@@ -20,7 +20,7 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     families = ["ass"]
     label = "Validate Arnold Scene Source"
 
-    def _get_nodes_data(self, nodes):
+    def _get_nodes_by_name(self, nodes):
         ungrouped_nodes = []
         nodes_by_name = {}
         parents = []
@@ -60,12 +60,12 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     def process(self, instance):
         ungrouped_nodes = []
 
-        nodes, content_nodes_by_name, content_parents = self._get_nodes_data(
-            instance.data["contentMembers"]
+        nodes, content_nodes_by_name, content_parents = (
+            self._get_nodes_by_name(instance.data["contentMembers"])
         )
         ungrouped_nodes.extend(nodes)
 
-        nodes, proxy_nodes_by_name, proxy_parents = self._get_nodes_data(
+        nodes, proxy_nodes_by_name, proxy_parents = self._get_nodes_by_name(
             instance.data.get("proxy", [])
         )
         ungrouped_nodes.extend(nodes)
