@@ -55,11 +55,11 @@
                         },
                         {
                             "type": "list",
-                            "key": "status_exceptions",
-                            "label": "Status exceptions",
+                            "key": "status_conditions",
+                            "label": "Status conditions",
                             "object_type": {
                                 "type": "dict",
-                                "key": "exception_dict",
+                                "key": "conditions_dict",
                                 "children": [
                                     {
                                         "type": "enum",

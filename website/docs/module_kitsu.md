@@ -46,7 +46,7 @@ Task status can be automatically set during publish thanks to `Integrate Kitsu N
 There are three settings available:
 - `Set status on note` -> turns on and off this integrator.
 - `Note shortname` -> Which status shortname should be set automatically (Case sensitive).
-- `Status exceptions` -> Exceptions for which task status should be left unchanged. You can add as many exceptions as you like. There are two fields to each exception: `Condition` (Whether current status should be equal or not equal to the exception status) and `Short name` (Kitsu Shortname of the exception status).
+- `Status conditions` -> Conditions that need to be met for kitsu status to be changed. You can add as many conditions as you like. There are two fields to each conditions: `Condition` (Whether current status should be equal or not equal to the condition status) and `Short name` (Kitsu Shortname of the condition status).
 
 ![Integrate Kitsu Note project settings](assets/integrate_kitsu_note_settings.png)
 

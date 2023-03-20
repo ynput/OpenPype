@@ -11,7 +11,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     families = ["render", "kitsu"]
     set_status_note = False
     note_status_shortname = "wfa"
-    status_exceptions = list()
+    status_conditions = list()
 
     def process(self, context):
         # Get comment text body
@@ -30,17 +30,17 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             # if it is not specified in the configuration
             shortname = kitsu_task["task_status"]["short_name"].upper()
             note_status = kitsu_task["task_status_id"]
-            if self.set_status_note and next(
-                (
-                    False
-                    for status_except in self.status_exceptions
-                    if shortname == status_except["short_name"].upper()
-                    and status_except["condition"] == "equal"
-                    or shortname != status_except["short_name"].upper()
-                    and status_except["condition"] == "not_equal"
-                ),
-                True,
-            ):
+
+            # Check if any status condition is not met
+            allow_status_change = True
+            for status_cond in self.status_conditions:
+                condition = status_cond["condition"] == "equal"
+                match = status_cond["short_name"].upper() == shortname
+                if match and not condition or condition and not match:
+                    allow_status_change = False
+                    break
+
+            if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
                 )
