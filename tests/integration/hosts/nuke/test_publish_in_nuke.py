@@ -1,12 +1,12 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.nuke.lib import NukeDeadlinePublishTestClass
+from tests.integration.hosts.nuke.lib import NukeLocalPublishTestClass
 
 log = logging.getLogger("test_publish_in_nuke")
 
 
-class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
+class TestPublishInNuke(NukeLocalPublishTestClass):
     """Basic test case for publishing in Nuke
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -36,13 +36,12 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
     """
     # https://drive.google.com/file/d/1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI/view?usp=sharing  # noqa: E501
     TEST_FILES = [
-        ("1SeWprClKhWMv2xVC9AcnekIJFExxnp_b",
-         "test_nuke_deadline_publish.zip", "")
+        ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
     ]
 
     APP_GROUP = "nuke"
 
-    TIMEOUT = 180  # publish timeout
+    TIMEOUT = 50  # publish timeout
 
     # could be overwritten by command line arguments
     # keep empty to locate latest installed variant or explicit
@@ -99,4 +98,4 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
 
 
 if __name__ == "__main__":
-    test_case = TestDeadlinePublishInNuke()
+    test_case = TestPublishInNuke()
