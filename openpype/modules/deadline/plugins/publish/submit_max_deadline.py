@@ -24,6 +24,7 @@ class MaxPluginInfo(object):
     SaveFile = attr.ib(default=True)
     IgnoreInputs = attr.ib(default=True)
 
+
 class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                         OptionalPyblishPluginMixin):
 
