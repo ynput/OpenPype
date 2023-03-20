@@ -51,8 +51,9 @@ publish instance.
 To create a **TextureSet instance** we will use OpenPype's publisher tool. Go 
 to **OpenPype → Publish... → TextureSet**
 
-The texture set instance will define what Substance Painter export template `.spexp` to
-use and thus defines what texture maps will be exported from your workfile.
+The texture set instance will define what Substance Painter export template (`.spexp`) to
+use and thus defines what texture maps will be exported from your workfile. This
+can be set with the **Output Template** attribute on the instance.
 
 :::info
 The TextureSet instance gets saved with your Substance Painter project. As such, 
@@ -61,8 +62,34 @@ just click **OpenPype → Publish...** and start publishing directly with the
 same settings.
 :::
 
+#### Publish per output map of the Substance Painter preset
 
-### Known issues
+The Texture Set instance generates a publish per output map that is defined in
+the Substance Painter's export preset. For example a publish from a default
+PBR Metallic Roughness texture set results in six separate published subsets 
+(if all the channels exist in your file).
+
+![Substance Painter PBR Metallic Roughness Export Preset](assets/substancepainter_pbrmetallicroughness_export_preset.png)
+
+When publishing for example a texture set with variant **Main** six instances will
+be published with the variants: 
+- Main.**BaseColor**
+- Main.**Emissive**
+- Main.**Height**
+- Main.**Metallic**
+- Main.**Normal**
+- Main.**Roughness**
+
+The bold output map name for the publish is based on the string that is pulled
+from the what is considered to be the static part of the filename templates in 
+the export preset. The tokens like `$mesh` and `(_$colorSpace)` are ignored.
+So `$mesh_$textureSet_BaseColor(_$colorSpace)(.$udim)` becomes `BaseColor`.
+
+An example output for PBR Metallic Roughness would be:
+
+![Substance Painter PBR Metallic Roughness Publish Example in Loader](assets/substancepainter_pbrmetallicroughness_published.png)
+
+## Known issues
 
 #### Can't see the OpenPype menu?
 
