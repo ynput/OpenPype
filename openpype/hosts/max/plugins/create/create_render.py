@@ -8,15 +8,6 @@ from openpype.lib import (
 )
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-
-
-def setting(project_setting=None):
-    render_setting = get_project_settings(
-        legacy_io.Session["AVALON_PROJECT"]
-    )
-    return render_setting["deadline"]["publish"]["MaxSubmitDeadline"]
 
 
 class CreateRender(plugin.MaxCreator):
@@ -24,6 +15,17 @@ class CreateRender(plugin.MaxCreator):
     label = "Render"
     family = "maxrender"
     icon = "gear"
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["deadline"]["publish"]["MaxSubmitDeadline"]
+        )
+        self.use_published = plugin_settings["use_published"]
+        self.priority = plugin_settings["priority"]
+        self.chunkSize = plugin_settings["chunk_size"]
+        self.group = plugin_settings["group"]
+        self.deadline_pool = plugin_settings["deadline_pool"]
+        self.deadline_pool_secondary = plugin_settings["deadline_pool_secondary"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
@@ -49,33 +51,33 @@ class CreateRender(plugin.MaxCreator):
     def get_instance_attr_defs(self):
         return [
             BoolDef("use_published",
-                    default=setting()["active"],
+                    default=self.use_published,
                     label="Use Published Scene"),
 
             NumberDef("priority",
                       minimum=1,
                       maximum=250,
                       decimals=0,
-                      default=setting()["priority"],
+                      default=self.priority,
                       label="Priority"),
 
             NumberDef("chunkSize",
                       minimum=1,
                       maximum=50,
                       decimals=0,
-                      default=setting()["chunk_size"],
+                      default=self.chunkSize,
                       label="Chunk Size"),
 
             TextDef("group",
-                    default=setting()["group"],
+                    default=self.group,
                     label="Group Name"),
 
             TextDef("deadline_pool",
-                    default=setting()["deadline_pool"],
+                    default=self.deadline_pool,
                     label="Deadline Pool"),
 
             TextDef("deadline_pool_secondary",
-                    default=setting()["deadline_pool_secondary"],
+                    default=self.deadline_pool_secondary,
                     label="Deadline Pool Secondary")
         ]
 

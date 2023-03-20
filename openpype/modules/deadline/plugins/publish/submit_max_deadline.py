@@ -60,8 +60,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
         # etc. which are stripped for the published file.
-        if not instance.data.get("publish"):
-            self.use_published = False
 
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
@@ -80,7 +78,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", self.chunk_size)
+        job_info.ChunkSize = instance.data.get("chunkSize", 1)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
         job_info.Group = instance.data.get("group", self.group)
