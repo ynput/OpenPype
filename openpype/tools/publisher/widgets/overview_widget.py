@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .border_label_widget import BorderedLabelWidget
 
@@ -146,6 +146,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._subset_list_view = subset_list_view
         self._subset_views_layout = subset_views_layout
 
+        self._create_btn = create_btn
         self._delete_btn = delete_btn
 
         self._subset_attributes_widget = subset_attributes_widget
@@ -172,7 +173,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._current_state = new_state
 
         anim_is_running = (
-            self._change_anim.state() == self._change_anim.Running
+            self._change_anim.state() == QtCore.QAbstractAnimation.Running
         )
         if not animate:
             self._change_visibility_for_state()
@@ -184,9 +185,9 @@ class OverviewWidget(QtWidgets.QFrame):
             self._max_widget_width = self._subset_views_widget.maximumWidth()
 
         if new_state == "create":
-            direction = self._change_anim.Backward
+            direction = QtCore.QAbstractAnimation.Backward
         else:
-            direction = self._change_anim.Forward
+            direction = QtCore.QAbstractAnimation.Forward
         self._change_anim.setDirection(direction)
 
         if not anim_is_running:
@@ -388,11 +389,13 @@ class OverviewWidget(QtWidgets.QFrame):
     def _on_publish_start(self):
         """Publish started."""
 
+        self._create_btn.setEnabled(False)
         self._subset_attributes_wrap.setEnabled(False)
 
     def _on_publish_reset(self):
         """Context in controller has been refreshed."""
 
+        self._create_btn.setEnabled(True)
         self._subset_attributes_wrap.setEnabled(True)
         self._subset_content_widget.setEnabled(self._controller.host_is_valid)
 

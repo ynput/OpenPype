@@ -18,8 +18,6 @@ class ValidateTransformZero(pyblish.api.Validator):
     order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
-    category = "geometry"
-    version = (0, 1, 0)
     label = "Transform Zero (Freeze)"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 

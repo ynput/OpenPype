@@ -14,7 +14,6 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "geometry"
     label = "Mesh Has UV's"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
     optional = True

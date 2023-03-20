@@ -1,7 +1,7 @@
 import os
 import sys
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils import host_tools
 
@@ -69,7 +69,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         #     "Set colorspace from presets", self
         # )
         # reset_resolution_btn = QtWidgets.QPushButton(
-        #     "Reset Resolution from peresets", self
+        #     "Set Resolution from presets", self
         # )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -108,7 +108,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         libload_btn.clicked.connect(self.on_libload_clicked)
         # rename_btn.clicked.connect(self.on_rename_clicked)
         # set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
-        # reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        # reset_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
         experimental_btn.clicked.connect(self.on_experimental_clicked)
 
     def on_workfile_clicked(self):
@@ -145,8 +145,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
     def on_set_colorspace_clicked(self):
         print("Clicked Set Colorspace")
 
-    def on_reset_resolution_clicked(self):
-        print("Clicked Reset Resolution")
+    def on_set_resolution_clicked(self):
+        print("Clicked Set Resolution")
 
     def on_experimental_clicked(self):
         host_tools.show_experimental_tools_dialog()

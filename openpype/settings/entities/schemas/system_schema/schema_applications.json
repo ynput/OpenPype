@@ -29,6 +29,14 @@
       "type": "schema_template",
       "name": "template_nuke",
       "template_data": {
+        "nuke_type": "nukeassist",
+        "nuke_label": "Nuke Assist"
+      }
+    },
+    {
+      "type": "schema_template",
+      "name": "template_nuke",
+      "template_data": {
         "nuke_type": "nukex",
         "nuke_label": "Nuke X"
       }

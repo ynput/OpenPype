@@ -15,7 +15,8 @@ from openpype_modules.ftrack.ftrack_server.lib import (
     SocketSession,
     StatusEventHub,
     TOPIC_STATUS_SERVER,
-    TOPIC_STATUS_SERVER_RESULT
+    TOPIC_STATUS_SERVER_RESULT,
+    get_host_ip
 )
 from openpype.lib import (
     Logger,
@@ -29,10 +30,10 @@ log = Logger.get_logger("Event storer")
 action_identifier = (
     "event.server.status" + os.environ["FTRACK_EVENT_SUB_ID"]
 )
-host_ip = socket.gethostbyname(socket.gethostname())
+host_ip = get_host_ip()
 action_data = {
     "label": "OpenPype Admin",
-    "variant": "- Event server Status ({})".format(host_ip),
+    "variant": "- Event server Status ({})".format(host_ip or "IP N/A"),
     "description": "Get Infromation about event server",
     "actionIdentifier": action_identifier
 }

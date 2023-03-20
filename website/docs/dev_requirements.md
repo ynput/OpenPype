@@ -14,7 +14,7 @@ The main things you will need to run and build pype are:
 - **Terminal** in your OS
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
-- [**Python 3.7.9**](#python) or higher
+- [**Python 3.9.x**](#python)
 - [**MongoDB**](#database)
 
 
@@ -55,13 +55,14 @@ To run mongoDB on server, use your server distribution tools to set it up (on Li
 
 ## Python
 
-**Python 3.7.9** is the recommended version to use (as per [VFX platform CY2021](https://vfxplatform.com/)).
+**Python 3.9.x** is the recommended version to use (as per [VFX platform CY2022](https://vfxplatform.com/)).
+**Note**: We do not support 3.9.0 because of [this bug](https://github.com/python/cpython/pull/22670). Please, use higher versions of 3.9.x.
 
-If you're planning to run openPYPE on workstations from built executables (highly recommended), you will only need python for building and development, however, if you'd like to run from source centrally, every user will need python installed. 
+If you're planning to run openPYPE on workstations from built executables (highly recommended), you will only need python for building and development, however, if you'd like to run from source centrally, every user will need python installed.
 
 ## Hardware
 
-openPYPE should be installed on all workstations that need to use it, the same as any other application. 
+openPYPE should be installed on all workstations that need to use it, the same as any other application.
 
 There are no specific requirements for the hardware. If the workstation can run
 the major DCCs, it most probably can run openPYPE.

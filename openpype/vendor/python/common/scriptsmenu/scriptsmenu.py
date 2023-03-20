@@ -3,7 +3,7 @@ import json
 import logging
 from collections import defaultdict
 
-from .vendor.Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from . import action
 
 log = logging.getLogger(__name__)

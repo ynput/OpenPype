@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## Publish Plugins
 
-### Render Settings Validator 
+### Render Settings Validator
 
 `ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
-we correct settings. Some of these settings are needed by OpenPype but some
-can be defined by TD using [OpenPype Settings UI](admin_settings.md).
+with the correct settings. Some of these settings are needed by OpenPype but some
+can be defined by the admin using [OpenPype Settings UI](admin_settings.md).
 
 OpenPype enforced settings include:
 
@@ -36,10 +36,9 @@ For **Renderman**:
 For **Arnold**:
 - there shouldn't be `<renderpass>` token when merge AOVs option is turned on
 
-
 Additional check can be added via Settings - **Project Settings > Maya > Publish plugin > ValidateRenderSettings**.
 You can add as many options as you want for every supported renderer. In first field put node type and attribute
-and in the second required value.
+and in the second required value. You can create multiple values for an attribute, but when repairing it'll be the first value in the list that get selected.
 
 ![Settings example](assets/maya-admin_render_settings_validator.png)
 
@@ -51,7 +50,11 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-### Model Name Validator 
+:::info getting attribute values
+If you do not know what an attributes value is supposed to be, for example for dropdown menu (enum), try changing the attribute and look in the script editor where it should log what the attribute was set to.
+:::
+
+### Model Name Validator
 
 `ValidateRenderSettings`
 
@@ -95,7 +98,7 @@ You can set various aspects of scene submission to farm with per-project setting
 
  - **Optional** will mark sumission plugin optional
  - **Active** will enable/disable plugin
- - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used 
+ - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used
 or Deadlines **Draft Tile Assembler**.
  - **Use Published scene** enable to render from published scene instead of scene in work area. Rendering from published files is much safer.
  - **Use Asset dependencies** will mark job pending on farm until asset dependencies are fulfilled - for example Deadline will wait for scene file to be synced to cloud, etc.
@@ -142,7 +145,7 @@ Fill in the necessary fields (the optional fields are regex filters)
 ![new place holder](assets/maya-placeholder_new.png)
 
 
-    - Builder type: Wether the the placeholder should load current asset representations or linked assets representations
+    - Builder type: Whether the the placeholder should load current asset representations or linked assets representations
 
     - Representation: Representation that will be loaded (ex: ma, abc, png, etc...)
 
@@ -169,5 +172,3 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
-
-

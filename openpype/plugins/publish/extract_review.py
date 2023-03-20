@@ -42,6 +42,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     hosts = [
         "nuke",
         "maya",
+        "blender",
         "shell",
         "hiero",
         "premiere",
@@ -169,7 +170,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "Skipped representation. All output definitions from"
                     " selected profile does not match to representation's"
                     " custom tags. \"{}\""
-                ).format(str(tags)))
+                ).format(str(custom_tags)))
                 continue
 
             outputs_per_representations.append((repre, outputs))
@@ -1037,6 +1038,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Set audio duration
             audio_in_args.append("-to {:0.10f}".format(audio_duration))
+
+            # Ignore video data from audio input
+            audio_in_args.append("-vn")
 
             # Add audio input path
             audio_in_args.append("-i {}".format(

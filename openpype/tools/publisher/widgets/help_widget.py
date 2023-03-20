@@ -3,7 +3,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 
 class HelpButton(QtWidgets.QPushButton):

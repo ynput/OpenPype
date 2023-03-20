@@ -173,7 +173,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
+        view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
         view.setIconSize(QtCore.QSize(30, 30))
@@ -423,7 +423,7 @@ class ActionHistory(QtWidgets.QPushButton):
             return
 
         widget = QtWidgets.QListWidget()
-        widget.setSelectionMode(widget.NoSelection)
+        widget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         widget.setStyleSheet("""
         * {
             font-family: "Courier New";

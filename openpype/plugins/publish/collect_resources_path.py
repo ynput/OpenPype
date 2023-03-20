@@ -15,7 +15,11 @@ import pyblish.api
 
 
 class CollectResourcesPath(pyblish.api.InstancePlugin):
-    """Generate directory path where the files and resources will be stored"""
+    """Generate directory path where the files and resources will be stored.
+
+    Collects folder name and file name from files, if exists, for in-situ
+    publishing.
+    """
 
     label = "Collect Resources Path"
     order = pyblish.api.CollectorOrder + 0.495
@@ -57,7 +61,8 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "background",
                 "effect",
                 "staticMesh",
-                "skeletalMesh"
+                "skeletalMesh",
+                "xgen"
                 ]
 
     def process(self, instance):

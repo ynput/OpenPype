@@ -4,7 +4,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (
@@ -26,7 +26,7 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
         self.setObjectName("ValidationErrorInstanceList")
 
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     def minimumSizeHint(self):
         return self.sizeHint()

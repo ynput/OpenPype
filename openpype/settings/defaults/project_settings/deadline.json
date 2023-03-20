@@ -2,7 +2,7 @@
     "deadline_servers": [],
     "publish": {
         "CollectDefaultDeadlineServer": {
-            "pass_mongo_url": false
+            "pass_mongo_url": true
         },
         "CollectDeadlinePools": {
             "primary_pool": "",
@@ -23,8 +23,9 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "tile_assembler_plugin": "OpenPypeTileAssembler",
+            "tile_assembler_plugin": "DraftTileAssembler",
             "use_published": true,
+            "import_reference": false,
             "asset_dependencies": true,
             "priority": 50,
             "tile_priority": 50,
@@ -32,13 +33,25 @@
             "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
-            "scene_patches": []
+            "scene_patches": [],
+            "strict_error_checking": true
+        },
+        "MaxSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "use_published": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "group": "none",
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "framePerTask": 1
         },
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
-            "use_published": true,
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
@@ -100,6 +113,9 @@
                     ".*"
                 ],
                 "harmony": [
+                    ".*"
+                ],
+                "max": [
                     ".*"
                 ]
             }

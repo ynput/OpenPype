@@ -16,7 +16,7 @@ class ExtractVRayProxy(publish.Extractor):
 
     label = "VRay Proxy (.vrmesh)"
     hosts = ["maya"]
-    families = ["vrayproxy"]
+    families = ["vrayproxy.vrmesh"]
 
     def process(self, instance):
 

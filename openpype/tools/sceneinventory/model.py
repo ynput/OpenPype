@@ -3,7 +3,7 @@ import logging
 
 from collections import defaultdict
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.host import ILoadHost
@@ -482,8 +482,13 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
             return True
 
         # Filter by regex
-        if not self.filterRegExp().isEmpty():
-            pattern = re.escape(self.filterRegExp().pattern())
+        if hasattr(self, "filterRegExp"):
+            regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
+        pattern = regex.pattern()
+        if pattern:
+            pattern = re.escape(pattern)
 
             if not self._matches(row, parent, pattern):
                 return False

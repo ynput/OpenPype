@@ -3,7 +3,7 @@ import re
 import copy
 import logging
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.pipeline import (
     registered_host,

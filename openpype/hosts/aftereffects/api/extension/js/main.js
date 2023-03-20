@@ -237,7 +237,7 @@ function main(websocket_url){
 
     RPC.addRoute('AfterEffects.get_render_info', function (data) {
         log.warn('Server called client route "get_render_info":', data);
-        return runEvalScript("getRenderInfo()")
+        return runEvalScript("getRenderInfo(" + data.comp_id +")")
             .then(function(result){
                 log.warn("get_render_info: " + result);
                 return result;
@@ -289,7 +289,7 @@ function main(websocket_url){
    RPC.addRoute('AfterEffects.render', function (data) {
     log.warn('Server called client route "render":', data);
     var escapedPath = EscapeStringForJSX(data.folder_url);
-    return runEvalScript("render('" + escapedPath +"')")
+    return runEvalScript("render('" + escapedPath +"', " + data.comp_id + ")")
         .then(function(result){
             log.warn("render: " + result);
             return result;

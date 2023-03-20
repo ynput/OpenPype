@@ -1,10 +1,7 @@
 import pyblish.api
 
 from openpype.client import get_representations
-from openpype.pipeline import (
-    registered_host,
-    legacy_io,
-)
+from openpype.pipeline import registered_host
 
 
 class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
@@ -44,7 +41,7 @@ class CollectSceneLoadedVersions(pyblish.api.ContextPlugin):
             for container in containers
         }
 
-        project_name = legacy_io.active_project()
+        project_name = context.data["projectName"]
         repre_docs = get_representations(
             project_name,
             representation_ids=repre_ids,

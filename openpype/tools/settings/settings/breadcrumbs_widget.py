@@ -339,7 +339,7 @@ class BreadcrumbsButton(QtWidgets.QToolButton):
         # fixed size breadcrumbs
         self.setMinimumSize(self.minimumSizeHint())
         size_policy = self.sizePolicy()
-        size_policy.setVerticalPolicy(size_policy.Minimum)
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
         self.setSizePolicy(size_policy)
 
         menu.triggered.connect(self._on_menu_click)
@@ -369,7 +369,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
         super(BreadcrumbsAddressBar, self).__init__(parent)
 
         self.setAutoFillBackground(True)
-        self.setFrameShape(self.StyledPanel)
+        self.setFrameShape(QtWidgets.QFrame.StyledPanel)
 
         # Edit presented path textually
         proxy_model = BreadcrumbsProxy()

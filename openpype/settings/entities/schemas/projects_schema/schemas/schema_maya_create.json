@@ -133,6 +133,16 @@
                     "label": "Write Face Sets"
                 },
                 {
+                    "type": "boolean",
+                    "key": "include_parent_hierarchy",
+                    "label": "Include Parent Hierarchy"
+                },
+                {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "Include User Defined Attributes"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -193,6 +203,11 @@
                     "label": "Write Face Sets"
                 },
                 {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "Include User Defined Attributes"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -227,6 +242,31 @@
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateReview",
+            "label": "Create Review",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "useMayaTimeline",
+                    "label": "Use Maya Timeline for Frame Range."
                 }
             ]
         },
@@ -323,6 +363,36 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateVrayProxy",
+            "label": "Create VRay Proxy",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "vrmesh",
+                    "label": "VrMesh"
+                },
+                {
+                    "type": "boolean",
+                    "key": "alembic",
+                    "label": "Alembic"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
@@ -359,20 +429,12 @@
                     "label": "Create Render Setup"
                 },
                 {
-                    "key": "CreateReview",
-                    "label": "Create Review"
-                },
-                {
                     "key": "CreateRig",
                     "label": "Create Rig"
                 },
                 {
                     "key": "CreateSetDress",
                     "label": "Create Set Dress"
-                },
-                {
-                    "key": "CreateVrayProxy",
-                    "label": "Create VRay Proxy"
                 },
                 {
                     "key": "CreateVRayScene",

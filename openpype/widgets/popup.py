@@ -1,8 +1,7 @@
 import sys
 import contextlib
 
-
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 
 class Popup(QtWidgets.QDialog):
@@ -99,15 +98,22 @@ class Popup(QtWidgets.QDialog):
         height = window.height()
         height = max(height, window.sizeHint().height())
 
-        desktop_geometry = QtWidgets.QDesktopWidget().availableGeometry()
-        screen_geometry = window.geometry()
+        try:
+            screen = window.screen()
+            desktop_geometry = screen.availableGeometry()
+        except AttributeError:
+            # Backwards compatibility for older Qt versions
+            # PySide6 removed QDesktopWidget
+            desktop_geometry = QtWidgets.QDesktopWidget().availableGeometry()
 
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
+        window_geometry = window.geometry()
+
+        screen_width = window_geometry.width()
+        screen_height = window_geometry.height()
 
         # Calculate width and height of system tray
-        systray_width = screen_geometry.width() - desktop_geometry.width()
-        systray_height = screen_geometry.height() - desktop_geometry.height()
+        systray_width = window_geometry.width() - desktop_geometry.width()
+        systray_height = window_geometry.height() - desktop_geometry.height()
 
         padding = 10
 
