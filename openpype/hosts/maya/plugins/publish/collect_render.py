@@ -318,7 +318,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
-                )
+                ),
+                # Hornet
+                "renderPreviewFrames": render_instance.data.get("renderPreviewFrames"),
+                "previewPriorityOffset": render_instance.data.get("previewPriorityOffset")
             }
 
             # Collect Deadline url if Deadline module is enabled
