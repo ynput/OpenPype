@@ -21,7 +21,7 @@ class MaxPluginInfo(object):
     SaveFile = attr.ib(default=True)
     IgnoreInputs = attr.ib(default=True)
 
-
+#TODO: add the optional attirbute
 class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     label = "Submit Render to Deadline"
@@ -49,11 +49,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         instance = self._instance
         context = instance.context
-
         # Always use the original work file name for the Job name even when
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
         # etc. which are stripped for the published file.
+        if not instance.data.get("publish"):
+            self.use_published = False
+
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
@@ -71,13 +73,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 1)
+        job_info.ChunkSize = instance.data.get("chunkSize", self.chunk_size)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
-
-        if self.group:
-            job_info.Group = self.group
+        job_info.Group = instance.data.get("group", self.group)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
