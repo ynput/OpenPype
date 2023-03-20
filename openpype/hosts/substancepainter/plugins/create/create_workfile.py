@@ -2,7 +2,6 @@
 """Creator plugin for creating workfiles."""
 
 from openpype.pipeline import CreatedInstance, AutoCreator
-from openpype.pipeline import legacy_io
 from openpype.client import get_asset_by_name
 
 from openpype.hosts.substancepainter.api.pipeline import (
