@@ -1692,7 +1692,6 @@ def add_review_knob(node):
     '''
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
-        knob.setValue(True)
         node.addKnob(knob)
     return node
 

@@ -16,7 +16,7 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
     optional = True
     families = ["write"]
     label = "Validate Write Legacy"
-    hosts = ["nuke"]
+    hosts = []
     actions = [RepairAction]
 
     def process(self, instance):
