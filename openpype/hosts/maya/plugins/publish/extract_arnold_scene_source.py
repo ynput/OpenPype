@@ -139,16 +139,18 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     parent, duplicate_transform
                 )
 
-                duplicate_transform = cmds.parent(
-                    duplicate_transform, world=True
-                )[0]
+
+                if cmds.listRelatives(duplicate_transform, parent=True):
+                    duplicate_transform = cmds.parent(
+                        duplicate_transform, world=True
+                    )[0]
 
                 basename = node.split("|")[-1].split(":")[-1]
                 duplicate_transform = cmds.rename(
                     duplicate_transform, basename
                 )
 
-                # Discard the children.
+                # Discard children nodes that are not shapes
                 shapes = cmds.listRelatives(
                     duplicate_transform, shapes=True, fullPath=True
                 )
