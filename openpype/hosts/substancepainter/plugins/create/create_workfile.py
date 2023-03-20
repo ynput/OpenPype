@@ -29,9 +29,9 @@ class CreateWorkfile(AutoCreator):
 
         variant = self.default_variant
         project_name = self.project_name
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        host_name = legacy_io.Session["AVALON_APP"]
+        asset_name = self.create_context.get_current_asset_name()
+        task_name = self.create_context.get_current_task_name()
+        host_name = self.create_context.host_name
 
         # Workfile instance should always exist and must only exist once.
         # As such we'll first check if it already exists and is collected.
