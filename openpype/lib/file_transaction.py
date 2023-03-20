@@ -44,7 +44,7 @@ class FileTransaction(object):
     MODE_COPY = 0
     MODE_HARDLINK = 1
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, allow_queue_replacements=False):
         if log is None:
             log = logging.getLogger("FileTransaction")
 
@@ -59,6 +59,8 @@ class FileTransaction(object):
 
         # Backup file location mapping to original locations
         self._backup_to_original = {}
+
+        self._allow_queue_replacements = allow_queue_replacements
 
     def add(self, src, dst, mode=MODE_COPY):
         """Add a new file to transfer queue.
@@ -82,6 +84,14 @@ class FileTransaction(object):
                         src, dst))
                 return
             else:
+                if not self._allow_queue_replacements:
+                    raise RuntimeError(
+                        "Transfer to destination is already in queue: "
+                        "{} -> {}. It's not allowed to be replaced by "
+                        "a new transfer from {}".format(
+                            queued_src, dst, src
+                        ))
+
                 self.log.warning("File transfer in queue replaced..")
                 self.log.debug(
                     "Removed from queue: {} -> {} replaced by {} -> {}".format(

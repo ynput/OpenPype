@@ -170,7 +170,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             ).format(instance.data["family"]))
             return
 
-        file_transactions = FileTransaction(log=self.log)
+        file_transactions = FileTransaction(log=self.log,
+                                            # Enforce unique transfers
+                                            allow_queue_replacements=False)
         try:
             self.register(instance, file_transactions, filtered_repres)
         except Exception:
