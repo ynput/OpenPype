@@ -15,7 +15,6 @@ class CreateAnimation(plugin.Creator):
     write_face_sets = False
     include_parent_hierarchy = False
     include_user_defined_attributes = False
-    with_handles = True
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)

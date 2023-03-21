@@ -148,11 +148,6 @@
                     "label": "Include User Defined Attributes"
                 },
                 {
-                    "type": "boolean",
-                    "key": "with_handles",
-                    "label": "With Handles"
-                },
-                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
