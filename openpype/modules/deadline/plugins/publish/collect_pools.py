@@ -32,7 +32,8 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
             if family == "maxrender":
                 max_setting = project_settings["deadline"]["publish"]["MaxSubmitDeadline"]  # noqa
                 cls.primary_pool = max_setting.get("deadline_pool", None)
-                cls.secondary_pool = max_setting.get("deadline_pool_secondary", None)
+                cls.secondary_pool = max_setting.get("deadline_pool_secondary",
+                                                     None)
 
     def process(self, instance):
 
