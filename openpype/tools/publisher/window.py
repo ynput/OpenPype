@@ -22,8 +22,9 @@ from .widgets import (
 
     PublisherTabsWidget,
 
-    StopBtn,
+    SaveBtn,
     ResetBtn,
+    StopBtn,
     ValidateBtn,
     PublishBtn,
 
@@ -121,6 +122,7 @@ class PublisherWindow(QtWidgets.QDialog):
             "Attach a comment to your publish"
         )
 
+        save_btn = SaveBtn(footer_widget)
         reset_btn = ResetBtn(footer_widget)
         stop_btn = StopBtn(footer_widget)
         validate_btn = ValidateBtn(footer_widget)
@@ -129,6 +131,7 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_bottom_layout = QtWidgets.QHBoxLayout(footer_bottom_widget)
         footer_bottom_layout.setContentsMargins(0, 0, 0, 0)
         footer_bottom_layout.addStretch(1)
+        footer_bottom_layout.addWidget(save_btn, 0)
         footer_bottom_layout.addWidget(reset_btn, 0)
         footer_bottom_layout.addWidget(stop_btn, 0)
         footer_bottom_layout.addWidget(validate_btn, 0)
@@ -251,6 +254,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._on_create_request
         )
 
+        save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
@@ -330,8 +334,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._comment_input = comment_input
         self._footer_spacer = footer_spacer
 
-        self._stop_btn = stop_btn
+        self._save_btn = save_btn
         self._reset_btn = reset_btn
+        self._stop_btn = stop_btn
         self._validate_btn = validate_btn
         self._publish_btn = publish_btn
 
@@ -599,8 +604,10 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_frame.setVisible(visible)
         self._update_publish_frame_rect()
 
-    def _on_reset_clicked(self):
+    def _on_save_clicked(self):
         self.save_changes()
+
+    def _on_reset_clicked(self):
         self.reset()
 
     def _on_stop_clicked(self):
@@ -618,6 +625,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
+        self._save_btn.setEnabled(True)
         self._reset_btn.setEnabled(True)
         if enabled:
             self._stop_btn.setEnabled(False)
