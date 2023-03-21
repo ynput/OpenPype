@@ -11,8 +11,8 @@ sidebar_label: Maya
 `ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
-we correct settings. Some of these settings are needed by OpenPype but some
-can be defined by TD using [OpenPype Settings UI](admin_settings.md).
+with the correct settings. Some of these settings are needed by OpenPype but some
+can be defined by the admin using [OpenPype Settings UI](admin_settings.md).
 
 OpenPype enforced settings include:
 
@@ -36,10 +36,9 @@ For **Renderman**:
 For **Arnold**:
 - there shouldn't be `<renderpass>` token when merge AOVs option is turned on
 
-
 Additional check can be added via Settings - **Project Settings > Maya > Publish plugin > ValidateRenderSettings**.
 You can add as many options as you want for every supported renderer. In first field put node type and attribute
-and in the second required value.
+and in the second required value. You can create multiple values for an attribute, but when repairing it'll be the first value in the list that get selected.
 
 ![Settings example](assets/maya-admin_render_settings_validator.png)
 

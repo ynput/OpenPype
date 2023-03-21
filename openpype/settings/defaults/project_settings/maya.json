@@ -147,6 +147,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
+            "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
             "defaults": [
                 "Main"

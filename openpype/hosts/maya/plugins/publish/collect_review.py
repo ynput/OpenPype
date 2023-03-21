@@ -24,7 +24,9 @@ class CollectReview(pyblish.api.InstancePlugin):
         task = legacy_io.Session["AVALON_TASK"]
 
         # Get panel.
-        instance.data["panel"] = cmds.playblast(activeEditor=True)
+        instance.data["panel"] = cmds.playblast(
+            activeEditor=True
+        ).split("|")[-1]
 
         # get cameras
         members = instance.data['setMembers']

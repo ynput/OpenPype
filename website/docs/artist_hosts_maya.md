@@ -516,6 +516,22 @@ In the scene from where you want to publish your model create *Render subset*. P
 model subset (Maya set node) under corresponding `LAYER_` set under *Render instance*. During publish, it will submit this render to farm and
 after it is rendered, it will be attached to your model subset.
 
+### Tile Rendering
+:::note Deadline
+This feature is only supported when using Deadline. See [here](module_deadline#openpypetileassembler-plugin) for setup.
+:::
+On the render instance objectset you'll find:
+
+* `Tile Rendering` - for enabling tile rendering.
+* `Tile X` - number of tiles in the X axis.
+* `Tile Y` - number of tiles in the Y axis.
+
+When submittig to Deadline, you'll get:
+
+- for each frame a tile rendering job, to render each from Maya.
+- for each frame a tile assembly job, to assemble the rendered tiles.
+- job to publish the assembled frames.
+
 ## Render Setups
 
 ### Publishing Render Setups
