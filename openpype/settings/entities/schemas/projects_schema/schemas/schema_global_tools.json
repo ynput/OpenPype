@@ -419,6 +419,15 @@
                         "type": "dict",
                         "children": [
                             {
+                                "type": "boolean",
+                                "key": "active",
+                                "label": "Is active",
+                                "default": true
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
                                 "key": "hosts",
                                 "label": "Host names",
                                 "type": "hosts-enum",
@@ -449,11 +458,6 @@
                             },
                             {
                                 "type": "separator"
-                            },
-                            {
-                                "key": "use_custom_staging_dir",
-                                "label": "Use Custom Staging Folder",
-                                "type": "boolean"
                             },
                             {
                                 "key": "custom_staging_dir_persistent",
