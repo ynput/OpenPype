@@ -40,13 +40,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
     use_published = True
     priority = 50
-    tile_priority = 50
-    chunkSize = 1
+    chunk_size = 1
     jobInfo = {}
     pluginInfo = {}
     group = None
-    framePerTask = 1
-    optional = True
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
