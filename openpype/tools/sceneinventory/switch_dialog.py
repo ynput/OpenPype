@@ -1291,32 +1291,29 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                         repre_doc = _repres.get(container_repre_name)
 
             if not repre_doc:
-                version_by_name = version_docs_by_parent_id_and_name[subset_id]
+                version_docs_by_name = version_docs_by_parent_id_and_name[
+                    subset_id
+                ]
 
                 # If asset or subset are selected for switching, we use latest
                 # version else we try to keep the current container version.
                 if selected_asset or selected_subset:
-                    version_name = max(version_by_name)
+                    version_name = max(version_docs_by_name)
                 else:
                     version_name = container_version_name
 
-                version_doc = version_by_name[version_name]
+                version_doc = version_docs_by_name[version_name]
                 version_id = version_doc["_id"]
-                repres_by_name = repre_docs_by_parent_id_by_name[version_id]
+                repres_docs_by_name = repre_docs_by_parent_id_by_name[
+                    version_id
+                ]
 
                 if selected_representation:
                     repres_name = selected_representation
                 else:
                     repres_name = container_repre_name
 
-                # If selected representation is not available with container
-                # version, we use latest version.
-                if repres_name not in repres_by_name:
-                    repres_by_name = repre_docs_by_parent_id_by_name[
-                        version_by_name[max(version_by_name)]["_id"]
-                    ]
-
-                repre_doc = repres_by_name[repres_name]
+                repre_doc = repres_docs_by_name[repres_name]
 
             try:
                 switch_container(container, repre_doc, loader)
