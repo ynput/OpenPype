@@ -110,11 +110,11 @@ This is useful to fix some specific renderer glitches and advanced hacking of Ma
 
 ![Maya GPU Cache](assets/maya-admin_gpu_cache.png)
 
-- **Evaluate Every** Specifies which samples are saved during cache creation. For example, a value of 2 specifies that only every other sample specified by the Evaluate every # frame(s) option is saved to your Alembic file.
-
-- **Save Every** Specifies how often samples are taken during file creation. By default, one sample of your object's transformations is taken every frame and saved to the Alembic file.
+- **Step** Specifies how often samples are taken during file creation. By default, one sample of your object's transformations is taken every frame and saved to the Alembic file.
 
   For example, a value of 2 caches the transformations of the current object at every other frame of the Cache Time Range.
+
+- **Step Save** Specifies which samples are saved during cache creation. For example, a value of 2 specifies that only every other sample specified by the Step # frame(s) option is saved to your Alembic file.
 
 - **Optimize Hierarchy** When on, nodes and objects in a selected hierarchy are consolidated to maximize the performance of the cache file during playback.
 - **Optimization Threshold** (Available only when Optimize Hierarchy is on.) Specifies the maximum number of vertices contained in a single draw primitive. The default value of 40000 may be ideal for most Maya supported graphics cards. When set to the default value, after optimization, each object in the GPU cache file(s) will have no more than 40000 vertices. This value can be set higher depending on the memory available on your system graphics card.

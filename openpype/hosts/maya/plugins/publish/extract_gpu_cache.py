@@ -11,8 +11,8 @@ class ExtractGPUCache(publish.Extractor):
     label = "GPU Cache"
     hosts = ["maya"]
     families = ["model", "animation", "pointcache"]
-    simulationRate = 1.0
-    sampleMultiplier = 1
+    step = 1.0
+    stepSave = 1
     optimize = True
     optimizationThreshold = 40000
     optimizeAnimationsForMotionBlur = True
@@ -28,8 +28,8 @@ class ExtractGPUCache(publish.Extractor):
             "directory": staging_dir,
             "fileName": filename,
             "saveMultipleFiles": False,
-            "simulationRate": self.simulationRate,
-            "sampleMultiplier": self.sampleMultiplier,
+            "step": self.step,
+            "stepSave": self.stepSave,
             "optimize": self.optimize,
             "optimizationThreshold": self.optimizationThreshold,
             "optimizeAnimationsForMotionBlur": (

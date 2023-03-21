@@ -1016,15 +1016,15 @@
                     "object_type": "text"
                 },
                 {
-                    "key": "simulationRate",
-                    "label": "Evaluate Every",
+                    "key": "step",
+                    "label": "Step",
                     "type": "number",
                     "decimal": 4,
                     "minimum": 1
                 },
                 {
-                    "key": "sampleMultiplier",
-                    "label": "Save Every",
+                    "key": "stepSave",
+                    "label": "Step Save",
                     "type": "number",
                     "minimum": 1
                 },

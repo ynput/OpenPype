@@ -932,8 +932,8 @@
                 "animation",
                 "pointcache"
             ],
-            "simulationRate": 0.0,
-            "sampleMultiplier": 0,
+            "step": 0.0,
+            "stepSave": 0,
             "optimize": true,
             "optimizationThreshold": 40000,
             "optimizeAnimationsForMotionBlur": true,
