@@ -160,10 +160,10 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._model.set_hierarchy_view(enabled)
 
     def _on_text_filter_change(self, text_filter):
-        if hasattr(self._proxy, "setFilterRegularExpression"):
-            self._proxy.setFilterRegularExpression(text_filter)
-        else:
+        if hasattr(self._proxy, "setFilterRegExp"):
             self._proxy.setFilterRegExp(text_filter)
+        else:
+            self._proxy.setFilterRegularExpression(text_filter)
 
     def _on_outdated_state_change(self):
         self._proxy.set_filter_outdated(
