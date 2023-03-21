@@ -117,7 +117,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
                 # TODO: Correctly define the subset name using templates
-                subset_name = "render" + layer.name()
+                subset_name = "render{}".format(layer.name())
                 instance_data = {
                     "asset": legacy_io.Session["AVALON_ASSET"],
                     "task": legacy_io.Session["AVALON_TASK"],
@@ -149,7 +149,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
 
             creator_identifier = cmds.getAttr(node + ".creator_identifier")
             if creator_identifier == self.identifier:
-                print(f"Found node: {node}")
+                self.log.info(f"Found node: {node}")
                 return node
 
     def _create_layer_instance_node(self, layer):
@@ -191,7 +191,8 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                 instance.data["instance_node"] = instance_node
             else:
                 # TODO: Keep name in sync with the actual renderlayer?
-                pass
+                self.log.warning("No instance node found for to be updated instance: {}".format(instance))
+                continue
 
             self.imprint_instance_node(instance_node,
                                        data=instance.data_to_store())
@@ -209,7 +210,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                                                                     data=data)
 
     def remove_instances(self, instances):
-        """Remove specified instance from the scene.
+        """Remove specified instances from the scene.
 
         This is only removing `id` parameter so instance is no longer
         instance, because it might contain valuable data for artist.
@@ -252,7 +253,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                     default=False),
             BoolDef("overrideExistingFrame",
                     label="Override Existing Frame",
-                    tooltip="Mark as reviewable",
+                    tooltip="Override existing rendered frames (if they exist).",
                     default=True),
 
             # TODO: Should these move to submit_maya_deadline plugin?

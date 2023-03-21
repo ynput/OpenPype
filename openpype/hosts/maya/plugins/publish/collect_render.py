@@ -121,7 +121,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             if product.camera and layer_render_products.has_camera_token():
                 product_name = "{}{}".format(
                     product.camera,
-                    "_" + product_name if product_name else "")
+                    "_{}".format(product_name) if product_name else "")
             exp_files.append(
                 {
                     product_name: layer_render_products.get_files(
@@ -133,7 +133,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         self.log.info("multipart: {}".format(
             multipart))
-        assert exp_files, "no file names were generated, this is bug"
+        assert exp_files, "no file names were generated, this is a bug"
         self.log.info(
             "expected files: {}".format(
                 json.dumps(exp_files, indent=4, sort_keys=True)
@@ -151,10 +151,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         # append full path
         aov_dict = {}
-        default_render_folder = context.data.get('project_settings')\
-            .get('maya')\
-            .get('RenderSettings')\
-            .get('default_render_image_folder') or ""
+        default_render_folder = context.data.get("project_settings")\
+            .get("maya")\
+            .get("RenderSettings")\
+            .get("default_render_image_folder") or ""
         # replace relative paths with absolute. Render products are
         # returned as list of dictionaries.
         publish_meta_path = None
@@ -183,15 +183,15 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         frame_end_render = int(self.get_render_attribute(
             "endFrame", layer=layer_name))
 
-        if (int(context.data['frameStartHandle']) == frame_start_render
-                and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
+        if (int(context.data["frameStartHandle"]) == frame_start_render
+                and int(context.data["frameEndHandle"]) == frame_end_render):  # noqa: W503, E501
 
-            handle_start = context.data['handleStart']
-            handle_end = context.data['handleEnd']
-            frame_start = context.data['frameStart']
-            frame_end = context.data['frameEnd']
-            frame_start_handle = context.data['frameStartHandle']
-            frame_end_handle = context.data['frameEndHandle']
+            handle_start = context.data["handleStart"]
+            handle_end = context.data["handleEnd"]
+            frame_start = context.data["frameStart"]
+            frame_end = context.data["frameEnd"]
+            frame_start_handle = context.data["frameStartHandle"]
+            frame_end_handle = context.data["frameEndHandle"]
         else:
             handle_start = 0
             handle_end = 0
