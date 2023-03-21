@@ -53,12 +53,8 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
-            if kitsu_task is None:
+            if not kitsu_task:
                 continue
-        # Get comment text body
-        publish_comment = context.data.get("comment")
-        if not publish_comment:
-            self.log.info("Comment is not set.")
 
             # Get note status, by default uses the task status for the note
             # if it is not specified in the configuration
@@ -74,57 +70,31 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     allow_status_change = False
                     break
 
-            if self.set_status_note and allow_status_change:
-                kitsu_status = gazu.task.get_task_status_by_short_name(
-                    self.note_status_shortname
-        families = {
-            instance.data.get("kitsu_task")
-            for instance in context
-            if instance.data.get("publish")
-        }
+            if allow_status_change:
+                # Get families
+                families = {
+                    instance.data.get("kitsu_task")
+                    for instance in context
+                    if instance.data.get("publish")
+                }
 
-        for instance in context:
-            kitsu_task = instance.data.get("kitsu_task")
-            if not kitsu_task:
-                continue
+                # Check if any family requirement is met
+                for family_requirement in self.family_requirements:
+                    condition = family_requirement["condition"] == "equal"
 
-            # Get note status, by default uses the task status for the note
-            # if it is not specified in the configuration
-            kitsu_task = context.data["kitsu_task"]
-            shortname = kitsu_task["task_status"]["short_name"].upper()
-            note_status = kitsu_task["task_status_id"]
-            if (
-                self.set_status_note
-                and next(
-                    (
-                        False
-                        for status_except in self.status_exceptions
-                        if shortname == status_except["short_name"].upper()
-                        and status_except["condition"] == "equal"
-                        or shortname != status_except["short_name"].upper()
-                        and status_except["condition"] == "not_equal"
-                    ),
-                    True,
-                )
-                and next(
-                    (
-                        True
-                        for family in families
-                        if next(
-                            (
-                                False
-                                for family_req in self.family_requirements
-                                if family_req["condition"] == "equal"
-                                and family_req["family"].lower() != family
-                                or family_req["condition"] == "not_equal"
-                                and family_req["family"].lower() == family
-                            ),
-                            True,
+                    for family in families:
+                        match = (
+                            family_requirement["short_name"].lower() == family
                         )
-                    ),
-                    False,
-                )
-            ):
+                        if match and not condition or condition and not match:
+                            allow_status_change = True
+                            break
+
+                    if allow_status_change:
+                        break
+
+            # Set note status
+            if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
                 )
@@ -153,9 +123,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             )
             kitsu_comment = gazu.task.add_comment(
                 kitsu_task, note_status, comment=publish_comment
-                instance.data["kitsu_task"],
-                note_status,
-                comment=publish_comment,
             )
 
             instance.data["kitsu_comment"] = kitsu_comment
