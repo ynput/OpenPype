@@ -11,7 +11,7 @@ class GpuCacheLoader(load.LoaderPlugin):
     """Load Alembic as gpuCache"""
 
     families = ["model", "animation", "proxyAbc", "pointcache"]
-    representations = ["gpu_cache"]
+    representations = ["abc", "gpu_cache"]
 
     label = "Import Gpu Cache"
     order = -5
