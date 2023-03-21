@@ -198,6 +198,14 @@ class CreateBtn(PublishIconBtn):
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
+class SaveBtn(PublishIconBtn):
+    """Save context and instances information."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("save")
+        super(SaveBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Save changes")
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):
