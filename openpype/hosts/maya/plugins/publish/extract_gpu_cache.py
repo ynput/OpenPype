@@ -28,8 +28,8 @@ class ExtractGPUCache(publish.Extractor):
             "directory": staging_dir,
             "fileName": filename,
             "saveMultipleFiles": False,
-            "step": self.step,
-            "stepSave": self.stepSave,
+            "simulationRate": self.step,
+            "sampleMultiplier": self.stepSave,
             "optimize": self.optimize,
             "optimizationThreshold": self.optimizationThreshold,
             "optimizeAnimationsForMotionBlur": (
