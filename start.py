@@ -197,6 +197,15 @@ if "--headless" in sys.argv:
 elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+# Set builtin ocio root
+os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
+    OPENPYPE_ROOT,
+    "vendor",
+    "bin",
+    "ocioconfig",
+    "OpenColorIOConfigs"
+)
+
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
     expected_values = (
