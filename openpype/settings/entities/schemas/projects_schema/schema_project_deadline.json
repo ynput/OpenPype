@@ -239,17 +239,12 @@
                         {
                             "type": "number",
                             "key": "chunk_size",
-                            "label": "Chunk Size"
+                            "label": "Frame per Task"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
-                        },
-                        {
-                            "type": "number",
-                            "key": "framePerTask",
-                            "label": "Frame Per Task"
                         }
                     ]
                 },
