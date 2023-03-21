@@ -666,7 +666,7 @@ def get_color_file(source_path, item_name, source_name):
             datetime.fromtimestamp(os.path.getctime(x)).strftime("%Y%m%d"))
     )
 
-    color_file = None
+    color_file = None, None, None
     for path in sorted_incoming:
         color_files = get_files(path, COLOR_FILE_EXTS)
 
