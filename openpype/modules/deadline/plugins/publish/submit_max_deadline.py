@@ -61,10 +61,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                     cls.priority)
         cls.chunkSize = settings.get("chunk_size", cls.chunkSize)
         cls.group = settings.get("group", cls.group)
-        cls.deadline_pool = settings.get("deadline_pool",
-                                         cls.deadline_pool)
-        cls.deadline_pool_secondary = settings.get("deadline_pool_secondary",
-                                                   cls.deadline_pool_secondary)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
@@ -95,17 +91,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
         job_info.Frames = frames
 
-        attr_values = self.get_attr_values_from_data(instance.data)
+        job_info.Pool = instance.data.get("primaryPool")
+        job_info.SecondaryPool = instance.data.get("secondaryPool")
 
-        if attr_values.get("deadline_pool"):
-            job_info.Pool = attr_values.get("deadline_pool")
-        else:
-            job_info.Pool = instance.data.get("primaryPool")
-        if attr_values.get("deadline_pool_secondary"):
-            job_info.SecondaryPool = attr_values.get("deadline_pool_secondary")
-        else:
-            job_info.SecondaryPool = instance.data.get("secondaryPool",
-                                                       self.deadline_pool_secondary)    # noqa
+        attr_values = self.get_attr_values_from_data(instance.data)
 
         job_info.ChunkSize = attr_values.get("chunkSize", 1)
         job_info.Comment = context.data.get("comment")
@@ -275,14 +264,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             TextDef("group",
                     default=cls.group,
                     label="Group Name"),
-
-            TextDef("deadline_pool",
-                    default=cls.deadline_pool,
-                    label="Deadline Pool"),
-
-            TextDef("deadline_pool_secondary",
-                    default=cls.deadline_pool_secondary,
-                    label="Deadline Pool Secondary")
         ])
 
         return defs
