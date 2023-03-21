@@ -102,6 +102,10 @@ def run_subprocess(*args, **kwargs):
     if (
         platform.system().lower() == "windows"
         and "creationflags" not in kwargs
+        # shell=True already tries to hide the console window
+        # and passing these creationflags then shows the window again
+        # so we avoid it for shell=True cases
+        and not kwargs.get("shell", False)
     ):
         kwargs["creationflags"] = (
             subprocess.CREATE_NEW_PROCESS_GROUP
