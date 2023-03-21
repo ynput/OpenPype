@@ -515,6 +515,7 @@ class MissingColorFile(QtWidgets.QDialog):
             "sat": 1
         }
         self.data["cdl"] = cdl
+        self.data["path"] = ''
 
         self.accept()
 
@@ -646,7 +647,7 @@ def priority_color_file(color_files, item_name, source_name):
     if matches:
         return sorted(matches, key=lambda x: x[0])[0]
     else:
-        return None
+        return None, None, None
 
 
 def get_color_file(source_path, item_name, source_name):
