@@ -1,6 +1,854 @@
 # Changelog
 
 
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.1...3.15.2)
+
+### **🆕 New features**
+
+
+<details>
+<summary>maya gltf texture convertor and validator <a href="https://github.com/ynput/OpenPype/pull/4261">#4261</a></summary>
+
+<strong>Continuity of the gltf extractor implementation
+
+</strong>Continuity of the gltf extractor https://github.com/pypeclub/OpenPype/pull/4192UPDATE:**Validator for GLSL Shader**:  Validate whether the mesh uses GLSL Shader. If not it will error out. The user can choose to perform the repair action and it will help to assign glsl shader. If the mesh with Stringray PBS, the repair action will also check to see if there is any linked texture such as Color, Occulsion, and Normal Map. If yes, it will help to relink the related textures to the glsl shader.*****If the mesh uses the PBS Shader,
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: New Publisher <a href="https://github.com/ynput/OpenPype/pull/4370">#4370</a></summary>
+
+<strong>Implementation of the new publisher for Unreal.
+
+</strong>The implementation of the new publisher for Unreal. This PR includes the changes for all the existing creators to be compatible with the new publisher.The basic creator has been split in two distinct creators:
+- `UnrealAssetCreator`, works with assets in the Content Browser.
+- `UnrealActorCreator` that works with actors in the scene.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Implementation of a new splash screen <a href="https://github.com/ynput/OpenPype/pull/4592">#4592</a></summary>
+
+Implemented a new splash screen widget to reflect a process running in the background. This widget can be used for other tasks than UE. **Also fixed the compilation error of the AssetContainer.cpp when trying to build the plugin in UE 5.0**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline for 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4439">#4439</a></summary>
+
+<strong>Setting up deadline for 3dsmax
+
+</strong>Setting up deadline for 3dsmax by setting render outputs and viewport camera
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: adding nukeassist  <a href="https://github.com/ynput/OpenPype/pull/4494">#4494</a></summary>
+
+<strong>Adding support for NukeAssist
+
+</strong>For support of NukeAssist we had to limit some Nuke features since NukeAssist itself Nuke with limitations. We do not support Creator and Publisher. User can only Load versions with version control. User can also set Framerange and Colorspace.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: OP-2630 acescg maya <a href="https://github.com/ynput/OpenPype/pull/4340">#4340</a></summary>
+
+<strong>Resolves #2712
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Default Ftrack Family on RenderLayer <a href="https://github.com/ynput/OpenPype/pull/4458">#4458</a></summary>
+
+<strong>With default settings, renderlayers in Maya were not being tagged with the Ftrack family leading to confusion when doing reviews.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Maya Playblast Options - OP-3783 <a href="https://github.com/ynput/OpenPype/pull/4487">#4487</a></summary>
+
+<strong>Replacement PR for #3912. Adds more options for playblasts to preferences/settings.
+
+</strong>Adds the following as options in generating playblasts, matching viewport settings.
+- Use default material
+- Wireframe on shaded
+- X-ray
+- X-ray Joints
+- X-ray active component
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Passing custom attributes to alembic - OP-4111 <a href="https://github.com/ynput/OpenPype/pull/4516">#4516</a></summary>
+
+<strong>Passing custom attributes to alembic
+
+</strong>This PR makes it possible to pass all user defined attributes along to the alembic representation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Options for VrayProxy output - OP-2010 <a href="https://github.com/ynput/OpenPype/pull/4525">#4525</a></summary>
+
+<strong>Options for output of VrayProxy.
+
+</strong>Client requested more granular control of output from VrayProxy instance. Exposed options on the instance and settings for vrmesh and alembic.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Validate missing instance attributes <a href="https://github.com/ynput/OpenPype/pull/4559">#4559</a></summary>
+
+<strong>Validate missing instance attributes.
+
+</strong>New attributes can be introduced as new features come in. Old instances will need to be updated with these attributes for the documentation to make sense, and users do not have to recreate the instances.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Refactored Generation of UE Projects, installation of plugins moved to the engine <a href="https://github.com/ynput/OpenPype/pull/4369">#4369</a></summary>
+
+<strong>Improved the way how OpenPype works with generation of UE projects. Also the installation of the plugin has been altered to install into the engine
+
+</strong>OpenPype now uses the appropriate tools to generate UE projects. Unreal Build Tool (UBT) and a "Commandlet Project" is needed to properly generate a BP project, or C++ code in case that `dev_mode = True`, folders, the .uproject file and many other resources.On the plugin's side, it is built seperately with the UnrealAutomationTool (UAT) and then it's contents are moved under the `Engine/Plugins/Marketplace/OpenPype` directory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Use client functions in Layout loader  <a href="https://github.com/ynput/OpenPype/pull/4578">#4578</a></summary>
+
+<strong>Use 'get_representations' instead of 'legacy_io' query in layout loader.
+
+</strong>This is removing usage of `find_one` called on `legacy_io` and use rather client functions as preparation for AYON connection. Also all representations are queried at once instead of one by one.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Support for extensions filtering in loaders <a href="https://github.com/ynput/OpenPype/pull/4492">#4492</a></summary>
+
+<strong>Added extensions filtering support to loader plugins.
+
+</strong>To avoid possible backwards compatibility break is filtering exactly the same and filtering by extensions is enabled only if class attribute 'extensions' is set.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: multiple reformat in baking review profiles <a href="https://github.com/ynput/OpenPype/pull/4514">#4514</a></summary>
+
+<strong>Added support for multiple reformat nodes in baking profiles.
+
+</strong>Old settings for single reformat node is supported and prioritised just in case studios are using it and backward compatibility is needed. Warnings in Nuke terminal are notifying users to switch settings to new workflow. Settings are also explaining the migration way.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Add option to use new creating system in workfile template builder <a href="https://github.com/ynput/OpenPype/pull/4545">#4545</a></summary>
+
+<strong>Nuke workfile template builder can use new creators instead of legacy creators.
+
+</strong>Modified workfile template builder to have option to say if legacy creators should be used or new creators. Legacy creators are disabled by default, so Maya has changed the value.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global, Nuke: Workfile first version with template processing <a href="https://github.com/ynput/OpenPype/pull/4579">#4579</a></summary>
+
+<strong>Supporting new template workfile builder with toggle for creation of first version of workfile in case there is none yet.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: New Publisher <a href="https://github.com/ynput/OpenPype/pull/4523">#4523</a></summary>
+
+<strong>This is an updated PR for @BigRoy 's old PR (https://github.com/ynput/OpenPype/pull/3892).I have merged it with code from OP 3.15.1-nightly.6 and made sure it works as expected.This converts the old publishing system to the new one. It implements Fusion as a new host addon.
+
+</strong>
+- Create button removed in OpenPype menu in favor of the new Publisher
+- Draft refactor validations to raise PublishValidationError
+- Implement Creator for New Publisher
+- Implement Fusion as Host addon
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Use Publisher tool <a href="https://github.com/ynput/OpenPype/pull/4471">#4471</a></summary>
+
+<strong>Use Publisher tool and new creation system in TVPaint integration.
+
+</strong>Using new creation system makes TVPaint integration a little bit easier to maintain for artists. Removed unneeded tools Creator and Subset Manager tools. Goal is to keep the integration work as close as possible to previous integration. Some changes were made but primarilly because they were not right using previous system.All creators create instance with final family instead of changing the family during extraction. Render passes are not related to group id but to render layer instance. Render layer is still related to group. Workfile, review and scene render instances are created using autocreators instead of auto-collection during publishing. Subset names are fully filled during publishing but instance labels are filled on refresh with the last known right value. Implemented basic of legacy convertor which should convert render layers and render passes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Auto-detect render creation <a href="https://github.com/ynput/OpenPype/pull/4496">#4496</a></summary>
+
+<strong>Create plugin which will create Render Layer and Render Pass instances based on information in the scene.
+
+</strong>Added new creator that must be triggered by artist. The create plugin will first create Render Layer instances if were not created yet. For variant is used color group name. The creator has option to rename color groups by template defined in settings -> Template may use index of group by it's usage in scene (from bottom to top). After Render Layers will create Render Passes. Render Pass is created for each individual TVPaint layer in any group that had created Render Layer. It's name is used as variant (pass).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Small enhancements <a href="https://github.com/ynput/OpenPype/pull/4501">#4501</a></summary>
+
+<strong>Small enhancements in TVPaint integration which did not get to https://github.com/ynput/OpenPype/pull/4471.
+
+</strong>It was found out that `opacity` returned from `tv_layerinfo` is always empty and is dangerous to add it to layer information. Added information about "current" layer to layers information. Disable review of Render Layer and Render Pass instances by default. In most of productions is used only "scene review". Skip usage of `"enabled"` key from settings in automated layer/pass creation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: color v3 global oiio transcoder plugin <a href="https://github.com/ynput/OpenPype/pull/4291">#4291</a></summary>
+
+<strong>Implements possibility to use `oiiotool` to transcode image sequences from one color space to another(s).
+
+</strong>Uses collected `colorspaceData` information about source color spaces, these information needs to be collected previously in each DCC interested in color management.Uses profiles configured in Settings to create single or multiple new representations (and file extensions) with different color spaces.New representations might replace existing one, each new representation might contain different tags and custom tags to control its integration step.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Added support for multiple install dirs in Deadline <a href="https://github.com/ynput/OpenPype/pull/4451">#4451</a></summary>
+
+<strong>SearchDirectoryList returns FIRST existing so if you would have multiple OP install dirs, it won't search for appropriate version in later ones.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Upload reviewables with original name <a href="https://github.com/ynput/OpenPype/pull/4483">#4483</a></summary>
+
+<strong>Ftrack can integrate reviewables with original filenames.
+
+</strong>As ftrack have restrictions about names of components the only way how to achieve the result was to upload the same file twice, one with required name and one with origin name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Ignore transparency in Render Pass <a href="https://github.com/ynput/OpenPype/pull/4499">#4499</a></summary>
+
+<strong>It is possible to ignore layers transparency during Render Pass extraction.
+
+</strong>Render pass extraction does not respect opacity of TVPaint layers set in scene during extraction. It can be enabled/disabled in settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Anatomy: Preparation for different root overrides <a href="https://github.com/ynput/OpenPype/pull/4521">#4521</a></summary>
+
+<strong>Prepare Anatomy to handle only 'studio' site override on it's own.
+
+</strong>Change how Anatomy fill root overrides based on requested site name. The logic which decide what is active site was moved to sync server addon and the same for receiving root overrides of local site. The Anatomy resolve only studio site overrides anything else is handled by sync server. BaseAnatomy only expect root overrides value and does not need site name. Validation of site name happens in sync server same as resolving if site name is local or not.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke | Global: colormanaged plugin in collection <a href="https://github.com/ynput/OpenPype/pull/4556">#4556</a></summary>
+
+<strong>Colormanaged extractor had changed to Mixin class so it can be added to any stage of publishing rather then just to Exctracting.Nuke is no collecting colorspaceData to representation collected on already rendered images.
+
+</strong>Mixin class can no be used as secondary  parent in publishing plugins.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>look publishing and srgb colorspace in maya  <a href="https://github.com/ynput/OpenPype/pull/4276">#4276</a></summary>
+
+<strong>Check the OCIO color management is enabled before doing linearize colorspace for converting the texture maps into tx files.
+
+</strong>Check whether the OCIO color management is enabled before the condition of converting the texture to tx extension.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: extract Thumbnail "No active model panel found" - OP-3849 <a href="https://github.com/ynput/OpenPype/pull/4421">#4421</a></summary>
+
+<strong>Error when extracting playblast with no model panel.
+
+</strong>If `project_settings/maya/publish/ExtractPlayblast/capture_preset/Viewport Options/override_viewport_options` were off and publishing without showing any model panel, the extraction would fail.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix setting scene fps with float input <a href="https://github.com/ynput/OpenPype/pull/4488">#4488</a></summary>
+
+<strong>Returned value of float fps on integer values would return float.
+
+</strong>This PR fixes the case when switching between integer fps values for example 24 > 25. Issue was when setting the scene fps, the original float value was used which makes it unpredictable whether the value is float or integer when mapping the fps values.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Multipart fix <a href="https://github.com/ynput/OpenPype/pull/4497">#4497</a></summary>
+
+<strong>Fix multipart logic in render products.
+
+</strong>Each renderer has a different way of defining whether output images is multipart, so we need to define it for each renderer. Also before the `multipart` class variable was defined multiple times in several places, which made it tricky to debug where `multipart` was defined. Now its created on initialization and referenced as `self.multipart`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Set pool on tile assembly - OP-2012 <a href="https://github.com/ynput/OpenPype/pull/4520">#4520</a></summary>
+
+<strong>Set pool on tile assembly
+
+</strong>Pool for publishing and tiling jobs, need to use the settings (`project_settings/deadline/publish/ProcessSubmittedJobOnFarm/deadline_pool`) else fallback on primary pool (`project_settings/deadline/publish/CollectDeadlinePools/primary_pool`)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Extract review with handles <a href="https://github.com/ynput/OpenPype/pull/4527">#4527</a></summary>
+
+<strong>Review was not extracting properly with/without handles.
+
+</strong>Review instance was not created properly resulting in the frame range on the instance including handles.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix broken lib. <a href="https://github.com/ynput/OpenPype/pull/4529">#4529</a></summary>
+
+<strong>Fix broken lib.
+
+</strong>This commit from this PR broke the Maya lib module.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Validate model name - OP-4983 <a href="https://github.com/ynput/OpenPype/pull/4539">#4539</a></summary>
+
+<strong>Validate model name issues.
+
+</strong>Couple of issues with validate model name;
+- missing platform extraction from settings
+- map function should be list comprehension
+- code cosmetics
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: SkeletalMesh family loadable as reference <a href="https://github.com/ynput/OpenPype/pull/4573">#4573</a></summary>
+
+<strong>In Maya, fix the SkeletalMesh family not loadable as reference.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: fix loaders because of missing AssetContainer <a href="https://github.com/ynput/OpenPype/pull/4536">#4536</a></summary>
+
+<strong>Fixing Unreal loaders, where changes in OpenPype Unreal integration plugin deleted AssetContainer.
+
+</strong>`AssetContainer` and `AssetContainerFactory` are still used to mark loaded instances. Because of optimizations in Integration plugin we've accidentally removed them but that broke loader.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax unable to delete loaded asset in the scene inventory <a href="https://github.com/ynput/OpenPype/pull/4507">#4507</a></summary>
+
+<strong>Fix the bug of being unable to delete loaded asset in the Scene Inventory
+
+</strong>Fix the bug of being unable to delete loaded asset in the Scene Inventory
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero/Nuke: originalBasename editorial publishing and loading <a href="https://github.com/ynput/OpenPype/pull/4453">#4453</a></summary>
+
+<strong>Publishing and loading `originalBasename` is working as expected
+
+</strong>Frame-ranges on version document is now correctly defined to fit original media frame range which is published. It means loading is now correctly identifying frame start and end on clip loader in Nuke.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Fix workfile template placeholder creation <a href="https://github.com/ynput/OpenPype/pull/4512">#4512</a></summary>
+
+<strong>Template placeholder creation was erroring out in Nuke due to the Workfile template builder not being able to find any of the plugins for the Nuke host.
+
+</strong>Move `get_workfile_build_placeholder_plugins` function to NukeHost class as workfile template builder expects.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: creator farm attributes from deadline submit plugin settings <a href="https://github.com/ynput/OpenPype/pull/4519">#4519</a></summary>
+
+<strong>Defaults in farm attributes are sourced from settings.
+
+</strong>Settings for deadline nuke submitter are now used during nuke render and prerender creator plugins.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: fix clip sequence loading <a href="https://github.com/ynput/OpenPype/pull/4574">#4574</a></summary>
+
+<strong>Nuke is loading correctly clip  from image sequence created without "{originalBasename}" token in anatomy template.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Fix files collection and small bug-fixes <a href="https://github.com/ynput/OpenPype/pull/4423">#4423</a></summary>
+
+<strong>Fixed Fusion review-representation and small bug-fixes
+
+</strong>This fixes the problem with review-file generation that stopped the publishing on second publish before the fix.The problem was that Fusion simply looked at all the files in the render-folder instead of only gathering the needed frames for the review.Also includes a fix to get the handle start/end that before throw an error if the data didn't exist (like from a kitsu sync).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Updated render_local.py to not only process the first instance <a href="https://github.com/ynput/OpenPype/pull/4522">#4522</a></summary>
+
+Moved the `__hasRun` to `render_once()` so the check only happens with the rendering. Currently only the first render node gets the representations added.Critical PR
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Load sequence fix filepath resolving from representation <a href="https://github.com/ynput/OpenPype/pull/4580">#4580</a></summary>
+
+<strong>Resolves issue mentioned on discord by @movalex:The loader was incorrectly trying to find the file in the publish folder which resulted in just picking 'any first file'.
+
+</strong>This gets the filepath from representation instead of taking the first file from listing files from publish folder.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Fix review burnin start and end frame <a href="https://github.com/ynput/OpenPype/pull/4590">#4590</a></summary>
+
+Fix the burnin start and end frame for reviews. Without this the asset document's start and end handle would've been added to the _burnin_ frame range even though that would've been incorrect since the handles are based on the comp saver's render range instead.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Harmony: missing set of frame range when opening scene <a href="https://github.com/ynput/OpenPype/pull/4485">#4485</a></summary>
+
+<strong>Frame range gets set from DB everytime scene is opened.
+
+</strong>Added also check for not up-to-date loaded containers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: context is not changed in publisher <a href="https://github.com/ynput/OpenPype/pull/4570">#4570</a></summary>
+
+<strong>When PS is already open and artists launch new task, it should keep only opened PS open, but change context.
+
+</strong>Problem were occurring in Workfile app where under new task files from old task were shown. This fixes this and adds opening of last workfile for new context if workfile exists.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>hiero: fix effect item node class <a href="https://github.com/ynput/OpenPype/pull/4543">#4543</a></summary>
+
+<strong>Collected effect name after renaming is saving correct class name.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix/OP-4616 vray multipart <a href="https://github.com/ynput/OpenPype/pull/4297">#4297</a></summary>
+
+<strong>This fixes a bug where multipart vray renders would not make a review in Ftrack.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix changed location of reset_frame_range <a href="https://github.com/ynput/OpenPype/pull/4491">#4491</a></summary>
+
+<strong>Location in commands caused cyclic import
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>global: source template fixed frame duplication <a href="https://github.com/ynput/OpenPype/pull/4503">#4503</a></summary>
+
+<strong>Duplication is not happening.
+
+</strong>Template is using `originalBasename` which already assume all necessary elements are part of the file name so there was no need for additional optional name elements.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Hint to use Python 3 <a href="https://github.com/ynput/OpenPype/pull/4518">#4518</a></summary>
+
+<strong>Added shebank to give deadline hint which python should be used.
+
+</strong>Deadline has issues with Python 2 (especially with `os.scandir`). When a shebank is added to file header deadline will use python 3 mode instead of python 2 which fix the issue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Prevent access to create tab after publish start <a href="https://github.com/ynput/OpenPype/pull/4528">#4528</a></summary>
+
+<strong>Prevent access to create tab after publish start.
+
+</strong>Disable create button in instance view on publish start and enable it again on reset. Even with that make sure that it is not possible to go to create tab if the tab is disabled.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Color Transcoding: store target_colorspace as new colorspace <a href="https://github.com/ynput/OpenPype/pull/4544">#4544</a></summary>
+
+<strong>When transcoding into new colorspace, representation must carry this information instead original color space.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: fix submit_publish_job <a href="https://github.com/ynput/OpenPype/pull/4552">#4552</a></summary>
+
+<strong>Fix submit_publish_job
+
+</strong>Resolves #4541
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Fix task itteration in update-op-with-zou <a href="https://github.com/ynput/OpenPype/pull/4577">#4577</a></summary>
+
+From the last PR (https://github.com/ynput/OpenPype/pull/4425) a comment-commit last second messed up the code and resulted in two lines being the same, crashing the script. This PR fixes that.
+___
+
+</details>
+
+
+<details>
+<summary>AttrDefs: Fix type for PySide6 <a href="https://github.com/ynput/OpenPype/pull/4584">#4584</a></summary>
+
+<strong>Use right type in signal emit for value change of attribute definitions.
+
+</strong>Changed `UUID` type to `str`. This is not an issue with PySide2 but it is with PySide6.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Scene Inventory: Avoid using ObjectId <a href="https://github.com/ynput/OpenPype/pull/4524">#4524</a></summary>
+
+<strong>Avoid using conversion to ObjectId type in scene inventory tool.
+
+</strong>Preparation for AYON compatibility where ObjectId won't be used for ids. Representation ids from loaded containers are not converted to ObjectId but kept as strings which also required some changes when working with representation documents.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>SiteSync: host dirmap is not working properly <a href="https://github.com/ynput/OpenPype/pull/4563">#4563</a></summary>
+
+<strong>If artists uses SiteSync with real remote (gdrive, dropbox, sftp) drive, Local Settings were throwing error `string indices must be integers`.
+
+</strong>Logic was reworked to provide only `local_drive` values to be overrriden by Local Settings. If remote site is `gdrive` etc. mapping to `studio` is provided as it is expected that workfiles will have imported from `studio` location and not from `gdrive` folder.Also Nuke dirmap was reworked to be less verbose and much faster.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Input representation ids are not ObjectIds <a href="https://github.com/ynput/OpenPype/pull/4576">#4576</a></summary>
+
+<strong>Don't use `ObjectId` as representation ids during publishing.
+
+</strong>Representation ids are kept as strings during publishing instead of converting them to `ObjectId`. This change is pre-requirement for AYON connection.Inputs are used for integration of links and for farm publishing (or at least it looks like).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Shotgrid: Fixes on Deadline submissions <a href="https://github.com/ynput/OpenPype/pull/4498">#4498</a></summary>
+
+<strong>A few other bug fixes for getting Nuke submission to Deadline work smoothly using Shotgrid integration.
+
+</strong>Continuing on the work done on this other PR this fixes a few other bugs I came across with further tests.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: New Publisher <a href="https://github.com/ynput/OpenPype/pull/3892">#3892</a></summary>
+
+<strong>This converts the old publishing system to the new one. It implements Fusion as a new host addon.
+
+</strong>
+- Create button removed in OpenPype menu in favor of the new Publisher
+- Draft refactor validations to raise `PublishValidationError`
+- Implement Creator for New Publisher
+- Implement Fusion as Host addon
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Make Kitsu work with Tray Publisher, added kitsureview tag, fixed sync-problems. <a href="https://github.com/ynput/OpenPype/pull/4425">#4425</a></summary>
+
+<strong>Make Kitsu work with Tray Publisher, added kitsureview tag, fixed sync-problems.
+
+</strong>This PR updates the way the module gather info for the current publish so it now works with Tray Publisher.It fixes the data that gets synced from Kitsu to OP so all needed data gets registered even if it doesn't exist on Kitsus side.It also adds the tag "Add review to Kitsu" and adds it to Burn In so previews gets generated by default to Kitsu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: V-Ray Set Image Format from settings <a href="https://github.com/ynput/OpenPype/pull/4566">#4566</a></summary>
+
+<strong>Resolves #4565
+
+</strong>Set V-Ray Image Format using settings.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.1](https://github.com/ynput/OpenPype/tree/3.15.1)
 
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.0...3.15.1)
