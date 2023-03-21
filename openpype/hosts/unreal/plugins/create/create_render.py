@@ -69,6 +69,8 @@ class CreateRender(UnrealAssetCreator):
         seq.set_playback_start(pre_create_data.get("start_frame"))
         seq.set_playback_end(pre_create_data.get("end_frame"))
 
+        pre_create_data["members"] = [seq.get_path_name()]
+
         unreal.EditorAssetLibrary.save_asset(seq.get_path_name())
 
         # Create the master level
