@@ -14,6 +14,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # status settings
     set_status_note = False
     note_status_shortname = "wfa"
+    status_conditions = list()
 
     # comment settings
     custom_comment_template = {
@@ -56,9 +57,19 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # Get note status, by default uses the task status for the note
             # if it is not specified in the configuration
-            note_status = kitsu_task["task_status"]["id"]
+            shortname = kitsu_task["task_status"]["short_name"].upper()
+            note_status = kitsu_task["task_status_id"]
 
-            if self.set_status_note:
+            # Check if any status condition is not met
+            allow_status_change = True
+            for status_cond in self.status_conditions:
+                condition = status_cond["condition"] == "equal"
+                match = status_cond["short_name"].upper() == shortname
+                if match and not condition or condition and not match:
+                    allow_status_change = False
+                    break
+
+            if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
                 )
@@ -82,10 +93,11 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 self.log.debug("Comment is `{}`".format(publish_comment))
 
             # Add comment to kitsu task
-            task_id = kitsu_task["id"]
-            self.log.debug("Add new note in taks id {}".format(task_id))
+            self.log.debug(
+                "Add new note in tasks id {}".format(kitsu_task["id"])
+            )
             kitsu_comment = gazu.task.add_comment(
-                task_id, note_status, comment=publish_comment
+                kitsu_task, note_status, comment=publish_comment
             )
 
             instance.data["kitsu_comment"] = kitsu_comment

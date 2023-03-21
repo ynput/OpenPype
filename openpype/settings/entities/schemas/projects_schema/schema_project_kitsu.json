@@ -51,6 +51,32 @@
                         {
                             "type": "text",
                             "key": "note_status_shortname",
+                            "label": "Note shortname"
+                        },
+                        {
+                            "type": "list",
+                            "key": "status_conditions",
+                            "label": "Status conditions",
+                            "object_type": {
+                                "type": "dict",
+                                "key": "conditions_dict",
+                                "children": [
+                                    {
+                                        "type": "enum",
+                                        "key": "condition",
+                                        "label": "Condition",
+                                        "enum_items": [
+                                            {"equal": "Equal"},
+                                            {"not_equal": "Not equal"}
+                                        ]
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "short_name",
+                                        "label": "Short name"
+                                    }
+                                ]
+                            },
                             "label": "Status shortname"
                         },
                         {
