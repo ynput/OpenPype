@@ -1227,15 +1227,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         version_ids = list()
 
-        version_docs_by_parent_and_name = collections.defaultdict(dict)
-        last_version_docs_by_parent_id = {}
+        version_docs_by_parent_id_and_name = collections.defaultdict(dict)
         for version_doc in version_docs:
             parent_id = version_doc["parent"]
             version_ids.append(version_doc["_id"])
             name = version_doc["name"]
-            version_docs_by_parent_and_name[parent_id][name] = version_doc
-            if parent_id not in last_version_docs_by_parent_id:
-                last_version_docs_by_parent_id[parent_id] = version_doc
+            version_docs_by_parent_id_and_name[parent_id][name] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
@@ -1294,17 +1291,32 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                         repre_doc = _repres.get(container_repre_name)
 
             if not repre_doc:
-                version_by_name = version_docs_by_parent_and_name[subset_id]
+                version_by_name = version_docs_by_parent_id_and_name[subset_id]
+
+                # If asset or subset are selected for switching, we use latest
+                # version else we try to keep the current container version.
                 if selected_asset or selected_subset:
-                    version_doc = last_version_docs_by_parent_id[subset_id]
+                    version_name = max(version_by_name)
                 else:
-                    version_doc = version_by_name[container_version_name]
+                    version_name = container_version_name
+
+                version_doc = version_by_name[version_name]
                 version_id = version_doc["_id"]
                 repres_by_name = repre_docs_by_parent_id_by_name[version_id]
+
                 if selected_representation:
-                    repre_doc = repres_by_name[selected_representation]
+                    repres_name = selected_representation
                 else:
-                    repre_doc = repres_by_name[container_repre_name]
+                    repres_name = container_repre_name
+
+                # If selected representation is not available with container
+                # version, we use latest version.
+                if repres_name not in repres_by_name:
+                    repres_by_name = repre_docs_by_parent_id_by_name[
+                        version_by_name[max(version_by_name)]["_id"]
+                    ]
+
+                repre_doc = repres_by_name[repres_name]
 
             try:
                 switch_container(container, repre_doc, loader)
