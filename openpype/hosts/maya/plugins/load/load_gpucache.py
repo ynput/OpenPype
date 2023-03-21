@@ -13,7 +13,7 @@ class GpuCacheLoader(load.LoaderPlugin):
     families = ["model", "animation", "proxyAbc", "pointcache"]
     representations = ["abc", "gpu_cache"]
 
-    label = "Import Gpu Cache"
+    label = "Load Gpu Cache"
     order = -5
     icon = "code-fork"
     color = "orange"
