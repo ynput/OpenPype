@@ -187,7 +187,7 @@ class MayaCreatorBase(object):
         data.pop("publish_attributes", None)    # pop to move to end of dict
         data["publish_attributes"] = publish_attributes
 
-        # Kill any existing attributes just we can imprint cleanly again
+        # Kill any existing attributes just so we can imprint cleanly again
         for attr in data.keys():
             if cmds.attributeQuery(attr, node=node, exists=True):
                 cmds.deleteAttr("{}.{}".format(node, attr))

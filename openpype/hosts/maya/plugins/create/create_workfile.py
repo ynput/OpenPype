@@ -18,7 +18,6 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
 
     def create(self):
 
-        print("Create...")
         variant = self.default_variant
         current_instance = next(
             (

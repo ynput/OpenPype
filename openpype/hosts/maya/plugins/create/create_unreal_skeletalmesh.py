@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Creator for Unreal Static Meshes."""
+"""Creator for Unreal Skeletal Meshes."""
 from openpype.hosts.maya.api import plugin, lib
 from openpype.lib import (
     BoolDef,
