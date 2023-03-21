@@ -6,7 +6,7 @@ sidebar_label: Maya
 
 ## Publish Plugins
 
-### Render Settings Validator 
+### Render Settings Validator
 
 `ValidateRenderSettings`
 
@@ -51,7 +51,7 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-### Model Name Validator 
+### Model Name Validator
 
 `ValidateRenderSettings`
 
@@ -95,7 +95,7 @@ You can set various aspects of scene submission to farm with per-project setting
 
  - **Optional** will mark sumission plugin optional
  - **Active** will enable/disable plugin
- - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used 
+ - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used
 or Deadlines **Draft Tile Assembler**.
  - **Use Published scene** enable to render from published scene instead of scene in work area. Rendering from published files is much safer.
  - **Use Asset dependencies** will mark job pending on farm until asset dependencies are fulfilled - for example Deadline will wait for scene file to be synced to cloud, etc.
@@ -106,6 +106,35 @@ or Deadlines **Draft Tile Assembler**.
  - **Scene patches** - configure mechanism to add additional lines to published Maya Ascii scene files before they are used for rendering.
 This is useful to fix some specific renderer glitches and advanced hacking of Maya Scene files. `Patch name` is label for patch for easier orientation.
 `Patch regex` is regex used to find line in file, after `Patch line` string is inserted. Note that you need to add line ending.
+
+### Extract GPU Cache
+
+![Maya GPU Cache](assets/maya-admin_gpu_cache.png)
+
+- **Evaluate Every** Specifies which samples are saved during cache creation. For example, a value of 2 specifies that only every other sample specified by the Evaluate every # frame(s) option is saved to your Alembic file.
+
+- **Save Every** Specifies how often samples are taken during file creation. By default, one sample of your object's transformations is taken every frame and saved to the Alembic file.
+
+  For example, a value of 2 caches the transformations of the current object at every other frame of the Cache Time Range.
+
+- **Optimize Hierarchy** When on, nodes and objects in a selected hierarchy are consolidated to maximize the performance of the cache file during playback.
+- **Optimization Threshold** (Available only when Optimize Hierarchy is on.) Specifies the maximum number of vertices contained in a single draw primitive. The default value of 40000 may be ideal for most Maya supported graphics cards. When set to the default value, after optimization, each object in the GPU cache file(s) will have no more than 40000 vertices. This value can be set higher depending on the memory available on your system graphics card.
+
+- **Optimize Animations for Motion Blur** When on, objects with animated transform nodes display with motion blur when the cache is played back in Viewport 2.0 render mode. See Viewport 2.0 options.
+
+  Maya first determines if the GPU cache includes animation data. If the GPU cache is static and does not contain animation data, Maya does not optimize the GPU cache for motion blur.
+
+:::note Motion Blur does not support Cached Playback.
+:::
+
+- **Write Materials** When on, Maya exports the Lambert and Phong materials from source geometry to the GPU Cache file. These materials display when the GPU-cached file is played back in Viewport 2.0.
+
+  GPU-cached objects support all the high-quality lighting and shading effects provide by the Viewport 2.0 rendering mode. See Viewport 2.0 options.
+
+:::note Lambert and Phong materials do not display on GPU-cached files when they are played back in scene view's High Quality Rendering or Default Quality Rendering modes.
+:::
+
+- **Use Base Tessellation** Exports geometry with base tessellation and no smoothing applied. If this setting is turned off, the extractor will export geometry with the current Smooth Mesh Preview setting applied.
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
@@ -169,5 +198,3 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
-
-
