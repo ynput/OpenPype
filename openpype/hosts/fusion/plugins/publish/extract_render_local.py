@@ -1,6 +1,4 @@
-import os
 import pyblish.api
-from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
 
 
