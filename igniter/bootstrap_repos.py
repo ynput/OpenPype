@@ -62,6 +62,10 @@ class OpenPypeVersion(semver.VersionInfo):
 
     """
     path = None
+
+    _vendor = "pypeclub"
+    _app = "openpype"
+    _local_openpype_path = None
     # this should match any string complying with https://semver.org/
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?")  # noqa: E501
     _installed_version = None
@@ -291,6 +295,31 @@ class OpenPypeVersion(semver.VersionInfo):
         return os.getenv("OPENPYPE_PATH")
 
     @classmethod
+    def get_local_openpype_path(cls, settings=None):
+        """Path to unzipped versions.
+
+        By default it should be user appdata, but could be overridden by
+        settings.
+        """
+        if cls._local_openpype_path:
+            return cls._local_openpype_path
+
+        data_dir = Path(user_data_dir(cls._app, cls._vendor))
+        if not settings:
+            mongo_url = os.environ.get("OPENPYPE_MONGO")
+            if mongo_url:
+                settings = get_openpype_global_settings(mongo_url)
+
+        if settings:
+            overridden_path = get_local_openpype_path_from_settings(settings)
+            if overridden_path:
+                print(f"overriding local folder: {overridden_path}")
+                data_dir = overridden_path
+
+        cls._local_openpype_path = data_dir
+        return data_dir
+
+    @classmethod
     def openpype_path_is_set(cls):
         """Path to OpenPype zip directory is set."""
         if cls.get_openpype_path():
@@ -320,8 +349,7 @@ class OpenPypeVersion(semver.VersionInfo):
             list: of compatible versions available on the machine.
 
         """
-        # DEPRECATED: backwards compatible way to look for versions in root
-        dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
+        dir_to_search = OpenPypeVersion.get_local_openpype_path()
         versions = OpenPypeVersion.get_versions_from_directory(dir_to_search)
 
         return list(sorted(set(versions)))
@@ -534,17 +562,15 @@ class BootstrapRepos:
 
         """
         # vendor and app used to construct user data dir
-        self._vendor = "pypeclub"
-        self._app = "openpype"
+        self._message = message
         self._log = log.getLogger(str(__class__))
-        self.data_dir = Path(user_data_dir(self._app, self._vendor))
+        self.set_data_dir(None)
         self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
             "openpype", "schema", "LICENSE"
         ]
-        self._message = message
 
         # dummy progress reporter
         def empty_progress(x: int):
@@ -556,13 +582,7 @@ class BootstrapRepos:
         self._progress_callback = progress_callback
 
     def set_data_dir(self, settings):
-        if not settings:
-            return
-
-        overridden_path = get_local_openpype_path_from_settings(settings)
-        if overridden_path:
-            self._print(f"overriding local folder: {overridden_path}")
-            self.data_dir = overridden_path
+        self.data_dir = OpenPypeVersion.get_local_openpype_path(settings)
 
     @staticmethod
     def get_version_path_from_list(
