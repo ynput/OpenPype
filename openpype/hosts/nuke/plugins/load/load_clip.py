@@ -21,6 +21,10 @@ from openpype.hosts.nuke.api import (
     viewer_update_and_undo_stop,
     colorspace_exists_on_node
 )
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 from openpype.hosts.nuke.api import plugin
 
 
@@ -38,13 +42,10 @@ class LoadClip(plugin.NukeLoader):
         "prerender",
         "review"
     ]
-    representations = [
-        "exr",
-        "dpx",
-        "mov",
-        "review",
-        "mp4"
-    ]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load Clip"
     order = -20
@@ -81,16 +82,16 @@ class LoadClip(plugin.NukeLoader):
 
     @classmethod
     def get_representations(cls):
-        return (
-            cls.representations
-            + cls._representations
-            + plugin.get_review_presets_config()
-        )
+        return cls._representations or cls.representations
 
     def load(self, context, name, namespace, options):
+        """Load asset via database
+        """
         representation = context["representation"]
-        # reste container id so it is always unique for each instance
+        # reset container id so it is always unique for each instance
         self.reset_container_id()
+
+        self.log.warning(self.extensions)
 
         is_sequence = len(representation["files"]) > 1
 
@@ -221,18 +222,21 @@ class LoadClip(plugin.NukeLoader):
         """
         representation = deepcopy(representation)
         context = representation["context"]
-        template = representation["data"]["template"]
+
+        # Get the frame from the context and hash it
+        frame = context["frame"]
+        hashed_frame = "#" * len(str(frame))
+
+        # Replace the frame with the hash in the originalBasename
         if (
-            "{originalBasename}" in template
-            and "frame" in context
+            "{originalBasename}" in representation["data"]["template"]
         ):
-            frame = context["frame"]
-            hashed_frame = "#" * len(str(frame))
             origin_basename = context["originalBasename"]
             context["originalBasename"] = origin_basename.replace(
                 frame, hashed_frame
             )
 
+        # Replace the frame with the hash in the frame
         representation["context"]["frame"] = hashed_frame
         return representation
 

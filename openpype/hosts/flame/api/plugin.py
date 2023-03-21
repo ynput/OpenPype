@@ -702,6 +702,37 @@ class ClipLoader(LoaderPlugin):
 
     _mapping = None
 
+    def apply_settings(cls, project_settings, system_settings):
+
+        plugin_type_settings = (
+            project_settings
+            .get("flame", {})
+            .get("load", {})
+        )
+
+        if not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                print("  - is disabled by preset")
+            elif option == "representations":
+                continue
+            else:
+                print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
+
     def get_colorspace(self, context):
         """Get colorspace name
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Loader for layouts."""
 import json
+import collections
 from pathlib import Path
 
 import unreal
@@ -12,9 +13,7 @@ from unreal import FBXImportType
 from unreal import MovieSceneLevelVisibilityTrack
 from unreal import MovieSceneSubTrack
 
-from bson.objectid import ObjectId
-
-from openpype.client import get_asset_by_name, get_assets
+from openpype.client import get_asset_by_name, get_assets, get_representations
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -410,6 +409,30 @@ class LayoutLoader(plugin.Loader):
 
         return sequence, (min_frame, max_frame)
 
+    def _get_repre_docs_by_version_id(self, data):
+        version_ids = {
+            element.get("version")
+            for element in data
+            if element.get("representation")
+        }
+        version_ids.discard(None)
+
+        output = collections.defaultdict(list)
+        if not version_ids:
+            return output
+
+        project_name = legacy_io.active_project()
+        repre_docs = get_representations(
+            project_name,
+            representation_names=["fbx", "abc"],
+            version_ids=version_ids,
+            fields=["_id", "parent", "name"]
+        )
+        for repre_doc in repre_docs:
+            version_id = str(repre_doc["parent"])
+            output[version_id].append(repre_doc)
+        return output
+
     def _process(self, lib_path, asset_dir, sequence, repr_loaded=None):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -429,31 +452,21 @@ class LayoutLoader(plugin.Loader):
 
         loaded_assets = []
 
+        repre_docs_by_version_id = self._get_repre_docs_by_version_id(data)
         for element in data:
             representation = None
             repr_format = None
             if element.get('representation'):
-                # representation = element.get('representation')
-
-                self.log.info(element.get("version"))
-
-                valid_formats = ['fbx', 'abc']
-
-                repr_data = legacy_io.find_one({
-                    "type": "representation",
-                    "parent": ObjectId(element.get("version")),
-                    "name": {"$in": valid_formats}
-                })
-                repr_format = repr_data.get('name')
-
-                if not repr_data:
+                repre_docs = repre_docs_by_version_id[element.get("version")]
+                if not repre_docs:
                     self.log.error(
                         f"No valid representation found for version "
                         f"{element.get('version')}")
                     continue
+                repre_doc = repre_docs[0]
+                representation = str(repre_doc["_id"])
+                repr_format = repre_doc["name"]
 
-                representation = str(repr_data.get('_id'))
-                print(representation)
             # This is to keep compatibility with old versions of the
             # json format.
             elif element.get('reference_fbx'):

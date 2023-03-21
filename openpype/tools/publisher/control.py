@@ -18,6 +18,7 @@ from openpype.client import (
 )
 from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import (
+    UIDef,
     serialize_attr_defs,
     deserialize_attr_defs,
 )
@@ -1938,6 +1939,8 @@ class PublisherController(BasePublisherController):
                 plugin_values = all_plugin_values[plugin_name]
 
                 for attr_def in attr_defs:
+                    if isinstance(attr_def, UIDef):
+                        continue
                     if attr_def.key not in plugin_values:
                         plugin_values[attr_def.key] = []
                     attr_values = plugin_values[attr_def.key]

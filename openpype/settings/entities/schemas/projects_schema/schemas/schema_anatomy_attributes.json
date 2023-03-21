@@ -10,7 +10,7 @@
             "type": "number",
             "key": "fps",
             "label": "Frame Rate",
-            "decimal": 2,
+            "decimal": 3,
             "minimum": 0
         },
         {

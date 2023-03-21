@@ -50,13 +50,10 @@ async def upload(module, project_name, file, representation, provider_name,
                                                   presets=preset)
 
         file_path = file.get("path", "")
-        try:
-            local_file_path, remote_file_path = resolve_paths(
-                module, file_path, project_name,
-                remote_site_name, remote_handler
-            )
-        except Exception as exp:
-            print(exp)
+        local_file_path, remote_file_path = resolve_paths(
+            module, file_path, project_name,
+            remote_site_name, remote_handler
+        )
 
         target_folder = os.path.dirname(remote_file_path)
         folder_id = remote_handler.create_folder(target_folder)

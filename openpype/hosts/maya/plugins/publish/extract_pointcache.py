@@ -23,7 +23,7 @@ class ExtractAlembic(publish.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["pointcache", "model", "vrayproxy"]
+    families = ["pointcache", "model", "vrayproxy.alembic"]
     targets = ["local", "remote"]
 
     def process(self, instance):

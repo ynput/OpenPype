@@ -19,8 +19,9 @@ from openpype.lib import Logger
 class LoadEffects(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["effectJson"]
     families = ["effect"]
+    representations = ["*"]
+    extension = {"json"}
 
     label = "Load Effects"
     order = 0

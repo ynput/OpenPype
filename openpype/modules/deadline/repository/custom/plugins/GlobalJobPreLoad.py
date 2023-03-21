@@ -1,3 +1,4 @@
+# /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import tempfile
@@ -341,7 +342,7 @@ def inject_openpype_environment(deadlinePlugin):
             "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
             "envgroup": "farm"
         }
-        
+
         if job.GetJobEnvironmentKeyValue('IS_TEST'):
             args.append("--automatic-tests")
 
@@ -361,11 +362,11 @@ def inject_openpype_environment(deadlinePlugin):
 
         args_str = subprocess.list2cmdline(args)
         print(">>> Executing: {} {}".format(exe, args_str))
-        process = ProcessUtils.SpawnProcess(
-            exe, args_str, os.path.dirname(exe)
+        process_exitcode = deadlinePlugin.RunProcess(
+            exe, args_str, os.path.dirname(exe), -1
         )
-        ProcessUtils.WaitForExit(process, -1)
-        if process.ExitCode != 0:
+
+        if process_exitcode != 0:
             raise RuntimeError(
                 "Failed to run OpenPype process to extract environments."
             )
