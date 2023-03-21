@@ -3,6 +3,7 @@
 import bpy
 
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.utils import NODETREE_TYPES
 
 
 class BlenderNodegroupLoader(plugin.AssetLoader):
@@ -13,7 +14,7 @@ class BlenderNodegroupLoader(plugin.AssetLoader):
     color = "orange"
     no_namespace = True
 
-    bl_types = frozenset({bpy.types.GeometryNodeTree, bpy.types.Object})
+    bl_types = frozenset(NODETREE_TYPES)
 
     def update(self, *args, **kwargs):
         """Override `update` to restore updated nodegroups into modifiers."""

@@ -16,6 +16,11 @@ from openpype.pipeline.load.utils import loaders_from_representation
 # Key for metadata dict
 AVALON_PROPERTY = "avalon"
 
+# NodeTree Blender types
+NODETREE_TYPES = set(
+    getattr(bpy.types, t) for t in dir(bpy.types) if t.endswith("NodeTree")
+)
+
 # Match Blender type to a datapath to look into. Needed for native UI creator.
 BL_TYPE_DATAPATH = (  # TODO rename DATACOL
     {  # NOTE Order is important for some hierarchy based processes!
@@ -25,7 +30,8 @@ BL_TYPE_DATAPATH = (  # TODO rename DATACOL
         bpy.types.Action: "actions",
         bpy.types.Armature: "armatures",
         bpy.types.Material: "materials",
-        bpy.types.GeometryNodeTree: "node_groups",
+        bpy.types.NodeTree: "node_groups",
+        **{t: "node_groups" for t in NODETREE_TYPES},
     }
 )
 # Match Blender type to an ICON for display
@@ -36,8 +42,9 @@ BL_TYPE_ICON = {
     bpy.types.Action: "ACTION",
     bpy.types.Armature: "ARMATURE_DATA",
     bpy.types.Material: "MATERIAL_DATA",
-    bpy.types.GeometryNodeTree: "NODETREE",
+    **{t: "NODETREE" for t in NODETREE_TYPES},
 }
+
 # Types which can be handled through the outliner
 BL_OUTLINER_TYPES = frozenset((bpy.types.Collection, bpy.types.Object))
 

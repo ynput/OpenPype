@@ -2,6 +2,7 @@
 import bpy
 
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.utils import NODETREE_TYPES
 
 
 class CreateBlenderNodegroup(plugin.Creator):
@@ -12,4 +13,4 @@ class CreateBlenderNodegroup(plugin.Creator):
     family = "blender.nodegroup"
     icon = "microchip"
 
-    bl_types = frozenset({bpy.types.GeometryNodeTree, bpy.types.Object})
+    bl_types = frozenset({bpy.types.Object, *NODETREE_TYPES})
