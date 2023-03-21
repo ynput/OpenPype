@@ -54,7 +54,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                          cls.use_published)
         cls.priority = settings.get("priority",
                                     cls.priority)
-        cls.chunkSize = settings.get("chunk_size", cls.chunkSize)
+        cls.chuck_size = settings.get("chunk_size", cls.chunk_size)
         cls.group = settings.get("group", cls.group)
 
     def get_job_info(self):
@@ -253,7 +253,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                       minimum=1,
                       maximum=50,
                       decimals=0,
-                      default=cls.chunkSize,
+                      default=cls.chunk_size,
                       label="Frame Per Task"),
 
             TextDef("group",
