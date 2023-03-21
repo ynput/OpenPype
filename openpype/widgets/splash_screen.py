@@ -49,9 +49,7 @@ class SplashScreen(QtWidgets.QDialog):
         self.init_ui()
 
     def was_proc_successful(self) -> bool:
-        if self.thread_return_code == 0:
-            return True
-        return False
+        return self.thread_return_code == 0
 
     def start_thread(self, q_thread: QtCore.QThread):
         """Saves the reference to this thread and starts it.
