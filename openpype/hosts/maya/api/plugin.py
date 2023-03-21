@@ -147,7 +147,7 @@ class MayaCreatorBase(object):
             cache = dict()
             cache_legacy = dict()
 
-            for node in cmds.ls(type='objectSet'):
+            for node in cmds.ls(type="objectSet"):
 
                 if _get_attr(node, attr="id") != "pyblish.avalon.instance":
                     continue
