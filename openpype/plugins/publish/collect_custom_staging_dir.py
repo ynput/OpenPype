@@ -12,10 +12,10 @@ import os.path
 
 import pyblish.api
 
-from openpype.pipeline.publish.lib import get_transient_dir_info
+from openpype.pipeline.publish.lib import get_custom_staging_dir_info
 
 
-class CollectTransientFolder(pyblish.api.InstancePlugin):
+class CollectCustomStagingDir(pyblish.api.InstancePlugin):
     """Looks through profiles if stagingDir should be persistent and in special
     location.
 
@@ -29,10 +29,10 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
     ('transient' key is expected, with 'folder' key)
 
     Which family/task type/subset is applicable is configured in:
-    `project_settings/global/publish/CollectTransientFolder`
+    `project_settings/global/tools/publish/custom_staging_dir_profiles`
 
     """
-    label = "Collect Transient Staging Dir"
+    label = "Collect Custom Staging Directory"
     order = pyblish.api.CollectorOrder + 0.4990
 
     template_key = "transient"
@@ -47,14 +47,9 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
         anatomy_data = copy.deepcopy(instance.data["anatomyData"])
         task = anatomy_data.get("task", {})
 
-        transient_tml, is_persistent = get_transient_dir_info(project_name,
-                                                              host_name,
-                                                              family,
-                                                              task.get("name"),
-                                                              task.get("type"),
-                                                              subset_name,
-                                                              anatomy,
-                                                              log=self.log)
+        transient_tml, is_persistent = get_custom_staging_dir_info(
+            project_name, host_name, family, task.get("name"),
+            task.get("type"), subset_name, anatomy, log=self.log)
         result_str = "Not adding"
         if transient_tml:
             anatomy_data["root"] = anatomy.roots
@@ -67,6 +62,6 @@ class CollectTransientFolder(pyblish.api.InstancePlugin):
             instance.data["stagingDir_persistent"] = is_persistent
             result_str = "Adding '{}' as".format(transient_dir)
 
-        self.log.info("{} transient staging dir for instance with '{}'".format(
+        self.log.info("{} custom staging dir for instance with '{}'".format(
             result_str, family
         ))

@@ -694,9 +694,10 @@ def get_publish_repre_path(instance, repre, only_published=False):
     return None
 
 
-def get_transient_dir_info(project_name, host_name, family, task_name,
-                           task_type, subset_name, anatomy=None, log=None):
-    """Checks profiles if context should use special transient dir as staging.
+def get_custom_staging_dir_info(project_name, host_name, family, task_name,
+                                task_type, subset_name,
+                                anatomy=None, log=None):
+    """Checks profiles if context should use special custom dir as staging.
 
     Args:
         project_name (str)
@@ -714,15 +715,15 @@ def get_transient_dir_info(project_name, host_name, family, task_name,
         ValueError - if misconfigured template should be used
     """
     settings = get_project_settings(project_name)
-    transient_dir_profiles = (settings["global"]
-                                      ["tools"]
-                                      ["publish"]
-                                      ["transient_dir_profiles"])
-    if not transient_dir_profiles:
+    custom_staging_dir_profiles = (settings["global"]
+                                           ["tools"]
+                                           ["publish"]
+                                           ["custom_staging_dir_profiles"])
+    if not custom_staging_dir_profiles:
         return None, None
 
     if not log:
-        log = Logger.get_logger("get_transient_dir_info")
+        log = Logger.get_logger("get_custom_staging_dir_info")
 
     filtering_criteria = {
         "hosts": host_name,
@@ -731,11 +732,11 @@ def get_transient_dir_info(project_name, host_name, family, task_name,
         "task_types": task_type,
         "subsets": subset_name
     }
-    profile = filter_profiles(transient_dir_profiles,
+    profile = filter_profiles(custom_staging_dir_profiles,
                               filtering_criteria,
                               logger=log)
 
-    if not profile or not profile["use_transient_dir"]:
+    if not profile or not profile["use_custom_staging_dir"]:
         return None, None
 
     if not anatomy:
@@ -744,10 +745,10 @@ def get_transient_dir_info(project_name, host_name, family, task_name,
     template_name = profile["template_name"] or TRANSIENT_DIR_TEMPLATE
     _validate_transient_template(project_name, template_name, anatomy)
 
-    transient_dir = anatomy.templates[template_name]["folder"]
-    is_persistent = profile["transient_dir_persistent"]
+    custom_staging_dir = anatomy.templates[template_name]["folder"]
+    is_persistent = profile["custom_staging_dir_persistent"]
 
-    return transient_dir, is_persistent
+    return custom_staging_dir, is_persistent
 
 
 def _validate_transient_template(project_name, template_name, anatomy):

@@ -411,8 +411,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "transient_dir_profiles",
-                    "label": "Transient Dir Profiles",
+                    "key": "custom_staging_dir_profiles",
+                    "label": "Custom Staging Dir Profiles",
                     "use_label_wrap": true,
                     "docstring": "Profiles to specify special location and persistence for staging dir. Could be used in Creators and Publish phase!",
                     "object_type": {
@@ -451,13 +451,13 @@
                                 "type": "separator"
                             },
                             {
-                                "key": "use_transient_dir",
-                                "label": "Use Transient Folder",
+                                "key": "use_custom_staging_dir",
+                                "label": "Use Custom Staging Folder",
                                 "type": "boolean"
                             },
                             {
-                                "key": "transient_dir_persistent",
-                                "label": "Transient Folder Persistent",
+                                "key": "custom_staging_dir_persistent",
+                                "label": "Custom Staging Folder Persistent",
                                 "type": "boolean",
                                 "default": false
                             },
