@@ -86,7 +86,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             msg = "Render layer [ {} ] is not " "renderable".format(
                 layer.name()
             )
-            raise RuntimeError(msg)
+            self.log.warning(msg)
 
         # detect if there are sets (subsets) to attach render to
         sets = cmds.sets(objset, query=True) or []
@@ -112,7 +112,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         layer_render_products = get_layer_render_products(layer.name())
         render_products = layer_render_products.layer_data.products
         assert render_products, "no render products generated"
-        exp_files = []
+        expected_files = []
         multipart = False
         for product in render_products:
             if product.multipart:
@@ -122,7 +122,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
                 product_name = "{}{}".format(
                     product.camera,
                     "_{}".format(product_name) if product_name else "")
-            exp_files.append(
+            expected_files.append(
                 {
                     product_name: layer_render_products.get_files(
                         product)
@@ -133,10 +133,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         self.log.info("multipart: {}".format(
             multipart))
-        assert exp_files, "no file names were generated, this is a bug"
+        assert expected_files, "no file names were generated, this is a bug"
         self.log.info(
             "expected files: {}".format(
-                json.dumps(exp_files, indent=4, sort_keys=True)
+                json.dumps(expected_files, indent=4, sort_keys=True)
             )
         )
 
@@ -144,7 +144,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         # in expectedFiles. If so, raise error as we cannot attach AOV
         # (considered to be subset on its own) to another subset
         if attach_to:
-            assert isinstance(exp_files, list), (
+            assert isinstance(expected_files, list), (
                 "attaching multiple AOVs or renderable cameras to "
                 "subset is not supported"
             )
@@ -158,7 +158,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         # replace relative paths with absolute. Render products are
         # returned as list of dictionaries.
         publish_meta_path = None
-        for aov in exp_files:
+        for aov in expected_files:
             full_paths = []
             aov_first_key = list(aov.keys())[0]
             for file in aov[aov_first_key]:

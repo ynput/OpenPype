@@ -170,8 +170,8 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
         # later by a physical maya connection instead of relying on the layer
         # name
         cmds.addAttr(render_set, longName="renderlayer", at="message")
-        cmds.connectAttr(layer.name() + ".message",
-                         render_set + ".renderlayer", force=True)
+        cmds.connectAttr("{}.message".format(layer.name()),
+                         "{}.renderlayer".format(render_set), force=True)
 
         # Add the set to the 'CreateRender' set.
         cmds.sets(render_set, forceElement=create_render_set)
@@ -191,7 +191,8 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                 instance.data["instance_node"] = instance_node
             else:
                 # TODO: Keep name in sync with the actual renderlayer?
-                self.log.warning("No instance node found for to be updated instance: {}".format(instance))
+                self.log.warning("No instance node found for to be updated "
+                                 "instance: {}".format(instance))
                 continue
 
             self.imprint_instance_node(instance_node,
@@ -253,7 +254,8 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                     default=False),
             BoolDef("overrideExistingFrame",
                     label="Override Existing Frame",
-                    tooltip="Override existing rendered frames (if they exist).",
+                    tooltip="Override existing rendered frames "
+                            "(if they exist).",
                     default=True),
 
             # TODO: Should these move to submit_maya_deadline plugin?
