@@ -228,7 +228,11 @@ def  get_main_grade(ocio_directory):
     """Determine if Grade file is meant to be main grade or it if it is an element grade"""
     original_grades = []
     for grade in glob(ocio_directory + "/*"):
-        if os.path.isfile(grade) and (grade.endswith(".ccc") or grade.endswith(".cdl") or grade.endswith(".cc")):
+        if os.path.isfile(grade) and not os.path.basename(grade) == "grade.ccc" and (
+                grade.endswith(".ccc") or
+                grade.endswith(".cdl") or
+                grade.endswith(".cc")
+            ):
             original_grades.append((os.path.basename(parse_cdl(grade)["file"]).rsplit(".")[0], grade))
 
     if len(original_grades) == 1:
