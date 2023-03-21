@@ -13,6 +13,16 @@ else:
     from shutil import copyfile
 
 
+class DuplicateDestinationError(ValueError):
+    """Error raised when transfer destination already exists in queue.
+
+    The error is only raised if `allow_queue_replacements` is False on the
+    FileTransaction instance and the added file to transfer is of a different
+    src file than the one already detected in the queue.
+
+    """
+
+
 class FileTransaction(object):
     """File transaction with rollback options.
 
@@ -85,7 +95,7 @@ class FileTransaction(object):
                 return
             else:
                 if not self._allow_queue_replacements:
-                    raise RuntimeError(
+                    raise DuplicateDestinationError(
                         "Transfer to destination is already in queue: "
                         "{} -> {}. It's not allowed to be replaced by "
                         "a new transfer from {}".format(
