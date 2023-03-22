@@ -431,6 +431,21 @@ class PublisherWindow(QtWidgets.QDialog):
         if event.key() == QtCore.Qt.Key_Escape:
             event.accept()
             return
+
+        if event.matches(QtGui.QKeySequence.Save):
+            self._save_changes(True)
+            event.accept()
+            return
+
+        if (
+            event.modifiers() == QtCore.Qt.ControlModifier
+            and event.key() == QtCore.Qt.Key_R
+        ):
+            if not self.controller.publish_is_running:
+                self.reset()
+            event.accept()
+            return
+
         super(PublisherWindow, self).keyPressEvent(event)
 
     def _on_overlay_message(self, event):
@@ -518,7 +533,7 @@ class PublisherWindow(QtWidgets.QDialog):
                 for save. Value affects shown message.
 
         Returns:
-            bool: Save happened successfuly.
+            bool: Save happened successfully.
         """
 
         if not self._checks_before_save(explicit_save):

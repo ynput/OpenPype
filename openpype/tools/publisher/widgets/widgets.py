@@ -203,7 +203,7 @@ class SaveBtn(PublishIconBtn):
     def __init__(self, parent=None):
         icon_path = get_icon_path("save")
         super(SaveBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Save changes")
+        self.setToolTip("Save changes (Ctrl + S)")
 
 
 class ResetBtn(PublishIconBtn):
@@ -211,7 +211,7 @@ class ResetBtn(PublishIconBtn):
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Refresh publishing")
+        self.setToolTip("Refresh publishing (Ctrl + R)")
 
 
 class StopBtn(PublishIconBtn):
