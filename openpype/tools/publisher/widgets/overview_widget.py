@@ -340,10 +340,24 @@ class OverviewWidget(QtWidgets.QFrame):
         self.convert_requested.emit()
 
     def get_selected_items(self):
+        """Selected items in current view widget.
+
+        Returns:
+            tuple[list[str], bool, list[str]]: Selected items. List of
+                instance ids, context is selected, list of selected legacy
+                convertor plugins.
+        """
+
         view = self._subset_views_layout.currentWidget()
         return view.get_selected_items()
 
-    def get_selected_convertors(self):
+    def get_selected_legacy_convertors(self):
+        """Selected legacy convertor identifiers.
+
+        Returns:
+            list[str]: Selected legacy convertor identifiers.
+        """
+
         _, _, convertor_identifiers = self.get_selected_items()
         return convertor_identifiers
 

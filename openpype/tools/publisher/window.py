@@ -638,7 +638,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_convert_requested(self):
         if not self._save_changes(False):
             return
-        convertor_identifiers = self._overview_widget.get_selected_convertors()
+        convertor_identifiers = (
+            self._overview_widget.get_selected_legacy_convertors()
+        )
         self._controller.trigger_convertor_items(convertor_identifiers)
 
     def _set_current_tab(self, identifier):
