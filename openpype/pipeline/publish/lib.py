@@ -736,7 +736,7 @@ def get_custom_staging_dir_info(project_name, host_name, family, task_name,
                               filtering_criteria,
                               logger=log)
 
-    if not profile or not profile["use_custom_staging_dir"]:
+    if not profile or not profile["active"]:
         return None, None
 
     if not anatomy:
