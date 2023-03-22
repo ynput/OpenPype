@@ -5,6 +5,7 @@ import copy
 import functools
 import uuid
 import shutil
+import platform
 import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -188,6 +189,12 @@ class PublishIconBtn(IconButton):
         return pixmap
 
 
+def get_control_str():
+    if platform.system().lower() == "darwin":
+        return "Command"
+    return "Ctrl"
+
+
 class CreateBtn(PublishIconBtn):
     """Create instance button."""
 
@@ -203,7 +210,9 @@ class SaveBtn(PublishIconBtn):
     def __init__(self, parent=None):
         icon_path = get_icon_path("save")
         super(SaveBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Save changes (Ctrl + S)")
+        self.setToolTip(
+            "Save changes ({} + S)".format(get_control_str())
+        )
 
 
 class ResetBtn(PublishIconBtn):
@@ -211,7 +220,9 @@ class ResetBtn(PublishIconBtn):
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Refresh publishing (Ctrl + R)")
+        self.setToolTip(
+            "Refresh publishing ({} + S)".format(get_control_str())
+        )
 
 
 class StopBtn(PublishIconBtn):
