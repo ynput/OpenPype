@@ -152,6 +152,19 @@
             ]
         },
         {
+            "type": "dict",
+            "key": "with_handles",
+            "collapsible": true,
+            "label": "Include handles",
+            "children": [
+                {
+                    "key": "handles_task_types",
+                    "label": "Task types",
+                    "type": "task-types-enum"
+                }
+            ]
+        },
+        {
             "type": "schema",
             "name": "schema_scriptsmenu"
         },

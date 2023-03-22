@@ -1144,6 +1144,9 @@
             }
         ]
     },
+    "with_handles": {
+        "handles_task_types": []
+    },
     "templated_workfile_build": {
         "profiles": []
     },
