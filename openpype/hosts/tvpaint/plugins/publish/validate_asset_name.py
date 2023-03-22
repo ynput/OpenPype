@@ -1,5 +1,8 @@
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
 from openpype.hosts.tvpaint.api.pipeline import (
     list_instances,
     write_instances,
@@ -31,7 +34,10 @@ class FixAssetNames(pyblish.api.Action):
         write_instances(new_instance_items)
 
 
-class ValidateAssetNames(pyblish.api.ContextPlugin):
+class ValidateAssetName(
+    OptionalPyblishPluginMixin,
+    pyblish.api.ContextPlugin
+):
     """Validate assset name present on instance.
 
     Asset name on instance should be the same as context's.

@@ -1,11 +1,17 @@
 import json
 
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
 
 
 # TODO @iLliCiTiT add fix action for fps
-class ValidateProjectSettings(pyblish.api.ContextPlugin):
+class ValidateProjectSettings(
+    OptionalPyblishPluginMixin,
+    pyblish.api.ContextPlugin
+):
     """Validate scene settings against database."""
 
     label = "Validate Scene Settings"
