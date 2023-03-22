@@ -537,7 +537,7 @@ def burnins_from_data(
         if not value:
             continue
 
-        if isinstance(value, (dict, tuple)):
+        if isinstance(value, dict):
             raise TypeError((
                 "Expected string or number type."
                 " Got: {} - \"{}\""
