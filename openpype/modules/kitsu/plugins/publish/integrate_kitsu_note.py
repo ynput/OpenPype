@@ -65,7 +65,9 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # Check if any status condition is not met
             allow_status_change = True
-            for status_cond in self.status_change_conditions["status_conditions"]:
+            for status_cond in self.status_change_conditions[
+                "status_conditions"
+            ]:
                 condition = status_cond["condition"] == "equal"
                 match = status_cond["short_name"].upper() == shortname
                 if match and not condition or condition and not match:
@@ -83,13 +85,13 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 allow_status_change = False
 
                 # Check if any family requirement is met
-                for family_requirement in self.status_change_conditions["family_requirements"]:
+                for family_requirement in self.status_change_conditions[
+                    "family_requirements"
+                ]:
                     condition = family_requirement["condition"] == "equal"
 
                     for family in families:
-                        match = (
-                            family_requirement["family"].lower() == family
-                        )
+                        match = family_requirement["family"].lower() == family
                         if match and condition or not condition and not match:
                             allow_status_change = True
                             break
