@@ -1247,8 +1247,8 @@ class ApplicationLaunchContext:
             args = self.clear_launch_args(self.launch_args)
             args_len_str = " ({})".format(len(args))
         self.log.info(
-            "Launching \"{}\" with args{}: {}".format(
-                self.app_name, args_len_str, args
+            "Launching \"{}/{}\" with args{}: {}".format(
+                self.app_group.name, self.app_name, args_len_str, args
             )
         )
         self.launch_args = args
