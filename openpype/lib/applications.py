@@ -1508,8 +1508,8 @@ def prepare_app_environments(
         if key in source_env:
             source_env[key] = value
 
-    # `added_env_keys` has debug purpose
-    added_env_keys = {app.group.name, app.name}
+    # `app_and_tool_labels` has debug purpose
+    app_and_tool_labels = ["/".join([app.group.name, app.name])]
     # Environments for application
     environments = [
         app.group.environment,
@@ -1532,15 +1532,14 @@ def prepare_app_environments(
         for group_name in sorted(groups_by_name.keys()):
             group = groups_by_name[group_name]
             environments.append(group.environment)
-            added_env_keys.add(group_name)
             for tool_name in sorted(tool_by_group_name[group_name].keys()):
                 tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
-                added_env_keys.add(tool.name)
+                app_and_tool_labels.append("/".join([group_name, tool_name]))
 
     log.debug(
         "Will add environments for apps and tools: {}".format(
-            ", ".join(added_env_keys)
+            ", ".join(app_and_tool_labels)
         )
     )
 
