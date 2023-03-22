@@ -6,13 +6,10 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
-from openpype.client import (
-    get_project,
-    get_asset_by_name
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_current_project
 )
-from openpype.pipeline import legacy_io
-
-from openpype.pipeline.context_tools import get_current_project_asset
 
 
 JSON_PREFIX = "JSON::"
@@ -165,7 +162,7 @@ def get_multipass_setting(project_setting=None):
                            ["multipass"])
 
 
-def set_scene_resolution(width, height):
+def set_scene_resolution(width: int, height: int):
     """Set the render resolution
 
     Args:
@@ -189,49 +186,43 @@ def reset_scene_resolution():
     Returns:
         None
     """
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_data = get_current_project_asset()["data"]
-
+    data = ["data.resolutionWidth", "data.resolutionHeight"]
+    project_resolution = get_current_project(fields=data)["data"]
+    project_resolution_data = project_resolution["data"]
+    asset_resolution = get_current_project_asset(fields=data)["data"]
+    asset_resolution_data = asset_resolution["data"]
     # Set project resolution
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-    proj_width_key = project_data.get(width_key, 1920)
-    proj_height_key = project_data.get(height_key, 1080)
-
-    width = asset_data.get(width_key, proj_width_key)
-    height = asset_data.get(height_key, proj_height_key)
+    project_width = int(project_resolution_data.get("resolutionWidth", 1920))
+    project_height = int(project_resolution_data.get("resolutionHeight", 1080))
+    width = int(asset_resolution_data.get("resolutionWidth", project_width))
+    height = int(asset_resolution_data.get("resolutionHeight", project_height))
 
     set_scene_resolution(width, height)
 
 
-def get_frame_range():
-    """Get the current assets frame range and handles."""
-    # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset = get_asset_by_name(project_name, asset_name)
+def get_frame_range() -> dict:
+    """Get the current assets frame range and handles.
 
+    Returns:
+    	dict: with frame start, frame end, handle start, handle end.
+    """
+    # Set frame start/end
+    asset = get_current_project_asset()
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
     # Backwards compatibility
     if frame_start is None or frame_end is None:
         frame_start = asset["data"].get("edit_in")
         frame_end = asset["data"].get("edit_out")
-
     if frame_start is None or frame_end is None:
         return
-
     handles = asset["data"].get("handles") or 0
     handle_start = asset["data"].get("handleStart")
     if handle_start is None:
         handle_start = handles
-
     handle_end = asset["data"].get("handleEnd")
     if handle_end is None:
         handle_end = handles
-
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
@@ -240,29 +231,24 @@ def get_frame_range():
     }
 
 
-def reset_frame_range(fps=True):
-    """Set frame range to current asset
+def reset_frame_range(fps: bool=True):
+    """Set frame range to current asset.
 
-    Args:
+    	This is part of 3dsmax documentation:
         animationRange: A System Global variable which lets you get and
-        set an Interval value that defines the start and end frames
-        of the Active Time Segment.
+        	set an Interval value that defines the start and end frames
+        	of the Active Time Segment.
         frameRate: A System Global variable which lets you get
-        and set an Integer value that defines the current
-        scene frame rate in frames-per-second.
+        	and set an Integer value that defines the current
+        	scene frame rate in frames-per-second.
     """
     if fps:
-        fps_number = float(legacy_io.Session.get("AVALON_FPS",
-                                                 25))
+        fps_number = float(get_current_project(fields=["data.fps"])["data"]["fps"])
         rt.frameRate = fps_number
-
     frame_range = get_frame_range()
-
     frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
     frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-
     frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
-
     rt.execute(frange_cmd)
 
 
@@ -280,8 +266,6 @@ def set_context_setting():
         None
     """
     reset_scene_resolution()
-
-    reset_frame_range()
 
 
 def get_max_version():
