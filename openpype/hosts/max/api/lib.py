@@ -230,7 +230,7 @@ def get_frame_range() -> dict:
     }
 
 
-def reset_frame_range(fps:bool=True):
+def reset_frame_range(fps: bool = True):
     """Set frame range to current asset.
     This is part of 3dsmax documentation:
 
