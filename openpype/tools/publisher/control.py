@@ -6,7 +6,7 @@ import collections
 import uuid
 import tempfile
 import shutil
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six
 import pyblish.api
@@ -964,7 +964,8 @@ class AbstractPublisherController(object):
     access objects directly but by using wrappers that can be serialized.
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def log(self):
         """Controller's logger object.
 
@@ -974,13 +975,15 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def event_system(self):
         """Inner event system for publisher controller."""
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def project_name(self):
         """Current context project name.
 
@@ -990,7 +993,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def current_asset_name(self):
         """Current context asset name.
 
@@ -1000,7 +1004,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def current_task_name(self):
         """Current context task name.
 
@@ -1010,7 +1015,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def host_is_valid(self):
         """Host is valid for creation part.
 
@@ -1023,7 +1029,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def instances(self):
         """Collected/created instances.
 
@@ -1145,7 +1152,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_finished(self):
         """Has publishing finished.
 
@@ -1155,7 +1163,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_is_running(self):
         """Publishing is running right now.
 
@@ -1165,7 +1174,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_validated(self):
         """Publish validation passed.
 
@@ -1175,7 +1185,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_crashed(self):
         """Publishing crashed for any reason.
 
@@ -1185,7 +1196,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_validation_errors(self):
         """During validation happened at least one validation error.
 
@@ -1195,7 +1207,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_max_progress(self):
         """Get maximum possible progress number.
 
@@ -1205,7 +1218,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_progress(self):
         """Current progress number.
 
@@ -1215,7 +1229,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_error_msg(self):
         """Current error message which cause fail of publishing.
 
@@ -1267,7 +1282,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def convertor_items(self):
         pass
 
