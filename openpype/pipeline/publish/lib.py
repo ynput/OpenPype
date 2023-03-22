@@ -696,6 +696,7 @@ def get_publish_repre_path(instance, repre, only_published=False):
 
 def get_custom_staging_dir_info(project_name, host_name, family, task_name,
                                 task_type, subset_name,
+                                project_settings=None,
                                 anatomy=None, log=None):
     """Checks profiles if context should use special custom dir as staging.
 
@@ -706,7 +707,8 @@ def get_custom_staging_dir_info(project_name, host_name, family, task_name,
         task_name (str)
         task_type (str)
         subset_name (str)
-        anatomy (Anatomy) (optional)
+        project_settings(Dict[str, Any]): Prepared project settings.
+        anatomy (Dict[str, Any])
         log (Logger) (optional)
 
     Returns:
@@ -714,7 +716,7 @@ def get_custom_staging_dir_info(project_name, host_name, family, task_name,
     Raises:
         ValueError - if misconfigured template should be used
     """
-    settings = get_project_settings(project_name)
+    settings = project_settings or get_project_settings(project_name)
     custom_staging_dir_profiles = (settings["global"]
                                            ["tools"]
                                            ["publish"]
