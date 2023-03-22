@@ -684,8 +684,6 @@ if __name__ == "__main__":
     with open(in_data_json_path, "r") as file_stream:
         in_data = json.load(file_stream)
 
-    print(json.dumps(in_data, indent=4, sort_keys=True))
-
     burnins_from_data(
         in_data["input"],
         in_data["output"],
