@@ -188,7 +188,7 @@ def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     return next((path for path in paths if os.path.exists(path)), None)
 
 
-def get_local_openpype_path_from_settings(settings:  dict) -> Union[str, None]:
+def get_local_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     """Get OpenPype local path from global settings.
 
     Used to download and unzip OP versions.
@@ -207,7 +207,10 @@ def get_local_openpype_path_from_settings(settings:  dict) -> Union[str, None]:
     if paths and isinstance(paths, str):
         paths = [paths]
 
-    return next((Path(path) for path in paths if os.path.exists(path)), None)
+    overridden_path = next((Path(path)
+                            for path in paths
+                            if os.path.exists(path)), None)
+    return overridden_path
 
 
 def get_expected_studio_version_str(

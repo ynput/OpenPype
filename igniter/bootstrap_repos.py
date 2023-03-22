@@ -63,8 +63,6 @@ class OpenPypeVersion(semver.VersionInfo):
     """
     path = None
 
-    _vendor = "pypeclub"
-    _app = "openpype"
     _local_openpype_path = None
     # this should match any string complying with https://semver.org/
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?")  # noqa: E501
@@ -295,7 +293,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return os.getenv("OPENPYPE_PATH")
 
     @classmethod
-    def get_local_openpype_path(cls, settings=None):
+    def get_local_openpype_path(cls):
         """Path to unzipped versions.
 
         By default it should be user appdata, but could be overridden by
@@ -304,18 +302,10 @@ class OpenPypeVersion(semver.VersionInfo):
         if cls._local_openpype_path:
             return cls._local_openpype_path
 
-        data_dir = Path(user_data_dir(cls._app, cls._vendor))
-        if not settings:
-            mongo_url = os.environ.get("OPENPYPE_MONGO")
-            if mongo_url:
-                settings = get_openpype_global_settings(mongo_url)
-
-        if settings:
-            overridden_path = get_local_openpype_path_from_settings(settings)
-            if overridden_path:
-                print(f"overriding local folder: {overridden_path}")
-                data_dir = overridden_path
-
+        settings = get_openpype_global_settings(os.environ["OPENPYPE_MONGO"])
+        data_dir = get_local_openpype_path_from_settings(settings)
+        if not data_dir:
+            data_dir = Path(user_data_dir("openpype", "pypeclub"))
         cls._local_openpype_path = data_dir
         return data_dir
 
@@ -581,8 +571,13 @@ class BootstrapRepos:
             progress_callback = empty_progress
         self._progress_callback = progress_callback
 
-    def set_data_dir(self, settings):
-        self.data_dir = OpenPypeVersion.get_local_openpype_path(settings)
+    def set_data_dir(self, data_dir):
+        if not data_dir:
+            self.data_dir = Path(user_data_dir("openpype", "pypeclub"))
+        else:
+            self._print(f"overriding local folder: {data_dir}")
+            self.data_dir = data_dir
+
 
     @staticmethod
     def get_version_path_from_list(
