@@ -182,7 +182,6 @@ def reset_scene_resolution():
 
     scene resolution can be overwritten by an asset if the asset.data contains
     any information regarding scene resolution .
-
     Returns:
         None
     """
@@ -204,7 +203,7 @@ def get_frame_range() -> dict:
     """Get the current assets frame range and handles.
 
     Returns:
-    	dict: with frame start, frame end, handle start, handle end.
+        dict: with frame start, frame end, handle start, handle end.
     """
     # Set frame start/end
     asset = get_current_project_asset()
@@ -233,17 +232,18 @@ def get_frame_range() -> dict:
 
 def reset_frame_range(fps: bool=True):
     """Set frame range to current asset.
+    This is part of 3dsmax documentation:
 
-    	This is part of 3dsmax documentation:
-        animationRange: A System Global variable which lets you get and
-        	set an Interval value that defines the start and end frames
-        	of the Active Time Segment.
-        frameRate: A System Global variable which lets you get
-        	and set an Integer value that defines the current
-        	scene frame rate in frames-per-second.
+    animationRange: A System Global variable which lets you get and
+        set an Interval value that defines the start and end frames
+        of the Active Time Segment.
+    frameRate: A System Global variable which lets you get
+            and set an Integer value that defines the current
+            scene frame rate in frames-per-second.
     """
     if fps:
-        fps_number = float(get_current_project(fields=["data.fps"])["data"]["fps"])
+        data_fps = get_current_project(fields=["data.fps"])
+        fps_number = float(data_fps["data"]["fps"])
         rt.frameRate = fps_number
     frame_range = get_frame_range()
     frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
