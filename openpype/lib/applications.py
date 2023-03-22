@@ -889,7 +889,9 @@ class ApplicationLaunchContext:
         self.modules_manager = ModulesManager()
 
         # Logger
-        logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
+        logger_name = "{}-{}/{}".format(self.__class__.__name__,
+                                        self.app_group.name,
+                                        self.app_name)
         self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
