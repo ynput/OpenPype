@@ -50,7 +50,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             # Check if instance is a review by checking its family
             # Allow a match to primary family or any of families
             families = set([instance.data["family"]] +
-                            instance.data.get("families", []))
+                           instance.data.get("families", []))
             if "review" not in families:
                 continue
 
