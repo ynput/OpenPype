@@ -6,12 +6,10 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
-from openpype.client import (
-    get_project
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_current_project
 )
-from openpype.pipeline import legacy_io
-
-from openpype.pipeline.context_tools import get_current_project_asset
 
 
 JSON_PREFIX = "JSON::"
@@ -164,7 +162,7 @@ def get_multipass_setting(project_setting=None):
                            ["multipass"])
 
 
-def set_scene_resolution(width, height):
+def set_scene_resolution(width: int, height: int):
     """Set the render resolution
 
     Args:
@@ -188,19 +186,15 @@ def reset_scene_resolution():
     Returns:
         None
     """
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_data = get_current_project_asset()["data"]
-
+    project_resolution_data = get_current_project(fields=["data.resolutionWidth",
+                                                          "data.resolutionHeight"])["data"]
+    asset_resolution_data = get_current_project_asset(fields=["data.resolutionWidth",
+                                                              "data.resolutionHeight"])["data"]
     # Set project resolution
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-    proj_width_key = project_data.get(width_key, 1920)
-    proj_height_key = project_data.get(height_key, 1080)
-
-    width = asset_data.get(width_key, proj_width_key)
-    height = asset_data.get(height_key, proj_height_key)
+    project_width = int(project_resolution_data.get("resolutionWidth", 1920))
+    project_height = int(project_resolution_data.get("resolutionHeight", 1080))
+    width = int(asset_resolution_data.get("resolutionWidth", project_width))
+    height = int(asset_resolution_data.get("resolutionHeight", project_height))
 
     set_scene_resolution(width, height)
 
