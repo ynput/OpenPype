@@ -65,6 +65,9 @@ class ValidateMarks(
         }
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
+
         current_data = {
             "markIn": context.data["sceneMarkIn"],
             "markInState": context.data["sceneMarkInState"],

@@ -49,6 +49,8 @@ class ValidateAssetName(
     actions = [FixAssetNames]
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
         context_asset_name = context.data["asset"]
         for instance in context:
             asset_name = instance.data.get("asset")

@@ -19,6 +19,9 @@ class ValidateProjectSettings(
     optional = True
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
+
         expected_data = context.data["assetEntity"]["data"]
         scene_data = {
             "fps": context.data.get("sceneFps"),

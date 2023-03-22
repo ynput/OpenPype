@@ -30,6 +30,9 @@ class ValidateStartFrame(
     optional = True
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
+
         start_frame = execute_george("tv_startframe")
         if start_frame == 0:
             return
