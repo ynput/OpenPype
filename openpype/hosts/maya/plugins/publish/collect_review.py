@@ -161,9 +161,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             ]
 
         key = "focalLength"
-        instance.data[key] = focal_length
-
         try:
-            instance.data["burninDataMembers"].append(key)
+            instance.data["burninDataMembers"][key] = focal_length
         except KeyError:
-            instance.data["burninDataMembers"] = [key]
+            instance.data["burninDataMembers"] = {key: focal_length}
