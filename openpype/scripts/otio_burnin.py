@@ -41,9 +41,8 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def convert_list_to_cmd(list_to_convert, fps, label=""):
+def convert_list_to_commands(list_to_convert, fps, label=""):
     path = None
-    #need to clean up temp file when done
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
         for i, value in enumerate(list_to_convert):
             seconds = i / fps
@@ -63,10 +62,8 @@ def convert_list_to_cmd(list_to_convert, fps, label=""):
             f.write(line)
         f.flush()
         path = f.name
-        path = path.replace("\\", "/")
-        path = path.replace(":", "\\:")
 
-    return "sendcmd=f='{}'".format(path)
+    return path
 
 
 def _get_ffprobe_data(source):
@@ -541,6 +538,7 @@ def burnins_from_data(
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
+    clean_up_paths = []
     for align_text, value in burnin_values.items():
         if not value:
             continue
@@ -583,8 +581,48 @@ def burnins_from_data(
             print("Source does not have set timecode value.")
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
-        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+        # Convert lists.
+        cmd = ""
+        text = None
+        keys = [i[1] for i in Formatter().parse(value) if i[1] is not None]
+        list_to_convert = []
 
+        # Warn about nested dictionary support for lists. Ei. we dont support
+        # it.
+        if "[" in "".join(keys):
+            print(
+                "We dont support converting nested dictionaries to lists,"
+                " so skipping {}".format(value)
+            )
+        else:
+            for key in keys:
+                data_value = data[key]
+
+                # Multiple lists are not supported.
+                if isinstance(data_value, list) and list_to_convert:
+                    raise ValueError(
+                        "Found multiple lists to convert, which is not "
+                        "supported: {}".format(value)
+                    )
+
+                if isinstance(data_value, list):
+                    print("Found list to convert: {}".format(data_value))
+                    for v in data_value:
+                        data[key] = v
+                        list_to_convert.append(value.format(**data))
+
+        if list_to_convert:
+            value = list_to_convert[0]
+            path = convert_list_to_commands(
+                list_to_convert, data["fps"], label=align
+            )
+            cmd = "sendcmd=f='{}'".format(path)
+            cmd = cmd.replace("\\", "/")
+            cmd = cmd.replace(":", "\\:")
+            clean_up_paths.append(path)
+
+        # Failsafe for missing keys.
+        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
         missing_keys = []
         for group in key_pattern.findall(value):
             try:
@@ -617,42 +655,7 @@ def burnins_from_data(
             burnin.add_timecode(*args)
             continue
 
-        cmd = ""
-        text = None
-        keys = [i[1] for i in Formatter().parse(value) if i[1] is not None]
-        list_to_convert = []
-
-        # Warn about nested dictionary support for lists. Ei. we dont support
-        # it.
-        if "[" in "".join(keys):
-            print(
-                "We dont support converting nested dictionaries to lists,"
-                " so skipping {}".format(value)
-            )
-        else:
-            for key in keys:
-                data_value = data[key]
-
-                # Multiple lists are not supported.
-                if isinstance(data_value, list) and list_to_convert:
-                    raise ValueError(
-                        "Found multiple lists to convert, which is not "
-                        "supported: {}".format(value)
-                    )
-
-                if isinstance(data_value, list):
-                    print("Found list to convert: {}".format(data_value))
-                    for v in data_value:
-                        data[key] = v
-                        list_to_convert.append(value.format(**data))
-
-        if list_to_convert:
-            text = list_to_convert[0]
-            cmd = convert_list_to_cmd(
-                list_to_convert, data["fps"], label=align
-            )
-        else:
-            text = value.format(**data)
+        text = value.format(**data)
 
         burnin.add_text(text, align, frame_start, frame_end, cmd=cmd)
 
@@ -685,6 +688,8 @@ def burnins_from_data(
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
     )
+    for path in clean_up_paths:
+        os.remove(path)
 
 
 if __name__ == "__main__":
