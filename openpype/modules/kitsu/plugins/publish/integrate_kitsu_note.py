@@ -14,8 +14,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # status settings
     set_status_note = False
     note_status_shortname = "wfa"
-    status_conditions = list()
-    family_requirements = list()
+    status_change_conditions = {
+        "status_conditions": [],
+        "family_requirements": [],
+    }
 
     # comment settings
     custom_comment_template = {
@@ -63,7 +65,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # Check if any status condition is not met
             allow_status_change = True
-            for status_cond in self.status_conditions:
+            for status_cond in self.status_change_conditions["status_conditions"]:
                 condition = status_cond["condition"] == "equal"
                 match = status_cond["short_name"].upper() == shortname
                 if match and not condition or condition and not match:
@@ -73,20 +75,22 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             if allow_status_change:
                 # Get families
                 families = {
-                    instance.data.get("kitsu_task")
+                    instance.data.get("family")
                     for instance in context
                     if instance.data.get("publish")
                 }
 
+                allow_status_change = False
+
                 # Check if any family requirement is met
-                for family_requirement in self.family_requirements:
+                for family_requirement in self.status_change_conditions["family_requirements"]:
                     condition = family_requirement["condition"] == "equal"
 
                     for family in families:
                         match = (
-                            family_requirement["short_name"].lower() == family
+                            family_requirement["family"].lower() == family
                         )
-                        if match and not condition or condition and not match:
+                        if match and condition or not condition and not match:
                             allow_status_change = True
                             break
 
