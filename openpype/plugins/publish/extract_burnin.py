@@ -16,9 +16,7 @@ from openpype.lib import (
 
     get_transcode_temp_directory,
     convert_input_paths_for_ffmpeg,
-    should_convert_for_ffmpeg,
-
-    CREATE_NO_WINDOW
+    should_convert_for_ffmpeg
 )
 from openpype.lib.profiles_filtering import filter_profiles
 
@@ -338,8 +336,6 @@ class ExtractBurnin(publish.Extractor):
                     "logger": self.log,
                     "env": {}
                 }
-                if platform.system().lower() == "windows":
-                    process_kwargs["creationflags"] = CREATE_NO_WINDOW
 
                 run_openpype_process(*args, **process_kwargs)
                 # Remove the temporary json
