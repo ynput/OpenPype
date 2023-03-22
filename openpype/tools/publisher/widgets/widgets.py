@@ -1541,7 +1541,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     │   attributes    │  Thumbnail  │  TOP
     │                 │             │
     ├─────────────┬───┴─────────────┤
-    │  Family     │   Publish       │
+    │  Creator    │   Publish       │
     │  attributes │   plugin        │  BOTTOM
     │             │   attributes    │
     └───────────────────────────────┘
