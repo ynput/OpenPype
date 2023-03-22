@@ -253,6 +253,9 @@ class PublisherWindow(QtWidgets.QDialog):
         overview_widget.create_requested.connect(
             self._on_create_request
         )
+        overview_widget.convert_requested.connect(
+            self._on_convert_requested
+        )
 
         save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
@@ -553,6 +556,10 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _on_create_request(self):
         self._go_to_create_tab()
+
+    def _on_convert_requested(self):
+        convertor_identifiers = self._overview_widget.get_selected_convertors()
+        self._controller.trigger_convertor_items(convertor_identifiers)
 
     def _set_current_tab(self, identifier):
         self._tabs_widget.set_current_tab(identifier)

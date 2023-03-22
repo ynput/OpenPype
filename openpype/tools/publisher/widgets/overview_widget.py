@@ -17,6 +17,7 @@ class OverviewWidget(QtWidgets.QFrame):
     active_changed = QtCore.Signal()
     instance_context_changed = QtCore.Signal()
     create_requested = QtCore.Signal()
+    convert_requested = QtCore.Signal()
 
     anim_end_value = 200
     anim_duration = 200
@@ -336,12 +337,15 @@ class OverviewWidget(QtWidgets.QFrame):
         self.instance_context_changed.emit()
 
     def _on_convert_requested(self):
-        _, _, convertor_identifiers = self.get_selected_items()
-        self._controller.trigger_convertor_items(convertor_identifiers)
+        self.convert_requested.emit()
 
     def get_selected_items(self):
         view = self._subset_views_layout.currentWidget()
         return view.get_selected_items()
+
+    def get_selected_convertors(self):
+        _, _, convertor_identifiers = self.get_selected_items()
+        return convertor_identifiers
 
     def _change_view_type(self):
         idx = self._subset_views_layout.currentIndex()
