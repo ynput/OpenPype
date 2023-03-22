@@ -539,7 +539,7 @@ def burnins_from_data(
 
         if isinstance(value, dict):
             raise TypeError((
-                "Expected string or number type."
+                "Expected string, number or list type."
                 " Got: {} - \"{}\""
                 " (Make sure you have new burnin presets)."
             ).format(str(type(value)), str(value)))
