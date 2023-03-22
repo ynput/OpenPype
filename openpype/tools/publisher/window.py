@@ -396,7 +396,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def closeEvent(self, event):
         self._window_is_visible = False
         self._uninstall_app_event_listener()
-        self.save_changes()
+        # TODO capture changes and ask user if wants to save changes on close
+        if not self._controller.host_context_has_changed:
+            self._save_changes(False)
         self._reset_on_show = True
         self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
@@ -463,8 +465,65 @@ class PublisherWindow(QtWidgets.QDialog):
             self._reset_on_show = False
             self.reset()
 
-    def save_changes(self):
-        self._controller.save_changes()
+    def _checks_before_save(self, explicit_save):
+        """Save of changes may trigger some issues.
+
+        Check if context did change and ask user if he is really sure the
+        save should happen. A dialog can be shown during this method.
+
+        Args:
+            explicit_save (bool): Method was called when user explicitly asked
+                for save. Value affects shown message.
+
+        Returns:
+            bool: Save can happen.
+        """
+
+        if not self._controller.host_context_has_changed:
+            return True
+
+        title = "Host context changed"
+        if explicit_save:
+            message = (
+                "Context has changed since Publisher window was refreshed last"
+                " time.\n\nAre you sure you want to save changes?"
+            )
+        else:
+            message = (
+                "Your action requires save of changes but context has changed"
+                " since Publisher window was refreshed last time.\n\nAre you"
+                " sure you want to continue and save changes?"
+            )
+
+        result = QtWidgets.QMessageBox.question(
+            self,
+            title,
+            message,
+            QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Cancel
+        )
+        return result == QtWidgets.QMessageBox.Save
+
+    def _save_changes(self, explicit_save):
+        """Save changes of Creation part.
+
+        All possible triggers of save changes were moved to main window (here),
+        so it can handle possible issues with save at one place. Do checks,
+        so user don't accidentally save changes to different file or using
+        different context.
+        Moving responsibility to this place gives option to show the dialog and
+        wait for user's response without breaking action he wanted to do.
+
+        Args:
+            explicit_save (bool): Method was called when user explicitly asked
+                for save. Value affects shown message.
+
+        Returns:
+            bool: Save happened successfuly.
+        """
+
+        if not self._checks_before_save(explicit_save):
+            return False
+        return self._controller.save_changes()
 
     def reset(self):
         self._controller.reset()
@@ -558,6 +617,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._go_to_create_tab()
 
     def _on_convert_requested(self):
+        if not self._save_changes(False):
+            return
         convertor_identifiers = self._overview_widget.get_selected_convertors()
         self._controller.trigger_convertor_items(convertor_identifiers)
 
@@ -612,7 +673,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._update_publish_frame_rect()
 
     def _on_save_clicked(self):
-        self.save_changes()
+        self._save_changes(True)
 
     def _on_reset_clicked(self):
         self.reset()
@@ -624,12 +685,14 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
-        self._set_publish_comment()
-        self._controller.validate()
+        if self._save_changes(False):
+            self._set_publish_comment()
+            self._controller.validate()
 
     def _on_publish_clicked(self):
-        self._set_publish_comment()
-        self._controller.publish()
+        if self._save_changes(False):
+            self._set_publish_comment()
+            self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
         self._save_btn.setEnabled(True)

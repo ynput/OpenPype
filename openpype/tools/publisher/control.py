@@ -1017,6 +1017,19 @@ class AbstractPublisherController(object):
 
     @property
     @abstractmethod
+    def host_context_has_changed(self):
+        """Host context changed after last reset.
+
+        'CreateContext' has this option available using 'context_has_changed'.
+
+        Returns:
+            bool: Context has changed.
+        """
+
+        pass
+
+    @property
+    @abstractmethod
     def host_is_valid(self):
         """Host is valid for creation part.
 
@@ -1141,7 +1154,13 @@ class AbstractPublisherController(object):
 
     @abstractmethod
     def save_changes(self):
-        """Save changes in create context."""
+        """Save changes in create context.
+
+        Save can crash because of unexpected errors.
+
+        Returns:
+            bool: Save was successful.
+        """
 
         pass
 
@@ -1693,6 +1712,10 @@ class PublisherController(BasePublisherController):
         return self._host.get_current_context()["task_name"]
 
     @property
+    def host_context_has_changed(self):
+        return self._create_context.context_has_changed
+
+    @property
     def instances(self):
         """Current instances in create context."""
         return self._create_context.instances_by_id
@@ -2008,7 +2031,15 @@ class PublisherController(BasePublisherController):
         )
 
     def trigger_convertor_items(self, convertor_identifiers):
-        self.save_changes()
+        """Trigger legacy item convertors.
+
+        This functionality requires to save and reset CreateContext. The reset
+        is needed so Creators can collect converted items.
+
+        Args:
+            convertor_identifiers (list[str]): Identifiers of convertor
+                plugins.
+        """
 
         success = True
         try:
@@ -2056,12 +2087,26 @@ class PublisherController(BasePublisherController):
         return success
 
     def save_changes(self):
-        """Save changes happened during creation."""
+        """Save changes happened during creation.
+
+        Trigger save of changes using host api. This functionality does not
+        validate anything. It is required to do checks before this method is
+        called to be able to give user actionable response e.g. check of
+        context using 'host_context_has_changed'.
+
+        Returns:
+            bool: Save of changes was successful.
+        """
+
         if not self._create_context.host_is_valid:
-            return
+            # TODO remove
+            # Fake success save when host is not valid for CreateContext
+            #   this is for testing as experimental feature
+            return True
 
         try:
             self._create_context.save_changes()
+            return True
 
         except CreatorsOperationFailed as exc:
             self._emit_event(
@@ -2072,16 +2117,17 @@ class PublisherController(BasePublisherController):
                 }
             )
 
+        return False
+
     def remove_instances(self, instance_ids):
         """Remove instances based on instance ids.
 
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # QUESTION Expect that instances are really removed? In that case save
-        #   reset is not required and save changes too.
-        self.save_changes()
 
+        # QUESTION Expect that instances are really removed? In that case reset
+        #    is not required.
         self._remove_instances_from_context(instance_ids)
 
         self._on_create_instance_change()
@@ -2152,12 +2198,22 @@ class PublisherController(BasePublisherController):
             self._publish_comment_is_set = True
 
     def publish(self):
-        """Run publishing."""
+        """Run publishing.
+
+        Make sure all changes are saved before method is called (Call
+        'save_changes' and check output).
+        """
+
         self._publish_up_validation = False
         self._start_publish()
 
     def validate(self):
-        """Run publishing and stop after Validation."""
+        """Run publishing and stop after Validation.
+
+        Make sure all changes are saved before method is called (Call
+        'save_changes' and check output).
+        """
+
         if self.publish_has_validated:
             return
         self._publish_up_validation = True
@@ -2167,9 +2223,6 @@ class PublisherController(BasePublisherController):
         """Start or continue in publishing."""
         if self.publish_is_running:
             return
-
-        # Make sure changes are saved
-        self.save_changes()
 
         self.publish_is_running = True
 
