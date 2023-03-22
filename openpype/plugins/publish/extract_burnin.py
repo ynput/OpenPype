@@ -254,6 +254,10 @@ class ExtractBurnin(publish.Extractor):
             # Add context data burnin_data.
             burnin_data["custom"] = custom_data
 
+            # Add data members.
+            for key in instance.data.get("burninDataMembers", []):
+                burnin_data[key] = instance.data[key]
+
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
             if camera_name:

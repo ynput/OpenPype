@@ -146,11 +146,24 @@ class CollectReview(pyblish.api.InstancePlugin):
                 )
 
         # Collect focal length.
-        data = {
-            "cameraFocalLength": cmds.getAttr(camera + ".focalLength")
-        }
+        #Refactor to lib or use available lib method.
+        plug = "{0}.focalLength".format(camera)
+        focal_length = None
+        if not cmds.listConnections(plug, destination=False, source=True):
+            # Static.
+            focal_length = cmds.getAttr(plug)
+        else:
+            # Dynamic.
+            start = instance.data["frameStart"]
+            end = instance.data["frameEnd"] + 1
+            focal_length = [
+                cmds.getAttr(plug, time=t) for t in range(int(start), int(end))
+            ]
+
+        key = "focalLength"
+        instance.data[key] = focal_length
 
         try:
-            instance.data["customData"].update(data)
+            instance.data["burninDataMembers"].append(key)
         except KeyError:
-            instance.data["customData"] = data
+            instance.data["burninDataMembers"] = [key]

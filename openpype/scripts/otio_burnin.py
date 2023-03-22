@@ -4,8 +4,10 @@ import re
 import subprocess
 import platform
 import json
-import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
+import tempfile
+from string import Formatter
 
+import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_ffmpeg_codec_args,
@@ -23,7 +25,7 @@ FFMPEG = (
 ).format(ffmpeg_path)
 
 DRAWTEXT = (
-    "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':"
+    "drawtext@'%(label)s'=fontfile='%(font)s':text=\\'%(text)s\\':"
     "x=%(x)s:y=%(y)s:fontcolor=%(color)s@%(opacity).1f:fontsize=%(size)d"
 )
 TIMECODE = (
@@ -37,6 +39,34 @@ CURRENT_FRAME_KEY = "{current_frame}"
 CURRENT_FRAME_SPLITTER = "_-_CURRENT_FRAME_-_"
 TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
+
+
+def convert_list_to_cmd(list_to_convert, fps, label=""):
+    path = None
+    #need to clean up temp file when done
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        for i, value in enumerate(list_to_convert):
+            seconds = i / fps
+
+            # Escape special character
+            value = str(value).replace(":", "\\:")
+
+            filter = "drawtext"
+            if label:
+                filter += "@" + label
+
+            line = (
+                "{start} {filter} reinit text='{value}';"
+                "\n".format(start=seconds, filter=filter, value=value)
+            )
+
+            f.write(line)
+        f.flush()
+        path = f.name
+        path = path.replace("\\", "/")
+        path = path.replace(":", "\\:")
+
+    return "sendcmd=f='{}'".format(path)
 
 
 def _get_ffprobe_data(source):
@@ -144,7 +174,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             self.options_init.update(options_init)
 
     def add_text(
-        self, text, align, frame_start=None, frame_end=None, options=None
+        self, text, align, frame_start=None, frame_end=None, options=None, cmd=""
     ):
         """
         Adding static text to a filter.
@@ -165,7 +195,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if frame_end is not None:
             options["frame_end"] = frame_end
 
-        self._add_burnin(text, align, options, DRAWTEXT)
+        draw_text = DRAWTEXT
+        if cmd:
+            draw_text = "{}, {}".format(cmd, DRAWTEXT)
+
+        options["label"] = align
+
+        self._add_burnin(text, align, options, draw_text)
 
     def add_timecode(
         self, align, frame_start=None, frame_end=None, frame_start_tc=None,
@@ -501,7 +537,7 @@ def burnins_from_data(
         if not value:
             continue
 
-        if isinstance(value, (dict, list, tuple)):
+        if isinstance(value, (dict, tuple)):
             raise TypeError((
                 "Expected string or number type."
                 " Got: {} - \"{}\""
@@ -573,8 +609,43 @@ def burnins_from_data(
             burnin.add_timecode(*args)
             continue
 
-        text = value.format(**data)
-        burnin.add_text(text, align, frame_start, frame_end)
+        cmd = ""
+        text = None
+        keys = [i[1] for i in Formatter().parse(value) if i[1] is not None]
+        list_to_convert = []
+
+        # Warn about nested dictionary support for lists. Ei. we dont support
+        # it.
+        if "[" in "".join(keys):
+            print(
+                "We dont support converting nested dictionaries to lists,"
+                " so skipping {}".format(value)
+            )
+        else:
+            for key in keys:
+                data_value = data[key]
+
+                # Multiple lists are not supported.
+                if isinstance(data_value, list) and list_to_convert:
+                    raise ValueError(
+                        "Found multiple lists to convert, which is not "
+                        "supported: {}".format(value)
+                    )
+
+                if isinstance(data_value, list):
+                    print("Found list to convert: {}".format(data_value))
+                    for v in data_value:
+                        data[key] = v
+                        list_to_convert.append(value.format(**data))
+
+        if list_to_convert:
+            text = list_to_convert[0]
+            cmd = convert_list_to_cmd(list_to_convert, 25.0, label=align)# need to fetch fps properly
+            print("cmd: " + cmd)
+        else:
+            text = value.format(**data)
+        print(text)
+        burnin.add_text(text, align, frame_start, frame_end, cmd=cmd)
 
     ffmpeg_args = []
     if codec_data:
@@ -612,6 +683,8 @@ if __name__ == "__main__":
     in_data_json_path = sys.argv[-1]
     with open(in_data_json_path, "r") as file_stream:
         in_data = json.load(file_stream)
+
+    print(json.dumps(in_data, indent=4, sort_keys=True))
 
     burnins_from_data(
         in_data["input"],
