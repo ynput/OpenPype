@@ -2140,8 +2140,12 @@ def get_frame_range():
 
     # Set frame start/end
     project_name = legacy_io.active_project()
+    task_name = legacy_io.Session["AVALON_TASK"]
     asset_name = legacy_io.Session["AVALON_ASSET"]
     asset = get_asset_by_name(project_name, asset_name)
+    settings = get_project_settings(project_name)
+    task_name = legacy_io.Session["AVALON_TASK"]
+    with_handles = settings['maya']['with_handles']["handles_task_types"]
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
