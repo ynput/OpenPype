@@ -8,43 +8,41 @@ from glob import glob
 from datetime import datetime
 
 
-# noinspection DuplicatedCode
 def parse_cdl(path):
     with open(path, "r") as f:
         cdl_data = f.read().lower()
-
-    cdl = {}
 
     slope_pattern = r"<slope>(?P<sR>[-,\d,.]*)[ ]{1}(?P<sG>[-,\d,.]+)[ ]{1}(?P<sB>[-,\d,.]*)</slope>"
     offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
     power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
     sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
-    path_pattern = r"<originalpath\>(?P<path>.*)<\/originalpath\>"
+    path_pattern = r"<originalpath\>(?P<file>.*)<\/originalpath\>"
 
     slope_match = re.search(slope_pattern, cdl_data)
-    if slope_match:
-        slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB")))))
-        cdl["slope"] = slope
+    slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) \
+        if slope_match else None
 
     offset_match = re.search(offset_pattern, cdl_data)
-    if offset_match:
-        offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB")))))
-        cdl["offset"] = offset
+    offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB"))))) \
+        if offset_match else None
 
     power_match = re.search(power_pattern, cdl_data)
-    if power_match:
-        power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB")))))
-        cdl["power"] = power
+    power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB"))))) \
+        if power_match else None
 
     sat_match = re.search(sat_pattern, cdl_data)
-    if sat_match:
-        sat = float(sat_match.group("sat"))
-        cdl["sat"] = sat
+    sat = float(sat_match.group("sat")) if sat_match else None
 
     path_match = re.search(path_pattern, cdl_data)
-    if path_match:
-        path_value = path_match.group("path")
-        cdl["file"] = path_value
+    file = path_match.group("file") if path_match else ""
+
+    cdl = {
+    "slope": slope,
+    "offset": offset,
+    "power": power,
+    "sat": sat,
+    "file": file
+    }
 
     return cdl
 
@@ -208,6 +206,7 @@ def same_grade(cdl, cdl_path):
     else:
         return False
 
+
 def sort_by_descript(item):
     """Sort is done by giving a value to the alpha part of the plate name description and adding an integer for plate number"""
     plate_prefix_order = ("pl", "bg", "e", "fg")
@@ -295,6 +294,7 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
             # Grade previously copied. Test to see if unique CDL data and if so then backup previous file and make new plate CDL
             if same_grade(cdl, grade_path):
                 skip_write = True
+                self.log.info("New grade already matches a grade in shot OCIO directory")
                 # Run main_grade and figure out which grade should be main
             else:
                 backup_grade = create_backup_grade(grade_path)
