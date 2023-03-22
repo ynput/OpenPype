@@ -1173,6 +1173,17 @@ class AbstractPublisherController(object):
 
     @property
     @abstractmethod
+    def publish_has_started(self):
+        """Has publishing finished.
+
+        Returns:
+            bool: If publishing finished and all plugins were iterated.
+        """
+
+        pass
+
+    @property
+    @abstractmethod
     def publish_has_finished(self):
         """Has publishing finished.
 
@@ -1391,6 +1402,7 @@ class BasePublisherController(AbstractPublisherController):
         self._publish_has_validation_errors = False
         self._publish_has_crashed = False
         # All publish plugins are processed
+        self._publish_has_started = False
         self._publish_has_finished = False
         self._publish_max_progress = 0
         self._publish_progress = 0
@@ -1460,7 +1472,16 @@ class BasePublisherController(AbstractPublisherController):
     def _set_host_is_valid(self, value):
         if self._host_is_valid != value:
             self._host_is_valid = value
-            self._emit_event("publish.host_is_valid.changed", {"value": value})
+            self._emit_event(
+                "publish.host_is_valid.changed", {"value": value}
+            )
+
+    def _get_publish_has_started(self):
+        return self._publish_has_started
+
+    def _set_publish_has_started(self, value):
+        if value != self._publish_has_started:
+            self._publish_has_started = value
 
     def _get_publish_has_finished(self):
         return self._publish_has_finished
@@ -1484,7 +1505,9 @@ class BasePublisherController(AbstractPublisherController):
     def _set_publish_has_validated(self, value):
         if self._publish_has_validated != value:
             self._publish_has_validated = value
-            self._emit_event("publish.has_validated.changed", {"value": value})
+            self._emit_event(
+                "publish.has_validated.changed", {"value": value}
+            )
 
     def _get_publish_has_crashed(self):
         return self._publish_has_crashed
@@ -1532,6 +1555,9 @@ class BasePublisherController(AbstractPublisherController):
     host_is_valid = property(
         _get_host_is_valid, _set_host_is_valid
     )
+    publish_has_started = property(
+        _get_publish_has_started, _set_publish_has_started
+    )
     publish_has_finished = property(
         _get_publish_has_finished, _set_publish_has_finished
     )
@@ -1561,6 +1587,7 @@ class BasePublisherController(AbstractPublisherController):
         """Reset most of attributes that can be reset."""
 
         self.publish_is_running = False
+        self.publish_has_started = False
         self.publish_has_validated = False
         self.publish_has_crashed = False
         self.publish_has_validation_errors = False
@@ -2216,6 +2243,7 @@ class PublisherController(BasePublisherController):
             return
 
         self.publish_is_running = True
+        self.publish_has_started = True
 
         self._emit_event("publish.process.started")
 
