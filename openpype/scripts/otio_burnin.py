@@ -640,7 +640,9 @@ def burnins_from_data(
 
         if list_to_convert:
             text = list_to_convert[0]
-            cmd = convert_list_to_cmd(list_to_convert, 25.0, label=align)# need to fetch fps properly
+            cmd = convert_list_to_cmd(
+                list_to_convert, data["fps"], label=align
+            )
         else:
             text = value.format(**data)
 
