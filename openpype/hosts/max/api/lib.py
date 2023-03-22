@@ -186,9 +186,9 @@ def reset_scene_resolution():
         None
     """
     data = ["data.resolutionWidth", "data.resolutionHeight"]
-    project_resolution = get_current_project(fields=data)["data"]
+    project_resolution = get_current_project(fields=data)
     project_resolution_data = project_resolution["data"]
-    asset_resolution = get_current_project_asset(fields=data)["data"]
+    asset_resolution = get_current_project_asset(fields=data)
     asset_resolution_data = asset_resolution["data"]
     # Set project resolution
     project_width = int(project_resolution_data.get("resolutionWidth", 1920))
