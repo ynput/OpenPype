@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.hosts.maya.api.lib import get_attribute_input
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -146,19 +147,16 @@ class CollectReview(pyblish.api.InstancePlugin):
                 )
 
         # Collect focal length.
-        #Refactor to lib or use available lib method.
-        plug = "{0}.focalLength".format(camera)
+        attr = camera + ".focalLength"
         focal_length = None
-        if not cmds.listConnections(plug, destination=False, source=True):
-            # Static.
-            focal_length = cmds.getAttr(plug)
-        else:
-            # Dynamic.
+        if get_attribute_input(attr):
             start = instance.data["frameStart"]
             end = instance.data["frameEnd"] + 1
             focal_length = [
-                cmds.getAttr(plug, time=t) for t in range(int(start), int(end))
+                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
             ]
+        else:
+            focal_length = cmds.getAttr(attr)
 
         key = "focalLength"
         try:
