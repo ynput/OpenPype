@@ -760,11 +760,11 @@ def _validate_transient_template(project_name, template_name, anatomy):
         ValueError - if misconfigured template
     """
     if template_name not in anatomy.templates:
-        raise ValueError(("!!! Anatomy of project \"{}\" does not have set"
+        raise ValueError(("Anatomy of project \"{}\" does not have set"
                           " \"{}\" template key!"
                           ).format(project_name, template_name))
 
     if "folder" not in anatomy.templates[template_name]:
-        raise ValueError(("!!! There is not set \"folder\" template in \"{}\" anatomy"  # noqa
+        raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
                              " for project \"{}\"."
                          ).format(template_name, project_name))
