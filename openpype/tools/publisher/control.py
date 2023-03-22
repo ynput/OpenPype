@@ -1433,7 +1433,8 @@ class BasePublisherController(AbstractPublisherController):
             "show.card.message" - Show card message request (UI related).
             "instances.refresh.finished" - Instances are refreshed.
             "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Publish context reset finished.
+            "publish.reset.finished" - Reset finished.
+            "controller.reset.started" - Controller reset started.
             "controller.reset.finished" - Controller reset finished.
             "publish.process.started" - Publishing started. Can be started from
                 paused state.
@@ -1807,6 +1808,8 @@ class PublisherController(BasePublisherController):
     def reset(self):
         """Reset everything related to creation and publishing."""
         self.stop_publish()
+
+        self._emit_event("controller.reset.started")
 
         self.host_is_valid = self._create_context.host_is_valid
 

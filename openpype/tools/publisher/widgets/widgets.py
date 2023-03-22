@@ -367,6 +367,19 @@ class AbstractInstanceView(QtWidgets.QWidget):
             "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
+    def set_active_toggle_enabled(self, enabled):
+        """Instances are disabled for changing enabled state.
+
+        Active state should stay the same until is "unset".
+
+        Args:
+            enabled (bool): Instance state can be changed.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_active_toggle_enabled' is not implemented."
+        ).format(self.__class__.__name__))
+
 
 class ClickableLineEdit(QtWidgets.QLineEdit):
     """QLineEdit capturing left mouse click.

@@ -134,6 +134,9 @@ class OverviewWidget(QtWidgets.QFrame):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
+            "controller.reset.started", self._on_controller_reset_start
+        )
+        controller.event_system.add_callback(
             "publish.reset.finished", self._on_publish_reset
         )
         controller.event_system.add_callback(
@@ -409,9 +412,19 @@ class OverviewWidget(QtWidgets.QFrame):
 
         self._create_btn.setEnabled(False)
         self._subset_attributes_wrap.setEnabled(False)
+        for idx in range(self._subset_views_layout.count()):
+            widget = self._subset_views_layout.widget(idx)
+            widget.set_active_toggle_enabled(False)
+
+    def _on_controller_reset_start(self):
+        """Controller reset started."""
+
+        for idx in range(self._subset_views_layout.count()):
+            widget = self._subset_views_layout.widget(idx)
+            widget.set_active_toggle_enabled(True)
 
     def _on_publish_reset(self):
-        """Context in controller has been refreshed."""
+        """Context in controller has been reseted."""
 
         self._create_btn.setEnabled(True)
         self._subset_attributes_wrap.setEnabled(True)
