@@ -9,6 +9,15 @@
             "rules": {}
         }
     },
+    "workfile": {
+        "parameters": [
+            "--chunk *CHUNK*",
+            "--frameStart *START*",
+            "--frameEnd *END*",
+            "--resolutionWidth *X*",
+            "--resolutionHeight *Y*"
+        ]
+    },
     "publish": {
         "CollectRenderPath": {
             "output_extension": "png",

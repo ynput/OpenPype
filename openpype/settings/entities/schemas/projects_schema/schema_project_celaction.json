@@ -25,6 +25,20 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "workfile",
+            "label": "Workfile",
+            "children": [
+                {
+                    "key": "parameters",
+                    "label": "Parameters",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [

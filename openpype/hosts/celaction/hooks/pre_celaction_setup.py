@@ -38,8 +38,9 @@ class CelactionPrelaunchHook(PreLaunchHook):
         )
 
         path_to_cli = os.path.join(CELACTION_SCRIPTS_DIR, "publish_cli.py")
-        subproces_args = get_openpype_execute_args("run", path_to_cli)
-        openpype_executable = subproces_args.pop(0)
+        subprocess_args = get_openpype_execute_args("run", path_to_cli)
+        openpype_executable = subprocess_args.pop(0)
+        workfile_settings = self.get_workfile_settings()
 
         winreg.SetValueEx(
             hKey,
@@ -49,14 +50,14 @@ class CelactionPrelaunchHook(PreLaunchHook):
             openpype_executable
         )
 
-        parameters = subproces_args + [
-            "--currentFile", "*SCENE*",
-            "--chunk", "*CHUNK*",
-            "--frameStart", "*START*",
-            "--frameEnd", "*END*",
-            "--resolutionWidth", "*X*",
-            "--resolutionHeight", "*Y*"
+        # add required arguments for workfile path
+        parameters = subprocess_args + [
+            "--currentFile", "*SCENE*"
         ]
+
+        # Add custom parameters from workfile settings
+        if workfile_settings["parameters"]:
+            parameters += workfile_settings["parameters"]
 
         winreg.SetValueEx(
             hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
@@ -135,3 +136,6 @@ class CelactionPrelaunchHook(PreLaunchHook):
         self.log.info(f"Workfile to open: \"{workfile_path}\"")
 
         return workfile_path
+
+    def get_workfile_settings(self):
+        return self.data["project_settings"]["celaction"]["workfile"]
