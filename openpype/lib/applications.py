@@ -1273,7 +1273,10 @@ class ApplicationLaunchContext:
                     exc_info=True
                 )
 
-        self.log.debug("Launch of {} finished.".format(self.app_name))
+        self.log.debug("Launch of {}/{} finished.".format(
+            self.app_group.name,
+            self.app_name
+        ))
 
         return self.process
 
