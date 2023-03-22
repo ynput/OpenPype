@@ -433,7 +433,8 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         if event.matches(QtGui.QKeySequence.Save):
-            self._save_changes(True)
+            if not self._controller.publish_has_started:
+                self._save_changes(True)
             event.accept()
             return
 
