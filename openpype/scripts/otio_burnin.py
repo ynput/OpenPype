@@ -174,7 +174,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             self.options_init.update(options_init)
 
     def add_text(
-        self, text, align, frame_start=None, frame_end=None, options=None, cmd=""
+        self,
+        text,
+        align,
+        frame_start=None,
+        frame_end=None,
+        options=None,
+        cmd=""
     ):
         """
         Adding static text to a filter.
@@ -450,11 +456,13 @@ def burnins_from_data(
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
-    - "options" - sets look of burnins - colors, opacity,...(more info: ModifiedBurnins doc)
+    - "options" - sets look of burnins - colors, opacity,...
+        (more info: ModifiedBurnins doc)
                 - *OPTIONAL* default values are used when not included
     - "burnins" - contains dictionary with burnins settings
                 - *OPTIONAL* burnins won't be added (easier is not to use this)
-        - each key of "burnins" represents Alignment, there are 6 possibilities:
+        - each key of "burnins" represents Alignment,
+        there are 6 possibilities:
             TOP_LEFT        TOP_CENTERED        TOP_RIGHT
             BOTTOM_LEFT     BOTTOM_CENTERED     BOTTOM_RIGHT
         - value must be string with text you want to burn-in
