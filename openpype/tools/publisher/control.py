@@ -2104,13 +2104,17 @@ class PublisherController(BasePublisherController):
         self._on_create_instance_change()
         return success
 
-    def save_changes(self):
+    def save_changes(self, show_message=True):
         """Save changes happened during creation.
 
         Trigger save of changes using host api. This functionality does not
         validate anything. It is required to do checks before this method is
         called to be able to give user actionable response e.g. check of
         context using 'host_context_has_changed'.
+
+        Args:
+            show_message (bool): Show message that changes were
+                saved successfully.
 
         Returns:
             bool: Save of changes was successful.
@@ -2124,6 +2128,13 @@ class PublisherController(BasePublisherController):
 
         try:
             self._create_context.save_changes()
+            if show_message:
+                self._emit_event(
+                    "show.card.message",
+                    {
+                        "message": "Saved changes.."
+                    }
+                )
             return True
 
         except CreatorsOperationFailed as exc:
