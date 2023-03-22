@@ -49,7 +49,7 @@ class CollectCustomStagingDir(pyblish.api.InstancePlugin):
 
         transient_tml, is_persistent = get_custom_staging_dir_info(
             project_name, host_name, family, task.get("name"),
-            task.get("type"), subset_name, anatomy, log=self.log)
+            task.get("type"), subset_name, anatomy=anatomy, log=self.log)
         result_str = "Not adding"
         if transient_tml:
             anatomy_data["root"] = anatomy.roots
