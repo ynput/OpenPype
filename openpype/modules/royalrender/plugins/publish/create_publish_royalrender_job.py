@@ -131,7 +131,10 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             SeqStep=1,
             SeqFileOffset=0,
             Version="1.0",
+            # executable
             SceneName="",
+            # command line arguments
+            CustomAddCmdFlags=" ".join(args),
             IsActive=True,
             ImageFilename="execOnce.file",
             ImageDir="<SceneFolder>",

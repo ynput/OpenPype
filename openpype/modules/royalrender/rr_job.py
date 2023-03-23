@@ -138,6 +138,9 @@ class RRJob:
     # list item must be of `CustomAttribute` named tuple
     CustomAttributes = attr.ib(factory=list)  # type: list
 
+    # This is used to hold command line arguments for Execute job
+    CustomAddCmdFlags = attr.ib(default=None)  # type: str
+
     # Additional information for subsequent publish script and
     # for better display in rrControl
     UserName = attr.ib(default=None)  # type: str
