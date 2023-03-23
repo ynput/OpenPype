@@ -58,8 +58,8 @@ class CelactionPrelaunchHook(PreLaunchHook):
         # Add custom parameters from workfile settings
         if "render_chunk" in workfile_settings["submission_overrides"]:
             parameters += [
-            "--chunk *CHUNK*"
-        ]
+                "--chunk *CHUNK*"
+           ]
         elif "resolution" in workfile_settings["submission_overrides"]:
             parameters += [
                 "--resolutionWidth *X*",
