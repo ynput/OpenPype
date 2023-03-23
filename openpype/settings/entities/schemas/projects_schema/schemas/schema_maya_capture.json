@@ -161,7 +161,7 @@
                         {
                             "type": "boolean",
                             "key": "override_viewport_options",
-                            "label": "override_viewport_options"
+                            "label": "Override Viewport Options"
                         },
                         {
                             "type": "enum",
