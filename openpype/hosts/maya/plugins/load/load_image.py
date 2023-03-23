@@ -273,6 +273,11 @@ class FileNodeLoader(load.LoaderPlugin):
             project_name, host_name,
             project_settings=project_settings
         )
+
+        # ignore if host imageio is not enabled
+        if not config_data:
+            return
+
         file_rules = get_imageio_file_rules(
             project_name, host_name,
             project_settings=project_settings
