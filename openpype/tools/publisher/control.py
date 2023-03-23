@@ -2132,12 +2132,7 @@ class PublisherController(BasePublisherController):
         try:
             self._create_context.save_changes()
             if show_message:
-                self._emit_event(
-                    "show.card.message",
-                    {
-                        "message": "Saved changes.."
-                    }
-                )
+                self.emit_card_message("Saved changes..")
             return True
 
         except CreatorsOperationFailed as exc:
