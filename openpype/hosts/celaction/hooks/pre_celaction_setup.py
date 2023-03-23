@@ -49,6 +49,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
             openpype_executable
         )
 
+        # testing comment
         parameters = subproces_args + [
             "--currentFile", "*SCENE*",
             "--chunk", "*CHUNK*",
