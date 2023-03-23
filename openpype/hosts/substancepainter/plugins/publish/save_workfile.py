@@ -1,6 +1,9 @@
 import pyblish.api
 
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    KnownPublishError
+)
 
 
 class SaveCurrentWorkfile(pyblish.api.ContextPlugin):
