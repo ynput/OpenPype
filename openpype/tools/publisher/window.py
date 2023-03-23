@@ -439,7 +439,9 @@ class PublisherWindow(QtWidgets.QDialog):
             event.accept()
             return
 
-        if event.matches(ResetKeySequence):
+        if ResetKeySequence.matches(
+            QtGui.QKeySequence(event.key() | event.modifiers())
+        ):
             if not self.controller.publish_is_running:
                 self.reset()
             event.accept()
