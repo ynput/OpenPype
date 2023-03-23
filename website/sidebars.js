@@ -32,7 +32,7 @@ module.exports = {
         {
             type: "category",
             collapsed: false,
-            label: "Integrations",
+            label: "Hosts",
             items: [
                 "artist_hosts_hiero",
                 "artist_hosts_nuke_tut",
@@ -117,7 +117,7 @@ module.exports = {
         },
         {
             type: "category",
-            label: "Integrations",
+            label: "Hosts",
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_hiero",
