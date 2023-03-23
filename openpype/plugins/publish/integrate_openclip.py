@@ -14,7 +14,7 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
     families = ['render', 'plate']
     hosts = ['nuke', 'standalonepublisher', 'traypublisher']
 # the pattern based clips are very compact and can reasonably fit here to avoid referencing non python files in the publish steps
-    template = """<?xml version="1.0"?>
+    template = r"""<?xml version="1.0"?>
 <clip type="clip" version="6">
 	<handler>
 		<name>MIO Clip</name>
