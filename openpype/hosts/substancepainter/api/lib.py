@@ -7,6 +7,8 @@ import substance_painter.project
 import substance_painter.resource
 import substance_painter.js
 
+from qtpy import QtGui, QtWidgets, QtCore
+
 
 def get_export_presets():
     """Return Export Preset resource URLs for all available Export Presets.
@@ -391,8 +393,6 @@ def get_parsed_export_maps(config):
         dict: [texture_set, stack]: {template: [file1_data, file2_data]}
 
     """
-    import substance_painter.export
-    from .colorspace import get_project_channel_data
 
     outputs = substance_painter.export.list_project_textures(config)
     templates = get_export_templates(config, strip_folder=False)
@@ -524,7 +524,6 @@ def load_shelf(path, name=None):
 
 def _get_new_project_action():
     """Return QAction which triggers Substance Painter's new project dialog"""
-    from PySide2 import QtGui
 
     main_window = substance_painter.ui.get_main_window()
 
@@ -564,7 +563,6 @@ def prompt_new_file_with_mesh(mesh_filepath):
        for example when the user might have cancelled the operation.
 
     """
-    from PySide2 import QtWidgets, QtCore
 
     app = QtWidgets.QApplication.instance()
     assert os.path.isfile(mesh_filepath), \
