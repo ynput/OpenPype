@@ -165,6 +165,12 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         menu = QtWidgets.QMenu("OpenPype")
 
+        action = menu.addAction("Create...")
+        action.triggered.connect(
+            lambda: host_tools.show_publisher(parent=parent,
+                                              tab="create")
+        )
+
         action = menu.addAction("Load...")
         action.triggered.connect(
             lambda: host_tools.show_loader(parent=parent, use_context=True)
@@ -172,7 +178,8 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         action = menu.addAction("Publish...")
         action.triggered.connect(
-            lambda: host_tools.show_publisher(parent=parent)
+            lambda: host_tools.show_publisher(parent=parent,
+                                              tab="publish")
         )
 
         action = menu.addAction("Manage...")
