@@ -817,7 +817,8 @@
                 },
                 "Generic": {
                     "isolate_view": true,
-                    "off_screen": true
+                    "off_screen": true,
+                    "pan_zoom": false
                 },
                 "Renderer": {
                     "rendererName": "vp2Renderer"

@@ -91,6 +91,11 @@
                             "type": "boolean",
                             "key": "off_screen",
                             "label": "            Off Screen"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "pan_zoom",
+                            "label": "            2D Pan/Zoom"
                         }
                     ]
                 },
