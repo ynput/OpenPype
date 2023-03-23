@@ -5,7 +5,8 @@ import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -74,5 +75,9 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Meshes found with zero "
-                               "edge length: {0}".format(invalid))
+            label = "Meshes found with zero edge length"
+            raise PublishValidationError(
+                message="{}: {}".format(label, invalid),
+                title=label,
+                description="{}:\n- ".format(label) + "\n- ".join(invalid)
+            )
