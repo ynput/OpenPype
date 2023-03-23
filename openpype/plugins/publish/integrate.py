@@ -160,6 +160,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Instance is marked to be processed on farm. Skipping")
             return
 
+        # Instance is marked to not get integrated
+        if instance.data.get("integrate", True):
+            self.log.info("Instance is marked to skip integrating. Skipping")
+            return
+
         filtered_repres = self.filter_representations(instance)
         # Skip instance if there are not representations to integrate
         #   all representations should not be integrated

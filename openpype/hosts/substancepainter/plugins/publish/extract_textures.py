@@ -58,14 +58,7 @@ class ExtractTextures(publish.Extractor,
                                                    context=context,
                                                    colorspace=colorspace)
 
-        # Add a fake representation which won't be integrated so the
-        # Integrator leaves us alone - otherwise it would error
-        # TODO: Add `instance.data["integrate"] = False` support in Integrator?
-        instance.data["representations"] = [
-            {
-                "name": "_fake",
-                "ext": "_fake",
-                "delete": True,
-                "files": []
-            }
-        ]
+        # The TextureSet instance should not be integrated. It generates no
+        # output data. Instead the separated texture instances are generated
+        # from it which themselves integrate into the database.
+        instance.data["integrate"] = False
