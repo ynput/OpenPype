@@ -26,7 +26,9 @@ class FusionPreLaunchOCIO(PreLaunchHook):
             anatomy_data=template_data,
             anatomy=self.data["anatomy"]
         )
-        ocio_path = config_data["path"]
 
-        self.log.info(f"Setting OCIO config path: {ocio_path}")
-        self.launch_context.env["OCIO"] = ocio_path
+        if config_data:
+            ocio_path = config_data["path"]
+
+            self.log.info(f"Setting OCIO config path: {ocio_path}")
+            self.launch_context.env["OCIO"] = ocio_path
