@@ -336,6 +336,7 @@ def get_imageio_config(
         anatomy_data = get_template_data_from_session()
 
     formatting_data = deepcopy(anatomy_data)
+
     # add project roots to anatomy data
     formatting_data["root"] = anatomy.roots
     formatting_data["platform"] = platform.system().lower()
@@ -343,6 +344,12 @@ def get_imageio_config(
     # get colorspace settings
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
+
+    # check if host settings are having enabled key and if it is False
+    if imageio_host.get("enabled") and imageio_host["enabled"] is False:
+        # if host settings are disabled return False because
+        # it is expected that no colorspace management is needed
+        return False
 
     config_host = imageio_host.get("ocio_config", {})
 
