@@ -39,6 +39,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 OPENPYPE_METADATA_KEY = "OpenPype"
 OPENPYPE_METADATA_CONTAINERS_KEY = "containers"  # child key
 OPENPYPE_METADATA_CONTEXT_KEY = "context"        # child key
+OPENPYPE_METADATA_INSTANCES_KEY = "instances"    # child key
 
 
 class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
@@ -312,21 +313,6 @@ def imprint_container(container,
         container[key] = value
 
 
-def set_project_metadata(key, data):
-    """Set a key in project's OpenPype metadata."""
-    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
-    metadata.set(key, data)
-
-
-def get_project_metadata(key):
-    """Get a key from project's OpenPype metadata."""
-    if not substance_painter.project.is_open():
-        return
-
-    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
-    return metadata.get(key)
-
-
 def set_container_metadata(object_name, container_data, update=False):
     """Helper method to directly set the data for a specific container
 
@@ -359,3 +345,54 @@ def remove_container_metadata(object_name):
     if containers:
         containers.pop(object_name, None)
         metadata.set("containers", containers)
+
+
+def set_instance(instance_id, instance_data, update=False):
+    """Helper method to directly set the data for a specific container
+
+    Args:
+        instance_id (str): Unique identifier for the instance
+        instance_data (dict): The instance data to store in the metaadata.
+    """
+    set_instances({instance_id: instance_data}, update=update)
+
+
+def set_instances(instance_data_by_id, update=False):
+    """Store data for multiple instances at the same time.
+
+    This is more optimal than querying and setting them in the metadata one
+    by one.
+    """
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    instances = metadata.get(OPENPYPE_METADATA_INSTANCES_KEY) or {}
+
+    for instance_id, instance_data in instance_data_by_id.items():
+        if update:
+            existing_data = instances.get(instance_id, {})
+            existing_data.update(instance_data)
+        else:
+            instances[instance_id] = instance_data
+
+    metadata.set("instances", instances)
+
+
+def remove_instance(instance_id):
+    """Helper method to remove the data for a specific container"""
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    instances = metadata.get(OPENPYPE_METADATA_INSTANCES_KEY) or {}
+    instances.pop(instance_id, None)
+    metadata.set("instances", instances)
+
+
+def get_instances_by_id():
+    """Return all instances stored in the project instances metadata"""
+    if not substance_painter.project.is_open():
+        return {}
+
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    return metadata.get(OPENPYPE_METADATA_INSTANCES_KEY) or {}
+
+
+def get_instances():
+    """Return all instances stored in the project instances as a list"""
+    return list(get_instances_by_id().values())

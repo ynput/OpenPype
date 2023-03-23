@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating textures."""
 
-from openpype.pipeline import CreatedInstance, Creator
+from openpype.pipeline import CreatedInstance, Creator, CreatorError
 from openpype.lib import (
     EnumDef,
     UILabelDef,
@@ -9,8 +9,10 @@ from openpype.lib import (
 )
 
 from openpype.hosts.substancepainter.api.pipeline import (
-    set_project_metadata,
-    get_project_metadata
+    get_instances,
+    set_instance,
+    set_instances,
+    remove_instance
 )
 from openpype.hosts.substancepainter.api.lib import get_export_presets
 
@@ -29,27 +31,34 @@ class CreateTextures(Creator):
     def create(self, subset_name, instance_data, pre_create_data):
 
         if not substance_painter.project.is_open():
-            return
+            raise CreatorError("Can't create a Texture Set instance without "
+                               "an open project.")
 
-        instance = self.create_instance_in_context(subset_name, instance_data)
-        set_project_metadata("textureSet", instance.data_to_store())
+        instance = self.create_instance_in_context(subset_name,
+                                                   instance_data)
+        set_instance(
+            instance_id=instance["instance_id"],
+            instance_data=instance.data_to_store()
+        )
 
     def collect_instances(self):
-        workfile = get_project_metadata("textureSet")
-        if workfile:
-            self.create_instance_in_context_from_existing(workfile)
+        for instance in get_instances():
+            if (instance.get("creator_identifier") == self.identifier or
+                    instance.get("family") == self.family):
+                self.create_instance_in_context_from_existing(instance)
 
     def update_instances(self, update_list):
+        instance_data_by_id = {}
         for instance, _changes in update_list:
-            # Update project's metadata
-            data = get_project_metadata("textureSet") or {}
-            data.update(instance.data_to_store())
-            set_project_metadata("textureSet", data)
+            # Persist the data
+            instance_id = instance.get("instance_id")
+            instance_data = instance.data_to_store()
+            instance_data_by_id[instance_id] = instance_data
+        set_instances(instance_data_by_id, update=True)
 
     def remove_instances(self, instances):
         for instance in instances:
-            # TODO: Implement removal
-            # api.remove_instance(instance)
+            remove_instance(instance["instance_id"])
             self._remove_instance_from_context(instance)
 
     # Helper methods (this might get moved into Creator class)
