@@ -6,6 +6,7 @@ from collections import defaultdict
 import substance_painter.project
 import substance_painter.resource
 import substance_painter.js
+import substance_painter.export
 
 from qtpy import QtGui, QtWidgets, QtCore
 
@@ -393,6 +394,8 @@ def get_parsed_export_maps(config):
         dict: [texture_set, stack]: {template: [file1_data, file2_data]}
 
     """
+    # Import is here to avoid recursive lib <-> colorspace imports
+    from .colorspace import get_project_channel_data
 
     outputs = substance_painter.export.list_project_textures(config)
     templates = get_export_templates(config, strip_folder=False)
