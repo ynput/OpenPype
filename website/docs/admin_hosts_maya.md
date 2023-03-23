@@ -139,7 +139,7 @@ Most settings to override in the viewport are self explanatory and can be found 
 
 #### Camera Options
 
-These camera options can be overridden when publishing the review. They can be found on the camera shape node.
+These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
 
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
 
