@@ -207,9 +207,9 @@ class ExtractPlayblast(publish.Extractor):
             collected_files = collected_files[0]
 
         representation = {
-            'name': 'png',
-            'ext': 'png',
-            'files': collected_files,
+            "name": self.capture_preset["Codec"]["compression"],
+            "ext": self.capture_preset["Codec"]["compression"],
+            "files": collected_files,
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
