@@ -114,7 +114,10 @@ class ExtractPlayblast(publish.Extractor):
 
         # Disable Pan/Zoom.
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
+        cmds.setAttr(
+            "{}.panZoomEnabled".format(preset["camera"]),
+            instance.data["panZoom"]
+        )
 
         # Need to explicitly enable some viewport changes so the viewport is
         # refreshed ahead of playblasting.

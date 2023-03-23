@@ -124,7 +124,10 @@ class ExtractThumbnail(publish.Extractor):
 
         # Disable Pan/Zoom.
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
+        cmds.setAttr(
+            "{}.panZoomEnabled".format(preset["camera"]),
+            instance.data["panZoom"]
+        )
 
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
