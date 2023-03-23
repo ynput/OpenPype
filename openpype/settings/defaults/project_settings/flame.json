@@ -1,6 +1,6 @@
 {
     "imageio": {
-        "enabled": false,
+        "enabled": true,
         "ocio_config": {
             "enabled": false,
             "filepath": []

@@ -47,6 +47,13 @@ class FlamePrelaunch(PreLaunchHook):
 
         imageio_flame = project_settings["flame"]["imageio"]
 
+        colormanaged = True
+        # check if host settings are having enabled key and if it is False
+        if imageio_flame.get("enabled") and imageio_flame["enabled"] is False:
+            # if host settings are disabled return False because
+            # it is expected that no colorspace management is needed
+            colormanaged = False
+
         # get user name and host name
         user_name = get_openpype_username()
         user_name = user_name.replace(".", "_")
@@ -68,9 +75,7 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameWidth": int(width),
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
-            "FrameRate": self._get_flame_fps(fps),
-            "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
-            "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
+            "FrameRate": self._get_flame_fps(fps)
         }
 
         data_to_script = {
@@ -78,13 +83,21 @@ class FlamePrelaunch(PreLaunchHook):
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
             "volume_name": volume_name,
             "group_name": _env.get("FLAME_WIRETAP_GROUP"),
-            "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
             # from project
             "project_name": project_name,
             "user_name": user_name,
             "project_data": project_data
         }
+
+        # add color management data
+        if colormanaged:
+            project_data.update({
+                "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
+                "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
+            })
+            data_to_script["color_policy"] = str(
+                imageio_flame["project"]["colourPolicy"])
 
         self.log.info(pformat(dict(_env)))
         self.log.info(pformat(data_to_script))
