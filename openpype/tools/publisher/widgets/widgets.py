@@ -221,7 +221,7 @@ class ResetBtn(PublishIconBtn):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
         self.setToolTip(
-            "Refresh publishing ({} + S)".format(get_control_str())
+            "Reset & discard changes ({} + R)".format(get_control_str())
         )
 
 
