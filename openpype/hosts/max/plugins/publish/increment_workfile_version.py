@@ -16,4 +16,4 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
         filepath = version_up(path)
 
         rt.saveMaxFile(filepath)
-        self.log.info('Incrementing file version')
+        self.log.info("Incrementing file version")
