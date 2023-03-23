@@ -146,6 +146,8 @@ class CreatorWidget(QtWidgets.QDialog):
         return " ".join([str(m.group(0)).capitalize() for m in matches])
 
     def create_row(self, layout, type, text, **kwargs):
+        value_keys = ["setText", "setCheckState", "setValue", "setChecked"]
+
         # get type attribute from qwidgets
         attr = getattr(QtWidgets, type)
 
@@ -175,13 +177,25 @@ class CreatorWidget(QtWidgets.QDialog):
             item.setMinimum(0)
         ### Ends Alkemy-X Override ###
 
+        # set attributes to item which are not values
         for func, val in kwargs.items():
+            if func in value_keys:
+                continue
+
             if getattr(item, func):
+                log.debug("Setting {} to {}".format(func, val))
                 func_attr = getattr(item, func)
                 if isinstance(val, tuple):
                     func_attr(*val)
                 else:
                     func_attr(val)
+
+        # set values to item
+        for value_item in value_keys:
+            if value_item not in kwargs:
+                continue
+            if getattr(item, value_item):
+                getattr(item, value_item)(kwargs[value_item])
 
         # add to layout
         layout.addRow(label, item)
@@ -284,8 +298,11 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMinimum=0,
+                    setValue=v["value"],
+                    setDisplayIntegerBase=10000,
+                    setRange=(0, 99999), setMinimum=0,
                     setMaximum=100000, setToolTip=tool_tip)
+
         return data
 
 

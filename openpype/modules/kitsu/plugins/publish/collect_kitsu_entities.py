@@ -29,7 +29,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
             if not zou_asset_data:
                 raise ValueError("Zou asset data not found in OpenPype!")
 
-            task_name = instance.data.get("task")
+            task_name = instance.data.get("task", context.data.get("task"))
             if not task_name:
                 continue
 
