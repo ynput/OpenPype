@@ -25,11 +25,11 @@ def _iter_document_stack_channels():
         material_name = material["name"]
         for stack in material["stacks"]:
             stack_name = stack["name"]
+            if stack_name:
+                stack_path = [material_name, stack_name]
+            else:
+                stack_path = material_name
             for channel in stack["channels"]:
-                if stack_name:
-                    stack_path = [material_name, stack_name]
-                else:
-                    stack_path = material_name
                 yield stack_path, channel
 
 
