@@ -21,7 +21,7 @@ from openpype.pipeline.publish import (
     AbstractMetaInstancePlugin,
     KnownPublishError
 )
-from openpype.pipeline.farm.tools import get_published_workfile_instance
+from openpype.pipeline.publish.lib import replace_published_scene
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
@@ -500,6 +500,29 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         return []
+
+    def from_published_scene(self, replace_in_path=True):
+        """Switch work scene for published scene.
+
+        If rendering/exporting from published scenes is enabled, this will
+        replace paths from working scene to published scene.
+
+        Args:
+            replace_in_path (bool): if True, it will try to find
+                old scene name in path of expected files and replace it
+                with name of published scene.
+
+        Returns:
+            str: Published scene path.
+            None: if no published scene is found.
+
+        Note:
+            Published scene path is actually determined from project Anatomy
+            as at the time this plugin is running scene can still no be
+            published.
+
+        """
+        return replace_published_scene(self._instance, replace_in_path=True)
 
     def assemble_payload(
             self, job_info=None, plugin_info=None, aux_files=None):
