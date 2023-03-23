@@ -926,7 +926,7 @@
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         },
         "ExtractGPUCache": {
-            "enabled": true,
+            "enabled": false,
             "families": [
                 "model",
                 "animation",
