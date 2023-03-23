@@ -2001,18 +2001,18 @@ class WorkfileSettings(object):
                 "Attention! Viewer nodes {} were erased."
                 "It had wrong color profile".format(erased_viewers))
 
-    def set_root_colorspace(self, nuke_colorspace):
+    def set_root_colorspace(self, imageio_host):
         ''' Adds correct colorspace to root
 
         Arguments:
-            nuke_colorspace (dict): adjustmensts from presets
+            imageio_host (dict): adjustments from presets
 
         '''
-        workfile_settings = nuke_colorspace["workfile"]
+        workfile_settings = imageio_host["workfile"]
 
-        # resolve config data if they are enabled in host
+        # get config data if imageio is enabled
         config_data = None
-        if nuke_colorspace.get("ocio_config", {}).get("enabled"):
+        if imageio_host.get("enabled") and imageio_host["enabled"] is True:
             # switch ocio config to custom config
             workfile_settings["OCIO_config"] = "custom"
             workfile_settings["colorManagement"] = "OCIO"
