@@ -113,6 +113,8 @@ This is useful to fix some specific renderer glitches and advanced hacking of Ma
 ### Extract Playblast Settings (review)
 These settings provide granular control over how the playblasts or reviews are produced in Maya.
 
+Some of these settings are also available on the instance itself, in which case these settings will become the default value when creating the review instance.
+
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings.png)
 
 - **Compression type** which file encoding to use.
@@ -126,8 +128,8 @@ These settings provide granular control over how the playblasts or reviews are p
 - **Off Screen** records the playblast hidden from the user.
 - **2D Pan/Zoom** enables the 2D Pan/Zoom functionality of the camera.
 - **Renderer name** which renderer to use for playblasting.
-- **Width** width of the output resolution.
-- **Height** height of the output resolution.
+- **Width** width of the output resolution. If this value is `0`, the asset's width is used.
+- **Height** height of the output resolution. If this value is `0`, the asset's height is used.
 
 #### Viewport Options
 
