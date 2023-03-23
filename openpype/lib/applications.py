@@ -889,7 +889,8 @@ class ApplicationLaunchContext:
         self.modules_manager = ModulesManager()
 
         # Logger
-        logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
+        logger_name = "{}-{}".format(self.__class__.__name__,
+                                     self.application.full_name)
         self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
@@ -1246,7 +1247,7 @@ class ApplicationLaunchContext:
             args_len_str = " ({})".format(len(args))
         self.log.info(
             "Launching \"{}\" with args{}: {}".format(
-                self.app_name, args_len_str, args
+                self.application.full_name, args_len_str, args
             )
         )
         self.launch_args = args
@@ -1271,7 +1272,9 @@ class ApplicationLaunchContext:
                     exc_info=True
                 )
 
-        self.log.debug("Launch of {} finished.".format(self.app_name))
+        self.log.debug("Launch of {} finished.".format(
+            self.application.full_name
+        ))
 
         return self.process
 
