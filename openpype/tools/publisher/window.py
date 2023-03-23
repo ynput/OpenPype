@@ -13,6 +13,7 @@ from openpype.tools.utils import (
     PixmapLabel,
 )
 
+from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
 from .control_qt import QtPublisherController
 from .widgets import (
@@ -438,10 +439,7 @@ class PublisherWindow(QtWidgets.QDialog):
             event.accept()
             return
 
-        if (
-            event.modifiers() == QtCore.Qt.ControlModifier
-            and event.key() == QtCore.Qt.Key_R
-        ):
+        if event.matches(ResetKeySequence):
             if not self.controller.publish_is_running:
                 self.reset()
             event.accept()
