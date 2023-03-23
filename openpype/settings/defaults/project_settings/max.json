@@ -1,4 +1,15 @@
 {
+    "imageio": {
+        "enabled": false,
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "RenderSettings": {
         "default_render_image_folder": "renders/3dsmax",
         "aov_separator": "underscore",

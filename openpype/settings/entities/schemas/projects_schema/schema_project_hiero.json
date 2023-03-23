@@ -11,7 +11,13 @@
             "label": "Color Management (ImageIO)",
             "is_group": true,
             "collapsible": true,
+            "checkbox_key": "enabled",
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
                 {
                     "type": "schema",
                     "name": "schema_imageio_config"
