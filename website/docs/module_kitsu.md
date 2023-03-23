@@ -38,6 +38,18 @@ This functionality cannot deal with all cases and is not error proof, some inter
 openpype_console module kitsu push-to-zou -l me@domain.ext -p my_password
 ```
 
+## Integrate Kitsu Note
+Task status can be automatically set during publish thanks to `Integrate Kitsu Note`. This feature can be configured in:
+
+`Admin -> Studio Settings -> Project Settings -> Kitsu -> Integrate Kitsu Note`.
+
+There are three settings available:
+- `Set status on note` -> turns on and off this integrator.
+- `Note shortname` -> Which status shortname should be set automatically (Case sensitive).
+- `Status conditions` -> Conditions that need to be met for kitsu status to be changed. You can add as many conditions as you like. There are two fields to each conditions: `Condition` (Whether current status should be equal or not equal to the condition status) and `Short name` (Kitsu Shortname of the condition status).
+
+![Integrate Kitsu Note project settings](assets/integrate_kitsu_note_settings.png)
+
 ## Q&A
 ### Is it safe to rename an entity from Kitsu?
 Absolutely! Entities are linked by their unique IDs between the two databases.  

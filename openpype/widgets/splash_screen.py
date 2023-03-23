@@ -49,9 +49,7 @@ class SplashScreen(QtWidgets.QDialog):
         self.init_ui()
 
     def was_proc_successful(self) -> bool:
-        if self.thread_return_code == 0:
-            return True
-        return False
+        return self.thread_return_code == 0
 
     def start_thread(self, q_thread: QtCore.QThread):
         """Saves the reference to this thread and starts it.
@@ -80,7 +78,13 @@ class SplashScreen(QtWidgets.QDialog):
         """
         self.thread_return_code = 0
         self.q_thread.quit()
+
+        if not self.q_thread.wait(5000):
+            raise RuntimeError("Failed to quit the QThread! "
+                               "The deadline has been reached! The thread "
+                               "has not finished it's execution!.")
         self.close()
+
 
     @QtCore.Slot()
     def toggle_log(self):
@@ -256,3 +260,4 @@ class SplashScreen(QtWidgets.QDialog):
         self.close_btn.show()
         self.thread_return_code = return_code
         self.q_thread.exit(return_code)
+        self.q_thread.wait()
