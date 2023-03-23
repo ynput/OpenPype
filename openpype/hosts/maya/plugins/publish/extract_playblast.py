@@ -113,11 +113,8 @@ class ExtractPlayblast(publish.Extractor):
             preset["viewport_options"] = {"imagePlane": image_plane}
 
         # Disable Pan/Zoom.
-        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-        cmds.setAttr(
-            "{}.panZoomEnabled".format(preset["camera"]),
-            instance.data["panZoom"]
-        )
+        preset.pop("pan_zoom", None)
+        preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
 
         # Need to explicitly enable some viewport changes so the viewport is
         # refreshed ahead of playblasting.
@@ -169,8 +166,6 @@ class ExtractPlayblast(publish.Extractor):
             cmds.modelEditor(
                 instance.data["panel"], edit=True, **viewport_defaults
             )
-
-        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.debug("playblast path  {}".format(path))
 
