@@ -536,7 +536,7 @@ class ExtractLook(publish.Extractor):
                                             color_space,
                                             render_colorspace])
                 else:
-
+                    config_path = None
                     if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
@@ -552,8 +552,7 @@ class ExtractLook(publish.Extractor):
                         self.log.warning("cannot guess the colorspace"
                                          "color conversion won't be available!")    # noqa
 
-            if config_path:
-                additional_args.extend(["--colorconfig", config_path])
+            additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
