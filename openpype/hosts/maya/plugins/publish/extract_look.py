@@ -552,8 +552,8 @@ class ExtractLook(publish.Extractor):
                         self.log.warning("cannot guess the colorspace"
                                          "color conversion won't be available!")    # noqa
 
-
-            additional_args.extend(["--colorconfig", config_path])
+            if config_path:
+                additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
