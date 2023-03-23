@@ -40,7 +40,8 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
-    "data.thumbnail_id": {"thumbnailId"}
+    "data.thumbnail_id": {"thumbnailId"},
+    "data.entityType": {"folderType"}
 }
 
 # --- Subset entity ---
@@ -164,7 +165,8 @@ def convert_v4_project_to_v3(project):
     output = {
         "_id": project_name,
         "name": project_name,
-        "schema": CURRENT_PROJECT_SCHEMA
+        "schema": CURRENT_PROJECT_SCHEMA,
+        "type": "project"
     }
 
     data = project.get("data") or {}
@@ -175,6 +177,7 @@ def convert_v4_project_to_v3(project):
         for app_name in apps_attr
     ]
     data.update(attribs)
+    data["entityType"] = "Project"
 
     config = {}
     project_config = project.get("config")
@@ -338,6 +341,9 @@ def convert_v4_folder_to_v3(folder, project_name):
     if "name" in folder:
         output["name"] = folder["name"]
         output_data["label"] = folder["name"]
+
+    if "folderType" in folder:
+        output_data["entityType"] = folder["folderType"]
 
     for src_key, dst_key in (
         ("parentId", "visualParent"),
