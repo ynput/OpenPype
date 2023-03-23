@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Pipeline tools for OpenPype Gaffer integration."""
+"""Pipeline tools for OpenPype Substance Painter integration."""
 import os
 import logging
 from functools import partial
