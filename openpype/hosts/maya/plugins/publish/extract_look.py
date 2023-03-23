@@ -536,7 +536,7 @@ class ExtractLook(publish.Extractor):
                                             color_space,
                                             render_colorspace])
                 else:
-                    config_path = ""
+                    config_path = None
                     if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
