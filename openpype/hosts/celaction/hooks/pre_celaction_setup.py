@@ -56,8 +56,20 @@ class CelactionPrelaunchHook(PreLaunchHook):
         ]
 
         # Add custom parameters from workfile settings
-        if workfile_settings["parameters"]:
-            parameters += workfile_settings["parameters"]
+        if "render_chunk" in workfile_settings["submission_overrides"]:
+            parameters += [
+            "--chunk *CHUNK*"
+        ]
+        elif "resolution" in workfile_settings["submission_overrides"]:
+            parameters += [
+                "--resolutionWidth *X*",
+                "--resolutionHeight *Y*"
+            ]
+        elif "frame_range" in workfile_settings["submission_overrides"]:
+            parameters += [
+                "--frameStart *START*",
+                "--frameEnd *END*"
+            ]
 
         winreg.SetValueEx(
             hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,

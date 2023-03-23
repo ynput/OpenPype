@@ -29,10 +29,21 @@
             "label": "Workfile",
             "children": [
                 {
-                    "key": "parameters",
-                    "label": "Parameters",
-                    "type": "list",
-                    "object_type": "text"
+                    "key": "submission_overrides",
+                    "label": "Submission workfile overrides",
+                    "type": "enum",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "render_chunk": "Pass chunk size"
+                        },
+                        {
+                            "frame_range": "Pass frame range"
+                        },
+                        {
+                            "resolution": "Pass resolution"
+                        }
+                    ]
                 }
             ]
         },

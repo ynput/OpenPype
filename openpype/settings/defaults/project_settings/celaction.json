@@ -10,12 +10,10 @@
         }
     },
     "workfile": {
-        "parameters": [
-            "--chunk *CHUNK*",
-            "--frameStart *START*",
-            "--frameEnd *END*",
-            "--resolutionWidth *X*",
-            "--resolutionHeight *Y*"
+        "submission_overrides": [
+            "render_chunk",
+            "frame_range",
+            "resolution"
         ]
     },
     "publish": {
