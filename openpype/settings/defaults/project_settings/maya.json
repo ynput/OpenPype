@@ -1144,8 +1144,9 @@
             }
         ]
     },
-    "with_handles": {
-        "handles_task_types": []
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
     },
     "templated_workfile_build": {
         "profiles": []
