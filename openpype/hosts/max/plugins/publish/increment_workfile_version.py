@@ -8,7 +8,6 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder + 0.9
     label = "Increment Workfile Version"
-    optional = True
     hosts = ["max"]
     families = ["workfile"]
 
