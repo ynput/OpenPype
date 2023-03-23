@@ -161,7 +161,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             return
 
         # Instance is marked to not get integrated
-        if instance.data.get("integrate", True):
+        if not instance.data.get("integrate", True):
             self.log.info("Instance is marked to skip integrating. Skipping")
             return
 
