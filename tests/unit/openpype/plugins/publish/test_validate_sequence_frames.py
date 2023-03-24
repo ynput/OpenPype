@@ -63,7 +63,8 @@ class TestValidateSequenceFrames(BaseTest):
     @pytest.mark.parametrize("files",
                              ["Main_beauty.v001.1001.exr",
                               "Main_beauty_v001.1001.exr",
-                              "Main_beauty.1001.1001.exr"])
+                              "Main_beauty.1001.1001.exr",
+                              "Main_beauty_v001_1001.exr"])
     def test_validate_sequence_frames_single_frame_name(self, instance,
                                                         plugin,
                                                         files):
@@ -95,6 +96,24 @@ class TestValidateSequenceFrames(BaseTest):
         with pytest.raises(ValueError) as excinfo:
             plugin.process(instance)
         assert ("Invalid frame range: (1, 1) - expected: (1001, 1001)" in
+                str(excinfo.value))
+
+    @pytest.mark.parametrize("files",
+                             ["Main_beauty.1001.v001.ass.gz"])
+    def test_validate_sequence_frames_single_frame_possible_wrong_name(self,
+            instance, plugin, files):
+        # currently pattern fails on extensions with dots
+        representations = [
+            {
+                "ext": "exr",
+                "files": files,
+            }
+        ]
+        instance.data["representations"] = representations
+
+        with pytest.raises(AssertionError) as excinfo:
+            plugin.process(instance)
+        assert ("Must not have remainder" in
                 str(excinfo.value))
 
     def test_validate_sequence_frames_multi_frame(self, instance, plugin):
