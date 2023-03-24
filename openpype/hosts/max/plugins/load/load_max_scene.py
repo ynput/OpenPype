@@ -47,30 +47,17 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-        rt.select(node.Children)
-        for previous_max_object in rt.selection:
-            rt.delete(previous_max_object)
-        merge_before = {
-            c for c in rt.rootNode.Children
-            if rt.classOf(c) == rt.Container
-        }
-        rt.mergeMaxFile(path)
-
-        merge_after = {
-            c for c in rt.rootNode.Children
-            if rt.classOf(c) == rt.Container
-        }
-        max_containers = merge_after.difference(merge_before)
-
-        if len(max_containers) != 1:
-            self.log.error("Something failed when loading.")
-
-        max_container = max_containers.pop()
-        node.Children = max_container
+        rt.mergeMaxFile(path,
+                        rt.Name("noRedraw"),
+                        rt.Name("deleteOldDups"),
+                        rt.Name("useSceneMtlDups"))
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         from pymxs import runtime as rt
