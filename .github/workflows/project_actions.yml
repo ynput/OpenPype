@@ -3,6 +3,8 @@ name: project-actions
 on:
   pull_request:
     types: [review_requested]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   pr_review_requested:
