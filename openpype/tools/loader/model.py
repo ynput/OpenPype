@@ -1172,9 +1172,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                     repre_groups_items[doc["name"]] = 0
                     group = group_item
 
-            progress = lib.get_progress_for_repre(
-                doc, self.active_site, self.remote_site
-            )
+            progress = self.sync_server.get_progress_for_repre(
+                doc,
+                self.active_site, self.remote_site)
 
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)

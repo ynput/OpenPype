@@ -8,6 +8,7 @@ import platform
 from qtpy import QtCore, QtGui, QtWidgets
 
 import openpype.version
+from openpype import AYON_SERVER_ENABLED
 from openpype import resources, style
 from openpype.lib import (
     Logger,
@@ -589,6 +590,11 @@ class TrayManager:
         self.tray_widget.showMessage(*args, **kwargs)
 
     def _add_version_item(self):
+        if AYON_SERVER_ENABLED:
+            login_action = QtWidgets.QAction("Login", self.tray_widget)
+            login_action.triggered.connect(self._on_ayon_login)
+            self.tray_widget.menu.addAction(login_action)
+
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
@@ -613,6 +619,19 @@ class TrayManager:
         self.tray_widget.menu.addSeparator()
 
         self._restart_action = restart_action
+
+    def _on_ayon_login(self):
+        self.execute_in_main_thread(self._show_ayon_login)
+
+    def _show_ayon_login(self):
+        from ayon_common.connection.credentials import change_user_ui
+
+        result = change_user_ui()
+        if result.shutdown:
+            self.exit()
+
+        elif result.restart or result.token_changed:
+            self.restart()
 
     def _on_restart_action(self):
         self.restart(use_expected_version=True)
