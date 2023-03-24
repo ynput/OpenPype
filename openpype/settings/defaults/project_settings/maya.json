@@ -110,6 +110,7 @@
         "CreateLook": {
             "enabled": true,
             "make_tx": true,
+            "rs_tex": false,
             "defaults": [
                 "Main"
             ]

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
+import logging
+from abc import ABCMeta, abstractmethod
+
+import six
 import os
 import json
 import tempfile
@@ -11,8 +15,9 @@ from maya import cmds  # noqa
 
 import pyblish.api
 
+from openpype.lib.vendor_bin_utils import find_executable
 from openpype.lib import source_hash, run_subprocess
-from openpype.pipeline import legacy_io, publish
+from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 
@@ -28,6 +33,28 @@ def _has_arnold():
         return True
     except (ImportError, ModuleNotFoundError):
         return False
+
+
+def get_redshift_tool(tool_name):
+    """Path to redshift texture processor.
+
+    On Windows it adds .exe extension if missing from tool argument.
+
+    Args:
+        tool (string): Tool name.
+
+    Returns:
+        str: Full path to redshift texture processor executable.
+    """
+    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+
+    redshift_tool_path = os.path.join(
+        redshift_os_path,
+        "bin",
+        tool_name
+    )
+
+    return find_executable(redshift_tool_path)
 
 
 def find_paths_by_hash(texture_hash):
@@ -46,59 +73,130 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
-def maketx(source, destination, args, logger):
-    """Make `.tx` using `maketx` with some default settings.
+@six.add_metaclass(ABCMeta)
+class TextureProcessor:
 
-    The settings are based on default as used in Arnold's
-    txManager in the scene.
-    This function requires the `maketx` executable to be
-    on the `PATH`.
+    def __init__(self, log=None):
+        if log is None:
+            log = logging.getLogger(self.__class___.__name__)
 
-    Args:
-        source (str): Path to source file.
-        destination (str): Writing destination path.
-        args (list): Additional arguments for `maketx`.
-        logger (logging.Logger): Logger to log messages to.
+    @abstractmethod
+    def process(self, filepath):
 
-    Returns:
-        str: Output of `maketx` command.
+        pass
 
-    """
-    from openpype.lib import get_oiio_tools_path
+    @staticmethod
+    def get_extension():
+        pass
 
-    maketx_path = get_oiio_tools_path("maketx")
 
-    if not maketx_path:
-        print(
-            "OIIO tool not found in {}".format(maketx_path))
-        raise AssertionError("OIIO tool not found")
+class MakeRSTexBin(TextureProcessor):
+    """Make `.rstexbin` using `redshiftTextureProcessor`"""
 
-    subprocess_args = [
-        maketx_path,
-        "-v",  # verbose
-        "-u",  # update mode
-        # unpremultiply before conversion (recommended when alpha present)
-        "--unpremult",
-        "--checknan",
-        # use oiio-optimized settings for tile-size, planarconfig, metadata
-        "--oiio",
-        "--filter", "lanczos3",
-        source
-    ]
+    def __init__(self):
+        super(MakeRSTexBin, self).__init__()
 
-    subprocess_args.extend(args)
-    subprocess_args.extend(["-o", destination])
+    def process(self, source, *args):
+        """
+        with some default settings.
 
-    cmd = " ".join(subprocess_args)
-    logger.debug(cmd)
+        This function requires the `REDSHIFT_COREDATAPATH`
+        to be in `PATH`.
 
-    try:
-        out = run_subprocess(subprocess_args)
-    except Exception:
-        logger.error("Maketx converion failed", exc_info=True)
-        raise
+        Args:
+            source (str): Path to source file.
+            *args: Additional arguments for `redshiftTextureProcessor`.
 
-    return out
+        """
+        if "REDSHIFT_COREDATAPATH" not in os.environ:
+            raise RuntimeError("Must have Redshift available.")
+
+        texture_processor_path = get_redshift_tool("redshiftTextureProcessor")
+        if not texture_processor_path:
+            raise KnownPublishError("Must have Redshift available.",
+                                    title="Make RSTexBin texture")
+
+        subprocess_args = [
+            texture_processor_path,
+            source
+        ]
+
+        subprocess_args.extend(args)
+
+        self.log.debug(" ".join(subprocess_args))
+        try:
+            out = run_subprocess(subprocess_args)
+        except Exception:
+            self.log.error("Texture .rstexbin conversion failed",
+                           exc_info=True)
+            raise
+
+        return out
+
+    @staticmethod
+    def get_extension():
+        return ".rstexbin"
+
+
+class MakeTX(TextureProcessor):
+    def __init__(self):
+        super(MakeTX, self).__init__()
+
+    def process(self, source, destination, *args):
+        """Make `.tx` using `maketx` with some default settings.
+
+        The settings are based on default as used in Arnold's
+        txManager in the scene.
+        This function requires the `maketx` executable to be
+        on the `PATH`.
+
+        Args:
+            source (str): Path to source file.
+            destination (str): Writing destination path.
+            *args: Additional arguments for `maketx`.
+
+        Returns:
+            str: Output of `maketx` command.
+
+        """
+        from openpype.lib import get_oiio_tools_path
+
+        maketx_path = get_oiio_tools_path("maketx")
+
+        if not maketx_path:
+            print(
+                "OIIO tool not found in {}".format(maketx_path))
+            raise AssertionError("OIIO tool not found")
+
+        subprocess_args = [
+            maketx_path,
+            "-v",  # verbose
+            "-u",  # update mode
+            # unpremultiply before conversion (recommended when alpha present)
+            "--unpremult",
+            "--checknan",
+            # use oiio-optimized settings for tile-size, planarconfig, metadata
+            "--oiio",
+            "--filter", "lanczos3",
+            source
+        ]
+
+        subprocess_args.extend(args)
+        subprocess_args.extend(["-o", destination])
+
+        self.log.debug(" ".join(subprocess_args))
+        try:
+            out = run_subprocess(subprocess_args)
+        except Exception:
+            self.log.error("Texture maketx conversion failed",
+                           exc_info=True)
+            raise
+
+        return out
+
+    @staticmethod
+    def get_extension():
+        return ".tx"
 
 
 @contextlib.contextmanager
@@ -332,6 +430,15 @@ class ExtractLook(publish.Extractor):
         hashes = {}
         destinations = {}
         remap = OrderedDict()
+
+        # Specify texture processing executables to activate
+        processors = []
+        if instance.data.get("maketx", False):
+            processors.append(MakeTX)
+        # Option to convert textures to native redshift textures
+        if instance.data.get("rstex", False):
+            processors.append(MakeRSTexBin)
+
         for resource in resources:
             colorspace = resource["color_space"]
 
@@ -364,7 +471,7 @@ class ExtractLook(publish.Extractor):
 
                 texture_result = self._process_texture(
                     filepath,
-                    do_maketx=do_maketx,
+                    processors=processors,
                     staging_dir=staging_dir,
                     force_copy=force_copy,
                     color_management=color_management,
@@ -373,7 +480,7 @@ class ExtractLook(publish.Extractor):
                 source, mode, texture_hash, result_colorspace = texture_result
                 destination = self.resource_destination(instance,
                                                         source,
-                                                        do_maketx)
+                                                        processors)
 
                 # Set the resulting color space on the resource
                 self._set_resource_result_colorspace(
@@ -407,7 +514,7 @@ class ExtractLook(publish.Extractor):
                 # Cache destination as source resource might be included
                 # multiple times
                 destinations[source] = self.resource_destination(
-                    instance, source, do_maketx
+                    instance, source, processors
                 )
 
             # Set up remapping attributes for the node during the publish
@@ -437,7 +544,7 @@ class ExtractLook(publish.Extractor):
             "attrRemap": remap,
         }
 
-    def resource_destination(self, instance, filepath, do_maketx):
+    def resource_destination(self, instance, filepath, processors):
         """Get resource destination path.
 
         This is utility function to change path if resource file name is
@@ -446,7 +553,7 @@ class ExtractLook(publish.Extractor):
         Args:
             instance: Current Instance.
             filepath (str): Resource path
-            do_maketx (bool): Flag if resource is processed by `maketx`.
+            processor: Texture processors converting resource.
 
         Returns:
             str: Path to resource file
@@ -457,9 +564,12 @@ class ExtractLook(publish.Extractor):
         # Compute destination location
         basename, ext = os.path.splitext(os.path.basename(filepath))
 
-        # If `maketx` then the texture will always end with .tx
-        if do_maketx:
-            ext = ".tx"
+        # Get extension from the last processor
+        for processors in reversed(processors):
+            ext = processor.get_extension()
+            self.log.debug("Processor {} defined extension: "
+                           "{}".format(processor, ext))
+            break
 
         return os.path.join(
             resources_dir, basename + ext
@@ -484,7 +594,7 @@ class ExtractLook(publish.Extractor):
 
     def _process_texture(self,
                          filepath,
-                         do_maketx,
+                         processors,
                          staging_dir,
                          force_copy,
                          color_management,
@@ -497,7 +607,7 @@ class ExtractLook(publish.Extractor):
 
         Args:
             filepath (str): The source file path to process.
-            do_maketx (bool): Whether to produce a .tx file
+            processors (list): List of TexProcessor processing the texture
             staging_dir (str): The staging directory to write to.
             force_copy (bool): Whether to force a copy even if a file hash
                 might have existed already in the project, otherwise
@@ -510,7 +620,6 @@ class ExtractLook(publish.Extractor):
         Returns:
             tuple: (filepath, copy_mode, texture_hash, result_colorspace)
         """
-
         fname, ext = os.path.splitext(os.path.basename(filepath))
 
         # Note: The texture hash is only reliable if we include any potential
@@ -518,6 +627,37 @@ class ExtractLook(publish.Extractor):
         args = []
         hash_args = []
 
+        if len(processors) > 1:
+            raise KnownPublishError(
+                "More than one texture processor not supported"
+            )
+
+        # TODO: Make all processors take the same arguments
+        for processor in processors:
+            if processor is MakeTX:
+                processed_path = processor().process(filepath,
+                                                     converted,
+                                                     "--sattrib",
+                                                     "sourceHash",
+                                                     escape_space(texture_hash), # noqa
+                                                     colorconvert,
+                                                     color_config,
+                                                     )
+                self.log.info("Generating texture file for %s .." % filepath) # noqa
+                self.log.info(converted)
+                if processed_path:
+                    return processed_path, COPY, texture_hash
+                else:
+                    self.log.info("maketx has returned nothing")
+            elif processor is MakeRSTexBin:
+                processed_path = processor().process(filepath)
+                self.log.info("Generating texture file for %s .." % filepath) # noqa
+                if processed_path:
+                    return processed_path, COPY, texture_hash
+                else:
+                    self.log.info("redshift texture converter has returned nothing") # noqa
+
+        # TODO: continue this refactoring to processor
         if do_maketx and ext != ".tx":
             # Define .tx filepath in staging if source file is not .tx
             converted = os.path.join(staging_dir, "resources", fname + ".tx")
