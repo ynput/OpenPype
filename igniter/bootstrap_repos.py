@@ -339,8 +339,8 @@ class OpenPypeVersion(semver.VersionInfo):
             list: of compatible versions available on the machine.
 
         """
-        dir_to_search = OpenPypeVersion.get_local_openpype_path()
-        versions = OpenPypeVersion.get_versions_from_directory(dir_to_search)
+        dir_to_search = cls.get_local_openpype_path()
+        versions = cls.get_versions_from_directory(dir_to_search)
 
         return list(sorted(set(versions)))
 
