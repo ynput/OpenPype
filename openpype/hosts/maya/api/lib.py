@@ -1,6 +1,5 @@
 """Standalone helper functions"""
 
-from asyncio.base_tasks import _task_get_stack
 import os
 import sys
 import platform
