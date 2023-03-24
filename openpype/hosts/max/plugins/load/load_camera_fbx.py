@@ -47,8 +47,6 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
         rt.select(node.Children)
-        for previous_fbx_obj in rt.selection:
-            pass
         fbx_reimport_cmd = (
             f"""
 
