@@ -607,11 +607,11 @@ class CreateRenderPass(TVPaintCreator):
         current_instances = self.host.list_instances()
         render_layers = [
             {
-                "value": instance["instance_id"],
-                "label": instance["subset"]
+                "value": inst["instance_id"],
+                "label": inst["subset"]
             }
-            for instance in current_instances
-            if instance["creator_identifier"] == CreateRenderlayer.identifier
+            for inst in current_instances
+            if inst.get("creator_identifier") == CreateRenderlayer.identifier
         ]
         if not render_layers:
             render_layers.append({"value": None, "label": "N/A"})
