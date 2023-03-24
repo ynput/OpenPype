@@ -82,8 +82,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     if instance.data.get("publish")
                 }
 
-                allow_status_change = False
-
                 # Check if any family requirement is met
                 for family_requirement in self.status_change_conditions[
                     "family_requirements"
@@ -92,8 +90,8 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
                     for family in families:
                         match = family_requirement["family"].lower() == family
-                        if match and condition or not condition and not match:
-                            allow_status_change = True
+                        if match and not condition or condition and not match:
+                            allow_status_change = False
                             break
 
                     if allow_status_change:
