@@ -271,12 +271,17 @@ With this feature, users can specify a transient data folder path based on prese
 ![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
 
 Staging dirs are used as a destination for intermediate files (as renders) before they are renamed and copied to proper location during integration phase. They could be created completely dynamically in temp folders, or for some DCCs in `work` area.
-(Example could be Nuke where artist might want to temporarily render pictures into `work` area to check them before they get published.)
+Example could be Nuke where artist might want to temporarily render pictures into `work` area to check them before they get published with the choice of "Use existing frames" on the write node.
 One of the key advantages of this feature is that it allows users to repoint folder for such intermediate files to take advantage of faster storages for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their rendered data persistent, and use their own infrastructure for regular cleaning.
 
-In some cases, these DCCs automatically add a rendering path during the creation stage, which is then used in publishing. Creators of such DCCs need to use these profiles to use this functionality.
+In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
 
 Location of the custom staging folder is configured in `project_anatomy/templates/others`. (`transient` key is expected, with 'folder' key, could be more templates)
+
+##### Known issues
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
 
 ### Workfiles
 All settings related to Workfile tool.
