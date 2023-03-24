@@ -344,8 +344,6 @@ class ExtractLook(publish.Extractor):
                     # didn't do color spaces different than the current
                     # resource.
                     processed_file = processed_files[filepath]
-                    processed_colorspace = processed_file["color_space"]
-                    processed_result_colorspace = processed_file["result_color_space"]
                     self.log.debug(
                         "File was already processed. Likely used by another "
                         "resource too: {}".format(filepath)
@@ -355,10 +353,12 @@ class ExtractLook(publish.Extractor):
                         self.log.warning(
                             "File was already processed but using another"
                             "colorspace: {} <-> {}"
-                            "".format(colorspace, processed_colorspace))
+                            "".format(colorspace,
+                                      processed_file["color_space"]))
 
                     self._set_resource_result_colorspace(
-                        resource, colorspace=processed_result_colorspace
+                        resource,
+                        colorspace=processed_file["result_color_space"]
                     )
                     continue
 
