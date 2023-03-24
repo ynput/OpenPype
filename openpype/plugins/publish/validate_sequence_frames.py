@@ -27,16 +27,17 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     def process(self, instance):
         representations = instance.data.get("representations")
         for repr in representations:
-            if isinstance(repr["files"], str):
-                repr["files"] = [repr["files"]]
+            repr_files = repr["files"]
+            if isinstance(repr_files, str):
+                repr_files = [repr_files]
 
-            _, ext = os.path.splitext(repr["files"][0])
+            _, ext = os.path.splitext(repr_files[0])
             pattern = r"\D?(?P<index>(?P<padding>0*)\d+){}$".format(
                 re.escape(ext))
             patterns = [pattern]
 
             collections, remainder = clique.assemble(
-                repr["files"], minimum_items=1, patterns=patterns)
+                repr_files, minimum_items=1, patterns=patterns)
 
             assert not remainder, "Must not have remainder"
             assert len(collections) == 1, "Must detect single collection"
