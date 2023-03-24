@@ -92,7 +92,7 @@ class FlamePrelaunch(PreLaunchHook):
             project_data.update({
                 "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
                 "FieldDominance": str(
-                imageio_flame["project"]["fieldDominance"])
+                    imageio_flame["project"]["fieldDominance"])
             })
             data_to_script["color_policy"] = str(
                 imageio_flame["project"]["colourPolicy"])
