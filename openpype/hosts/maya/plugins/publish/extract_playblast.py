@@ -175,7 +175,10 @@ class ExtractPlayblast(publish.Extractor):
             capture_presets['Viewport Options']['override_viewport_options']
         )
 
+        # Need to ensure Python 2 compatibility.
+        # TODO: Remove once dropping Python 2.
         if getattr(contextlib, "nested", None):
+            # Python 3 compatibility.
             with contextlib.nested(
                 lib.maintained_time(),
                 panel_camera(instance.data["panel"], preset["camera"])
@@ -184,6 +187,7 @@ class ExtractPlayblast(publish.Extractor):
                     preset, override_viewport_options, instance
                 )
         else:
+            # Python 2 compatibility.
             with contextlib.ExitStack() as stack:
                 stack.enter_context(lib.maintained_time())
                 stack.enter_context(
