@@ -149,22 +149,6 @@ class ExtractLook(publish.Extractor):
     scene_type = "ma"
     look_data_type = "json"
 
-    @staticmethod
-    def get_renderer_name():
-        """Get renderer name from Maya.
-
-        Returns:
-            str: Renderer name.
-
-        """
-        renderer = cmds.getAttr(
-            "defaultRenderGlobals.currentRenderer"
-        ).lower()
-        # handle various renderman names
-        if renderer.startswith("renderman"):
-            renderer = "renderman"
-        return renderer
-
     def get_maya_scene_type(self, instance):
         """Get Maya scene type from settings.
 
@@ -209,11 +193,9 @@ class ExtractLook(publish.Extractor):
         maya_path = os.path.join(dir_path, maya_fname)
         json_path = os.path.join(dir_path, json_fname)
 
-        self.log.info("Performing extraction..")
-
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Extract sets (%s) ..." % _scene_type)
+        self.log.info("Processing sets..")
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
         sets = list(relationships.keys())
@@ -221,6 +203,7 @@ class ExtractLook(publish.Extractor):
             self.log.info("No sets found")
             return
 
+        self.log.debug("Processing resources..")
         results = self.process_resources(instance, staging_dir=dir_path)
         transfers = results["fileTransfers"]
         hardlinks = results["fileHardlinks"]
@@ -228,6 +211,7 @@ class ExtractLook(publish.Extractor):
         remap = results["attrRemap"]
 
         # Extract in correct render layer
+        self.log.info("Extracting look maya scene file: {}".format(maya_path))
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with lib.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
@@ -299,40 +283,39 @@ class ExtractLook(publish.Extractor):
         # Source hash for the textures
         instance.data["sourceHashes"] = hashes
 
-        """
-        self.log.info("Returning colorspaces to their original values ...")
-        for attr, value in remap.items():
-            self.log.info("  - {}: {}".format(attr, value))
-            cmds.setAttr(attr, value, type="string")
-        """
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           maya_path))
 
-    def process_resources(self, instance, staging_dir):
+    def _set_resource_result_colorspace(self, resource, colorspace):
+        """Update resource resulting colorspace after texture processing"""
+        if "result_colorspace" in resource:
+            if resource["result_colorspace"] == colorspace:
+                return
 
-        # Extract the textures to transfer, possibly convert with maketx and
-        # remap the node paths to the destination path. Note that a source
-        # might be included more than once amongst the resources as they could
-        # be the input file to multiple nodes.
+            self.log.warning(
+                "Resource already has a resulting colorspace but is now "
+                "being overridden to a new one: {} -> {}".format(
+                    resource["result_colorspace"], colorspace
+                )
+            )
+        resource["result_colorspace"] = colorspace
+
+    def process_resources(self, instance, staging_dir):
+        """Process all resources in the instance.
+
+        It is assumed that all resources are nodes using file textures.
+
+        Extract the textures to transfer, possibly convert with maketx and
+        remap the node paths to the destination path. Note that a source
+        might be included more than once amongst the resources as they could
+        be the input file to multiple nodes.
+
+        """
+
         resources = instance.data["resources"]
         do_maketx = instance.data.get("maketx", False)
+        color_management = lib.get_color_management_preferences()
 
-        # Collect all unique files used in the resources
-        files_metadata = {}
-        for resource in resources:
-            # Preserve color space values (force value after filepath change)
-            # This will also trigger in the same order at end of context to
-            # ensure after context it's still the original value.
-            color_space = resource.get("color_space")
-
-            for f in resource["files"]:
-                files_metadata[os.path.normpath(f)] = {
-                    "color_space": color_space}
-
-        # Process the resource files
-        transfers = []
-        hardlinks = []
-        hashes = {}
         # Temporary fix to NOT create hardlinks on windows machines
         if platform.system().lower() == "windows":
             self.log.info(
@@ -342,58 +325,83 @@ class ExtractLook(publish.Extractor):
         else:
             force_copy = instance.data.get("forceCopy", False)
 
-        for filepath in files_metadata:
-
-            linearize = False
-            # if OCIO color management enabled
-            # it won't take the condition of the files_metadata
-
-            ocio_maya = cmds.colorManagementPrefs(q=True,
-                                                  cmConfigFileEnabled=True,
-                                                  cmEnabled=True)
-
-            if do_maketx and not ocio_maya:
-                if files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
-                    linearize = True
-                    # set its file node to 'raw' as tx will be linearized
-                    files_metadata[filepath]["color_space"] = "Raw"
-
-            # if do_maketx:
-            #     color_space = "Raw"
-
-            source, mode, texture_hash = self._process_texture(
-                filepath,
-                resource,
-                do_maketx,
-                staging=staging_dir,
-                linearize=linearize,
-                force=force_copy
-            )
-            destination = self.resource_destination(instance,
-                                                    source,
-                                                    do_maketx)
-
-            # Force copy is specified.
-            if force_copy:
-                mode = COPY
-
-            if mode == COPY:
-                transfers.append((source, destination))
-                self.log.info('file will be copied {} -> {}'.format(
-                    source, destination))
-            elif mode == HARDLINK:
-                hardlinks.append((source, destination))
-                self.log.info('file will be hardlinked {} -> {}'.format(
-                    source, destination))
-
-            # Store the hashes from hash to destination to include in the
-            # database
-            hashes[texture_hash] = destination
-
-        # Remap the resources to the destination path (change node attributes)
+        # Process all resource's individual files
+        processed_files = {}
+        transfers = []
+        hardlinks = []
+        hashes = {}
         destinations = {}
-        remap = OrderedDict()  # needs to be ordered, see color space values
+        remap = OrderedDict()
         for resource in resources:
+            colorspace = resource["color_space"]
+
+            for filepath in resource["files"]:
+                filepath = os.path.normpath(filepath)
+
+                if filepath in processed_files:
+                    # The file was already processed, likely due to usage by
+                    # another resource in the scene. We confirm here it
+                    # didn't do color spaces different than the current
+                    # resource.
+                    processed_file = processed_files[filepath]
+                    processed_colorspace = processed_file["color_space"]
+                    processed_result_colorspace = processed_file["result_color_space"]
+                    self.log.debug(
+                        "File was already processed. Likely used by another "
+                        "resource too: {}".format(filepath)
+                    )
+
+                    if colorspace != processed_file["color_space"]:
+                        self.log.warning(
+                            "File was already processed but using another"
+                            "colorspace: {} <-> {}"
+                            "".format(colorspace, processed_colorspace))
+
+                    self._set_resource_result_colorspace(
+                        resource, colorspace=processed_result_colorspace
+                    )
+                    continue
+
+                texture_result = self._process_texture(
+                    filepath,
+                    do_maketx=do_maketx,
+                    staging_dir=staging_dir,
+                    force_copy=force_copy,
+                    color_management=color_management,
+                    colorspace=colorspace
+                )
+                source, mode, texture_hash, result_colorspace = texture_result
+                destination = self.resource_destination(instance,
+                                                        source,
+                                                        do_maketx)
+
+                # Set the resulting color space on the resource
+                self._set_resource_result_colorspace(
+                    resource, colorspace=result_colorspace
+                )
+
+                processed_files[filepath] = {
+                    "color_space": colorspace,
+                    "result_color_space": result_colorspace,
+                }
+
+                # Force copy is specified.
+                if force_copy:
+                    mode = COPY
+
+                if mode == COPY:
+                    transfers.append((source, destination))
+                    self.log.info('file will be copied {} -> {}'.format(
+                        source, destination))
+                elif mode == HARDLINK:
+                    hardlinks.append((source, destination))
+                    self.log.info('file will be hardlinked {} -> {}'.format(
+                        source, destination))
+
+                # Store the hashes from hash to destination to include in the
+                # database
+                hashes[texture_hash] = destination
+
             source = os.path.normpath(resource["source"])
             if source not in destinations:
                 # Cache destination as source resource might be included
@@ -402,35 +410,23 @@ class ExtractLook(publish.Extractor):
                     instance, source, do_maketx
                 )
 
+            # Set up remapping attributes for the node during the publish
+            # The order of these can be important if one attribute directly
+            # affects another, e.g. we set colorspace after filepath because
+            # maya sometimes tries to guess the colorspace when changing
+            # filepaths (which is avoidable, but we don't want to have those
+            # attributes changed in the resulting publish)
+            # Remap filepath to publish destination
+            filepath_attr = resource["attribute"]
+            remap[filepath_attr] = destinations[source]
+
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
             # ensure after context it's still the original value.
-            color_space_attr = resource["node"] + ".colorSpace"
-            try:
-                color_space = cmds.getAttr(color_space_attr)
-            except ValueError:
-                # node doesn't have color space attribute
-                color_space = "Raw"
-            else:
-                # get the resolved files
-                metadata = files_metadata.get(source)
-                # if the files are unresolved from `source`
-                # assume color space from the first file of
-                # the resource
-                if not metadata:
-                    first_file = next(iter(resource.get(
-                        "files", [])), None)
-                    if not first_file:
-                        continue
-                    first_filepath = os.path.normpath(first_file)
-                    metadata = files_metadata[first_filepath]
-                if metadata["color_space"] == "Raw":
-                    # set color space to raw if we linearized it
-                    color_space = "Raw"
-                # Remap file node filename to destination
-                remap[color_space_attr] = color_space
-            attr = resource["attribute"]
-            remap[attr] = destinations[source]
+            node = resource["node"]
+            if cmds.attributeQuery("colorSpace", node=node, exists=True):
+                color_space_attr = "{}.colorSpace".format(node)
+                remap[color_space_attr] = resource["result_color_space"]
 
         self.log.info("Finished remapping destinations ...")
 
@@ -469,91 +465,115 @@ class ExtractLook(publish.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, resource,
-                         do_maketx, staging, linearize, force):
-        """Process a single texture file on disk for publishing.
-        This will:
-            1. Check whether it's already published, if so it will do hardlink
-            2. If not published and maketx is enabled, generate a new .tx file.
-            3. Compute the destination path for the source file.
-        Args:
-            filepath (str): The source file path to process.
-            do_maketx (bool): Whether to produce a .tx file
-        Returns:
-        """
-
-        fname, ext = os.path.splitext(os.path.basename(filepath))
-
-        args = []
-        if do_maketx:
-            args.append("maketx")
-        texture_hash = source_hash(filepath, *args)
+    def _get_existing_hashed_texture(self, texture_hash):
+        """Return the first found filepath from a texture hash"""
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
-        if existing and not force:
+        if existing:
             self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
             if source:
                 return source, HARDLINK, texture_hash
             else:
                 self.log.warning(
-                    ("Paths not found on disk, "
-                     "skipping hardlink: %s") % (existing,)
+                    "Paths not found on disk, "
+                    "skipping hardlink: {}".format(existing)
                 )
 
+    def _process_texture(self,
+                         filepath,
+                         do_maketx,
+                         staging_dir,
+                         force_copy,
+                         color_management,
+                         colorspace):
+        """Process a single texture file on disk for publishing.
+        This will:
+            1. Check whether it's already published, if so it will do hardlink
+            2. If not published and maketx is enabled, generate a new .tx file.
+            3. Compute the destination path for the source file.
+
+        Args:
+            filepath (str): The source file path to process.
+            do_maketx (bool): Whether to produce a .tx file
+            staging_dir (str): The staging directory to write to.
+            force_copy (bool): Whether to force a copy even if a file hash
+                might have existed already in the project, otherwise
+                hardlinking the existing file is allowed.
+            color_management (dict): Maya's Color Management settings from
+                `lib.get_color_management_preferences`
+            colorspace (str): The source colorspace of the resources this
+                texture belongs to.
+
+        Returns:
+            tuple: (filepath, copy_mode, texture_hash, result_colorspace)
+        """
+
+        fname, ext = os.path.splitext(os.path.basename(filepath))
+
+        # Note: The texture hash is only reliable if we include any potential
+        # conversion arguments provide to e.g. `maketx`
+        args = []
+        hash_args = []
+
         if do_maketx and ext != ".tx":
-            # Produce .tx file in staging if source file is not .tx
-            converted = os.path.join(staging, "resources", fname + ".tx")
-            additional_args = [
+            # Define .tx filepath in staging if source file is not .tx
+            converted = os.path.join(staging_dir, "resources", fname + ".tx")
+
+            if color_management["enabled"]:
+                config_path = color_management["config"]
+                if not os.path.exists(config_path):
+                    raise RuntimeError("OCIO config not found at: "
+                                       "{}".format(config_path))
+
+                render_colorspace = color_management["rendering_space"]
+
+                self.log.info("tx: converting colorspace {0} "
+                              "-> {1}".format(colorspace, render_colorspace))
+                args.extend(["--colorconvert", colorspace, render_colorspace])
+                args.extend(["--colorconfig", config_path])
+
+            else:
+                # We can't rely on the colorspace attribute when not
+                # in color managed mode because the collected color space
+                # is the color space attribute of the file node which can be
+                # any string whatsoever but only appears disabled in Attribute
+                # Editor. We assume we're always converting to linear/Raw if
+                # the source file is assumed to be sRGB.
+                render_colorspace = "linear"
+                if _has_arnold():
+                    img_info = image_info(filepath)
+                    color_space = guess_colorspace(img_info)
+                    if color_space.lower() == "sRGB":
+                        self.log.info("tx: converting sRGB -> linear")
+                        args.extend(["--colorconvert", "sRGB", "Raw"])
+                    else:
+                        self.log.info("tx: texture's colorspace "
+                                      "is already linear")
+                else:
+                    self.log.warning("tx: cannot guess the colorspace, "
+                                     "color conversion won't be available!")
+
+            hash_args.append("maketx")
+            hash_args.extend(args)
+
+            texture_hash = source_hash(filepath, *args)
+
+            if not force_copy:
+                existing = self._get_existing_hashed_texture(filepath)
+                if existing:
+                    return existing
+
+            # Exclude these additional arguments from the hashing because
+            # it is the hash itself
+            args.extend([
                 "--sattrib",
                 "sourceHash",
                 texture_hash
-            ]
-            if linearize:
-                if cmds.colorManagementPrefs(query=True, cmEnabled=True):
-                    render_colorspace = cmds.colorManagementPrefs(query=True,
-                                                                  renderingSpaceName=True)  # noqa
-                    config_path = cmds.colorManagementPrefs(query=True,
-                                                            configFilePath=True) # noqa
-                    if not os.path.exists(config_path):
-                        raise RuntimeError("No OCIO config path found!")
+            ])
 
-                    color_space_attr = resource["node"] + ".colorSpace"
-                    try:
-                        color_space = cmds.getAttr(color_space_attr)
-                    except ValueError:
-                        # node doesn't have color space attribute
-                        if _has_arnold():
-                            img_info = image_info(filepath)
-                            color_space = guess_colorspace(img_info)
-                        else:
-                            color_space = "Raw"
-                    self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
-
-                    additional_args.extend(["--colorconvert",
-                                            color_space,
-                                            render_colorspace])
-                else:
-
-                    if _has_arnold():
-                        img_info = image_info(filepath)
-                        color_space = guess_colorspace(img_info)
-                        if color_space == "sRGB":
-                            self.log.info("tx: converting sRGB -> linear")
-                            additional_args.extend(["--colorconvert",
-                                                    "sRGB",
-                                                    "Raw"])
-                        else:
-                            self.log.info("tx: texture's colorspace "
-                                          "is already linear")
-                    else:
-                        self.log.warning("cannot guess the colorspace"
-                                         "color conversion won't be available!")    # noqa
-
-
-            additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -562,13 +582,20 @@ class ExtractLook(publish.Extractor):
             maketx(
                 filepath,
                 converted,
-                additional_args,
+                args,
                 self.log
             )
 
-            return converted, COPY, texture_hash
+            return converted, COPY, texture_hash, render_colorspace
 
-        return filepath, COPY, texture_hash
+        # No special treatment for this file
+        texture_hash = source_hash(filepath)
+        if not force_copy:
+            existing = self._get_existing_hashed_texture(filepath)
+            if existing:
+                return existing
+
+        return filepath, COPY, texture_hash, colorspace
 
 
 class ExtractModelRenderSets(ExtractLook):
