@@ -82,8 +82,8 @@ All context filters are lists which may contain strings or Regular expressions (
 - **`tasks`** - Currently processed task. `["modeling", "animation"]`
 
 :::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority that profile without filters.
-(Eg. order of when filter is added doesn't matter, only the precision of matching does.)
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
 :::
 
 ## Publish plugins
@@ -94,7 +94,7 @@ Publish plugins used across all integrations.
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
 
-Extract review is using [profile filtering](#profile-filters) to be able render different outputs for different situations.
+Extract review uses [profile filtering](#profile-filters) to render different outputs for different situations.
 
 Applicable context filters:
  **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
@@ -104,7 +104,7 @@ Applicable context filters:
 
 **Output Definitions**
 
-Profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
+A profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
 
 ![global_extract_review_output_defs](assets/global_extract_review_output_defs.png)
 - **`Tags`**
@@ -118,7 +118,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - **Output arguments** other FFmpeg output arguments like codec definition.
 
 - **`Output width`** and **`Output height`**
-    - it is possible to rescale output to specified resolution and keep aspect ratio.
+    - It is possible to rescale output to specified resolution and keep aspect ratio.
     - If value is set to 0, source resolution will be used.
 
 - **`Overscan crop`**
