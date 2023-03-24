@@ -44,7 +44,7 @@ class AddonSettingsDef(JsonFilesSettingsDef):
 
 
 class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
-    """This Addon has defined it's settings and interface.
+    """This Addon has defined its settings and interface.
 
     This example has system settings with an enabled option. And use
     few other interfaces:
