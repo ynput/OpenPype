@@ -1,5 +1,6 @@
 """Standalone helper functions"""
 
+from asyncio.base_tasks import _task_get_stack
 import os
 import sys
 import platform
@@ -2144,8 +2145,8 @@ def get_frame_range():
     asset_name = legacy_io.Session["AVALON_ASSET"]
     asset = get_asset_by_name(project_name, asset_name)
     settings = get_project_settings(project_name)
-    task_name = legacy_io.Session["AVALON_TASK"]
-    with_handles = settings['maya']['with_handles']["handles_task_types"]
+    include_handles = settings['maya']['include_handles']
+    current_task = asset.get("data").get("tasks").get(task_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
