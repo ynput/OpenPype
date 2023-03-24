@@ -36,14 +36,15 @@ class ExtractPlayblast(publish.Extractor):
     optional = True
     capture_preset = {}
 
-    def _capture(self, preset, override_viewport_options, instance):
+    def _capture(self, preset):
         self.log.info(
             "Using preset:\n{}".format(
                 json.dumps(preset, sort_keys=True, indent=4)
             )
         )
 
-        return capture.capture(log=self.log, **preset)
+        path = capture.capture(log=self.log, **preset)
+        self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -179,9 +180,7 @@ class ExtractPlayblast(publish.Extractor):
                 lib.maintained_time(),
                 panel_camera(instance.data["panel"], preset["camera"])
             ):
-                path = self._capture(
-                    preset, override_viewport_options, instance
-                )
+                self._capture(preset)
         else:
             # Python 2 compatibility.
             with contextlib.ExitStack() as stack:
@@ -190,9 +189,7 @@ class ExtractPlayblast(publish.Extractor):
                     panel_camera(instance.data["panel"], preset["camera"])
                 )
 
-                path = self._capture(
-                    preset, override_viewport_options, instance
-                )
+                self._capture(preset)
 
         # Restoring viewport options.
         if viewport_defaults:
@@ -201,8 +198,6 @@ class ExtractPlayblast(publish.Extractor):
             )
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-
-        self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]
