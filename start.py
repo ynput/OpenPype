@@ -133,6 +133,10 @@ else:
 vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
 sys.path.insert(0, vendor_python_path)
 
+# Add common package to sys path
+# - common contains common code for bootstraping and OpenPype processes
+sys.path.insert(0, os.path.join(OPENPYPE_ROOT, "common"))
+
 import blessed  # noqa: E402
 import certifi  # noqa: E402
 
