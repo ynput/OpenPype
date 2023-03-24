@@ -1,3 +1,4 @@
+from openpype import AYON_SERVER_ENABLED
 from openpype.modules import OpenPypeModule, ITrayAction
 
 
@@ -11,6 +12,9 @@ class ProjectManagerAction(OpenPypeModule, ITrayAction):
         module_settings = modules_settings.get(self.name)
         if module_settings:
             enabled = module_settings.get("enabled", enabled)
+
+        if AYON_SERVER_ENABLED:
+            enabled = False
         self.enabled = enabled
 
         # Tray attributes

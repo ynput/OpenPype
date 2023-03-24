@@ -1,3 +1,4 @@
+from openpype import AYON_SERVER_ENABLED
 from openpype.modules import OpenPypeModule, ITrayAction
 
 
@@ -10,6 +11,8 @@ class SettingsAction(OpenPypeModule, ITrayAction):
     def initialize(self, _modules_settings):
         # This action is always enabled
         self.enabled = True
+        if AYON_SERVER_ENABLED:
+            self.enabled = False
 
         # User role
         # TODO should be changeable
@@ -80,6 +83,8 @@ class LocalSettingsAction(OpenPypeModule, ITrayAction):
     def initialize(self, _modules_settings):
         # This action is always enabled
         self.enabled = True
+        if AYON_SERVER_ENABLED:
+            self.enabled = False
 
         # Tray attributes
         self.settings_window = None
