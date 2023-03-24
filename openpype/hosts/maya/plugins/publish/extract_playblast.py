@@ -37,29 +37,13 @@ class ExtractPlayblast(publish.Extractor):
     capture_preset = {}
 
     def _capture(self, preset, override_viewport_options, instance):
-        filename = preset.get("filename", "%TEMP%")
-
-        # Force viewer to False in call to capture because we have our own
-        # viewer opening call to allow a signal to trigger between
-        # playblast and viewer
-        preset['viewer'] = False
-
-        # Update preset with current panel setting
-        # if override_viewport_options is turned off
-        if not override_viewport_options:
-            panel_preset = capture.parse_view(instance.data["panel"])
-            panel_preset.pop("camera")
-            preset.update(panel_preset)
-
         self.log.info(
             "Using preset:\n{}".format(
                 json.dumps(preset, sort_keys=True, indent=4)
             )
         )
 
-        path = capture.capture(log=self.log, **preset)
-
-        return filename, path
+        return capture.capture(log=self.log, **preset)
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -175,6 +159,18 @@ class ExtractPlayblast(publish.Extractor):
             capture_presets['Viewport Options']['override_viewport_options']
         )
 
+        # Force viewer to False in call to capture because we have our own
+        # viewer opening call to allow a signal to trigger between
+        # playblast and viewer
+        preset['viewer'] = False
+
+        # Update preset with current panel setting
+        # if override_viewport_options is turned off
+        if not override_viewport_options:
+            panel_preset = capture.parse_view(instance.data["panel"])
+            panel_preset.pop("camera")
+            preset.update(panel_preset)
+
         # Need to ensure Python 2 compatibility.
         # TODO: Remove once dropping Python 2.
         if getattr(contextlib, "nested", None):
@@ -183,7 +179,7 @@ class ExtractPlayblast(publish.Extractor):
                 lib.maintained_time(),
                 panel_camera(instance.data["panel"], preset["camera"])
             ):
-                filename, path = self._capture(
+                path = self._capture(
                     preset, override_viewport_options, instance
                 )
         else:
@@ -194,7 +190,7 @@ class ExtractPlayblast(publish.Extractor):
                     panel_camera(instance.data["panel"], preset["camera"])
                 )
 
-                filename, path = self._capture(
+                path = self._capture(
                     preset, override_viewport_options, instance
                 )
 
@@ -214,6 +210,7 @@ class ExtractPlayblast(publish.Extractor):
                                                  minimum_items=1,
                                                  patterns=patterns)
 
+        filename = preset.get("filename", "%TEMP%")
         self.log.debug("filename {}".format(filename))
         frame_collection = None
         for collection in collections:
