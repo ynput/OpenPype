@@ -1,0 +1,84 @@
+* {
+    font-size: 10pt;
+    font-family: "Noto Sans";
+    font-weight: 450;
+    outline: none;
+}
+
+QWidget {
+    color: #D3D8DE;
+    background: #2C313A;
+    border-radius: 0px;
+}
+
+QWidget:disabled {
+    color: #5b6779;
+}
+
+QLabel {
+    background: transparent;
+}
+
+QPushButton {
+    text-align:center center;
+    border: 0px solid transparent;
+    border-radius: 0.2em;
+    padding: 3px 5px 3px 5px;
+    background: #434a56;
+}
+
+QPushButton:hover {
+    background: rgba(168, 175, 189, 0.3);
+    color: #F0F2F5;
+}
+
+QPushButton:pressed {}
+
+QPushButton:disabled {
+    background: #434a56;
+}
+
+QLineEdit {
+    border: 1px solid #373D48;
+    border-radius: 0.3em;
+    background: #21252B;
+    padding: 0.1em;
+}
+
+QLineEdit:disabled {
+    background: #2C313A;
+}
+QLineEdit:hover {
+    border-color: rgba(168, 175, 189, .3);
+}
+QLineEdit:focus {
+    border-color: rgb(92, 173, 214);
+}
+
+QLineEdit[state="invalid"] {
+    border-color: #AA5050;
+}
+
+#Separator {
+    background: rgba(75, 83, 98, 127);
+}
+
+#PasswordBtn {
+    border: none;
+    padding: 0.1em;
+    background: transparent;
+}
+
+#PasswordBtn:hover {
+    background: #434a56;
+}
+
+#LikeDisabledInput {
+    background: #2C313A;
+}
+#LikeDisabledInput:hover {
+    border-color: #373D48;
+}
+#LikeDisabledInput:focus {
+    border-color: #373D48;
+}

@@ -6,6 +6,7 @@ import shutil
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_version_by_id,
     get_hero_version_by_subset_id,
@@ -195,11 +196,20 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         entity_id = None
         if old_version:
             entity_id = old_version["_id"]
-        new_hero_version = new_hero_version_doc(
-            src_version_entity["_id"],
-            src_version_entity["parent"],
-            entity_id=entity_id
-        )
+
+        if AYON_SERVER_ENABLED:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["parent"],
+                copy.deepcopy(src_version_entity["data"]),
+                src_version_entity["name"],
+                entity_id=entity_id
+            )
+        else:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["_id"],
+                src_version_entity["parent"],
+                entity_id=entity_id
+            )
 
         if old_version:
             self.log.debug("Replacing old hero version.")

@@ -27,7 +27,6 @@ from openpype.modules import ModulesManager
 from .lib import (
     get_site_icons,
     walk_hierarchy,
-    get_progress_for_repre
 )
 
 
@@ -80,7 +79,7 @@ class InventoryModel(TreeModel):
                 project_name, remote_site
             )
 
-        # self.sync_server = sync_server
+        self.sync_server = sync_server
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
@@ -445,7 +444,7 @@ class InventoryModel(TreeModel):
             group_node["group"] = subset["data"].get("subsetGroup")
 
             if self.sync_enabled:
-                progress = get_progress_for_repre(
+                progress = self.sync_server.get_progress_for_repre(
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site
