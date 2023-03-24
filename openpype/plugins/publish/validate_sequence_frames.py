@@ -26,6 +26,8 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         representations = instance.data.get("representations")
+        if not representations:
+            return
         for repr in representations:
             repr_files = repr["files"]
             if isinstance(repr_files, str):
