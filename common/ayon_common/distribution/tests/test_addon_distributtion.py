@@ -2,29 +2,29 @@ import pytest
 import attr
 import tempfile
 
-from common.openpype_common.distribution.addon_distribution import (
-    AddonDownloader,
-    OSAddonDownloader,
-    HTTPAddonDownloader,
+from common.ayon_common.distribution.addon_distribution import (
+    DownloadFactory,
+    OSDownloader,
+    HTTPDownloader,
     AddonInfo,
-    update_addon_state,
+    AyonDistribution,
     UpdateState
 )
-from common.openpype_common.distribution.addon_info import UrlType
+from common.ayon_common.distribution.addon_info import UrlType
 
 
 @pytest.fixture
-def addon_downloader():
-    addon_downloader = AddonDownloader()
-    addon_downloader.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
-    addon_downloader.register_format(UrlType.HTTP, HTTPAddonDownloader)
+def addon_download_factory():
+    addon_downloader = DownloadFactory()
+    addon_downloader.register_format(UrlType.FILESYSTEM, OSDownloader)
+    addon_downloader.register_format(UrlType.HTTP, HTTPDownloader)
 
     yield addon_downloader
 
 
 @pytest.fixture
-def http_downloader(addon_downloader):
-    yield addon_downloader.get_downloader(UrlType.HTTP.value)
+def http_downloader(addon_download_factory):
+    yield addon_download_factory.get_downloader(UrlType.HTTP.value)
 
 
 @pytest.fixture
@@ -55,7 +55,8 @@ def sample_addon_info():
                  "clientSourceInfo": [
                      {
                          "type": "http",
-                         "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
+                         "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
+                         "filename": "dummy.zip"
                      },
                      {
                          "type": "filesystem",
@@ -84,19 +85,19 @@ def sample_addon_info():
 
 
 def test_register(printer):
-    addon_downloader = AddonDownloader()
+    download_factory = DownloadFactory()
 
-    assert len(addon_downloader._downloaders) == 0, "Contains registered"
+    assert len(download_factory._downloaders) == 0, "Contains registered"
 
-    addon_downloader.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
-    assert len(addon_downloader._downloaders) == 1, "Should contain one"
+    download_factory.register_format(UrlType.FILESYSTEM, OSDownloader)
+    assert len(download_factory._downloaders) == 1, "Should contain one"
 
 
-def test_get_downloader(printer, addon_downloader):
-    assert addon_downloader.get_downloader(UrlType.FILESYSTEM.value), "Should find"  # noqa
+def test_get_downloader(printer, download_factory):
+    assert download_factory.get_downloader(UrlType.FILESYSTEM.value), "Should find"  # noqa
 
     with pytest.raises(ValueError):
-        addon_downloader.get_downloader("unknown"), "Shouldn't find"
+        download_factory.get_downloader("unknown"), "Shouldn't find"
 
 
 def test_addon_info(printer, sample_addon_info):
@@ -147,21 +148,36 @@ def test_addon_info(printer, sample_addon_info):
 
 
 def test_update_addon_state(printer, sample_addon_info,
-                            temp_folder, addon_downloader):
+                            temp_folder, download_factory):
     """Tests possible cases of addon update."""
     addon_info = AddonInfo.from_dict(sample_addon_info)
     orig_hash = addon_info.hash
 
+    # Cause crash because of invalid hash
     addon_info.hash = "brokenhash"
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.FAILED.value, \
-        "Update should failed because of wrong hash"
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, download_factory, [addon_info], None
+    )
+    distribution.distribute()
+    dist_items = distribution.get_addons_dist_items()
+    slack_state = dist_items["openpype_slack_1.0.0"].state
+    assert slack_state == UpdateState.UPDATE_FAILED, (
+        "Update should have failed because of wrong hash")
 
+    # Fix cache and validate if was updated
     addon_info.hash = orig_hash
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.UPDATED.value, \
-        "Addon should have been updated"
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, download_factory, [addon_info], None
+    )
+    distribution.distribute()
+    dist_items = distribution.get_addons_dist_items()
+    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+        "Addon should have been updated")
 
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.EXISTS.value, \
-        "Addon should already exist"
+    # Is UPDATED without calling distribute
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, download_factory, [addon_info], None
+    )
+    dist_items = distribution.get_addons_dist_items()
+    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+        "Addon should already exist")
