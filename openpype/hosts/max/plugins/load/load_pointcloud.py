@@ -34,14 +34,17 @@ class PointCloudLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-
-        prt_objects = self.get_container_children(node)
-        for prt_object in prt_objects:
-            prt_object.source = path
+        rt.select(node.Children)
+        for prt in rt.selection:
+            prt_object = rt.getNodeByName(prt.name)
+            prt_object.filename = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         """remove the container"""
