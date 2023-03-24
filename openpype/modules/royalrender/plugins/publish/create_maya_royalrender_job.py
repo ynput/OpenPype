@@ -6,10 +6,11 @@ import platform
 
 from maya.OpenMaya import MGlobal  # noqa
 from pyblish.api import InstancePlugin, IntegratorOrder, Context
+from openpype.lib import is_running_from_build
 from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
 from openpype.modules.royalrender.api import Api as rrApi
-from openpype.modules.royalrender.rr_job import RRJob
+from openpype.modules.royalrender.rr_job import RRJob, CustomAttribute
 
 
 class CreateMayaRoyalRenderJob(InstancePlugin):
@@ -58,6 +59,14 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
         layer = self._instance.data["setMembers"]  # type: str
         layer_name = layer.removeprefix("rs_")
 
+        custom_attributes = []
+        if is_running_from_build():
+            custom_attributes = [
+                CustomAttribute(
+                    name="OpenPypeVersion",
+                    value=os.environ.get("OPENPYPE_VERSION"))
+            ]
+
         job = RRJob(
             Software="Maya",
             Renderer=self._instance.data["renderer"],
@@ -81,7 +90,9 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
             CompanyProjectName=self._instance.context.data["projectName"],
             ImageWidth=self._instance.data["resolutionWidth"],
             ImageHeight=self._instance.data["resolutionHeight"],
+            CustomAttributes=custom_attributes
         )
+
         return job
 
     def process(self, instance):
