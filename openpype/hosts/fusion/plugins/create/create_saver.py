@@ -4,29 +4,34 @@ import qtawesome
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
-    comp_lock_and_undo_chunk
+    comp_lock_and_undo_chunk,
 )
 
-from openpype.lib import BoolDef
+from openpype.lib import (
+    BoolDef,
+    EnumDef,
+)
 from openpype.pipeline import (
     legacy_io,
     Creator,
-    CreatedInstance
+    CreatedInstance,
 )
-from openpype.client import get_asset_by_name
+from openpype.client import (
+    get_asset_by_name,
+)
 
 
 class CreateSaver(Creator):
     identifier = "io.openpype.creators.fusion.saver"
-    name = "saver"
-    label = "Saver"
+    label = "Render (saver)"
+    name = "render"
     family = "render"
-    default_variants = ["Main"]
-
+    default_variants = ["Main", "Mask"]
     description = "Fusion Saver to generate image sequence"
 
-    def create(self, subset_name, instance_data, pre_create_data):
+    instance_attributes = ["reviewable"]
 
+    def create(self, subset_name, instance_data, pre_create_data):
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
 
@@ -58,7 +63,8 @@ class CreateSaver(Creator):
             family=self.family,
             subset_name=subset_name,
             data=instance_data,
-            creator=self)
+            creator=self,
+        )
 
         # Insert the transient data
         instance.transient_data["tool"] = saver
@@ -68,11 +74,9 @@ class CreateSaver(Creator):
         return instance
 
     def collect_instances(self):
-
         comp = get_current_comp()
         tools = comp.GetToolList(False, "Saver").values()
         for tool in tools:
-
             data = self.get_managed_tool_data(tool)
             if not data:
                 data = self._collect_unmanaged_saver(tool)
@@ -90,7 +94,6 @@ class CreateSaver(Creator):
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
-
             new_data = created_inst.data_to_store()
             tool = created_inst.transient_data["tool"]
             self._update_tool_with_data(tool, new_data)
@@ -139,7 +142,6 @@ class CreateSaver(Creator):
                 tool.SetAttrs({"TOOLS_Name": subset})
 
     def _collect_unmanaged_saver(self, tool):
-
         # TODO: this should not be done this way - this should actually
         #       get the data as stored on the tool explicitly (however)
         #       that would disallow any 'regular saver' to be collected
@@ -153,8 +155,7 @@ class CreateSaver(Creator):
         asset = legacy_io.Session["AVALON_ASSET"]
         task = legacy_io.Session["AVALON_TASK"]
 
-        asset_doc = get_asset_by_name(project_name=project,
-                                      asset_name=asset)
+        asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
 
         path = tool["Clip"][comp.TIME_UNDEFINED]
         fname = os.path.basename(path)
@@ -178,21 +179,20 @@ class CreateSaver(Creator):
             "variant": variant,
             "active": not passthrough,
             "family": self.family,
-
             # Unique identifier for instance and this creator
             "id": "pyblish.avalon.instance",
-            "creator_identifier": self.identifier
+            "creator_identifier": self.identifier,
         }
 
     def get_managed_tool_data(self, tool):
         """Return data of the tool if it matches creator identifier"""
-        data = tool.GetData('openpype')
+        data = tool.GetData("openpype")
         if not isinstance(data, dict):
             return
 
         required = {
             "id": "pyblish.avalon.instance",
-            "creator_identifier": self.identifier
+            "creator_identifier": self.identifier,
         }
         for key, value in required.items():
             if key not in data or data[key] != value:
@@ -205,11 +205,40 @@ class CreateSaver(Creator):
 
         return data
 
-    def get_instance_attr_defs(self):
-        return [
-            BoolDef(
-                "review",
-                default=True,
-                label="Review"
-            )
+    def get_pre_create_attr_defs(self):
+        """Settings for create page"""
+        attr_defs = [
+            self._get_render_target_enum(),
+            self._get_reviewable_bool(),
         ]
+        return attr_defs
+
+    def get_instance_attr_defs(self):
+        """Settings for publish page"""
+        attr_defs = [
+            self._get_render_target_enum(),
+            self._get_reviewable_bool(),
+        ]
+        return attr_defs
+
+    # These functions below should be moved to another file
+    # so it can be used by other plugins. plugin.py ?
+
+    def _get_render_target_enum(self):
+        rendering_targets = {
+            "local": "Local machine rendering",
+            "frames": "Use existing frames",
+        }
+        if "farm_rendering" in self.instance_attributes:
+            rendering_targets["farm"] = "Farm rendering"
+
+        return EnumDef(
+            "render_target", items=rendering_targets, label="Render target"
+        )
+
+    def _get_reviewable_bool(self):
+        return BoolDef(
+            "review",
+            default=("reviewable" in self.instance_attributes),
+            label="Review",
+        )
