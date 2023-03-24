@@ -1122,11 +1122,15 @@ def format_anatomy(data):
     anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    padding = int(
-        anatomy.templates["render"].get(
-            "frame_padding"
+    padding = None
+    if "frame_padding" in anatomy.templates.keys():
+        padding = int(anatomy.templates["frame_padding"])
+    elif "render" in anatomy.templates.keys():
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding"
+            )
         )
-    )
 
     version = data.get("version", None)
     if not version:
@@ -2054,6 +2058,11 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value, dict):
                 continue
+
+            # ignore knobs that are not in root node
+            if knob not in self._root_node.knobs().keys():
+                continue
+
             if self._root_node[knob].value() not in value:
                 self._root_node[knob].setValue(str(value))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
