@@ -120,7 +120,10 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
 
             self.scene_path = file_path
 
-        self._instance.data["rrJobs"] = [self.get_job()]
+        if not self._instance.data.get("rrJobs"):
+            self._instance.data["rrJobs"] = []
+
+        self._instance.data["rrJobs"] += self.get_job()
 
     @staticmethod
     def _iter_expected_files(exp):

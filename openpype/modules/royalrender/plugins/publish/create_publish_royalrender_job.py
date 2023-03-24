@@ -123,16 +123,16 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         ]
 
         job = RRJob(
-            Software="Execute",
+            Software="OpenPype",
             Renderer="Once",
             # path to OpenPype
             SeqStart=1,
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
-            Version="1.0",
+            Version=os.environ.get("OPENPYPE_VERSION"),
             # executable
-            SceneName="",
+            SceneName=roothless_metadata_path,
             # command line arguments
             CustomAddCmdFlags=" ".join(args),
             IsActive=True,
@@ -157,7 +157,9 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         self.log.info("Creating RoyalRender Publish job ...")
 
-        url = "{}/api/jobs".format(self.deadline_url)
-        response = requests.post(url, json=payload, timeout=10)
-        if not response.ok:
-            raise Exception(response.text)
+        if not instance.data.get("rrJobs"):
+            self.log.error("There is no RoyalRender job on the instance.")
+            raise KnownPublishError(
+                "Can't create publish job without producing jobs")
+
+        instance.data["rrJobs"] += job
