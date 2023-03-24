@@ -124,7 +124,7 @@ class TestValidateSequenceFrames(BaseTest):
         with pytest.raises(ValueError) as excinfo:
             plugin.process(instance)
         assert ("Invalid frame range: (1001, 1002) - expected: (1001, 1003)" in
-               str(excinfo.value))
+                str(excinfo.value))
 
     def test_validate_sequence_frames_multi_frame_hole(self, instance, plugin):
         representations = [
@@ -139,5 +139,6 @@ class TestValidateSequenceFrames(BaseTest):
         with pytest.raises(AssertionError) as excinfo:
             plugin.process(instance)
         assert ("Missing frames: [1002]" in str(excinfo.value))
+
 
 test_case = TestValidateSequenceFrames()
