@@ -151,7 +151,7 @@
                     "key": "local_openpype_path",
                     "label": "Custom Local Versions Folder",
                     "multiplatform": true,
-                    "multipath": true,
+                    "multipath": false,
                     "require_restart": true
                 },
                 {
