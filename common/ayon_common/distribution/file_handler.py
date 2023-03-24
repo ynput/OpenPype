@@ -62,7 +62,7 @@ class RemoteFileHandler:
             return True
         if not hash_type:
             raise ValueError("Provide hash type, md5 or sha256")
-        if hash_type == 'md5':
+        if hash_type == "md5":
             return RemoteFileHandler.check_md5(fpath, hash_value)
         if hash_type == "sha256":
             return RemoteFileHandler.check_sha256(fpath, hash_value)
@@ -70,7 +70,7 @@ class RemoteFileHandler:
     @staticmethod
     def download_url(
         url, root, filename=None,
-        sha256=None, max_redirect_hops=3
+        sha256=None, max_redirect_hops=3, headers=None
     ):
         """Download a file from a url and place it in root.
         Args:
@@ -82,6 +82,7 @@ class RemoteFileHandler:
                 If None, do not check
             max_redirect_hops (int, optional): Maximum number of redirect
                 hops allowed
+            headers (dict): additional required headers - Authentication etc..
         """
         root = os.path.expanduser(root)
         if not filename:
@@ -93,12 +94,13 @@ class RemoteFileHandler:
         # check if file is already present locally
         if RemoteFileHandler.check_integrity(fpath,
                                              sha256, hash_type="sha256"):
-            print('Using downloaded and verified file: ' + fpath)
+            print(f"Using downloaded and verified file: {fpath}")
             return
 
         # expand redirect chain if needed
         url = RemoteFileHandler._get_redirect_url(url,
-                                                  max_hops=max_redirect_hops)
+                                                  max_hops=max_redirect_hops,
+                                                  headers=headers)
 
         # check if file is located on Google Drive
         file_id = RemoteFileHandler._get_google_drive_file_id(url)
@@ -108,14 +110,17 @@ class RemoteFileHandler:
 
         # download the file
         try:
-            print('Downloading ' + url + ' to ' + fpath)
-            RemoteFileHandler._urlretrieve(url, fpath)
+            print(f"Downloading {url} to {fpath}")
+            RemoteFileHandler._urlretrieve(url, fpath, headers=headers)
         except (urllib.error.URLError, IOError) as e:
-            if url[:5] == 'https':
-                url = url.replace('https:', 'http:')
-                print('Failed download. Trying https -> http instead.'
-                      ' Downloading ' + url + ' to ' + fpath)
-                RemoteFileHandler._urlretrieve(url, fpath)
+            if url[:5] == "https":
+                url = url.replace("https:", "http:")
+                print((
+                    "Failed download. Trying https -> http instead."
+                    f" Downloading {url} to {fpath}"
+                ))
+                RemoteFileHandler._urlretrieve(url, fpath,
+                                               headers=headers)
             else:
                 raise e
 
@@ -216,11 +221,16 @@ class RemoteFileHandler:
             tar_file.close()
 
     @staticmethod
-    def _urlretrieve(url, filename, chunk_size):
+    def _urlretrieve(url, filename, chunk_size=None, headers=None):
+        final_headers = {"User-Agent": USER_AGENT}
+        if headers:
+            final_headers.update(headers)
+
+        chunk_size = chunk_size or 8192
         with open(filename, "wb") as fh:
             with urllib.request.urlopen(
                 urllib.request.Request(url,
-                                       headers={"User-Agent": USER_AGENT})) \
+                                       headers=final_headers)) \
                     as response:
                 for chunk in iter(lambda: response.read(chunk_size), ""):
                     if not chunk:
@@ -228,13 +238,15 @@ class RemoteFileHandler:
                     fh.write(chunk)
 
     @staticmethod
-    def _get_redirect_url(url, max_hops):
+    def _get_redirect_url(url, max_hops, headers=None):
         initial_url = url
-        headers = {"Method": "HEAD", "User-Agent": USER_AGENT}
-
+        final_headers = {"Method": "HEAD", "User-Agent": USER_AGENT}
+        if headers:
+            final_headers.update(headers)
         for _ in range(max_hops + 1):
             with urllib.request.urlopen(
-                    urllib.request.Request(url, headers=headers)) as response:
+                    urllib.request.Request(url,
+                                           headers=final_headers)) as response:
                 if response.url == url or response.url is None:
                     return url
 
