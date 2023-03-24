@@ -1,6 +1,7 @@
 import collections
 from copy import deepcopy
 import pyblish.api
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_archived_assets
@@ -16,6 +17,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     families = ["clip", "shot"]
 
     def process(self, context):
+        if AYON_SERVER_ENABLED:
+            return
+
         if "hierarchyContext" not in context.data:
             self.log.info("skipping IntegrateHierarchyToAvalon")
             return
