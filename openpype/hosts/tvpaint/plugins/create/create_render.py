@@ -415,11 +415,11 @@ class CreateRenderPass(TVPaintCreator):
                 .get("creator_attributes", {})
                 .get("render_layer_instance_id")
             )
-            render_layer_info = render_layers.get(render_layer_instance_id)
+            render_layer_info = render_layers.get(render_layer_instance_id, {})
             self.update_instance_labels(
                 instance_data,
-                render_layer_info["variant"],
-                render_layer_info["template_data"]
+                render_layer_info.get("variant"),
+                render_layer_info.get("template_data")
             )
             instance = CreatedInstance.from_existing(instance_data, self)
             self._add_instance_to_context(instance)
