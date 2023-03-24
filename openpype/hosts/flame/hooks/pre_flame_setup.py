@@ -47,12 +47,9 @@ class FlamePrelaunch(PreLaunchHook):
 
         imageio_flame = project_settings["flame"]["imageio"]
 
-        colormanaged = True
-        # check if host settings are having enabled key and if it is False
-        if imageio_flame.get("enabled") and imageio_flame["enabled"] is False:
-            # if host settings are disabled return False because
-            # it is expected that no colorspace management is needed
-            colormanaged = False
+        colormanaged = imageio_flame.get("enabled")
+        if colormanaged is None:
+            colormanaged = True
 
         # get user name and host name
         user_name = get_openpype_username()
