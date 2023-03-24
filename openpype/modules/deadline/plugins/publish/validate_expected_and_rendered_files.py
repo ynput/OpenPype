@@ -68,8 +68,15 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
             # files to be in the folder that we might not want to use.
             missing = expected_files - existing_files
             if missing:
-                raise RuntimeError("Missing expected files: {}".format(
-                    sorted(missing)))
+                raise RuntimeError(
+                    "Missing expected files: {}\n"
+                    "Expected files: {}\n"
+                    "Existing files: {}".format(
+                        sorted(missing),
+                        sorted(expected_files),
+                        sorted(existing_files)
+                    )
+                )
 
     def _get_frame_list(self, original_job_id):
         """Returns list of frame ranges from all render job.

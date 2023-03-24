@@ -1,5 +1,6 @@
 import os
 import json
+import contextlib
 
 import clique
 import capture
@@ -9,6 +10,16 @@ from openpype.hosts.maya.api import lib
 
 from maya import cmds
 import pymel.core as pm
+
+
+@contextlib.contextmanager
+def panel_camera(panel, camera):
+    original_camera = cmds.modelPanel(panel, query=True, camera=True)
+    try:
+        cmds.modelPanel(panel, edit=True, camera=camera)
+        yield
+    finally:
+        cmds.modelPanel(panel, edit=True, camera=original_camera)
 
 
 class ExtractPlayblast(publish.Extractor):
@@ -24,6 +35,31 @@ class ExtractPlayblast(publish.Extractor):
     families = ["review"]
     optional = True
     capture_preset = {}
+
+    def _capture(self, preset, override_viewport_options, instance):
+        filename = preset.get("filename", "%TEMP%")
+
+        # Force viewer to False in call to capture because we have our own
+        # viewer opening call to allow a signal to trigger between
+        # playblast and viewer
+        preset['viewer'] = False
+
+        # Update preset with current panel setting
+        # if override_viewport_options is turned off
+        if not override_viewport_options:
+            panel_preset = capture.parse_view(instance.data["panel"])
+            panel_preset.pop("camera")
+            preset.update(panel_preset)
+
+        self.log.info(
+            "Using preset:\n{}".format(
+                json.dumps(preset, sort_keys=True, indent=4)
+            )
+        )
+
+        path = capture.capture(log=self.log, **preset)
+
+        return filename, path
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -112,15 +148,6 @@ class ExtractPlayblast(publish.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
-        # Image planes do not update the file sequence unless the active panel
-        # is viewing through the camera.
-        panel_camera = cmds.modelPanel(
-            instance.data["panel"], query=True, camera=True
-        )
-        cmds.modelPanel(
-            instance.data["panel"], edit=True, camera=preset["camera"]
-        )
-
         # Disable Pan/Zoom.
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
@@ -147,28 +174,25 @@ class ExtractPlayblast(publish.Extractor):
         override_viewport_options = (
             capture_presets['Viewport Options']['override_viewport_options']
         )
-        with lib.maintained_time():
-            filename = preset.get("filename", "%TEMP%")
 
-            # Force viewer to False in call to capture because we have our own
-            # viewer opening call to allow a signal to trigger between
-            # playblast and viewer
-            preset['viewer'] = False
-
-            # Update preset with current panel setting
-            # if override_viewport_options is turned off
-            if not override_viewport_options:
-                panel_preset = capture.parse_view(instance.data["panel"])
-                panel_preset.pop("camera")
-                preset.update(panel_preset)
-
-            self.log.info(
-                "Using preset:\n{}".format(
-                    json.dumps(preset, sort_keys=True, indent=4)
+        if getattr(contextlib, "nested", None):
+            with contextlib.nested(
+                lib.maintained_time(),
+                panel_camera(instance.data["panel"], preset["camera"])
+            ):
+                filename, path = self._capture(
+                    preset, override_viewport_options, instance
                 )
-            )
+        else:
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(lib.maintained_time())
+                stack.enter_context(
+                    panel_camera(instance.data["panel"], preset["camera"])
+                )
 
-            path = capture.capture(log=self.log, **preset)
+                filename, path = self._capture(
+                    preset, override_viewport_options, instance
+                )
 
         # Restoring viewport options.
         if viewport_defaults:
@@ -177,9 +201,6 @@ class ExtractPlayblast(publish.Extractor):
             )
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-
-        # Restore panel camera.
-        cmds.modelPanel(instance.data["panel"], edit=True, camera=panel_camera)
 
         self.log.debug("playblast path  {}".format(path))
 
