@@ -511,6 +511,9 @@ class ExtractLook(publish.Extractor):
                 "sourceHash",
                 texture_hash
             ]
+
+            config_path = None
+
             if linearize:
                 if cmds.colorManagementPrefs(query=True, cmEnabled=True):
                     render_colorspace = cmds.colorManagementPrefs(query=True,
@@ -536,7 +539,6 @@ class ExtractLook(publish.Extractor):
                                             color_space,
                                             render_colorspace])
                 else:
-                    config_path = None
                     if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
