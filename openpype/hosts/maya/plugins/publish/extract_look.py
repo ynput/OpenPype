@@ -424,7 +424,9 @@ class ExtractLook(publish.Extractor):
                            "{}".format(processors))
 
         self.log.debug("Processing resources..")
-        results = self.process_resources(instance, staging_dir=dir_path)
+        results = self.process_resources(instance,
+                                         staging_dir=dir_path,
+                                         processors=processors)
         transfers = results["fileTransfers"]
         hardlinks = results["fileHardlinks"]
         hashes = results["fileHashes"]
