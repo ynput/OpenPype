@@ -10,6 +10,7 @@ import tempfile
 import platform
 import contextlib
 from collections import OrderedDict
+import attr
 
 from maya import cmds  # noqa
 
@@ -24,6 +25,19 @@ from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 # Modes for transfer
 COPY = 1
 HARDLINK = 2
+
+
+@attr.s
+class TextureResult:
+    # Path to the file
+    path = attr.ib()
+    # Colorspace of the resulting texture. This might not be the input
+    # colorspace of the texture if a TextureProcessor has processed the file.
+    colorspace = attr.ib()
+    # Hash generated for the texture using openpype.lib.source_hash
+    file_hash = attr.ib()
+    # The transfer mode, e.g. COPY or HARDLINK
+    transfer_mode = attr.ib()
 
 
 def find_paths_by_hash(texture_hash):
@@ -46,7 +60,7 @@ def find_paths_by_hash(texture_hash):
 class TextureProcessor:
     def __init__(self, log=None):
         if log is None:
-            log = logging.getLogger(self.__class___.__name__)
+            log = logging.getLogger(self.__class__.__name__)
         self.log = log
 
     @abstractmethod
@@ -66,6 +80,10 @@ class TextureProcessor:
     @abstractmethod
     def get_extension():
         pass
+
+    def __repr__(self):
+        # Log instance as class name
+        return self.__class__.__name__
 
 
 class MakeRSTexBin(TextureProcessor):
@@ -100,6 +118,9 @@ class MakeRSTexBin(TextureProcessor):
             source
         ]
 
+        hash_args = ["rstex"]
+        texture_hash = source_hash(source, *hash_args)
+
         self.log.debug(" ".join(subprocess_args))
         try:
             out = run_subprocess(subprocess_args)
@@ -108,8 +129,12 @@ class MakeRSTexBin(TextureProcessor):
                            exc_info=True)
             raise
 
-        # TODO: Implement correct return values
-        return out
+        return TextureResult(
+            path=out,
+            file_hash=texture_hash,
+            colorspace=colorspace,
+            transfer_mode=COPY
+        )
 
     @staticmethod
     def get_extension():
@@ -192,10 +217,13 @@ class MakeTX(TextureProcessor):
         # Define .tx filepath in staging if source file is not .tx
         fname, ext = os.path.splitext(os.path.basename(source))
         if ext == ".tx":
-            # TODO: Implement this fallback
             # Do nothing if the source file is already a .tx file.
-            # return source, COPY, texture_hash, render_colorspace
-            pass
+            return TextureResult(
+                path=source,
+                file_hash=None,     # todo: unknown texture hash?
+                colorspace=colorspace,
+                transfer_mode=COPY
+            )
 
         args = []
         if color_management["enabled"]:
@@ -286,7 +314,12 @@ class MakeTX(TextureProcessor):
                            exc_info=True)
             raise
 
-        return destination, COPY, texture_hash, render_colorspace
+        return TextureResult(
+            path=destination,
+            file_hash=texture_hash,
+            colorspace=render_colorspace,
+            transfer_mode=COPY
+        )
 
     @staticmethod
     def get_extension():
@@ -510,17 +543,17 @@ class ExtractLook(publish.Extractor):
 
     def _set_resource_result_colorspace(self, resource, colorspace):
         """Update resource resulting colorspace after texture processing"""
-        if "result_colorspace" in resource:
-            if resource["result_colorspace"] == colorspace:
+        if "result_color_space" in resource:
+            if resource["result_color_space"] == colorspace:
                 return
 
             self.log.warning(
                 "Resource already has a resulting colorspace but is now "
                 "being overridden to a new one: {} -> {}".format(
-                    resource["result_colorspace"], colorspace
+                    resource["result_color_space"], colorspace
                 )
             )
-        resource["result_colorspace"] = colorspace
+        resource["result_color_space"] = colorspace
 
     def process_resources(self, instance, staging_dir, processors):
         """Process all resources in the instance.
@@ -592,37 +625,33 @@ class ExtractLook(publish.Extractor):
                     color_management=color_management,
                     colorspace=colorspace
                 )
-                source, mode, texture_hash, result_colorspace = texture_result
+                source = texture_result.path
                 destination = self.resource_destination(instance,
-                                                        source,
+                                                        texture_result.path,
                                                         processors)
 
                 # Set the resulting color space on the resource
                 self._set_resource_result_colorspace(
-                    resource, colorspace=result_colorspace
+                    resource, colorspace=texture_result.colorspace
                 )
 
                 processed_files[filepath] = {
                     "color_space": colorspace,
-                    "result_color_space": result_colorspace,
+                    "result_color_space": texture_result.colorspace,
                 }
 
-                # Force copy is specified.
-                if force_copy:
-                    mode = COPY
-
-                if mode == COPY:
+                if force_copy or texture_result.transfer_mode == COPY:
                     transfers.append((source, destination))
                     self.log.info('file will be copied {} -> {}'.format(
                         source, destination))
-                elif mode == HARDLINK:
+                elif texture_result.transfer_mode == HARDLINK:
                     hardlinks.append((source, destination))
                     self.log.info('file will be hardlinked {} -> {}'.format(
                         source, destination))
 
                 # Store the hashes from hash to destination to include in the
                 # database
-                hashes[texture_hash] = destination
+                hashes[texture_result.file_hash] = destination
 
             source = os.path.normpath(resource["source"])
             if source not in destinations:
@@ -697,10 +726,9 @@ class ExtractLook(publish.Extractor):
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
         if existing:
-            self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
             if source:
-                return source, HARDLINK, texture_hash
+                return source
             else:
                 self.log.warning(
                     "Paths not found on disk, "
@@ -722,7 +750,7 @@ class ExtractLook(publish.Extractor):
 
         Args:
             filepath (str): The source file path to process.
-            processors (list): List of TexProcessor processing the texture
+            processors (list): List of TextureProcessor processing the texture
             staging_dir (str): The staging directory to write to.
             force_copy (bool): Whether to force a copy even if a file hash
                 might have existed already in the project, otherwise
@@ -733,7 +761,7 @@ class ExtractLook(publish.Extractor):
                 texture belongs to.
 
         Returns:
-            tuple: (filepath, copy_mode, texture_hash, result_colorspace)
+            TextureResult: The texture result information.
         """
 
         if len(processors) > 1:
@@ -742,7 +770,6 @@ class ExtractLook(publish.Extractor):
                 "Current processors enabled: {}".format(processors)
             )
 
-        # TODO: Make all processors take the same arguments
         for processor in processors:
             self.log.debug("Processing texture {} with processor {}".format(
                 filepath, processor
@@ -755,21 +782,32 @@ class ExtractLook(publish.Extractor):
             if not processed_result:
                 raise RuntimeError("Texture Processor {} returned "
                                    "no result.".format(processor))
-
-            processed_path, processed_texture_hash = processed_result
             self.log.info("Generated processed "
-                          "texture: {}".format(processed_path))
+                          "texture: {}".format(processed_result.path))
 
-            return processed_path, COPY, processed_texture_hash
+            # TODO: Currently all processors force copy instead of allowing
+            #       hardlinks using source hashes. This should be refactored
+            return processed_result
 
-        # No special treatment for this file
+        # No texture processing for this file
         texture_hash = source_hash(filepath)
         if not force_copy:
             existing = self._get_existing_hashed_texture(filepath)
             if existing:
-                return existing
+                self.log.info("Found hash in database, preparing hardlink..")
+                return TextureResult(
+                    path=filepath,
+                    file_hash=texture_hash,
+                    colorspace=colorspace,
+                    transfer_mode=HARDLINK
+                )
 
-        return filepath, COPY, texture_hash, colorspace
+        return TextureResult(
+            path=filepath,
+            file_hash=texture_hash,
+            colorspace=colorspace,
+            transfer_mode=COPY
+        )
 
 
 class ExtractModelRenderSets(ExtractLook):
