@@ -402,6 +402,25 @@ class ExtractLook(publish.Extractor):
             self.log.info("No sets found")
             return
 
+        # Specify texture processing executables to activate
+        # TODO: Load these more dynamically once we support more processors
+        processors = []
+        context = instance.context
+        for key, Processor in {
+            # Instance data key to texture processor mapping
+            "maketx": MakeTX,
+            "rstex": MakeRSTexBin
+        }.items():
+            if instance.data.get(key, False):
+                processor = Processor()
+                processor.apply_settings(context.data["system_settings"],
+                                         context.data["project_settings"])
+                processors.append(processor)
+
+        if processors:
+            self.log.debug("Collected texture processors: "
+                           "{}".format(processors))
+
         self.log.debug("Processing resources..")
         results = self.process_resources(instance, staging_dir=dir_path)
         transfers = results["fileTransfers"]
@@ -499,7 +518,7 @@ class ExtractLook(publish.Extractor):
             )
         resource["result_colorspace"] = colorspace
 
-    def process_resources(self, instance, staging_dir):
+    def process_resources(self, instance, staging_dir, processors):
         """Process all resources in the instance.
 
         It is assumed that all resources are nodes using file textures.
@@ -512,7 +531,6 @@ class ExtractLook(publish.Extractor):
         """
 
         resources = instance.data["resources"]
-        do_maketx = instance.data.get("maketx", False)
         color_management = lib.get_color_management_preferences()
 
         # Temporary fix to NOT create hardlinks on windows machines
@@ -531,14 +549,6 @@ class ExtractLook(publish.Extractor):
         hashes = {}
         destinations = {}
         remap = OrderedDict()
-
-        # Specify texture processing executables to activate
-        processors = []
-        if instance.data.get("maketx", False):
-            processors.append(MakeTX)
-        # Option to convert textures to native redshift textures
-        if instance.data.get("rstex", False):
-            processors.append(MakeRSTexBin)
 
         for resource in resources:
             colorspace = resource["color_space"]
@@ -724,9 +734,6 @@ class ExtractLook(publish.Extractor):
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
-        args = []
-        hash_args = []
-
         if len(processors) > 1:
             raise KnownPublishError(
                 "More than one texture processor not supported. "
@@ -741,7 +748,8 @@ class ExtractLook(publish.Extractor):
 
             processed_result = processor.process(filepath,
                                                  colorspace,
-                                                 color_management)
+                                                 color_management,
+                                                 staging_dir)
             if not processed_result:
                 raise RuntimeError("Texture Processor {} returned "
                                    "no result.".format(processor))
