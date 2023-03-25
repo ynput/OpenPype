@@ -139,13 +139,31 @@ class MakeRSTexBin(TextureProcessor):
 
 
 class MakeTX(TextureProcessor):
+    """Make `.tx` using `maketx` with some default settings."""
+
+    def __init__(self, log=None):
+        super(MakeTX, self).__init__(log=log)
+        self.extra_args = []
+
+    def apply_settings(self, system_settings, project_settings):
+        # Allow extra maketx arguments from project settings
+        extra_args_dict = (
+            project_settings["maya"]["publish"]
+                .get("ExtractLook", {})
+                .get("maketx_arguments", {})
+        )
+        extra_args = []
+        for flag, value in extra_args_dict.items():
+            extra_args.append(flag)
+            extra_args.append(value)
+        self.extra_args = extra_args
 
     def process(self,
                 source,
                 colorspace,
                 color_management,
                 staging_dir):
-        """Make `.tx` using `maketx` with some default settings.
+        """
 
         The settings are based on default as used in Arnold's
         txManager in the scene.
@@ -154,6 +172,10 @@ class MakeTX(TextureProcessor):
 
         Args:
             source (str): Path to source file.
+            colorspace (str): Colorspace of the source file.
+            color_management (dict): Maya Color management data from
+                `lib.get_color_management_preferences`
+            staging_dir (str): Output directory to write to.
 
         Returns:
             str: Output of `maketx` command.
@@ -230,9 +252,9 @@ class MakeTX(TextureProcessor):
         ])
 
         # Ensure folder exists
-        converted = os.path.join(staging_dir, "resources", fname + ".tx")
-        if not os.path.exists(os.path.dirname(converted)):
-            os.makedirs(os.path.dirname(converted))
+        destination = os.path.join(staging_dir, "resources", fname + ".tx")
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
 
         self.log.info("Generating .tx file for %s .." % source)
 
@@ -250,6 +272,8 @@ class MakeTX(TextureProcessor):
         ]
 
         subprocess_args.extend(args)
+        if self.extra_args:
+            subprocess_args.extend(self.extra_args)
         subprocess_args.extend(["-o", destination])
 
         self.log.debug(" ".join(subprocess_args))
@@ -260,7 +284,7 @@ class MakeTX(TextureProcessor):
                            exc_info=True)
             raise
 
-        return converted, COPY, texture_hash, render_colorspace
+        return destination, COPY, texture_hash, render_colorspace
 
     @staticmethod
     def get_extension():
