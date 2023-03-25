@@ -217,10 +217,9 @@ class MakeTX(TextureProcessor):
                                  "color conversion won't be "
                                  "available!")
 
-        args.append("maketx")
-        args.extend(args)
-
-        texture_hash = source_hash(source, *args)
+        hash_args = ["maketx"]
+        hash_args.extend(args)
+        texture_hash = source_hash(source, *hash_args)
 
         # Exclude these additional arguments from the hashing because
         # it is the hash itself
