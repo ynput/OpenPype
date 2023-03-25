@@ -63,7 +63,6 @@ class TextureProcessor:
             log = logging.getLogger(self.__class__.__name__)
         self.log = log
 
-    @abstractmethod
     def apply_settings(self, system_settings, project_settings):
         pass
 
@@ -73,11 +72,28 @@ class TextureProcessor:
                 colorspace,
                 color_management,
                 staging_dir):
+        """Process the `source` texture.
+
+        Must be implemented on inherited class.
+
+        This must always return a TextureResult even when it does not generate
+        a texture. If it doesn't generate a texture then it should return a
+        TextureResult using the input path and colorspace.
+
+        Args:
+            source (str): Path to source file.
+            colorspace (str): Colorspace of the source file.
+            color_management (dict): Maya Color management data from
+                `lib.get_color_management_preferences`
+            staging_dir (str): Output directory to write to.
+
+        Returns:
+            TextureResult: The resulting texture information.
+
+        """
         pass
 
-    # TODO: Warning this only supports Py3.3+
     @staticmethod
-    @abstractmethod
     def get_extension():
         pass
 
@@ -164,7 +180,12 @@ class MakeRSTexBin(TextureProcessor):
 
 
 class MakeTX(TextureProcessor):
-    """Make `.tx` using `maketx` with some default settings."""
+    """Make `.tx` using `maketx` with some default settings.
+
+    Some hardcoded arguments passed to `maketx` are based on the defaults used
+    in Arnold's txManager tool.
+
+    """
 
     def __init__(self, log=None):
         super(MakeTX, self).__init__(log=log)
@@ -187,12 +208,10 @@ class MakeTX(TextureProcessor):
                 colorspace,
                 color_management,
                 staging_dir):
-        """
+        """Process the texture.
 
-        The settings are based on default as used in Arnold's
-        txManager in the scene.
         This function requires the `maketx` executable to be
-        on the `PATH`.
+        available in the OIIO tool.
 
         Args:
             source (str): Path to source file.
@@ -202,7 +221,7 @@ class MakeTX(TextureProcessor):
             staging_dir (str): Output directory to write to.
 
         Returns:
-            str: Output of `maketx` command.
+            TextureResult: The resulting texture information.
 
         """
         from openpype.lib import get_oiio_tools_path
@@ -474,7 +493,7 @@ class ExtractLook(publish.Extractor):
                 # To avoid Maya trying to automatically remap the file
                 # textures relative to the `workspace -directory` we force
                 # it to a fake temporary workspace. This fixes textures
-                # getting incorrectly remapped. (LKD-17, PLN-101)
+                # getting incorrectly remapped.
                 with no_workspace_dir():
                     with lib.attribute_values(remap):
                         with lib.maintained_selection():
@@ -710,9 +729,11 @@ class ExtractLook(publish.Extractor):
 
         # Get extension from the last processor
         for processor in reversed(processors):
-            ext = processor.get_extension()
-            self.log.debug("Processor {} defined extension: "
-                           "{}".format(processor, ext))
+            processor_ext = processor.get_extension()
+            if processor_ext:
+                self.log.debug("Processor {} defined extension: "
+                               "{}".format(processor, ext))
+                ext = processor_ext
             break
 
         return os.path.join(
