@@ -2,7 +2,7 @@ name: project-actions
 
 on:
   pull_request:
-    types: [review_requested, closed]
+    types: [review_requested]
   pull_request_review:
     types: [submitted]
 
@@ -16,7 +16,6 @@ jobs:
         uses: leonsteinhaeuser/project-beta-automations@v2.1.0
         with:
           gh_token: ${{ secrets.YNPUT_BOT_TOKEN }}
-          user: ${{ secrets.CI_USER }}
           organization: ynput
           project_id: 11
           resource_node_id: ${{ github.event.pull_request.node_id }}
