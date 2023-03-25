@@ -238,8 +238,11 @@ class MakeTX(TextureProcessor):
                                  "color conversion won't be "
                                  "available!")
 
+        # Note: The texture hash is only reliable if we include any potential
+        # conversion arguments provide to e.g. `maketx`
         hash_args = ["maketx"]
         hash_args.extend(args)
+        hash_args.extend(self.extra_args)
         texture_hash = source_hash(source, *hash_args)
 
         # Exclude these additional arguments from the hashing because
@@ -731,8 +734,6 @@ class ExtractLook(publish.Extractor):
             tuple: (filepath, copy_mode, texture_hash, result_colorspace)
         """
 
-        # Note: The texture hash is only reliable if we include any potential
-        # conversion arguments provide to e.g. `maketx`
         if len(processors) > 1:
             raise KnownPublishError(
                 "More than one texture processor not supported. "
