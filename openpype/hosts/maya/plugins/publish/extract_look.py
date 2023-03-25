@@ -26,37 +26,6 @@ COPY = 1
 HARDLINK = 2
 
 
-def _has_arnold():
-    """Return whether the arnold package is available and can be imported."""
-    try:
-        import arnold  # noqa: F401
-        return True
-    except (ImportError, ModuleNotFoundError):
-        return False
-
-
-def get_redshift_tool(tool_name):
-    """Path to redshift texture processor.
-
-    On Windows it adds .exe extension if missing from tool argument.
-
-    Args:
-        tool (string): Tool name.
-
-    Returns:
-        str: Full path to redshift texture processor executable.
-    """
-    redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
-
-    redshift_tool_path = os.path.join(
-        redshift_os_path,
-        "bin",
-        tool_name
-    )
-
-    return find_executable(redshift_tool_path)
-
-
 def find_paths_by_hash(texture_hash):
     """Find the texture hash key in the dictionary.
 
@@ -75,17 +44,26 @@ def find_paths_by_hash(texture_hash):
 
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
-
     def __init__(self, log=None):
         if log is None:
             log = logging.getLogger(self.__class___.__name__)
+        self.log = log
 
     @abstractmethod
-    def process(self, filepath):
-
+    def apply_settings(self, system_settings, project_settings):
         pass
 
+    @abstractmethod
+    def process(self,
+                source,
+                colorspace,
+                color_management,
+                staging_dir):
+        pass
+
+    # TODO: Warning this only supports Py3.3+
     @staticmethod
+    @abstractmethod
     def get_extension():
         pass
 
@@ -93,10 +71,11 @@ class TextureProcessor:
 class MakeRSTexBin(TextureProcessor):
     """Make `.rstexbin` using `redshiftTextureProcessor`"""
 
-    def __init__(self):
-        super(MakeRSTexBin, self).__init__()
-
-    def process(self, source, *args):
+    def process(self,
+                source,
+                colorspace,
+                color_management,
+                staging_dir):
         """
         with some default settings.
 
@@ -105,23 +84,21 @@ class MakeRSTexBin(TextureProcessor):
 
         Args:
             source (str): Path to source file.
-            *args: Additional arguments for `redshiftTextureProcessor`.
 
         """
         if "REDSHIFT_COREDATAPATH" not in os.environ:
             raise RuntimeError("Must have Redshift available.")
 
-        texture_processor_path = get_redshift_tool("redshiftTextureProcessor")
+        texture_processor_path = self.get_redshift_tool(
+            "redshiftTextureProcessor"
+        )
         if not texture_processor_path:
-            raise KnownPublishError("Must have Redshift available.",
-                                    title="Make RSTexBin texture")
+            raise KnownPublishError("Must have Redshift available.")
 
         subprocess_args = [
             texture_processor_path,
             source
         ]
-
-        subprocess_args.extend(args)
 
         self.log.debug(" ".join(subprocess_args))
         try:
@@ -131,18 +108,43 @@ class MakeRSTexBin(TextureProcessor):
                            exc_info=True)
             raise
 
+        # TODO: Implement correct return values
         return out
 
     @staticmethod
     def get_extension():
         return ".rstexbin"
 
+    @staticmethod
+    def get_redshift_tool(tool_name):
+        """Path to redshift texture processor.
+
+        On Windows it adds .exe extension if missing from tool argument.
+
+        Args:
+            tool (string): Tool name.
+
+        Returns:
+            str: Full path to redshift texture processor executable.
+        """
+        redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+
+        redshift_tool_path = os.path.join(
+            redshift_os_path,
+            "bin",
+            tool_name
+        )
+
+        return find_executable(redshift_tool_path)
+
 
 class MakeTX(TextureProcessor):
-    def __init__(self):
-        super(MakeTX, self).__init__()
 
-    def process(self, source, destination, *args):
+    def process(self,
+                source,
+                colorspace,
+                color_management,
+                staging_dir):
         """Make `.tx` using `maketx` with some default settings.
 
         The settings are based on default as used in Arnold's
@@ -152,8 +154,6 @@ class MakeTX(TextureProcessor):
 
         Args:
             source (str): Path to source file.
-            destination (str): Writing destination path.
-            *args: Additional arguments for `maketx`.
 
         Returns:
             str: Output of `maketx` command.
@@ -164,9 +164,78 @@ class MakeTX(TextureProcessor):
         maketx_path = get_oiio_tools_path("maketx")
 
         if not maketx_path:
-            print(
-                "OIIO tool not found in {}".format(maketx_path))
-            raise AssertionError("OIIO tool not found")
+            raise AssertionError(
+                "OIIO 'maketx' tool not found. Result: {}".format(maketx_path)
+            )
+
+        # Define .tx filepath in staging if source file is not .tx
+        fname, ext = os.path.splitext(os.path.basename(source))
+        if ext == ".tx":
+            # TODO: Implement this fallback
+            # Do nothing if the source file is already a .tx file.
+            # return source, COPY, texture_hash, render_colorspace
+            pass
+
+        args = []
+        if color_management["enabled"]:
+            config_path = color_management["config"]
+            if not os.path.exists(config_path):
+                raise RuntimeError("OCIO config not found at: "
+                                   "{}".format(config_path))
+
+            render_colorspace = color_management["rendering_space"]
+
+            self.log.info("tx: converting colorspace {0} "
+                          "-> {1}".format(colorspace,
+                                          render_colorspace))
+            args.extend(["--colorconvert", colorspace, render_colorspace])
+            args.extend(["--colorconfig", config_path])
+
+        else:
+            # We can't rely on the colorspace attribute when not in color
+            # managed mode because the collected color space is the color space
+            # attribute of the file node which can be any string whatsoever
+            # but only appears disabled in Attribute Editor. We assume we're
+            # always converting to linear/Raw if the source file is assumed to
+            # be sRGB.
+            # TODO Without color management do we even know we can do
+            #      "colorconvert" and what config does that end up using since
+            #       colorconvert is a OCIO command line flag for maketx.
+            #       Also, Raw != linear?
+            render_colorspace = "linear"
+            if self._has_arnold():
+                img_info = image_info(source)
+                color_space = guess_colorspace(img_info)
+                if color_space.lower() == "sRGB":
+                    self.log.info("tx: converting sRGB -> linear")
+                    args.extend(["--colorconvert", "sRGB", "Raw"])
+                else:
+                    self.log.info("tx: texture's colorspace "
+                                  "is already linear")
+            else:
+                self.log.warning("tx: cannot guess the colorspace, "
+                                 "color conversion won't be "
+                                 "available!")
+
+        args.append("maketx")
+        args.extend(args)
+
+        texture_hash = source_hash(source, *args)
+
+        # Exclude these additional arguments from the hashing because
+        # it is the hash itself
+        args.extend([
+            "--sattrib",
+            "sourceHash",
+            texture_hash
+        ])
+
+        # Ensure folder exists
+        converted = os.path.join(staging_dir, "resources", fname + ".tx")
+        if not os.path.exists(os.path.dirname(converted)):
+            os.makedirs(os.path.dirname(converted))
+
+        self.log.info("Generating .tx file for %s .." % source)
 
         subprocess_args = [
             maketx_path,
@@ -186,17 +255,26 @@ class MakeTX(TextureProcessor):
 
         self.log.debug(" ".join(subprocess_args))
         try:
-            out = run_subprocess(subprocess_args)
+            run_subprocess(subprocess_args)
         except Exception:
             self.log.error("Texture maketx conversion failed",
                            exc_info=True)
             raise
 
-        return out
+        return converted, COPY, texture_hash, render_colorspace
 
     @staticmethod
     def get_extension():
         return ".tx"
+
+    @staticmethod
+    def _has_arnold():
+        """Return whether the arnold package is available and importable."""
+        try:
+            import arnold  # noqa: F401
+            return True
+        except (ImportError, ModuleNotFoundError):
+            return False
 
 
 @contextlib.contextmanager
@@ -565,7 +643,7 @@ class ExtractLook(publish.Extractor):
         basename, ext = os.path.splitext(os.path.basename(filepath))
 
         # Get extension from the last processor
-        for processors in reversed(processors):
+        for processor in reversed(processors):
             ext = processor.get_extension()
             self.log.debug("Processor {} defined extension: "
                            "{}".format(processor, ext))
@@ -620,7 +698,6 @@ class ExtractLook(publish.Extractor):
         Returns:
             tuple: (filepath, copy_mode, texture_hash, result_colorspace)
         """
-        fname, ext = os.path.splitext(os.path.basename(filepath))
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
@@ -629,104 +706,28 @@ class ExtractLook(publish.Extractor):
 
         if len(processors) > 1:
             raise KnownPublishError(
-                "More than one texture processor not supported"
+                "More than one texture processor not supported. "
+                "Current processors enabled: {}".format(processors)
             )
 
         # TODO: Make all processors take the same arguments
         for processor in processors:
-            if processor is MakeTX:
-                processed_path = processor().process(filepath,
-                                                     converted,
-                                                     "--sattrib",
-                                                     "sourceHash",
-                                                     escape_space(texture_hash), # noqa
-                                                     colorconvert,
-                                                     color_config,
-                                                     )
-                self.log.info("Generating texture file for %s .." % filepath) # noqa
-                self.log.info(converted)
-                if processed_path:
-                    return processed_path, COPY, texture_hash
-                else:
-                    self.log.info("maketx has returned nothing")
-            elif processor is MakeRSTexBin:
-                processed_path = processor().process(filepath)
-                self.log.info("Generating texture file for %s .." % filepath) # noqa
-                if processed_path:
-                    return processed_path, COPY, texture_hash
-                else:
-                    self.log.info("redshift texture converter has returned nothing") # noqa
+            self.log.debug("Processing texture {} with processor {}".format(
+                filepath, processor
+            ))
 
-        # TODO: continue this refactoring to processor
-        if do_maketx and ext != ".tx":
-            # Define .tx filepath in staging if source file is not .tx
-            converted = os.path.join(staging_dir, "resources", fname + ".tx")
+            processed_result = processor.process(filepath,
+                                                 colorspace,
+                                                 color_management)
+            if not processed_result:
+                raise RuntimeError("Texture Processor {} returned "
+                                   "no result.".format(processor))
 
-            if color_management["enabled"]:
-                config_path = color_management["config"]
-                if not os.path.exists(config_path):
-                    raise RuntimeError("OCIO config not found at: "
-                                       "{}".format(config_path))
+            processed_path, processed_texture_hash = processed_result
+            self.log.info("Generated processed "
+                          "texture: {}".format(processed_path))
 
-                render_colorspace = color_management["rendering_space"]
-
-                self.log.info("tx: converting colorspace {0} "
-                              "-> {1}".format(colorspace, render_colorspace))
-                args.extend(["--colorconvert", colorspace, render_colorspace])
-                args.extend(["--colorconfig", config_path])
-
-            else:
-                # We can't rely on the colorspace attribute when not
-                # in color managed mode because the collected color space
-                # is the color space attribute of the file node which can be
-                # any string whatsoever but only appears disabled in Attribute
-                # Editor. We assume we're always converting to linear/Raw if
-                # the source file is assumed to be sRGB.
-                render_colorspace = "linear"
-                if _has_arnold():
-                    img_info = image_info(filepath)
-                    color_space = guess_colorspace(img_info)
-                    if color_space.lower() == "sRGB":
-                        self.log.info("tx: converting sRGB -> linear")
-                        args.extend(["--colorconvert", "sRGB", "Raw"])
-                    else:
-                        self.log.info("tx: texture's colorspace "
-                                      "is already linear")
-                else:
-                    self.log.warning("tx: cannot guess the colorspace, "
-                                     "color conversion won't be available!")
-
-            hash_args.append("maketx")
-            hash_args.extend(args)
-
-            texture_hash = source_hash(filepath, *args)
-
-            if not force_copy:
-                existing = self._get_existing_hashed_texture(filepath)
-                if existing:
-                    return existing
-
-            # Exclude these additional arguments from the hashing because
-            # it is the hash itself
-            args.extend([
-                "--sattrib",
-                "sourceHash",
-                texture_hash
-            ])
-
-            # Ensure folder exists
-            if not os.path.exists(os.path.dirname(converted)):
-                os.makedirs(os.path.dirname(converted))
-
-            self.log.info("Generating .tx file for %s .." % filepath)
-            maketx(
-                filepath,
-                converted,
-                args,
-                self.log
-            )
-
-            return converted, COPY, texture_hash, render_colorspace
+            return processed_path, COPY, processed_texture_hash
 
         # No special treatment for this file
         texture_hash = source_hash(filepath)
