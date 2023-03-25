@@ -149,8 +149,7 @@ class MakeTX(TextureProcessor):
         # Allow extra maketx arguments from project settings
         extra_args_dict = (
             project_settings["maya"]["publish"]
-                .get("ExtractLook", {})
-                .get("maketx_arguments", {})
+            .get("ExtractLook", {}).get("maketx_arguments", {})
         )
         extra_args = []
         for flag, value in extra_args_dict.items():
