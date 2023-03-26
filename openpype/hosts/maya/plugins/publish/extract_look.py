@@ -601,9 +601,8 @@ class ExtractLook(publish.Extractor):
         def get_resource_destination_cached(path):
             """Get resource destination with cached result per filepath"""
             if path not in destinations_cache:
-                self.get_resource_destination(path,
-                                              instance.data["resourcesDir"],
-                                              processors)
+                destination = self.get_resource_destination(
+                    path, instance.data["resourcesDir"], processors)
                 destinations_cache[path] = destination
             return destinations_cache[path]
 
