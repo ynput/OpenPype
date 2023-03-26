@@ -441,8 +441,6 @@ class ExtractLook(publish.Extractor):
         dir_path = self.staging_dir(instance)
         maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
         json_fname = "{0}.{1}".format(instance.name, self.look_data_type)
-
-        # Make texture dump folder
         maya_path = os.path.join(dir_path, maya_fname)
         json_path = os.path.join(dir_path, json_fname)
 
