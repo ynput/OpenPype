@@ -687,6 +687,11 @@ class ExtractLook(publish.Extractor):
             # filepaths (which is avoidable, but we don't want to have those
             # attributes changed in the resulting publish)
             # Remap filepath to publish destination
+            # TODO It would be much better if we could use the destination path
+            #   from the actual processed texture results, but since the
+            #   attribute will need to preserve tokens like <f>, <udim> etc for
+            #   now we will define the output path from the attribute value
+            #   including the tokens to persist them.
             filepath_attr = resource["attribute"]
             remap[filepath_attr] = get_resource_destination_cached(
                 resource["source"]
