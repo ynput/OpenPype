@@ -790,7 +790,7 @@
         "ExtractPlayblast": {
             "capture_preset": {
                 "Codec": {
-                    "compression": "jpg",
+                    "compression": "png",
                     "format": "image",
                     "quality": 95
                 },
