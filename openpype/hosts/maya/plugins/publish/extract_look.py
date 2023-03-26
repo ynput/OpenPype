@@ -623,10 +623,14 @@ class ExtractLook(publish.Extractor):
 
                     if colorspace != processed_file["color_space"]:
                         self.log.warning(
-                            "File was already processed but using another"
-                            "colorspace: {} <-> {}"
-                            "".format(colorspace,
-                                      processed_file["color_space"]))
+                            "File '{}' was already processed using colorspace "
+                            "'{}' instead of the current resource's "
+                            "colorspace '{}'. The already processed texture "
+                            "result's colorspace '{}' will be used."
+                            "".format(filepath,
+                                      colorspace,
+                                      processed_file["color_space"],
+                                      processed_file["result_color_space"]))
 
                     self._set_resource_result_colorspace(
                         resource,
@@ -642,7 +646,6 @@ class ExtractLook(publish.Extractor):
                     color_management=color_management,
                     colorspace=colorspace
                 )
-                source = texture_result.path
                 destination = self.resource_destination(instance,
                                                         texture_result.path,
                                                         processors)
@@ -657,6 +660,7 @@ class ExtractLook(publish.Extractor):
                     "result_color_space": texture_result.colorspace,
                 }
 
+                source = texture_result.path
                 if force_copy or texture_result.transfer_mode == COPY:
                     transfers.append((source, destination))
                     self.log.info('file will be copied {} -> {}'.format(
