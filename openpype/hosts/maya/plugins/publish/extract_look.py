@@ -730,9 +730,11 @@ class ExtractLook(publish.Extractor):
         # Get extension from the last processor
         for processor in reversed(processors):
             processor_ext = processor.get_extension()
-            if processor_ext:
-                self.log.debug("Processor {} defined extension: "
-                               "{}".format(processor, ext))
+            if processor_ext and ext != processor_ext:
+                self.log.debug("Processor {} overrides extension to '{}' "
+                               "for path: {}".format(processor,
+                                                     processor_ext,
+                                                     filepath))
                 ext = processor_ext
             break
 
