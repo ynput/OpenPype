@@ -596,14 +596,23 @@ class ExtractLook(publish.Extractor):
         else:
             force_copy = instance.data.get("forceCopy", False)
 
+        destinations_cache = {}
+
+        def get_resource_destination_cached(path):
+            """Get resource destination with cached result per filepath"""
+            if path not in destinations_cache:
+                self.get_resource_destination(path,
+                                              instance.data["resourcesDir"],
+                                              processors)
+                destinations_cache[path] = destination
+            return destinations_cache[path]
+
         # Process all resource's individual files
         processed_files = {}
         transfers = []
         hardlinks = []
         hashes = {}
-        destinations = {}
         remap = OrderedDict()
-
         for resource in resources:
             colorspace = resource["color_space"]
 
@@ -646,9 +655,6 @@ class ExtractLook(publish.Extractor):
                     color_management=color_management,
                     colorspace=colorspace
                 )
-                destination = self.resource_destination(instance,
-                                                        texture_result.path,
-                                                        processors)
 
                 # Set the resulting color space on the resource
                 self._set_resource_result_colorspace(
@@ -661,6 +667,7 @@ class ExtractLook(publish.Extractor):
                 }
 
                 source = texture_result.path
+                destination = get_resource_destination_cached(source)
                 if force_copy or texture_result.transfer_mode == COPY:
                     transfers.append((source, destination))
                     self.log.info('file will be copied {} -> {}'.format(
@@ -674,14 +681,6 @@ class ExtractLook(publish.Extractor):
                 # database
                 hashes[texture_result.file_hash] = destination
 
-            source = os.path.normpath(resource["source"])
-            if source not in destinations:
-                # Cache destination as source resource might be included
-                # multiple times
-                destinations[source] = self.resource_destination(
-                    instance, source, processors
-                )
-
             # Set up remapping attributes for the node during the publish
             # The order of these can be important if one attribute directly
             # affects another, e.g. we set colorspace after filepath because
@@ -690,7 +689,9 @@ class ExtractLook(publish.Extractor):
             # attributes changed in the resulting publish)
             # Remap filepath to publish destination
             filepath_attr = resource["attribute"]
-            remap[filepath_attr] = destinations[source]
+            remap[filepath_attr] = get_resource_destination_cached(
+                resource["source"]
+            )
 
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
@@ -709,23 +710,21 @@ class ExtractLook(publish.Extractor):
             "attrRemap": remap,
         }
 
-    def resource_destination(self, instance, filepath, processors):
+    def get_resource_destination(self, filepath, resources_dir, processors):
         """Get resource destination path.
 
         This is utility function to change path if resource file name is
         changed by some external tool like `maketx`.
 
         Args:
-            instance: Current Instance.
-            filepath (str): Resource path
-            processor: Texture processors converting resource.
+            filepath (str): Resource source path
+            resources_dir (str): Destination dir for resources in publish.
+            processors (list): Texture processors converting resource.
 
         Returns:
             str: Path to resource file
 
         """
-        resources_dir = instance.data["resourcesDir"]
-
         # Compute destination location
         basename, ext = os.path.splitext(os.path.basename(filepath))
 
