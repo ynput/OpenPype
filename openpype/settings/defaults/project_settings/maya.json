@@ -228,7 +228,7 @@
                 "name": "meshReorder"
             },
             {
-                "enabled": false,
+                "enabled": true,
                 "name": "modelingToolkit"
             },
             {
