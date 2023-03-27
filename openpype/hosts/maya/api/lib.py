@@ -1881,6 +1881,11 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
+def get_parent(node):
+    """Return full path name for parent of node"""
+    return cmds.listRelatives(node, parent=True, fullPath=True)
+
+
 def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
@@ -1904,10 +1909,6 @@ def get_id_from_sibling(node, history_only=True):
 
     """
 
-    def _get_parent(node):
-        """Return full path name for parent of node"""
-        return cmds.listRelatives(node, parent=True, fullPath=True)
-
     node = cmds.ls(node, long=True)[0]
 
     # Find all similar nodes in history
@@ -1919,8 +1920,8 @@ def get_id_from_sibling(node, history_only=True):
     similar_nodes = [x for x in similar_nodes if x != node]
 
     # The node *must be* under the same parent
-    parent = _get_parent(node)
-    similar_nodes = [i for i in similar_nodes if _get_parent(i) == parent]
+    parent = get_parent(node)
+    similar_nodes = [i for i in similar_nodes if get_parent(i) == parent]
 
     # Check all of the remaining similar nodes and take the first one
     # with an id and assume it's the original.
@@ -3176,38 +3177,74 @@ def set_colorspace():
 def parent_nodes(nodes, parent=None):
     # type: (list, str) -> list
     """Context manager to un-parent provided nodes and return them back."""
-    import pymel.core as pm  # noqa
+
+    def _as_mdagpath(node):
+        """Return MDagPath for node path."""
+        if not node:
+            return
+        sel = OpenMaya.MSelectionList()
+        sel.add(node)
+        return sel.getDagPath(0)
+
+    # We can only parent dag nodes so we ensure input contains only dag nodes
+    nodes = cmds.ls(nodes, type="dagNode", long=True)
 
     parent_node = None
     delete_parent = False
 
     if parent:
         if not cmds.objExists(parent):
-            parent_node = pm.createNode("transform", n=parent, ss=False)
+            parent_node = cmds.createNode("transform",
+                                          name=parent,
+                                          skipSelect=False)
             delete_parent = True
         else:
-            parent_node = pm.PyNode(parent)
-    node_parents = []
+            parent_node = parent
+        parent_node = cmds.ls(parent_node, long=True)
+
+    # Store original parents
+    node_parents = {}
     for node in nodes:
-        n = pm.PyNode(node)
-        try:
-            root = pm.listRelatives(n, parent=1)[0]
-        except IndexError:
-            root = None
-        node_parents.append((n, root))
+        node_parent = get_parent(node)
+        node_parents[_as_mdagpath(node)] = _as_mdagpath(node_parent)
+
     try:
-        for node in node_parents:
-            if not parent:
-                node[0].setParent(world=True)
+        for node, node_parent in node_parents.items():
+            if node_parent.fullPathName() == parent_node:
+                # Already a child
+                continue
+
+            if node_parent:
+                cmds.parent(node.fullPathName(), parent_node)
             else:
-                node[0].setParent(parent_node)
+                cmds.parent(node.fullPathName(), world=True)
+
         yield
     finally:
-        for node in node_parents:
-            if node[1]:
-                node[0].setParent(node[1])
+        # Reparent to original parents
+        for node, original_parent in node_parents.items():
+            node_path = node.fullPathName()
+            if not node_path:
+                # Node must have been deleted
+                continue
+
+            node_parent_path = get_parent(node_path)
+
+            original_parent_path = None
+            if original_parent:
+                original_parent_path = original_parent.fullPathName()
+                if not original_parent_path:
+                    # Original parent node must have been deleted
+                    continue
+
+            if node_parent_path != original_parent_path:
+                if not original_parent_path:
+                    cmds.parent(node_path, world=True)
+                else:
+                    cmds.parent(node_path, original_parent_path)
+
         if delete_parent:
-            pm.delete(parent_node)
+            cmds.delete(parent_node)
 
 
 @contextlib.contextmanager
