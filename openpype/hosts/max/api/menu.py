@@ -5,7 +5,7 @@ from pymxs import runtime as rt
 
 from openpype.tools.utils import host_tools
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api import lib
+
 
 class OpenPypeMenu(object):
     """Object representing OpenPype menu.
