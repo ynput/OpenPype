@@ -47,26 +47,44 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
+        # unparent the current version of asset
+        rt.select(node)
+        rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
         max_objs_prev = []
         max_objs_after = []
+
+        # find the old version of the asset
         for c in rt.rootNode.Children:
-            if rt.classOf(c) == rt.Container and c.startswith("maxSceneMain"):
-                if c != container["instance_node"]:
+            if rt.classOf(c) == rt.Container and "maxSceneMain" in str(c):
+                if c != node:
                     max_objs_prev.append(c)
+
         rt.mergeMaxFile(path,
                         rt.Name("noRedraw"),
                         rt.Name("deleteOldDups"),
                         rt.Name("useSceneMtlDups"))
+
         for c in rt.rootNode.Children:
-            if rt.classOf(c) == rt.Container and c.startswith("maxSceneMain"):
-                if c != container["instance_node"]:
+            if rt.classOf(c) == rt.Container and "maxSceneMain" in str(c):
+                if c != node:
                     max_objs_after.append(c)
 
         max_obj = set(max_objs_after) - set(max_objs_prev)
+
+        for prev in max_objs_prev:
+            rt.select(prev)
+            for prev_obj in rt.selection:
+                rt.delete(prev_obj)
+
+        for new_max_obj in max_obj:
+            rt.select(new_max_obj)
+            for obj in rt.selection:
+                obj.parent = node
+
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def switch(self, container, representation):
         self.update(container, representation)
