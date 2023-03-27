@@ -316,19 +316,15 @@ class MakeTX(TextureProcessor):
             # managed mode because the collected color space is the color space
             # attribute of the file node which can be any string whatsoever
             # but only appears disabled in Attribute Editor. We assume we're
-            # always converting to linear/Raw if the source file is assumed to
+            # always converting to linear if the source file is assumed to
             # be sRGB.
-            # TODO Without color management do we even know we can do
-            #      "colorconvert" and what config does that end up using since
-            #       colorconvert is a OCIO command line flag for maketx.
-            #       Also, Raw != linear?
             render_colorspace = "linear"
             if self._has_arnold():
                 img_info = image_info(source)
                 color_space = guess_colorspace(img_info)
                 if color_space.lower() == "sRGB":
                     self.log.info("tx: converting sRGB -> linear")
-                    args.extend(["--colorconvert", "sRGB", "Raw"])
+                    args.extend(["--colorconvert", "sRGB", render_colorspace])
                 else:
                     self.log.info("tx: texture's colorspace "
                                   "is already linear")
