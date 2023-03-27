@@ -6,6 +6,11 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_current_project
+)
+
 
 JSON_PREFIX = "JSON::"
 
@@ -155,6 +160,60 @@ def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
+
+def set_scene_resolution(width: int, height: int):
+    """Set the render resolution
+
+    Args:
+        width(int): value of the width
+        height(int): value of the height
+
+    Returns:
+        None
+
+    """
+    rt.renderWidth = width
+    rt.renderHeight = height
+
+
+def reset_scene_resolution():
+    """Apply the scene resolution from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+
+    Returns:
+        None
+    """
+    data = ["data.resolutionWidth", "data.resolutionHeight"]
+    project_resolution = get_current_project(fields=data)
+    project_resolution_data = project_resolution["data"]
+    asset_resolution = get_current_project_asset(fields=data)
+    asset_resolution_data = asset_resolution["data"]
+    # Set project resolution
+    project_width = int(project_resolution_data.get("resolutionWidth", 1920))
+    project_height = int(project_resolution_data.get("resolutionHeight", 1080))
+    width = int(asset_resolution_data.get("resolutionWidth", project_width))
+    height = int(asset_resolution_data.get("resolutionHeight", project_height))
+
+    set_scene_resolution(width, height)
+
+
+def set_context_setting():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        frame range
+        resolution
+
+    Returns:
+        None
+    """
+    reset_scene_resolution()
 
 
 def get_max_version():
