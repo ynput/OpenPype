@@ -120,9 +120,6 @@ class MakeRSTexBin(TextureProcessor):
             source (str): Path to source file.
 
         """
-        if "REDSHIFT_COREDATAPATH" not in os.environ:
-            raise RuntimeError("Must have Redshift available.")
-
         texture_processor_path = self.get_redshift_tool(
             "redshiftTextureProcessor"
         )
@@ -173,10 +170,11 @@ class MakeRSTexBin(TextureProcessor):
         Returns:
             str: Full path to redshift texture processor executable.
         """
-        redshift_os_path = os.environ["REDSHIFT_COREDATAPATH"]
+        if "REDSHIFT_COREDATAPATH" not in os.environ:
+            raise RuntimeError("Must have Redshift available.")
 
         redshift_tool_path = os.path.join(
-            redshift_os_path,
+            os.environ["REDSHIFT_COREDATAPATH"],
             "bin",
             tool_name
         )
