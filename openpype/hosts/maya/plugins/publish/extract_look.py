@@ -317,6 +317,8 @@ class MakeTX(TextureProcessor):
             self.log.debug("tx: Maya color management is disabled. No color "
                            "conversion will be applied to .tx conversion for: "
                            "{}".format(source))
+            # Assume linear
+            render_colorspace = "linear"
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
