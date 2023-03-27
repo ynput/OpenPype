@@ -29,6 +29,7 @@ HARDLINK = 2
 
 @attr.s
 class TextureResult:
+    """The resulting texture of a processed file for a resource"""
     # Path to the file
     path = attr.ib()
     # Colorspace of the resulting texture. This might not be the input
@@ -56,6 +57,38 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
+@contextlib.contextmanager
+def no_workspace_dir():
+    """Force maya to a fake temporary workspace directory.
+
+    Note: This is not maya.cmds.workspace 'rootDirectory' but the 'directory'
+
+    This helps to avoid Maya automatically remapping image paths to files
+    relative to the currently set directory.
+
+    """
+
+    # Store current workspace
+    original = cmds.workspace(query=True, directory=True)
+
+    # Set a fake workspace
+    fake_workspace_dir = tempfile.mkdtemp()
+    cmds.workspace(directory=fake_workspace_dir)
+
+    try:
+        yield
+    finally:
+        try:
+            cmds.workspace(directory=original)
+        except RuntimeError:
+            # If the original workspace directory didn't exist either
+            # ignore the fact that it fails to reset it to the old path
+            pass
+
+        # Remove the temporary directory
+        os.rmdir(fake_workspace_dir)
+
+
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
     def __init__(self, log=None):
@@ -64,6 +97,16 @@ class TextureProcessor:
         self.log = log
 
     def apply_settings(self, system_settings, project_settings):
+        """Apply OpenPype system/project settings to the TextureProcessor
+
+        Args:
+            system_settings (dict): OpenPype system settings
+            project_settings (dict): OpenPype project settings
+
+        Returns:
+            None
+
+        """
         pass
 
     @abstractmethod
@@ -110,16 +153,7 @@ class MakeRSTexBin(TextureProcessor):
                 colorspace,
                 color_management,
                 staging_dir):
-        """
-        with some default settings.
 
-        This function requires the `REDSHIFT_COREDATAPATH`
-        to be in `PATH`.
-
-        Args:
-            source (str): Path to source file.
-
-        """
         texture_processor_path = self.get_redshift_tool(
             "redshiftTextureProcessor"
         )
@@ -135,7 +169,7 @@ class MakeRSTexBin(TextureProcessor):
         texture_hash = source_hash(source, *hash_args)
 
         # Redshift stores the output texture next to the input but with
-        # the extension replaced to `.rstexbin
+        # the extension replaced to `.rstexbin`
         basename, ext = os.path.splitext(source)
         destination = "{}{}".format(basename, self.get_extension())
 
@@ -165,7 +199,7 @@ class MakeRSTexBin(TextureProcessor):
         On Windows it adds .exe extension if missing from tool argument.
 
         Args:
-            tool (string): Tool name.
+            tool_name (string): Tool name.
 
         Returns:
             str: Full path to redshift texture processor executable.
@@ -213,8 +247,8 @@ class MakeTX(TextureProcessor):
                 staging_dir):
         """Process the texture.
 
-        This function requires the `maketx` executable to be
-        available in the OIIO tool.
+        This function requires the `maketx` executable to be available in an
+        OpenImageIO toolset detectable by OpenPype.
 
         Args:
             source (str): Path to source file.
@@ -355,38 +389,6 @@ class MakeTX(TextureProcessor):
             return True
         except (ImportError, ModuleNotFoundError):
             return False
-
-
-@contextlib.contextmanager
-def no_workspace_dir():
-    """Force maya to a fake temporary workspace directory.
-
-    Note: This is not maya.cmds.workspace 'rootDirectory' but the 'directory'
-
-    This helps to avoid Maya automatically remapping image paths to files
-    relative to the currently set directory.
-
-    """
-
-    # Store current workspace
-    original = cmds.workspace(query=True, directory=True)
-
-    # Set a fake workspace
-    fake_workspace_dir = tempfile.mkdtemp()
-    cmds.workspace(directory=fake_workspace_dir)
-
-    try:
-        yield
-    finally:
-        try:
-            cmds.workspace(directory=original)
-        except RuntimeError:
-            # If the original workspace directory didn't exist either
-            # ignore the fact that it fails to reset it to the old path
-            pass
-
-        # Remove the temporary directory
-        os.rmdir(fake_workspace_dir)
 
 
 class ExtractLook(publish.Extractor):
