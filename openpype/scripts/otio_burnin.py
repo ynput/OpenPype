@@ -42,7 +42,22 @@ SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
 def convert_list_to_commands(list_to_convert, fps, label=""):
-    path = None
+    """Convert a list of values to a drawtext command file for ffmpeg `sendcmd`
+
+    The list of values is expected to have a value per frame. If the video
+    file ends up being longer than the amount of samples per frame than the
+    last value will be held.
+
+    Args:
+        list_to_convert (list): List of values per frame.
+        fps (float or int): The expected frame per seconds of the output file
+        label (str): Label for the
+
+    Returns:
+        str: Filepath to the temporary drawtext command file.
+
+    """
+
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
         for i, value in enumerate(list_to_convert):
             seconds = i / fps
@@ -61,9 +76,7 @@ def convert_list_to_commands(list_to_convert, fps, label=""):
 
             f.write(line)
         f.flush()
-        path = f.name
-
-    return path
+        return f.name
 
 
 def _get_ffprobe_data(source):
