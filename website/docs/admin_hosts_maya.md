@@ -180,4 +180,6 @@ By default only the required plugins are enabled. You can also add any plugin to
 
 :::note technical
 When enabling this feature, the workfile will be launched post initialization no matter the setting on `project_settings/maya/open_workfile_post_initialization`. This is to avoid any issues with references needing plugins.
+
+Renderfarm integration is not supported for this feature.
 :::
