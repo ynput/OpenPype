@@ -75,6 +75,44 @@ def get_rendersetup_layer(layer):
                  if conn.endswith(".legacyRenderLayer")), None)
 
 
+def _get_attr(plug, **kwargs):
+    """Maya getAttr with some fixes based on `pymel.core.general.getAttr()`.
+
+    Like Pymel getAttr this applies some changes to `maya.cmds.getAttr`
+      - maya pointlessly returned vector results as a tuple wrapped in a list
+        (ex.  '[(1,2,3)]'). This command unpacks the vector for you.
+      - when getting a multi-attr, maya would raise an error, but this will
+        return a list of values for the multi-attr
+      - added support for getting message attributes by returning the
+        connections instead
+
+    """
+    attr_type = cmds.getAttr(plug, type=True)
+    try:
+        res = cmds.getAttr(plug, **kwargs)
+    except RuntimeError:
+        if attr_type == "message":
+            return cmds.listConnections(plug)
+
+        node, attr = plug.split(".", 1)
+        children = cmds.attributeQuery(attr, node=node, listChildren=True)
+        if children:
+            return [
+                _get_attr("{}.{}".format(node, child)) for child in children
+            ]
+
+        raise
+
+    # Convert vector result wrapped in tuple
+    if isinstance(res, list) and len(res):
+        if isinstance(res[0], tuple) and len(res):
+            if attr_type in {'pointArray', 'vectorArray'}:
+                return res
+            return res[0]
+
+    return res
+
+
 def get_attr_in_layer(node_attr, layer):
     """Return attribute value in Render Setup layer.
 
@@ -95,9 +133,6 @@ def get_attr_in_layer(node_attr, layer):
         object: attribute value in layer
 
     """
-
-    # Delay pymel import to here because it's slow to load
-    import pymel.core as pm
 
     def _layer_needs_update(layer):
         """Return whether layer needs updating."""
@@ -125,7 +160,7 @@ def get_attr_in_layer(node_attr, layer):
             node = history_overrides[-1] if history_overrides else override
             node_attr_ = node + ".original"
 
-        return pm.getAttr(node_attr_, asString=True)
+        return _get_attr(node_attr_, asString=True)
 
     layer = get_rendersetup_layer(layer)
     rs = renderSetup.instance()
@@ -145,7 +180,7 @@ def get_attr_in_layer(node_attr, layer):
                 # we will let it error out.
                 rs.switchToLayer(current_layer)
 
-        return pm.getAttr(node_attr, asString=True)
+        return _get_attr(node_attr, asString=True)
 
     overrides = get_attr_overrides(node_attr, layer)
     default_layer_value = get_default_layer_value(node_attr)
@@ -156,7 +191,7 @@ def get_attr_in_layer(node_attr, layer):
     for match, layer_override, index in overrides:
         if isinstance(layer_override, AbsOverride):
             # Absolute override
-            value = pm.getAttr(layer_override.name() + ".attrValue")
+            value = _get_attr(layer_override.name() + ".attrValue")
             if match == EXACT_MATCH:
                 # value = value
                 pass
@@ -168,8 +203,8 @@ def get_attr_in_layer(node_attr, layer):
         elif isinstance(layer_override, RelOverride):
             # Relative override
             # Value = Original * Multiply + Offset
-            multiply = pm.getAttr(layer_override.name() + ".multiply")
-            offset = pm.getAttr(layer_override.name() + ".offset")
+            multiply = _get_attr(layer_override.name() + ".multiply")
+            offset = _get_attr(layer_override.name() + ".offset")
 
             if match == EXACT_MATCH:
                 value = value * multiply + offset
