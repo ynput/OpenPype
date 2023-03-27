@@ -36,6 +36,8 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         self.log.debug(f"Executing command: {fbx_import_cmd}")
         rt.execute(fbx_import_cmd)
 
+        container_name = f"{name}_CON"
+
         asset = rt.getNodeByName(f"{name}")
 
         return containerise(
