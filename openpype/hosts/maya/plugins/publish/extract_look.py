@@ -364,7 +364,7 @@ class MakeTX(TextureProcessor):
             subprocess_args.extend(self.extra_args)
 
         # Add source hash attribute after other arguments for log readability
-        # Note: argument is excluding from the hash since it is the hash itself
+        # Note: argument is excluded from the hash since it is the hash itself
         subprocess_args.extend([
             "--sattrib",
             "sourceHash",
