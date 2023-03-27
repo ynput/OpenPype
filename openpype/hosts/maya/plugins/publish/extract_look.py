@@ -236,8 +236,16 @@ class MakeTX(TextureProcessor):
         )
         extra_args = []
         for flag, value in extra_args_dict.items():
+            if not flag:
+                self.log.debug("Ignoring empty flag from `maketx_arguments` "
+                               "setting..")
+                continue
+
             extra_args.append(flag)
-            extra_args.append(value)
+            if value.strip():
+                # There might be flags without values like --opaque-detect
+                extra_args.append(value)
+
         self.extra_args = extra_args
 
     def process(self,
@@ -328,14 +336,6 @@ class MakeTX(TextureProcessor):
         hash_args.extend(self.extra_args)
         texture_hash = source_hash(source, *hash_args)
 
-        # Exclude these additional arguments from the hashing because
-        # it is the hash itself
-        args.extend([
-            "--sattrib",
-            "sourceHash",
-            texture_hash
-        ])
-
         # Ensure folder exists
         destination = os.path.join(staging_dir, "resources", fname + ".tx")
         if not os.path.exists(os.path.dirname(destination)):
@@ -347,9 +347,12 @@ class MakeTX(TextureProcessor):
             maketx_path,
             "-v",  # verbose
             "-u",  # update mode
+            # --checknan doesn't influence the output file but aborts the
+            # conversion if it finds any. So we can avoid need
+            "--checknan",
+            # todo: --unpremult, --oiio, --filter should be in the file hash
             # unpremultiply before conversion (recommended when alpha present)
             "--unpremult",
-            "--checknan",
             # use oiio-optimized settings for tile-size, planarconfig, metadata
             "--oiio",
             "--filter", "lanczos3",
@@ -359,6 +362,15 @@ class MakeTX(TextureProcessor):
         subprocess_args.extend(args)
         if self.extra_args:
             subprocess_args.extend(self.extra_args)
+
+        # Add source hash attribute after other arguments for log readability
+        # Note: argument is excluding from the hash since it is the hash itself
+        subprocess_args.extend([
+            "--sattrib",
+            "sourceHash",
+            texture_hash
+        ])
+
         subprocess_args.extend(["-o", destination])
 
         self.log.debug(" ".join(subprocess_args))
