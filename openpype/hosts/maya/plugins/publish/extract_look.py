@@ -1,26 +1,24 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
-import logging
 from abc import ABCMeta, abstractmethod
-
-import six
-import os
-import json
-import tempfile
-import platform
-import contextlib
 from collections import OrderedDict
+import contextlib
+import json
+import logging
+import os
+import platform
+import tempfile
+import six
 import attr
 
-from maya import cmds  # noqa
-
 import pyblish.api
+
+from maya import cmds  # noqa
 
 from openpype.lib.vendor_bin_utils import find_executable
 from openpype.lib import source_hash, run_subprocess, get_oiio_tools_path
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
-from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 
 # Modes for transfer
 COPY = 1
