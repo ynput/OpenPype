@@ -177,18 +177,16 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_published_name(payload_data)
+        project_settings = instance.context["project_settings"]
+        payload = self._use_published_name(project_settings, payload_data)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data):
+    def _use_published_name(self, project_settings, data):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
-        project_setting = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
 
         multipass = get_multipass_setting(project_setting)
         if multipass:

@@ -7,7 +7,7 @@ import platform
 from maya import cmds
 
 import pyblish.api
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
@@ -70,8 +70,9 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             cls.log.error("name doesn't match regex {}".format(regex))
             invalid.append(top_group)
         else:
+            , get_current_asset_name
             if "asset" in r.groupindex:
-                if m.group("asset") != legacy_io.Session["AVALON_ASSET"]:
+                if m.group("asset") != get_current_asset_name():
                     cls.log.error("Invalid asset name in top level group.")
                     return top_group
             if "subset" in r.groupindex:
@@ -79,7 +80,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
                     cls.log.error("Invalid subset name in top level group.")
                     return top_group
             if "project" in r.groupindex:
-                if m.group("project") != legacy_io.Session["AVALON_PROJECT"]:
+                if m.group("project") != get_current_project_name():
                     cls.log.error("Invalid project name in top level group.")
                     return top_group
 

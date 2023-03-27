@@ -47,6 +47,6 @@ class CollectReview(pyblish.api.ContextPlugin):
             "family": family,
             "families": [],
             "representations": [],
-            "asset": os.environ["AVALON_ASSET"],
+            "asset": context.data["asset"],
             "publish": self.publish
         })

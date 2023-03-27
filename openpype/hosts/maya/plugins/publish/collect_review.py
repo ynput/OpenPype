@@ -4,7 +4,6 @@ import pymel.core as pm
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib import get_attribute_input
 
 
@@ -22,7 +21,8 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug('instance: {}'.format(instance))
 
-        task = legacy_io.Session["AVALON_TASK"]
+        project_name = instance.context.data["projectName"]
+        task = instance.context.data["task"]
 
         # Get panel.
         instance.data["panel"] = cmds.playblast(
@@ -42,7 +42,6 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         objectset = instance.context.data['objectsets']
 
-        reviewable_subset = None
         reviewable_subset = list(set(members) & set(objectset))
         if reviewable_subset:
             assert len(reviewable_subset) <= 1, "Multiple subsets for review"
@@ -90,7 +89,6 @@ class CollectReview(pyblish.api.InstancePlugin):
         else:
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
-            project_name = legacy_io.active_project()
             subset_doc = get_subset_by_name(
                 project_name,
                 legacy_subset_name,

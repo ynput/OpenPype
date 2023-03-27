@@ -48,7 +48,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
                 "family": family,
                 "families": [],
                 "representations": [],
-                "asset": os.environ["AVALON_ASSET"]
+                "asset": context.data["asset"]
             })
         else:
             instance = existing_instance
