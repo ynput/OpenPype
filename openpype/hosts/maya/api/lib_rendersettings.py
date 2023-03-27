@@ -37,7 +37,7 @@ class RenderSettings(object):
 
     def __init__(self, project_settings=None):
         if not project_settings:
-             project_settings = get_project_settings(
+            project_settings = get_project_settings(
                 get_current_project_name()
             )
         render_settings = project_settings["maya"]["RenderSettings"]

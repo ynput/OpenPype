@@ -70,7 +70,6 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             cls.log.error("name doesn't match regex {}".format(regex))
             invalid.append(top_group)
         else:
-            , get_current_asset_name
             if "asset" in r.groupindex:
                 if m.group("asset") != get_current_asset_name():
                     cls.log.error("Invalid asset name in top level group.")

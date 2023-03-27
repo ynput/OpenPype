@@ -1,5 +1,4 @@
 from maya import cmds
-from openpype.pipeline import get_current_project_name
 from openpype.hosts.maya.api import (
     lib,
     plugin

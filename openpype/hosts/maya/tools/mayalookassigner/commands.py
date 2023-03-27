@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import maya.cmds as cmds
 
-from openpype.client import get_assets, get_asset_by_id
+from openpype.client import get_assets
 from openpype.pipeline import (
     remove_container,
     registered_host,
