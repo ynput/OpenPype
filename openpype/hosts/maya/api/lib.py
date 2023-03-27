@@ -2062,6 +2062,35 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def get_fps_for_current_context():
+    """Get fps that should be set for current context.
+
+    Todos:
+        - Skip project value.
+        - Merge logic with 'get_frame_range' and 'reset_scene_resolution' ->
+            all the values in the functions can be collected at one place as
+            they have same requirements.
+
+    Returns:
+        Union[int, float]: FPS value.
+    """
+
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["data.fps"]
+    ) or {}
+    fps = asset_doc.get("data", {}).get("fps")
+    if not fps:
+        project_doc = get_project(project_name, fields=["data.fps"]) or {}
+        fps = project_doc.get("data", {}).get("fps")
+
+        if not fps:
+            fps = 25
+
+    return convert_to_maya_fps(fps)
+
+
 def get_frame_range():
     """Get the current assets frame range and handles."""
 
@@ -2110,10 +2139,7 @@ def reset_frame_range(playback=True, render=True, fps=True):
     """
 
     if fps:
-        fps = convert_to_maya_fps(
-            float(legacy_io.Session.get("AVALON_FPS", 25))
-        )
-        set_scene_fps(fps)
+        set_scene_fps(get_fps_for_current_context())
 
     frame_range = get_frame_range()
 
@@ -2178,18 +2204,9 @@ def set_context_settings():
     """
 
     # Todo (Wijnand): apply renderer and resolution of project
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_doc = get_current_project_asset(fields=["data.fps"])
-    asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = convert_to_maya_fps(
-        asset_data.get("fps", project_data.get("fps", 25))
-    )
-    legacy_io.Session["AVALON_FPS"] = str(fps)
-    set_scene_fps(fps)
+    set_scene_fps(get_fps_for_current_context())
 
     reset_scene_resolution()
 
@@ -2209,9 +2226,7 @@ def validate_fps():
 
     """
 
-    expected_fps = convert_to_maya_fps(
-        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    )
+    expected_fps = get_fps_for_current_context()
     current_fps = mel.eval('currentTimeUnitToFPS()')
 
     fps_match = current_fps == expected_fps
