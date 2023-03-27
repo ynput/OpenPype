@@ -43,6 +43,18 @@
             "label": "Pre-roll frames"
         },
         {
+            "key": "render_format",
+            "label": "Render format",
+            "type": "enum",
+            "multiselection": false,
+            "enum_items": [
+                {"png": "PNG"},
+                {"exr": "EXR"},
+                {"jpg": "JPG"},
+                {"bmp": "BMP"}
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "project_setup",

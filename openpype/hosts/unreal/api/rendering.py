@@ -33,7 +33,7 @@ def start_rendering():
     """
     Start the rendering process.
     """
-    print("Starting rendering...")
+    unreal.log("Starting rendering...")
 
     # Get selected sequences
     assets = unreal.EditorUtilityLibrary.get_selected_assets()
@@ -137,8 +137,20 @@ def start_rendering():
             job.get_configuration().find_or_add_setting_by_class(
                 unreal.MoviePipelineDeferredPassBase)
 
-            job.get_configuration().find_or_add_setting_by_class(
-                unreal.MoviePipelineImageSequenceOutput_PNG)
+            render_format = data.get("unreal").get("render_format", "png")
+
+            if render_format == "png":
+                job.get_configuration().find_or_add_setting_by_class(
+                    unreal.MoviePipelineImageSequenceOutput_PNG)
+            elif render_format == "exr":
+                job.get_configuration().find_or_add_setting_by_class(
+                    unreal.MoviePipelineImageSequenceOutput_EXR)
+            elif render_format == "jpg":
+                job.get_configuration().find_or_add_setting_by_class(
+                    unreal.MoviePipelineImageSequenceOutput_JPG)
+            elif render_format == "bmp":
+                job.get_configuration().find_or_add_setting_by_class(
+                    unreal.MoviePipelineImageSequenceOutput_BMP)
 
     # If there are jobs in the queue, start the rendering process.
     if queue.get_jobs():

@@ -13,6 +13,7 @@
     "delete_unmatched_assets": false,
     "render_config_path": "",
     "preroll_frames": 0,
+    "render_format": "png",
     "project_setup": {
         "dev_mode": true
     }
