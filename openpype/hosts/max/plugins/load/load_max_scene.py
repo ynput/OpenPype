@@ -46,7 +46,9 @@ class MaxSceneLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node_name = container["instance_node"]
+        node = rt.getNodeByName(node_name)
+        instance_name, con = node_name.split("_")
         # unparent the current version of asset
         rt.select(node)
         rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
@@ -56,7 +58,7 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         # find the old version of the asset
         for c in rt.rootNode.Children:
-            if rt.classOf(c) == rt.Container and "maxSceneMain" in str(c):
+            if rt.classOf(c) == rt.Container and instance_name in str(c):
                 if c != node:
                     max_objs_prev.append(c)
 
@@ -66,7 +68,7 @@ class MaxSceneLoader(load.LoaderPlugin):
                         rt.Name("useSceneMtlDups"))
 
         for c in rt.rootNode.Children:
-            if rt.classOf(c) == rt.Container and "maxSceneMain" in str(c):
+            if rt.classOf(c) == rt.Container and instance_name in str(c):
                 if c != node:
                     max_objs_after.append(c)
 
