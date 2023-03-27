@@ -24,10 +24,6 @@ from openpype.hosts.maya.api import lib
 COPY = 1
 HARDLINK = 2
 
-# File formats we will assume are sRGB when Maya Color Management is disabled
-# Currently only used for `maketx` color conversion logic
-NONLINEAR_FILE_FORMATS = {".jpeg", ".jpg"}
-
 
 @attr.s
 class TextureResult:
