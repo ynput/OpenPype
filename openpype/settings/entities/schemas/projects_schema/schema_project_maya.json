@@ -11,6 +11,41 @@
             "label": "Open Workfile Post Initialization"
         },
         {
+            "type": "dict",
+            "key": "explicit_plugins_loading",
+            "label": "Explicit Plugins Loading",
+            "collapsible": true,
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "plugins_to_load",
+                    "label": "Plugins To Load",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                          {
+                              "type": "boolean",
+                              "key": "enabled",
+                              "label": "Enabled"
+                          },
+                          {
+                              "type": "text",
+                              "key": "name",
+                              "label": "Name"
+                          }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (ImageIO)",
