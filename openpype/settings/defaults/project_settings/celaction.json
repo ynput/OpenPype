@@ -9,6 +9,13 @@
             "rules": {}
         }
     },
+    "workfile": {
+        "submission_overrides": [
+            "render_chunk",
+            "frame_range",
+            "resolution"
+        ]
+    },
     "publish": {
         "CollectRenderPath": {
             "output_extension": "png",
