@@ -17,7 +17,7 @@ from maya import cmds  # noqa
 import pyblish.api
 
 from openpype.lib.vendor_bin_utils import find_executable
-from openpype.lib import source_hash, run_subprocess
+from openpype.lib import source_hash, run_subprocess, get_oiio_tools_path
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.lib import image_info, guess_colorspace
@@ -261,7 +261,6 @@ class MakeTX(TextureProcessor):
             TextureResult: The resulting texture information.
 
         """
-        from openpype.lib import get_oiio_tools_path
 
         maketx_path = get_oiio_tools_path("maketx")
 
