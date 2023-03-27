@@ -1,5 +1,4 @@
 import os
-from functools import partial
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import install_host
@@ -13,23 +12,40 @@ install_host(host)
 
 print("Starting OpenPype usersetup...")
 
+settings = get_project_settings(os.environ['AVALON_PROJECT'])
+
+# Loading plugins explicitly.
+if settings["maya"]["explicit_plugins_loading"]["enabled"]:
+    def _explicit_load_plugins():
+        project_settings = get_project_settings(os.environ["AVALON_PROJECT"])
+        maya_settings = project_settings["maya"]
+        explicit_plugins_loading = maya_settings["explicit_plugins_loading"]
+        if explicit_plugins_loading["enabled"]:
+            for plugin in explicit_plugins_loading["plugins_to_load"]:
+                if plugin["enabled"]:
+                    print("Loading " + plugin["name"])
+                    try:
+                        cmds.loadPlugin(plugin["name"], quiet=True)
+                    except RuntimeError as e:
+                        print(e)
+
+    cmds.evalDeferred(
+        _explicit_load_plugins,
+        lowestPriority=True
+    )
 
 # Open Workfile Post Initialization.
 key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
 if bool(int(os.environ.get(key, "0"))):
+    def _log_and_open():
+        print("Opening \"{}\"".format(os.environ["AVALON_LAST_WORKFILE"]))
+        cmds.file(os.environ["AVALON_LAST_WORKFILE"], open=True, force=True)
     cmds.evalDeferred(
-        partial(
-            cmds.file,
-            os.environ["AVALON_LAST_WORKFILE"],
-            open=True,
-            force=True
-        ),
+        _log_and_open,
         lowestPriority=True
     )
 
-
 # Build a shelf.
-settings = get_project_settings(os.environ['AVALON_PROJECT'])
 shelf_preset = settings['maya'].get('project_shelf')
 
 if shelf_preset:
