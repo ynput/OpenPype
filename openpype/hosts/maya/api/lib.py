@@ -1883,7 +1883,8 @@ def remove_other_uv_sets(mesh):
 
 def get_parent(node):
     """Return full path name for parent of node"""
-    return cmds.listRelatives(node, parent=True, fullPath=True)
+    parents = cmds.listRelatives(node, parent=True, fullPath=True)
+    return parents[0] if parents else None
 
 
 def get_id_from_sibling(node, history_only=True):
@@ -3189,9 +3190,8 @@ def parent_nodes(nodes, parent=None):
     # We can only parent dag nodes so we ensure input contains only dag nodes
     nodes = cmds.ls(nodes, type="dagNode", long=True)
 
-    parent_node = None
+    parent_node_path = None
     delete_parent = False
-
     if parent:
         if not cmds.objExists(parent):
             parent_node = cmds.createNode("transform",
@@ -3200,29 +3200,30 @@ def parent_nodes(nodes, parent=None):
             delete_parent = True
         else:
             parent_node = parent
-        parent_node = cmds.ls(parent_node, long=True)
+        parent_node_path = cmds.ls(parent_node, long=True)[0]
 
     # Store original parents
-    node_parents = {}
+    node_parents = []
     for node in nodes:
         node_parent = get_parent(node)
-        node_parents[_as_mdagpath(node)] = _as_mdagpath(node_parent)
+        node_parents.append((_as_mdagpath(node), _as_mdagpath(node_parent)))
 
     try:
-        for node, node_parent in node_parents.items():
-            if node_parent.fullPathName() == parent_node:
+        for node, node_parent in node_parents:
+            node_parent_path = node_parent.fullPathName() if node_parent else None  # noqa
+            if node_parent_path == parent_node_path:
                 # Already a child
                 continue
 
-            if node_parent:
-                cmds.parent(node.fullPathName(), parent_node)
+            if parent_node_path:
+                cmds.parent(node.fullPathName(), parent_node_path)
             else:
                 cmds.parent(node.fullPathName(), world=True)
 
         yield
     finally:
         # Reparent to original parents
-        for node, original_parent in node_parents.items():
+        for node, original_parent in node_parents:
             node_path = node.fullPathName()
             if not node_path:
                 # Node must have been deleted
@@ -3244,7 +3245,7 @@ def parent_nodes(nodes, parent=None):
                     cmds.parent(node_path, original_parent_path)
 
         if delete_parent:
-            cmds.delete(parent_node)
+            cmds.delete(parent_node_path)
 
 
 @contextlib.contextmanager
