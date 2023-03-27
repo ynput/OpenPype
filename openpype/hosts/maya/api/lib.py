@@ -1454,7 +1454,7 @@ def get_container_members(container):
 
 
 # region LOOKDEV
-def list_looks(asset_id):
+def list_looks(project_name, asset_id):
     """Return all look subsets for the given asset
 
     This assumes all look subsets start with "look*" in their names.
@@ -1463,7 +1463,6 @@ def list_looks(asset_id):
     # the name associated with the asset
     # TODO this should probably look for family 'look' instead of checking
     #   subset name that can not start with family
-    project_name = get_current_project_name()
     subset_docs = get_subsets(project_name, asset_ids=[asset_id])
     return [
         subset_doc

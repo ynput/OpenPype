@@ -162,7 +162,7 @@ def create_items_from_nodes(nodes):
             continue
 
         # Collect available look subsets for this asset
-        looks = lib.list_looks(asset_doc["_id"])
+        looks = lib.list_looks(project_name, asset_doc["_id"])
 
         # Collect namespaces the asset is found in
         namespaces = set()
