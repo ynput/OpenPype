@@ -288,7 +288,15 @@ class MakeTX(TextureProcessor):
                 transfer_mode=COPY
             )
 
-        args = []
+        # Hardcoded default arguments for maketx conversion based on Arnold's
+        # txManager in Maya
+        args = [
+            # unpremultiply before conversion (recommended when alpha present)
+            "--unpremult",
+            # use oiio-optimized settings for tile-size, planarconfig, metadata
+            "--oiio",
+            "--filter", "lanczos3",
+        ]
         if color_management["enabled"]:
             config_path = color_management["config"]
             if not os.path.exists(config_path):
@@ -348,14 +356,8 @@ class MakeTX(TextureProcessor):
             "-v",  # verbose
             "-u",  # update mode
             # --checknan doesn't influence the output file but aborts the
-            # conversion if it finds any. So we can avoid need
+            # conversion if it finds any. So we can avoid it for the file hash
             "--checknan",
-            # todo: --unpremult, --oiio, --filter should be in the file hash
-            # unpremultiply before conversion (recommended when alpha present)
-            "--unpremult",
-            # use oiio-optimized settings for tile-size, planarconfig, metadata
-            "--oiio",
-            "--filter", "lanczos3",
             source
         ]
 
