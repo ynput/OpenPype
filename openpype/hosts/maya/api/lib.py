@@ -3189,6 +3189,10 @@ def parent_nodes(nodes, parent=None):
 
     # We can only parent dag nodes so we ensure input contains only dag nodes
     nodes = cmds.ls(nodes, type="dagNode", long=True)
+    if not nodes:
+        # opt-out early
+        yield
+        return
 
     parent_node_path = None
     delete_parent = False
