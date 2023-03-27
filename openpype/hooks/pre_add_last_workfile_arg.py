@@ -44,15 +44,10 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
 
         # Determine whether to open workfile post initialization.
         if self.host_name == "maya":
-            maya_settings = self.data["project_settings"]["maya"]
-
-            if maya_settings["explicit_plugins_loading"]["enabled"]:
-                self.log.debug("Explicit plugins loading.")
-                self.launch_context.launch_args.append("-noAutoloadPlugins")
-
             keys = [
                 "open_workfile_post_initialization", "explicit_plugins_loading"
             ]
+            maya_settings = self.data["project_settings"]["maya"]
             values = [maya_settings[k] for k in keys]
             if any(values):
                 self.log.debug("Opening workfile post initialization.")
