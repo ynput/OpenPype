@@ -135,6 +135,9 @@ def start_rendering():
             settings.output_directory.path = f"{render_dir}/{output_dir}"
 
             job.get_configuration().find_or_add_setting_by_class(
+                unreal.MoviePipelineDeferredPassBase)
+
+            job.get_configuration().find_or_add_setting_by_class(
                 unreal.MoviePipelineImageSequenceOutput_PNG)
 
     # If there are jobs in the queue, start the rendering process.
