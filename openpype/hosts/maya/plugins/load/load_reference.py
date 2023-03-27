@@ -8,7 +8,7 @@ from openpype.pipeline.create import (
     get_legacy_creator_by_name,
 )
 import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import maintained_selection, parent_nodes
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -41,7 +41,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
-        import pymel.core as pm
 
         try:
             family = context["representation"]["context"]["family"]
@@ -68,8 +67,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             new_nodes = (list(set(nodes) - set(shapes)))
 
-            current_namespace = pm.namespaceInfo(currentNamespace=True)
-
+            current_namespace = cmds.namespaceInfo(currentNamespace=True)
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
 
@@ -78,23 +76,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             self[:] = new_nodes
 
             if attach_to_root:
-                group_node = pm.PyNode(group_name)
-                roots = set()
+                roots = cmds.listRelatives(group_name,
+                                           children=True,
+                                           fullPath=True) or []
 
-                for node in new_nodes:
-                    try:
-                        roots.add(pm.PyNode(node).getAllParents()[-2])
-                    except:  # noqa: E722
-                        pass
-
-                if family not in ["layout", "setdress",
-                                  "mayaAscii", "mayaScene"]:
-                    for root in roots:
-                        root.setParent(world=True)
-
-                group_node.zeroTransformPivots()
-                for root in roots:
-                    root.setParent(group_node)
+                if family not in {"layout", "setdress",
+                                  "mayaAscii", "mayaScene"}:
+                    # QUESTION Why do we need to exclude these families?
+                    with parent_nodes(roots, parent=None):
+                        cmds.xform(group_name, zeroTransformPivots=True)
 
                 cmds.setAttr(group_name + ".displayHandle", 1)
 
@@ -102,11 +92,12 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
-                    group_node.useOutlinerColor.set(1)
-                    group_node.outlinerColor.set(
-                        (float(c[0]) / 255),
-                        (float(c[1]) / 255),
-                        (float(c[2]) / 255))
+                    cmds.setAttr(group_name + ".useOutlinerColor", 1)
+                    cmds.setAttr(group_name + ".outlinerColor",
+                                 (float(c[0])/255),
+                                 (float(c[1])/255),
+                                 (float(c[2])/255)
+                    )
 
                 cmds.setAttr(group_name + ".displayHandle", 1)
                 # get bounding box
