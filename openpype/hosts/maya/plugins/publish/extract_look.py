@@ -137,16 +137,21 @@ class MakeRSTexBin(TextureProcessor):
         hash_args = ["rstex"]
         texture_hash = source_hash(source, *hash_args)
 
+        # Redshift stores the output texture next to the input but with
+        # the extension replaced to `.rstexbin
+        basename, ext = os.path.splitext(source)
+        destination = "{}{}".format(basename, self.get_extension())
+
         self.log.debug(" ".join(subprocess_args))
         try:
-            out = run_subprocess(subprocess_args)
+            run_subprocess(subprocess_args)
         except Exception:
             self.log.error("Texture .rstexbin conversion failed",
                            exc_info=True)
             raise
 
         return TextureResult(
-            path=out,
+            path=destination,
             file_hash=texture_hash,
             colorspace=colorspace,
             transfer_mode=COPY
