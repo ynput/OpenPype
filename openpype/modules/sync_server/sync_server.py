@@ -290,14 +290,16 @@ def download_last_published_workfile(
         )
     )
     for repre_id in representation_ids:
-        sync_server.add_site(
-            project_name,
-            repre_id,
-            local_site_id,
-            force=True,
-            priority=99,
-            reset_timer=True,
-        )
+        if not sync_server.is_representation_on_site(project_name, repre_id,
+                                                     local_site_id):
+            sync_server.add_site(
+                project_name,
+                repre_id,
+                local_site_id,
+                force=True,
+                priority=99
+            )
+    sync_server.reset_timer()
 
     # While representation unavailable locally, wait.
     while not sync_server.is_representation_on_site(
@@ -532,7 +534,6 @@ class SyncServerThread(threading.Thread):
 
                 duration = time.time() - start_time
                 self.log.debug("One loop took {:.2f}s".format(duration))
-
                 delay = self.module.get_loop_delay(project_name)
                 self.log.debug(
                     "Waiting for {} seconds to new loop".format(delay)
@@ -544,8 +545,8 @@ class SyncServerThread(threading.Thread):
                 self.log.warning(
                     "ConnectionResetError in sync loop, trying next loop",
                     exc_info=True)
-            except CancelledError:
-                # just stopping server
+            except asyncio.exceptions.CancelledError:
+                # cancelling timer
                 pass
             except ResumableError:
                 self.log.warning(
