@@ -26,6 +26,10 @@ from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 COPY = 1
 HARDLINK = 2
 
+# File formats we will assume are sRGB when Maya Color Management is disabled
+# Currently only used for `maketx` color conversion logic
+NONLINEAR_FILE_FORMATS = {".png", ".jpeg", ".jpg"}
+
 
 @attr.s
 class TextureResult:
@@ -311,6 +315,7 @@ class MakeTX(TextureProcessor):
             args.extend(["--colorconfig", config_path])
 
         else:
+            self.log.debug("Maya color management is disabled..")
             # We can't rely on the colorspace attribute when not in color
             # managed mode because the collected color space is the color space
             # attribute of the file node which can be any string whatsoever
@@ -318,19 +323,28 @@ class MakeTX(TextureProcessor):
             # always converting to linear if the source file is assumed to
             # be sRGB.
             render_colorspace = "linear"
-            if self._has_arnold():
+            assumed_input_colorspace = "linear"
+            if ext.lower() in NONLINEAR_FILE_FORMATS:
+                assumed_input_colorspace = "sRGB"
+            elif self._has_arnold():
+                # Assume colorspace based on input image bit-depth
                 img_info = image_info(source)
-                color_space = guess_colorspace(img_info)
-                if color_space.lower() == "sRGB":
-                    self.log.info("tx: converting sRGB -> linear")
-                    args.extend(["--colorconvert", "sRGB", render_colorspace])
-                else:
-                    self.log.info("tx: texture's colorspace "
-                                  "is already linear")
+                assumed_input_colorspace = guess_colorspace(img_info)
             else:
-                self.log.warning("tx: cannot guess the colorspace, "
-                                 "color conversion won't be "
-                                 "available!")
+                self.log.warning("tx: cannot guess the colorspace, a linear "
+                                 "colorspace will be assumed for file: "
+                                 "{}".format(source))
+
+            if assumed_input_colorspace == "sRGB":
+                self.log.info("tx: converting sRGB -> linear")
+                args.extend(["--colorconvert", "sRGB", render_colorspace])
+            elif assumed_input_colorspace == "linear":
+                self.log.info("tx: texture's colorspace "
+                              "is already linear")
+            else:
+                self.log.warning("Unexpected texture color space: {} "
+                                 "(expected either 'linear' or 'sRGB')"
+                                 "".format(assumed_input_colorspace))
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
