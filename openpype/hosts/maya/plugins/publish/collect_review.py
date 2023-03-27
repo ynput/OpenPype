@@ -80,7 +80,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data['review_height'] = instance.data['review_height']
                 data["isolate"] = instance.data["isolate"]
                 data["panZoom"] = instance.data.get("panZoom", False)
-                data["panel"] =instance.data["panel"]
+                data["panel"] = instance.data["panel"]
                 cmds.setAttr(str(instance) + '.active', 1)
                 self.log.debug('data {}'.format(instance.context[i].data))
                 instance.context[i].data.update(data)
