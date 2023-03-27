@@ -41,7 +41,7 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def convert_list_to_commands(list_to_convert, fps, label=""):
+def convert_list_to_command(list_to_convert, fps, label=""):
     """Convert a list of values to a drawtext command file for ffmpeg `sendcmd`
 
     The list of values is expected to have a value per frame. If the video
@@ -627,7 +627,7 @@ def burnins_from_data(
 
         if list_to_convert:
             value = list_to_convert[0]
-            path = convert_list_to_commands(
+            path = convert_list_to_command(
                 list_to_convert, data["fps"], label=align
             )
             cmd = "sendcmd=f='{}'".format(path)
