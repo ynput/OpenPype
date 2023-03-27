@@ -99,13 +99,12 @@ class TestValidateSequenceFrames(BaseTest):
                 str(excinfo.value))
 
     @pytest.mark.parametrize("files",
-                             ["Main_beauty.1001.v001.ass.gz"])
-    def test_validate_sequence_frames_single_frame_possible_wrong_name(self,
-            instance, plugin, files):
+                             ["Main_beauty.v001.1001.ass.gz"])
+    def test_validate_sequence_frames_single_frame_possible_wrong_name(
+            self, instance, plugin, files):
         # currently pattern fails on extensions with dots
         representations = [
             {
-                "ext": "exr",
                 "files": files,
             }
         ]
@@ -115,6 +114,21 @@ class TestValidateSequenceFrames(BaseTest):
             plugin.process(instance)
         assert ("Must not have remainder" in
                 str(excinfo.value))
+
+    @pytest.mark.parametrize("files",
+                             ["Main_beauty.v001.1001.ass.gz"])
+    def test_validate_sequence_frames_single_frame_correct_ext(
+            self, instance, plugin, files):
+        # currently pattern fails on extensions with dots
+        representations = [
+            {
+                "ext": "ass.gz",
+                "files": files,
+            }
+        ]
+        instance.data["representations"] = representations
+
+        plugin.process(instance)
 
     def test_validate_sequence_frames_multi_frame(self, instance, plugin):
         representations = [

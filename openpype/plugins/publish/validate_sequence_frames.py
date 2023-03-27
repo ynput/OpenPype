@@ -33,7 +33,11 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
             if isinstance(repr_files, str):
                 repr_files = [repr_files]
 
-            _, ext = os.path.splitext(repr_files[0])
+            ext = repr.get("ext")
+            if not ext:
+                _, ext = os.path.splitext(repr_files[0])
+            elif not ext.startswith("."):
+                ext = ".{}".format(ext)
             pattern = r"\D?(?P<index>(?P<padding>0*)\d+){}$".format(
                 re.escape(ext))
             patterns = [pattern]
