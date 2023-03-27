@@ -1,5 +1,6 @@
 import os
 import json
+import contextlib
 
 import clique
 import capture
@@ -9,6 +10,16 @@ from openpype.hosts.maya.api import lib
 
 from maya import cmds
 import pymel.core as pm
+
+
+@contextlib.contextmanager
+def panel_camera(panel, camera):
+    original_camera = cmds.modelPanel(panel, query=True, camera=True)
+    try:
+        cmds.modelPanel(panel, edit=True, camera=camera)
+        yield
+    finally:
+        cmds.modelPanel(panel, edit=True, camera=original_camera)
 
 
 class ExtractPlayblast(publish.Extractor):
@@ -24,6 +35,16 @@ class ExtractPlayblast(publish.Extractor):
     families = ["review"]
     optional = True
     capture_preset = {}
+
+    def _capture(self, preset):
+        self.log.info(
+            "Using preset:\n{}".format(
+                json.dumps(preset, sort_keys=True, indent=4)
+            )
+        )
+
+        path = capture.capture(log=self.log, **preset)
+        self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -113,6 +134,7 @@ class ExtractPlayblast(publish.Extractor):
             preset["viewport_options"] = {"imagePlane": image_plane}
 
         # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
         preset.pop("pan_zoom", None)
         preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
 
@@ -138,28 +160,37 @@ class ExtractPlayblast(publish.Extractor):
         override_viewport_options = (
             capture_presets["Viewport Options"]["override_viewport_options"]
         )
-        with lib.maintained_time():
-            filename = preset.get("filename", "%TEMP%")
 
-            # Force viewer to False in call to capture because we have our own
-            # viewer opening call to allow a signal to trigger between
-            # playblast and viewer
-            preset["viewer"] = False
+        # Force viewer to False in call to capture because we have our own
+        # viewer opening call to allow a signal to trigger between
+        # playblast and viewer
+        preset["viewer"] = False
 
-            # Update preset with current panel setting
-            # if override_viewport_options is turned off
-            if not override_viewport_options:
-                panel_preset = capture.parse_view(instance.data["panel"])
-                panel_preset.pop("camera")
-                preset.update(panel_preset)
+        # Update preset with current panel setting
+        # if override_viewport_options is turned off
+        if not override_viewport_options:
+            panel_preset = capture.parse_view(instance.data["panel"])
+            panel_preset.pop("camera")
+            preset.update(panel_preset)
 
-            self.log.info(
-                "Using preset:\n{}".format(
-                    json.dumps(preset, sort_keys=True, indent=4)
+        # Need to ensure Python 2 compatibility.
+        # TODO: Remove once dropping Python 2.
+        if getattr(contextlib, "nested", None):
+            # Python 3 compatibility.
+            with contextlib.nested(
+                lib.maintained_time(),
+                panel_camera(instance.data["panel"], preset["camera"])
+            ):
+                self._capture(preset)
+        else:
+            # Python 2 compatibility.
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(lib.maintained_time())
+                stack.enter_context(
+                    panel_camera(instance.data["panel"], preset["camera"])
                 )
-            )
 
-            path = capture.capture(log=self.log, **preset)
+                self._capture(preset)
 
         # Restoring viewport options.
         if viewport_defaults:
@@ -167,7 +198,7 @@ class ExtractPlayblast(publish.Extractor):
                 instance.data["panel"], edit=True, **viewport_defaults
             )
 
-        self.log.debug("playblast path  {}".format(path))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]
@@ -175,6 +206,7 @@ class ExtractPlayblast(publish.Extractor):
                                                  minimum_items=1,
                                                  patterns=patterns)
 
+        filename = preset.get("filename", "%TEMP%")
         self.log.debug("filename {}".format(filename))
         frame_collection = None
         for collection in collections:
