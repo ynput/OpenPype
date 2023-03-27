@@ -50,8 +50,9 @@ def convert_list_to_commands(list_to_convert, fps, label=""):
 
     Args:
         list_to_convert (list): List of values per frame.
-        fps (float or int): The expected frame per seconds of the output file
-        label (str): Label for the
+        fps (float or int): The expected frame per seconds of the output file.
+        label (str): Label for the drawtext, if specific drawtext filter is
+            required
 
     Returns:
         str: Filepath to the temporary drawtext command file.
