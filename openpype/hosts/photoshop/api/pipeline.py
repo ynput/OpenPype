@@ -6,11 +6,8 @@ import pyblish.api
 
 from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
-    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
@@ -110,14 +107,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item = data
         item["id"] = "publish_context"
         _get_stub().imprint(item["id"], item)
-
-    def get_context_title(self):
-        """Returns title for Creator window"""
-
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        return "{}/{}/{}".format(project_name, asset_name, task_name)
 
     def list_instances(self):
         """List all created instances to publish from current workfile.
