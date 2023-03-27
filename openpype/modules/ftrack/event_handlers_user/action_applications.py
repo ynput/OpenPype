@@ -124,6 +124,11 @@ class AppplicationsAction(BaseAction):
         if not avalon_project_apps:
             return False
 
+        settings = self.get_project_settings_from_event(
+            event, avalon_project_doc["name"])
+
+        only_available = settings["applications"]["only_available"]
+
         items = []
         for app_name in avalon_project_apps:
             app = self.application_manager.applications.get(app_name)
@@ -131,6 +136,10 @@ class AppplicationsAction(BaseAction):
                 continue
 
             if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
+                continue
+
+            # Skip applications without valid executables
+            if only_available and not app.find_executable():
                 continue
 
             app_icon = app.icon
