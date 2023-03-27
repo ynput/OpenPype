@@ -91,6 +91,11 @@
                             "type": "boolean",
                             "key": "off_screen",
                             "label": "            Off Screen"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "pan_zoom",
+                            "label": "            2D Pan/Zoom"
                         }
                     ]
                 },
@@ -156,7 +161,7 @@
                         {
                             "type": "boolean",
                             "key": "override_viewport_options",
-                            "label": "override_viewport_options"
+                            "label": "Override Viewport Options"
                         },
                         {
                             "type": "enum",

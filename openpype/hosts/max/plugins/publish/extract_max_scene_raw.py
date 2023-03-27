@@ -21,6 +21,7 @@ class ExtractMaxSceneRaw(publish.Extractor,
     label = "Extract Max Scene (Raw)"
     hosts = ["max"]
     families = ["camera",
+                "maxScene",
                 "model"]
     optional = True
 

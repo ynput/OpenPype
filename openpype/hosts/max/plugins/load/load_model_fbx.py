@@ -46,14 +46,25 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
+        rt.select(node.Children)
+        fbx_reimport_cmd = (
+            f"""
+FBXImporterSetParam "Animation" false
+FBXImporterSetParam "Cameras" false
+FBXImporterSetParam "AxisConversionMethod" true
+FbxExporterSetParam "UpAxis" "Y"
+FbxExporterSetParam "Preserveinstances" true
 
-        fbx_objects = node.Children
-        for fbx_object in fbx_objects:
-            fbx_object.source = path
+importFile @"{path}" #noPrompt using:FBXIMP
+        """)
+        rt.execute(fbx_reimport_cmd)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         from pymxs import runtime as rt

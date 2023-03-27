@@ -247,7 +247,7 @@ class TrayPublishWindow(PublisherWindow):
 
     def _on_project_select(self, project_name):
         # TODO register project specific plugin paths
-        self._controller.save_changes()
+        self._controller.save_changes(False)
         self._controller.reset_project_data_cache()
 
         self.reset()

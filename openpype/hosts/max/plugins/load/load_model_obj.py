@@ -23,11 +23,12 @@ class ObjLoader(load.LoaderPlugin):
         self.log.debug(f"Executing command to import..")
 
         rt.execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
+        # create "missing" container for obj import
+        container = rt.container()
+        container.name = f"{name}"
+
         # get current selection
         for selection in rt.getCurrentSelection():
-            # create "missing" container for obj import
-            container = rt.container()
-            container.name = f"{name}"
             selection.Parent = container
 
         asset = rt.getNodeByName(f"{name}")
@@ -39,13 +40,20 @@ class ObjLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node_name = container["instance_node"]
+        node = rt.getNodeByName(node_name)
+        instance_name, _ = node_name.split("_")
 
-        objects = node.Children
-        for obj in objects:
-            obj.source = path
+        rt.execute(f'importFile @"{path}" #noPrompt using:ObjImp')
+        # create "missing" container for obj import
+        container = rt.container()
+        container.name = f"{instance_name}"
+        # get current selection
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
+            container.Parent = node
 
-        lib.imprint(container["instance_node"], {
+        lib.imprint(node_name, {
             "representation": str(representation["_id"])
         })
 

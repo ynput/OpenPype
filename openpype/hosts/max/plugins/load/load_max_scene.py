@@ -10,7 +10,9 @@ class MaxSceneLoader(load.LoaderPlugin):
     """Max Scene Loader"""
 
     families = ["camera",
+                "maxScene",
                 "model"]
+
     representations = ["max"]
     order = -8
     icon = "code-fork"
@@ -47,8 +49,7 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-
-        max_objects = self.get_container_children(node)
+        max_objects = node.Children
         for max_object in max_objects:
             max_object.source = path
 

@@ -39,13 +39,28 @@ class ModelUSDLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node_name = container["instance_node"]
+        node = rt.getNodeByName(node_name)
+        for n in node.Children:
+            for r in n.Children:
+                rt.delete(r)
+            rt.delete(n)
+        instance_name, _ = node_name.split("_")
 
-        usd_objects = node.Children
-        for usd_object in usd_objects:
-            usd_object.source = path
+        import_options = rt.USDImporter.CreateOptions()
+        base_filename = os.path.basename(path)
+        _, ext = os.path.splitext(base_filename)
+        log_filepath = path.replace(ext, "txt")
 
-        lib.imprint(container["instance_node"], {
+        rt.LogPath = log_filepath
+        rt.LogLevel = rt.name('info')
+        rt.USDImporter.importFile(path,
+                                  importOptions=import_options)
+
+        asset = rt.getNodeByName(f"{instance_name}")
+        asset.Parent = node
+
+        lib.imprint(node_name, {
             "representation": str(representation["_id"])
         })
 
