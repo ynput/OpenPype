@@ -91,6 +91,9 @@ def no_workspace_dir():
 
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
+
+    extension = None
+
     def __init__(self, log=None):
         if log is None:
             log = logging.getLogger(self.__class__.__name__)
@@ -136,10 +139,6 @@ class TextureProcessor:
         """
         pass
 
-    @staticmethod
-    def get_extension():
-        pass
-
     def __repr__(self):
         # Log instance as class name
         return self.__class__.__name__
@@ -147,6 +146,8 @@ class TextureProcessor:
 
 class MakeRSTexBin(TextureProcessor):
     """Make `.rstexbin` using `redshiftTextureProcessor`"""
+
+    extension = ".rstexbin"
 
     def process(self,
                 source,
@@ -171,7 +172,7 @@ class MakeRSTexBin(TextureProcessor):
         # Redshift stores the output texture next to the input but with
         # the extension replaced to `.rstexbin`
         basename, ext = os.path.splitext(source)
-        destination = "{}{}".format(basename, self.get_extension())
+        destination = "{}{}".format(basename, self.extension)
 
         self.log.debug(" ".join(subprocess_args))
         try:
@@ -187,10 +188,6 @@ class MakeRSTexBin(TextureProcessor):
             colorspace=colorspace,
             transfer_mode=COPY
         )
-
-    @staticmethod
-    def get_extension():
-        return ".rstexbin"
 
     @staticmethod
     def get_redshift_tool(tool_name):
@@ -223,6 +220,8 @@ class MakeTX(TextureProcessor):
     in Arnold's txManager tool.
 
     """
+
+    extension = ".tx"
 
     def __init__(self, log=None):
         super(MakeTX, self).__init__(log=log)
@@ -335,15 +334,13 @@ class MakeTX(TextureProcessor):
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
-        hash_args = ["maketx"]
-        hash_args.extend(args)
-        hash_args.extend(self.extra_args)
+        hash_args = ["maketx"] + args + self.extra_args
         texture_hash = source_hash(source, *hash_args)
 
         # Ensure folder exists
-        destination = os.path.join(staging_dir, "resources", fname + ".tx")
-        if not os.path.exists(os.path.dirname(destination)):
-            os.makedirs(os.path.dirname(destination))
+        resources_dir = os.path.join(staging_dir, "resources")
+        if not os.path.exists(resources_dir):
+            os.makedirs(resources_dir)
 
         self.log.info("Generating .tx file for %s .." % source)
 
@@ -369,6 +366,7 @@ class MakeTX(TextureProcessor):
             texture_hash
         ])
 
+        destination = os.path.join(resources_dir, fname + ".tx")
         subprocess_args.extend(["-o", destination])
 
         self.log.debug(" ".join(subprocess_args))
@@ -385,10 +383,6 @@ class MakeTX(TextureProcessor):
             colorspace=render_colorspace,
             transfer_mode=COPY
         )
-
-    @staticmethod
-    def get_extension():
-        return ".tx"
 
     @staticmethod
     def _has_arnold():
@@ -748,7 +742,7 @@ class ExtractLook(publish.Extractor):
 
         # Get extension from the last processor
         for processor in reversed(processors):
-            processor_ext = processor.get_extension()
+            processor_ext = processor.extension
             if processor_ext and ext != processor_ext:
                 self.log.debug("Processor {} overrides extension to '{}' "
                                "for path: {}".format(processor,
@@ -785,9 +779,12 @@ class ExtractLook(publish.Extractor):
                          color_management,
                          colorspace):
         """Process a single texture file on disk for publishing.
+
         This will:
             1. Check whether it's already published, if so it will do hardlink
-            2. If not published and maketx is enabled, generate a new .tx file.
+                (if the texture hash is found and force copy is not enabled)
+            2. It will process the texture using the supplied texture
+                processors like MakeTX and MakeRSTexBin if enabled.
             3. Compute the destination path for the source file.
 
         Args:
