@@ -15,12 +15,12 @@ from openpype.client import (
     get_last_version_by_subset_name,
 )
 from openpype.pipeline import (
-    legacy_io,
     load_container,
     loaders_from_representation,
     discover_loader_plugins,
     get_representation_path,
     registered_host,
+    get_current_project_name,
 )
 from openpype.hosts.maya.api import lib
 
@@ -160,7 +160,7 @@ def get_look_relationships(version_id):
         dict: Dictionary of relations.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     json_representation = get_representation_by_name(
         project_name, representation_name="json", version_id=version_id
     )
@@ -187,7 +187,7 @@ def load_look(version_id):
 
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
         project_name, representation_name="ma", version_id=version_id
@@ -247,7 +247,7 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
         asset_id = node_id.split(":", 1)[0]
         node_ids_by_asset_id[asset_id].add(node_id)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version

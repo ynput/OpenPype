@@ -25,7 +25,8 @@ from openpype.client import (
 )
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
@@ -1325,8 +1326,8 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
         assert asset_doc, "No current asset found in Session"
         asset_id = asset_doc['_id']
@@ -1458,12 +1459,11 @@ def list_looks(asset_id):
 
     This assumes all look subsets start with "look*" in their names.
     """
-
     # # get all subsets with look leading in
     # the name associated with the asset
     # TODO this should probably look for family 'look' instead of checking
     #   subset name that can not start with family
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     subset_docs = get_subsets(project_name, asset_ids=[asset_id])
     return [
         subset_doc
@@ -1485,7 +1485,7 @@ def assign_look_by_version(nodes, version_id):
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
 
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
@@ -1551,7 +1551,7 @@ def assign_look(nodes, subset="lookDefault"):
         parts = pype_id.split(":", 1)
         grouped[parts[0]].append(node)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     subset_docs = get_subsets(
         project_name, subset_names=[subset], asset_ids=grouped.keys()
     )
@@ -2067,8 +2067,8 @@ def get_frame_range():
     """Get the current assets frame range and handles."""
 
     # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
 
     frame_start = asset["data"].get("frameStart")
@@ -2145,7 +2145,7 @@ def reset_scene_resolution():
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
     asset_data = get_current_project_asset()["data"]
@@ -3074,7 +3074,7 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 def set_colorspace():
     """Set Colorspace from project configuration
     """
-    project_name = os.getenv("AVALON_PROJECT")
+    project_name = get_current_project_name()
     imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that

@@ -20,6 +20,8 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_inventory_action_path,
     AVALON_CONTAINER_ID,
+    get_current_asset_name,
+    get_current_task_name,
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
@@ -217,7 +219,8 @@ def _install_menu():
 
     if not ASSIST:
         label = "{0}, {1}".format(
-            os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+            get_current_asset_name(),
+            get_current_task_name()
         )
         Context.context_label = label
         context_action = menu.addCommand(label)
@@ -325,7 +328,7 @@ def change_context_label():
     menu = menubar.findItem(MENU_LABEL)
 
     label = "{0}, {1}".format(
-        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+        get_current_asset_name(), get_current_task_name()
     )
 
     rm_item = [
