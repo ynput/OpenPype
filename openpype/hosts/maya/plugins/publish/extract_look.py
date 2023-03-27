@@ -315,36 +315,10 @@ class MakeTX(TextureProcessor):
             args.extend(["--colorconfig", config_path])
 
         else:
-            self.log.debug("Maya color management is disabled..")
-            # We can't rely on the colorspace attribute when not in color
-            # managed mode because the collected color space is the color space
-            # attribute of the file node which can be any string whatsoever
-            # but only appears disabled in Attribute Editor. We assume we're
-            # always converting to linear if the source file is assumed to
-            # be sRGB.
-            render_colorspace = "linear"
-            assumed_input_colorspace = "linear"
-            if ext.lower() in NONLINEAR_FILE_FORMATS:
-                assumed_input_colorspace = "sRGB"
-            elif self._has_arnold():
-                # Assume colorspace based on input image bit-depth
-                img_info = image_info(source)
-                assumed_input_colorspace = guess_colorspace(img_info)
-            else:
-                self.log.warning("tx: cannot guess the colorspace, a linear "
-                                 "colorspace will be assumed for file: "
-                                 "{}".format(source))
-
-            if assumed_input_colorspace == "sRGB":
-                self.log.info("tx: converting sRGB -> linear")
-                args.extend(["--colorconvert", "sRGB", render_colorspace])
-            elif assumed_input_colorspace == "linear":
-                self.log.info("tx: texture's colorspace "
-                              "is already linear")
-            else:
-                self.log.warning("Unexpected texture color space: {} "
-                                 "(expected either 'linear' or 'sRGB')"
-                                 "".format(assumed_input_colorspace))
+            # Maya Color management is disabled. We cannot rely on an OCIO
+            self.log.debug("tx: Maya color management is disabled. No color "
+                           "conversion will be applied to .tx conversion for: "
+                           "{}".format(source))
 
         # Note: The texture hash is only reliable if we include any potential
         # conversion arguments provide to e.g. `maketx`
@@ -383,9 +357,15 @@ class MakeTX(TextureProcessor):
         destination = os.path.join(resources_dir, fname + ".tx")
         subprocess_args.extend(["-o", destination])
 
+        # We want to make sure we are explicit about what OCIO config gets
+        # used. So when we supply no --colorconfig flag that no fallback to
+        # an OCIO env var occurs.
+        env = os.environ.copy()
+        env.pop("OCIO", None)
+
         self.log.debug(" ".join(subprocess_args))
         try:
-            run_subprocess(subprocess_args)
+            run_subprocess(subprocess_args, env=env)
         except Exception:
             self.log.error("Texture maketx conversion failed",
                            exc_info=True)
