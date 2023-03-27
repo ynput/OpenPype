@@ -117,7 +117,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data["frameEndHandle"]
 
             # make ftrack publishable
-            instance.data.setdefault("families", []).append(['ftrack'])
+            instance.data.setdefault("families", []).append('ftrack')
 
             cmds.setAttr(str(instance) + '.active', 1)
 
