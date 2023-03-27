@@ -9,7 +9,6 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 from maya import cmds
-import pymel.core as pm
 
 
 @contextlib.contextmanager
@@ -110,11 +109,11 @@ class ExtractPlayblast(publish.Extractor):
         preset["filename"] = path
         preset["overwrite"] = True
 
-        pm.refresh(f=True)
+        cmds.refresh(force=True)
 
-        refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
-        pm.currentTime(refreshFrameInt - 1, edit=True)
-        pm.currentTime(refreshFrameInt, edit=True)
+        refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
+        cmds.currentTime(refreshFrameInt - 1, edit=True)
+        cmds.currentTime(refreshFrameInt, edit=True)
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
@@ -226,7 +225,7 @@ class ExtractPlayblast(publish.Extractor):
             tags.append("delete")
 
         # Add camera node name to representation data
-        camera_node_name = pm.ls(camera)[0].getTransform().name()
+        camera_node_name = cmds.listRelatives(camera, parent=True)[0]
 
         collected_files = list(frame_collection)
         # single frame file shouldn't be in list, only as a string
