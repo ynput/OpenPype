@@ -2005,7 +2005,7 @@ class WorkfileSettings(object):
         ''' Adds correct colorspace to root
 
         Arguments:
-            imageio_host (dict): adjustments from presets
+            imageio_host (dict): host colorspace configurations
 
         '''
         workfile_settings = imageio_host["workfile"]
