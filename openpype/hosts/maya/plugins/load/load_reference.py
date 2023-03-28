@@ -94,10 +94,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 if c is not None:
                     cmds.setAttr(group_name + ".useOutlinerColor", 1)
                     cmds.setAttr(group_name + ".outlinerColor",
-                                 (float(c[0])/255),
-                                 (float(c[1])/255),
-                                 (float(c[2])/255)
-                    )
+                                 (float(c[0]) / 255),
+                                 (float(c[1]) / 255),
+                                 (float(c[2]) / 255))
 
                 cmds.setAttr(group_name + ".displayHandle", 1)
                 # get bounding box
