@@ -53,7 +53,7 @@ class ExtractRedshiftProxy(publish.Extractor,
             'name': 'rs',
             'ext': 'rs',
             # need to count the files
-            'files': rs_filenames if len(rs_filenames) > 1 else rs_filenames[0],
+            'files': rs_filenames if len(rs_filenames) > 1 else rs_filenames[0],    # noqa
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
