@@ -103,66 +103,18 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
 
-        # Get subsets of the correct family
-        filtered_subsets = [
-            subset
-            for subset in get_subsets(
-                project_name,
-                asset_ids=[asset_doc["_id"]],
-                fields=["_id", "name", "data.family", "data.families"],
-            )
-            if (
-                subset["data"].get("family") == "workfile"
-                # Legacy compatibility
-                or "workfile" in subset["data"].get("families", [])
-            )
-        ]
-        if not filtered_subsets:
-            self.log.debug(
-                "No any subset for asset '{}' with id '{}'.".format(
-                    asset_doc["name"], asset_doc["_id"]
-                )
-            )
-            return
+        context_filters = {
+            "asset": asset_name,
+            "family": "workfile",
+            "task": {"name": task_name, "type": task_type}
+        }
 
-        # Match subset which has `task_name` in its name
-        subset_id = None
-        low_task_name = task_name.lower()
-        if len(filtered_subsets) > 1:
-            for subset in filtered_subsets:
-                if low_task_name in subset["name"].lower():
-                    subset_id = subset["_id"]
-        else:
-            subset_id = filtered_subsets[0]["_id"]
+        workfile_representations = list(get_representations(
+            project_name,
+            context_filters=context_filters
+        ))
 
-        if subset_id is None:
-            self.log.debug(
-                "Not any matched subset for task '{}' of '{}'.".format(
-                    task_name, asset_name
-                )
-            )
-            return
-
-        # Get workfile representation
-        last_version_doc = get_last_version_by_subset_id(
-            project_name, subset_id, fields=["_id", "name"]
-        )
-        if not last_version_doc:
-            self.log.debug("Subset does not have any versions")
-            return
-
-        workfile_representation = next(
-            (
-                representation
-                for representation in get_representations(
-                    project_name, version_ids=[last_version_doc["_id"]]
-                )
-                if representation["context"].get("task", {}).get("name")
-                == task_name
-            ),
-            None,
-        )
-        if not workfile_representation:
+        if not workfile_representations:
             self.log.debug(
                 'No published workfile for task "{}" and host "{}".'.format(
                     task_name, host_name
@@ -170,6 +122,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             )
             return
 
+        sorted_workfile_representations = sorted(workfile_representations,
+                                                 key=lambda d: d["context"]
+                                                                ["version"])
+
+        workfile_representation = sorted_workfile_representations[-1]
         # Get last published
         published_workfile_path = get_representation_path_with_anatomy(
             workfile_representation, anatomy
@@ -183,7 +140,6 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             task_name,
             published_workfile_path,
             workfile_representation,
-            subset_id,
             max_retries,
             anatomy=anatomy,
             asset_doc=asset_doc,

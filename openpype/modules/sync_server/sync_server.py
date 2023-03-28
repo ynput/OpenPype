@@ -209,7 +209,6 @@ def download_last_published_workfile(
     task_name: str,
     last_published_workfile_path: str,
     workfile_representation: dict,
-    subset_id: str,
     max_retries: int,
     anatomy: Anatomy = None,
     asset_doc: dict = None,
@@ -224,8 +223,7 @@ def download_last_published_workfile(
         last_published_workfile_path (str): Last published workfile
             path.
         workfile_representation (dict): Workfile representation.
-        subset_id (str): Subset ID.
-        last_version_doc (dict): Last version doc.
+        max_retries (int): complete file failure only after so many attempts
         anatomy (Anatomy, optional): Anatomy (Used for optimization).
             Defaults to None.
         asset_doc (dict, optional): Asset doc (Used for optimization).
@@ -245,14 +243,6 @@ def download_last_published_workfile(
     sync_server = ModulesManager().modules_by_name.get("sync_server")
     if not sync_server or not sync_server.enabled:
         print("Sync server module is disabled or unavailable.")
-        return
-
-    if subset_id is None:
-        print(
-            "Not any matched subset for task '{}' of '{}'.".format(
-                task_name, asset_name
-            )
-        )
         return
 
     if not workfile_representation:
