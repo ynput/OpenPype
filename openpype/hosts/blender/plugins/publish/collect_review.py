@@ -39,7 +39,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         if not instance.data.get("remove"):
 
-            task = get_current_task_name()
+            task = instance.context.data["task"]
 
             instance.data.update({
                 "subset": f"{task}Review",
