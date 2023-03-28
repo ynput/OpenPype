@@ -17,7 +17,7 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
     label = "USD Shade model exists"
 
     def process(self, instance):
-        project_name = instance.context["projectName"]
+        project_name = instance.context.data["projectName"]
         asset_name = instance.data["asset"]
         subset = instance.data["subset"]
 

@@ -79,7 +79,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
             asset_name = instance.data["asset"]
-            project_name = instance.context["projectName"]
+            project_name = instance.context.data["projectName"]
             self.log.info((
                 "Asset is not stored on instance."
                 " Querying by name \"{}\" from project \"{}\""
