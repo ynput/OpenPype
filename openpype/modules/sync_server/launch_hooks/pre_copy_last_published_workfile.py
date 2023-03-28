@@ -94,6 +94,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             )
             return
 
+        max_retries = int((sync_server.sync_project_settings[project_name]
+                                                            ["config"]
+                                                            ["retry_cnt"]))
+
         self.log.info("Trying to fetch last published workfile...")
 
         asset_doc = self.data.get("asset_doc")
@@ -180,7 +184,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             published_workfile_path,
             workfile_representation,
             subset_id,
-            last_version_doc,
+            max_retries,
             anatomy=anatomy,
             asset_doc=asset_doc,
         )

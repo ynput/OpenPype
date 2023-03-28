@@ -210,7 +210,7 @@ def download_last_published_workfile(
     last_published_workfile_path: str,
     workfile_representation: dict,
     subset_id: str,
-    last_version_doc: dict,
+    max_retries: int,
     anatomy: Anatomy = None,
     asset_doc: dict = None,
 ) -> str:
@@ -300,7 +300,8 @@ def download_last_published_workfile(
 
     # While representation unavailable locally, wait.
     while not sync_server.is_representation_on_site(
-        project_name, workfile_representation["_id"], local_site_id
+        project_name, workfile_representation["_id"], local_site_id,
+        max_retries=max_retries
     ):
         sleep(5)
 
