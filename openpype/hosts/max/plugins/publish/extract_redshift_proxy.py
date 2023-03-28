@@ -2,10 +2,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
-)
+from openpype.hosts.max.api import maintained_selection
 
 
 class ExtractRedshiftProxy(publish.Extractor):
