@@ -1881,7 +1881,7 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
-def get_parent(node):
+def get_node_parent(node):
     """Return full path name for parent of node"""
     parents = cmds.listRelatives(node, parent=True, fullPath=True)
     return parents[0] if parents else None
@@ -1921,8 +1921,8 @@ def get_id_from_sibling(node, history_only=True):
     similar_nodes = [x for x in similar_nodes if x != node]
 
     # The node *must be* under the same parent
-    parent = get_parent(node)
-    similar_nodes = [i for i in similar_nodes if get_parent(i) == parent]
+    parent = get_node_parent(node)
+    similar_nodes = [i for i in similar_nodes if get_node_parent(i) == parent]
 
     # Check all of the remaining similar nodes and take the first one
     # with an id and assume it's the original.
@@ -3209,7 +3209,7 @@ def parent_nodes(nodes, parent=None):
     # Store original parents
     node_parents = []
     for node in nodes:
-        node_parent = get_parent(node)
+        node_parent = get_node_parent(node)
         node_parents.append((_as_mdagpath(node), _as_mdagpath(node_parent)))
 
     try:
@@ -3233,7 +3233,7 @@ def parent_nodes(nodes, parent=None):
                 # Node must have been deleted
                 continue
 
-            node_parent_path = get_parent(node_path)
+            node_parent_path = get_node_parent(node_path)
 
             original_parent_path = None
             if original_parent:
