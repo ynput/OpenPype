@@ -242,14 +242,6 @@ class ImagePlaneLoader(load.LoaderPlugin):
             plug = "{}.{}".format(image_plane_shape, attr)
             cmds.setAttr(plug, value)
 
-
-
-        image_plane_shape.imageName.set(path)
-        cmds.setAttr(
-            container["objectName"] + ".representation",
-            str(representation["_id"]),
-            type="string"
-        )
     def switch(self, container, representation):
         self.update(container, representation)
 
