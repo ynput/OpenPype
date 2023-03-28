@@ -16,4 +16,5 @@ class PreCopyMel(PreLaunchHook):
             self.log.warning("BUG: Workdir is not filled.")
             return
 
-        create_workspace_mel(workdir, project_doc["name"])
+        project_settings = self.data["project_settings"]
+        create_workspace_mel(workdir, project_doc["name"], project_settings)
