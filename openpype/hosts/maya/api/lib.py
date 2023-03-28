@@ -2203,7 +2203,6 @@ def set_context_settings():
         None
     """
 
-    # Todo (Wijnand): apply renderer and resolution of project
 
     # Set project fps
     set_scene_fps(get_fps_for_current_context())
