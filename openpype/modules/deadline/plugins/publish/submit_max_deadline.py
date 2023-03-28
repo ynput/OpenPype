@@ -178,17 +178,17 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         self.log.debug("Submitting 3dsMax render..")
         project_settings = instance.context.data["project_settings"]
-        payload = self._use_published_name(project_settings, payload_data)
+        payload = self._use_published_name(payload_data, project_settings)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, project_settings, data):
+    def _use_published_name(self, data, project_settings):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
 
-        multipass = get_multipass_setting(project_setting)
+        multipass = get_multipass_setting(project_settings)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:
