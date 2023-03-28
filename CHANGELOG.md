@@ -1,9 +1,24 @@
 # Changelog
 
+## [3.15.3](https://github.com/ynput/OpenPype/tree/3.15.3)
+
 
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.2...3.15.3)
 
 ### **🆕 New features**
+
+
+<details>
+<summary>Blender: Extract Review <a href="https://github.com/ynput/OpenPype/pull/3616">#3616</a></summary>
+
+<strong>Added Review to Blender.
+
+</strong>This implementation is based on #3508 but made compatible for the current implementation of OpenPype for Blender.
+
+
+___
+
+</details>
 
 
 <details>
@@ -24,35 +39,33 @@ ___
 
 
 <details>
-<summary>MaxScene Family  <a href="https://github.com/ynput/OpenPype/pull/4615">#4615</a></summary>
-
-Introduction of the Max Scene Family
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Blender: Extract Review <a href="https://github.com/ynput/OpenPype/pull/3616">#3616</a></summary>
-
-<strong>Added Review to Blender.
-
-</strong>This implementation is based on #3508 but made compatible for the current implementation of OpenPype for Blender.
-
-
-___
-
-</details>
-
-
-<details>
 <summary>Global: persistent staging directory for renders <a href="https://github.com/ynput/OpenPype/pull/4583">#4583</a></summary>
 
 <strong>Allows configure if staging directory (`stagingDir`) should be persistent with use of profiles.
 
 </strong>With this feature, users can specify a transient data folder path based on presets, which can be used during the creation and publishing stages. In some cases, these DCCs automatically add a rendering path during the creation stage, which is then used in publishing.One of the key advantages of this feature is that it allows users to take advantage of faster storages for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their rendered data persistent, and use their own infrastructure for regular cleaning.However, it should be noted that some productions may want to use this feature without persistency. Furthermore, there may be a need for retargeting the rendering folder to faster storages, which is also not supported at the moment.It is studio responsibility to clean up obsolete folders with data.Location of the folder is configured in `project_anatomy/templates/others`. ('transient' key is expected, with 'folder' key, could be more templates)Which family/task type/subset is applicable is configured in:`project_settings/global/tools/publish/transient_dir_profiles`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu custom comment template <a href="https://github.com/ynput/OpenPype/pull/4599">#4599</a></summary>
+
+Kitsu allows to write markdown in its comment field. This can be something very powerful to deliver dynamic comments with the help the data from the instance.This feature is defaults to off so the admin have to manually set up the comment field the way they want.I have added a basic example on how the comment can look like as the comment-fields default value.To this I want to add some documentation also but that's on its way when the code itself looks good for the reviewers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>MaxScene Family  <a href="https://github.com/ynput/OpenPype/pull/4615">#4615</a></summary>
+
+Introduction of the Max Scene Family
 
 
 ___
@@ -85,9 +98,47 @@ ___
 
 
 <details>
+<summary>Copy existing or generate new Fusion profile on prelaunch <a href="https://github.com/ynput/OpenPype/pull/4572">#4572</a></summary>
+
+<strong>Fusion preferences will be copied to the predefined `~/.openpype/hosts/fusion/prefs` folder (or any other folder set in system settings) on launch.
+
+</strong>The idea is to create a copy of existing Fusion profile, adding an OpenPype menu to the Fusion instance.By default the copy setting is turned off, so no file copying is performed. Instead the clean Fusion profile is created by Fusion in the predefined folder. The default locaion is set to `~/.openpype/hosts/fusion/prefs`, to better comply with the other os platforms. After creating the default profile, some modifications are applied:
+- forced Python3
+- forced English interface
+- setup Openpype specific path maps.If the `copy_prefs` checkbox is toggled, a copy of existing Fusion profile folder will be placed in the mentioned location. Then they are altered the same way as described above. The operation is run only once, on the first launch, unless the `force_sync [Resync profile on each launch]` is toggled.English interface is forced because the `FUSION16_PROFILE_DIR` environment variable is not read otherwise (seems to be a Fusion bug).
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Houdini: Create button open new publisher's "create" tab <a href="https://github.com/ynput/OpenPype/pull/4601">#4601</a></summary>
 
 During a talk with @maxpareschi he mentioned that the new publisher in Houdini felt super confusing due to "Create" going to the older creator but now being completely empty and the publish button directly went to the publish tab.This resolves that by fixing the Create button to now open the new publisher but on the Create tab.Also made publish button enforce going to the "publish" tab for consistency in usage.@antirotor I think changing the Create button's callback was just missed in this commit or was there a specific reason to not change that around yet?
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Clockify: refresh and fix the integration <a href="https://github.com/ynput/OpenPype/pull/4607">#4607</a></summary>
+
+Due to recent API changes, Clockify requires `user_id` to operate with the timers. I updated this part and currently it is a WIP for making it fully functional. Most functions, such as start and stop timer, and projects sync are currently working. For the rate limiting task new dependency is added: https://pypi.org/project/ratelimiter/
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion publish existing frames <a href="https://github.com/ynput/OpenPype/pull/4611">#4611</a></summary>
+
+This PR adds the function to publish existing frames instead of having to re-render all of them for each new publish.I have split the render_locally plugin so the review-part is its own plugin now.I also change the saver-creator-plugin's label from Saver to Render (saver) as I intend to add a Prerender creator like in Nuke.
 
 
 ___
@@ -108,58 +159,20 @@ ___
 
 
 <details>
+<summary>3dsmax: render instance settings in Publish tab <a href="https://github.com/ynput/OpenPype/pull/4658">#4658</a></summary>
+
+Allows user preset the pools, group and use_published settings in Render Creator in the Max Hosts.User can set the settings before or after creating instance in the new publisher
+
+
+___
+
+</details>
+
+
+<details>
 <summary>scene length setting referenced from DB record for 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4665">#4665</a></summary>
 
 Setting the timeline length based on DB record in 3dsMax Hosts
-
-
-___
-
-</details>
-
-
-<details>
-<summary>increment workfile version 3dsmax <a href="https://github.com/ynput/OpenPype/pull/4685">#4685</a></summary>
-
-increment workfile version in 3dsmax as if in blender and maya hosts.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Copy existing or generate new Fusion profile on prelaunch <a href="https://github.com/ynput/OpenPype/pull/4572">#4572</a></summary>
-
-<strong>Fusion preferences will be copied to the predefined `~/.openpype/hosts/fusion/prefs` folder (or any other folder set in system settings) on launch.
-
-</strong>The idea is to create a copy of existing Fusion profile, adding an OpenPype menu to the Fusion instance.By default the copy setting is turned off, so no file copying is performed. Instead the clean Fusion profile is created by Fusion in the predefined folder. The default locaion is set to `~/.openpype/hosts/fusion/prefs`, to better comply with the other os platforms. After creating the default profile, some modifications are applied:
-- forced Python3
-- forced English interface
-- setup Openpype specific path maps.If the `copy_prefs` checkbox is toggled, a copy of existing Fusion profile folder will be placed in the mentioned location. Then they are altered the same way as described above. The operation is run only once, on the first launch, unless the `force_sync [Resync profile on each launch]` is toggled.English interface is forced because the `FUSION16_PROFILE_DIR` environment variable is not read otherwise (seems to be a Fusion bug).
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Fusion publish existing frames <a href="https://github.com/ynput/OpenPype/pull/4611">#4611</a></summary>
-
-This PR adds the function to publish existing frames instead of having to re-render all of them for each new publish.I have split the render_locally plugin so the review-part is its own plugin now.I also change the saver-creator-plugin's label from Saver to Render (saver) as I intend to add a Prerender creator like in Nuke.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Clockify: refresh and fix the integration <a href="https://github.com/ynput/OpenPype/pull/4607">#4607</a></summary>
-
-Due to recent API changes, Clockify requires `user_id` to operate with the timers. I updated this part and currently it is a WIP for making it fully functional. Most functions, such as start and stop timer, and projects sync are currently working. For the rate limiting task new dependency is added: https://pypi.org/project/ratelimiter/
 
 
 ___
@@ -179,6 +192,17 @@ ___
 
 
 <details>
+<summary>Publisher: Explicit save <a href="https://github.com/ynput/OpenPype/pull/4676">#4676</a></summary>
+
+Publisher have explicit button to save changes, so reset can happen without saving any changes. Save still happens automatically when publishing is started or on publisher window close. But a popup is shown if context of host has changed. Important context was enhanced by workfile path (if host integration supports it) so workfile changes are captured too. In that case a dialog with confirmation is shown to user. All callbacks that may require save of context were moved to main window to be able handle dialog show at one place. Save changes now returns success so the rest of logic is skipped -> publishing won't start, when save of instances fails.Save and reset buttons have shortcuts (Ctrl + s and Ctrls + r).
+
+
+___
+
+</details>
+
+
+<details>
 <summary>CelAction: conditional workfile parameters from settings <a href="https://github.com/ynput/OpenPype/pull/4677">#4677</a></summary>
 
 Since some productions were requesting excluding some workfile parameters from publishing submission, we needed to move them to settings so those could be altered per project.
@@ -190,9 +214,42 @@ ___
 
 
 <details>
+<summary>Improve logging of used app + tool envs on application launch <a href="https://github.com/ynput/OpenPype/pull/4682">#4682</a></summary>
+
+Improve logging of what apps + tool environments got loaded for an application launch.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Fix name and docstring for Create Workdir Extra Folders prelaunch hook <a href="https://github.com/ynput/OpenPype/pull/4683">#4683</a></summary>
 
 Fix class name and docstring for Create Workdir Extra Folders prelaunch hookThe class name and docstring were originally copied from another plug-in and didn't match the plug-in logic.This also fixes potentially seeing this twice in your logs. Before:After:Where it was actually running both this prelaunch hook and the actual `AddLastWorkfileToLaunchArgs` plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Application launch context: Include app group name in logger <a href="https://github.com/ynput/OpenPype/pull/4684">#4684</a></summary>
+
+Clarify in logs better what app group the ApplicationLaunchContext belongs to and what application is being launched.Before:After:
+
+
+___
+
+</details>
+
+
+<details>
+<summary>increment workfile version 3dsmax <a href="https://github.com/ynput/OpenPype/pull/4685">#4685</a></summary>
+
+increment workfile version in 3dsmax as if in blender and maya hosts.
 
 
 ___
@@ -301,9 +358,64 @@ ___
 
 
 <details>
-<summary>Fixed a bug where a QThread in the splash screen could be destroyed before finishing execution <a href="https://github.com/ynput/OpenPype/pull/4647">#4647</a></summary>
+<summary>Maya: tile assembly fail in draft - OP-4820 <a href="https://github.com/ynput/OpenPype/pull/4416">#4416</a></summary>
 
-This should fix the occasional behavior of the QThread being destroyed before even its worker returns from the `run()` function.After quiting, it should wait for the QThread object to properly close itself.
+<strong>Tile assembly in Deadline was broken.
+
+</strong>Initial bug report revealed other areas of the tile assembly that needed fixing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Yeti Validate Rig Input - OP-3454 <a href="https://github.com/ynput/OpenPype/pull/4554">#4554</a></summary>
+
+<strong>Fix Yeti Validate Rig Input
+
+</strong>Existing workflow was broken due to this #3297.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Scene inventory: Fix code errors when "not found" entries are found <a href="https://github.com/ynput/OpenPype/pull/4594">#4594</a></summary>
+
+Whenever a "NOT FOUND" entry is present a lot of errors happened in the Scene Inventory:
+- It started spamming a lot of errors for the VersionDelegate since it had no numeric version (no version at all).Error reported on Discord:
+```python
+Traceback (most recent call last):
+  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 65, in paint
+    text = self.displayText(
+  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 33, in displayText
+    assert isinstance(value, numbers.Integral), (
+AssertionError: Version is not integer. "None" <class 'NoneType'>
+```
+- Right click menu would error on NOT FOUND entries, and thus not show. With this PR it will now _disregard_ not found items for "Set version" and "Remove" but still allow actions.This PR resolves those.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Sync OP with zou, make sure value-data is int or float <a href="https://github.com/ynput/OpenPype/pull/4596">#4596</a></summary>
+
+Currently the data zou pulls is a string and not a value causing some bugs in the pipe where a value is expected (like `Set frame range` in Fusion).
+
+
+
+This PR makes sure each value is set with int() or float() so these bugs can't happen later on.
+
+
+
+_(A request to cgwire has also bin sent to allow force values only for some metadata columns, but currently the user can enter what ever they want in there)_
 
 
 ___
@@ -323,9 +435,53 @@ ___
 
 
 <details>
+<summary>Global | Nuke: fixing farm publishing workflow <a href="https://github.com/ynput/OpenPype/pull/4623">#4623</a></summary>
+
+After Nuke had adopted new publisher with new creators new issues were introduced. Those issues were addressed with this PR. Those are for example broken reviewable video files publishing if published via farm. Also fixed local publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Ftrack additional families filtering <a href="https://github.com/ynput/OpenPype/pull/4633">#4633</a></summary>
+
+Ftrack family collector makes sure the subset family is also in instance families for additional families filtering.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Hierarchical <> Non-Hierarchical attributes sync fix <a href="https://github.com/ynput/OpenPype/pull/4635">#4635</a></summary>
+
+Sync between hierarchical and non-hierarchical attributes should be fixed and work as expected. Action should sync the values as expected and event handler should do it too and only on newly created entities.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>bugfix for 3dsmax publishing error <a href="https://github.com/ynput/OpenPype/pull/4637">#4637</a></summary>
 
 fix the bug of failing publishing job in 3dsMax
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Use right validation for ffmpeg executable <a href="https://github.com/ynput/OpenPype/pull/4640">#4640</a></summary>
+
+Use ffmpeg exec validation for ffmpeg executables instead of oiio exec validation. The validation is used as last possible source of ffmpeg from `PATH` environment variables, which is an edge case but can cause issues.
 
 
 ___
@@ -345,9 +501,53 @@ ___
 
 
 <details>
-<summary>Global | Nuke: fixing farm publishing workflow <a href="https://github.com/ynput/OpenPype/pull/4623">#4623</a></summary>
+<summary>Fixed a bug where a QThread in the splash screen could be destroyed before finishing execution <a href="https://github.com/ynput/OpenPype/pull/4647">#4647</a></summary>
 
-After Nuke had adopted new publisher with new creators new issues were introduced. Those issues were addressed with this PR. Those are for example broken reviewable video files publishing if published via farm. Also fixed local publishing.
+This should fix the occasional behavior of the QThread being destroyed before even its worker returns from the `run()` function.After quiting, it should wait for the QThread object to properly close itself.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Use right plugin class for Collect Comment <a href="https://github.com/ynput/OpenPype/pull/4653">#4653</a></summary>
+
+Collect Comment plugin is instance plugin so should inherit from `InstancePlugin` instead of `ContextPlugin`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: add tags field to thumbnail representation <a href="https://github.com/ynput/OpenPype/pull/4660">#4660</a></summary>
+
+Thumbnail representation might be missing tags field.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Integrator: Enforce unique destination transfers, disallow overwrites in queued transfers <a href="https://github.com/ynput/OpenPype/pull/4662">#4662</a></summary>
+
+Fix #4656 by enforcing unique destination transfers in the Integrator. It's now disallowed to a destination in the file transaction queue with a new source path during the publish.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Creator with correct workfile numeric padding input <a href="https://github.com/ynput/OpenPype/pull/4666">#4666</a></summary>
+
+Creator was showing 99 in workfile input for long time, even if users set default value to 1001 in studio settings. This has been fixed now.
 
 
 ___
@@ -378,95 +578,6 @@ ___
 
 
 <details>
-<summary>Hiero: Creator with correct workfile numeric padding input <a href="https://github.com/ynput/OpenPype/pull/4666">#4666</a></summary>
-
-Creator was showing 99 in workfile input for long time, even if users set default value to 1001 in studio settings. This has been fixed now.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Hiero: correct container colors if UpToDate <a href="https://github.com/ynput/OpenPype/pull/4708">#4708</a></summary>
-
-Colors on loaded containers are now correctly identifying real state of version. `Red` for out of date and `green` for up to date.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Maya: tile assembly fail in draft - OP-4820 <a href="https://github.com/ynput/OpenPype/pull/4416">#4416</a></summary>
-
-<strong>Tile assembly in Deadline was broken.
-
-</strong>Initial bug report revealed other areas of the tile assembly that needed fixing.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Scene inventory: Fix code errors when "not found" entries are found <a href="https://github.com/ynput/OpenPype/pull/4594">#4594</a></summary>
-
-Whenever a "NOT FOUND" entry is present a lot of errors happened in the Scene Inventory:
-- It started spamming a lot of errors for the VersionDelegate since it had no numeric version (no version at all).Error reported on Discord:
-```python
-Traceback (most recent call last):
-  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 65, in paint
-    text = self.displayText(
-  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 33, in displayText
-    assert isinstance(value, numbers.Integral), (
-AssertionError: Version is not integer. "None" <class 'NoneType'>
-```
-- Right click menu would error on NOT FOUND entries, and thus not show. With this PR it will now _disregard_ not found items for "Set version" and "Remove" but still allow actions.This PR resolves those.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Ftrack: Ftrack additional families filtering <a href="https://github.com/ynput/OpenPype/pull/4633">#4633</a></summary>
-
-Ftrack family collector makes sure the subset family is also in instance families for additional families filtering.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>General: Use right validation for ffmpeg executable <a href="https://github.com/ynput/OpenPype/pull/4640">#4640</a></summary>
-
-Use ffmpeg exec validation for ffmpeg executables instead of oiio exec validation. The validation is used as last possible source of ffmpeg from `PATH` environment variables, which is an edge case but can cause issues.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Global: add tags field to thumbnail representation <a href="https://github.com/ynput/OpenPype/pull/4660">#4660</a></summary>
-
-Thumbnail representation might be missing tags field.
-
-
-___
-
-</details>
-
-
-<details>
 <summary>Kitsu: Slightly less strict with instance data <a href="https://github.com/ynput/OpenPype/pull/4678">#4678</a></summary>
 
 - Allow to take task name from context if asset doesn't have any. Fixes an issue with Photoshop's review instance not having `task` in data.
@@ -480,9 +591,31 @@ ___
 
 
 <details>
+<summary>Publisher: Fix reset shortcut sequence <a href="https://github.com/ynput/OpenPype/pull/4694">#4694</a></summary>
+
+Fix bug created in https://github.com/ynput/OpenPype/pull/4676 where key sequence is checked using unsupported method. The check was changed to convert event into `QKeySequence` object which can be compared to prepared sequence.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Refactor _capture <a href="https://github.com/ynput/OpenPype/pull/4702">#4702</a></summary>
 
 Paragraphs contain detailed information on the changes made to the product or service, providing an in-depth description of the updates and enhancements. They can be used to explain the reasoning behind the changes, or to highlight the importance of the new features. Paragraphs can often include links to further information or support documentation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: correct container colors if UpToDate <a href="https://github.com/ynput/OpenPype/pull/4708">#4708</a></summary>
+
+Colors on loaded containers are now correctly identifying real state of version. `Red` for out of date and `green` for up to date.
 
 
 ___
@@ -530,9 +663,31 @@ ___
 
 
 <details>
+<summary>Maya: Replace last usages of Qt module <a href="https://github.com/ynput/OpenPype/pull/4610">#4610</a></summary>
+
+Replace last usage of `Qt` module with `qtpy`. This change is needed for `PySide6` support. All changes happened in Maya loader plugins.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Update tests and documentation for  `ColormanagedPyblishPluginMixin` <a href="https://github.com/ynput/OpenPype/pull/4612">#4612</a></summary>
 
 Refactor `ExtractorColormanaged` to `ColormanagedPyblishPluginMixin` in tests and documentation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Improve logging of used app + tool envs on application launch (minor tweak) <a href="https://github.com/ynput/OpenPype/pull/4686">#4686</a></summary>
+
+Use `app.full_name` for change done in #4682
 
 
 ___
@@ -548,6 +703,17 @@ ___
 <strong>Add `ARCHITECTURE.md` document.
 
 </strong>his document attemps to give a quick overview of the project to help onboarding, it's not an extensive documentation but more of a elevator pitch one-line descriptions of files/directories and what the attempt to do.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Documentation: Tweak grammar and fix some typos <a href="https://github.com/ynput/OpenPype/pull/4613">#4613</a></summary>
+
+This resolves some grammar and typos in the documentation.Also fixes the extension of some images in after effects docs which used uppercase extension even though files were lowercase extension.
 
 
 ___
@@ -613,9 +779,11 @@ ___
 
 
 <details>
-<summary>3dsmax: make sure that startup script executes <a href="https://github.com/ynput/OpenPype/pull/4695">#4695</a></summary>
+<summary>Resolve missing OPENPYPE_MONGO in deadline global job preload  <a href="https://github.com/ynput/OpenPype/pull/4484">#4484</a></summary>
 
-Fixing reliability of OpenPype startup in 3dsmax.
+<strong>In the GlobalJobPreLoad plugin, we propose to replace the SpawnProcess by a sub-process and to pass the environment variables in the parameters, since the SpawnProcess under Centos Linux does not pass the environment variables.
+
+</strong>In the GlobalJobPreLoad plugin, the Deadline SpawnProcess is used to start the OpenPype process. The problem is that the SpawnProcess does not pass environment variables, including OPENPYPE_MONGO, to the process when it is under Centos7 linux, and the process gets stuck. We propose to replace it by a subprocess and to pass the variable in the parameters.
 
 
 ___
@@ -624,11 +792,9 @@ ___
 
 
 <details>
-<summary>Resolve missing OPENPYPE_MONGO in deadline global job preload  <a href="https://github.com/ynput/OpenPype/pull/4484">#4484</a></summary>
+<summary>Tests: Added setup_only to tests <a href="https://github.com/ynput/OpenPype/pull/4591">#4591</a></summary>
 
-<strong>In the GlobalJobPreLoad plugin, we propose to replace the SpawnProcess by a sub-process and to pass the environment variables in the parameters, since the SpawnProcess under Centos Linux does not pass the environment variables.
-
-</strong>In the GlobalJobPreLoad plugin, the Deadline SpawnProcess is used to start the OpenPype process. The problem is that the SpawnProcess does not pass environment variables, including OPENPYPE_MONGO, to the process when it is under Centos7 linux, and the process gets stuck. We propose to replace it by a subprocess and to pass the variable in the parameters.
+Allows to download test zip, unzip and restore DB in preparation for new test.
 
 
 ___
@@ -648,9 +814,78 @@ ___
 
 
 <details>
+<summary>Bump @sideway/formula from 3.0.0 to 3.0.1 in /website <a href="https://github.com/ynput/OpenPype/pull/4609">#4609</a></summary>
+
+Bumps [@sideway/formula](https://github.com/sideway/formula) from 3.0.0 to 3.0.1.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/hapijs/formula/commit/5b44c1bffc38135616fb91d5ad46eaf64f03d23b"><code>5b44c1b</code></a> 3.0.1</li>
+<li><a href="https://github.com/hapijs/formula/commit/9fbc20a02d75ae809c37a610a57802cd1b41b3fe"><code>9fbc20a</code></a> chore: better number regex</li>
+<li><a href="https://github.com/hapijs/formula/commit/41ae98e0421913b100886adb0107a25d552d9e1a"><code>41ae98e</code></a> Cleanup</li>
+<li><a href="https://github.com/hapijs/formula/commit/c59f35ec401e18cead10e0cedfb44291517610b1"><code>c59f35e</code></a> Move to Sideway</li>
+<li>See full diff in <a href="https://github.com/sideway/formula/compare/v3.0.0...v3.0.1">compare view</a></li>
+</ul>
+</details>
+<details>
+<summary>Maintainer changes</summary>
+<p>This version was pushed to npm by <a href="https://www.npmjs.com/~marsup">marsup</a>, a new releaser for <code>@​sideway/formula</code> since your current version.</p>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=@sideway/formula&package-manager=npm_and_yarn&previous-version=3.0.0&new-version=3.0.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot merge` will merge this PR after your CI passes on it
+- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it
+- `@dependabot cancel merge` will cancel a previously requested merge and block automerging
+- `@dependabot reopen` will reopen this PR if it is closed
+- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot use these labels` will set the current labels as the default for future PRs for this repo and language
+- `@dependabot use these reviewers` will set the current reviewers as the default for future PRs for this repo and language
+- `@dependabot use these assignees` will set the current assignees as the default for future PRs for this repo and language
+- `@dependabot use this milestone` will set the current milestone as the default for future PRs for this repo and language
+
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/ynput/OpenPype/network/alerts).
+
+</details>
+___
+
+</details>
+
+
+<details>
 <summary>Update artist_hosts_maya_arnold.md <a href="https://github.com/ynput/OpenPype/pull/4626">#4626</a></summary>
 
 Correct Arnold docs.
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Add "Include Parent Hierarchy" option in animation creator plugin <a href="https://github.com/ynput/OpenPype/pull/4645">#4645</a></summary>
+
+Add an option in Project Settings > Maya > Creator Plugins > Create Animation to include (or not) parent hierarchy. This is to avoid artists to check manually the option for all create animation.
+
+
 ___
 
 </details>
@@ -667,7 +902,30 @@ ___
 </details>
 
 
+<details>
+<summary>3dsmax: make sure that startup script executes <a href="https://github.com/ynput/OpenPype/pull/4695">#4695</a></summary>
 
+Fixing reliability of OpenPype startup in 3dsmax.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Project Manager: Change minimum frame start/end to '0' <a href="https://github.com/ynput/OpenPype/pull/4719">#4719</a></summary>
+
+Project manager can have frame start/end set to `0`.
+
+
+___
+
+</details>
+
+
+
+## [3.15.2](https://github.com/ynput/OpenPype/tree/3.15.2)
 
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.1...3.15.2)
 
