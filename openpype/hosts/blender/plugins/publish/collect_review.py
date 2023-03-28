@@ -1,7 +1,6 @@
 import bpy
 
 import pyblish.api
-from openpype.pipeline import get_current_task_name
 
 
 class CollectReview(pyblish.api.InstancePlugin):
