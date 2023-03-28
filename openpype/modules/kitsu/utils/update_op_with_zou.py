@@ -250,6 +250,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
+    project_status = project['project_status_name']
+    project.pop('project_status_name')
     project_doc = get_project(project_name)
     if not project_doc:
         log.info(f"Creating project '{project_name}'")
@@ -267,18 +269,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         # Update Zou
         gazu.project.update_project(project)
 
-    all_kitsu_projects_names = [
-        project['name'] for project in gazu.project.all_projects()
-    ]
-    all_kitsu_open_projects_names = [
-        project['name'] for project in gazu.project.all_open_projects()
-    ]
-    all_kitsu_closed_projects_names = [
-        project for project in all_kitsu_projects_names
-        if project not in all_kitsu_open_projects_names
-    ]
-
-    if project_name in all_kitsu_closed_projects_names:
+    if project['project_status_name'] == "Closed":
         project_status = False
     else:
         project_status = True
@@ -338,7 +329,7 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_open_projects()
+    all_projects = gazu.project.all_projects()
     for project in all_projects:
         if ignore_projects and project["name"] in ignore_projects:
             continue
@@ -381,8 +372,16 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         if naming_pattern.match(item["name"])
     ]
 
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project['project_status_id'] == status['id']:
+            project['project_status_name'] = status['name']
+
     # Sync project. Create if doesn't exist
     bulk_writes.append(write_project_to_op(project, dbcon))
+
+    if project['project_status_name'] == "Closed":
+        return
 
     # Try to find project document
     project_name = project["name"]
