@@ -5,7 +5,6 @@ import asyncio
 import threading
 import concurrent.futures
 from time import sleep
-from concurrent.futures._base import CancelledError
 
 from openpype.pipeline.template_data import get_template_data
 
@@ -17,9 +16,7 @@ from openpype.modules.base import ModulesManager
 from openpype.pipeline import Anatomy
 from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.pipeline.workfile.path_resolving import (
-    get_last_workfile_with_version,
     get_workfile_template_key,
-    get_workdir,
 )
 from openpype.settings.lib import get_project_settings
 from openpype.client.entities import get_asset_by_name, get_project
