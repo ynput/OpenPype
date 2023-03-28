@@ -9,7 +9,7 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     load,
-    get_current_asset_name,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api import (
