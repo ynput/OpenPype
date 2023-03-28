@@ -6,7 +6,8 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection
+    maintained_selection,
+    get_all_children
 )
 
 
@@ -29,35 +30,22 @@ class ExtractRedshiftProxy(publish.Extractor,
         self.log.info("Extracting Redshift Proxy...")
         stagingdir = self.staging_dir(instance)
         rs_filename = "{name}.rs".format(**instance.data)
-
         rs_filepath = os.path.join(stagingdir, rs_filename)
+        rs_filepath = rs_filepath.replace("\\", "/")
 
-        # MaxScript command for export
-        export_cmd = (
-            f"""
-fn ProxyExport fp selected:true compress:false connectivity:false startFrame: endFrame: camera:undefined warnExisting:true transformPivotToOrigin:false = (
-	if startFrame == unsupplied then (
-		startFrame = (currentTime.frame as integer)
-	)
-
-	if endFrame == unsupplied then (
-		endFrame = (currentTime.frame as integer)
-	)
-
-    ret = rsProxy fp selected compress connectivity startFrame endFrame camera warnExisting transformPivotToOrigin
-
-    ret
-)
-execute = ProxyExport fp selected:true compress:false connectivity:false startFrame:{start} endFrame:{end} warnExisting:false transformPivotToOrigin:bTransformPivotToOrigin
-
-            """)    # noqa
+        rs_filenames = self.get_rsfiles(instance, start, end)
 
         with maintained_selection():
             # select and export
-            rt.select(container.Children)
-            rt.execute(export_cmd)
+            # con = rt.getNodeByName(container)
+            rt.select(get_all_children(rt.getNodeByName(container)))
+            # Redshift rsProxy command
+            # rsProxy fp selected compress connectivity startFrame endFrame
+            # camera warnExisting transformPivotToOrigin
+            rt.rsProxy(rs_filepath, 1, 0, 0, start, end, 0, 1, 1)
 
         self.log.info("Performing Extraction ...")
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
@@ -65,13 +53,19 @@ execute = ProxyExport fp selected:true compress:false connectivity:false startFr
             'name': 'rs',
             'ext': 'rs',
             # need to count the files
-            'files': rs_filename,
+            'files': rs_filenames if len(rs_filenames) > 1 else rs_filenames[0],
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          rs_filepath))
+                                                          stagingdir))
 
         # TODO: set sequence
-        def get_rsfiles(self, container, startFrame, endFrame):
-            pass
+    def get_rsfiles(self, instance, startFrame, endFrame):
+        rs_filenames = []
+        rs_name = instance.data["name"]
+        for frame in range(startFrame, endFrame + 1):
+            rs_filename = "%s.%04d.rs" % (rs_name, frame)
+            rs_filenames.append(rs_filename)
+
+        return rs_filenames
