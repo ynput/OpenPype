@@ -2293,7 +2293,6 @@ class WorkfileSettings(object):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
         project_name = get_current_project_name()
-        project = get_project(project_name)
         asset_name = get_current_asset_name()
         asset = get_asset_by_name(project_name, asset_name)
         asset_data = asset.get('data', {})
@@ -2308,7 +2307,7 @@ class WorkfileSettings(object):
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": project["name"]
+            "name": project_name
         }
 
         if any(x for x in data.values() if x is None):
