@@ -26,9 +26,6 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
         # Add review representations as preview of comment
         task_id = instance.data["kitsu_task"]["id"]
         for representation in instance.data.get("representations", []):
-            # Skip if not tagged as review
-            if "kitsureview" not in representation.get("tags", []):
-                continue
             review_path = representation.get("published_path")
             self.log.debug("Found review at: {}".format(review_path))
 
