@@ -133,7 +133,7 @@ class CollectAERender(publish.AbstractCollectRender):
             if is_local:
                 # for local renders
                 instance = self._update_for_local(
-                    project_settings, instance, project_entity
+                    instance, project_entity, project_settings
                 )
             else:
                 fam = "render.farm"
@@ -213,7 +213,7 @@ class CollectAERender(publish.AbstractCollectRender):
         # for submit_publish_job
         return base_dir
 
-    def _update_for_local(self, project_settings, instance, project_entity):
+    def _update_for_local(self, instance, project_entity, project_settings):
         """Update old saved instances to current publishing format"""
         instance.stagingDir = tempfile.mkdtemp()
         instance.projectEntity = project_entity

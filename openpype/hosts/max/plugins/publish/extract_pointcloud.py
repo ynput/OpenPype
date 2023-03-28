@@ -103,7 +103,7 @@ class ExtractPointCloud(publish.Extractor):
             job_args.append(mode)
 
             additional_args = self.get_custom_attr(
-                point_cloud_settings, operator)
+                operator, point_cloud_settings)
             for args in additional_args:
                 job_args.append(args)
 
@@ -133,7 +133,7 @@ class ExtractPointCloud(publish.Extractor):
 
         return opt_list
 
-    def get_custom_attr(self, point_cloud_settings, operator):
+    def get_custom_attr(self, operator, point_cloud_settings):
         """Get Custom Attributes"""
 
         custom_attr_list = []
