@@ -1,9 +1,6 @@
 import os
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
+from openpype.pipeline import publish
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
     maintained_selection,
@@ -11,10 +8,9 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractRedshiftProxy(publish.Extractor,
-                           OptionalPyblishPluginMixin):
+class ExtractRedshiftProxy(publish.Extractor):
     """
-    Extract Camera with AlembicExport
+    Extract Redshift Proxy
     """
 
     order = pyblish.api.ExtractorOrder - 0.1
