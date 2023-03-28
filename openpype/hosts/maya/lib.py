@@ -12,8 +12,8 @@ def create_workspace_mel(workdir, project_name, project_settings=None):
         os.makedirs(workdir)
 
     if not project_settings:
-        project_setting = get_project_settings(project_name)
-    mel_script = project_setting["maya"].get("mel_workspace")
+        project_settings = get_project_settings(project_name)
+    mel_script = project_settings["maya"].get("mel_workspace")
 
     # Skip if mel script in settings is empty
     if not mel_script:
