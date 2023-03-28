@@ -182,7 +182,6 @@ def reset_scene_resolution():
 
     scene resolution can be overwritten by an asset if the asset.data contains
     any information regarding scene resolution .
-
     Returns:
         None
     """
@@ -198,6 +197,59 @@ def reset_scene_resolution():
     height = int(asset_resolution_data.get("resolutionHeight", project_height))
 
     set_scene_resolution(width, height)
+
+
+def get_frame_range() -> dict:
+    """Get the current assets frame range and handles.
+
+    Returns:
+        dict: with frame start, frame end, handle start, handle end.
+    """
+    # Set frame start/end
+    asset = get_current_project_asset()
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+    if frame_start is None or frame_end is None:
+        return
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range(fps: bool = True):
+    """Set frame range to current asset.
+    This is part of 3dsmax documentation:
+
+    animationRange: A System Global variable which lets you get and
+        set an Interval value that defines the start and end frames
+        of the Active Time Segment.
+    frameRate: A System Global variable which lets you get
+            and set an Integer value that defines the current
+            scene frame rate in frames-per-second.
+    """
+    if fps:
+        data_fps = get_current_project(fields=["data.fps"])
+        fps_number = float(data_fps["data"]["fps"])
+        rt.frameRate = fps_number
+    frame_range = get_frame_range()
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
+    rt.execute(frange_cmd)
 
 
 def set_context_setting():
