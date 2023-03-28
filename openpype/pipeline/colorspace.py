@@ -345,8 +345,13 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # check if host settings are having enabled key and if it is False
-    if imageio_host.get("enabled") and imageio_host["enabled"] is False:
+    # check if host settings group is having enabled key
+    imageio_enabled = imageio_host.get("enabled")
+    if imageio_enabled  is None:
+        # it it does not have enabled key, use global settings
+        imageio_enabled = True
+
+    if not imageio_enabled :
         # if host settings are disabled return False because
         # it is expected that no colorspace management is needed
         return False
