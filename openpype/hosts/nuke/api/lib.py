@@ -2012,7 +2012,7 @@ class WorkfileSettings(object):
 
         # get config data if imageio is enabled
         config_data = None
-        if imageio_host.get("enabled") and imageio_host["enabled"] is True:
+        if imageio_host.get("enabled"):
             # switch ocio config to custom config
             workfile_settings["OCIO_config"] = "custom"
             workfile_settings["colorManagement"] = "OCIO"
