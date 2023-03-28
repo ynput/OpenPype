@@ -310,7 +310,7 @@ class Window(QtWidgets.QWidget):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            project_name = get_current_project_name()
+            project_name = self.project_name
             workfile_doc = get_workfile_info(
                 project_name, asset_id, task_name, filename
             )
@@ -341,7 +341,7 @@ class Window(QtWidgets.QWidget):
         if not update_data:
             return
 
-        project_name = get_current_project_name()
+        project_name = self.project_name
 
         session = OperationsSession()
         session.update_entity(
@@ -358,7 +358,7 @@ class Window(QtWidgets.QWidget):
             return
 
         filename = os.path.split(filepath)[1]
-        project_name = get_current_project_name()
+        project_name = self.project_name
         return get_workfile_info(
             project_name, asset_id, task_name, filename
         )
@@ -370,7 +370,7 @@ class Window(QtWidgets.QWidget):
 
         workdir, filename = os.path.split(filepath)
 
-        project_name = get_current_project_name()
+        project_name = self.project_name
         asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
 
