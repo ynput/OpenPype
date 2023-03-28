@@ -227,13 +227,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
-        project_name = instance.context.data["projectName"]
-        asset_name = instance.data.get("asset")
-        task_name = instance.data.get("task")
+
         output_dir = self._get_publish_folder(
             instance.context.data['anatomy'],
             deepcopy(instance.data["anatomyData"]),
-            asset_name,
+            instance.data.get("asset"),
             instances[0]["subset"],
             'render',
             override_version
@@ -245,9 +243,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = {
-            "AVALON_PROJECT": project_name,
-            "AVALON_ASSET": asset_name,
-            "AVALON_TASK": task_name,
+            "AVALON_PROJECT": instance.context.data["projectName"],
+            "AVALON_ASSET": instance.context.data["asset"],
+            "AVALON_TASK": instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
