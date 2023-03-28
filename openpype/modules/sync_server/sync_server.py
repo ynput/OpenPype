@@ -325,32 +325,8 @@ def download_last_published_workfile(
         task_name, host_name, project_name, project_settings
     )
 
-    # Get local workfile version number
-    _, last_local_workfile_version = get_last_workfile_with_version(
-        get_workdir(
-            project_doc,
-            asset_doc,
-            task_name,
-            host_name,
-            anatomy=anatomy,
-            template_key=template_key,
-            project_settings=project_settings,
-        ),
-        anatomy.templates[template_key]["file"],
-        workfile_data,
-        [extension],
-    )
-
-    # Set workfile data workfile version
-    # Either last published version or last local version, whichever is higher
     workfile_data["version"] = (
-        last_local_workfile_version + 1
-        if (
-            last_local_workfile_version
-            and last_local_workfile_version > last_version_doc["name"]
-        )
-        else last_version_doc["name"] + 1
-    )
+        workfile_representation["context"]["version"] + 1)
     workfile_data["ext"] = extension
 
     anatomy_result = anatomy.format(workfile_data)
