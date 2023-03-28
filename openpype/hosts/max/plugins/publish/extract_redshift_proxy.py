@@ -10,7 +10,7 @@ from openpype.hosts.max.api import (
 
 class ExtractRedshiftProxy(publish.Extractor):
     """
-    Extract Redshift Proxy
+    Extract Redshift Proxy with rsProxy
     """
 
     order = pyblish.api.ExtractorOrder - 0.1
