@@ -110,7 +110,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             if (
                 subset["data"].get("family") == "workfile"
                 # Legacy compatibility
-                or "workfile" in subset["data"].get("families", {})
+                or "workfile" in subset["data"].get("families", [])
             )
         ]
         if not filtered_subsets:
