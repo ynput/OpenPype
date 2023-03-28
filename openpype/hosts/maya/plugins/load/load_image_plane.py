@@ -187,7 +187,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                frame_extension_plug = "{}.frameExtension".format(image_plane_shape)
+                frame_extension_plug = "{}.frameExtension".format(image_plane_shape)  # noqa
 
                 # Remove current frame expression
                 disconnect_inputs(frame_extension_plug)
