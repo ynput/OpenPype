@@ -5,6 +5,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
 class ObjLoader(load.LoaderPlugin):
@@ -42,16 +43,19 @@ class ObjLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
+
         instance_name, _ = node_name.split("_")
+        container = rt.getNodeByName(instance_name)
+        for n in container.Children:
+            rt.delete(n)
 
         rt.execute(f'importFile @"{path}" #noPrompt using:ObjImp')
-        # create "missing" container for obj import
-        container = rt.container()
-        container.name = f"{instance_name}"
         # get current selection
         for selection in rt.getCurrentSelection():
             selection.Parent = container
-            container.Parent = node
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(node_name, {
             "representation": str(representation["_id"])

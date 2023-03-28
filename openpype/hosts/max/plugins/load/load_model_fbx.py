@@ -5,6 +5,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
 class FbxModelLoader(load.LoaderPlugin):
@@ -58,6 +59,9 @@ FbxExporterSetParam "Preserveinstances" true
 importFile @"{path}" #noPrompt using:FBXIMP
         """)
         rt.execute(fbx_reimport_cmd)
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

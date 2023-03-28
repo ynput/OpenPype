@@ -4,6 +4,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
 class ModelUSDLoader(load.LoaderPlugin):
@@ -59,6 +60,9 @@ class ModelUSDLoader(load.LoaderPlugin):
 
         asset = rt.getNodeByName(f"{instance_name}")
         asset.Parent = node
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(node_name, {
             "representation": str(representation["_id"])

@@ -5,6 +5,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
 class ModelAbcLoader(load.LoaderPlugin):
@@ -57,12 +58,8 @@ importFile @"{file_path}" #noPrompt
 
     def update(self, container, representation):
         from pymxs import runtime as rt
-
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
         rt.select(node.Children)
 
         for alembic in rt.selection:
@@ -75,6 +72,13 @@ importFile @"{file_path}" #noPrompt
                 for abc_obj in rt.selection:
                     alembic_obj = rt.getNodeByName(abc_obj.name)
                     alembic_obj.source = path
+
+        with maintained_selection():
+            rt.select(node)
+
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def switch(self, container, representation):
         self.update(container, representation)
