@@ -4,6 +4,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
 class PointCloudLoader(load.LoaderPlugin):
@@ -38,6 +39,9 @@ class PointCloudLoader(load.LoaderPlugin):
         for prt in rt.selection:
             prt_object = rt.getNodeByName(prt.name)
             prt_object.filename = path
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
