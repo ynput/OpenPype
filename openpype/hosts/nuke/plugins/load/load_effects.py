@@ -156,7 +156,7 @@ class LoadEffects(load.LoaderPlugin):
         """
         # get main variables
         # Get version from io
-        project_name = get_current_asset_name()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
