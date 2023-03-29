@@ -3,6 +3,7 @@ from .addon import (
     HieroAddon,
 )
 
+# testing hiero label
 
 __all__ = (
     "HIERO_ROOT_DIR",
