@@ -198,19 +198,14 @@ def get_local_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     Returns:
         path to OpenPype or None if not found
     """
-    paths = (
+    path = (
         settings
         .get("local_openpype_path", {})
         .get(platform.system().lower())
-    ) or []
-    # For cases when `local_openpype_path` is a single path
-    if paths and isinstance(paths, str):
-        paths = [paths]
-
-    overridden_path = next((Path(path)
-                            for path in paths
-                            if os.path.exists(path)), None)
-    return overridden_path
+    )
+    if path:
+        return Path(path)
+    return None
 
 
 def get_expected_studio_version_str(
