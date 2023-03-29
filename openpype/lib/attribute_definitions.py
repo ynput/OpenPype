@@ -431,7 +431,7 @@ class EnumDef(AbstractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted using
+        items: Items definition that can be converted using
             'prepare_enum_items'.
         default: Default value. Must be one key(value) from passed items.
     """
