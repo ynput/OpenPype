@@ -36,7 +36,7 @@ All context filters are lists which may contain strings or Regular expressions (
 - **families** - Main family of processed instance. `["plate", "model"]`
 
 :::important Filtering
-Filters are optional and may not be set. In case when multiple profiles match current context, profile with filters has higher priority that profile without filters.
+Filters are optional and may not be set. In case when multiple profiles match current context, profile with filters has higher priority than profile without filters.
 :::
 
 #### Profile outputs

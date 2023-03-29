@@ -398,12 +398,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             "stderr": subprocess.PIPE,
             "shell": True,
         }
-        if platform.system().lower() == "windows":
-            kwargs["creationflags"] = (
-                subprocess.CREATE_NEW_PROCESS_GROUP
-                | getattr(subprocess, "DETACHED_PROCESS", 0)
-                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            )
         proc = subprocess.Popen(command, **kwargs)
 
         _stdout, _stderr = proc.communicate()
