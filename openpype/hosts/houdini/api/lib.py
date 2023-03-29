@@ -479,10 +479,6 @@ def reset_framerange():
 
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset_data.get("edit_in")
-        frame_end = asset_data.get("edit_out")
 
     if frame_start is None or frame_end is None:
         log.warning("No edit information found for %s" % asset_name)

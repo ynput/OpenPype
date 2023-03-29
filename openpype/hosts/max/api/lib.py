@@ -209,10 +209,7 @@ def get_frame_range() -> dict:
     asset = get_current_project_asset()
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
+
     if frame_start is None or frame_end is None:
         return
 
