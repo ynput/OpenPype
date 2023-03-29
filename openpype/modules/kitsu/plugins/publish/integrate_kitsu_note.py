@@ -51,7 +51,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     def process(self, context):
         for instance in context:
             # Check if instance is a review by checking its family
-            if "review" not in instance.data["families"]:
+            # Allow a match to primary family or any of families
+            families = set([instance.data["family"]] +
+                           instance.data.get("families", []))
+            if "review" not in families:
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")

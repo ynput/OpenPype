@@ -17,7 +17,11 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
 
     label = "Validate Deadline Pools"
     order = pyblish.api.ValidatorOrder
-    families = ["rendering", "render.farm", "renderFarm", "renderlayer"]
+    families = ["rendering",
+                "render.farm",
+                "renderFarm",
+                "renderlayer",
+                "maxrender"]
     optional = True
 
     def process(self, instance):
