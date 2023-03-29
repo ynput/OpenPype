@@ -5,3 +5,39 @@ type: unittest:
 # any changes in documentation structure
 type: documentation:
 - any: ['website/**/*', 'docs/**/*']
+
+# hosts triage
+host: Nuke:
+- openpype/hosts/nuke/**/*
+host: Photoshop:
+- openpype/hosts/photoshop/**/*
+host: Harmony:
+- openpype/hosts/harmony/**/*
+host: UE:
+- openpype/hosts/unreal/**/*
+host: Houdini:
+- openpype/hosts/houdini/**/*
+host: Maya:
+- openpype/hosts/maya/**/*
+host: Resolve:
+- openpype/hosts/resolve/**/*
+host: Blender:
+- openpype/hosts/blender/**/*
+host: Hiero:
+- openpype/hosts/hiero/**/*
+host: Fusion:
+- openpype/hosts/fusion/**/*
+host: Flame:
+- openpype/hosts/flame/**/*
+host: TrayPublisher:
+- openpype/hosts/traypublisher/**/*
+host: 3dsmax:
+- openpype/hosts/max/**/*
+host: TV Paint:
+- openpype/hosts/tvpaint/**/*
+host: CelAction:
+- openpype/hosts/celaction/**/*
+host: After Effects:
+- openpype/hosts/aftereffects/**/*
+host: Substance Painter:
+- openpype/hosts/substancepainter/**/*
