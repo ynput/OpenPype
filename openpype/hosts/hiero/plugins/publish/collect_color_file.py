@@ -6,11 +6,12 @@ from glob import glob
 from datetime import datetime
 from qtpy import QtWidgets, QtCore, QtGui
 
-##################
-# TODO: Determine if there is only one color file for shot or multiple color file for multiuple plates
-##################
 
-COLOR_FILE_EXTS = ("ccc", "cc", "cdl", "edl")
+THREED_LUTS = ["cube", "3dl", "csp", "lut"]
+TWOD_LUTS = ["ccc", "cc", "cdl"]
+
+# EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
+COLOR_FILE_EXTS = TWOD_LUTS + THREED_LUTS + ["edl"]
 
 def parse_edl_events(path, color_edits_only=False):
     with open(path, "r") as f:
@@ -100,29 +101,28 @@ def parse_cdl(path):
     offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
     power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
     sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
-    path_pattern = r"<originalpath\>(?P<file>.*)<\/originalpath\>"
 
     slope_match = re.search(slope_pattern, cdl_data)
-    slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) if slope_match else None
+    slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) \
+        if slope_match else None
 
     offset_match = re.search(offset_pattern, cdl_data)
-    offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB"))))) if offset_match else None
+    offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB"))))) \
+        if offset_match else None
 
     power_match = re.search(power_pattern, cdl_data)
-    power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB"))))) if power_match else None
+    power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB"))))) \
+        if power_match else None
 
     sat_match = re.search(sat_pattern, cdl_data)
     sat = float(sat_match.group("sat")) if sat_match else None
-
-    path_match = re.search(path_pattern, cdl_data)
-    file = path_match.group("file") if path_match else ""
 
     cdl = {
     "slope": slope,
     "offset": offset,
     "power": power,
     "sat": sat,
-    "file": file
+    "file":path,
     }
 
     return cdl
@@ -137,6 +137,7 @@ class MissingColorFile(QtWidgets.QDialog):
     prev_file_path_input = ""
     prev_edl_entries_path = ""
     edl = {}
+    ignore_grade = False
 
     def __init__(self, shot_name, source_name, main_grade, parent=None):
         super(MissingColorFile, self).__init__(parent)
@@ -332,11 +333,13 @@ class MissingColorFile(QtWidgets.QDialog):
         buttons_h_spacer_item_1 = QtWidgets.QSpacerItem(10, 8, QtWidgets.QSizePolicy.Expanding,
                                                         QtWidgets.QSizePolicy.Fixed)
         self.blank_grade_button = QtWidgets.QPushButton("Blank Grade")
+        self.ignore_grade_button = QtWidgets.QPushButton("Ignore Grade")
         buttons_h_spacer_item_2 = QtWidgets.QSpacerItem(10, 8, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.accept_button = QtWidgets.QPushButton("Accept")
         self.cancel_button = QtWidgets.QPushButton("Cancel")
         buttons_layout.addItem(buttons_h_spacer_item_1)
         buttons_layout.addWidget(self.blank_grade_button)
+        buttons_layout.addWidget(self.ignore_grade_button)
         buttons_layout.addItem(buttons_h_spacer_item_2)
         buttons_layout.addWidget(self.accept_button)
         buttons_layout.addWidget(self.cancel_button)
@@ -354,6 +357,7 @@ class MissingColorFile(QtWidgets.QDialog):
         # Connections
         self.file_path_browse.pressed.connect(self.open_color_file_browser)
         self.blank_grade_button.pressed.connect(self.blank_grade)
+        self.ignore_grade_button.pressed.connect(self.set_ignore)
         self.accept_button.pressed.connect(self.check_and_accept)
         self.cancel_button.pressed.connect(self.cancel)
         self.file_path_input.textChanged.connect(self.set_sops_and_edl)
@@ -511,8 +515,13 @@ class MissingColorFile(QtWidgets.QDialog):
             "sat": 1
         }
         self.data["cdl"] = cdl
-        self.data["path"] = ''
+        self.data["path"] = ""
 
+        self.accept()
+
+    def set_ignore(self):
+        self.ignore_grade = True
+        self.data["ignore"] = self.ignore_grade
         self.accept()
 
     def open_text_file(self):
@@ -524,18 +533,25 @@ class MissingColorFile(QtWidgets.QDialog):
                                               "Info", "Can't open file as it doesn't exist on disk")
 
     def set_data(self):
-        cdl = {
-            "slope": (self.slope_r_input.text(), self.slope_g_input.text(), self.slope_b_input.text()),
-            "offset": (self.offset_r_input.text(), self.offset_g_input.text(), self.offset_b_input.text()),
-            "power": (self.power_r_input.text(), self.power_g_input.text(), self.power_b_input.text()),
-            "sat": self.sat_input.text()
-        }
-        data = {
-            "path": self.file_path_input.text(),
+        file_path = self.file_path_input.text()
+        color_ext = file_path.rsplit(".", 1)[-1]
+        data = {}
+        if color_ext == "edl":
+            cdl = {
+                "slope": (self.slope_r_input.text(), self.slope_g_input.text(), self.slope_b_input.text()),
+                "offset": (self.offset_r_input.text(), self.offset_g_input.text(), self.offset_b_input.text()),
+                "power": (self.power_r_input.text(), self.power_g_input.text(), self.power_b_input.text()),
+                "sat": self.sat_input.text()
+            }
+            data["cdl"] = cdl
+
+        data.update({
+            "path": file_path,
             "event": self.entry_number.value(),
-            "type": self.file_path_input.text().rsplit(".", 1)[-1],
-            "cdl" : cdl
-        }
+            "type": color_ext,
+            "ignore":self.ignore_grade
+            }
+        )
         self.data = data
 
     def check_and_accept(self):
@@ -560,14 +576,15 @@ class MissingColorFile(QtWidgets.QDialog):
         if not color_file_path_ext in COLOR_FILE_EXTS:
             # Make sure that color file is correct
             QtWidgets.QMessageBox.information(hiero.ui.mainWindow(), "Info",
-                                              "Please make sure the file you selected is a color file type\n\n'EDL, CCC, CC, CDL'")  # 3DL, Cube
+                                              "Please make sure the file you selected is a color file type\n\n'{0}'".format(", ".join(COLOR_FILE_EXTS)))
             return
 
         self.set_data()
-        if self.data["cdl"]["slope"][0] == "NA":
-            QtWidgets.QMessageBox.information(hiero.ui.mainWindow(), "Info",
-                                              "No color data found!\n\nIf this shot needs a blank grade press 'Blank Grade'")
-            return
+        if self.data["type"] == "edl":
+            if self.data["cdl"]["slope"][0] == "NA" and color_file_path_ext == "edl":
+                QtWidgets.QMessageBox.information(hiero.ui.mainWindow(), "Info",
+                                                  "No color data found!\n\nIf this shot needs a blank grade press 'Blank Grade'")
+                return
 
         self.accept()
 
@@ -597,6 +614,7 @@ def get_files(package_path, filters):
 
 def priority_color_file(color_files, item_name, source_name):
     """Priority is given to the closest match of source_name then item_name as well as found file type"""
+    source_name = source_name.lower()
     matches = []
     for color_ext in COLOR_FILE_EXTS:
         ext_color_files = color_files.get(color_ext)
@@ -606,15 +624,20 @@ def priority_color_file(color_files, item_name, source_name):
                 if not color_ext == "edl":
                     # Name match priority
                     priority = None
-                    color_file_name = os.path.basename(color_file)
+                    # Remove extension and don't compare case
+                    color_file_name = os.path.basename(color_file).lower().rsplit(".", 1)[0]
+                    # Incase file name is wack
+                    if color_file_name.endswith("_ccc") or color_file_name.endswith("_cc") or color_file_name.endswith("_cdl"):
+                        color_file_name = color_file_name.replace("_ccc", "").replace("_cc", "").replace("_cdl", "")
+
                     if source_name == color_file_name:
                         priority = 0
-                    elif source_name in color_file_name:
-                        priority = 4
+                    # elif source_name in color_file_name:
+                    #     priority = 4
                     elif item_name == color_file_name:
                         priority = 8
-                    elif item_name in color_file_name:
-                        priority = 12
+                    # elif item_name in color_file_name:
+                    #     priority = 12
 
                     if not priority is None:
                         # Distinguish type priority
@@ -632,21 +655,22 @@ def priority_color_file(color_files, item_name, source_name):
                     edits = parse_edl_events(color_file, color_edits_only=True)
                     for edit in edits["events"]:
                         edl_event = edits["events"][edit]
-                        print(edl_event, "edl_event")
                         cdl = {
                             "slope": edl_event["slope"],
                             "offset": edl_event["offset"],
                             "power": edl_event["power"],
+                            "sat": edl_event["sat"],
                         }
-                        loc_name = edl_event["LOC"]
+                        loc_name = edl_event["LOC"].lower()
                         if source_name == loc_name:
-                            matches.append((2, cdl, color_file))
-                        elif source_name in loc_name:
-                            matches.append((6, cdl, color_file))
+                            priority = 2
+                        # elif source_name in loc_name:
+                        #     priority = 6
                         elif item_name == loc_name:
-                            matches.append((10, cdl, color_file))
-                        elif item_name in loc_name:
-                            matches.append((14, cdl, color_file))
+                            priority = 10
+                        # elif item_name in loc_name:
+                        #     priority = 14
+                        matches.append((priority, cdl, color_file))
 
     if matches:
         return sorted(matches, key=lambda x: x[0])[0]
@@ -664,23 +688,31 @@ def get_color_file(source_path, item_name, source_name):
 
     incoming_path = os.path.dirname(source_path.split("/" + package_path_end.split("/")[0])[0])
     incoming_packages = [d for d in sorted(glob(incoming_path + "/*")) if os.path.isdir(d)]
+
     # Create Package list
-    sorted_incoming = [package_path] + sorted(
+    sorted_incoming = sorted(
         incoming_packages,
         key=lambda x: int(os.path.basename(x)) if os.path.basename(x).isdigit() else int(
             datetime.fromtimestamp(os.path.getctime(x)).strftime("%Y%m%d"))
     )
 
-    color_file = None, None, None
+    # Add current package directory
+    if os.path.isfile(package_path):
+        package_path = os.path.dirname(package_path)
+        if package_path in incoming_packages:
+            sorted_incoming.remove(package_path)
+        sorted_incoming.insert(0, package_path)
+
+    priority, cdl, color_file = None, None, None
     for path in sorted_incoming:
         color_files = get_files(path, COLOR_FILE_EXTS)
 
         # Prioritize which color files will be used
-        color_file = priority_color_file(color_files, item_name, source_name)
+        priority, cdl, color_file = priority_color_file(color_files, item_name, source_name)
         if color_file:
             break
 
-    return color_file
+    return priority, cdl, color_file
 
 
 class CollectColorFile(pyblish.api.InstancePlugin):
@@ -690,13 +722,14 @@ class CollectColorFile(pyblish.api.InstancePlugin):
     label = "Collect Color File"
     families = ["plate"]
 
+    optional = True
+
     def process(self, instance):
         track_item = instance.data["item"]
         item_name = track_item.name()
         source_name = track_item.source().name()
         source_path = track_item.source().mediaSource().firstpath()
         main_grade = False
-        cdl = None
         color_file = ""
 
         # TODO: Check to make sure that the source_path is in incoming
@@ -704,17 +737,28 @@ class CollectColorFile(pyblish.api.InstancePlugin):
         incoming_match = re.match(incoming_pattern, source_path)
         if incoming_match:
             priority, cdl, color_file = get_color_file(source_path, item_name, source_name)
+            color_ext = color_file.rsplit(".", 1)[-1]
+
+            color_info = {}
+            if color_ext == "edl":
+                if color_ext == "edl":
+                    color_info["cdl"] = cdl
+
+            color_info.update({
+                "path": color_file,
+                "type": color_ext,
+                "ignore":False
+                }
+            )
 
         if not color_file:
             dialog = MissingColorFile(item_name, source_name, main_grade)
             dialog_result = dialog.exec()
-            print(dialog.data, "dialog_result.data")
             if dialog_result:
-                cdl = dialog.data["cdl"]
-                cdl["file"] = dialog.data["path"]
+                color_info = dialog.data
             else:
                 self.log.critical("No color file found for plate '{0}'-'{1}'".format(item_name, source_name))
                 return
 
-        instance.data["cdl"] = cdl
-        self.log.info("Collected CDL: {0}".format(cdl))
+        instance.data["shot_grade"] = color_info
+        self.log.info("Collected Color File: {0}".format(color_info))

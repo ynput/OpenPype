@@ -1,12 +1,18 @@
 import re
 import os.path
 import copy
+import json
 import shutil
 import pyblish.api
 import xml.etree.ElementTree
 from glob import glob
 from datetime import datetime
 
+THREED_LUTS = ["cube", "3dl", "csp", "lut"]
+TWOD_LUTS = ["ccc", "cc", "cdl"]
+
+# EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
+COLOR_FILE_EXTS = TWOD_LUTS + THREED_LUTS + ["edl"]
 
 def parse_cdl(path):
     with open(path, "r") as f:
@@ -16,7 +22,6 @@ def parse_cdl(path):
     offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
     power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
     sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
-    path_pattern = r"<originalpath\>(?P<file>.*)<\/originalpath\>"
 
     slope_match = re.search(slope_pattern, cdl_data)
     slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) \
@@ -33,15 +38,12 @@ def parse_cdl(path):
     sat_match = re.search(sat_pattern, cdl_data)
     sat = float(sat_match.group("sat")) if sat_match else None
 
-    path_match = re.search(path_pattern, cdl_data)
-    file = path_match.group("file") if path_match else ""
-
     cdl = {
     "slope": slope,
     "offset": offset,
     "power": power,
     "sat": sat,
-    "file": file
+    "file":path,
     }
 
     return cdl
@@ -192,20 +194,24 @@ def create_backup_grade(grade):
     return backup_grade_result
 
 
-def same_grade(cdl, cdl_path):
-    """Test whether two cdls have the same values"""
-    match_cdl = parse_cdl(cdl_path)
-    if (
-            cdl.get("slope") == match_cdl.get("slope") and
-            cdl.get("offset") == match_cdl.get("offset") and
-            cdl.get("power") == match_cdl.get("power") and
-            cdl.get("sat") == match_cdl.get("sat") and
-            cdl.get("file") == match_cdl.get("file")
-        ):
-        return True
-    else:
-        return False
+def same_grade(color_path, grade_path, color_type, cdl={}):
+    """Test whether two color files have the same values"""
 
+    if color_type == "edl":
+        match_cdl = parse_cdl(grade_path)
+        if (
+                cdl.get("slope") == match_cdl.get("slope") and
+                cdl.get("offset") == match_cdl.get("offset") and
+                cdl.get("power") == match_cdl.get("power") and
+                cdl.get("sat") == match_cdl.get("sat") and
+                cdl.get("file") == match_cdl.get("file")
+            ):
+            return True
+        else:
+            return False
+    else:
+        with open(color_path, "r") as color_file, open(grade_path, "r") as grade_file:
+            return color_file.read() == grade_file.read()
 
 def sort_by_descript(item):
     """Sort is done by giving a value to the alpha part of the plate name description and adding an integer for plate number"""
@@ -223,35 +229,153 @@ def sort_by_descript(item):
     return descriptor_value
 
 
-def  get_main_grade(ocio_directory):
-    """Determine if Grade file is meant to be main grade or it if it is an element grade"""
-    original_grades = []
-    for grade in glob(ocio_directory + "/*"):
-        if os.path.isfile(grade) and not os.path.basename(grade) == "grade.ccc" and (
-                grade.endswith(".ccc") or
-                grade.endswith(".cdl") or
-                grade.endswith(".cc")
-            ):
-            original_grades.append((os.path.basename(parse_cdl(grade)["file"]).rsplit(".")[0], grade))
+class IngestMeta:
+    """
+    Meta is stored in the following format:
+    filename:{
+        "source_path":"path/to/file.ccc"
+        "plate":"associated_plate_name"
+    },
+    Here is a sample json file with ingest meta
+    {
+        101_001_010.ccc:{
+            "source_path":"/proj/zzz/incoming/20210202/101_001_010/101_001_010.ccc"
+            "plate":"101_001_010_bg1"
+            "main_grade":True,
+        },
+    }
 
-    if len(original_grades) == 1:
-        return original_grades[0][1]
+    Built out of multiple filename entries with pertaining meta
+    main_grade is needed to be able to determine if there was a custom set grade.ccc link
+    """
+    basename = "color_ingest_meta.json"
+    metadata = {}
+    historic_main_grade = ""
 
-    # Testing to see if there is a high chance that main grade is only shot name
-    possible_main = sorted(original_grades, key=lambda x: len(x[0]))[0]
-    for name, grade in original_grades:
-        # If a grades name is in the other grades name it is for sure the main grade
-        if name == possible_main[0]:
-            continue
-        if not possible_main[0] in name:
-            break
-    else:
-        return possible_main[1]
+    def __init__(self, ocio_directory):
+        self.ocio_directory = ocio_directory
+        self.meta_path = os.path.join(ocio_directory, self.basename)
+        self.main_grade_file = os.path.join(ocio_directory, "grade.ccc")
+        self.get_ingest_meta()
 
-    # Use description sorting method
-    descript_grade = sorted(original_grades, key=sort_by_descript)[0]
 
-    return descript_grade[1]
+    def get_ingest_meta(self):
+        if os.path.isfile(self.meta_path):
+            # Read the JSON file back into a Python object
+            with open(self.meta_path, "r") as f:
+                data = json.load(f)
+            self.metadata = data
+            self.historic_main_grade = self.get_meta_main_grade()
+        else:
+            # Leave meta as is if meta does not exist on disk
+            return
+
+    def write_ingest_meta(self):
+        meta_dir = os.path.dirname(self.meta_path)
+        if not os.path.isdir(meta_dir):
+            os.makedirs(meta_dir)
+
+        with open(self.meta_path, "w") as f:
+            json.dump(self.metadata, f)
+
+    def get_meta_main_grade(self):
+        for filename in self.metadata:
+            # New entries won't have main_grade attribute
+            if "main_grade" in self.metadata[filename]:
+                if self.metadata[filename]["main_grade"]:
+                    return filename
+
+        return False
+
+    def set_meta_main_grade(self, target_grade):
+        # target_grade can be empty depending on if there was a main grade set or not
+        for filename in self.metadata:
+            if not filename == target_grade:
+                self.metadata[filename]["main_grade"] = False
+            else:
+                self.metadata[filename]["main_grade"] = True
+
+    def add_grade(self, filename, source_path, plate):
+        """Main grade is not determined at this point"""
+
+        self.metadata[filename] = {
+            "source_path":source_path,
+            "plate":plate,
+        }
+
+    def remove_grade(self, filename):
+        if filename in self.metadata:
+            del self.metadata[filename]
+
+    def get_main_grade(self):
+        """
+        If main grade is out of line as in someone manually changed it then set all grades to False
+        Under that case the target_filename will be empty ""
+        """
+
+        # Don't need to store when grade was modified. if grade was modified it would be recored by this same logic previously
+        if os.path.isfile(self.main_grade_file):
+            main_grade_mtime = os.path.getmtime(self.main_grade_file)
+            main_grade_exists = True
+        else:
+            main_grade_exists = False
+
+        if os.path.isfile(self.meta_path):
+            ingest_meta_mtime = os.path.getmtime(self.meta_path)
+            ingest_meta_exists = True
+        else:
+            ingest_meta_exists = False
+
+        # Historic main grade is useful when there is ingest_meta.
+        # If there is no ingest_meta use grade.ccc as the key logic
+        set_grade = False
+        if main_grade_exists and ingest_meta_exists:
+            # If ingest_meta_mtime is greater AND historic main grade
+            # We know that since ingest_meta_exists that there will be valid historic_main_grade
+            if main_grade_mtime < ingest_meta_mtime and self.historic_main_grade:
+                set_grade = True
+
+        elif main_grade_exists and not ingest_meta_exists:
+            # When grade is found and not ingest_meta we can assume
+            # there was custom link performed
+            # Test to see whether there is a valid color file linked
+            if not os.path.isfile(os.path.realpath(self.main_grade_file)):
+                set_grade = True
+
+        else:
+            # There are only two other conditions which will always be True
+            # If not ingest and not grade.
+            # AND
+            # If ingest and not grade.
+            set_grade = True
+
+            # If there are grades that are not in the ingest meta json still use those grades as potential main grades?
+
+    # Add conditional for if shot name from shot folder is in grade name and if not then push prio to end of list
+
+        if set_grade:
+            """Determine if Grade file is meant to be main grade or if it is an element grade"""
+            original_grades = [(f.rsplit(".", 1)[0], f) for f in self.metadata.keys()]
+
+            if len(original_grades) == 1:
+                main_grade = original_grades[0][1]
+                return main_grade
+
+            # Testing to see if there is a high chance that main grade is only shot name
+            possible_main = sorted(original_grades, key=lambda x: len(x[0]))[0]
+            for name, grade in original_grades:
+                # If a grades name is in the other grades name it is for sure the main grade
+                if name == possible_main[0]:
+                    continue
+                if not possible_main[0] in name:
+                    break
+            else:
+                main_grade = possible_main[1]
+                return possible_main[1]
+
+            # Use description sorting method
+            main_grade = sorted(original_grades, key=sort_by_descript)[0][1]
+            return main_grade
 
 
 class IntegrateColorFile(pyblish.api.InstancePlugin):
@@ -261,11 +385,19 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
     label = "Integrate Color File"
     families = ["plate"]
 
+    optional = True
+
     def process(self, instance):
-        if instance.data.get("cdl"):
-            cdl = instance.data["cdl"]
+        if instance.data.get("shot_grade"):
+            color_info = instance.data["shot_grade"]
+            ignore = color_info["ignore"]
+            if ignore:
+                self.log.info("Skipping plate color ingest. Ignore grade was set")
+                return
+            color_path = color_info["path"]
+            color_type = color_info["type"]
         else:
-            self.log.warning("No CDL found in instance data")
+            self.log.warning("No color info found in instance data")
             return
 
         temp_extension = "tmp"
@@ -277,12 +409,12 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
         publish_file = anatomy_filled["publish"]["file"]
         version = anatomy_filled["publish"]["version"]
         shot_root = publish_dir.split("/publish/")[0]
-        grade_name = publish_file.replace("_{0}.{1}".format(version, temp_extension), ".ccc")
+        plate_name = publish_file.replace("_{0}.{1}".format(version, temp_extension), "")
 
         ocio_directory = "{0}/ocio/grade".format(shot_root)
-        grade_path = ocio_directory + "/" + grade_name
+        grade_path = os.path.join(ocio_directory, os.path.basename(color_path))
         plate_grades = glob(ocio_directory+"/*")
-        main_grade_path = ocio_directory + "/" + "grade.ccc"
+        main_grade_path = os.path.join(ocio_directory, "grade.ccc")
 
         self.log.info("Ensuring shot OCIO dir exists: {0}".format(ocio_directory))
         if not os.path.exists(ocio_directory):
@@ -292,7 +424,8 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
         skip_write = False
         if grade_path in plate_grades:
             # Grade previously copied. Test to see if unique CDL data and if so then backup previous file and make new plate CDL
-            if same_grade(cdl, grade_path):
+            # When checking if same grade - test whether file is exactly the same instead of values
+            if same_grade(color_path, grade_path, color_type, cdl=color_info.get("cdl")):
                 skip_write = True
                 self.log.info("New grade already matches a grade in shot OCIO directory")
                 # Run main_grade and figure out which grade should be main
@@ -301,18 +434,25 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
                 self.log.info("New grade is unique. Creating backup grade: {}".format(backup_grade))
 
         if not skip_write:
-            if cdl["file"].rsplit(".", 1)[-1] in ("3dl", "cube"):
-                self.log.critical('3D Luts are not supported currently')
-                pass
-                # shutil.move()
-            else:
-                ccc_file = ccc_xml(cdl)
+            if color_info["type"] == "edl":
+                ccc_file = ccc_xml(color_info["cdl"])
                 write_xml(ccc_file, grade_path)
                 self.log.info("Writing CDL to OCIO Grade folder: {}".format(grade_path))
+            else:
+                shutil.copyfile(color_path, grade_path)
 
-        main_grade = get_main_grade(ocio_directory)
-        if os.path.islink(main_grade_path):
-            os.unlink(main_grade_path)
+        ingest_meta = IngestMeta(ocio_directory)
+        ingest_meta.add_grade(os.path.basename(color_path), color_path, plate_name)
+        main_grade = ingest_meta.get_main_grade()
+        ingest_meta.set_meta_main_grade(main_grade)
+        if main_grade:
+            if os.path.islink(main_grade_path):
+                os.unlink(main_grade_path)
 
-        os.symlink(main_grade, main_grade_path)
-        self.log.info("Creating Grade.ccc symlink to: {}".format(os.path.basename(main_grade)))
+            os.symlink(main_grade, main_grade_path)
+            self.log.info("Creating Grade.ccc symlink to: {}".format(os.path.basename(main_grade)))
+        else:
+            self.log.info("Main Grade modified by user and left as is: {}".format(os.path.basename(os.path.realpath(main_grade_path))))
+
+        ingest_meta.write_ingest_meta()
+        self.log.info("Ingest meta writen out")
