@@ -135,6 +135,41 @@ This is useful to fix some specific renderer glitches and advanced hacking of Ma
 
 - **Use Base Tessellation** Exports geometry with base tessellation and no smoothing applied. If this setting is turned off, the extractor will export geometry with the current Smooth Mesh Preview setting applied.
 
+### Extract Playblast Settings (review)
+These settings provide granular control over how the playblasts or reviews are produced in Maya.
+
+Some of these settings are also available on the instance itself, in which case these settings will become the default value when creating the review instance.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings.png)
+
+- **Compression type** which file encoding to use.
+- **Data format** what format is the file encoding.
+- **Quality** lets you control the compression value for the output. Results can vary depending on the compression you selected. Quality values can range from 0 to 100, with a default value of 95.
+- **Background Color** the viewports background color.
+- **Background Bottom** the viewports background bottom color.
+- **Background Top** the viewports background top color.
+- **Override display options** override the viewports display options to use what is set in the settings.
+- **Isolate view** isolates the view to what is in the review instance. If only a camera is present in the review instance, all nodes are displayed in view.
+- **Off Screen** records the playblast hidden from the user.
+- **2D Pan/Zoom** enables the 2D Pan/Zoom functionality of the camera.
+- **Renderer name** which renderer to use for playblasting.
+- **Width** width of the output resolution. If this value is `0`, the asset's width is used.
+- **Height** height of the output resolution. If this value is `0`, the asset's height is used.
+
+#### Viewport Options
+
+Most settings to override in the viewport are self explanatory and can be found in Maya.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_viewport_options.png)
+
+- **Override Viewport Options** enable to use the settings below for the viewport when publishing the review.
+
+#### Camera Options
+
+These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
+
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
 ![Custom menu definition](assets/maya-admin_scriptsmenu.png)

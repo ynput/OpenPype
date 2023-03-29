@@ -224,18 +224,26 @@ def find_tool_in_custom_paths(paths, tool, validation_func=None):
 
 def _check_args_returncode(args):
     try:
-        # Python 2 compatibility where DEVNULL is not available
+        kwargs = {}
+        if platform.system().lower() == "windows":
+            kwargs["creationflags"] = (
+                subprocess.CREATE_NEW_PROCESS_GROUP
+                | getattr(subprocess, "DETACHED_PROCESS", 0)
+                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            )
+
         if hasattr(subprocess, "DEVNULL"):
             proc = subprocess.Popen(
                 args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                **kwargs
             )
             proc.wait()
         else:
             with open(os.devnull, "w") as devnull:
                 proc = subprocess.Popen(
-                    args, stdout=devnull, stderr=devnull,
+                    args, stdout=devnull, stderr=devnull, **kwargs
                 )
                 proc.wait()
 
