@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """Create publishing job on RoyalRender."""
-from pyblish.api import InstancePlugin, IntegratorOrder
-from copy import deepcopy
-from openpype.pipeline import legacy_io
-import requests
 import os
+from copy import deepcopy
 
+from pyblish.api import InstancePlugin, IntegratorOrder
+
+from openpype.pipeline import legacy_io
 from openpype.modules.royalrender.rr_job import RRJob, RREnvList
 from openpype.pipeline.publish import KnownPublishError
-from openpype.modules.royalrender.api import Api as rrApi
+from openpype.lib.openpype_version import get_OpenPypeVersion, get_openpype_version
 
 
 class CreatePublishRoyalRenderJob(InstancePlugin):
@@ -122,6 +122,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "--targets", "farm"
         ]
 
+        openpype_version = get_OpenPypeVersion()
+        current_version = openpype_version(version=get_openpype_version())
         job = RRJob(
             Software="OpenPype",
             Renderer="Once",
@@ -130,7 +132,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
-            Version=os.environ.get("OPENPYPE_VERSION"),
+            Version="{}.{}".format(
+                current_version.major(), current_version.minor()),
             # executable
             SceneName=roothless_metadata_path,
             # command line arguments
