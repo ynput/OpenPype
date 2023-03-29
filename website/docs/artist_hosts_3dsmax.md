@@ -47,7 +47,7 @@ This is the core functional area for you as a user. Most of your actions will ta
 ![Menu OpenPype](assets/3dsmax_menu_first_OP.png)
 
 :::note OpenPype Menu
-User should use this menu exclusively for **Opening/Saving** when dealing with work files not standard ```File Menu``` even though user still being able perform file operations via this menu but prefferably just performing quick saves during work session not saving actual workfile versions.
+User should use this menu exclusively for **Opening/Saving** when dealing with work files not standard ```File Menu``` even though user still being able perform file operations via this menu but preferably just performing quick saves during work session not saving actual workfile versions.
 :::
 
 ## Working With Scene Files
@@ -73,7 +73,7 @@ OpenPype correctly names it and add version to the workfile. This basically happ
 
  etc. 
 
-Basically meaning user is free of guessing what is the correct naming and other neccessities to keep everthing in order and managed.
+Basically meaning user is free of guessing what is the correct naming and other necessities to keep everything in order and managed.
 
 > Note: user still has also other options for naming like ```Subversion```, ```Artist's Note``` but we won't dive into those now.
 

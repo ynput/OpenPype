@@ -147,6 +147,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
+            "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
             "defaults": [
                 "Main"
@@ -326,6 +327,11 @@
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMayaColorSpace": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -784,7 +790,7 @@
         "ExtractPlayblast": {
             "capture_preset": {
                 "Codec": {
-                    "compression": "jpg",
+                    "compression": "png",
                     "format": "image",
                     "quality": 95
                 },
@@ -811,7 +817,8 @@
                 },
                 "Generic": {
                     "isolate_view": true,
-                    "off_screen": true
+                    "off_screen": true,
+                    "pan_zoom": false
                 },
                 "Renderer": {
                     "rendererName": "vp2Renderer"

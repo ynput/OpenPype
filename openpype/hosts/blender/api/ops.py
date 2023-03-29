@@ -84,11 +84,11 @@ class MainThreadItem:
         self.kwargs = kwargs
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         print("Executing process in main thread")
         if self.done:
@@ -382,8 +382,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline', 'Reset Frame Range' and
-        #                'Reset Resolution'?
+        # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
+        #                'Set Resolution'?
 
 
 def draw_avalon_menu(self, context):

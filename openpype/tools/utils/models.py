@@ -202,11 +202,20 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     Use case: Filtering by string - parent won't be filtered if does not match
         the filter string but first checks if any children does.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(RecursiveSortFilterProxyModel, self).__init__(*args, **kwargs)
+        recursive_enabled = False
+        if hasattr(self, "setRecursiveFilteringEnabled"):
+            self.setRecursiveFilteringEnabled(True)
+            recursive_enabled = True
+        self._recursive_enabled = recursive_enabled
+
     def filterAcceptsRow(self, row, parent_index):
-        if hasattr(self, "filterRegularExpression"):
-            regex = self.filterRegularExpression()
-        else:
+        if hasattr(self, "filterRegExp"):
             regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
 
         pattern = regex.pattern()
         if pattern:
@@ -219,8 +228,9 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
 
                 # Check current index itself
                 value = model.data(source_index, self.filterRole())
-                if re.search(pattern, value, re.IGNORECASE):
-                    return True
+                matched = bool(re.search(pattern, value, re.IGNORECASE))
+                if matched or self._recursive_enabled:
+                    return matched
 
                 rows = model.rowCount(source_index)
                 for idx in range(rows):
