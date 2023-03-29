@@ -14,7 +14,10 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # status settings
     set_status_note = False
     note_status_shortname = "wfa"
-    status_conditions = list()
+    status_change_conditions = {
+        "status_conditions": [],
+        "family_requirements": [],
+    }
 
     # comment settings
     custom_comment_template = {
@@ -55,7 +58,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
-            if kitsu_task is None:
+            if not kitsu_task:
                 continue
 
             # Get note status, by default uses the task status for the note
@@ -65,13 +68,39 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
             # Check if any status condition is not met
             allow_status_change = True
-            for status_cond in self.status_conditions:
+            for status_cond in self.status_change_conditions[
+                "status_conditions"
+            ]:
                 condition = status_cond["condition"] == "equal"
                 match = status_cond["short_name"].upper() == shortname
                 if match and not condition or condition and not match:
                     allow_status_change = False
                     break
 
+            if allow_status_change:
+                # Get families
+                families = {
+                    instance.data.get("family")
+                    for instance in context
+                    if instance.data.get("publish")
+                }
+
+                # Check if any family requirement is met
+                for family_requirement in self.status_change_conditions[
+                    "family_requirements"
+                ]:
+                    condition = family_requirement["condition"] == "equal"
+
+                    for family in families:
+                        match = family_requirement["family"].lower() == family
+                        if match and not condition or condition and not match:
+                            allow_status_change = False
+                            break
+
+                    if allow_status_change:
+                        break
+
+            # Set note status
             if self.set_status_note and allow_status_change:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
                     self.note_status_shortname
