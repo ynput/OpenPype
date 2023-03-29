@@ -308,6 +308,10 @@ def get_fusion_module():
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     return fusion
 
+def get_bmd_library():
+    """Get bmd library"""
+    bmd = getattr(sys.modules["__main__"], "bmd", None)
+    return bmd
 
 def get_current_comp():
     """Get current comp in this session"""
