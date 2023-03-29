@@ -6,6 +6,7 @@ from pymxs import runtime as rt
 from openpype.tools.utils import host_tools
 from openpype.hosts.max.api import lib
 
+
 class OpenPypeMenu(object):
     """Object representing OpenPype menu.
 
@@ -114,6 +115,10 @@ class OpenPypeMenu(object):
         res_action.triggered.connect(self.resolution_callback)
         openpype_menu.addAction(res_action)
 
+        frame_action = QtWidgets.QAction("Set Frame Range", openpype_menu)
+        frame_action.triggered.connect(self.frame_range_callback)
+        openpype_menu.addAction(frame_action)
+
         return openpype_menu
 
     def load_callback(self):
@@ -139,3 +144,7 @@ class OpenPypeMenu(object):
     def resolution_callback(self):
         """Callback to reset scene resolution"""
         return lib.reset_scene_resolution()
+
+    def frame_range_callback(self):
+        """Callback to reset frame range"""
+        return lib.reset_frame_range()
