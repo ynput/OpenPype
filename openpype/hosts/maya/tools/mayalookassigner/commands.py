@@ -45,33 +45,11 @@ def get_namespace_from_node(node):
     return parts[0] if len(parts) > 1 else u":"
 
 
-def list_descendents(nodes):
-    """Include full descendant hierarchy of given nodes.
-
-    This is a workaround to cmds.listRelatives(allDescendents=True) because
-    this way correctly keeps children instance paths (see Maya documentation)
-
-    This fixes LKD-26: assignments not working as expected on instanced shapes.
-
-    Return:
-        list: List of children descendents of nodes
-
-    """
-    result = []
-    while True:
-        nodes = cmds.listRelatives(nodes,
-                                   fullPath=True)
-        if nodes:
-            result.extend(nodes)
-        else:
-            return result
-
-
 def get_selected_nodes():
     """Get information from current selection"""
 
     selection = cmds.ls(selection=True, long=True)
-    hierarchy = list_descendents(selection)
+    hierarchy = lib.get_all_children(selection)
     return list(set(selection + hierarchy))
 
 
