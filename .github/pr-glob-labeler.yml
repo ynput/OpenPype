@@ -1,107 +1,102 @@
 # Add type: unittest label if any changes in tests folders
 'type: unittest':
-- tests/**/*
-- tests/**
-- openpype/tests/**/*
-- openpype/tests/**
+- '*/*tests*/**/*'
 
 # any changes in documentation structure
 'type: documentation':
-- website/**/*
-- website/**
-- docs/**/*
-- docs/**
+- '*/**/*website*/**/*'
+- '*/**/*docs*/**/*'
 
 # hosts triage
 'host: Nuke':
-- openpype/hosts/nuke/**/*
-- openpype/hosts/nuke/**
+- '*/**/*nuke*'
+- '*/**/*nuke*/**/*'
 
 'host: Photoshop':
-- openpype/hosts/photoshop/**/*
-- openpype/hosts/photoshop/**
+- '*/**/*photoshop*'
+- '*/**/*photoshop*/**/*'
 
 'host: Harmony':
-- openpype/hosts/harmony/**/*
-- openpype/hosts/harmony/**
+- '*/**/*harmony*'
+- '*/**/*harmony*/**/*'
 
 'host: UE':
-- openpype/hosts/unreal/**/*
-- openpype/hosts/unreal/**
+- '*/**/*unreal*'
+- '*/**/*unreal*/**/*'
 
 'host: Houdini':
-- openpype/hosts/houdini/**/*
-- openpype/hosts/houdini/**
+- '*/**/*houdini*'
+- '*/**/*houdini*/**/*'
 
 'host: Maya':
-- openpype/hosts/maya/**/*
-- openpype/hosts/maya/**
+- '*/**/*maya*'
+- '*/**/*maya*/**/*'
 
 'host: Resolve':
-- openpype/hosts/resolve/**/*
-- openpype/hosts/resolve/**
+- '*/**/*resolve*'
+- '*/**/*resolve*/**/*'
 
 'host: Blender':
-- openpype/hosts/blender/**/*
-- openpype/hosts/blender/**
+- '*/**/*blender*'
+- '*/**/*blender*/**/*'
 
 'host: Hiero':
-- openpype/hosts/hiero/**/*
-- openpype/hosts/hiero/**
+- '*/**/*hiero*'
+- '*/**/*hiero*/**/*'
 
 'host: Fusion':
-- openpype/hosts/fusion/**/*
-- openpype/hosts/fusion/**
+- '*/**/*fusion*'
+- '*/**/*fusion*/**/*'
 
 'host: Flame':
-- openpype/hosts/flame/**/*
-- openpype/hosts/flame/**
+- '*/**/*flame*'
+- '*/**/*flame*/**/*'
 
 'host: TrayPublisher':
-- openpype/hosts/traypublisher/**/*
-- openpype/hosts/traypublisher/**
+- '*/**/*traypublisher*'
+- '*/**/*traypublisher*/**/*'
 
 'host: 3dsmax':
-- openpype/hosts/max/**/*
-- openpype/hosts/max/**
+- '*/**/*max*'
+- '*/**/*max*/**/*'
 
 'host: TV Paint':
-- openpype/hosts/tvpaint/**/*
-- openpype/hosts/tvpaint/**
+- '*/**/*tvpaint*'
+- '*/**/*tvpaint*/**/*'
 
 'host: CelAction':
-- openpype/hosts/celaction/**/*
-- openpype/hosts/celaction/**
+- '*/**/*celaction*'
+- '*/**/*celaction*/**/*'
 
 'host: After Effects':
-- openpype/hosts/aftereffects/**/*
-- openpype/hosts/aftereffects/**
+- '*/**/*aftereffects*'
+- '*/**/*aftereffects*/**/*'
 
 'host: Substance Painter':
-- openpype/hosts/substancepainter/**/*
-- openpype/hosts/substancepainter/**
+- '*/**/*substancepainter*'
+- '*/**/*substancepainter*/**/*'
 
 # modules triage
 'module: Deadline':
-- openpype/modules/deadline/**/*
-- openpype/modules/deadline/**
+- '*/**/*deadline*'
+- '*/**/*deadline*/**/*'
 
 'module: RoyalRender':
-- openpype/modules/royalrender/**/*
-- openpype/modules/royalrender/**
+- '*/**/*royalrender*'
+- '*/**/*royalrender*/**/*'
 
 'module: Sitesync':
-- openpype/modules/sync_server/**/*
-- openpype/modules/sync_server/**
+- '*/**/*sync_server*'
+- '*/**/*sync_server*/**/*'
 
 'module: Ftrack':
-- openpype/modules/ftrack/**/*
-- openpype/modules/ftrack/**
+- '*/**/*ftrack*'
+- '*/**/*ftrack*/**/*'
 
 'module: Shotgrid':
-- openpype/modules/shotgrid/**/*
-- openpype/modules/shotgrid/**
+- '*/**/*shotgrid*'
+- '*/**/*shotgrid*/**/*'
 
 'module: Kitsu':
-- openpype/modules/kitsu/**/*
-- openpype/modules/kitsu/**
+- '*/**/*kitsu*'
+- '*/**/*kitsu*/**/*'
