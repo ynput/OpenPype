@@ -170,11 +170,13 @@ def clean_envs_for_openpype_process(env=None):
     """
     if env is None:
         env = os.environ
-    return {
-        key: value
-        for key, value in env.items()
-        if key not in ("PYTHONPATH",)
-    }
+
+    # Exclude some environment variables from a copy of the environment
+    env = env.copy()
+    for key in ["PYTHONPATH", "PYTHONHOME"]:
+        env.pop(key, None)
+
+    return env
 
 
 def run_openpype_process(*args, **kwargs):
