@@ -68,6 +68,10 @@
                     "label": "Resync profile on each launch"
                 }
             ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         }
     ]
 }
