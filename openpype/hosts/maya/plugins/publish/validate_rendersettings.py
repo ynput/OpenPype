@@ -275,16 +275,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
         for attribute, data in cls.get_nodes(instance, renderer).items():
-            # Validate the settings has values.
-            if not data["values"]:
-                cls.log.error(
-                    "Settings for {}.{} is missing values.".format(
-                        node, attribute
-                    )
-                )
-                continue
-
             for node in data["nodes"]:
+                # Validate the settings has values.
+                if not data["values"]:
+                    cls.log.error(
+                        "Settings for {}.{} is missing values.".format(
+                            node, attribute
+                        )
+                    )
+                    continue
+
                 try:
                     render_value = cmds.getAttr(
                         "{}.{}".format(node, attribute)
