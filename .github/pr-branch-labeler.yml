@@ -1,15 +1,15 @@
 # Apply label "feature" if head matches "feature/*"
-type: feature:
+'type: feature':
   head: "feature/*"
 
 # Apply label "feature" if head matches "feature/*"
-type: enhancement:
+'type: enhancement':
   head: "enhancement/*"
 
 # Apply label "bugfix" if head matches one of "bugfix/*" or "hotfix/*"
-type: bugfix:
+'type: bugfix':
   head: ["bugfix/*", "hotfix/*"]
 
 # Apply label "release" if base matches "release/*"
-Bump Minor:
+'Bump Minor':
   base: "release/next-minor"
