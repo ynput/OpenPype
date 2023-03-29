@@ -2,7 +2,7 @@ name: project-actions
 
 on:
   pull_request:
-    types: [review_requested]
+    types: [opened, synchronize, assigned, review_requested]
   pull_request_review:
     types: [submitted]
 
@@ -20,3 +20,26 @@ jobs:
           project_id: 11
           resource_node_id: ${{ github.event.pull_request.node_id }}
           status_value: Change Requested
+  size-label:
+    name: pr_size_label
+    runs-on: ubuntu-latest
+    if: |
+      ${{(github.event_name == 'pull_request' && github.event.action == 'synchronize')
+      || (github.event_name == 'pull_request' && github.event.action == 'assigned')}}
+
+    steps:
+      - name: Add size label
+        uses: "pascalgn/size-label-action@v0.4.3"
+        env:
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
+          IGNORED: ".gitignore\n*.md\n*.json"
+        with:
+          sizes: >
+            {
+              "0": "XS",
+              "100": "S",
+              "500": "M",
+              "1000": "L",
+              "1500": "XL",
+              "2500": "XXL"
+            }
