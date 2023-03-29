@@ -118,6 +118,7 @@ def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
                 shading_engine, attribute
             )
         )
+        return
 
     # Strip off component assignments
     for i, node in enumerate(nodes):
@@ -261,4 +262,4 @@ def assign_look(standin, subset):
 
                 index += 1
 
-            cmds.sets(operator, edit=True, addElement=container_node[0])
+            cmds.sets(operator, edit=True, addElement=container_node)
