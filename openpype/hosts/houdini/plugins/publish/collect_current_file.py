@@ -1,7 +1,6 @@
 import os
 import hou
 
-from openpype.pipeline import legacy_io
 import pyblish.api
 
 
