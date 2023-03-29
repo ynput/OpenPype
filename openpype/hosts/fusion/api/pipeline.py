@@ -9,11 +9,7 @@ import contextlib
 import pyblish.api
 from qtpy import QtCore
 
-from openpype.lib import (
-    Logger,
-    register_event_callback,
-    emit_event
-)
+from openpype.lib import Logger, register_event_callback, emit_event
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -26,10 +22,19 @@ from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.tools.utils import host_tools
 
 
+from .workfile_template_builder import (
+    FusionPlaceholderLoadPlugin,
+    FusionPlaceholderCreatePlugin,
+    build_workfile_template,
+    create_placeholder,
+    update_placeholder,
+)
+
+
 from .lib import (
     get_current_comp,
     comp_lock_and_undo_chunk,
-    validate_comp_prefs
+    validate_comp_prefs,
 )
 
 log = Logger.get_logger(__name__)
@@ -141,11 +146,13 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return os.path.join(work_dir, scene_dir)
         else:
             return work_dir
+
     # endregion
 
     @contextlib.contextmanager
     def maintained_selection(self):
         from .lib import maintained_selection
+
         return maintained_selection()
 
     def get_containers(self):
@@ -158,6 +165,12 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_context_data(self):
         comp = get_current_comp()
         return comp.GetData("openpype") or {}
+
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            FusionPlaceholderLoadPlugin,
+            FusionPlaceholderCreatePlugin,
+        ]
 
 
 def on_new(event):
@@ -186,15 +199,17 @@ def on_after_open(event):
             if not frame:
                 print("Comp is closed, skipping show scene inventory")
                 return
-            frame.ActivateFrame()   # raise comp window
+            frame.ActivateFrame()  # raise comp window
             host_tools.show_scene_inventory()
 
         from openpype.widgets import popup
         from openpype.style import load_stylesheet
+
         dialog = popup.Popup(parent=menu.menu)
         dialog.setWindowTitle("Fusion comp has outdated content")
-        dialog.setMessage("There are outdated containers in "
-                          "your Fusion comp.")
+        dialog.setMessage(
+            "There are outdated containers in " "your Fusion comp."
+        )
         dialog.on_clicked.connect(_on_show_scene_inventory)
         dialog.show()
         dialog.raise_()
@@ -223,11 +238,7 @@ def ls():
             yield container
 
 
-def imprint_container(tool,
-                      name,
-                      namespace,
-                      context,
-                      loader=None):
+def imprint_container(tool, name, namespace, context, loader=None):
     """Imprint a Loader with metadata
 
     Containerisation enables a tracking of version, author and origin
@@ -266,13 +277,19 @@ def parse_container(tool):
 
     """
 
-    data = tool.GetData('avalon')
+    data = tool.GetData("avalon")
     if not isinstance(data, dict):
         return
 
     # If not all required data return the empty container
-    required = ['schema', 'id', 'name',
-                'namespace', 'loader', 'representation']
+    required = [
+        "schema",
+        "id",
+        "name",
+        "namespace",
+        "loader",
+        "representation",
+    ]
     if not all(key in data for key in required):
         return
 
@@ -299,12 +316,11 @@ def list_instances(creator_id=None):
 
     instance_signature = {
         "id": "pyblish.avalon.instance",
-        "identifier": creator_id
+        "identifier": creator_id,
     }
     instances = []
     for tool in tools:
-
-        data = tool.GetData('openpype')
+        data = tool.GetData("openpype")
         if not isinstance(data, dict):
             continue
 
@@ -341,7 +357,6 @@ class FusionEventThread(QtCore.QThread):
     on_event = QtCore.Signal(dict)
 
     def run(self):
-
         app = getattr(sys.modules["__main__"], "app", None)
         if app is None:
             # No Fusion app found
@@ -383,12 +398,8 @@ class FusionEventHandler(QtCore.QObject):
 
 
     """
-    ACTION_IDS = [
-        "Comp_Save",
-        "Comp_SaveAs",
-        "Comp_New",
-        "Comp_Opened"
-    ]
+
+    ACTION_IDS = ["Comp_Save", "Comp_SaveAs", "Comp_New", "Comp_Opened"]
 
     def __init__(self, parent=None):
         super(FusionEventHandler, self).__init__(parent=parent)
