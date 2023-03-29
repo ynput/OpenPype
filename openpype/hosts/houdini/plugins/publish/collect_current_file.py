@@ -11,7 +11,7 @@ class CollectHoudiniCurrentFile(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder - 0.01
     label = "Houdini Current File"
     hosts = ["houdini"]
-    family = ["workfile"]
+    families = ["workfile"]
 
     def process(self, instance):
         """Inject the current working file"""
