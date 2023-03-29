@@ -138,7 +138,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
                         duplicate_transform, world=True
                     )[0]
 
-                basename = node.split("|")[-1].split(":")[-1]
+                basename = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
                 duplicate_transform = cmds.rename(
                     duplicate_transform, basename
                 )
