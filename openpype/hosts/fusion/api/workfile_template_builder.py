@@ -39,6 +39,10 @@ class FusionTemplateBuilder(AbstractTemplateBuilder):
         bmd = get_bmd_library()
         comp = get_current_comp()
         comp.Paste(bmd.readfile(path))
+
+        # Make sure no node is selected before starting to process the comp
+        flow = comp.CurrentFrame.FlowView
+        flow.Select()
         return True
 
 
@@ -173,7 +177,10 @@ class FusionPlaceholderLoadPlugin(
         return loaded_representation_ids
 
     def _before_repre_load(self, placeholder, representation):
-        placeholder.data["nodes_init"] = nuke.allNodes()
+        comp = get_current_comp()
+        placeholder.data["nodes_init"] = list(
+            comp.GetToolList(False, "Fuse.OPEmpty").values()
+        )
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -207,6 +214,8 @@ class FusionPlaceholderLoadPlugin(
 
     def cleanup_placeholder(self, placeholder, failed):
         # deselect all selected nodes
+        comp = get_current_comp()
+        node = comp.FindTool(placeholder_item.scene_identifier)
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
         # getting the latest nodes added
