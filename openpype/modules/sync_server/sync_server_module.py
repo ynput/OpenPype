@@ -839,7 +839,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return ret_dict
 
     def get_launch_hook_paths(self):
-        """Implementation for applications launch hooks."""
+        """Implementation for applications launch hooks.
+
+        Returns:
+            (str): full absolut path to directory with hooks for the module
+        """
 
         return os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -1063,6 +1067,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             site_name (str)
             max_retries (int) (optional) - provide only if method used in while
                 loop to bail out
+        Returns:
+            (bool): True if 'representation_id' has all files correctly on the
+            'site_name'
         Raises:
               (ValueError)  Only If 'max_retries' provided if upload/download
         failed too many times to limit infinite loop check.
