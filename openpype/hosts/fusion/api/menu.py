@@ -18,6 +18,14 @@ from openpype.resources import get_openpype_icon_filepath
 from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
 
+from .workfile_template_builder import (
+    FusionPlaceholderLoadPlugin,
+    FusionPlaceholderCreatePlugin,
+    build_workfile_template,
+    create_placeholder,
+    update_placeholder,
+)
+
 self = sys.modules[__name__]
 self.menu = None
 
@@ -59,6 +67,17 @@ class OpenPypeMenu(QtWidgets.QWidget):
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
+
+        build_workfile_from_template_btn = QtWidgets.QPushButton(
+            "Build workfile from template...", self
+        )
+        create_placeholder_btn = QtWidgets.QPushButton(
+            "Creat placeholder...", self
+        )
+        update_placeholder_btn = QtWidgets.QPushButton(
+            "Update placeholder...", self
+        )
+
         set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
         set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
@@ -87,6 +106,12 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addSpacing(20)
 
+        layout.addWidget(build_workfile_from_template_btn)
+        layout.addWidget(create_placeholder_btn)
+        layout.addWidget(update_placeholder_btn)
+
+        layout.addSpacing(20)
+
         layout.addWidget(set_framerange_btn)
         layout.addWidget(set_resolution_btn)
 
@@ -105,6 +130,15 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
+        build_workfile_from_template_btn.clicked.connect(
+            self.on_build_workfile_from_template_clicked
+        )
+        create_placeholder_btn.clicked.connect(
+            self.on_create_placeholder_clicked
+        )
+        update_placeholder_btn.clicked.connect(
+            self.update_placeholder_clicked
+        )
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked
         )
@@ -157,6 +191,15 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_libload_clicked(self):
         host_tools.show_library_loader()
+
+    def on_build_workfile_from_template_clicked(self):
+        build_workfile_template()
+
+    def on_create_placeholder_clicked(self):
+        create_placeholder()
+
+    def update_placeholder_clicked(self):
+        update_placeholder()
 
     def on_duplicate_with_inputs_clicked(self):
         duplicate_with_inputs.duplicate_with_input_connections()
