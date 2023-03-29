@@ -144,13 +144,13 @@ class ReferenceLoader(Loader):
 
         asset = context['asset']
         subset = context['subset']
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load']['reference_loader']['naming']
         loaded_containers = []
 
         count = options.get("count") or 1
 
         for c in range(0, count):
-            custom_naming = settings['maya']['load']['reference_loader']['naming']  # noqa
             group_name = None
 
             if ':' not in custom_naming:
@@ -169,8 +169,10 @@ missing content after ':' separator"
                 )
 
             custom_naming = custom_naming.format(
-                asset=asset,
-                subset=subset
+                asset_name=asset['name'],
+                asset_type=asset['type'],
+                subset=subset['name'],
+                family=subset['data'].get('family') or subset['data']['families'][0]  # noqa
             )
 
             namespace = custom_naming.split(':')[0]

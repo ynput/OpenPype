@@ -184,10 +184,10 @@ Here's the different variables you can use:
 
 | Token | Description |
 |---|---|
-|`{asset[name]}` | Asset name |
-|`{asset[type]}` | Asset type |
-|`{subset[name]}` | Subset name |
-|`{subset[data][family]}` | Subset family |
+|`{asset_name}` | Asset name |
+|`{asset_type}` | Asset type |
+|`{subset}` | Subset name |
+|`{family}` | Subset family |
 
 </div>
 </div>
