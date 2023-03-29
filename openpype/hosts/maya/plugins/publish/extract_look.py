@@ -227,21 +227,21 @@ class MakeTX(TextureProcessor):
 
     def apply_settings(self, system_settings, project_settings):
         # Allow extra maketx arguments from project settings
-        extra_args_dict = (
+        args_settings = (
             project_settings["maya"]["publish"]
-            .get("ExtractLook", {}).get("maketx_arguments", {})
+            .get("ExtractLook", {}).get("maketx_arguments", [])
         )
         extra_args = []
-        for flag, value in extra_args_dict.items():
-            if not flag:
-                self.log.debug("Ignoring empty flag from `maketx_arguments` "
-                               "setting..")
+        for arg_data in args_settings:
+            argument = arg_data["argument"]
+            parameters = arg_data["parameters"]
+            if not argument:
+                self.log.debug("Ignoring empty parameter from "
+                               "`maketx_arguments` setting..")
                 continue
 
-            extra_args.append(flag)
-            if value.strip():
-                # There might be flags without values like --opaque-detect
-                extra_args.append(value)
+            extra_args.append(argument)
+            extra_args.extend(parameters)
 
         self.extra_args = extra_args
 

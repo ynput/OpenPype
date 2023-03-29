@@ -1004,11 +1004,24 @@
             "label": "Extract Look",
             "children": [
                 {
+                    "type": "list",
                     "key": "maketx_arguments",
                     "label": "Extra arguments for maketx command line",
-                    "type": "dict-modifiable",
                     "object_type": {
-                        "type": "text"
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "argument",
+                                "label": "Argument",
+                                "type": "text"
+                            },
+                            {
+                                "key": "parameters",
+                                "label": "Parameters",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
                     }
                 }
             ]

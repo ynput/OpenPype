@@ -928,7 +928,7 @@
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         },
         "ExtractLook": {
-            "maketx_arguments": {}
+            "maketx_arguments": []
         }
     },
     "load": {
