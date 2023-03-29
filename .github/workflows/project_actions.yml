@@ -10,7 +10,7 @@ jobs:
   pr_review_requested:
     name: pr_review_requested
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested'
     steps:
       - name: Move PR to 'Change Requested'
         uses: leonsteinhaeuser/project-beta-automations@v2.1.0
