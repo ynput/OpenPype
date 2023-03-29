@@ -5,7 +5,7 @@ from openpype.pipeline import (
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
-    comp_lock_and_undo_chunk
+    comp_lock_and_undo_chunk,
 )
 
 
@@ -16,7 +16,7 @@ class FusionLoadAlembicMesh(load.LoaderPlugin):
     representations = ["*"]
     extensions = {"abc"}
 
-    label = "Load alembic mesh"
+    label = "Load Alembic mesh"
     order = -10
     icon = "code-fork"
     color = "orange"
@@ -26,23 +26,24 @@ class FusionLoadAlembicMesh(load.LoaderPlugin):
     def load(self, context, name, namespace, data):
         # Fallback to asset name when namespace is None
         if namespace is None:
-            namespace = context['asset']['name']
+            namespace = context["asset"]["name"]
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create tool"):
-
             path = self.fname
 
             args = (-32768, -32768)
             tool = comp.AddTool(self.tool_type, *args)
             tool["Filename"] = path
 
-            imprint_container(tool,
-                              name=name,
-                              namespace=namespace,
-                              context=context,
-                              loader=self.__class__.__name__)
+            imprint_container(
+                tool,
+                name=name,
+                namespace=namespace,
+                context=context,
+                loader=self.__class__.__name__,
+            )
 
     def switch(self, container, representation):
         self.update(container, representation)
