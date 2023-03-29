@@ -895,6 +895,197 @@ class FileDef(AbstractAttrDef):
         return []
 
 
+class EnumObjectDef(AbstractAttrDef):
+    """Enumeration of single item from items.
+
+    Args:
+        items: Items definition that can be converted using
+            'prepare_enum_items'.
+        default: Default value. Must be one key(value) from passed items.
+    """
+
+    type = "enum-object"
+
+    def __init__(
+        self,
+        key,
+        enum_key,
+        items,
+        default=None,
+        label=None,
+        is_label_horizontal=False,
+        **kwargs
+    ):
+        if not items:
+            raise ValueError((
+                "Empty 'items' value. {} must have"
+                " defined values on initialization."
+            ).format(self.__class__.__name__))
+
+        enum_items, children_by_enum = self.prepare_enum_items(items)
+        default_value = None
+        if isinstance(default, dict):
+            default_value = default
+            default = default_value[enum_key]
+
+        if default not in children_by_enum:
+            default = enum_items[0]["value"]
+            default_value = None
+
+        super(EnumObjectDef, self).__init__(
+            key,
+            default=default,
+            label=None,
+            is_label_horizontal=is_label_horizontal,
+            **kwargs
+        )
+
+        self.enum_key = enum_key
+        self.enum_label = label
+        self.children_by_enum = children_by_enum
+        self.enum_items = enum_items
+        self.enum_values = {item["value"] for item in enum_items}
+        self.enum_default = self._default
+        self._default = default_value
+
+    def __eq__(self, other):
+        if not super(EnumObjectDef, self).__eq__(other):
+            return False
+
+        return (
+            self.enum_values == other.enum_values
+            and self.children_by_enum == other.children_by_enum
+        )
+
+    @property
+    def default(self):
+        if self._default is not None:
+            return self._default
+
+        default = {
+            self.enum_key: self.enum_default
+        }
+        for child in self.children_by_enum[self.enum_default]:
+            if not isinstance(child, UIDef):
+                default[child.key] = child.default
+        self._default = default
+        return default
+
+    def convert_value(self, value):
+        if (
+            isinstance(value, dict)
+            and self.enum_key in value
+            and value[self.enum_key] in self.children_by_enum
+        ):
+            keys = set(value.keys())
+            keys.discard(self.enum_key)
+            for child in self.children_by_enum[value[self.enum_key]]:
+                if not isinstance(child, UIDef):
+                    key = child.key
+                    keys.discard(key)
+                    value[key] = child.convert_value(value.get(key))
+
+            for key in keys:
+                value.pop(key)
+            return value
+        return self.default
+
+    def serialize(self):
+        data = super(EnumObjectDef, self).serialize()
+        data["enum_key"] = self.enum_key
+        data["items"] = [
+            {
+                "value": item["value"],
+                "label": item["label"],
+                "children": [child.serialize() for child in item["children"]]
+            }
+            for item in self.enum_items
+        ]
+        return data
+
+    @staticmethod
+    def prepare_enum_items(items):
+        """Convert items to unified structure.
+
+        Output is a list where each item is dictionary with 'value'
+        and 'label'.
+
+        ```python
+        # Example output
+        [
+            {
+                "label": "Option 1", "value": 1, "children": []},
+            {
+                "label": "Option 2",
+                "value": 2,
+                "children": [BoolDef("enabled")]
+            },
+            {
+                "label": "Option 3",
+                "value": 3,
+                "children": [TextDef("text")]
+            }
+        ]
+        ```
+
+        Args:
+            items (Union[Dict[str, Any], List[Any], List[Dict[str, Any]]): The
+                items to convert.
+
+        Returns:
+            List[Dict[str, Any]]: Unified structure of items.
+        """
+
+        if not isinstance(items, (tuple, list, set)):
+            raise TypeError(
+                "Unknown type for enum items '{}'".format(type(items))
+            )
+        children_by_enum = {}
+        enum_items = []
+        for item in items:
+            if isinstance(item, dict):
+                # Validate if 'value' is available
+                if "value" not in item:
+                    raise KeyError("Item does not contain 'value' key.")
+
+                if "label" not in item:
+                    item["label"] = str(item["value"])
+
+                if "children" not in item:
+                    item["children"] = []
+
+            elif isinstance(item, (list, tuple)):
+                if len(item) == 3:
+                    value, label, children = item
+                elif len(item) == 2:
+                    value, label = item
+                    children = []
+                elif len(item) == 1:
+                    value = item[0]
+                    label = str(value)
+                    children = []
+                else:
+                    raise ValueError((
+                        "Invalid items count {}."
+                        " Expected 1-3. Value: {}"
+                    ).format(len(item), str(item)))
+
+                item = {"label": label, "value": value, "children": children}
+            else:
+                raise TypeError(
+                    "Unknown type for enum item '{}'".format(type(item))
+                )
+            enum_value = item["value"]
+            if enum_value in enum_items:
+                raise ValueError(
+                    "Duplicated enum value \"{}\"".format(enum_value)
+                )
+            enum_items.append(item)
+            children_by_enum[enum_value] = item["children"]
+
+        return enum_items, children_by_enum
+
+
 def serialize_attr_def(attr_def):
     """Serialize attribute definition to data.
 
@@ -958,6 +1149,7 @@ for _attr_class in (
     TextDef,
     EnumDef,
     BoolDef,
-    FileDef
+    FileDef,
+    EnumObjectDef,
 ):
     register_attr_def_class(_attr_class)
