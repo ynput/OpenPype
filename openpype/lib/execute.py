@@ -199,7 +199,7 @@ def run_openpype_process(*args, **kwargs):
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
 
-    # Add OpenPype version if we are running from build.
+    # Only keep OpenPype version if we are running from build.
     if not is_running_from_build():
         env.pop("OPENPYPE_VERSION", None)
 
