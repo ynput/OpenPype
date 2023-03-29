@@ -11,7 +11,7 @@ from maya import cmds
 
 from openpype.client import get_last_version_by_subset_name
 from openpype.pipeline import legacy_io
-from openpype.hosts.maya import api
+import openpype.hosts.maya.lib as maya_lib
 from . import lib
 
 
@@ -189,8 +189,10 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
         edits = list(
-            api.lib.iter_shader_edits(
-                relationships, shadernodes, asset_nodes_by_id))
+            maya_lib.iter_shader_edits(
+                relationships, shadernodes, asset_nodes_by_id
+            )
+        )
 
         # Create assignments
         assignments = {}

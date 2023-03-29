@@ -121,15 +121,13 @@ def create_asset_id_hash(nodes):
             path = cmds.getAttr("{}.fileName".format(node))
             ids = get_alembic_ids_cache(path)
             for k, _ in ids.items():
-                pid = k.split(":")[0]
-                if node not in node_id_hash[pid]:
-                    node_id_hash[pid].append(node)
+                id = k.split(":")[0]
+                node_id_hash[id].append(node)
         elif shapes and cmds.nodeType(shapes[0]) == "aiStandIn":
             path = arnold_standin.get_standin_path(shapes[0])
-            for id, _ in arnold_standin.get_cbid_by_node(path).items():
-                pid = id.split(":")[0]
-                if shapes[0] not in node_id_hash[pid]:
-                    node_id_hash[pid].append(shapes[0])
+            for id, _ in arnold_standin.get_id_by_node(path).items():
+                id = id.split(":")[0]
+                node_id_hash[id].append(shapes[0])
         else:
             value = lib.get_id(node)
             if value is None:

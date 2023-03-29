@@ -58,17 +58,17 @@ def calculate_visibility_mask(attributes):
     return mask
 
 
-def get_cbid_by_node(path):
-    """Get cbid from Arnold Scene Source.
+def get_id_by_node(path):
+    """Get node id from Arnold Scene Source.
 
     Args:
         path (string): Path to Arnold Scene Source.
 
     Returns:
-        (dict): Dictionary with node full name/path and CBID.
+        (dict): Dictionary with node full name/path and id.
     """
     import arnold
-    results = {}
+    results = defaultdict(list)
 
     arnold.AiBegin()
 
@@ -82,10 +82,7 @@ def get_cbid_by_node(path):
         node = arnold.AiNodeIteratorGetNext(iter)
         if arnold.AiNodeIs(node, "polymesh"):
             node_name = arnold.AiNodeGetName(node)
-            try:
-                results[arnold.AiNodeGetStr(node, "cbId")].append(node_name)
-            except KeyError:
-                results[arnold.AiNodeGetStr(node, "cbId")] = [node_name]
+            results[arnold.AiNodeGetStr(node, "cbId")].append(node_name)
 
     arnold.AiNodeIteratorDestroy(iter)
     arnold.AiEnd()
@@ -139,7 +136,7 @@ def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
 def assign_look(standin, subset):
     log.info("Assigning {} to {}.".format(subset, standin))
 
-    nodes_by_id = get_cbid_by_node(get_standin_path(standin))
+    nodes_by_id = get_id_by_node(get_standin_path(standin))
 
     # Group by asset id so we run over the look per asset
     node_ids_by_asset_id = defaultdict(set)
@@ -164,7 +161,8 @@ def assign_look(standin, subset):
             continue
 
         relationships = lib.get_look_relationships(version["_id"])
-        shader_nodes, container_node = lib.load_look(version["_id"])
+        shader_nodes, container_nodes = lib.load_look(version["_id"])
+        container_node = container_nodes[0]
         namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset

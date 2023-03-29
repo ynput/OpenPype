@@ -126,18 +126,12 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
                 # Only interested in transforms with shapes.
                 shapes = cmds.listRelatives(
-                    node, shapes=True, fullPath=True
+                    node, shapes=True, noIntermediate=True
                 ) or []
                 if not shapes:
                     continue
 
-                parent = cmds.listRelatives(
-                    node, parent=True, fullPath=True
-                )[0]
                 duplicate_transform = cmds.duplicate(node)[0]
-                duplicate_transform = "{}|{}".format(
-                    parent, duplicate_transform
-                )
 
                 if cmds.listRelatives(duplicate_transform, parent=True):
                     duplicate_transform = cmds.parent(
