@@ -45,6 +45,10 @@ executable. It is recommended to use the `openpype_console` executable as it pro
 
 ![Configure plugin](assets/deadline_configure_plugin.png)
 
+### OpenPypeTileAssembler Plugin
+To setup tile rendering copy the `OpenPypeTileAssembler` plugin to the repository;
+`[OpenPype]\openpype\modules\deadline\repository\custom\plugins\OpenPypeTileAssembler` > `[DeadlineRepository]\custom\plugins\OpenPypeTileAssembler`
+
 ### Pools
 
 The main pools can be configured at `project_settings/deadline/publish/CollectDeadlinePools/primary_pool`, which is applied to the rendering jobs.

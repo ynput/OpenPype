@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## Publish Plugins
 
-### Render Settings Validator 
+### Render Settings Validator
 
 `ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
-we correct settings. Some of these settings are needed by OpenPype but some
-can be defined by TD using [OpenPype Settings UI](admin_settings.md).
+with the correct settings. Some of these settings are needed by OpenPype but some
+can be defined by the admin using [OpenPype Settings UI](admin_settings.md).
 
 OpenPype enforced settings include:
 
@@ -36,10 +36,9 @@ For **Renderman**:
 For **Arnold**:
 - there shouldn't be `<renderpass>` token when merge AOVs option is turned on
 
-
 Additional check can be added via Settings - **Project Settings > Maya > Publish plugin > ValidateRenderSettings**.
 You can add as many options as you want for every supported renderer. In first field put node type and attribute
-and in the second required value.
+and in the second required value. You can create multiple values for an attribute, but when repairing it'll be the first value in the list that get selected.
 
 ![Settings example](assets/maya-admin_render_settings_validator.png)
 
@@ -51,7 +50,11 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-### Model Name Validator 
+:::info getting attribute values
+If you do not know what an attributes value is supposed to be, for example for dropdown menu (enum), try changing the attribute and look in the script editor where it should log what the attribute was set to.
+:::
+
+### Model Name Validator
 
 `ValidateRenderSettings`
 
@@ -95,7 +98,7 @@ You can set various aspects of scene submission to farm with per-project setting
 
  - **Optional** will mark sumission plugin optional
  - **Active** will enable/disable plugin
- - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used 
+ - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used
 or Deadlines **Draft Tile Assembler**.
  - **Use Published scene** enable to render from published scene instead of scene in work area. Rendering from published files is much safer.
  - **Use Asset dependencies** will mark job pending on farm until asset dependencies are fulfilled - for example Deadline will wait for scene file to be synced to cloud, etc.
@@ -106,6 +109,41 @@ or Deadlines **Draft Tile Assembler**.
  - **Scene patches** - configure mechanism to add additional lines to published Maya Ascii scene files before they are used for rendering.
 This is useful to fix some specific renderer glitches and advanced hacking of Maya Scene files. `Patch name` is label for patch for easier orientation.
 `Patch regex` is regex used to find line in file, after `Patch line` string is inserted. Note that you need to add line ending.
+
+### Extract Playblast Settings (review)
+These settings provide granular control over how the playblasts or reviews are produced in Maya.
+
+Some of these settings are also available on the instance itself, in which case these settings will become the default value when creating the review instance.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings.png)
+
+- **Compression type** which file encoding to use.
+- **Data format** what format is the file encoding.
+- **Quality** lets you control the compression value for the output. Results can vary depending on the compression you selected. Quality values can range from 0 to 100, with a default value of 95.
+- **Background Color** the viewports background color.
+- **Background Bottom** the viewports background bottom color.
+- **Background Top** the viewports background top color.
+- **Override display options** override the viewports display options to use what is set in the settings.
+- **Isolate view** isolates the view to what is in the review instance. If only a camera is present in the review instance, all nodes are displayed in view.
+- **Off Screen** records the playblast hidden from the user.
+- **2D Pan/Zoom** enables the 2D Pan/Zoom functionality of the camera.
+- **Renderer name** which renderer to use for playblasting.
+- **Width** width of the output resolution. If this value is `0`, the asset's width is used.
+- **Height** height of the output resolution. If this value is `0`, the asset's height is used.
+
+#### Viewport Options
+
+Most settings to override in the viewport are self explanatory and can be found in Maya.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_viewport_options.png)
+
+- **Override Viewport Options** enable to use the settings below for the viewport when publishing the review.
+
+#### Camera Options
+
+These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
@@ -169,5 +207,3 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
-
-
