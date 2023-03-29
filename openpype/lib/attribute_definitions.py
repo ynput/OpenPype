@@ -139,7 +139,7 @@ class AbstractAttrDef(object):
         self.key = key
         self.label = label
         self.tooltip = tooltip
-        self.default = default
+        self._default = default
         self.is_label_horizontal = is_label_horizontal
         self.hidden = hidden
         self.disabled = disabled
@@ -150,6 +150,10 @@ class AbstractAttrDef(object):
     @property
     def id(self):
         return self._id
+
+    @property
+    def default(self):
+        return self._default
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
