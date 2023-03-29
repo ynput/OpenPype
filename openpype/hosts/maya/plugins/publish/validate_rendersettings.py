@@ -276,15 +276,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # if so, compare its value from the one required.
         for attribute, data in cls.get_nodes(instance, renderer).items():
             for node in data["nodes"]:
-                # Validate the settings has values.
-                if not data["values"]:
-                    cls.log.error(
-                        "Settings for {}.{} is missing values.".format(
-                            node, attribute
-                        )
-                    )
-                    continue
-
                 try:
                     render_value = cmds.getAttr(
                         "{}.{}".format(node, attribute)
@@ -316,6 +307,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         )
         result = {}
         for attr, values in OrderedDict(validation_settings).items():
+            # Validate the settings has values.
+            if not values:
+                cls.log.error(
+                    "Settings for {} is missing values.".format(attr)
+                )
+                continue
+
             cls.log.debug("{}: {}".format(attr, values))
             if "." not in attr:
                 cls.log.warning(
