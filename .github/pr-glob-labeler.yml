@@ -1,15 +1,16 @@
 # Add type: unittest label if any changes in tests folders
 'type: unittest':
-- ./**/*tests*/**/*
+- /tests/**/*
+- openpype/tests/**/*
 
 # any changes in documentation structure
 'type: documentation':
-- /**/*website*/**/*
-- /**/*docs*/**/*
+- '*/**/*website*/**/*'
+- '*/**/*docs*/**/*'
 
 # hosts triage
 'host: Nuke':
-- /**/*nuke*
+- ./**/*nuke*
 - ./**/*nuke*/**/*
 
 'host: Photoshop':
