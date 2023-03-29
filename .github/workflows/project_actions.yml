@@ -20,6 +20,7 @@ jobs:
           project_id: 11
           resource_node_id: ${{ github.event.pull_request.node_id }}
           status_value: Change Requested
+
   size-label:
     name: pr_size_label
     runs-on: ubuntu-latest
@@ -43,3 +44,24 @@ jobs:
               "1500": "XL",
               "2500": "XXL"
             }
+
+  label_prs_branch:
+    name: pr_branch_label
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+    - name: Label PRs - Branch name detection
+      uses: ffittschen/pr-branch-labeler@v1
+      with:
+        repo-token: ${{ secrets.YNPUT_BOT_TOKEN }}
+
+  label_prs_globe:
+    name: pr_globe_label
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+    - name: Label PRs - Globe detection
+      uses: actions/labeler@v4
+      with:
+        repo-token: ${{ secrets.YNPUT_BOT_TOKEN }}
+        configuration-path: ".github/pr-glob-labeler.yml"
