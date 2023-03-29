@@ -20,7 +20,7 @@ class CollectHoudiniCurrentFile(pyblish.api.InstancePlugin):
             # By default, Houdini will even point a new scene to a path.
             # However if the file is not saved at all and does not exist,
             # we assume the user never set it.
-            filepath = ""
+            current_file = ""
 
         elif os.path.basename(current_file) == "untitled.hip":
             # Due to even a new file being called 'untitled.hip' we are unable
