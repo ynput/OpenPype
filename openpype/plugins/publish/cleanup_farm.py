@@ -37,7 +37,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
         dirpaths_to_remove = set()
         for instance in context:
             staging_dir = instance.data.get("stagingDir")
-            if staging_dir:
+            if staging_dir and not instance.data.get("stagingDir_persistent"):
                 dirpaths_to_remove.add(os.path.normpath(staging_dir))
 
             if "representations" in instance.data:
