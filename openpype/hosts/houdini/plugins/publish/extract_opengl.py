@@ -1,13 +1,13 @@
 import os
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop, get_output_parameter
 
 import hou
 
 
-class ExtractOpenGL(openpype.api.Extractor):
+class ExtractOpenGL(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract OpenGL"
