@@ -1,6 +1,7 @@
 name: project-actions
 
 on:
+  pull_request_target:
   pull_request:
     types: [opened, synchronize, assigned, review_requested]
   pull_request_review:
