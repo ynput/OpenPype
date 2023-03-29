@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 import openpype.api
-from openpype.hosts.houdini.api.lib import render_rop
+from openpype.hosts.houdini.api.lib import render_rop, get_output_parameter
 
 import hou
 
@@ -21,7 +21,7 @@ class ExtractOpenGL(openpype.api.Extractor):
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved
-        output = ropnode.evalParm("picture")
+        output = get_output_parameter(ropnode).eval()
         staging_dir = os.path.dirname(output)
         instance.data["stagingDir"] = staging_dir
         file_name = os.path.basename(output)
