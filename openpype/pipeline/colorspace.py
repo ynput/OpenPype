@@ -218,8 +218,7 @@ def get_data_subprocess(config_path, data_type):
         log.info("Executing: {}".format(" ".join(args)))
 
         process_kwargs = {
-            "logger": log,
-            "env": {}
+            "logger": log
         }
 
         run_openpype_process(*args, **process_kwargs)
