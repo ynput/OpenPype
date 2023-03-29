@@ -99,6 +99,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             "frameEnd": instance.context.data["frameEnd"],
             "handleStart": instance.context.data.get("handleStart"),
             "handleEnd": instance.context.data.get("handleEnd"),
+            "frameStartHandle": instance.context.data.get("frameStartHandle"),
             "frameEndHandle": instance.context.data.get("frameEndHandle"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),
