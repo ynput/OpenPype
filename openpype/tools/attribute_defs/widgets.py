@@ -1,4 +1,4 @@
-import uuid
+import collections
 import copy
 
 from qtpy import QtWidgets, QtCore
@@ -11,6 +11,7 @@ from openpype.lib.attribute_definitions import (
     TextDef,
     EnumDef,
     BoolDef,
+    EnumObjectDef,
     FileDef,
     UIDef,
     UISeparatorDef,
@@ -53,6 +54,9 @@ def _create_widget_for_attr_def(attr_def, parent=None):
 
     if isinstance(attr_def, BoolDef):
         return BoolAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, EnumObjectDef):
+        return EnumObjectAttrWidget(attr_def, parent)
 
     if isinstance(attr_def, UnknownDef):
         return UnknownAttrWidget(attr_def, parent)
@@ -160,19 +164,17 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
             )
             row += 1
 
-    def set_value(self, value):
+    def set_value(self, value, multivalue=False):
         new_value = copy.deepcopy(value)
-        unused_keys = set(new_value.keys())
         for widget in self._widgets:
             attr_def = widget.attr_def
             if attr_def.key not in new_value:
                 continue
-            unused_keys.remove(attr_def.key)
 
             widget_value = new_value[attr_def.key]
             if widget_value is None:
                 widget_value = copy.deepcopy(attr_def.default)
-            widget.set_value(widget_value)
+            widget.set_value(widget_value, multivalue)
 
     def current_value(self):
         output = {}
@@ -536,3 +538,136 @@ class FileAttrWidget(_BaseAttrDefWidget):
 
     def set_value(self, value, multivalue=False):
         self._input_widget.set_value(value, multivalue)
+
+
+class EnumObjectAttrWidget(_BaseAttrDefWidget):
+    def __init__(self, *args, **kwargs):
+        self._multivalue = False
+        super(EnumObjectAttrWidget, self).__init__(*args, **kwargs)
+
+    def _ui_init(self):
+        content_widget = QtWidgets.QWidget(self)
+
+        enum_wrap_widget = QtWidgets.QWidget(content_widget)
+        enum_widget = CustomTextComboBox(enum_wrap_widget)
+        combo_delegate = QtWidgets.QStyledItemDelegate(enum_widget)
+        enum_widget.setItemDelegate(combo_delegate)
+
+        if self.attr_def.tooltip:
+            enum_widget.setToolTip(self.attr_def.tooltip)
+
+        values = []
+        for item in self.attr_def.enum_items:
+            enum_widget.addItem(item["label"], item["value"])
+            values.append(item["value"])
+
+        idx = enum_widget.findData(self.attr_def.enum_default)
+        if idx >= 0:
+            enum_widget.setCurrentIndex(idx)
+
+        enum_wrap_layout = QtWidgets.QHBoxLayout(enum_wrap_widget)
+        enum_wrap_layout.setContentsMargins(0, 0, 0, 0)
+        if self.attr_def.enum_label:
+            enum_label = QtWidgets.QLabel(self.attr_def.enum_label)
+            enum_wrap_layout.addWidget(enum_label)
+        enum_wrap_layout.addWidget(enum_widget, 1)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(enum_wrap_widget)
+        subwidgets_by_value = {}
+        for value in values:
+            children = self.attr_def.children_by_enum[value]
+            if not children:
+                subwidgets_by_value[value] = None
+                continue
+            widget = AttributeDefinitionsWidget(children, content_widget)
+            widget.setVisible(value == self.attr_def.enum_default)
+            widget.layout().setContentsMargins(0, 0, 0, 0)
+            subwidgets_by_value[value] = widget
+            content_layout.addWidget(widget)
+
+        enum_widget.currentIndexChanged.connect(self._on_enum_value_change)
+
+        self._combo_delegate = combo_delegate
+        self._enum_widget = enum_widget
+        self._subwidgets_by_value = subwidgets_by_value
+
+        self.main_layout.addWidget(content_widget, 0)
+
+    def _on_enum_value_change(self):
+        new_enum_value = self.current_enum_value()
+        if self._multivalue:
+            self._multivalue = False
+            self._enum_widget.set_custom_text(None)
+
+        for enum_value, widget in self._subwidgets_by_value.items():
+            if widget is not None:
+                widget.setVisible(enum_value == new_enum_value)
+
+        self.value_changed.emit(self.current_value(), self.attr_def.id)
+
+    def current_enum_value(self):
+        idx = self._enum_widget.currentIndex()
+        return self._enum_widget.itemData(idx)
+
+    def current_value(self):
+        enum_value = self.current_enum_value()
+        output = {self.attr_def.enum_key: enum_value}
+        subwidget = self._subwidgets_by_value[enum_value]
+        if subwidget:
+            output.update(subwidget.current_value())
+
+        return output
+
+    def set_value(self, value, multivalue=False):
+        orig_multivalue = multivalue
+        if not multivalue:
+            enum_value = value[self.attr_def.enum_key]
+            values_by_enum_values = {enum_value: value}
+            value = enum_value
+        else:
+            values_by_enum_values = {}
+            for item in value:
+                enum_value = item[self.attr_def.enum_key]
+                values_by_enum_values.setdefault(
+                    enum_value, collections.defaultdict(list)
+                )
+                _values = values_by_enum_values[enum_value]
+                for k, v in item.items():
+                    _values[k].append(v)
+
+            enum_values = set(values_by_enum_values.keys())
+            if len(enum_values) == 1:
+                multivalue = False
+                value = next(iter(enum_values))
+
+        if not multivalue:
+            idx = self._enum_widget.findData(value)
+            cur_idx = self._enum_widget.currentIndex()
+            if idx != cur_idx and idx >= 0:
+                self._enum_widget.setCurrentIndex(idx)
+
+        if multivalue:
+            custom_text = "< Multiselection >"
+            for enum_value, widget in self._subwidgets_by_value.items():
+                if widget is None:
+                    continue
+                widget.setVisible(False)
+                if enum_value in values_by_enum_values:
+                    widget.set_value(
+                        values_by_enum_values[enum_value], orig_multivalue
+                    )
+        else:
+            custom_text = None
+            for enum_value, widget in self._subwidgets_by_value.items():
+                if widget is None:
+                    continue
+                widget.setVisible(value == enum_value)
+                if enum_value in values_by_enum_values:
+                    widget.set_value(
+                        values_by_enum_values[enum_value], orig_multivalue
+                    )
+
+        self._enum_widget.set_custom_text(custom_text)
+        self._multivalue = multivalue
