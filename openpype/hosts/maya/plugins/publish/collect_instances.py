@@ -149,13 +149,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Append start frame and end frame to label if present
             if "frameStart" and "frameEnd" in data:
-
-                # Backwards compatibility for 'handles' data
-                if "handles" in data:
-                    data["handleStart"] = data["handles"]
-                    data["handleEnd"] = data["handles"]
-                    data.pop('handles')
-
                 # Take handles from context if not set locally on the instance
                 for key in ["handleStart", "handleEnd"]:
                     if key not in data:

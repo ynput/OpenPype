@@ -2082,14 +2082,8 @@ def get_frame_range():
         cmds.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
-
-    handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
+    handle_start = asset["data"].get("handleStart") or 0
+    handle_end = asset["data"].get("handleEnd") or 0
 
     return {
         "frameStart": frame_start,

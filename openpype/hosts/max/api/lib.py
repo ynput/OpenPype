@@ -215,13 +215,9 @@ def get_frame_range() -> dict:
         frame_end = asset["data"].get("edit_out")
     if frame_start is None or frame_end is None:
         return
-    handles = asset["data"].get("handles") or 0
+
     handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
     handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
