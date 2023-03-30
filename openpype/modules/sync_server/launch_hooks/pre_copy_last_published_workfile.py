@@ -1,8 +1,6 @@
 import os
 from openpype.client.entities import (
-    get_last_version_by_subset_id,
     get_representations,
-    get_subsets,
 )
 
 from openpype.lib import PreLaunchHook
