@@ -498,17 +498,6 @@
             "optional": false,
             "active": true
         },
-        "ValidateModelName": {
-            "enabled": false,
-            "database": true,
-            "material_file": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            },
-            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
-            "top_level_regex": ".*_GRP"
-        },
         "ValidateModelContent": {
             "enabled": true,
             "optional": false,
