@@ -424,11 +424,6 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "gpuCacheDisplayFilter",
-                            "label": "GPU Cache"
-                        },
-                        {
-                            "type": "boolean",
                             "key": "greasePencils",
                             "label": "Grease Pencil"
                         },
@@ -561,6 +556,12 @@
                             "type": "boolean",
                             "key": "textures",
                             "label": "Texture Placements"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "pluginObjects",
+                            "label": "Plugin Objects",
+                            "object_type": "boolean"
                         }
                     ]
                 },
