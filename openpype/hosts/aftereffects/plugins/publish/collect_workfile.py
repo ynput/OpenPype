@@ -49,20 +49,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        handle_start = asset_entity["data"].get("handleStart") or context.data.get("handleStart")  # noqa
-        handle_end = asset_entity["data"].get("handeEnd") or context.data.get("handleEnd")  # noqa
-
-        if handle_start is None or handle_end is None:
-            raise KeyError("Handles are not set for this context")
-
         instance_data = {
             "active": True,
             "asset": asset_entity["name"],
             "task": task,
-            "frameStart": asset_entity["data"]["frameStart"],
-            "frameEnd": asset_entity["data"]["frameEnd"],
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
+            "frameStart": context.data['frameStart'],
+            "frameEnd": context.data['frameEnd'],
+            "handleStart": context.data['handleStart'],
+            "handleEnd": context.data['handleEnd'],
             "fps": asset_entity["data"]["fps"],
             "resolutionWidth": asset_entity["data"].get(
                 "resolutionWidth",
