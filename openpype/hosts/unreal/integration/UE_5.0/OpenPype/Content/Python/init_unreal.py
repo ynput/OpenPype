@@ -54,6 +54,10 @@ from plugin import (
     delete_all_bound_assets,
     remove_camera,
     remove_layout,
+    match_actor,
+    spawn_existing_actors,
+    spawn_actors,
+    remove_unmatched_actors,
 )
 
 __all__ = [
@@ -106,4 +110,8 @@ __all__ = [
     "delete_all_bound_assets",
     "remove_camera",
     "remove_layout",
+    "match_actor",
+    "spawn_existing_actors",
+    "spawn_actors",
+    "remove_unmatched_actors",
 ]

@@ -1094,3 +1094,151 @@ def remove_layout(params):
     if create_sequences:
         unreal.EditorLevelLibrary.load_level(master_level)
         unreal.EditorAssetLibrary.delete_directory(f"{root}/tmp")
+
+
+def match_actor(params):
+    """
+    Match existing actors in the scene to the layout that is being loaded.
+    It will create a container for each of them, and apply the transformations
+    from the layout.
+
+    Args:
+        params (str): string containing a dictionary with parameters:
+            actors_matched (list): list of actors already matched
+            lasset (dict): dictionary containing the layout asset
+            repr_data (dict): dictionary containing the representation
+    """
+    actors_matched, lasset, repr_data = get_params(
+        params, 'actors_matched', 'lasset', 'repr_data')
+
+    actors = unreal.EditorLevelLibrary.get_all_level_actors()
+
+    for actor in actors:
+        if actor.get_class().get_name() != 'StaticMeshActor':
+            continue
+        if actor in actors_matched:
+            continue
+
+        # Get the original path of the file from which the asset has
+        # been imported.
+        smc = actor.get_editor_property('static_mesh_component')
+        mesh = smc.get_editor_property('static_mesh')
+        import_data = mesh.get_editor_property('asset_import_data')
+        filename = import_data.get_first_filename()
+        path = Path(filename)
+
+        if (not path.name or
+                path.name not in repr_data.get('data').get('path')):
+            continue
+
+        actor.set_actor_label(lasset.get('instance_name'))
+
+        mesh_path = Path(mesh.get_path_name()).parent.as_posix()
+
+        # Set the transform for the actor.
+        basis_data = lasset.get('basis')
+        transform_data = lasset.get('transform_matrix')
+        transform = _get_transform(import_data, basis_data, transform_data)
+
+        actor.set_actor_transform(transform, False, True)
+
+        return True, mesh_path
+
+    return False, None
+
+
+def _spawn_actor(obj, lasset):
+    actor = unreal.EditorLevelLibrary.spawn_actor_from_object(
+        obj, unreal.Vector(0.0, 0.0, 0.0)
+    )
+
+    actor.set_actor_label(lasset.get('instance_name'))
+    smc = actor.get_editor_property('static_mesh_component')
+    mesh = smc.get_editor_property('static_mesh')
+    import_data = mesh.get_editor_property('asset_import_data')
+
+    basis_data = lasset.get('basis')
+    transform_data = lasset.get('transform_matrix')
+    transform = _get_transform(import_data, basis_data, transform_data)
+
+    actor.set_actor_transform(transform, False, True)
+
+
+def spawn_existing_actors(params):
+    """
+    Spawn actors that have already been loaded from the layout asset.
+
+    Args:
+        params (str): string containing a dictionary with parameters:
+            repr_data (dict): dictionary containing the representation
+            lasset (dict): dictionary containing the layout asset
+    """
+    repr_data, lasset = get_params(params, 'repr_data', 'lasset')
+
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    all_containers = ls()
+
+    for container in all_containers:
+        representation = container.get('representation')
+
+        if representation != str(repr_data.get('_id')):
+            continue
+
+        asset_dir = container.get('namespace')
+
+        _filter = unreal.ARFilter(
+            class_names=["StaticMesh"],
+            package_paths=[asset_dir],
+            recursive_paths=False)
+        assets = ar.get_assets(_filter)
+
+        for asset in assets:
+            obj = asset.get_asset()
+            _spawn_actor(obj, lasset)
+
+        return True
+
+    return False
+
+
+def spawn_actors(params):
+    """
+    Spawn actors from a list of assets.
+
+    Args:
+        params (str): string containing a dictionary with parameters:
+            lasset (dict): dictionary containing the layout asset
+            repr_data (dict): dictionary containing the representation
+    """
+    assets, lasset = get_params(params, 'assets', 'lasset')
+
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    for asset in assets:
+        obj = ar.get_asset_by_object_path(asset).get_asset()
+        if obj.get_class().get_name() != 'StaticMesh':
+            continue
+        _spawn_actor(obj, lasset)
+
+    return True
+
+
+def remove_unmatched_actors(params):
+    """
+    Remove actors that have not been matched to the layout.
+
+    Args:
+        params (str): string containing a dictionary with parameters:
+            actors_matched (list): list of actors already matched
+    """
+    actors_matched = get_params(params, 'actors_matched')
+
+    actors = unreal.EditorLevelLibrary.get_all_level_actors()
+
+    for actor in actors:
+        if actor.get_class().get_name() != 'StaticMeshActor':
+            continue
+        if actor not in actors_matched:
+            unreal.log_warning(f"Actor {actor.get_name()} not matched.")
+            unreal.EditorLevelLibrary.destroy_actor(actor)
