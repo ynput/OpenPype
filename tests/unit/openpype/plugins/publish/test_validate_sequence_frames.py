@@ -63,10 +63,14 @@ class TestValidateSequenceFrames(BaseTest):
 
     @pytest.mark.parametrize("files",
                              [
-                              ["Main_beauty.v001.1001.exr", "Main_beauty.v001.1002.exr"],
-                              ["Main_beauty_v001.1001.exr", "Main_beauty_v001.1002.exr"],
-                              ["Main_beauty.1001.1001.exr", "Main_beauty.1001.1002.exr"],
-                              ["Main_beauty_v001_1001.exr", "Main_beauty_v001_1002.exr"]])
+                              ["Main_beauty.v001.1001.exr",
+                               "Main_beauty.v001.1002.exr"],
+                              ["Main_beauty_v001.1001.exr",
+                               "Main_beauty_v001.1002.exr"],
+                              ["Main_beauty.1001.1001.exr",
+                               "Main_beauty.1001.1002.exr"],
+                              ["Main_beauty_v001_1001.exr",
+                               "Main_beauty_v001_1002.exr"]])
     def test_validate_sequence_frames_name(self, instance,
                                            plugin, files):
         # tests for names with number inside, caused clique failure before
@@ -81,7 +85,8 @@ class TestValidateSequenceFrames(BaseTest):
         plugin.process(instance)
 
     @pytest.mark.parametrize("files",
-                             [["Main_beauty.1001.v001.exr", "Main_beauty.1002.v001.exr"]])
+                             [["Main_beauty.1001.v001.exr",
+                               "Main_beauty.1002.v001.exr"]])
     def test_validate_sequence_frames_wrong_name(self, instance,
                                                  plugin, files):
         # tests for names with number inside, caused clique failure before
@@ -99,7 +104,8 @@ class TestValidateSequenceFrames(BaseTest):
                 str(excinfo.value))
 
     @pytest.mark.parametrize("files",
-                             [["Main_beauty.v001.1001.ass.gz", "Main_beauty.v001.1002.ass.gz"]])
+                             [["Main_beauty.v001.1001.ass.gz",
+                               "Main_beauty.v001.1002.ass.gz"]])
     def test_validate_sequence_frames_possible_wrong_name(
             self, instance, plugin, files):
         # currently pattern fails on extensions with dots
@@ -116,7 +122,8 @@ class TestValidateSequenceFrames(BaseTest):
                 str(excinfo.value))
 
     @pytest.mark.parametrize("files",
-                             [["Main_beauty.v001.1001.ass.gz", "Main_beauty.v001.1002.ass.gz"]])
+                             [["Main_beauty.v001.1001.ass.gz",
+                               "Main_beauty.v001.1002.ass.gz"]])
     def test_validate_sequence_frames__correct_ext(
             self, instance, plugin, files):
         # currently pattern fails on extensions with dots
