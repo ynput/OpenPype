@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.hosts.maya.api.lib import get_attribute_input
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -156,3 +157,21 @@ class CollectReview(pyblish.api.InstancePlugin):
                         "filename": node.filename.get()
                     }
                 )
+
+        # Collect focal length.
+        attr = camera + ".focalLength"
+        focal_length = None
+        if get_attribute_input(attr):
+            start = instance.data["frameStart"]
+            end = instance.data["frameEnd"] + 1
+            focal_length = [
+                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
+            ]
+        else:
+            focal_length = cmds.getAttr(attr)
+
+        key = "focalLength"
+        try:
+            instance.data["burninDataMembers"][key] = focal_length
+        except KeyError:
+            instance.data["burninDataMembers"] = {key: focal_length}
