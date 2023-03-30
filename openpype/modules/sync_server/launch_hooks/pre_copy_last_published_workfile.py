@@ -21,7 +21,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
     # Before `AddLastWorkfileToLaunchArgs`
     order = -1
-    app_groups = ["blender", "photoshop", "tvpaint", "aftereffects"]
+    # any DCC could be used but TrayPublisher and other specials
+    app_groups = ["blender", "photoshop", "tvpaint", "aftereffects",
+                  "nuke", "nukeassist", "nukex", "hiero", "nukestudio",
+                  "maya", "harmony", "celaction", "flame", "fusion",
+                  "houdini", "tvpaint"]
 
     def execute(self):
         """Check if local workfile doesn't exist, else copy it.
