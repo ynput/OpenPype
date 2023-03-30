@@ -34,7 +34,7 @@ class ChangeUserResult:
     ):
         shutdown = logged_out
         restart = new_url is not None and new_url != old_url
-        token_changed = new_token is not None and new_token == old_token
+        token_changed = new_token is not None and new_token != old_token
 
         self.logged_out = logged_out
         self.old_url = old_url
