@@ -240,8 +240,8 @@ class CreateShotClip(phiero.Creator):
         v_sync_track = widget.result["vSyncTrack"]["value"]
 
         # sort selected trackItems by
-        sorted_selected_track_items = list()
-        unsorted_selected_track_items = list()
+        sorted_selected_track_items = []
+        unsorted_selected_track_items = []
         for _ti in self.selected:
             if _ti.parent().name() in v_sync_track:
                 sorted_selected_track_items.append(_ti)
