@@ -1,8 +1,7 @@
-import os.path
-
-import clique
+import os
 import re
 
+import clique
 import pyblish.api
 
 
