@@ -484,8 +484,8 @@ def reset_framerange():
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
+    handle_start = asset_data.get("handleStart", 0)
+    handle_end = asset_data.get("handleEnd", 0)
 
     frame_start -= int(handle_start)
     frame_end += int(handle_end)
