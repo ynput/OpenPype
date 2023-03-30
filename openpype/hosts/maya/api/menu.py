@@ -112,12 +112,12 @@ def install():
         )
 
         cmds.menuItem(
-            "Reset Frame Range",
+            "Set Frame Range",
             command=lambda *args: lib.reset_frame_range()
         )
 
         cmds.menuItem(
-            "Reset Resolution",
+            "Set Resolution",
             command=lambda *args: lib.reset_scene_resolution()
         )
 

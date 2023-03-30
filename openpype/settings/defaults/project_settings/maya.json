@@ -147,6 +147,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
+            "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
             "defaults": [
                 "Main"
@@ -789,11 +790,12 @@
         "ExtractPlayblast": {
             "capture_preset": {
                 "Codec": {
-                    "compression": "jpg",
+                    "compression": "png",
                     "format": "image",
                     "quality": 95
                 },
                 "Display Options": {
+                    "override_display": true,
                     "background": [
                         125,
                         125,
@@ -812,11 +814,12 @@
                         125,
                         255
                     ],
-                    "override_display": true
+                    "displayGradient": true
                 },
                 "Generic": {
                     "isolate_view": true,
-                    "off_screen": true
+                    "off_screen": true,
+                    "pan_zoom": false
                 },
                 "Renderer": {
                     "rendererName": "vp2Renderer"

@@ -7,7 +7,15 @@
     "publish": {
         "IntegrateKitsuNote": {
             "set_status_note": false,
-            "note_status_shortname": "wfa"
+            "note_status_shortname": "wfa",
+            "status_change_conditions": {
+                "status_conditions": [],
+                "family_requirements": []
+            },
+            "custom_comment_template": {
+                "enabled": false,
+                "comment_template": "{comment}\n\n|  |  |\n|--|--|\n| version| `{version}` |\n| family | `{family}` |\n| name | `{name}` |"
+            }
         }
     }
 }
