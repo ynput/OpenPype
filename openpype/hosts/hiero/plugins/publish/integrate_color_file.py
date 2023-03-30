@@ -196,7 +196,6 @@ def create_backup_grade(grade):
 
 def same_grade(color_path, grade_path, color_type, cdl={}):
     """Test whether two color files have the same values"""
-
     if color_type == "edl":
         match_cdl = parse_cdl(grade_path)
         if (
@@ -238,7 +237,7 @@ class IngestMeta:
     },
     Here is a sample json file with ingest meta
     {
-        101_001_010.ccc:{
+        "101_001_010.ccc":{
             "source_path":"/proj/zzz/incoming/20210202/101_001_010/101_001_010.ccc"
             "plate":"101_001_010_bg1"
             "main_grade":True,
@@ -257,7 +256,6 @@ class IngestMeta:
         self.meta_path = os.path.join(ocio_directory, self.basename)
         self.main_grade_file = os.path.join(ocio_directory, "grade.ccc")
         self.get_ingest_meta()
-
 
     def get_ingest_meta(self):
         if os.path.isfile(self.meta_path):
@@ -288,8 +286,8 @@ class IngestMeta:
         return False
 
     def set_meta_main_grade(self, target_grade):
-        # target_grade can be empty depending on if there was a main grade set or not
         for filename in self.metadata:
+            # target_grade can be empty depending on if there was a main grade set or not
             if not filename == target_grade:
                 self.metadata[filename]["main_grade"] = False
             else:
@@ -422,6 +420,7 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
             os.makedirs(ocio_directory)
 
         skip_write = False
+        backup_grade = ""
         if grade_path in plate_grades:
             # Grade previously copied. Test to see if unique CDL data and if so then backup previous file and make new plate CDL
             # When checking if same grade - test whether file is exactly the same instead of values
@@ -441,10 +440,19 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
             else:
                 shutil.copyfile(color_path, grade_path)
 
+        # Create color ingest meta on disk
         ingest_meta = IngestMeta(ocio_directory)
+
+        # Make sure that backup grade is removed from ingest_meta before adding grade
+        # Could rely on filename being the same and dict key overwrite but same grade doesn't always have same name
+        if backup_grade:
+            ingest_meta.remove_grade(os.path.dirname(main_grade))
+
         ingest_meta.add_grade(os.path.basename(color_path), color_path, plate_name)
+
         main_grade = ingest_meta.get_main_grade()
         ingest_meta.set_meta_main_grade(main_grade)
+        # Create symlink for main grade
         if main_grade:
             if os.path.islink(main_grade_path):
                 os.unlink(main_grade_path)
