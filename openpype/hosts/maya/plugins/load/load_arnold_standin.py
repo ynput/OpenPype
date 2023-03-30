@@ -84,7 +84,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-        nodes = [root, standin]
+        nodes = [root, standin, standin_shape]
         if operator is not None:
             nodes.append(operator)
         self[:] = nodes
