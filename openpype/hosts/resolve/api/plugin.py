@@ -791,6 +791,7 @@ class PublishClip:
             self.tag_data.update({"reviewTrack": self.review_layer})
         else:
             self.tag_data.update({"reviewTrack": None})
+
     def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
