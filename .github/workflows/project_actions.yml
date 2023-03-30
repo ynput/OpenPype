@@ -69,3 +69,4 @@ jobs:
       with:
         repo-token: ${{ secrets.YNPUT_BOT_TOKEN }}
         configuration-path: ".github/pr-glob-labeler.yml"
+        sync-labels: false
