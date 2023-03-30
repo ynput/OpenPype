@@ -46,7 +46,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
                 instance, representation, False
             )
 
-            if "shotgridreview" in representation.get("tags", []):
+            if "review" in representation.get("tags", []):
 
                 if representation["ext"] in ["mov", "avi"]:
                     self.log.info(
