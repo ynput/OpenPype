@@ -127,6 +127,7 @@ class FtrackComponentCreator:
         file = os.path.basename(file_path)
         _n, ext = os.path.splitext(file)
 
+        # TODO: This should not be hardcoded to ftrack
         name = "ftrackreview-mp4" if "mov" in ext else "thumbnail"
 
         component_data = {
@@ -136,6 +137,7 @@ class FtrackComponentCreator:
             "location": location
         }
 
+        # TODO: this should not be hardcoded to ftrack
         if name == "ftrackreview-mp4":
             duration = data["duration"]
             handles = data["handles"]

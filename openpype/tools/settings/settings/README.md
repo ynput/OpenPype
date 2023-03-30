@@ -259,7 +259,7 @@
     "multiselection": true,
     "enum_items": [
         {"burnin": "Add burnins"},
-        {"ftrackreview": "Add to Ftrack"},
+        {"review": "Add as review (upload to production tracker)"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
         {"no-hnadles": "Skip handle frames"}

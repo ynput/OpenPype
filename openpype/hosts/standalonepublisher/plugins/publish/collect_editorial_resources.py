@@ -202,7 +202,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "step": 1,
                     "fps": self.context.data.get("fps"),
                     "name": "review",
-                    "tags": ["review", "ftrackreview", "delete"],
+                    "tags": ["review", "delete"],
                 })
             instance_data["representations"].append(repre_data)
 
@@ -256,7 +256,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "fps": self.context.data.get("fps"),
                     "name": "review",
                     "thumbnail": True,
-                    "tags": ["review", "ftrackreview", "delete"],
+                    "tags": ["review", "delete"],
                 })
 
             # add to frames for frame range reset only if no collection

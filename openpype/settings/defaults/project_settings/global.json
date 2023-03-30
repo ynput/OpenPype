@@ -81,9 +81,7 @@
                     "outputs": {
                         "png": {
                             "ext": "png",
-                            "tags": [
-                                "ftrackreview"
-                            ],
+                            "tags": ["review"],
                             "burnins": [],
                             "ffmpeg_args": {
                                 "video_filters": [],
@@ -139,8 +137,7 @@
                             "ext": "mp4",
                             "tags": [
                                 "burnin",
-                                "ftrackreview",
-                                "kitsureview"
+                                "review"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {

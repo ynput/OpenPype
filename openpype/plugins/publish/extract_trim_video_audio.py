@@ -120,7 +120,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             if ext in [".mov", ".mp4"] and reviewable:
                 repre.update({
                     "thumbnail": True,
-                    "tags": ["review", "ftrackreview", "delete"]})
+                    "tags": ["review", "delete"]})
 
             instance.data["representations"].append(repre)
 

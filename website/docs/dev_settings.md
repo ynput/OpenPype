@@ -501,7 +501,7 @@ How output of the schema could look like on save:
     "multiselection": true,
     "enum_items": [
         {"burnin": "Add burnins"},
-        {"ftrackreview": "Add to Ftrack"},
+        {"review": "Add as review (upload to production tracker)"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
         {"no-handles": "Skip handle frames"}

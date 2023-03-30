@@ -326,6 +326,7 @@ class ExtractSubsetResources(publish.Extractor):
             # HACK: `ftrackreview_withLUT` will result only in `ftrackreview`
             if (
                 "thumbnail" in unique_name
+                # TODO: this should not be hardcoded to ftrack
                 or "ftrackreview" in unique_name
             ):
                 repr_name = unique_name.split("_")[0]

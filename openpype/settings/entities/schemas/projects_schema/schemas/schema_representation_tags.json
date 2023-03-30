@@ -11,15 +11,6 @@
             "review": "Create review"
         },
         {
-            "ftrackreview": "Add review to Ftrack"
-        },
-        {
-            "shotgridreview": "Add review to Shotgrid"
-        },
-        {
-            "kitsureview": "Add review to Kitsu"
-        },
-        {
             "delete": "Delete output"
         },
         {

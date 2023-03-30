@@ -131,7 +131,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             if repre.get("thumbnail") or "thumbnail" in repre_tags:
                 thumbnail_representations.append(repre)
 
-            elif "ftrackreview" in repre_tags:
+            elif "review" in repre_tags:
                 review_representations.append(repre)
                 if self._is_repre_video(repre):
                     has_movie_review = True

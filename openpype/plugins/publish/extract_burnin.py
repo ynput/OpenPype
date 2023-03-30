@@ -267,6 +267,8 @@ class ExtractBurnin(publish.Extractor):
                 new_repre["stagingDir"] = src_repre_staging_dir
 
                 # Keep "ftrackreview" tag only on first output
+                # TODO: What do we do here to remove `ftrackreview`
+                #       Do we remove the `review` tag instead?
                 if first_output:
                     first_output = False
                 elif "ftrackreview" in new_repre["tags"]:
