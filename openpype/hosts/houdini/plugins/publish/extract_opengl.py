@@ -41,7 +41,7 @@ class ExtractOpenGL(publish.Extractor,
         if not instance.data.get("keepImages"):
             tags.append("delete")
 
-        representation  = {
+        representation = {
             "name": instance.data["imageFormat"],
             "ext": instance.data["imageFormat"],
             "files": output,
