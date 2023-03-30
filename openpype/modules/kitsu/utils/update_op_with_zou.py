@@ -250,8 +250,6 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_status = project['project_status_name']
-    project.pop('project_status_name')
     project_doc = get_project(project_name)
     if not project_doc:
         log.info(f"Creating project '{project_name}'")
@@ -269,18 +267,13 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         # Update Zou
         gazu.project.update_project(project)
 
-    if project['project_status_name'] == "Closed":
-        project_status = False
-    else:
-        project_status = True
-
     # Update data
     project_data.update(
         {
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
-            "active": project_status,
+            "active": project['project_status_name'] != "Closed",
         }
     )
 
@@ -372,6 +365,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         if naming_pattern.match(item["name"])
     ]
 
+    # Get all statuses for projects from Kitsu
     all_status = gazu.project.all_project_status()
     for status in all_status:
         if project['project_status_id'] == status['id']:
