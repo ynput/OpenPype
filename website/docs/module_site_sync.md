@@ -200,3 +200,10 @@ This is an example how to trigger background syncing process where active (sourc
 ```shell
 openpype_console syncserver --active_site studio
 ```
+
+### Syncing of last published workfile
+
+Some DCC might have enabled in `project_setting/global/tools/Workfiles/last_workfile_on_startup`, eg. open DCC with last opened workfile. 
+
+Flag `use_last_published_workfile` tells that last published workfile should be used if no workfile is present locally. 
+This use case could happen if artists starts working on new task locally, doesn't have any workfile present. In that case last published will be synchronized locally and its version bumped by 1 (as workfile's version is always +1 from published version).
