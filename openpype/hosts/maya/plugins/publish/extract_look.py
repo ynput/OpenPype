@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
 import os
-import sys
 import json
 import tempfile
 import platform
 import contextlib
-import subprocess
 from collections import OrderedDict
 
 from maya import cmds  # noqa
@@ -23,34 +21,13 @@ COPY = 1
 HARDLINK = 2
 
 
-def escape_space(path):
-    """Ensure path is enclosed by quotes to allow paths with spaces"""
-    return '"{}"'.format(path) if " " in path else path
-
-
-def get_ocio_config_path(profile_folder):
-    """Path to OpenPype vendorized OCIO.
-
-    Vendorized OCIO config file path is grabbed from the specific path
-    hierarchy specified below.
-
-    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
-    Args:
-        profile_folder (str): Name of folder to grab config file from.
-
-    Returns:
-        str: Path to vendorized config file.
-    """
-
-    return os.path.join(
-        os.environ["OPENPYPE_ROOT"],
-        "vendor",
-        "bin",
-        "ocioconfig",
-        "OpenColorIOConfigs",
-        profile_folder,
-        "config.ocio"
-    )
+def _has_arnold():
+    """Return whether the arnold package is available and can be imported."""
+    try:
+        import arnold  # noqa: F401
+        return True
+    except (ImportError, ModuleNotFoundError):
+        return False
 
 
 def find_paths_by_hash(texture_hash):
@@ -548,7 +525,7 @@ class ExtractLook(publish.Extractor):
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        if cmds.loadPlugin("mtoa", quiet=True):
+                        if _has_arnold():
                             img_info = image_info(filepath)
                             color_space = guess_colorspace(img_info)
                         else:
@@ -560,7 +537,7 @@ class ExtractLook(publish.Extractor):
                                             render_colorspace])
                 else:
 
-                    if cmds.loadPlugin("mtoa", quiet=True):
+                    if _has_arnold():
                         img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
                         if color_space == "sRGB":
