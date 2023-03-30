@@ -218,6 +218,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     @staticmethod
     def _update_model_panels(container, update_panels):
         # Update the modelPanels to contain the new camera
+        if not update_panels:
+            return
         members = get_container_members(container)
         new_cameras = cmds.ls(members, type="camera", long=True)
         new_camera = new_cameras[0]
