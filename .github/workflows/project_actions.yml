@@ -25,8 +25,8 @@ jobs:
     name: pr_size_label
     runs-on: ubuntu-latest
     if: |
-      ${{(github.event_name == 'pull_request' && github.event.action == 'synchronize')
-      || (github.event_name == 'pull_request' && github.event.action == 'assigned')}}
+      ${{(github.event_name == 'pull_request' && github.event.action == 'assigned')
+      || (github.event_name == 'pull_request' && github.event.action == 'opened')}}
 
     steps:
       - name: Add size label
@@ -49,7 +49,7 @@ jobs:
     name: pr_branch_label
     runs-on: ubuntu-latest
     if: |
-      ${{(github.event_name == 'pull_request' && github.event.action == 'synchronize')
+      ${{(github.event_name == 'pull_request' && github.event.action == 'assigned')
       || (github.event_name == 'pull_request' && github.event.action == 'opened')}}
     steps:
     - name: Label PRs - Branch name detection
@@ -61,7 +61,7 @@ jobs:
     name: pr_globe_label
     runs-on: ubuntu-latest
     if: |
-      ${{(github.event_name == 'pull_request' && github.event.action == 'synchronize')
+      ${{(github.event_name == 'pull_request' && github.event.action == 'assigned')
       || (github.event_name == 'pull_request' && github.event.action == 'opened')}}
     steps:
     - name: Label PRs - Globe detection
