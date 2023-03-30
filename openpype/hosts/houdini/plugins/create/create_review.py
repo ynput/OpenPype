@@ -1,11 +1,11 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import (
-    CreatedInstance,
-    OpenPypePyblishPluginMixin
-)
+from openpype.pipeline import CreatedInstance
+from openpype.lib import EnumDef, BoolDef, NumberDef
 
 
-class CreateReview(plugin.HoudiniCreator, OpenPypePyblishPluginMixin):
+class CreateReview(plugin.HoudiniCreator):
     """Review with OpenGL ROP"""
 
     identifier = "io.openpype.creators.houdini.review"
@@ -13,34 +13,30 @@ class CreateReview(plugin.HoudiniCreator, OpenPypePyblishPluginMixin):
     family = "review"
     icon = "video-camera"
 
-    # Default settings for the ROP
-    # todo: expose in OpenPype settings?
-    override_resolution = True
-    width = 1280
-    height = 720
-    aspect = 1.0
-
-    def create(self, subset_name, instance_data, pre_create_data):
-
+    def create(self, subset_name, instance_data, pre_create_data): # type: CreatedInstance
         import hou
 
-        # Remove the active, we are checking the bypass flag of the nodes
         instance_data.pop("active", None)
-
-        instance_data["node_type"] = "opengl"
+        instance_data.update({"node_type": "opengl"})
+        instance_data["imageFormat"] = pre_create_data.get("imageFormat")
+        instance_data["keepImages"] = pre_create_data.get("keepImages")
 
         instance = super(CreateReview, self).create(
             subset_name,
             instance_data,
-            pre_create_data)  # type: CreatedInstance
+            pre_create_data)
 
         instance_node = hou.node(instance.get("instance_node"))
 
         frame_range = hou.playbar.frameRange()
 
         parms = {
-            "picture": '$HIP/pyblish/`chs("subset")`/`chs("subset")`.$F4.png',
-            # Render frame range
+            "picture": "{}{}".format(
+            hou.text.expandString("$HIP/pyblish/"),
+            "{}/{}.$F4.{}".format(
+                subset_name,
+                subset_name,
+                pre_create_data.get("image_format") or "png")),
             "trange": 1,
 
             # Unlike many other ROP nodes the opengl node does not default
@@ -50,13 +46,13 @@ class CreateReview(plugin.HoudiniCreator, OpenPypePyblishPluginMixin):
             "f2": frame_range[1],
         }
 
-        if self.override_resolution:
-            # Override resolution
+        override_resolution = pre_create_data.get("override_resolution")
+        if override_resolution:
             parms.update({
-                "tres": True,   # Override Camera Resolution
-                "res1": self.width,
-                "res2": self.height,
-                "aspect": self.aspect
+                "tres": override_resolution,
+                "res1": pre_create_data.get("resx"),
+                "res2": pre_create_data.get("resy"),
+                "aspect": pre_create_data.get("aspect"),
             })
 
         if self.selected_nodes:
@@ -66,9 +62,96 @@ class CreateReview(plugin.HoudiniCreator, OpenPypePyblishPluginMixin):
 
         instance_node.setParms(parms)
 
-        # Lock any parameters in this list
-        to_lock = [
-            "family",
-            "id"
-        ]
+        to_lock = ["id", "family"]
+
         self.lock_parameters(instance_node, to_lock)
+
+    def get_pre_create_attr_defs(self):
+        attrs = super().get_pre_create_attr_defs()
+        image_format_enum = [
+            {
+                "value": "png",
+                "label": ".png"
+            },
+            {
+                "value": "tif",
+                "label": ".tif"
+            },
+            {
+                "value": "sgi",
+                "label": ".sgi"
+            },
+            {
+                "value": "pic.gz",
+                "label": ".pic.gz"
+            },
+            {
+                "value": "rat",
+                "label": ".rat"
+            },
+            {
+                "value": "jpg",
+                "label": ".jpg"
+            },
+            {
+                "value": "cin",
+                "label": ".cin"
+            },
+            {
+                "value": "rta",
+                "label": ".rta"
+            },
+            {
+                "value": "rat",
+                "label": ".rat"
+            },
+            {
+                "value": "bmp",
+                "label": ".bmp"
+            },
+            {
+                "value": "tga",
+                "label": ".tga"
+            },
+            {
+                "value": "rad",
+                "label": ".rad"
+            },
+            {
+                "value": "exr",
+                "label": ".exr"
+            },
+            {
+                "value": "pic",
+                "label": ".pic"
+            }
+        ]
+
+        return attrs + [
+            BoolDef("keepImages",
+                    label="Keep Image Sequences",
+                    default=False),
+            EnumDef("imageFormat",
+                    image_format_enum,
+                    label="Image Format Options"),
+            BoolDef("override_resolution",
+                    label="Override resolution",
+                    tooltip="When disabled the resolution set on the camera "
+                            "is used instead.",
+                    default=True),
+            NumberDef("resx",
+                      label="Resolution Width",
+                      default=1280,
+                      minimum=2,
+                      decimals=0),
+            NumberDef("resy",
+                      label="Resolution Height",
+                      default=720,
+                      minimum=2,
+                      decimals=0),
+            NumberDef("aspect",
+                      label="Aspect Ratio",
+                      default=1.0,
+                      minimum=0.0001,
+                      decimals=3)
+        ]

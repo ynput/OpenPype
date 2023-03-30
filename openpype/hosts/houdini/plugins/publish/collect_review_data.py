@@ -22,19 +22,17 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         ropnode_path = instance.data["instance_node"]
         ropnode = hou.node(ropnode_path)
 
-        try:
-            camera = ropnode.parm("camera").evalAsNode()
-        except TypeError:
-            # Not a valid node path set
-            self.log.error("No valid camera node found on review node: "
-                           "{}".format(ropnode.path()))
-            return
+        camera_path = ropnode.parm("camera").eval()
+        camera_node = hou.node(camera_path)
+        if not camera_node:
+            raise RuntimeError("No valid camera node found on review node: "
+                               "{}".format(camera_path))
 
         # Collect focal length.
-        focal_length_parm = camera.parm("focal")
+        focal_length_parm = camera_node.parm("focal")
         if not focal_length_parm:
             self.log.warning("No 'focal' (focal length) parameter found on "
-                             "camera: {}".format(camera.path()))
+                             "camera: {}".format(camera_path))
             return
 
         if focal_length_parm.isTimeDependent():
@@ -50,3 +48,5 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         # Store focal length in `burninDataMembers`
         burnin_members = instance.data.setdefault("burninDataMembers", {})
         burnin_members["focalLength"] = focal_length
+
+        instance.data.setdefault("families", []).append('ftrack')
