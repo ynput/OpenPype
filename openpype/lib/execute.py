@@ -200,7 +200,7 @@ def run_openpype_process(*args, **kwargs):
     args = get_openpype_execute_args(*args)
     env = kwargs.pop("env", None)
     # Keep env untouched if are passed and not empty
-    if env is None:
+    if not env:
         # Skip envs that can affect OpenPype process
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
