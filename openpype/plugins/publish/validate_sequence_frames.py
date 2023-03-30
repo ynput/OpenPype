@@ -31,7 +31,7 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
         for repr in representations:
             repr_files = repr["files"]
             if isinstance(repr_files, str):
-                repr_files = [repr_files]
+                continue
 
             ext = repr.get("ext")
             if not ext:

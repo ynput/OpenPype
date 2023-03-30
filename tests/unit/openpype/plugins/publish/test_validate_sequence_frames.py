@@ -37,7 +37,7 @@ class TestValidateSequenceFrames(BaseTest):
         class Instance(PyblishInstance):
             data = {
                 "frameStart": 1001,
-                "frameEnd": 1001,
+                "frameEnd": 1002,
                 "representations": []
             }
         yield Instance
@@ -57,17 +57,18 @@ class TestValidateSequenceFrames(BaseTest):
             }
         ]
         instance.data["representations"] = representations
+        instance.data["frameEnd"] = 1001
 
         plugin.process(instance)
 
     @pytest.mark.parametrize("files",
-                             ["Main_beauty.v001.1001.exr",
-                              "Main_beauty_v001.1001.exr",
-                              "Main_beauty.1001.1001.exr",
-                              "Main_beauty_v001_1001.exr"])
-    def test_validate_sequence_frames_single_frame_name(self, instance,
-                                                        plugin,
-                                                        files):
+                             [
+                              ["Main_beauty.v001.1001.exr", "Main_beauty.v001.1002.exr"],
+                              ["Main_beauty_v001.1001.exr", "Main_beauty_v001.1002.exr"],
+                              ["Main_beauty.1001.1001.exr", "Main_beauty.1001.1002.exr"],
+                              ["Main_beauty_v001_1001.exr", "Main_beauty_v001_1002.exr"]])
+    def test_validate_sequence_frames_name(self, instance,
+                                           plugin, files):
         # tests for names with number inside, caused clique failure before
         representations = [
             {
@@ -80,10 +81,9 @@ class TestValidateSequenceFrames(BaseTest):
         plugin.process(instance)
 
     @pytest.mark.parametrize("files",
-                             ["Main_beauty.1001.v001.exr"])
-    def test_validate_sequence_frames_single_frame_wrong_name(self, instance,
-                                                              plugin,
-                                                              files):
+                             [["Main_beauty.1001.v001.exr", "Main_beauty.1002.v001.exr"]])
+    def test_validate_sequence_frames_wrong_name(self, instance,
+                                                 plugin, files):
         # tests for names with number inside, caused clique failure before
         representations = [
             {
@@ -93,14 +93,14 @@ class TestValidateSequenceFrames(BaseTest):
         ]
         instance.data["representations"] = representations
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(AssertionError) as excinfo:
             plugin.process(instance)
-        assert ("Invalid frame range: (1, 1) - expected: (1001, 1001)" in
+        assert ("Must detect single collection" in
                 str(excinfo.value))
 
     @pytest.mark.parametrize("files",
-                             ["Main_beauty.v001.1001.ass.gz"])
-    def test_validate_sequence_frames_single_frame_possible_wrong_name(
+                             [["Main_beauty.v001.1001.ass.gz", "Main_beauty.v001.1002.ass.gz"]])
+    def test_validate_sequence_frames_possible_wrong_name(
             self, instance, plugin, files):
         # currently pattern fails on extensions with dots
         representations = [
@@ -116,8 +116,8 @@ class TestValidateSequenceFrames(BaseTest):
                 str(excinfo.value))
 
     @pytest.mark.parametrize("files",
-                             ["Main_beauty.v001.1001.ass.gz"])
-    def test_validate_sequence_frames_single_frame_correct_ext(
+                             [["Main_beauty.v001.1001.ass.gz", "Main_beauty.v001.1002.ass.gz"]])
+    def test_validate_sequence_frames__correct_ext(
             self, instance, plugin, files):
         # currently pattern fails on extensions with dots
         representations = [
