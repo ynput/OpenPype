@@ -86,7 +86,6 @@ def create_asset_id_hash(nodes):
     """
     node_id_hash = defaultdict(list)
     for node in nodes:
-        shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
@@ -101,11 +100,11 @@ def create_asset_id_hash(nodes):
             for k, _ in ids.items():
                 id = k.split(":")[0]
                 node_id_hash[id].append(node)
-        elif shapes and cmds.nodeType(shapes[0]) == "aiStandIn":
-            path = arnold_standin.get_standin_path(shapes[0])
+        elif cmds.nodeType(node) == "aiStandIn":
+            path = arnold_standin.get_standin_path(node)
             for id, _ in arnold_standin.get_id_by_node(path).items():
                 id = id.split(":")[0]
-                node_id_hash[id].append(shapes[0])
+                node_id_hash[id].append(node)
         else:
             value = lib.get_id(node)
             if value is None:
