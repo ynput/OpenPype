@@ -1089,6 +1089,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         openpype_containers = context.scene.openpype_containers
         container = openpype_containers.get(self.container_name)
         avalon_data = dict(container["avalon"])
+        container_datablocks = [d_ref.datablock for d_ref in container.datablock_refs]
 
         # Expose container content and get neutral outliner entity
         bpy.ops.scene.expose_container_content(
@@ -1116,23 +1117,35 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
                 outliner_entity, bpy.types.Collection
             ),
         }
+
         if outliner_entity:
             # For collection, allow renaming
             if isinstance(outliner_entity, bpy.types.Collection):
                 # TODO may not be a good design because this value is from source workfile...
                 outliner_entity.is_openpype_instance = False
 
-            create_args.update(
-                {
-                    "datapath": BL_TYPE_DATAPATH.get(
-                        type(outliner_entity)
-                    ),
-                    "datablock_name": outliner_entity.name,
-                }
-            )
+            datablock_args = {
+                "datapath": BL_TYPE_DATAPATH.get(type(outliner_entity)),
+                "datablock_name": outliner_entity.name,
+            }
+        else:
+            datablock_args = {
+                "datapath": BL_TYPE_DATAPATH.get(
+                    type(container_datablocks[0])
+                ),
+                "datablock_name": container_datablocks[0].name,
+            }
+        create_args.update(datablock_args)
 
         # Create new instance
         bpy.ops.scene.create_openpype_instance(**create_args)
+
+        # Reassign container datablocks to new instance
+        if not outliner_entity:
+            add_datablocks_to_container(
+                container_datablocks[1:],
+                bpy.context.scene.openpype_instances[-1],
+            )
 
         return {"FINISHED"}
 
@@ -1177,35 +1190,37 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
         openpype_containers = context.scene.openpype_containers
         container = openpype_containers.get(self.container_name)
 
+        # Remove old container
+        outliner_entity = container.outliner_entity
+        openpype_containers.remove(openpype_containers.find(container.name))
+
+        if not outliner_entity:
+            return {"FINISHED"}
+
         # If collection, convert it to regular one
-        parent_collection = get_parent_collection(container.outliner_entity)
+        parent_collection = get_parent_collection(outliner_entity)
         substitute_collection = None
-        if isinstance(container.outliner_entity, bpy.types.Collection):
-            container.outliner_entity.name += ".old"
+        if isinstance(outliner_entity, bpy.types.Collection):
+            outliner_entity.name += ".old"
             substitute_collection = bpy.data.collections.new(
                 self.container_name
             )
 
             # Link old collection objects to new substitute collection
-            link_to_collection(
-                container.outliner_entity.objects, substitute_collection
-            )
+            link_to_collection(outliner_entity.objects, substitute_collection)
 
             # Link new substitute collection to parent collection
             parent_collection.children.link(substitute_collection)
 
         # Move objects to either substituted collection or the parent one
         link_to_collection(
-            container.outliner_entity.children,
+            outliner_entity.children,
             substitute_collection or parent_collection,
         )
 
         # Unlink entity from scene
-        parent_collection.children.unlink(container.outliner_entity)
-        container.outliner_entity.use_fake_user = False
-
-        # Remove old container
-        openpype_containers.remove(openpype_containers.find(container.name))
+        parent_collection.children.unlink(outliner_entity)
+        outliner_entity.use_fake_user = False
 
         # Update containers list
         update_scene_containers_from_outliner()
