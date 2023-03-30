@@ -124,11 +124,13 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             )
             return
 
-        sorted_workfile_representations = sorted(workfile_representations,
-                                                 key=lambda d: d["context"]
-                                                                ["version"])
-
-        workfile_representation = sorted_workfile_representations[-1]
+        filtered_repres = filter(
+            lambda r: r["context"].get("version") is not None,
+            workfile_representations
+        )
+        workfile_representation = max(
+            filtered_repres, key=lambda r: r["context"]["version"]
+        )
         # Get last published
         published_workfile_path = get_representation_path_with_anatomy(
             workfile_representation, anatomy
