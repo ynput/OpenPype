@@ -82,9 +82,9 @@ config (dictionary)
 write_security_roles/read_security_roles (array of strings)
     - default: ["ALL"]
     - strings should be role names (e.g.: ["API", "Administrator"])
-    - if set to ["ALL"] - all roles will be availabled
+    - if set to ["ALL"] - all roles will be available
     - if first is 'except' - roles will be set to all except roles in array
-        - Warning: Be carefull with except - roles can be different by company
+        - Warning: Be careful with except - roles can be different by company
         - example:
             write_security_roles = ["except", "User"]
             read_security_roles = ["ALL"] # (User is can only read)
@@ -500,7 +500,7 @@ class CustomAttributes(BaseAction):
             data = {}
             # Get key, label, type
             data.update(self.get_required(cust_attr_data))
-            # Get hierachical/ entity_type/ object_id
+            # Get hierarchical/ entity_type/ object_id
             data.update(self.get_entity_type(cust_attr_data))
             # Get group, default, security roles
             data.update(self.get_optional(cust_attr_data))

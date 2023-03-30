@@ -104,7 +104,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 if repr.get(k):
                     repr.pop(k)
 
-            # convert files to list if it isnt
+            # convert files to list if it isn't
             if not isinstance(files, (tuple, list)):
                 files = [files]
 
@@ -174,7 +174,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 continue
 
             files = repre["files"]
-            # Convert files to list if it isnt
+            # Convert files to list if it isn't
             if not isinstance(files, (tuple, list)):
                 files = [files]
 

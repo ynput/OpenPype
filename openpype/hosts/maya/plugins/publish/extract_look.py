@@ -95,7 +95,7 @@ def maketx(source, destination, args, logger):
     try:
         out = run_subprocess(subprocess_args)
     except Exception:
-        logger.error("Maketx converion failed", exc_info=True)
+        logger.error("Maketx conversion failed", exc_info=True)
         raise
 
     return out

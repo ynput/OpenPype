@@ -81,7 +81,7 @@ class ILoadHost:
 
     @abstractmethod
     def get_containers(self):
-        """Retreive referenced containers from scene.
+        """Retrieve referenced containers from scene.
 
         This can be implemented in hosts where referencing can be used.
 
@@ -191,7 +191,7 @@ class IWorkfileHost:
 
     @abstractmethod
     def get_current_workfile(self):
-        """Retreive path to current opened file.
+        """Retrieve path to current opened file.
 
         Returns:
             str: Path to file which is currently opened.
@@ -220,7 +220,7 @@ class IWorkfileHost:
         Default implementation keeps workdir untouched.
 
         Warnings:
-            We must handle this modification with more sofisticated way because
+            We must handle this modification with more sophisticated way because
             this can't be called out of DCC so opening of last workfile
             (calculated before DCC is launched) is complicated. Also breaking
             defined work template is not a good idea.
@@ -302,7 +302,7 @@ class IPublishHost:
                 required methods.
 
         Returns:
-            list[str]: Missing method implementations for new publsher
+            list[str]: Missing method implementations for new publisher
                 workflow.
         """
 
