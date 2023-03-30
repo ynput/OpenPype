@@ -7,6 +7,8 @@
 #include "IPythonScriptPlugin.h"
 #include "PythonScriptTypes.h"
 
+#include <regex>
+
 
 // Initialize static attributes
 TSharedPtr<IWebSocket> FOpenPypeCommunication::Socket = nullptr;
@@ -181,19 +183,68 @@ void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 	}
 
 	FString Method = Root->GetStringField(TEXT("method"));
-	UE_LOG(LogTemp, Verbose, TEXT("Calling a function: %s"), *Method);
+	UE_LOG(LogTemp, Warning, TEXT("Calling a function: %s"), *Method);
 
+	TSharedPtr<FJsonObject> ParamsObject = Root->GetObjectField("params");
+
+	TArray< TSharedPtr<FJsonValue> > FieldNames;
+	ParamsObject->Values.GenerateValueArray(FieldNames);
+
+	FString ParamStrings;
+
+	// Checks if there are parameters in the params field.
+	if (FieldNames.Num() > 0)
+	{
+		// If there are parameters, we serialize the params field to a string.
+		TSharedRef< TJsonWriter<> > Writer = TJsonWriterFactory<>::Create(&ParamStrings);
+		FJsonSerializer::Serialize(ParamsObject.ToSharedRef(), Writer);
+
+		UE_LOG(LogTemp, Warning, TEXT("Parameters: %s"), *ParamStrings);
+
+		// We need to escape the parameters string, because it will be used in a python command.
+		// We use the std::regex library to do this.
+		std::string ParamsStr(TCHAR_TO_UTF8(*ParamStrings));
+
+		std::regex re;
+		std::string str;
+
+		re = std::regex("\\\\");
+		str = std::regex_replace(ParamsStr, re, "/");
+
+		re = std::regex("'");
+		str = std::regex_replace(str, re, "\\'");
+
+		re = std::regex("\"");
+		str = std::regex_replace(str, re, "\\\"");
+
+		// Fix true and false for python
+		std::regex true_regex("\\btrue\\b");
+		std::regex false_regex("\\bfalse\\b");
+		str = std::regex_replace(str, true_regex, "True");
+		str = std::regex_replace(str, false_regex, "False");
+
+		// We also need to remove the new line characters from the string, because
+		// they will cause an error in the python command.
+		std::string FormattedParamsStr;
+		std::remove_copy(str.begin(), str.end(), std::back_inserter(FormattedParamsStr), '\n');
+
+		ParamStrings = FString(UTF8_TO_TCHAR(FormattedParamsStr.c_str()));
+
+		UE_LOG(LogTemp, Warning, TEXT("Formatted Parameters: %s"), *ParamStrings);
+
+		ParamStrings = "\"\"\"" + ParamStrings + "\"\"\"";
+	}
+
+	// To execute the method from python, we need to construct the command
+	// as a string. We use the FPythonCommandEx struct to do this. We set
+	// the ExecutionMode to EvaluateStatement, so that the command is
+	// executed as a statement.
 	FPythonCommandEx Command;
 	Command.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
-	Command.Command = Method + "(";
-	auto params = Root->GetArrayField(TEXT("params"));
-	for (auto param : params)
-	{
-		Command.Command += " " + param->AsString() + ",";
-	}
-	Command.Command += ")";
+	// Get the command from the params field, that is a python dict.
+	Command.Command = Method + "(" + ParamStrings + ")";
 
-	UE_LOG(LogTemp, Verbose, TEXT("Full command: %s"), *Command.Command);
+	UE_LOG(LogTemp, Warning, TEXT("Full command: %s"), *Command.Command);
 
 	FString StringResponse;
 

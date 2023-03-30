@@ -2,7 +2,9 @@
 from pathlib import Path
 
 from openpype.pipeline import CreatorError
-from openpype.hosts.unreal.api import pipeline as up
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+)
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator,
 )
@@ -18,14 +20,15 @@ class CreateUAsset(UnrealAssetCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         if pre_create_data.get("use_selection"):
-            selection = up.send_request("get_selected_assets")
+            selection = send_request("get_selected_assets")
 
             if len(selection) != 1:
                 raise CreatorError("Please select only one object.")
 
             obj = selection[0]
 
-            sys_path = up.send_request("get_system_path", params=[obj])
+            sys_path = send_request(
+                "get_system_path", params={"asset_path": obj})
 
             if not sys_path:
                 raise CreatorError(

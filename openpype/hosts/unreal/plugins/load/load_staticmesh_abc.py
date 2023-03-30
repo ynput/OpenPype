@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """Loader for Static Mesh alembics."""
-import os
 
 from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID
 )
-from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as unreal_pipeline
-import unreal  # noqa
+from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+    containerise,
+)
 
 
-class StaticMeshAlembicLoader(plugin.Loader):
+class StaticMeshAlembicLoader(UnrealBaseLoader):
     """Load Unreal StaticMesh from Alembic"""
 
     families = ["model", "staticMesh"]
@@ -21,39 +22,40 @@ class StaticMeshAlembicLoader(plugin.Loader):
     color = "orange"
 
     @staticmethod
-    def get_task(filename, asset_dir, asset_name, replace, default_conversion):
-        task = unreal.AssetImportTask()
-        options = unreal.AbcImportSettings()
-        sm_settings = unreal.AbcStaticMeshSettings()
+    def _import_abc_task(
+        filename, destination_path, destination_name, replace,
+        default_conversion
+    ):
+        conversion = (
+            None
+            if default_conversion
+            else {
+                "flip_u": False,
+                "flip_v": False,
+                "rotation": [0.0, 0.0, 0.0],
+                "scale": [1.0, 1.0, 1.0],
+            }
+        )
 
-        task.set_editor_property('filename', filename)
-        task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', asset_name)
-        task.set_editor_property('replace_existing', replace)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+        params = {
+            "filename": filename,
+            "destination_path": destination_path,
+            "destination_name": destination_name,
+            "replace_existing": replace,
+            "automated": True,
+            "save": True,
+            "options_properties": [
+                ['import_type', 'unreal.AlembicImportType.STATIC_MESH']
+            ],
+            "sub_options_properties": [
+                ["static_mesh_settings", "merge_meshes", "True"]
+            ],
+            "conversion_settings": conversion
+        }
 
-        # set import options here
-        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
-        options.set_editor_property(
-            'import_type', unreal.AlembicImportType.STATIC_MESH)
+        send_request("import_abc_task", params=params)
 
-        sm_settings.set_editor_property('merge_meshes', True)
-
-        if not default_conversion:
-            conversion_settings = unreal.AbcConversionSettings(
-                preset=unreal.AbcConversionPreset.CUSTOM,
-                flip_u=False, flip_v=False,
-                rotation=[0.0, 0.0, 0.0],
-                scale=[1.0, 1.0, 1.0])
-            options.conversion_settings = conversion_settings
-
-        options.static_mesh_settings = sm_settings
-        task.options = options
-
-        return task
-
-    def load(self, context, name, namespace, options):
+    def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
@@ -68,44 +70,33 @@ class StaticMeshAlembicLoader(plugin.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
-
-        Returns:
-            list(str): list of container content
-
+            options (dict): Those would be data to be imprinted. This is not
+                            used now, data are imprinted by `containerise()`.
         """
         # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        root = f"{self.root}/Assets"
+        if options and options.get("asset_dir"):
+            root = options["asset_dir"]
         asset = context.get('asset').get('name')
-        suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
         version = context.get('version').get('name')
 
-        default_conversion = False
-        if options.get("default_conversion"):
-            default_conversion = options.get("default_conversion")
+        default_conversion = options.get("default_conversion") or False
 
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-        asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+        asset_dir, container_name = send_request(
+            "create_unique_asset_name", params={
+                "root": root,
+                "asset": asset,
+                "name": name,
+                "version": version})
 
-        container_name += suffix
+        if not send_request(
+                "does_directory_exist", params={"directory_path": asset_dir}):
+            send_request(
+                "make_directory", params={"directory_path": asset_dir})
 
-        if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
-            unreal.EditorAssetLibrary.make_directory(asset_dir)
-
-            task = self.get_task(
+            self._import_abc_task(
                 self.fname, asset_dir, asset_name, False, default_conversion)
-
-            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
-
-            # Create Asset Container
-            unreal_pipeline.create_container(
-                container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
@@ -114,59 +105,23 @@ class StaticMeshAlembicLoader(plugin.Loader):
             "namespace": asset_dir,
             "container_name": container_name,
             "asset_name": asset_name,
-            "loader": str(self.__class__.__name__),
-            "representation": context["representation"]["_id"],
-            "parent": context["representation"]["parent"],
-            "family": context["representation"]["context"]["family"]
+            "loader": self.__class__.__name__,
+            "representation": str(context["representation"]["_id"]),
+            "parent": str(context["representation"]["parent"]),
+            "family": context["representation"]["context"]["family"],
+            "default_conversion": default_conversion
         }
-        unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
 
-        asset_content = unreal.EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=True
-        )
-
-        for a in asset_content:
-            unreal.EditorAssetLibrary.save_asset(a)
-
-        return asset_content
+        containerise(asset_dir, container_name, data)
 
     def update(self, container, representation):
-        name = container["asset_name"]
-        source_path = get_representation_path(representation)
-        destination_path = container["namespace"]
+        filename = get_representation_path(representation)
+        asset_dir = container["namespace"]
+        asset_name = container["asset_name"]
 
-        task = self.get_task(source_path, destination_path, name, True)
+        default_conversion = container["default_conversion"]
 
-        # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        self._import_abc_task(
+            filename, asset_dir, asset_name, True, default_conversion)
 
-        container_path = "{}/{}".format(container["namespace"],
-                                        container["objectName"])
-        # update metadata
-        unreal_pipeline.imprint(
-            container_path,
-            {
-                "representation": str(representation["_id"]),
-                "parent": str(representation["parent"])
-            })
-
-        asset_content = unreal.EditorAssetLibrary.list_assets(
-            destination_path, recursive=True, include_folder=True
-        )
-
-        for a in asset_content:
-            unreal.EditorAssetLibrary.save_asset(a)
-
-    def remove(self, container):
-        path = container["namespace"]
-        parent_path = os.path.dirname(path)
-
-        unreal.EditorAssetLibrary.delete_directory(path)
-
-        asset_content = unreal.EditorAssetLibrary.list_assets(
-            parent_path, recursive=False
-        )
-
-        if len(asset_content) == 0:
-            unreal.EditorAssetLibrary.delete_directory(parent_path)
+        super(UnrealBaseLoader, self).update(container, representation)

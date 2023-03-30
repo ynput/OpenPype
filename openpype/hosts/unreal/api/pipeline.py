@@ -3,7 +3,6 @@ import ast
 import os
 import json
 import logging
-from typing import List
 from contextlib import contextmanager
 import semver
 import time
@@ -15,7 +14,6 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
-    AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -56,14 +54,22 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
         return ls()
 
     def update_context_data(self, data, changes):
-        content_path = send_request_literal("project_content_dir")
+        content_path = send_request("project_content_dir")
+
+        unreal_log("Updating context data...", "info")
 
         # The context json will be stored in the OpenPype folder, so we need
         # to create it if it doesn't exist.
-        if not send_request_literal(
-                "does_directory_exist", params=["/Game/OpenPype"]):
-            send_request("make_directory", params=["/Game/OpenPype"])
+        dir_exists = send_request(
+            "does_directory_exist",
+            params={"directory_path": "/Game/OpenPype"})
 
+        if not dir_exists:
+            send_request(
+                "make_directory",
+                params={"directory_path": "/Game/OpenPype"})
+
+        #
         op_ctx = content_path + CONTEXT_CONTAINER
         attempts = 3
         for i in range(attempts):
@@ -75,11 +81,8 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
                 if i == attempts - 1:
                     raise IOError(
                         "Failed to write context data. Aborting.") from e
-                send_request(
-                    "log",
-                    params=[
-                        "Failed to write context data. Retrying...",
-                        "warning"])
+                unreal_log(
+                    "Failed to write context data. Retrying...", "warning")
                 i += 1
                 time.sleep(3)
                 continue
@@ -141,26 +144,41 @@ def _register_events():
     pass
 
 
-def format_string(input):
-    string = input.replace('\\', '/')
+def format_string(input_str):
+    string = input_str.replace('\\', '/')
     string = string.replace('"', '\\"')
     string = string.replace("'", "\\'")
     return f'"{string}"'
 
 
-def send_request(request, params=None):
+def send_request(request: str, params: dict = None):
     communicator = CommunicationWrapper.communicator
-    formatted_params = []
-    if params:
-        for p in params:
-            if isinstance(p, str):
-                p = format_string(p)
-            formatted_params.append(p)
-    return communicator.send_request(request, formatted_params)
+    if ret_value := ast.literal_eval(
+        communicator.send_request(request, params)
+    ):
+        return ret_value.get("return")
+    return None
 
 
-def send_request_literal(request, params=None):
-    return ast.literal_eval(send_request(request, params))
+def unreal_log(message, level):
+    """Log message to Unreal.
+
+    Args:
+        message (str): message to log
+        level (str): level of message
+
+    """
+    send_request("log", params={"message": message, "level": level})
+
+
+def imprint(node, data):
+    """Imprint data to container.
+
+    Args:
+        node (str): path to container
+        data (dict): data to imprint
+    """
+    send_request("imprint", params={"node": node, "data": data})
 
 
 def ls():
@@ -170,7 +188,7 @@ def ls():
     metadata from them. Adding `objectName` to set.
 
     """
-    return send_request_literal("ls")
+    return send_request("ls")
 
 
 def ls_inst():
@@ -180,7 +198,7 @@ def ls_inst():
     metadata from them. Adding `objectName` to set.
 
     """
-    return send_request_literal("ls_inst")
+    return send_request("ls_inst")
 
 
 def publish():
@@ -190,7 +208,7 @@ def publish():
     return pyblish.util.publish()
 
 
-def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
+def containerise(root, name, data, suffix="_CON"):
     """Bundles *nodes* (assets) into a *container* and add metadata to it.
 
     Unreal doesn't support *groups* of assets that you can add metadata to.
@@ -209,7 +227,12 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
 
     """
     return send_request(
-        "containerise", [name, namespace, nodes, context, loader, suffix])
+        "containerise",
+        params={
+            "root": root,
+            "name": name,
+            "data": data,
+            "suffix": suffix})
 
 
 def instantiate(root, name, data, assets=None, suffix="_INS"):
@@ -231,7 +254,12 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
 
     """
     return send_request(
-        "instantiate", params=[root, name, data, assets, suffix])
+        "instantiate", params={
+            "root": root,
+            "name": name,
+            "data": data,
+            "assets": assets,
+            "suffix": suffix})
 
 
 def show_creator():

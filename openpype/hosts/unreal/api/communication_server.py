@@ -240,7 +240,7 @@ class BaseUnrealRpc(JsonRpc):
 
     def send_request(self, client, method, params=None, timeout=0):
         if params is None:
-            params = []
+            params = {}
 
         client_host = client.host
 

@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 """Loader for published alembics."""
-import os
 
 from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID
 )
-from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as up
+from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+    containerise,
+)
 
 
-class PointCacheAlembicLoader(plugin.Loader):
+class PointCacheAlembicLoader(UnrealBaseLoader):
     """Load Point Cache from Alembic"""
 
     families = ["model", "pointcache"]
@@ -19,48 +21,43 @@ class PointCacheAlembicLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    def _import_fbx_task(
-            self, filename, destination_path, destination_name, replace,
-            frame_start, frame_end, default_conversion
+    @staticmethod
+    def _import_abc_task(
+        filename, destination_path, destination_name, replace,
+        frame_start, frame_end, default_conversion
     ):
-        task_properties = [
-            ("filename", up.format_string(filename)),
-            ("destination_path", up.format_string(destination_path)),
-            ("destination_name", up.format_string(destination_name)),
-            ("replace_existing", str(replace)),
-            ("automated", "True"),
-            ("save", "True")
-        ]
+        conversion = (
+            None
+            if default_conversion
+            else {
+                "flip_u": False,
+                "flip_v": True,
+                "rotation": [0.0, 0.0, 0.0],
+                "scale": [1.0, 1.0, 1.0],
+            }
+        )
 
-        options_properties = [
-            ("import_type", "unreal.AlembicImportType.GEOMETRY_CACHE")
-        ]
+        params = {
+            "filename": filename,
+            "destination_path": destination_path,
+            "destination_name": destination_name,
+            "replace_existing": replace,
+            "automated": True,
+            "save": True,
+            "options_properties": [
+                ["import_type", "unreal.AlembicImportType.GEOMETRY_CACHE"]
+            ],
+            "sub_options_properties": [
+                ["geometry_cache_settings", "flatten_tracks", "False"],
+                ["sampling_settings", "frame_start", str(frame_start)],
+                ["sampling_settings", "frame_end", str(frame_end)]
+            ],
+            "conversion_settings": conversion
+        }
 
-        options_extra_properties = [
-            ("geometry_cache_settings", "flatten_tracks", "False"),
-            ("sampling_settings", "frame_start", str(frame_start)),
-            ("sampling_settings", "frame_end", str(frame_end))
-        ]
+        send_request("import_abc_task", params=params)
 
-        if not default_conversion:
-            options_extra_properties.extend([
-                ("conversion_settings", "preset",
-                    "unreal.AbcConversionPreset.CUSTOM"),
-                ("conversion_settings", "flip_u", "False"),
-                ("conversion_settings", "flip_v", "True"),
-                ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
-                ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
-            ])
-
-        up.send_request(
-            "import_abc_task",
-            params=[
-                str(task_properties),
-                str(options_properties),
-                str(options_extra_properties)
-            ])
-
-    def load(self, context, name, namespace, options):
+    def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
@@ -75,35 +72,28 @@ class PointCacheAlembicLoader(plugin.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
-
-        Returns:
-            list(str): list of container content
-
+            options (dict): Those would be data to be imprinted. This is not
+                            used now, data are imprinted by `containerise()`.
         """
         # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        root = f"{self.root}/Assets"
         asset = context.get('asset').get('name')
-        suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
         version = context.get('version').get('name')
 
-        default_conversion = False
-        if options.get("default_conversion"):
-            default_conversion = options.get("default_conversion")
+        default_conversion = options.get("default_conversion") or False
 
-        asset_dir, container_name = up.send_request_literal(
-            "create_unique_asset_name", params=[root, asset, name, version])
+        asset_dir, container_name = send_request(
+            "create_unique_asset_name", params={
+                "root": root,
+                "asset": asset,
+                "name": name,
+                "version": version})
 
-        container_name += suffix
-
-        if not up.send_request_literal(
-                "does_directory_exist", params=[asset_dir]):
-            up.send_request("make_directory", params=[asset_dir])
+        if not send_request(
+                "does_directory_exist", params={"directory_path": asset_dir}):
+            send_request(
+                "make_directory", params={"directory_path": asset_dir})
 
             frame_start = context.get('asset').get('data').get('frameStart')
             frame_end = context.get('asset').get('data').get('frameEnd')
@@ -113,13 +103,9 @@ class PointCacheAlembicLoader(plugin.Loader):
             if frame_start == frame_end:
                 frame_end += 1
 
-            self._import_fbx_task(
+            self._import_abc_task(
                 self.fname, asset_dir, asset_name, False,
                 frame_start, frame_end, default_conversion)
-
-            # Create Asset Container
-            up.send_request(
-                "create_container", params=[container_name, asset_dir])
 
         data = {
             "schema": "openpype:container-2.0",
@@ -128,7 +114,7 @@ class PointCacheAlembicLoader(plugin.Loader):
             "namespace": asset_dir,
             "container_name": container_name,
             "asset_name": asset_name,
-            "loader": str(self.__class__.__name__),
+            "loader": self.__class__.__name__,
             "representation": str(context["representation"]["_id"]),
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
@@ -136,46 +122,20 @@ class PointCacheAlembicLoader(plugin.Loader):
             "frame_end": context["asset"]["data"]["frameEnd"],
             "default_conversion": default_conversion
         }
-        up.send_request(
-            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "True"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
-
-        return asset_content
+        containerise(asset_dir, container_name, data)
 
     def update(self, container, representation):
         filename = get_representation_path(representation)
         asset_dir = container["namespace"]
         asset_name = container["asset_name"]
-        container_name = container['objectName']
 
         frame_start = container["frameStart"]
         frame_end = container["frameStart"]
         default_conversion = container["default_conversion"]
 
-        self._import_fbx_task(
+        self._import_abc_task(
             filename, asset_dir, asset_name, True,
             frame_start, frame_end, default_conversion)
 
-        data = {
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"])
-        }
-        up.send_request(
-            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
-
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "True"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
-
-    def remove(self, container):
-        path = container["namespace"]
-
-        up.send_request(
-            "remove_asset", params=[path])
+        super(UnrealBaseLoader, self).update(container, representation)

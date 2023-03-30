@@ -4,7 +4,11 @@ import json
 import collections
 from pathlib import Path
 
-from openpype.client import get_asset_by_name, get_assets, get_representations
+from openpype.client import (
+    get_asset_by_name,
+    get_assets,
+    get_representations
+)
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -15,11 +19,14 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_current_project_settings
-from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as up
+from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+    containerise,
+)
 
 
-class LayoutLoader(plugin.Loader):
+class LayoutLoader(UnrealBaseLoader):
     """Load Layout from a JSON file"""
 
     families = ["layout"]
@@ -28,155 +35,47 @@ class LayoutLoader(plugin.Loader):
     label = "Load Layout"
     icon = "code-fork"
     color = "orange"
-    ASSET_ROOT = "/Game/OpenPype"
-
-    # def _get_asset_containers(self, path):
-    #     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-
-    #     asset_content = EditorAssetLibrary.list_assets(
-    #         path, recursive=True)
-
-    #     asset_containers = []
-
-    #     # Get all the asset containers
-    #     for a in asset_content:
-    #         obj = ar.get_asset_by_object_path(a)
-    #         if obj.get_asset().get_class().get_name() == 'AssetContainer':
-    #             asset_containers.append(obj)
-
-    #     return asset_containers
 
     @staticmethod
-    def _get_fbx_loader(loaders, family):
-        name = ""
-        if family == 'rig':
-            name = "SkeletalMeshFBXLoader"
-        elif family == 'model':
-            name = "StaticMeshFBXLoader"
-        elif family == 'camera':
-            name = "CameraLoader"
-
-        if name == "":
-            return None
-
-        for loader in loaders:
-            if loader.__name__ == name:
-                return loader
-
-        return None
-
-    @staticmethod
-    def _get_abc_loader(loaders, family):
-        name = ""
-        if family == 'rig':
-            name = "SkeletalMeshAlembicLoader"
-        elif family == 'model':
-            name = "StaticMeshAlembicLoader"
-
-        if name == "":
-            return None
-
-        for loader in loaders:
-            if loader.__name__ == name:
-                return loader
-
-        return None
-
-    def _import_animation(
-        self, asset_dir, path, instance_name, skeleton, actors_dict,
-        animation_file, bindings_dict, sequence
+    def _create_levels(
+        hierarchy_dir_list, hierarchy, asset_path_parent, asset,
+        create_sequences_option
     ):
-        anim_file = Path(animation_file)
-        anim_file_name = anim_file.with_suffix('')
+        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        master_level = None
 
-        anim_path = f"{asset_dir}/animations/{anim_file_name}"
+        if not send_request(
+                "does_asset_exist", params={"asset_path": level}):
+            send_request(
+                "new_level",
+                params={"level_path": f"{asset_path_parent}/{asset}_map"})
 
-        asset_doc = get_current_project_asset()
-        fps = asset_doc.get("data", {}).get("fps")
+        if create_sequences_option:
+            # Create map for the shot, and create hierarchy of map. If the
+            # maps already exist, we will use them.
+            if hierarchy:
+                h_dir = hierarchy_dir_list[0]
+                h_asset = hierarchy[0]
+                master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+                if not send_request(
+                        "does_asset_exist",
+                        params={"asset_path": master_level}):
+                    send_request(
+                        "new_level",
+                        params={"level_path": f"{h_dir}/{h_asset}_map"})
 
-        task_properties = [
-            ("filename", up.format_string(str(
-                path.with_suffix(f".{animation_file}")))),
-            ("destination_path", up.format_string(anim_path)),
-            ("destination_name", up.format_string(
-                f"{instance_name}_animation")),
-            ("replace_existing", "False"),
-            ("automated", "True"),
-            ("save", "False")
-        ]
+            if master_level:
+                send_request("load_level",
+                                params={"level_path": master_level})
+                send_request("add_level_to_world",
+                                params={"level_path": level})
+                send_request("save_all_dirty_levels")
+                send_request("load_level", params={"level_path": level})
 
-        options_properties = [
-            ("automated_import_should_detect_type", "False"),
-            ("original_import_type",
-                "unreal.FBXImportType.FBXIT_SKELETAL_MESH"),
-            ("mesh_type_to_import",
-                "unreal.FBXImportType.FBXIT_SKELETAL_MESH"),
-            ("original_import_type", "unreal.FBXImportType.FBXIT_ANIMATION"),
-            ("import_mesh", "False"),
-            ("import_animations", "True"),
-            ("override_full_name", "True"),
-            ("skeleton", f"get_asset({up.format_string(skeleton)})")
-        ]
+        return level, master_level
 
-        options_extra_properties = [
-            ("anim_sequence_import_data", "animation_length",
-                "unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME"),
-            ("anim_sequence_import_data",
-                "import_meshes_in_bone_hierarchy", "False"),
-            ("anim_sequence_import_data", "use_default_sample_rate", "False"),
-            ("anim_sequence_import_data", "custom_sample_rate", str(fps)),
-            ("anim_sequence_import_data", "import_custom_attribute", "True"),
-            ("anim_sequence_import_data", "import_bone_tracks", "True"),
-            ("anim_sequence_import_data", "remove_redundant_keys", "False"),
-            ("anim_sequence_import_data", "convert_scene", "False")
-        ]
-
-        up.send_request(
-            "import_fbx_task",
-            params=[
-                str(task_properties),
-                str(options_properties),
-                str(options_extra_properties)
-            ])
-
-        asset_content = up.send_request_literal(
-            "list_assets", params=[anim_path, "False", "False"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
-
-        animation = None
-
-        animations = up.send_request_literal(
-            "get_assets_of_class",
-            params=[asset_content, "AnimSequence"])
-        if animations:
-            animation = animations[0]
-
-        if animation:
-            actor = None
-            if actors_dict.get(instance_name):
-                actors = up.send_request_literal(
-                    "get_assets_of_class",
-                    params=[
-                        actors_dict.get(instance_name), "SkeletalMeshActor"])
-                assert len(actors) == 1, (
-                    "There should be only one skeleton in the loaded assets.")
-                actor = actors[0]
-
-            up.send_request(
-                "apply_animation_to_actor", params=[actor, animation])
-
-            if sequence:
-                # Add animation to the sequencer
-                bindings = bindings_dict.get(instance_name)
-
-                for binding in bindings:
-                    up.send_request(
-                        "add_animation_to_sequencer",
-                        params=[sequence, binding, animation])
-
-    def _get_frame_info(self, h_dir):
+    @staticmethod
+    def _get_frame_info(h_dir):
         project_name = legacy_io.active_project()
         asset_data = get_asset_by_name(
             project_name,
@@ -205,20 +104,245 @@ class LayoutLoader(plugin.Loader):
         min_frame = min(start_frames)
         max_frame = max(end_frames)
 
-        tracks = sequence.get_master_tracks()
-        track = None
-        for t in tracks:
-            if (t.get_class() ==
-                    unreal.MovieSceneCameraCutTrack.static_class()):
-                track = t
-                break
-        if not track:
-            track = sequence.add_master_track(
-                unreal.MovieSceneCameraCutTrack)
+        return min_frame, max_frame, asset_data.get('data').get("fps")
 
-        return sequence, (min_frame, max_frame)
+    def _get_sequences(self, hierarchy_dir_list, hierarchy):
+        # Get all the sequences in the hierarchy. It will create them, if
+        # they don't exist.
+        sequences = []
+        frame_ranges = []
+        for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
+            root_content = send_request(
+                "list_assets", params={
+                    "directory_path": h_dir,
+                    "recursive": False,
+                    "include_folder": False})
 
-    def _get_repre_docs_by_version_id(self, data):
+            if existing_sequences := send_request(
+                    "get_assets_of_class",
+                    params={
+                        "asset_list": root_content,
+                        "class_name": "LevelSequence"},
+            ):
+                for sequence in existing_sequences:
+                    sequences.append(sequence)
+                    frame_ranges.append(
+                        send_request(
+                            "get_sequence_frame_range",
+                            params={"sequence_path": sequence}))
+            else:
+                start_frame, end_frame, fps = self._get_frame_info(h_dir)
+                sequence = send_request(
+                    "generate_master_sequence",
+                    params={
+                        "asset_name": h,
+                        "asset_path": h_dir,
+                        "start_frame": start_frame,
+                        "end_frame": end_frame,
+                        "fps": fps})
+
+                sequences.append(sequence)
+                frame_ranges.append((start_frame, end_frame))
+
+        send_request(
+            "save_listed_assets",
+            params={"asset_list": sequences})
+
+        return sequences, frame_ranges
+
+    @staticmethod
+    def _process_sequences(sequences, frame_ranges, asset, asset_dir, level):
+        project_name = legacy_io.active_project()
+        data = get_asset_by_name(project_name, asset)["data"]
+        start_frame = 0
+        end_frame = data.get('clipOut') - data.get('clipIn') + 1
+        fps = data.get("fps")
+
+        shot = send_request(
+            "generate_sequence",
+            params={
+                "asset_name": asset,
+                "asset_path": asset_dir,
+                "start_frame": start_frame,
+                "end_frame": end_frame,
+                "fps": fps})
+
+        # sequences and frame_ranges have the same length
+        for i in range(len(sequences) - 1):
+            send_request(
+                "set_sequence_hierarchy",
+                params={
+                    "parent_path": sequences[i],
+                    "child_path": sequences[i + 1],
+                    "child_start_frame": frame_ranges[i + 1][0],
+                    "child_end_frame": frame_ranges[i + 1][1]})
+            send_request(
+                "set_sequence_visibility",
+                params={
+                    "parent_path": sequences[i],
+                    "parent_end_frame": frame_ranges[i][1],
+                    "child_start_frame": frame_ranges[i + 1][0],
+                    "child_end_frame": frame_ranges[i + 1][1],
+                    "map_paths": [level]})
+
+        if sequences:
+            send_request(
+                "set_sequence_hierarchy",
+                params={
+                    "parent_path": sequences[-1],
+                    "child_path": shot,
+                    "child_start_frame": data.get('clipIn'),
+                    "child_end_frame": data.get('clipOut')})
+
+            send_request(
+                "set_sequence_visibility",
+                params={
+                    "parent_path": sequences[-1],
+                    "parent_end_frame": frame_ranges[-1][1],
+                    "child_start_frame": data.get('clipIn'),
+                    "child_end_frame": data.get('clipOut'),
+                    "map_paths": [level]})
+
+        return shot
+
+    @staticmethod
+    def _get_fbx_loader(loaders, family):
+        name = ""
+        if family == 'camera':
+            name = "CameraLoader"
+        elif family == 'model':
+            name = "StaticMeshFBXLoader"
+        elif family == 'rig':
+            name = "SkeletalMeshFBXLoader"
+        return (
+            next(
+                (
+                    loader for loader in loaders if loader.__name__ == name
+                ),
+                None
+            )
+            if name
+            else None
+        )
+
+    @staticmethod
+    def _get_abc_loader(loaders, family):
+        name = ""
+        if family == 'model':
+            name = "StaticMeshAlembicLoader"
+        elif family == 'rig':
+            name = "SkeletalMeshAlembicLoader"
+        return (
+            next(
+                (
+                    loader for loader in loaders if loader.__name__ == name
+                ),
+                None
+            )
+            if name
+            else None
+        )
+
+    @staticmethod
+    def _import_fbx_animation(
+        asset_dir, path, instance_name, skeleton, animation_file
+    ):
+        anim_file_name = Path(animation_file).with_suffix('')
+
+        anim_path = f"{asset_dir}/animations/{anim_file_name}"
+
+        asset_doc = get_current_project_asset(fields=["data.fps"])
+        fps = asset_doc.get("data", {}).get("fps")
+
+        options_properties = [
+            ["automated_import_should_detect_type", "False"],
+            ["original_import_type",
+             "unreal.FBXImportType.FBXIT_SKELETAL_MESH"],
+            ["mesh_type_to_import",
+             "unreal.FBXImportType.FBXIT_ANIMATION"],
+            ["import_mesh", "False"],
+            ["import_animations", "True"],
+            ["override_full_name", "True"],
+            ["skeleton", f"get_asset({skeleton})"]
+        ]
+
+        sub_options_properties = [
+            ["anim_sequence_import_data", "animation_length",
+             "unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME"],
+            ["anim_sequence_import_data",
+             "import_meshes_in_bone_hierarchy", "False"],
+            ["anim_sequence_import_data", "use_default_sample_rate", "False"],
+            ["anim_sequence_import_data", "custom_sample_rate", str(fps)],
+            ["anim_sequence_import_data", "import_custom_attribute", "True"],
+            ["anim_sequence_import_data", "import_bone_tracks", "True"],
+            ["anim_sequence_import_data", "remove_redundant_keys", "False"],
+            ["anim_sequence_import_data", "convert_scene", "True"]
+        ]
+
+        params = {
+            "filename": path.with_suffix(f".{animation_file}"),
+            "destination_path": anim_path,
+            "destination_name": f"{instance_name}_animation",
+            "replace_existing": False,
+            "automated": True,
+            "save": True,
+            "options_properties": options_properties,
+            "sub_options_properties": sub_options_properties
+        }
+
+        send_request("import_fbx_task", params=params)
+
+    @staticmethod
+    def _process_animation(
+        asset_dir, instance_name, actors_dict, bindings_dict, sequence
+    ):
+        asset_content = send_request(
+            "list_assets", params={
+                "directory_path": asset_dir,
+                "recursive": True,
+                "include_folder": True})
+
+        animation = None
+
+        if animations := send_request(
+                "get_assets_of_class",
+                params={"asset_list": asset_content,
+                        "class_name": "AnimSequence"},
+        ):
+            animation = animations[0]
+
+        if animation:
+            actor = None
+            if actors_dict.get(instance_name):
+                actors = send_request(
+                    "get_assets_of_class",
+                    params={
+                        "asset_list": actors_dict.get(instance_name),
+                        "class_name": "SkeletalMeshActor"})
+                assert len(actors) == 1, (
+                    "There should be only one skeleton in the loaded assets.")
+                actor = actors[0]
+
+            send_request(
+                "apply_animation_to_actor",
+                params={
+                    "actor_path": actor,
+                    "animation_path": animation})
+
+            if sequence:
+                # Add animation to the sequencer
+                bindings = bindings_dict.get(instance_name)
+
+                for binding in bindings:
+                    send_request(
+                        "add_animation_to_sequencer",
+                        params={
+                            "sequence_path": sequence,
+                            "binding_guid": binding,
+                            "animation_path": animation})
+
+    @staticmethod
+    def _get_repre_docs_by_version_id(data):
         version_ids = {
             element.get("version")
             for element in data
@@ -242,7 +366,121 @@ class LayoutLoader(plugin.Loader):
             output[version_id].append(repre_doc)
         return output
 
-    def _process(self, lib_path, asset_dir, sequence, repr_loaded=None):
+    def _get_representation(self, element, repre_docs_by_version_id):
+        representation = None
+        repr_format = None
+        if element.get('representation'):
+            repre_docs = repre_docs_by_version_id[element.get("version")]
+            if not repre_docs:
+                self.log.error(
+                    f"No valid representation found for version "
+                    f"{element.get('version')}")
+                return None, None
+            repre_doc = repre_docs[0]
+            representation = str(repre_doc["_id"])
+            repr_format = repre_doc["name"]
+
+        # This is to keep compatibility with old versions of the
+        # json format.
+        elif element.get('reference_fbx'):
+            representation = element.get('reference_fbx')
+            repr_format = 'fbx'
+        elif element.get('reference_abc'):
+            representation = element.get('reference_abc')
+            repr_format = 'abc'
+
+        return representation, repr_format
+
+    def _load_representation(
+        self, family, representation, repr_format, instance_name, all_loaders
+    ):
+        loaders = loaders_from_representation(
+            all_loaders, representation)
+
+        loader = None
+
+        if repr_format == 'fbx':
+            loader = self._get_fbx_loader(loaders, family)
+        elif repr_format == 'abc':
+            loader = self._get_abc_loader(loaders, family)
+
+        if not loader:
+            self.log.error(
+                f"No valid loader found for {representation}")
+            return None, None, None, None
+
+        assets = load_container(
+            loader,
+            representation,
+            namespace=instance_name)
+
+        asset_containers = send_request(
+            "get_assets_of_class",
+            params={
+                "asset_list": assets,
+                "class_name": "AssetContainer"})
+        assert len(asset_containers) == 1, (
+            "There should be only one AssetContainer in "
+            "the loaded assets.")
+        container = asset_containers[0]
+
+        skeletons = send_request(
+            "get_assets_of_class",
+            params={
+                "asset_list": assets,
+                "class_name": "Skeleton"})
+        assert len(skeletons) <= 1, (
+            "There should be one skeleton at most in "
+            "the loaded assets.")
+        skeleton = skeletons[0] if skeletons else None
+        return assets, container, skeleton, loader
+
+    @staticmethod
+    def _process_instances(
+        data, element, representation, family, sequence, assets
+    ):
+        actors_dict = {}
+        bindings_dict = {}
+
+        instances = [
+            item for item in data
+            if ((item.get('version') and
+                 item.get('version') == element.get('version')) or
+                item.get('reference_fbx') == representation or
+                item.get('reference_abc') == representation)]
+
+        for instance in instances:
+            transform = str(instance.get('transform_matrix'))
+            basis = str(instance.get('basis'))
+            instance_name = instance.get('instance_name')
+
+            if family == 'model':
+                send_request(
+                    "process_family",
+                    params={
+                        "assets": assets,
+                        "class_name": 'StaticMesh',
+                        "instance_name": instance_name,
+                        "transform": transform,
+                        "basis": basis,
+                        "sequence_path": sequence})
+            elif family == 'rig':
+                (actors, bindings) = send_request(
+                    "process_family",
+                    params={
+                        "assets": assets,
+                        "class_name": 'SkeletalMesh',
+                        "instance_name": instance_name,
+                        "transform": transform,
+                        "basis": basis,
+                        "sequence_path": sequence})
+
+                actors_dict[instance_name] = actors
+                bindings_dict[instance_name] = bindings
+
+        return actors_dict, bindings_dict
+
+    def _process_assets(self, lib_path, asset_dir, sequence, repr_loaded=None):
         with open(lib_path, "r") as fp:
             data = json.load(fp)
 
@@ -261,28 +499,8 @@ class LayoutLoader(plugin.Loader):
 
         repre_docs_by_version_id = self._get_repre_docs_by_version_id(data)
         for element in data:
-            representation = None
-            repr_format = None
-            if element.get('representation'):
-                repre_docs = repre_docs_by_version_id[element.get("version")]
-                if not repre_docs:
-                    self.log.error(
-                        f"No valid representation found for version "
-                        f"{element.get('version')}")
-                    continue
-                repre_doc = repre_docs[0]
-                representation = str(repre_doc["_id"])
-                repr_format = repre_doc["name"]
-
-                representation = str(repr_data.get('_id'))
-            # This is to keep compatibility with old versions of the
-            # json format.
-            elif element.get('reference_fbx'):
-                representation = element.get('reference_fbx')
-                repr_format = 'fbx'
-            elif element.get('reference_abc'):
-                representation = element.get('reference_abc')
-                repr_format = 'abc'
+            representation, repr_format = self._get_representation(
+                element, repre_docs_by_version_id)
 
             # If reference is None, this element is skipped, as it cannot be
             # imported in Unreal
@@ -291,87 +509,24 @@ class LayoutLoader(plugin.Loader):
 
             instance_name = element.get('instance_name')
 
-            skeleton = None
-
+            # Check if representation has already been loaded
             if representation not in repr_loaded:
                 repr_loaded.append(representation)
 
                 family = element.get('family')
-                loaders = loaders_from_representation(
-                    all_loaders, representation)
 
-                loader = None
-
-                if repr_format == 'fbx':
-                    loader = self._get_fbx_loader(loaders, family)
-                elif repr_format == 'abc':
-                    loader = self._get_abc_loader(loaders, family)
-
-                if not loader:
-                    self.log.error(
-                        f"No valid loader found for {representation}")
-                    continue
-
-                options = {
-                    # "asset_dir": asset_dir
-                }
-
-                assets = load_container(
-                    loader,
-                    representation,
-                    namespace=instance_name,
-                    options=options
-                )
-
-                container = None
-
-                asset_containers = up.send_request_literal(
-                    "get_assets_of_class",
-                    params=[assets, "AssetContainer"])
-                assert len(asset_containers) == 1, (
-                    "There should be only one AssetContainer in "
-                    "the loaded assets.")
-                container = asset_containers[0]
-
-                skeletons = up.send_request_literal(
-                    "get_assets_of_class",
-                    params=[assets, "Skeleton"])
-                assert len(skeletons) <= 1, (
-                    "There should be one skeleton at most in "
-                    "the loaded assets.")
-                if skeletons:
-                    skeleton = skeletons[0]
+                (assets, container,
+                 skeleton, loader) = self._load_representation(
+                    family, representation, repr_format, instance_name,
+                    all_loaders)
 
                 loaded_assets.append(container)
 
-                instances = [
-                    item for item in data
-                    if ((item.get('version') and
-                        item.get('version') == element.get('version')) or
-                        item.get('reference_fbx') == representation or
-                        item.get('reference_abc') == representation)]
+                new_actors, new_bindings = self._process_instances(
+                    data, element, representation, family, sequence, assets)
 
-                for instance in instances:
-                    # transform = instance.get('transform')
-                    transform = str(instance.get('transform_matrix'))
-                    basis = str(instance.get('basis'))
-                    instance_name = instance.get('instance_name')
-
-                    actors = []
-
-                    if family == 'model':
-                        (actors, _) = up.send_request_literal(
-                            "process_family", params=[
-                                assets, 'StaticMesh', instance_name,
-                                transform, basis, sequence])
-                    elif family == 'rig':
-                        (actors, bindings) = up.send_request_literal(
-                            "process_family", params=[
-                                assets, 'SkeletalMesh', instance_name,
-                                transform, basis, sequence])
-
-                        actors_dict[instance_name] = actors
-                        bindings_dict[instance_name] = bindings
+                actors_dict |= new_actors
+                bindings_dict |= new_bindings
 
                 if skeleton:
                     skeleton_dict[representation] = skeleton
@@ -381,13 +536,16 @@ class LayoutLoader(plugin.Loader):
             animation_file = element.get('animation')
 
             if animation_file and skeleton:
-                self._import_animation(
-                    asset_dir, path, instance_name, skeleton, actors_dict,
-                    animation_file, bindings_dict, sequence)
+                self._import_fbx_animation(
+                    asset_dir, path, instance_name, skeleton, animation_file)
+
+                self._process_animation(
+                    asset_dir, instance_name, actors_dict,
+                    bindings_dict, sequence)
 
         return loaded_assets
 
-    def load(self, context, name, namespace, options):
+    def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
@@ -403,140 +561,51 @@ class LayoutLoader(plugin.Loader):
                              by `containerise()` because only then we know
                              real path.
             options (dict): Those would be data to be imprinted. This is not
-                used now, data are imprinted by `containerise()`.
-
-        Returns:
-            list(str): list of container content
+                            used now, data are imprinted by `containerise()`.
         """
         data = get_current_project_settings()
-        create_sequences = data["unreal"]["level_sequences_for_layouts"]
+        create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
 
         # Create directory for asset and avalon container
         hierarchy = context.get('asset').get('data').get('parents')
-        root = self.ASSET_ROOT
+        root = self.root
+        asset = context.get('asset').get('name')
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
+
         hierarchy_dir = root
         hierarchy_dir_list = []
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
             hierarchy_dir_list.append(hierarchy_dir)
-        asset = context.get('asset').get('name')
-        suffix = "_CON"
-        asset_name = f"{asset}_{name}" if asset else name
 
-        asset_dir, container_name = up.send_request_literal(
-            "create_unique_asset_name", params=[hierarchy_dir, asset, name])
+        asset_dir, container_name = send_request(
+            "create_unique_asset_name", params={
+                "root": root,
+                "asset": asset,
+                "name": name})
 
-        asset_path = Path(asset_dir)
-        asset_path_parent = str(asset_path.parent.as_posix())
+        asset_path_parent = Path(asset_dir).parent.as_posix()
 
-        container_name += suffix
+        send_request("make_directory", params={"directory_path": asset_dir})
 
-        up.send_request("make_directory", params=[asset_dir])
+        shot = None
 
-        master_level = None
-        shot = ""
-        sequences = []
+        level, master_level = self._create_levels(
+            hierarchy_dir_list, hierarchy, asset_path_parent, asset,
+            create_sequences_option)
 
-        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
-        if not up.send_request_literal(
-                "does_asset_exist", params=[level]):
-            up.send_request(
-                "new_level", params=[f"{asset_path_parent}/{asset}_map"])
+        if create_sequences_option:
+            sequences, frame_ranges = self._get_sequences(
+                hierarchy_dir_list, hierarchy)
 
-        if create_sequences:
-            # Create map for the shot, and create hierarchy of map. If the
-            # maps already exist, we will use them.
-            if hierarchy:
-                h_dir = hierarchy_dir_list[0]
-                h_asset = hierarchy[0]
-                master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
-                if not up.send_request_literal(
-                        "does_asset_exist", params=[master_level]):
-                    up.send_request(
-                        "new_level", params=[f"{h_dir}/{h_asset}_map"])
+            shot = self._process_sequences(
+                sequences, frame_ranges, asset, asset_dir, level)
 
-            if master_level:
-                up.send_request("load_level", params=[master_level])
-                up.send_request("add_level_to_world", params=[level])
-                up.send_request("save_all_dirty_levels")
-                up.send_request("load_level", params=[level])
+            send_request("load_level", params={"level_path": level})
 
-            # Get all the sequences in the hierarchy. It will create them, if
-            # they don't exist.
-            frame_ranges = []
-            for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
-                root_content = up.send_request_literal(
-                    "list_assets", params=[h_dir, "False", "False"])
+        loaded_assets = self._process_assets(self.fname, asset_dir, shot)
 
-                existing_sequences = up.send_request_literal(
-                    "get_assets_of_class",
-                    params=[root_content, "LevelSequence"])
-
-                if not existing_sequences:
-                    start_frame, end_frame, fps = self._get_frame_info(h_dir)
-                    sequence = up.send_request(
-                        "generate_master_sequence",
-                        params=[h, h_dir, start_frame, end_frame, fps])
-
-                    sequences.append(sequence)
-                    frame_ranges.append((start_frame, end_frame))
-                else:
-                    for sequence in existing_sequences:
-                        sequences.append(sequence)
-                        frame_range = up.send_request_literal(
-                            "get_sequence_frame_range",
-                            params=[sequence])
-                        frame_ranges.append(frame_range)
-
-            project_name = legacy_io.active_project()
-            data = get_asset_by_name(project_name, asset)["data"]
-            shot_start_frame = 0
-            shot_end_frame = data.get('clipOut') - data.get('clipIn') + 1
-            fps = data.get("fps")
-
-            shot = up.send_request(
-                "generate_sequence",
-                params=[
-                    asset, asset_dir, shot_start_frame, shot_end_frame, fps])
-
-            # sequences and frame_ranges have the same length
-            for i in range(0, len(sequences) - 1):
-                up.send_request(
-                    "set_sequence_hierarchy",
-                    params=[
-                        sequences[i], sequences[i + 1],
-                        frame_ranges[i + 1][0], frame_ranges[i + 1][1]])
-                up.send_request(
-                    "set_sequence_visibility",
-                    params=[
-                        sequences[i], frame_ranges[i][1],
-                        frame_ranges[i + 1][0], frame_ranges[i + 1][1],
-                        str([level])])
-
-            if sequences:
-                up.send_request(
-                    "set_sequence_hierarchy",
-                    params=[
-                        sequences[-1], shot,
-                        data.get('clipIn'), data.get('clipOut')])
-                up.send_request(
-                    "set_sequence_visibility",
-                    params=[
-                        sequences[-1], frame_ranges[-1][1],
-                        data.get('clipIn'), data.get('clipOut'),
-                        str([level])])
-
-            up.send_request("load_level", params=[level])
-
-        loaded_assets = self._process(self.fname, asset_dir, shot)
-
-        up.send_request("save_listed_assets", params=[str(sequences)])
-
-        up.send_request("save_current_level")
-
-        # Create Asset Container
-        up.send_request(
-            "create_container", params=[container_name, asset_dir])
+        send_request("save_current_level")
 
         data = {
             "schema": "openpype:container-2.0",
@@ -551,56 +620,58 @@ class LayoutLoader(plugin.Loader):
             "family": context["representation"]["context"]["family"],
             "loaded_assets": loaded_assets
         }
-        up.send_request(
-            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "False"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
+        containerise(asset_dir, container_name, data)
 
         if master_level:
-            up.send_request("load_level", params=[master_level])
+            send_request("load_level", params={"level_path": master_level})
 
-        return asset_content
+    @staticmethod
+    def _remove_bound_assets(asset_dir):
+        parent_path = Path(asset_dir).parent.as_posix()
+
+        layout_level = send_request(
+            "get_first_asset_of_class",
+            params={
+                "class_name": "World",
+                "path": parent_path,
+                "recursive": False})
+
+        send_request("load_level", params={"level_path": layout_level})
+
+        layout_sequence = send_request(
+            "get_first_asset_of_class",
+            params={
+                "class_name": "LevelSequence",
+                "path": asset_dir,
+                "recursive": False})
+
+        send_request(
+            "delete_all_bound_assets",
+            params={"level_sequence_path": layout_sequence})
 
     def update(self, container, representation):
-        root = "/Game/OpenPype"
+        root = self.root
         asset_dir = container.get('namespace')
+        container_name = container['objectName']
         context = representation.get("context")
 
         data = get_current_project_settings()
-        create_sequences = data["unreal"]["level_sequences_for_layouts"]
+        create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
 
         master_level = None
-        prev_level = None
-        layout_sequence = ""
+        layout_sequence = None
 
-        if create_sequences:
+        if create_sequences_option:
             hierarchy = context.get('hierarchy').split("/")
             h_dir = f"{root}/{hierarchy[0]}"
             h_asset = hierarchy[0]
             master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
 
-            parent_path = Path(asset_dir).parent.as_posix()
+            self._remove_bound_assets(asset_dir)
 
-            layout_level = up.send_request(
-                "get_first_asset_of_class",
-                params=["World", parent_path, "False"])
-
-            up.send_request("load_level", params=[layout_level])
-
-            layout_sequence = up.send_request(
-                "get_first_asset_of_class",
-                params=["LevelSequence", asset_dir, "False"])
-
-            up.send_request(
-                "delete_all_bound_assets", params=[layout_sequence])
-
-        if not master_level:
-            prev_level = up.send_request("get_current_level")
-
+        prev_level = None if master_level else send_request(
+            "get_current_level")
         source_path = get_representation_path(representation)
 
         loaded_assets = self._process(source_path, asset_dir, layout_sequence)
@@ -610,40 +681,36 @@ class LayoutLoader(plugin.Loader):
             "parent": str(representation["parent"]),
             "loaded_assets": loaded_assets
         }
-        up.send_request(
-            "imprint", params=[
-                f"{asset_dir}/{container.get('container_name')}", str(data)])
 
-        up.send_request("save_current_level")
+        containerise(asset_dir, container_name, data)
 
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "False"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
+        send_request("save_current_level")
 
         if master_level:
-            up.send_request("load_level", params=[master_level])
+            send_request("load_level", params={"level_path": master_level})
         elif prev_level:
-            up.send_request("load_level", params=[prev_level])
-
+            send_request("load_level", params={"level_path": prev_level})
 
     def remove(self, container):
         """
         Delete the layout. First, check if the assets loaded with the layout
         are used by other layouts. If not, delete the assets.
         """
-        root = "/Game/OpenPype"
+        root = self.root
         asset = container.get('asset')
         asset_dir = container.get('namespace')
         asset_name = container.get('asset_name')
         loaded_assets = container.get('loaded_assets')
 
         data = get_current_project_settings()
-        create_sequences = data["unreal"]["level_sequences_for_layouts"]
+        create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
 
-        up.send_request(
+        send_request(
             "remove_layout",
-            params=[
-                root, asset, asset_dir, asset_name, loaded_assets,
-                "True" if create_sequences else "False"])
+            params={
+                "root": root,
+                "asset": asset,
+                "asset_dir": asset_dir,
+                "asset_name": asset_name,
+                "loaded_asset": loaded_assets,
+                "create_sequences": create_sequences_option})

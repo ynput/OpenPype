@@ -7,11 +7,14 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
-from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as up
+from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+    containerise,
+)
 
 
-class CameraLoader(plugin.Loader):
+class CameraLoader(UnrealBaseLoader):
     """Load Unreal StaticMesh from FBX"""
 
     families = ["camera"]
@@ -20,7 +23,38 @@ class CameraLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    def _get_frame_info(self, h_dir):
+    @staticmethod
+    def _create_levels(
+        hierarchy_dir_list, hierarchy, asset_path_parent, asset
+    ):
+        # Create map for the shot, and create hierarchy of map. If the maps
+        # already exist, we will use them.
+        h_dir = hierarchy_dir_list[0]
+        h_asset = hierarchy[0]
+        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+        if not send_request(
+                "does_asset_exist", params={"asset_path": master_level}):
+            send_request(
+                "new_level",
+                params={"level_path": f"{h_dir}/{h_asset}_map"})
+
+        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        if not send_request(
+                "does_asset_exist", params={"asset_path": level}):
+            send_request(
+                "new_level",
+                params={"level_path": f"{asset_path_parent}/{asset}_map"})
+
+            send_request("load_level", params={"level_path": master_level})
+            send_request("add_level_to_world", params={"level_path": level})
+
+        send_request("save_all_dirty_levels")
+        send_request("load_level", params={"level_path": level})
+
+        return master_level
+
+    @staticmethod
+    def _get_frame_info(h_dir):
         project_name = legacy_io.active_project()
         asset_data = get_asset_by_name(
             project_name,
@@ -51,97 +85,7 @@ class CameraLoader(plugin.Loader):
 
         return min_frame, max_frame, asset_data.get('data').get("fps")
 
-    def load(self, context, name, namespace, options):
-        """
-        Load and containerise representation into Content Browser.
-
-        This is two step process. First, import FBX to temporary path and
-        then call `containerise()` on it - this moves all content to new
-        directory and then it will create AssetContainer there and imprint it
-        with metadata. This will mark this path as container.
-
-        Args:
-            context (dict): application context
-            name (str): subset name
-            namespace (str): in Unreal this is basically path to container.
-                             This is not passed here, so namespace is set
-                             by `containerise()` because only then we know
-                             real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
-
-        Returns:
-            list(str): list of container content
-        """
-
-        # Create directory for asset and avalon container
-        hierarchy = context.get('asset').get('data').get('parents')
-        root = "/Game/OpenPype"
-        hierarchy_dir = root
-        hierarchy_dir_list = []
-        for h in hierarchy:
-            hierarchy_dir = f"{hierarchy_dir}/{h}"
-            hierarchy_dir_list.append(hierarchy_dir)
-        asset = context.get('asset').get('name')
-        suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
-
-        # Create a unique name for the camera directory
-        unique_number = 1
-        if up.send_request_literal("does_directory_exist",
-                                   params=[f"{hierarchy_dir}/{asset}"]):
-            asset_content = up.send_request_literal(
-                "list_assets", params=[f"{root}/{asset}", "False", "True"])
-
-            # Get highest number to make a unique name
-            folders = [a for a in asset_content
-                       if a[-1] == "/" and f"{name}_" in a]
-            f_numbers = []
-            for f in folders:
-                # Get number from folder name. Splits the string by "_" and
-                # removes the last element (which is a "/").
-                f_numbers.append(int(f.split("_")[-1][:-1]))
-            f_numbers.sort()
-            if not f_numbers:
-                unique_number = 1
-            else:
-                unique_number = f_numbers[-1] + 1
-
-        asset_dir, container_name = up.send_request_literal(
-            "create_unique_asset_name", params=[
-                hierarchy_dir, asset, name, unique_number])
-
-        asset_path = Path(asset_dir)
-        asset_path_parent = str(asset_path.parent.as_posix())
-
-        container_name += suffix
-
-        up.send_request("make_directory", params=[asset_dir])
-
-        # Create map for the shot, and create hierarchy of map. If the maps
-        # already exist, we will use them.
-        h_dir = hierarchy_dir_list[0]
-        h_asset = hierarchy[0]
-        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
-        if not up.send_request_literal(
-                "does_asset_exist", params=[master_level]):
-            up.send_request(
-                "new_level", params=[f"{h_dir}/{h_asset}_map"])
-
-        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
-        if not up.send_request_literal(
-                "does_asset_exist", params=[level]):
-            up.send_request(
-                "new_level", params=[f"{asset_path_parent}/{asset}_map"])
-
-            up.send_request("load_level", params=[master_level])
-            up.send_request("add_level_to_world", params=[level])
-        up.send_request("save_all_dirty_levels")
-        up.send_request("load_level", params=[level])
-
+    def _get_sequences(self, hierarchy_dir_list, hierarchy):
         # TODO refactor
         #   - Creationg of hierarchy should be a function in unreal integration
         #       - it's used in multiple loaders but must not be loader's logic
@@ -159,66 +103,147 @@ class CameraLoader(plugin.Loader):
         sequences = []
         frame_ranges = []
         for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
-            root_content = up.send_request_literal(
-                "list_assets", params=[h_dir, "False", "False"])
+            root_content = send_request(
+                "list_assets", params={
+                    "directory_path": h_dir,
+                    "recursive": False,
+                    "include_folder": False})
 
-            print(root_content)
-
-            existing_sequences = up.send_request_literal(
+            if existing_sequences := send_request(
                 "get_assets_of_class",
-                params=[root_content, "LevelSequence"])
-
-            print(existing_sequences)
-
-            if not existing_sequences:
-                start_frame, end_frame, fps = self._get_frame_info(h_dir)
-                sequence = up.send_request(
-                    "generate_master_sequence",
-                    params=[h, h_dir, start_frame, end_frame, fps])
-
-                sequences.append(sequence)
-                frame_ranges.append((start_frame, end_frame))
-            else:
+                params={
+                    "asset_list": root_content, "class_name": "LevelSequence"},
+            ):
                 for sequence in existing_sequences:
                     sequences.append(sequence)
                     frame_ranges.append(
-                        up.send_request_literal(
+                        send_request(
                             "get_sequence_frame_range",
-                            params=[sequence]))
+                            params={"sequence_path": sequence}))
+            else:
+                start_frame, end_frame, fps = self._get_frame_info(h_dir)
+                sequence = send_request(
+                    "generate_master_sequence",
+                    params={
+                        "asset_name": h,
+                        "asset_path": h_dir,
+                        "start_frame": start_frame,
+                        "end_frame": end_frame,
+                        "fps": fps})
 
+                sequences.append(sequence)
+                frame_ranges.append((start_frame, end_frame))
+
+        return sequences, frame_ranges
+
+    @staticmethod
+    def _process(sequences, frame_ranges, asset, asset_dir, filename):
         project_name = legacy_io.active_project()
         data = get_asset_by_name(project_name, asset)["data"]
         start_frame = 0
         end_frame = data.get('clipOut') - data.get('clipIn') + 1
         fps = data.get("fps")
 
-        cam_sequence = up.send_request(
+        cam_sequence = send_request(
             "generate_sequence",
-            params=[
-                f"{asset}_camera", asset_dir, start_frame, end_frame, fps])
+            params={
+                "asset_name": f"{asset}_camera",
+                "asset_path": asset_dir,
+                "start_frame": start_frame,
+                "end_frame": end_frame,
+                "fps": fps})
 
         # Add sequences data to hierarchy
-        for i in range(0, len(sequences) - 1):
-            up.send_request(
+        for i in range(len(sequences) - 1):
+            send_request(
                 "set_sequence_hierarchy",
-                params=[
-                    sequences[i], sequences[i + 1],
-                    frame_ranges[i + 1][0], frame_ranges[i + 1][1]])
+                params={
+                    "parent_path": sequences[i],
+                    "child_path": sequences[i + 1],
+                    "child_start_frame": frame_ranges[i + 1][0],
+                    "child_end_frame": frame_ranges[i + 1][1]})
 
-        up.send_request(
+        send_request(
             "set_sequence_hierarchy",
-            params=[
-                sequences[-1], cam_sequence,
-                data.get('clipIn'), data.get('clipOut')])
+            params={
+                "parent_path": sequences[-1],
+                "child_path": cam_sequence,
+                "child_start_frame": data.get('clipIn'),
+                "child_end_frame": data.get('clipOut')})
 
-        up.send_request(
+        send_request(
             "import_camera",
-            params=[
-                cam_sequence, self.fname])
+            params={
+                "sequence_path": cam_sequence,
+                "import_filename": filename})
 
-        # Create Asset Container
-        up.send_request(
-            "create_container", params=[container_name, asset_dir])
+    def load(self, context, name=None, namespace=None, options=None):
+        """
+        Load and containerise representation into Content Browser.
+
+        This is two step process. First, import FBX to temporary path and
+        then call `containerise()` on it - this moves all content to new
+        directory and then it will create AssetContainer there and imprint it
+        with metadata. This will mark this path as container.
+
+        Args:
+            context (dict): application context
+            name (str): subset name
+            namespace (str): in Unreal this is basically path to container.
+                             This is not passed here, so namespace is set
+                             by `containerise()` because only then we know
+                             real path.
+            options (dict): Those would be data to be imprinted. This is not
+                            used now, data are imprinted by `containerise()`.
+        """
+        # Create directory for asset and OpenPype container
+        hierarchy = context.get('asset').get('data').get('parents')
+        root = self.root
+        asset = context.get('asset').get('name')
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
+
+        hierarchy_dir = root
+        hierarchy_dir_list = []
+        for h in hierarchy:
+            hierarchy_dir = f"{hierarchy_dir}/{h}"
+            hierarchy_dir_list.append(hierarchy_dir)
+
+        # Create a unique name for the camera directory
+        unique_number = 1
+        if send_request(
+                "does_directory_exist",
+                params={"directory_path": f"{hierarchy_dir}/{asset}"}):
+            asset_content = send_request(
+                "list_assets", params={
+                    "directory_path": f"{root}/{asset}",
+                    "recursive": False,
+                    "include_folder": True})
+
+            # Get highest number to make a unique name
+            folders = [a for a in asset_content
+                       if a[-1] == "/" and f"{name}_" in a]
+            f_numbers = [int(f.split("_")[-1][:-1]) for f in folders]
+            f_numbers.sort()
+            unique_number = f_numbers[-1] + 1 if f_numbers else 1
+
+        asset_dir, container_name = send_request(
+            "create_unique_asset_name", params={
+                "root": hierarchy_dir,
+                "asset": asset,
+                "name": name,
+                "version": unique_number})
+
+        asset_path_parent = Path(asset_dir).parent.as_posix()
+
+        send_request("make_directory", params={"directory_path": asset_dir})
+
+        master_level = self._create_levels(
+            hierarchy_dir_list, hierarchy, asset_path_parent, asset)
+
+        sequences, frame_ranges = self._get_sequences(
+            hierarchy_dir_list, hierarchy)
+
+        self._process(sequences, frame_ranges, asset, asset_dir, self.fname)
 
         data = {
             "schema": "openpype:container-2.0",
@@ -232,77 +257,44 @@ class CameraLoader(plugin.Loader):
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"]
         }
-        up.send_request(
-            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-        up.send_request("save_all_dirty_levels")
-        up.send_request("load_level", params=[master_level])
+        containerise(asset_dir, container_name, data)
 
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "True"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
-
-        return asset_content
+        send_request("save_all_dirty_levels")
+        send_request("load_level", params={"level_path": master_level})
 
     def update(self, container, representation):
-        asset_dir = container.get("namespace")
         context = representation.get("context")
         asset = container.get('asset')
+        asset_dir = container.get("namespace")
+        filename = representation["data"]["path"]
 
-        root = "/Game/OpenPype"
+        root = self.root
         hierarchy = context.get('hierarchy').split("/")
         h_dir = f"{root}/{hierarchy[0]}"
         h_asset = hierarchy[0]
         master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
 
-        parent_sequence = up.send_request(
-            "remove_camera", params=[root, asset_dir])
+        parent_sequence = send_request(
+            "remove_camera", params={
+                "root": root, "asset_dir": asset_dir})
 
-        project_name = legacy_io.active_project()
-        data = get_asset_by_name(project_name, asset)["data"]
-        start_frame = 0
-        end_frame = data.get('clipOut') - data.get('clipIn') + 1
-        fps = data.get("fps")
+        sequences = [parent_sequence]
+        frame_ranges = []
 
-        cam_sequence = up.send_request(
-            "generate_sequence",
-            params=[
-                f"{asset}_camera", asset_dir, start_frame, end_frame, fps])
+        self._process(sequences, frame_ranges, asset, asset_dir, filename)
 
-        up.send_request(
-            "set_sequence_hierarchy",
-            params=[
-                parent_sequence, cam_sequence,
-                data.get('clipIn'), data.get('clipOut')])
+        super(UnrealBaseLoader, self).update(container, representation)
 
-        up.send_request(
-            "import_camera",
-            params=[
-                cam_sequence, str(representation["data"]["path"])])
-
-        data = {
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"])
-        }
-        up.send_request(
-            "imprint", params=[f"{asset_dir}/{container.get('container_name')}", str(data)])
-
-        up.send_request("save_all_dirty_levels")
-        up.send_request("load_level", params=[master_level])
-
-        asset_content = up.send_request_literal(
-            "list_assets", params=[asset_dir, "True", "True"])
-
-        up.send_request(
-            "save_listed_assets", params=[str(asset_content)])
+        send_request("save_all_dirty_levels")
+        send_request("load_level", params={"level_path": master_level})
 
     def remove(self, container):
-        root = "/Game/OpenPype"
+        root = self.root
+        path = container["namespace"]
 
-        up.send_request(
-            "remove_camera", params=[root, container.get("namespace")])
+        send_request(
+            "remove_camera", params={
+                "root": root, "asset_dir": path})
 
-        up.send_request(
-            "remove_asset", params=[container.get("namespace")])
+        send_request("remove_asset", params={"path": path})

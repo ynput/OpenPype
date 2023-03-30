@@ -3,15 +3,8 @@ import ast
 import collections
 import sys
 import six
-from abc import (
-    ABC,
-    ABCMeta,
-)
+from abc import ABCMeta
 
-from .pipeline import (
-    ls_inst,
-    UNREAL_VERSION
-)
 from openpype.lib import (
     BoolDef,
     UILabelDef
@@ -22,7 +15,14 @@ from openpype.pipeline import (
     CreatorError,
     CreatedInstance
 )
-from openpype.hosts.unreal.api import pipeline as up
+from openpype.hosts.unreal.api.pipeline import (
+    send_request,
+    unreal_log,
+    ls_inst,
+    imprint,
+    containerise,
+    instantiate
+)
 
 
 @six.add_metaclass(ABCMeta)
@@ -54,8 +54,7 @@ class UnrealBaseCreator(Creator):
             unreal_cached_subsets = collections.defaultdict(list)
             unreal_cached_legacy_subsets = collections.defaultdict(list)
             for instance in ls_inst():
-                creator_id = instance.get("creator_identifier")
-                if creator_id:
+                if creator_id := instance.get("creator_identifier"):
                     unreal_cached_subsets[creator_id].append(instance)
                 else:
                     family = instance.get("family")
@@ -81,11 +80,11 @@ class UnrealBaseCreator(Creator):
                 self)
             self._add_instance_to_context(instance)
 
-            up.send_request(
-                "new_publish_instance",
-                params=[
-                    instance_name, self.root, instance.data_to_store(),
-                    pre_create_data.get("members", [])])
+            instantiate(
+                self.root,
+                instance_name,
+                instance.data_to_store(),
+                pre_create_data.get("members", []))
 
             return instance
 
@@ -113,24 +112,21 @@ class UnrealBaseCreator(Creator):
             instance_node = created_inst.get("instance_path", "")
 
             if not instance_node:
-                up.send_request(
-                    "log",
-                    params=[
-                        f"Instance node not found for {created_inst}",
-                        "warning"])
+                message = f"Instance node not found for {created_inst}"
+                unreal_log(message, "warning")
                 continue
 
             new_values = {
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
-            up.send_request("imprint", params=[instance_node, new_values])
+            imprint(instance_node, new_values)
 
     def remove_instances(self, instances):
         for instance in instances:
-            instance_node = instance.data.get("instance_path", "")
-            if instance_node:
-                up.send_request("delete_asset", params=[instance_node])
+            if instance_node := instance.data.get("instance_path", ""):
+                send_request(
+                    "delete_asset", params={"asset_path": instance_node})
 
             self._remove_instance_from_context(instance)
 
@@ -157,7 +153,7 @@ class UnrealAssetCreator(UnrealBaseCreator):
                 pre_create_data["members"] = []
 
                 if pre_create_data.get("use_selection"):
-                    pre_create_data["members"] = up.send_request(
+                    pre_create_data["members"] = send_request(
                         "get_selected_assets")
 
             super(UnrealAssetCreator, self).create(
@@ -193,7 +189,7 @@ class UnrealActorCreator(UnrealBaseCreator):
             CreatedInstance: Created instance.
         """
         try:
-            world = up.send_request("get_editor_world")
+            world = send_request("get_editor_world")
 
             # Check if the level is saved
             if world.startswith("/Temp/"):
@@ -203,7 +199,7 @@ class UnrealActorCreator(UnrealBaseCreator):
             # Check if instance data has members, filled by the plugin.
             # If not, use selection.
             if not instance_data.get("members"):
-                instance_data["members"] = up.send_request(
+                instance_data["members"] = send_request(
                     "get_selected_actors")
 
             instance_data["level"] = world
@@ -225,6 +221,24 @@ class UnrealActorCreator(UnrealBaseCreator):
         ]
 
 
-class Loader(LoaderPlugin, ABC):
-    """This serves as skeleton for future OpenPype specific functionality"""
-    pass
+@six.add_metaclass(ABCMeta)
+class UnrealBaseLoader(LoaderPlugin):
+    """Base class for Unreal loader plugins."""
+    root = "/Game/OpenPype"
+    suffix = "_CON"
+
+    def update(self, container, representation):
+        asset_dir = container["namespace"]
+        container_name = container['objectName']
+
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"])
+        }
+
+        containerise(asset_dir, container_name, data)
+
+    def remove(self, container):
+        path = container["namespace"]
+
+        send_request("remove_asset", params={"path": path})
