@@ -414,7 +414,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             })
 
             # Force to pop these key if are in new repre
-            new_repre.pop("preview", None)
             new_repre.pop("thumbnail", None)
             if "clean_name" in new_repre.get("tags", []):
                 new_repre.pop("outputName")
