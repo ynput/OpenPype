@@ -30,8 +30,7 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
     def get_invalid_scene_path(self, instance):
         invalid = list()
         node = hou.node(instance.data.get("instance_node"))
-        scene_path = node.parm("scenepath").eval()
-        scene_path_node = hou.node(scene_path)
+        scene_path_node = node.parm("scenepath").evalAsNode()
         if not scene_path_node:
             invalid.append(scene_path_node)
 
