@@ -67,64 +67,11 @@ class CreateReview(plugin.HoudiniCreator):
         self.lock_parameters(instance_node, to_lock)
 
     def get_pre_create_attr_defs(self):
-        attrs = super().get_pre_create_attr_defs()
+        attrs = super(CreateReview, self).get_pre_create_attr_defs()
+
         image_format_enum = [
-            {
-                "value": "png",
-                "label": ".png"
-            },
-            {
-                "value": "tif",
-                "label": ".tif"
-            },
-            {
-                "value": "sgi",
-                "label": ".sgi"
-            },
-            {
-                "value": "pic.gz",
-                "label": ".pic.gz"
-            },
-            {
-                "value": "rat",
-                "label": ".rat"
-            },
-            {
-                "value": "jpg",
-                "label": ".jpg"
-            },
-            {
-                "value": "cin",
-                "label": ".cin"
-            },
-            {
-                "value": "rta",
-                "label": ".rta"
-            },
-            {
-                "value": "rat",
-                "label": ".rat"
-            },
-            {
-                "value": "bmp",
-                "label": ".bmp"
-            },
-            {
-                "value": "tga",
-                "label": ".tga"
-            },
-            {
-                "value": "rad",
-                "label": ".rad"
-            },
-            {
-                "value": "exr",
-                "label": ".exr"
-            },
-            {
-                "value": "pic",
-                "label": ".pic"
-            }
+            "bmp", "cin", "exr", "jpg", "pic", "pic.gz", "png",
+            "rad", "rat", "rta", "sgi", "tga", "tif",
         ]
 
         return attrs + [
@@ -133,6 +80,7 @@ class CreateReview(plugin.HoudiniCreator):
                     default=False),
             EnumDef("imageFormat",
                     image_format_enum,
+                    default="png",
                     label="Image Format Options"),
             BoolDef("override_resolution",
                     label="Override resolution",
