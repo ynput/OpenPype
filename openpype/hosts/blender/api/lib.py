@@ -1,5 +1,6 @@
 from itertools import chain
 import os
+from pathlib import Path
 import traceback
 import importlib
 import contextlib
@@ -7,16 +8,19 @@ from typing import Dict, Iterator, List, Union
 
 import bpy
 import addon_utils
+from openpype.client.entities import get_representation_by_id
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api.utils import (
+    AVALON_PROPERTY,
     BL_OUTLINER_TYPES,
     assign_loader_to_datablocks,
     get_all_outliner_children,
     get_instanced_collections,
 )
 from openpype.lib import Logger
-from openpype.pipeline import schema
+from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
+from openpype.pipeline.load.utils import get_representation_path
 
 from . import pipeline
 
@@ -173,11 +177,22 @@ def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
             if hasattr(entity, "instance_collection")
             and entity.instance_collection
             else entity
-        ).get(pipeline.AVALON_PROPERTY)
+        ).get(AVALON_PROPERTY)
         # Keep objectName for update/switch
-        metadata['objectName'] = container.name 
-        container[pipeline.AVALON_PROPERTY] = metadata
+        metadata["objectName"] = container.name
+        container[AVALON_PROPERTY] = metadata
         container.library = entity.library
+        # Try to match library in case of override
+        if not container.library:
+            representation = get_representation_by_id(
+                legacy_io.Session["AVALON_PROJECT"],
+                container[AVALON_PROPERTY].get("representation"),
+            )
+            representation_path = get_representation_path(representation)
+            library = bpy.data.libraries.get(Path(representation_path).name)
+            container.library = library
+
+        # Keep outliner entity if any
         if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
             container.outliner_entity = entity
 
