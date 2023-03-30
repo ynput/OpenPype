@@ -17,33 +17,45 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         invalid = self.get_invalid_scene_path(instance)
+
+        report = []
         if invalid:
-            raise PublishValidationError(
-                "Scene path does not exist: %s" % invalid,
-                title=self.label)
+            report.append(
+                "Scene path does not exist: '%s'" % invalid[0],
+            )
+
         invalid = self.get_invalid_resolution(instance)
         if invalid:
+            report.extend(invalid)
+
+        if report:
             raise PublishValidationError(
-                "Invalid Resolution Setting",
+                "\n\n".join(report),
                 title=self.label)
 
     def get_invalid_scene_path(self, instance):
-        invalid = list()
-        node = hou.node(instance.data.get("instance_node"))
-        scene_path_node = node.parm("scenepath").evalAsNode()
-        if not scene_path_node:
-            invalid.append(scene_path_node)
 
-        return invalid
+        node = hou.node(instance.data.get("instance_node"))
+        scene_path_parm = node.parm("scenepath")
+        scene_path_node = scene_path_parm.evalAsNode()
+        if not scene_path_node:
+            return [scene_path_parm.evalAsString()]
 
     def get_invalid_resolution(self, instance):
-        invalid = list()
         node = hou.node(instance.data.get("instance_node"))
+
+        # The resolution setting is only used when Override Camera Resolution
+        # is enabled. So we skip validation if it is disabled.
+        override = node.parm("tres").eval()
+        if not override:
+            return
+
+        invalid = []
         res_width = node.parm("res1").eval()
         res_height = node.parm("res2").eval()
         if res_width == 0:
-            invalid.append(res_width)
+            invalid.append("Override Resolution width is set to zero.")
         if res_height == 0:
-            invalid.append(res_height)
+            invalid.append("Override Resolution height is set to zero")
 
         return invalid
