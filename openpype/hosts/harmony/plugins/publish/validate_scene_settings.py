@@ -71,7 +71,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for pattern in self.skip_resolution_check)):
             self.log.info("Skipping resolution check because of "
                           "task name and pattern {}".format(
-                            self.skip_resolution_check))
+                              self.skip_resolution_check))
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
@@ -79,7 +79,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for pattern in self.skip_timelines_check)):
             self.log.info("Skipping frames check because of "
                           "task name and pattern {}".format(
-                            self.skip_timelines_check))
+                              self.skip_timelines_check))
             expected_settings.pop('frameStart', None)
             expected_settings.pop('frameEnd', None)
             expected_settings.pop('frameStartHandle', None)
@@ -90,7 +90,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for pattern in self.frame_check_filter):
             self.log.info("Skipping frames check because of "
                           "task name and pattern {}".format(
-                            self.frame_check_filter))
+                              self.frame_check_filter))
             expected_settings.pop('frameStart', None)
             expected_settings.pop('frameEnd', None)
             expected_settings.pop('frameStartHandle', None)
