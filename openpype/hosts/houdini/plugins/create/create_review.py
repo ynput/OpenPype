@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Creator plugin for creating pointcache alembics."""
+"""Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
 from openpype.lib import EnumDef, BoolDef, NumberDef
 
 
@@ -13,7 +12,7 @@ class CreateReview(plugin.HoudiniCreator):
     family = "review"
     icon = "video-camera"
 
-    def create(self, subset_name, instance_data, pre_create_data): # type: CreatedInstance
+    def create(self, subset_name, instance_data, pre_create_data):
         import hou
 
         instance_data.pop("active", None)
@@ -30,13 +29,15 @@ class CreateReview(plugin.HoudiniCreator):
 
         frame_range = hou.playbar.frameRange()
 
+        filepath = "{root}/{subset}/{subset}.$F4.{ext}".format(
+            root=hou.text.expandString("$HIP/pyblish"),
+            subset="`chs(\"subset\")`",  # keep dynamic link to subset
+            ext=pre_create_data.get("image_format") or "png"
+        )
+
         parms = {
-            "picture": "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}/{}.$F4.{}".format(
-                subset_name,
-                subset_name,
-                pre_create_data.get("image_format") or "png")),
+            "picture": filepath,
+
             "trange": 1,
 
             # Unlike many other ROP nodes the opengl node does not default
