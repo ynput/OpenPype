@@ -8,7 +8,10 @@ from openpype.pipeline.create import (
     get_legacy_creator_by_name,
 )
 import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    get_container_members
+)
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -67,6 +70,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
             new_nodes = (list(set(nodes) - set(shapes)))
+
+            # if there are cameras, try to lock their transforms
+            self._lock_camera_transforms(new_nodes)
 
             current_namespace = pm.namespaceInfo(currentNamespace=True)
 
@@ -136,6 +142,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def switch(self, container, representation):
         self.update(container, representation)
 
+    def update(self, container, representation):
+        update_panels = self._update_cameras(container)
+        super(ReferenceLoader, self).update(container, representation)
+        self._update_model_panels(container, update_panels)
+
     def _post_process_rig(self, name, namespace, context, options):
 
         output = next((node for node in self if
@@ -168,3 +179,47 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 options={"useSelection": True},
                 data={"dependencies": dependency}
             )
+
+    def _lock_camera_transforms(self, nodes):
+        cameras = cmds.ls(nodes, type="camera")
+
+        # Check the Maya version, lockTransform has been introduced since
+        # Maya 2016.5 Ext 2
+        version = int(cmds.about(version=True))
+        if version >= 2016:
+            for camera in cameras:
+                cmds.camera(camera, edit=True, lockTransform=True)
+        else:
+            self.log.warning("This version of Maya does not support locking of"
+                             " transforms of cameras.")
+
+    @staticmethod
+    def _update_cameras(container):
+        # Get the modelPanels that used the old camera
+        members = get_container_members(container)
+        old_cameras = cmds.ls(members, type="camera", long=True)
+        update_panels = []
+        for panel in cmds.getPanel(type="modelPanel"):
+            cam = cmds.ls(cmds.modelPanel(panel, query=True, camera=True),
+                          long=True)
+
+            # Often but not always maya returns the transform from the
+            # modelPanel as opposed to the camera shape, so we convert it
+            # to explicitly be the camera shape
+            if cmds.nodeType(cam) != "camera":
+                cam = cmds.listRelatives(cam,
+                                         children=True,
+                                         fullPath=True,
+                                         type="camera")[0]
+            if cam in old_cameras:
+                update_panels.append(panel)
+        return update_panels
+
+    @staticmethod
+    def _update_model_panels(container, update_panels):
+        # Update the modelPanels to contain the new camera
+        members = get_container_members(container)
+        new_cameras = cmds.ls(members, type="camera", long=True)
+        new_camera = new_cameras[0]
+        for panel in update_panels:
+            cmds.modelPanel(panel, edit=True, camera=new_camera)
