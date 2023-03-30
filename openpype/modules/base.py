@@ -622,7 +622,7 @@ class ModulesManager:
 
                 # Check if class is abstract (Developing purpose)
                 if inspect.isabstract(modules_item):
-                    # Find missing implementations by convention on `abc` module
+                    # Find abstract attributes by convention on `abc` module
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
