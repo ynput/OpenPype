@@ -220,6 +220,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         with preserve_modelpanel_cameras(container, log=self.log):
             super(ReferenceLoader, self).update(container, representation)
 
+        # We also want to lock camera transforms on any new cameras in the
+        # reference or for a camera which might have changed names.
+        members = get_container_members(container)
+        self._lock_camera_transforms(members)
+
     def _post_process_rig(self, name, namespace, context, options):
 
         output = next((node for node in self if
