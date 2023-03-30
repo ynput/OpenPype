@@ -4,6 +4,7 @@ import sys
 import bpy
 from openpype.client.entities import (
     get_asset_by_name,
+    get_representation_by_id,
     get_subset_by_name,
 )
 from openpype.hosts.blender.api.pipeline import (
@@ -47,7 +48,7 @@ if __name__ == "__main__":
         help="representation ID",
         required=True,
     )
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
+    args, unknown = parser.parse_known_args(sys.argv[sys.argv.index("--") + 1 :])
 
     containerized_datablocks = set()
     for datapath in args.datapaths:
@@ -71,6 +72,11 @@ if __name__ == "__main__":
                 asset_doc["_id"],
                 fields=["data.family"],
             )
+            representation_doc = get_representation_by_id(
+                project_name,
+                args.representation_id,
+                fields=["data", "parent"],
+            )
 
             # Update container metadata
             metadata_update(
@@ -81,7 +87,7 @@ if __name__ == "__main__":
                     "name": args.subset_name,
                     "representation": args.representation_id,
                     "asset_name": legacy_io.Session["AVALON_ASSET"],
-                    "parent": str(asset_doc["parent"]),
+                    "parent": str(representation_doc["parent"]),
                     "family": subset_doc["data"]["family"],
                     "namespace": "",
                 },
