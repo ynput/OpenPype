@@ -8,6 +8,8 @@ import tempfile
 from .log import Logger
 from .vendor_bin_utils import find_executable
 
+from .openpype_version import is_running_from_build
+
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
 
@@ -200,6 +202,11 @@ def run_openpype_process(*args, **kwargs):
         # Skip envs that can affect OpenPype process
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
+
+    # Only keep OpenPype version if we are running from build.
+    if not is_running_from_build():
+        env.pop("OPENPYPE_VERSION", None)
+
     return run_subprocess(args, env=env, **kwargs)
 
 

@@ -3,7 +3,15 @@ import getpass
 import copy
 
 import attr
-from openpype.pipeline import legacy_io
+from openpype.lib import (
+    TextDef,
+    BoolDef,
+    NumberDef,
+)
+from openpype.pipeline import (
+    legacy_io,
+    OpenPypePyblishPluginMixin
+)
 from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
@@ -22,7 +30,8 @@ class MaxPluginInfo(object):
     IgnoreInputs = attr.ib(default=True)
 
 
-class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                        OpenPypePyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["max"]
@@ -31,14 +40,22 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     use_published = True
     priority = 50
-    tile_priority = 50
     chunk_size = 1
     jobInfo = {}
     pluginInfo = {}
     group = None
-    deadline_pool = None
-    deadline_pool_secondary = None
-    framePerTask = 1
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["MaxSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.use_published = settings.get("use_published",
+                                         cls.use_published)
+        cls.priority = settings.get("priority",
+                                    cls.priority)
+        cls.chuck_size = settings.get("chunk_size", cls.chunk_size)
+        cls.group = settings.get("group", cls.group)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
@@ -49,11 +66,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         instance = self._instance
         context = instance.context
-
         # Always use the original work file name for the Job name even when
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
         # etc. which are stripped for the published file.
+
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
@@ -71,13 +88,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 1)
-        job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
 
-        if self.group:
-            job_info.Group = self.group
+        attr_values = self.get_attr_values_from_data(instance.data)
+
+        job_info.ChunkSize = attr_values.get("chunkSize", 1)
+        job_info.Comment = context.data.get("comment")
+        job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.Group = attr_values.get("group", self.group)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -216,3 +233,32 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(MaxSubmitDeadline, cls).get_attribute_defs()
+        defs.extend([
+            BoolDef("use_published",
+                    default=cls.use_published,
+                    label="Use Published Scene"),
+
+            NumberDef("priority",
+                      minimum=1,
+                      maximum=250,
+                      decimals=0,
+                      default=cls.priority,
+                      label="Priority"),
+
+            NumberDef("chunkSize",
+                      minimum=1,
+                      maximum=50,
+                      decimals=0,
+                      default=cls.chunk_size,
+                      label="Frame Per Task"),
+
+            TextDef("group",
+                    default=cls.group,
+                    label="Group Name"),
+        ])
+
+        return defs
