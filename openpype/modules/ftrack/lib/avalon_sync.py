@@ -2584,8 +2584,8 @@ class SyncEntitiesFactory:
                 #
                 # ent_dict = self.entities_dict[found_by_name_id]
 
-                # TODO report - CRITICAL entity with same name already exists in
-                # different hierarchy - can't recreate entity
+                # TODO report - CRITICAL entity with same name already exists
+                #     in different hierarchy - can't recreate entity
                 continue
 
             _vis_parent = deleted_entity["data"]["visualParent"]

@@ -220,8 +220,8 @@ class IWorkfileHost:
         Default implementation keeps workdir untouched.
 
         Warnings:
-            We must handle this modification with more sophisticated way because
-            this can't be called out of DCC so opening of last workfile
+            We must handle this modification with more sophisticated way
+            because this can't be called out of DCC so opening of last workfile
             (calculated before DCC is launched) is complicated. Also breaking
             defined work template is not a good idea.
             Only place where it's really used and can make sense is Maya. There

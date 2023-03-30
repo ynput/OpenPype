@@ -158,8 +158,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
 
-    # mapping of instance properties to be transferred to new instance for every
-    # specified family
+    # mapping of instance properties to be transferred to new instance
+    #     for every specified family
     instance_transfer = {
         "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
