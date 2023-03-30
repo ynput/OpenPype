@@ -301,8 +301,11 @@ class NukeWriteCreator(NukeCreator):
     def get_instance_attr_defs(self):
         attr_defs = [
             self._get_render_target_enum(),
-            self._get_reviewable_bool()
         ]
+        # add reviewable attribute
+        if "reviewable" in self.instance_attributes:
+            attr_defs.append(self._get_reviewable_bool())
+
         return attr_defs
 
     def _get_render_target_enum(self):
@@ -322,7 +325,7 @@ class NukeWriteCreator(NukeCreator):
     def _get_reviewable_bool(self):
         return BoolDef(
             "review",
-            default=("reviewable" in self.instance_attributes),
+            default=True,
             label="Review"
         )
 
