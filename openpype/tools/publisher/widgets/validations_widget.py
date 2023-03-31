@@ -191,7 +191,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         self.set_selected(True)
 
-    def current_desctiption_text(self):
+    def current_description_text(self):
         if self._context_validation:
             return self._help_text_by_instance_id[None]
         index = self._instances_view.currentIndex()
@@ -705,7 +705,7 @@ class ValidationsWidget(QtWidgets.QFrame):
             self._update_description()
 
     def _update_description(self):
-        description = self._previous_select.current_desctiption_text()
+        description = self._previous_select.current_description_text()
         if commonmark:
             html = commonmark.commonmark(description)
             self._error_details_input.setHtml(html)

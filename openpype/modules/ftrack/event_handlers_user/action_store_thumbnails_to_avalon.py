@@ -184,7 +184,7 @@ class StoreThumbnailsToAvalon(BaseAction):
         self.db_con.install()
 
         for entity in entities:
-            # Skip if entity is not AssetVersion (never should happend, but..)
+            # Skip if entity is not AssetVersion (should never happen, but..)
             if entity.entity_type.lower() != "assetversion":
                 continue
 

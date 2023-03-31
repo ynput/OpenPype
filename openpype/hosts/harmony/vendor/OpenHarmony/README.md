@@ -6,7 +6,7 @@ Ever tried to make a simple script for toonboom Harmony, then got stumped by the
 
 Toonboom Harmony is a very powerful software, with hundreds of functions and tools, and it unlocks a great amount of possibilities for animation studios around the globe. And... being the produce of the hard work of a small team forced to prioritise, it can also be a bit rustic at times!
 
-We are users at heart, animators and riggers, who just want to interact with the software as simply as possible. Simplicity is at the heart of the design of openHarmony. But we also are developpers, and we made the library for people like us who can't resist tweaking the software and bend it in all possible ways, and are looking for powerful functions to help them do it.
+We are users at heart, animators and riggers, who just want to interact with the software as simply as possible. Simplicity is at the heart of the design of openHarmony. But we also are developers, and we made the library for people like us who can't resist tweaking the software and bend it in all possible ways, and are looking for powerful functions to help them do it.
 
 This library's aim is to create a more direct way to interact with Toonboom through scripts, by providing a more intuitive way to access its elements, and help with the cumbersome and repetitive tasks as well as help unlock untapped potential in its many available systems. So we can go from having to do things like this:
 
@@ -78,7 +78,7 @@ All you have to do is call :
 ```javascript
 include("openHarmony.js");
 ```
-at the beggining of your script.
+at the beginning of your script.
 
 You can ask your users to download their copy of the library and store it alongside, or bundle it as you wish as long as you include the license file provided on this repository.
 
@@ -129,7 +129,7 @@ Check that the environment variable `LIB_OPENHARMONY_PATH` is set correctly to t
 ## How to add openHarmony to vscode intellisense for autocompletion
 
 Although not fully supported, you can get most of the autocompletion features to work by adding the following lines to a `jsconfig.json` file placed at the root of your working folder.
-The paths need to be relative which means the openHarmony source code must be placed directly in your developping environnement.
+The paths need to be relative which means the openHarmony source code must be placed directly in your developping environment.
 
 For example, if your working folder contains the openHarmony source in a folder called `OpenHarmony` and your working scripts in a folder called `myScripts`, place the `jsconfig.json` file at the root of the folder and add these lines to the file:
 
