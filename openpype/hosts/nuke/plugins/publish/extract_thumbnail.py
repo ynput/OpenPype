@@ -31,7 +31,7 @@ class ExtractThumbnail(publish.Extractor):
 
 
     def process(self, instance):
-        if "render.farm" in instance.data["families"]:
+        if instance.data.get("farm"):
             return
 
         with napi.maintained_selection():

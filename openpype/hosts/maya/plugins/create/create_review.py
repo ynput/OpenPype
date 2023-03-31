@@ -26,6 +26,7 @@ class CreateReview(plugin.Creator):
         "alpha cut"
     ]
     useMayaTimeline = True
+    panZoom = False
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
@@ -45,5 +46,6 @@ class CreateReview(plugin.Creator):
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
+        data["panZoom"] = self.panZoom
 
         self.data = data

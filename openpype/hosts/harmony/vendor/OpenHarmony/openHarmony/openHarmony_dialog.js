@@ -5,7 +5,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -17,7 +17,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -250,7 +250,7 @@ $.oDialog.prototype.prompt = function( labelText, title, prefilledText){
 /**
  * Prompts with a file selector window
  * @param   {string}           [text="Select a file:"]       The title of the confirmation dialog.
- * @param   {string}           [filter="*"]                  The filter for the file type and/or file name that can be selected. Accepts wildcard charater "*".
+ * @param   {string}           [filter="*"]                  The filter for the file type and/or file name that can be selected. Accepts wildcard character "*".
  * @param   {string}           [getExisting=true]            Whether to select an existing file or a save location
  * @param   {string}           [acceptMultiple=false]        Whether or not selecting more than one file is ok. Is ignored if getExisting is falses.
  * @param   {string}           [startDirectory]              The directory showed at the opening of the dialog.
@@ -327,14 +327,14 @@ $.oDialog.prototype.browseForFolder = function(text, startDirectory){
  * @constructor
  * @classdesc   An simple progress dialog to display the progress of a task.
  * To react to the user clicking the cancel button, connect a function to $.oProgressDialog.canceled() signal.
- * When $.batchmode is true, the progress will be outputed as a "Progress : value/range" string to the Harmony stdout.
+ * When $.batchmode is true, the progress will be outputted as a "Progress : value/range" string to the Harmony stdout.
  * @param       {string}              [labelText]                The text displayed above the progress bar.
  * @param       {string}              [range=100]                The maximum value that represents a full progress bar.
  * @param       {string}              [title]                    The title of the dialog
  * @param       {bool}                [show=false]               Whether to immediately show the dialog.
  *
  * @property    {bool}                wasCanceled                Whether the progress bar was cancelled.
- * @property    {$.oSignal}           canceled                   A Signal emited when the dialog is canceled. Can be connected to a callback.
+ * @property    {$.oSignal}           canceled                   A Signal emitted when the dialog is canceled. Can be connected to a callback.
  */
 $.oProgressDialog = function( labelText, range, title, show ){
   if (typeof title === 'undefined') var title = "Progress";
@@ -608,7 +608,7 @@ $.oPieMenu = function( name, widgets, show, minAngle, maxAngle, radius, position
   this.maxAngle = maxAngle;
   this.globalCenter = position;
 
-  // how wide outisde the icons is the slice drawn
+  // how wide outside the icons is the slice drawn
   this._circleMargin = 30;
 
   // set these values before calling show() to customize the menu appearance
@@ -974,7 +974,7 @@ $.oPieMenu.prototype.getMenuRadius = function(){
   var _minRadius = UiLoader.dpiScale(30);
   var _speed = 10; // the higher the value, the slower the progression
 
-  // hyperbolic tangent function to determin the radius
+  // hyperbolic tangent function to determine the radius
   var exp = Math.exp(2*itemsNumber/_speed);
   var _radius = ((exp-1)/(exp+1))*_maxRadius+_minRadius;
 
@@ -1383,7 +1383,7 @@ $.oActionButton.prototype.activate = function(){
  * This class is a subclass of QPushButton and all the methods from that class are available to modify this button.
  * @param {string}   paletteName              The name of the palette that contains the color
  * @param {string}   colorName                The name of the color (if more than one is present, will pick the first match)
- * @param {bool}     showName                 Wether to display the name of the color on the button
+ * @param {bool}     showName                 Whether to display the name of the color on the button
  * @param {QWidget}  parent                   The parent QWidget for the button. Automatically set during initialisation of the menu.
  *
  */
@@ -1437,7 +1437,7 @@ $.oColorButton.prototype.activate = function(){
  * @name          $.oScriptButton
  * @constructor
  * @classdescription This subclass of QPushButton provides an easy way to create a button for a widget that will launch a function from another script file.<br>
- * The buttons created this way automatically load the icon named after the script if it finds one named like the funtion in a script-icons folder next to the script file.<br>
+ * The buttons created this way automatically load the icon named after the script if it finds one named like the function in a script-icons folder next to the script file.<br>
  * It will also automatically set the callback to lanch the function from the script.<br>
  * This class is a subclass of QPushButton and all the methods from that class are available to modify this button.
  * @param {string}   scriptFile               The path to the script file that will be launched
