@@ -2,7 +2,7 @@ name: project-actions
 
 on:
   pull_request_target:
-    types: [opened, synchronize, assigned, review_requested]
+    types: [opened, assigned, review_requested]
   pull_request_review:
     types: [submitted]
 
