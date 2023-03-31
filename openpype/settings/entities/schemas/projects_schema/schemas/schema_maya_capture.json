@@ -19,12 +19,12 @@
                         {
                             "type": "text",
                             "key": "compression",
-                            "label": "Compression type"
+                            "label": "Encoding"
                         },
                         {
                             "type": "text",
                             "key": "format",
-                            "label": "Data format"
+                            "label": "Format"
                         },
                         {
                             "type": "number",
