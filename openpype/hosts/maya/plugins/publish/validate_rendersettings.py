@@ -307,6 +307,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         )
         result = {}
         for attr, values in OrderedDict(validation_settings).items():
+            values = [convert_to_int_or_float(v) for v in values if v]
+
             # Validate the settings has values.
             if not values:
                 cls.log.error(
@@ -321,8 +323,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     "settings: \"{}\"".format(attr)
                 )
                 continue
-
-            values = [convert_to_int_or_float(v) for v in values]
 
             node_type, attribute_name = attr.split(".", 1)
 
