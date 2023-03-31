@@ -203,7 +203,7 @@ class WireTapCom(object):
             list: all available volumes in server
 
         Rises:
-            AttributeError: unable to get any volumes childs from server
+            AttributeError: unable to get any volumes children from server
         """
         root = WireTapNodeHandle(self._server, "/volumes")
         children_num = WireTapInt(0)
