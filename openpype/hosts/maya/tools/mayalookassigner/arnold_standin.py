@@ -74,6 +74,10 @@ def get_nodes_by_id(standin):
             json_path = os.path.join(os.path.dirname(path), f)
             break
 
+    if not json_path:
+        log.warning("Could not find json file for {}.".format(standin))
+        return {}
+
     with open(json_path, "r") as f:
         return json.load(f)
 
