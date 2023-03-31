@@ -180,7 +180,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
         # Whether there is proxy or so, we still update the string operator.
-        # If no proxy exists, the string operator wont replace anything.
+        # If no proxy exists, the string operator won't replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
             "resources/" + proxy_basename,

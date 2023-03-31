@@ -230,10 +230,10 @@ Applicable context filters:
 ## Tools
 Settings for OpenPype tools.
 
-## Creator
+### Creator
 Settings related to [Creator tool](artist_tools_creator).
 
-### Subset name profiles
+#### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
 
 Subset name helps to identify published content. More specific name helps with organization and avoid mixing of published content. Subset name is defined using one of templates defined in **Subset name profiles settings**. The template is filled with context information at the time of creation.
@@ -263,10 +263,31 @@ Template may look like `"{family}{Task}{Variant}"`.
 Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
 
 
-## Workfiles
+### Publish
+
+#### Custom Staging Directory Profiles
+With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
+
+![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
+
+Staging directories are used as a destination for intermediate files (as renders) before they are renamed and copied to proper location during the integration phase. They could be created completely dynamically in the temp folder or for some DCCs in the `work` area.
+Example could be Nuke where artist might want to temporarily render pictures into `work` area to check them before they get published with the choice of "Use existing frames" on the write node.
+
+One of the key advantages of this feature is that it allows users to choose the folder for writing such intermediate files to take advantage of faster storage for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their intermediate extracted data persistent, and use their own infrastructure for regular cleaning.
+
+In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
+
+The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
+
+##### Known issues
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
+
+### Workfiles
 All settings related to Workfile tool.
 
-### Open last workfile at launch
+#### Open last workfile at launch
 This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
 
 ![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
