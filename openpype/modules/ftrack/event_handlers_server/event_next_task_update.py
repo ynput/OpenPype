@@ -279,7 +279,7 @@ class NextTaskUpdate(BaseEvent):
             except Exception:
                 session.rollback()
                 self.log.warning(
-                    "\"{}\" status couldnt be set to \"{}\"".format(
+                    "\"{}\" status couldn't be set to \"{}\"".format(
                         ent_path, new_status["name"]
                     ),
                     exc_info=True

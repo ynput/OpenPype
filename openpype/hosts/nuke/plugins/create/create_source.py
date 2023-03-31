@@ -85,4 +85,4 @@ class CreateSource(NukeCreator):
                 raise NukeCreatorError("Creator error: No active selection")
         else:
             NukeCreatorError(
-                "Creator error: only supprted with active selection")
+                "Creator error: only supported with active selection")
