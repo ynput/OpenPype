@@ -79,6 +79,14 @@ def get_nodes_by_id(standin):
 
 
 def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
+    """Full assignments with shader or disp_map.
+
+    Args:
+        shading_engine (string): Shading engine for material.
+        attribute (string): "surfaceShader" or "displacementShader"
+        nodes: (list): Nodes paths relative to aiStandIn.
+        assignments (dict): Assignments by nodes.
+    """
     shader_inputs = cmds.listConnections(
         shading_engine + "." + attribute, source=True
     )
