@@ -985,6 +985,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_skeleton_data["representations"] += representations
             instances = [instance_skeleton_data]
 
+        self._add_files_to_explicit_cleanup(instances)
+
         # if we are attaching to other subsets, create copy of existing
         # instances, change data to match thats subset and replace
         # existing instances with modified data
@@ -1106,6 +1108,29 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
             json.dump(publish_job, f, indent=4, sort_keys=True)
+
+    def _add_files_to_explicit_cleanup(self, instances):
+        """Add all expected files to be deleted explicitly.
+
+        This seems like a safest option, that only files that we are rendering
+        into intermediate folder ('renders') will get explicitly deleted after
+        successful publish.
+        """
+        for instance in instances:
+            instance.context.data.setdefault("cleanupFullPaths", [])
+            representations = instance.get("representations")
+            if not representations:
+                continue
+            for repre in representations:
+                files = repre["files"]
+                staging_dir = repre["stagingDir"]
+                if isinstance(files, str):
+                    files = [files]
+
+                for file_name in files:
+                    expected_file = os.path.join(staging_dir, file_name)
+                    instance.context.data["cleanupFullPaths"].append(
+                        expected_file)
 
     def _extend_frames(self, asset, subset, start, end):
         """Get latest version of asset nad update frame range.
