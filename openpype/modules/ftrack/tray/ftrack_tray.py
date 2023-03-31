@@ -174,7 +174,7 @@ class FtrackTrayWrapper:
 
             printed_ftrack_error = False
 
-            # Run backup thread which does not requeire mongo to work
+            # Run backup thread which does not require mongo to work
             if self.thread_socket_server is None:
                 if failed_count < max_fail_count:
                     self.thread_socket_server = socket_thread.SocketThread(
