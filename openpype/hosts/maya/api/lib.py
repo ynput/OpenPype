@@ -2162,6 +2162,26 @@ def get_frame_range():
     handle_start = asset["data"].get("handleStart") or 0
     handle_end = asset["data"].get("handleEnd") or 0
 
+    animation_start = frame_start
+    animation_end = frame_end
+
+    include_handles = include_handles_settings["include_handles_default"]
+    for item in include_handles_settings["per_task_type"]:
+        if current_task["type"] in item["task_type"]:
+            include_handles = item["include_handles"]
+            break
+    if include_handles:
+        animation_start -= int(handle_start)
+        animation_end += int(handle_end)
+
+    cmds.playbackOptions(
+        minTime=frame_start,
+        maxTime=frame_end,
+        animationStartTime=animation_start,
+        animationEndTime=animation_end
+    )
+    cmds.currentTime(frame_start)
+
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
@@ -2180,7 +2200,6 @@ def reset_frame_range(playback=True, render=True, fps=True):
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
-
     if fps:
         fps = convert_to_maya_fps(
             float(legacy_io.Session.get("AVALON_FPS", 25))
