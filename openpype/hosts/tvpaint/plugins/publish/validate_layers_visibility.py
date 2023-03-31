@@ -11,7 +11,7 @@ class ValidateLayersVisiblity(pyblish.api.InstancePlugin):
     families = ["review", "render"]
 
     def process(self, instance):
-        layers = instance.data["layers"]
+        layers = instance.data.get("layers")
         # Instance have empty layers
         # - it is not job of this validator to check that
         if not layers:

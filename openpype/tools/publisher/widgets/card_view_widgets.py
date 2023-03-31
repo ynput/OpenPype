@@ -164,6 +164,11 @@ class BaseGroupWidget(QtWidgets.QWidget):
     def _on_widget_selection(self, instance_id, group_id, selection_type):
         self.selected.emit(instance_id, group_id, selection_type)
 
+    def set_active_toggle_enabled(self, enabled):
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceCardWidget):
+                widget.set_active_toggle_enabled(enabled)
+
 
 class ConvertorItemsGroupWidget(BaseGroupWidget):
     def update_items(self, items_by_id):
@@ -437,6 +442,9 @@ class InstanceCardWidget(CardWidget):
 
         self.update_instance_values()
 
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
     def set_active(self, new_value):
         """Set instance as active."""
         checkbox_value = self._active_checkbox.isChecked()
@@ -551,6 +559,7 @@ class InstanceCardView(AbstractInstanceView):
 
         self._context_widget = None
         self._convertor_items_group = None
+        self._active_toggle_enabled = True
         self._widgets_by_group = {}
         self._ordered_groups = []
 
@@ -666,6 +675,9 @@ class InstanceCardView(AbstractInstanceView):
             widget_idx += 1
             group_widget.update_instances(
                 instances_by_group[group_name]
+            )
+            group_widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
             )
 
         self._update_ordered_group_names()
@@ -1091,3 +1103,10 @@ class InstanceCardView(AbstractInstanceView):
 
         self._explicitly_selected_groups = selected_groups
         self._explicitly_selected_instance_ids = selected_instances
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+        self._active_toggle_enabled = enabled
+        for group_widget in self._widgets_by_group.values():
+            group_widget.set_active_toggle_enabled(enabled)

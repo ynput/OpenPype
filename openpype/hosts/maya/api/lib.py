@@ -2099,29 +2099,40 @@ def get_frame_range():
     }
 
 
-def reset_frame_range():
-    """Set frame range to current asset"""
+def reset_frame_range(playback=True, render=True, fps=True):
+    """Set frame range to current asset
 
-    fps = convert_to_maya_fps(
-        float(legacy_io.Session.get("AVALON_FPS", 25))
-    )
-    set_scene_fps(fps)
+    Args:
+        playback (bool, Optional): Whether to set the maya timeline playback
+            frame range. Defaults to True.
+        render (bool, Optional): Whether to set the maya render frame range.
+            Defaults to True.
+        fps (bool, Optional): Whether to set scene FPS. Defaults to True.
+    """
+
+    if fps:
+        fps = convert_to_maya_fps(
+            float(legacy_io.Session.get("AVALON_FPS", 25))
+        )
+        set_scene_fps(fps)
 
     frame_range = get_frame_range()
 
     frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
     frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
 
-    cmds.playbackOptions(minTime=frame_start)
-    cmds.playbackOptions(maxTime=frame_end)
-    cmds.playbackOptions(animationStartTime=frame_start)
-    cmds.playbackOptions(animationEndTime=frame_end)
-    cmds.playbackOptions(minTime=frame_start)
-    cmds.playbackOptions(maxTime=frame_end)
-    cmds.currentTime(frame_start)
+    if playback:
+        cmds.playbackOptions(minTime=frame_start)
+        cmds.playbackOptions(maxTime=frame_end)
+        cmds.playbackOptions(animationStartTime=frame_start)
+        cmds.playbackOptions(animationEndTime=frame_end)
+        cmds.playbackOptions(minTime=frame_start)
+        cmds.playbackOptions(maxTime=frame_end)
+        cmds.currentTime(frame_start)
 
-    cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-    cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+    if render:
+        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
 
 def reset_scene_resolution():
@@ -2467,8 +2478,8 @@ def load_capture_preset(data=None):
                     float(value[2]) / 255
                 ]
             disp_options[key] = value
-        else:
-            disp_options['displayGradient'] = True
+        elif key == "displayGradient":
+            disp_options[key] = value
 
     options['display_options'] = disp_options
 
