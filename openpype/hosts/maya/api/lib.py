@@ -2300,11 +2300,23 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
-    if instances:
-        project_name = get_current_project_name()
-        settings = get_project_settings(project_name)
-        if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-            update_instances_frame_range()
+    instances = cmds.ls(
+        "*.id",
+        long=True,
+        type="objectSet",
+        recursive=True,
+        objectsOnly=True
+    )
+
+    for instance in instances:
+        if not cmds.attributeQuery("id", node=instance, exists=True):
+            continue
+
+        id_attr = "{}.id".format(instance)
+        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+            continue
+
+        cmds.setAttr("{}.frameStart".format(instance), frame_start)
 
 
 def reset_scene_resolution():
