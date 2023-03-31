@@ -142,7 +142,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 # Only interested in transforms with shapes.
                 shapes = cmds.listRelatives(
                     node, shapes=True, noIntermediate=True
-                ) or []
+                )
                 if not shapes:
                     continue
 
