@@ -94,7 +94,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
                     instance, compute=False
                 )
                 for attr in attributes:
-                    node, attr_name = attr.split(".", 1)[-1]
+                    node, attr_name = attr.split(".", 1)
                     value = defaults[attr_name]
                     set_attribute(
                         node=node,
