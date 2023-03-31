@@ -29,7 +29,10 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the cameras in the instance"""
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError("Renderable default cameras "
-                               "found: {0}".format(invalid))
+        # If the renderer is 3delight
+        # the validation will be skipped
+        if not instance.data.get("renderer") == "_3delight":
+            invalid = self.get_invalid(instance)
+            if invalid:
+                raise RuntimeError("Renderable default cameras "
+                                "found: {0}".format(invalid))
