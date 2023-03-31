@@ -388,22 +388,27 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         old_repre, repre)
 
                     # Keep previously synchronized sites up-to-date
-                    # by comparing old and new sites and adding old sites
-                    # if missing in new ones
-                    old_repre_files_sites = [
-                        f.get("sites", []) for f in old_repre.get("files", [])
-                    ]
-                    for i, file in enumerate(repre.get("files", [])):
-                        repre_sites_names = {
-                            s["name"] for s in file.get("sites", [])
+                    #   by comparing old and new sites and adding old sites
+                    #   if missing in new ones
+                    # Prepare all sites from all files in old representation
+                    old_site_names = set()
+                    for file_info in old_repre.get("files", []):
+                        old_site_names |= {
+                            site["name"]
+                            for site in file_info["sites"]
                         }
-                        for site in old_repre_files_sites[i]:
-                            if site["name"] not in repre_sites_names:
-                                # Pop the date to tag for sync
-                                site.pop("created_dt", None)
-                                file["sites"].append(site)
 
-                        update_data["files"][i] = file
+                    for file_info in update_data.get("files", []):
+                        file_info.setdefault("sites", [])
+                        file_info_site_names = {
+                            site["name"]
+                            for site in file_info["sites"]
+                        }
+                        for site_name in old_site_names:
+                            if site_name not in file_info_site_names:
+                                file_info["sites"].append({
+                                    "name": site_name
+                                })
 
                     op_session.update_entity(
                         project_name,
