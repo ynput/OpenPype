@@ -472,7 +472,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environemnt variables.
+            env (dict): Current environment variables.
         """
 
         pass
@@ -622,7 +622,7 @@ class ModulesManager:
 
                 # Check if class is abstract (Developing purpose)
                 if inspect.isabstract(modules_item):
-                    # Find missing implementations by convetion on `abc` module
+                    # Find abstract attributes by convention on `abc` module
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
@@ -708,13 +708,13 @@ class ModulesManager:
         ]
 
     def collect_global_environments(self):
-        """Helper to collect global enviornment variabled from modules.
+        """Helper to collect global environment variabled from modules.
 
         Returns:
             dict: Global environment variables from enabled modules.
 
         Raises:
-            AssertionError: Gobal environment variables must be unique for
+            AssertionError: Global environment variables must be unique for
                 all modules.
         """
         module_envs = {}
@@ -1174,7 +1174,7 @@ class TrayModulesManager(ModulesManager):
 
 
 def get_module_settings_defs():
-    """Check loaded addons/modules for existence of thei settings definition.
+    """Check loaded addons/modules for existence of their settings definition.
 
     Check if OpenPype addon/module as python module has class that inherit
     from `ModuleSettingsDef` in python module variables (imported
@@ -1204,7 +1204,7 @@ def get_module_settings_defs():
                 continue
 
             if inspect.isabstract(attr):
-                # Find missing implementations by convetion on `abc` module
+                # Find missing implementations by convention on `abc` module
                 not_implemented = []
                 for attr_name in dir(attr):
                     attr = getattr(attr, attr_name, None)
@@ -1293,7 +1293,7 @@ class BaseModuleSettingsDef:
 
 
 class ModuleSettingsDef(BaseModuleSettingsDef):
-    """Settings definiton with separated system and procect settings parts.
+    """Settings definition with separated system and procect settings parts.
 
     Reduce conditions that must be checked and adds predefined methods for
     each case.

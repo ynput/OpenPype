@@ -339,7 +339,7 @@ class ARenderProducts:
         aov_tokens = ["<aov>", "<renderpass>"]
 
         def match_last(tokens, text):
-            """regex match the last occurence from a list of tokens"""
+            """regex match the last occurrence from a list of tokens"""
             pattern = "(?:.*)({})".format("|".join(tokens))
             return re.search(pattern, text, re.IGNORECASE)
 
@@ -1054,7 +1054,7 @@ class RenderProductsRedshift(ARenderProducts):
     def get_files(self, product):
         # When outputting AOVs we need to replace Redshift specific AOV tokens
         # with Maya render tokens for generating file sequences. We validate to
-        # a specific AOV fileprefix so we only need to accout for one
+        # a specific AOV fileprefix so we only need to account for one
         # replacement.
         if not product.multipart and product.driver:
             file_prefix = self._get_attr(product.driver + ".filePrefix")

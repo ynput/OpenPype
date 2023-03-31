@@ -250,7 +250,7 @@ def create_timeline_item(media_pool_item: object,
             media_pool_item, timeline)
 
     assert output_timeline_item, AssertionError(
-        "Track Item with name `{}` doesnt exist on the timeline: `{}`".format(
+        "Track Item with name `{}` doesn't exist on the timeline: `{}`".format(
             clip_name, timeline.GetName()
         ))
     return output_timeline_item
@@ -571,7 +571,7 @@ def create_compound_clip(clip_data, name, folder):
     # Set current folder to input media_pool_folder:
     mp.SetCurrentFolder(folder)
 
-    # check if clip doesnt exist already:
+    # check if clip doesn't exist already:
     clips = folder.GetClipList()
     cct = next((c for c in clips
                 if c.GetName() in name), None)
@@ -582,7 +582,7 @@ def create_compound_clip(clip_data, name, folder):
         # Create empty timeline in current folder and give name:
         cct = mp.CreateEmptyTimeline(name)
 
-        # check if clip doesnt exist already:
+        # check if clip doesn't exist already:
         clips = folder.GetClipList()
         cct = next((c for c in clips
                     if c.GetName() in name), None)
