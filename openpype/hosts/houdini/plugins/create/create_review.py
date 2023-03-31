@@ -57,13 +57,28 @@ class CreateReview(plugin.HoudiniCreator):
             })
 
         if self.selected_nodes:
+            # The first camera found in selection we will use as camera
+            # Other node types we set in force objects
+            camera = None
+            force_objects = []
             for node in self.selected_nodes:
                 path = node.path()
                 if node.type().name() == "cam":
-                    parms.update({"camera": path})
+                    if camera:
+                        continue
+                    camera = path
                 else:
-                    node_paths = " ".join(path)
-                    parms.update({"forceobjects": node_paths})
+                    force_objects.append(path)
+
+            if not camera:
+                self.log.warning("No camera found in selection.")
+
+            parms.update({
+                "camera": camera or "",
+                "scenepath": "/obj",
+                "forceobjects": " ".join(force_objects),
+                "vobjects": ""  # clear candidate objects from '*' value
+            })
 
         instance_node.setParms(parms)
 
