@@ -353,7 +353,10 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         if project['project_status_id'] == status['id']:
             project['project_status_name'] = status['name']
 
-    if not get_project(project['name']) and project['project_status_name'] == "Closed":  # noqa
+    if (
+        project['project_status_name'] == "Closed"
+        and not get_project(project['name'])
+    ):
         return
 
     log.info(f"Synchronizing {project['name']}...")
