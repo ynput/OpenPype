@@ -246,7 +246,7 @@ class FillWorkfileAttributeAction(BaseAction):
 
         project_name = project_entity["full_name"]
 
-        # Find matchin asset documents and map them by ftrack task entities
+        # Find matching asset documents and map them by ftrack task entities
         # - result stored to 'asset_docs_with_task_entities' is list with
         #   tuple `(asset document, [task entitis, ...])`
         # Quety all asset documents

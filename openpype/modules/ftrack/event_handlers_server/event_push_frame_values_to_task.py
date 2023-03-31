@@ -394,7 +394,7 @@ class PushHierValuesToNonHierEvent(BaseEvent):
         project_id: str,
         entities_info: list[dict[str, Any]]
     ):
-        """Proces changes in single project.
+        """Process changes in single project.
 
         Args:
             session (ftrack_api.Session): Ftrack session.
