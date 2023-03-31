@@ -796,6 +796,7 @@
                     "quality": 95
                 },
                 "Display Options": {
+                    "override_display": true,
                     "background": [
                         125,
                         125,
@@ -814,7 +815,7 @@
                         125,
                         255
                     ],
-                    "override_display": true
+                    "displayGradient": true
                 },
                 "Generic": {
                     "isolate_view": true,
