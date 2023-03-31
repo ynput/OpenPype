@@ -57,7 +57,7 @@ Content:
 
 Contains end to end testing in a DCC. Currently it is setup to start DCC application with prepared worfkile, run publish process and compare results in DB and file system automatically.
 This approach is implemented as it should work in any DCC application and should cover most common use cases. Not all hosts allow "real headless" publishing, but all hosts should allow to trigger 
-publish process programatically when UI of host is actually running.
+publish process programmatically when UI of host is actually running.
 
 There will be eventually also possibility to build workfile and publish it programmatically, this would work only in DCCs that support it (Maya, Nuke).
 

@@ -756,6 +756,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance (pyblish.api.Instance): Instance data.
 
         """
+        if not instance.data.get("farm"):
+            self.log.info("Skipping local instance.")
+            return
+
         data = instance.data.copy()
         context = instance.context
         self.context = context

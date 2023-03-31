@@ -21,13 +21,15 @@ from openpype.settings import (
     get_system_settings,
 )
 from openpype.pipeline import (
-    tempdir
+    tempdir,
+    Anatomy
 )
 from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .contants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
+    TRANSIENT_DIR_TEMPLATE
 )
 
 
@@ -691,3 +693,79 @@ def get_publish_repre_path(instance, repre, only_published=False):
     if os.path.exists(src_path):
         return src_path
     return None
+
+
+def get_custom_staging_dir_info(project_name, host_name, family, task_name,
+                                task_type, subset_name,
+                                project_settings=None,
+                                anatomy=None, log=None):
+    """Checks profiles if context should use special custom dir as staging.
+
+    Args:
+        project_name (str)
+        host_name (str)
+        family (str)
+        task_name (str)
+        task_type (str)
+        subset_name (str)
+        project_settings(Dict[str, Any]): Prepared project settings.
+        anatomy (Dict[str, Any])
+        log (Logger) (optional)
+
+    Returns:
+        (tuple)
+    Raises:
+        ValueError - if misconfigured template should be used
+    """
+    settings = project_settings or get_project_settings(project_name)
+    custom_staging_dir_profiles = (settings["global"]
+                                           ["tools"]
+                                           ["publish"]
+                                           ["custom_staging_dir_profiles"])
+    if not custom_staging_dir_profiles:
+        return None, None
+
+    if not log:
+        log = Logger.get_logger("get_custom_staging_dir_info")
+
+    filtering_criteria = {
+        "hosts": host_name,
+        "families": family,
+        "task_names": task_name,
+        "task_types": task_type,
+        "subsets": subset_name
+    }
+    profile = filter_profiles(custom_staging_dir_profiles,
+                              filtering_criteria,
+                              logger=log)
+
+    if not profile or not profile["active"]:
+        return None, None
+
+    if not anatomy:
+        anatomy = Anatomy(project_name)
+
+    template_name = profile["template_name"] or TRANSIENT_DIR_TEMPLATE
+    _validate_transient_template(project_name, template_name, anatomy)
+
+    custom_staging_dir = anatomy.templates[template_name]["folder"]
+    is_persistent = profile["custom_staging_dir_persistent"]
+
+    return custom_staging_dir, is_persistent
+
+
+def _validate_transient_template(project_name, template_name, anatomy):
+    """Check that transient template is correctly configured.
+
+    Raises:
+        ValueError - if misconfigured template
+    """
+    if template_name not in anatomy.templates:
+        raise ValueError(("Anatomy of project \"{}\" does not have set"
+                          " \"{}\" template key!"
+                          ).format(project_name, template_name))
+
+    if "folder" not in anatomy.templates[template_name]:
+        raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
+                             " for project \"{}\"."
+                         ).format(template_name, project_name))

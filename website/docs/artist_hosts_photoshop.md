@@ -75,7 +75,7 @@ enabled instances, you could see more information after clicking on `Details` ta
 
 ![Image instances creates](assets/photoshop_publish_validations.png)
 
-In this dialog you could see publishable instances in left colummn, triggered plugins in the middle and logs in the right column.
+In this dialog you could see publishable instances in left column, triggered plugins in the middle and logs in the right column.
 
 In left column you could see that `review` instance was created automatically. This instance flattens all publishable instances or
 all visible layers if no publishable instances were created into single image which could serve as a single reviewable element (for example in Ftrack).

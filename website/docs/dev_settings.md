@@ -355,7 +355,7 @@ These inputs wraps another inputs into {key: value} relation
                 {
                     "type": "text",
                     "key": "command",
-                    "label": "Comand"
+                    "label": "Command"
                 }
             ]
         },
@@ -420,7 +420,7 @@ How output of the schema could look like on save:
 - number input, can be used for both integer and float
     - key `"decimal"` defines how many decimal places will be used, 0 is for integer input (Default: `0`)
     - key `"minimum"` as minimum allowed number to enter (Default: `-99999`)
-    - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
+    - key `"maximum"` as maximum allowed number to enter (Default: `99999`)
 - key `"steps"` will change single step value of UI inputs (using arrows and wheel scroll)
 - for UI it is possible to show slider to enable this option set `show_slider` to `true`
 ```javascript
@@ -602,7 +602,7 @@ How output of the schema could look like on save:
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. [text](#text))
-    3.) enhancement of 1.) there is also support of `template` type but be carefull about endless loop of templates
+    3.) enhancement of 1.) there is also support of `template` type but be careful about endless loop of templates
         - goal of using `template` is to easily change same item definitions in multiple lists
 
 1.) with item modifiers
