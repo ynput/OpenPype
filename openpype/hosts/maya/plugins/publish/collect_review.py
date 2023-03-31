@@ -4,6 +4,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.hosts.maya.api.lib import get_attribute_input
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -145,3 +146,20 @@ class CollectReview(pyblish.api.InstancePlugin):
                         audio_data.append(get_audio_node_data(node))
 
             instance.data["audio"] = audio_data
+
+        # Collect focal length.
+        attr = camera + ".focalLength"
+        if get_attribute_input(attr):
+            start = instance.data["frameStart"]
+            end = instance.data["frameEnd"] + 1
+            focal_length = [
+                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
+            ]
+        else:
+            focal_length = cmds.getAttr(attr)
+
+        key = "focalLength"
+        try:
+            instance.data["burninDataMembers"][key] = focal_length
+        except KeyError:
+            instance.data["burninDataMembers"] = {key: focal_length}

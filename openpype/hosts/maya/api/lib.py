@@ -2545,8 +2545,8 @@ def load_capture_preset(data=None):
                     float(value[2]) / 255
                 ]
             disp_options[key] = value
-        else:
-            disp_options['displayGradient'] = True
+        elif key == "displayGradient":
+            disp_options[key] = value
 
     options['display_options'] = disp_options
 

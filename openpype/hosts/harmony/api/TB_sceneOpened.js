@@ -476,6 +476,25 @@ function start() {
         action.triggered.connect(self.onSubsetManage);
     }
 
+     /**
+      * Set scene settings from DB to the scene
+      */
+    self.onSetSceneSettings = function() {
+          app.avalonClient.send(
+            {
+              "module": "openpype.hosts.harmony.api",
+              "method": "ensure_scene_settings",
+              "args": []
+            },
+            false
+          );
+    };
+    // add Set Scene Settings
+    if (app.avalonMenu == null) {
+        action = menu.addAction('Set Scene Settings...');
+        action.triggered.connect(self.onSetSceneSettings);
+    }
+
     /**
       * Show Experimental dialog
       */
