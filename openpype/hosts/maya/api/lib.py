@@ -1367,6 +1367,71 @@ def set_id(node, unique_id, overwrite=False):
         cmds.setAttr(attr, unique_id, type="string")
 
 
+def get_attribute(plug,
+                  asString=False,
+                  expandEnvironmentVariables=False,
+                  **kwargs):
+    """Maya getAttr with some fixes based on `pymel.core.general.getAttr()`.
+
+    Like Pymel getAttr this applies some changes to `maya.cmds.getAttr`
+      - maya pointlessly returned vector results as a tuple wrapped in a list
+        (ex.  '[(1,2,3)]'). This command unpacks the vector for you.
+      - when getting a multi-attr, maya would raise an error, but this will
+        return a list of values for the multi-attr
+      - added support for getting message attributes by returning the
+        connections instead
+
+    Note that the asString + expandEnvironmentVariables argument naming
+    convention matches the `maya.cmds.getAttr` arguments so that it can
+    act as a direct replacement for it.
+
+    Args:
+        plug (str): Node's attribute plug as `node.attribute`
+        asString (bool): Return string value for enum attributes instead
+            of the index. Note that the return value can be dependent on the
+            UI language Maya is running in.
+        expandEnvironmentVariables (bool): Expand any environment variable and
+            (tilde characters on UNIX) found in string attributes which are
+            returned.
+
+    Kwargs:
+        Supports the keyword arguments of `maya.cmds.getAttr`
+
+    Returns:
+        object: The value of the maya attribute.
+
+    """
+    attr_type = cmds.getAttr(plug, type=True)
+    if asString:
+        kwargs["asString"] = True
+    if expandEnvironmentVariables:
+        kwargs["expandEnvironmentVariables"] = True
+    try:
+        res = cmds.getAttr(plug, **kwargs)
+    except RuntimeError:
+        if attr_type == "message":
+            return cmds.listConnections(plug)
+
+        node, attr = plug.split(".", 1)
+        children = cmds.attributeQuery(attr, node=node, listChildren=True)
+        if children:
+            return [
+                get_attribute("{}.{}".format(node, child))
+                for child in children
+            ]
+
+        raise
+
+    # Convert vector result wrapped in tuple
+    if isinstance(res, list) and len(res):
+        if isinstance(res[0], tuple) and len(res):
+            if attr_type in {'pointArray', 'vectorArray'}:
+                return res
+            return res[0]
+
+    return res
+
+
 def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 

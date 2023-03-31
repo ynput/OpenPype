@@ -6,6 +6,7 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     delete_after,
     undo_chunk,
+    get_attribute,
     set_attribute
 )
 from openpype.pipeline.publish import (
@@ -48,8 +49,11 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
                                            fullPath=True)[0]
 
             for attr in cmds.listAttr(cube_mesh, string="ai*"):
-                defaults[attr] = cmds.getAttr("{}.{}".format(cube_mesh,
-                                                             attr))
+                plug = "{}.{}".format(cube_mesh, attr)
+                try:
+                    defaults[attr] = get_attribute(plug)
+                except RuntimeError:
+                    cls.log.debug("Ignoring arnold attribute: {}".format(attr))
 
         return defaults
 
@@ -68,7 +72,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
             for mesh in meshes:
                 for attr_name, default_value in defaults.items():
                     plug = "{}.{}".format(mesh, attr_name)
-                    if cmds.getAttr(plug) != default_value:
+                    if get_attribute(plug) != default_value:
                         invalid.append(plug)
 
             instance.data["nondefault_arnold_attributes"] = invalid
