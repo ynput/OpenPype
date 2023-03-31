@@ -1,4 +1,6 @@
 import os
+from collections import defaultdict
+import json
 
 from maya import cmds
 import arnold
@@ -17,8 +19,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filename = "{}.ass".format(instance.name)
-        file_path = os.path.join(staging_dir, filename)
+        file_path = os.path.join(staging_dir, "{}.ass".format(instance.name))
 
         # Mask
         mask = arnold.AI_NODE_ALL
@@ -69,7 +70,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "mask": mask
         }
 
-        filenames = self._extract(
+        filenames, nodes_by_id = self._extract(
             instance.data["contentMembers"], attribute_data, kwargs
         )
 
@@ -86,6 +87,19 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
         instance.data["representations"].append(representation)
 
+        json_path = os.path.join(staging_dir, "{}.json".format(instance.name))
+        with open(json_path, "w") as f:
+            json.dump(nodes_by_id, f)
+
+        representation = {
+            "name": "json",
+            "ext": "json",
+            "files": os.path.basename(json_path),
+            "stagingDir": staging_dir
+        }
+
+        instance.data["representations"].append(representation)
+
         self.log.info(
             "Extracted instance {} to: {}".format(instance.name, staging_dir)
         )
@@ -95,7 +109,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             return
 
         kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
-        filenames = self._extract(
+        filenames, _ = self._extract(
             instance.data["proxy"], attribute_data, kwargs
         )
 
@@ -115,6 +129,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "Writing {} with:\n{}".format(kwargs["filename"], kwargs)
         )
         filenames = []
+        nodes_by_id = defaultdict(list)
         # Duplicating nodes so they are direct children of the world. This
         # makes the hierarchy of any exported ass file the same.
         with lib.delete_after() as delete_bin:
@@ -158,7 +173,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
             # Copy cbId to mtoa_constant.
             for node in duplicate_nodes:
-                lib.set_attribute("mtoa_constant_cbId", lib.get_id(node), node)
+                nodes_by_id[lib.get_id(node)].append(node.replace("|", "/"))
 
             with lib.attribute_values(attribute_data):
                 with lib.maintained_selection():
@@ -178,4 +193,4 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
                     self.log.info("Exported: {}".format(filenames))
 
-        return filenames
+        return filenames, nodes_by_id

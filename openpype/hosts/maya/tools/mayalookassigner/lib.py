@@ -82,6 +82,6 @@ def load_look(version_id):
 
         # Reference the look file
         with lib.maintained_selection():
-            container_node = load_container(loader, look_representation)
+            container_node = load_container(loader, look_representation)[0]
 
     return lib.get_container_members(container_node), container_node

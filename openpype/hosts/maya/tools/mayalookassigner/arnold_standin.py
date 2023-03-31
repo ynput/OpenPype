@@ -1,5 +1,5 @@
 import os
-import re
+import json
 from collections import defaultdict
 import logging
 
@@ -58,52 +58,24 @@ def calculate_visibility_mask(attributes):
     return mask
 
 
-def get_id_by_node(path):
-    """Get node id from Arnold Scene Source.
+def get_nodes_by_id(standin):
+    """Get node id from aiStandIn via json sidecar.
 
     Args:
-        path (string): Path to Arnold Scene Source.
+        standin (string): aiStandIn node.
 
     Returns:
         (dict): Dictionary with node full name/path and id.
     """
-    import arnold
-    results = defaultdict(list)
+    path = cmds.getAttr(standin + ".dso")
+    json_path = None
+    for f in os.listdir(os.path.dirname(path)):
+        if f.endswith(".json"):
+            json_path = os.path.join(os.path.dirname(path), f)
+            break
 
-    arnold.AiBegin()
-
-    arnold.AiMsgSetConsoleFlags(arnold.AI_LOG_ALL)
-
-    arnold.AiSceneLoad(None, path, None)
-
-    # Iterate over all shader nodes
-    iter = arnold.AiUniverseGetNodeIterator(arnold.AI_NODE_SHAPE)
-    while not arnold.AiNodeIteratorFinished(iter):
-        node = arnold.AiNodeIteratorGetNext(iter)
-        if arnold.AiNodeIs(node, "polymesh"):
-            node_name = arnold.AiNodeGetName(node)
-            results[arnold.AiNodeGetStr(node, "cbId")].append(node_name)
-
-    arnold.AiNodeIteratorDestroy(iter)
-    arnold.AiEnd()
-
-    return results
-
-
-def get_standin_path(node):
-    path = cmds.getAttr(node + ".dso")
-
-    # Account for frame extension.
-    basename = os.path.basename(path)
-    current_frame = 1
-    pattern = "(#+)"
-    matches = re.findall(pattern, basename)
-    if matches:
-        substring = "%{}d".format(str(len(matches[0])).zfill(2))
-        path = path.replace(matches[0], substring)
-        path = path % current_frame
-
-    return path
+    with open(json_path, "r") as f:
+        return json.load(f)
 
 
 def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
@@ -136,7 +108,7 @@ def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
 def assign_look(standin, subset):
     log.info("Assigning {} to {}.".format(subset, standin))
 
-    nodes_by_id = get_id_by_node(get_standin_path(standin))
+    nodes_by_id = get_nodes_by_id(standin)
 
     # Group by asset id so we run over the look per asset
     node_ids_by_asset_id = defaultdict(set)
@@ -161,8 +133,7 @@ def assign_look(standin, subset):
             continue
 
         relationships = lib.get_look_relationships(version["_id"])
-        shader_nodes, container_nodes = lib.load_look(version["_id"])
-        container_node = container_nodes[0]
+        shader_nodes, container_node = lib.load_look(version["_id"])
         namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset

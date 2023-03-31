@@ -87,8 +87,7 @@ def create_asset_id_hash(nodes):
                 id = k.split(":")[0]
                 node_id_hash[id].append(node)
         elif cmds.nodeType(node) == "aiStandIn":
-            path = arnold_standin.get_standin_path(node)
-            for id, _ in arnold_standin.get_id_by_node(path).items():
+            for id, _ in arnold_standin.get_nodes_by_id(node).items():
                 id = id.split(":")[0]
                 node_id_hash[id].append(node)
         else:
