@@ -255,7 +255,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             if ext.startswith("."):
                 component["ext"] = ext[1:]
 
-            if component["preview"]:
+            # Remove 'preview' key from representation data
+            preview = component.pop("preview")
+            if preview:
                 instance.data["families"].append("review")
                 component["tags"] = ["review"]
                 self.log.debug("Adding review family")
