@@ -57,9 +57,13 @@ class CreateReview(plugin.HoudiniCreator):
             })
 
         if self.selected_nodes:
-            # todo: allow only object paths?
-            node_paths = " ".join(node.path() for node in self.selected_nodes)
-            parms.update({"scenepath": node_paths})
+            for node in self.selected_nodes:
+                path = node.path()
+                if node.type().name() == "cam":
+                    parms.update({"camera": path})
+                else:
+                    node_paths = " ".join(path)
+                    parms.update({"forceobjects": node_paths})
 
         instance_node.setParms(parms)
 
