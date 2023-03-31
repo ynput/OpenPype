@@ -183,10 +183,10 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 None,
                 "Frame Hold.",
                 message,
-                QtWidgets.QMessageBox.Ok,
-                QtWidgets.QMessageBox.Cancel
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
             )
-            if reply == QtWidgets.QMessageBox.Ok:
+            if reply == QtWidgets.QMessageBox.Yes:
                 frame_extension_plug = "{}.frameExtension".format(image_plane_shape)  # noqa
 
                 # Remove current frame expression
