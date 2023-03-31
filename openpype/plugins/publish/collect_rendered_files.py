@@ -89,11 +89,13 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # now we can just add instances from json file and we are done
         for instance_data in data.get("instances"):
+
             self.log.info("  - processing instance for {}".format(
                 instance_data.get("subset")))
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
+            instance.context.data.setdefault("cleanupFullPaths", [])
             self.log.info("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
@@ -106,6 +108,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
+
+                files = repre_data["files"]
+                staging_dir = repre_data["stagingDir"]
+                if isinstance(files, str):
+                    files = [files]
+
+                for file_name in files:
+                    expected_file = os.path.join(staging_dir, file_name)
+                    instance.context.data["cleanupFullPaths"].append(
+                        expected_file)
 
             instance.data["representations"] = representations
 
