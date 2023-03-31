@@ -173,7 +173,8 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
             # Copy cbId to mtoa_constant.
             for node in duplicate_nodes:
-                # Converting Maya hierarchy separator "|" to Arnold separator "/".
+                # Converting Maya hierarchy separator "|" to Arnold
+                # separator "/".
                 nodes_by_id[lib.get_id(node)].append(node.replace("|", "/"))
 
             with lib.attribute_values(attribute_data):
