@@ -757,7 +757,6 @@ def _applied_viewport_options(options, panel):
     try:
         cmds.modelEditor(panel, edit=True, **options)
     except TypeError as e:
-        logger.error("Cannot apply options {}".format(e))
         # Try to set as much as possible of the state by setting them one by
         # one. This way we can also report the failing key values explicitly.
         for key, value in options.items():
