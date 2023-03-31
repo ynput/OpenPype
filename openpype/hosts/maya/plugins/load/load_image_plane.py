@@ -120,7 +120,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
             # Cameras by names
             camera_names = {}
             for camera in cameras:
-                parent = cmds.listRelatives(camera, parent=True, path=True)
+                parent = cmds.listRelatives(camera, parent=True, path=True)[0]
                 camera_names[parent] = camera
 
             camera_names["Create new camera."] = "create-camera"
