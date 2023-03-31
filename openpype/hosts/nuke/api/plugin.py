@@ -239,7 +239,11 @@ class NukeCreator(NewCreator):
 
     def get_pre_create_attr_defs(self):
         return [
-            BoolDef("use_selection", label="Use selection")
+            BoolDef(
+                "use_selection",
+                default=not self.create_context.headless,
+                label="Use selection"
+            )
         ]
 
     def get_creator_settings(self, project_settings, settings_key=None):
@@ -590,7 +594,7 @@ class ExporterReview(object):
                                         Defaults to None.
             range (bool, optional): flag for adding ranges.
                                     Defaults to False.
-            custom_tags (list[str], optional): user inputed custom tags.
+            custom_tags (list[str], optional): user inputted custom tags.
                                                Defaults to None.
         """
         add_tags = tags or []
@@ -1106,7 +1110,7 @@ class AbstractWriteRender(OpenPypeCreator):
     def is_legacy(self):
         """Check if it needs to run legacy code
 
-        In case where `type` key is missing in singe
+        In case where `type` key is missing in single
         knob it is legacy project anatomy.
 
         Returns:
@@ -1264,7 +1268,7 @@ def convert_to_valid_instaces():
                     creator_attr["farm_chunk"] = (
                         node["deadlineChunkSize"].value())
                 if "deadlineConcurrentTasks" in node.knobs():
-                    creator_attr["farm_concurency"] = (
+                    creator_attr["farm_concurrency"] = (
                         node["deadlineConcurrentTasks"].value())
 
         _remove_old_knobs(node)

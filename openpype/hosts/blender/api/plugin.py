@@ -62,7 +62,8 @@ def prepare_data(data, container_name=None):
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
-                           selected: Optional[bpy.types.Object] = None,):
+                           selected: Optional[bpy.types.Object] = None,
+                           window: Optional[bpy.types.Window] = None):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
     """
@@ -72,7 +73,9 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
 
     override_context = bpy.context.copy()
 
-    for win in bpy.context.window_manager.windows:
+    windows = [window] if window else bpy.context.window_manager.windows
+
+    for win in windows:
         for area in win.screen.areas:
             if area.type == 'VIEW_3D':
                 for region in area.regions:

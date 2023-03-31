@@ -9,11 +9,19 @@ import pyblish.api
 
 import nuke
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import (
+    OpenPypePyblishPluginMixin
+)
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
+from openpype.lib import (
+    is_running_from_build,
+    BoolDef,
+    NumberDef
+)
 
 
-class NukeSubmitDeadline(pyblish.api.InstancePlugin):
+class NukeSubmitDeadline(pyblish.api.InstancePlugin,
+                         OpenPypePyblishPluginMixin):
     """Submit write to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -21,10 +29,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Submit to Deadline"
+    label = "Submit Nuke to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
-    hosts = ["nuke", "nukestudio"]
-    families = ["render.farm", "prerender.farm"]
+    hosts = ["nuke"]
+    families = ["render", "prerender"]
     optional = True
     targets = ["local"]
 
@@ -39,7 +47,46 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     env_allowed_keys = []
     env_search_replace_values = {}
 
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            NumberDef(
+                "priority",
+                label="Priority",
+                default=cls.priority,
+                decimals=0
+            ),
+            NumberDef(
+                "chunk",
+                label="Frames Per Task",
+                default=cls.chunk_size,
+                decimals=0,
+                minimum=1,
+                maximum=1000
+            ),
+            NumberDef(
+                "concurrency",
+                label="Concurrency",
+                default=cls.concurrent_tasks,
+                decimals=0,
+                minimum=1,
+                maximum=10
+            ),
+            BoolDef(
+                "use_gpu",
+                default=cls.use_gpu,
+                label="Use GPU"
+            )
+        ]
+
     def process(self, instance):
+        if not instance.data.get("farm"):
+            self.log.info("Skipping local instance.")
+            return
+
+        instance.data["attributeValues"] = self.get_attr_values_from_data(
+            instance.data)
+
         instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
@@ -125,10 +172,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     resp.json()["_id"])
 
         # redefinition of families
-        if "render.farm" in families:
+        if "render" in instance.data["family"]:
             instance.data['family'] = 'write'
             families.insert(0, "render2d")
-        elif "prerender.farm" in families:
+        elif "prerender" in instance.data["family"]:
             instance.data['family'] = 'write'
             families.insert(0, "prerender")
         instance.data["families"] = families
@@ -141,7 +188,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         exe_node_name,
         start_frame,
         end_frame,
-        responce_data=None
+        response_data=None
     ):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         batch_name = os.path.basename(script_path)
@@ -152,28 +199,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         output_filename_0 = self.preview_fname(render_path)
 
-        if not responce_data:
-            responce_data = {}
+        if not response_data:
+            response_data = {}
 
         try:
             # Ensure render folder exists
             os.makedirs(render_dir)
         except OSError:
             pass
-
-        # define chunk and priority
-        chunk_size = instance.data["deadlineChunkSize"]
-        if chunk_size == 0 and self.chunk_size:
-            chunk_size = self.chunk_size
-
-        # define chunk and priority
-        concurrent_tasks = instance.data["deadlineConcurrentTasks"]
-        if concurrent_tasks == 0 and self.concurrent_tasks:
-            concurrent_tasks = self.concurrent_tasks
-
-        priority = instance.data["deadlinePriority"]
-        if not priority:
-            priority = self.priority
 
         # resolve any limit groups
         limit_groups = self.get_limit_groups()
@@ -193,9 +226,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
 
-                "Priority": priority,
-                "ChunkSize": chunk_size,
-                "ConcurrentTasks": concurrent_tasks,
+                "Priority": instance.data["attributeValues"].get(
+                    "priority", self.priority),
+                "ChunkSize": instance.data["attributeValues"].get(
+                    "chunk", self.chunk_size),
+                "ConcurrentTasks": instance.data["attributeValues"].get(
+                    "concurrency",
+                    self.concurrent_tasks
+                ),
 
                 "Department": self.department,
 
@@ -234,7 +272,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "AWSAssetFile0": render_path,
 
                 # using GPU by default
-                "UseGpu": self.use_gpu,
+                "UseGpu": instance.data["attributeValues"].get(
+                    "use_gpu", self.use_gpu),
 
                 # Only the specific write node is rendered.
                 "WriteNode": exe_node_name
@@ -244,11 +283,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
-        if responce_data.get("_id"):
+        if response_data.get("_id"):
             payload["JobInfo"].update({
                 "JobType": "Normal",
-                "BatchName": responce_data["Props"]["Batch"],
-                "JobDependency0": responce_data["_id"],
+                "BatchName": response_data["Props"]["Batch"],
+                "JobDependency0": response_data["_id"],
                 "ChunkSize": 99999999
             })
 

@@ -22,6 +22,8 @@ PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 class MayaTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for maya"""
 
+    use_legacy_creators = True
+
     def import_template(self, path):
         """Import template into current scene.
         Block if a template is already loaded.
@@ -31,7 +33,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was succesfully imported or not
+            bool: Whether the template was successfully imported or not
         """
 
         if cmds.objExists(PLACEHOLDER_SET):
@@ -114,7 +116,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         placeholder_name_parts = placeholder_data["builder_type"].split("_")
 
         pos = 1
-        # add famlily in any
+        # add family in any
         placeholder_family = placeholder_data["family"]
         if placeholder_family:
             placeholder_name_parts.insert(pos, placeholder_family)

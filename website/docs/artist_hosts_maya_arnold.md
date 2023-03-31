@@ -6,7 +6,7 @@ sidebar_label: Arnold
 ## Arnold Scene Source (.ass)
 Arnold Scene Source can be published as a single file or a sequence of files, determined by the frame range.
 
-When creating the instance, two objectsets are created; `content` and `proxy`. Meshes in the `proxy` objectset will be the viewport representation when loading as `standin`. Proxy representations are stored as `resources` of the subset.
+When creating the instance, two objectsets are created; `content` and `proxy`. Meshes in the `proxy` objectset will be the viewport representation when loading as `standin`.
 
 ### Arnold Scene Source Proxy Workflow
 In order to utilize operators and proxies, the content and proxy nodes need to share the same names (including the shape names). This is done by parenting the content and proxy nodes into separate groups. For example:
