@@ -594,7 +594,7 @@ class ExporterReview(object):
                                         Defaults to None.
             range (bool, optional): flag for adding ranges.
                                     Defaults to False.
-            custom_tags (list[str], optional): user inputed custom tags.
+            custom_tags (list[str], optional): user inputted custom tags.
                                                Defaults to None.
         """
         add_tags = tags or []
@@ -1110,7 +1110,7 @@ class AbstractWriteRender(OpenPypeCreator):
     def is_legacy(self):
         """Check if it needs to run legacy code
 
-        In case where `type` key is missing in singe
+        In case where `type` key is missing in single
         knob it is legacy project anatomy.
 
         Returns:
