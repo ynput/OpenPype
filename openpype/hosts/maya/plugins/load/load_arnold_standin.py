@@ -77,11 +77,12 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.parent(standin, root)
 
             # Set the standin filepath
+            repre_path = self.filepath_from_context(context)
             path, operator = self._setup_proxy(
-                standin_shape, self.fname, namespace
+                standin_shape, repre_path, namespace
             )
             cmds.setAttr(standin_shape + ".dso", path, type="string")
-            sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
+            sequence = is_sequence(os.listdir(os.path.dirname(repre_path)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
         nodes = [root, standin]
@@ -180,7 +181,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
         # Whether there is proxy or so, we still update the string operator.
-        # If no proxy exists, the string operator wont replace anything.
+        # If no proxy exists, the string operator won't replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
             "resources/" + proxy_basename,

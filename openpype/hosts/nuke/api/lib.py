@@ -148,7 +148,7 @@ def get_main_window():
 def set_node_data(node, knobname, data):
     """Write data to node invisible knob
 
-    Will create new in case it doesnt exists
+    Will create new in case it doesn't exists
     or update the one already created.
 
     Args:
@@ -506,7 +506,7 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
         try:
             # check if data available on the node
             test = node[AVALON_DATA_GROUP].value()
-            log.debug("Only testing if data avalable: `{}`".format(test))
+            log.debug("Only testing if data available: `{}`".format(test))
         except NameError as e:
             # if it doesn't then create it
             log.debug("Creating avalon knob: `{}`".format(e))
@@ -908,11 +908,11 @@ def get_view_process_node():
             continue
 
         if not ipn_node:
-            # in case a Viewer node is transfered from
+            # in case a Viewer node is transferred from
             # different workfile with old values
             raise NameError((
                 "Input process node name '{}' set in "
-                "Viewer '{}' is does't exists in nodes"
+                "Viewer '{}' is doesn't exists in nodes"
             ).format(ipn, v_.name()))
 
         ipn_node.setSelected(True)
@@ -1120,11 +1120,15 @@ def format_anatomy(data):
     anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    padding = int(
-        anatomy.templates["render"].get(
-            "frame_padding"
+    padding = None
+    if "frame_padding" in anatomy.templates.keys():
+        padding = int(anatomy.templates["frame_padding"])
+    elif "render" in anatomy.templates.keys():
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding"
+            )
         )
-    )
 
     version = data.get("version", None)
     if not version:
@@ -1662,7 +1666,7 @@ def create_write_node_legacy(
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
 
-    # overrie knob values from settings
+    # override knob values from settings
     for knob in knob_overrides:
         knob_type = knob["type"]
         knob_name = knob["name"]
@@ -2054,6 +2058,11 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value, dict):
                 continue
+
+            # ignore knobs that are not in root node
+            if knob not in self._root_node.knobs().keys():
+                continue
+
             if self._root_node[knob].value() not in value:
                 self._root_node[knob].setValue(str(value))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
@@ -2117,7 +2126,7 @@ class WorkfileSettings(object):
                     write_node[knob["name"]].setValue(value)
             except TypeError:
                 log.warning(
-                    "Legacy workflow didnt work, switching to current")
+                    "Legacy workflow didn't work, switching to current")
 
                 set_node_knobs_from_settings(
                     write_node, nuke_imageio_writes["knobs"])
@@ -2543,7 +2552,7 @@ def reset_selection():
 
 
 def select_nodes(nodes):
-    """Selects all inputed nodes
+    """Selects all inputted nodes
 
     Arguments:
         nodes (list): nuke nodes to be selected
@@ -2560,7 +2569,7 @@ def launch_workfiles_app():
     Trigger to show workfiles tool on application launch. Can be executed only
     once all other calls are ignored.
 
-    Workfiles tool show is deffered after application initialization using
+    Workfiles tool show is deferred after application initialization using
     QTimer.
     """
 
@@ -2581,7 +2590,7 @@ def launch_workfiles_app():
     # Show workfiles tool using timer
     # - this will be probably triggered during initialization in that case
     #   the application is not be able to show uis so it must be
-    #   deffered using timer
+    #   deferred using timer
     # - timer should be processed when initialization ends
     #       When applications starts to process events.
     timer = QtCore.QTimer()

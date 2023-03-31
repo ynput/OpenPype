@@ -133,6 +133,10 @@ else:
 vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
 sys.path.insert(0, vendor_python_path)
 
+# Add common package to sys path
+# - common contains common code for bootstraping and OpenPype processes
+sys.path.insert(0, os.path.join(OPENPYPE_ROOT, "common"))
+
 import blessed  # noqa: E402
 import certifi  # noqa: E402
 
@@ -196,6 +200,15 @@ if "--headless" in sys.argv:
     sys.argv.remove("--headless")
 elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
+
+# Set builtin ocio root
+os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
+    OPENPYPE_ROOT,
+    "vendor",
+    "bin",
+    "ocioconfig",
+    "OpenColorIOConfigs"
+)
 
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
@@ -349,8 +362,15 @@ def run_disk_mapping_commands(settings):
 
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
-        destination = destination.rstrip('/')
-        source = source.rstrip('/')
+        if low_platform == "windows":
+            destination = destination.replace("/", "\\").rstrip("\\")
+            source = source.replace("/", "\\").rstrip("\\")
+            # Add slash after ':' ('G:' -> 'G:\')
+            if destination.endswith(":"):
+                destination += "\\"
+        else:
+            destination = destination.rstrip("/")
+            source = source.rstrip("/")
 
         if low_platform == "darwin":
             scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
@@ -1030,7 +1050,7 @@ def boot():
 
     if "validate" in commands:
         _boot_validate_versions(use_version, local_version)
-        sys.exit(1)
+        sys.exit(0)
 
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
@@ -1040,7 +1060,7 @@ def boot():
 
     if "print_versions" in commands:
         _boot_print_versions(OPENPYPE_ROOT)
-        sys.exit(1)
+        sys.exit(0)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions

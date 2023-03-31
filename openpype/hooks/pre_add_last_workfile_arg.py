@@ -14,6 +14,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     # Execute after workfile template copy
     order = 10
     app_groups = [
+        "3dsmax",
         "maya",
         "nuke",
         "nukex",

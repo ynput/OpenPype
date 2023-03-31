@@ -5,8 +5,12 @@ import platform
 import json
 import tempfile
 
+from openpype import AYON_SERVER_ENABLED
+
 from .log import Logger
 from .vendor_bin_utils import find_executable
+
+from .openpype_version import is_running_from_build
 
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
@@ -102,6 +106,10 @@ def run_subprocess(*args, **kwargs):
     if (
         platform.system().lower() == "windows"
         and "creationflags" not in kwargs
+        # shell=True already tries to hide the console window
+        # and passing these creationflags then shows the window again
+        # so we avoid it for shell=True cases
+        and kwargs.get("shell") is not True
     ):
         kwargs["creationflags"] = (
             subprocess.CREATE_NEW_PROCESS_GROUP
@@ -157,7 +165,7 @@ def run_subprocess(*args, **kwargs):
 
 
 def clean_envs_for_openpype_process(env=None):
-    """Modify environemnts that may affect OpenPype process.
+    """Modify environments that may affect OpenPype process.
 
     Main reason to implement this function is to pop PYTHONPATH which may be
     affected by in-host environments.
@@ -196,6 +204,11 @@ def run_openpype_process(*args, **kwargs):
         # Skip envs that can affect OpenPype process
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
+
+    # Only keep OpenPype version if we are running from build.
+    if not is_running_from_build():
+        env.pop("OPENPYPE_VERSION", None)
+
     return run_subprocess(args, env=env, **kwargs)
 
 
@@ -308,19 +321,22 @@ def get_openpype_execute_args(*args):
     It is possible to pass any arguments that will be added after pype
     executables.
     """
-    pype_executable = os.environ["OPENPYPE_EXECUTABLE"]
-    pype_args = [pype_executable]
+    executable = os.environ["OPENPYPE_EXECUTABLE"]
+    launch_args = [executable]
 
-    executable_filename = os.path.basename(pype_executable)
+    executable_filename = os.path.basename(executable)
     if "python" in executable_filename.lower():
-        pype_args.append(
-            os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")
+        filename = "start.py"
+        if AYON_SERVER_ENABLED:
+            filename = "ayon_start.py"
+        launch_args.append(
+            os.path.join(os.environ["OPENPYPE_ROOT"], filename)
         )
 
     if args:
-        pype_args.extend(args)
+        launch_args.extend(args)
 
-    return pype_args
+    return launch_args
 
 
 def get_linux_launcher_args(*args):

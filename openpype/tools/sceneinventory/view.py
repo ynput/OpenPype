@@ -22,7 +22,6 @@ from openpype.pipeline import (
 )
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
-    get_progress_for_repre,
     iter_model_rows,
     format_version
 )
@@ -80,9 +79,16 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setStyleSheet("QTreeView {}")
 
     def _build_item_menu_for_selection(self, items, menu):
+
+        # Exclude items that are "NOT FOUND" since setting versions, updating
+        # and removal won't work for those items.
+        items = [item for item in items if not item.get("isNotFound")]
+
         if not items:
             return
 
+        # An item might not have a representation, for example when an item
+        # is listed as "NOT FOUND"
         repre_ids = {
             item["representation"]
             for item in items
@@ -375,7 +381,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if not repre_doc:
                 continue
 
-            progress = get_progress_for_repre(
+            progress = self.sync_server.get_progress_for_repre(
                 repre_doc,
                 active_site,
                 remote_site

@@ -129,7 +129,7 @@ class CacheModelLoader(plugin.AssetLoader):
             options: Additional settings dictionary
         """
 
-        libpath = self.fname
+        libpath = self.filepath_from_context(context)
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 

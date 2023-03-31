@@ -27,7 +27,6 @@ from openpype.modules import ModulesManager
 from .lib import (
     get_site_icons,
     walk_hierarchy,
-    get_progress_for_repre
 )
 
 
@@ -80,7 +79,7 @@ class InventoryModel(TreeModel):
                 project_name, remote_site
             )
 
-        # self.sync_server = sync_server
+        self.sync_server = sync_server
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
@@ -327,7 +326,7 @@ class InventoryModel(TreeModel):
                 project_name, repre_id
             )
             if not representation:
-                not_found["representation"].append(group_items)
+                not_found["representation"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
@@ -335,7 +334,7 @@ class InventoryModel(TreeModel):
                 project_name, representation["parent"]
             )
             if not version:
-                not_found["version"].append(group_items)
+                not_found["version"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
@@ -348,13 +347,13 @@ class InventoryModel(TreeModel):
 
             subset = get_subset_by_id(project_name, version["parent"])
             if not subset:
-                not_found["subset"].append(group_items)
+                not_found["subset"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
             asset = get_asset_by_id(project_name, subset["parent"])
             if not asset:
-                not_found["asset"].append(group_items)
+                not_found["asset"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
@@ -380,11 +379,11 @@ class InventoryModel(TreeModel):
 
             self.add_child(group_node, parent=parent)
 
-            for _group_items in group_items:
+            for item in group_items:
                 item_node = Item()
-                item_node["Name"] = ", ".join(
-                    [item["objectName"] for item in _group_items]
-                )
+                item_node.update(item)
+                item_node["Name"] = item.get("objectName", "NO NAME")
+                item_node["isNotFound"] = True
                 self.add_child(item_node, parent=group_node)
 
         for repre_id, group_dict in sorted(grouped.items()):
@@ -432,7 +431,7 @@ class InventoryModel(TreeModel):
             group_node["group"] = subset["data"].get("subsetGroup")
 
             if self.sync_enabled:
-                progress = get_progress_for_repre(
+                progress = self.sync_server.get_progress_for_repre(
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site

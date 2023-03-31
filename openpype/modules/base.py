@@ -12,8 +12,12 @@ import collections
 import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
-import six
 
+import six
+import appdirs
+import ayon_api
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -186,7 +190,11 @@ def get_dynamic_modules_dirs():
     Returns:
         list: Paths loaded from studio overrides.
     """
+
     output = []
+    if AYON_SERVER_ENABLED:
+        return output
+
     value = get_studio_system_settings_overrides()
     for key in ("modules", "addon_paths", platform.system().lower()):
         if key not in value:
@@ -299,6 +307,108 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
+def _get_ayon_addons_information():
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    return ayon_api.get_addons_info()["addons"]
+
+
+def _load_ayon_addons(openpype_modules, modules_key, log):
+    """Load AYON addons based on information from server.
+
+    This function should not trigger downloading of any addons but only use
+    what is already available on the machine (at least in first stages of
+    development).
+
+    Args:
+        openpype_modules (_ModuleClass): Module object where modules are
+            stored.
+        log (logging.Logger): Logger object.
+
+    Returns:
+        List[str]: List of v3 addons to skip to load because v4 alternative is
+            imported.
+    """
+
+    v3_addons_to_skip = []
+
+    addons_info = _get_ayon_addons_information()
+    if not addons_info:
+        return v3_addons_to_skip
+    addons_dir = os.path.join(
+        appdirs.user_data_dir("ayon", "ynput"),
+        "addons"
+    )
+    if not os.path.exists(addons_dir):
+        log.warning("Addons directory does not exists. Path \"{}\"".format(
+            addons_dir
+        ))
+        return v3_addons_to_skip
+
+    for addon_info in addons_info:
+        addon_name = addon_info["name"]
+        addon_version = addon_info.get("productionVersion")
+        if not addon_version:
+            continue
+
+        folder_name = "{}_{}".format(addon_name, addon_version)
+        addon_dir = os.path.join(addons_dir, folder_name)
+        if not os.path.exists(addon_dir):
+            log.warning((
+                "Directory for addon {} {} does not exists. Path \"{}\""
+            ).format(addon_name, addon_version, addon_dir))
+            continue
+
+        sys.path.insert(0, addon_dir)
+        imported_modules = []
+        for name in os.listdir(addon_dir):
+            path = os.path.join(addon_dir, name)
+            basename, ext = os.path.splitext(name)
+            is_dir = os.path.isdir(path)
+            is_py_file = ext.lower() == ".py"
+            if not is_py_file and not is_dir:
+                continue
+
+            try:
+                mod = __import__(basename, fromlist=("",))
+                imported_modules.append(mod)
+            except BaseException:
+                log.warning(
+                    "Failed to import \"{}\"".format(basename),
+                    exc_info=True
+                )
+
+        if not imported_modules:
+            log.warning("Addon {} {} has no content to import".format(
+                addon_name, addon_version
+            ))
+            continue
+
+        if len(imported_modules) == 1:
+            mod = imported_modules[0]
+            addon_alias = getattr(mod, "V3_ALIAS", None)
+            if not addon_alias:
+                addon_alias = addon_name
+            v3_addons_to_skip.append(addon_alias)
+            new_import_str = "{}.{}".format(modules_key, addon_alias)
+
+            sys.modules[new_import_str] = mod
+            setattr(openpype_modules, addon_alias, mod)
+
+        else:
+            log.info("More then one module was imported")
+
+    return v3_addons_to_skip
+
+
 def _load_modules():
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
@@ -307,6 +417,12 @@ def _load_modules():
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
     log = Logger.get_logger("ModulesLoader")
+
+    ignore_addon_names = []
+    if AYON_SERVER_ENABLED:
+        ignore_addon_names = _load_ayon_addons(
+            openpype_modules, modules_key, log
+        )
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -346,6 +462,9 @@ def _load_modules():
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
+
+            if basename in ignore_addon_names:
+                continue
 
             # Validations
             if os.path.isdir(fullpath):
@@ -472,7 +591,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environemnt variables.
+            env (dict): Current environment variables.
         """
 
         pass
@@ -622,7 +741,7 @@ class ModulesManager:
 
                 # Check if class is abstract (Developing purpose)
                 if inspect.isabstract(modules_item):
-                    # Find missing implementations by convetion on `abc` module
+                    # Find abstract attributes by convention on `abc` module
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
@@ -708,13 +827,13 @@ class ModulesManager:
         ]
 
     def collect_global_environments(self):
-        """Helper to collect global enviornment variabled from modules.
+        """Helper to collect global environment variabled from modules.
 
         Returns:
             dict: Global environment variables from enabled modules.
 
         Raises:
-            AssertionError: Gobal environment variables must be unique for
+            AssertionError: Global environment variables must be unique for
                 all modules.
         """
         module_envs = {}
@@ -1174,7 +1293,7 @@ class TrayModulesManager(ModulesManager):
 
 
 def get_module_settings_defs():
-    """Check loaded addons/modules for existence of thei settings definition.
+    """Check loaded addons/modules for existence of their settings definition.
 
     Check if OpenPype addon/module as python module has class that inherit
     from `ModuleSettingsDef` in python module variables (imported
@@ -1204,7 +1323,7 @@ def get_module_settings_defs():
                 continue
 
             if inspect.isabstract(attr):
-                # Find missing implementations by convetion on `abc` module
+                # Find missing implementations by convention on `abc` module
                 not_implemented = []
                 for attr_name in dir(attr):
                     attr = getattr(attr, attr_name, None)
@@ -1293,7 +1412,7 @@ class BaseModuleSettingsDef:
 
 
 class ModuleSettingsDef(BaseModuleSettingsDef):
-    """Settings definiton with separated system and procect settings parts.
+    """Settings definition with separated system and procect settings parts.
 
     Reduce conditions that must be checked and adds predefined methods for
     each case.

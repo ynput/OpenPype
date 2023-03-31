@@ -9,7 +9,8 @@ from openpype.hosts.max.api import lib
 class MaxSceneLoader(load.LoaderPlugin):
     """Max Scene Loader"""
 
-    families = ["camera"]
+    families = ["camera",
+                "maxScene"]
     representations = ["max"]
     order = -8
     icon = "code-fork"
@@ -17,7 +18,9 @@ class MaxSceneLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-        path = os.path.normpath(self.fname)
+
+        path = self.filepath_from_context(context)
+        path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
 
@@ -46,8 +49,7 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-
-        max_objects = self.get_container_children(node)
+        max_objects = node.Children
         for max_object in max_objects:
             max_object.source = path
 

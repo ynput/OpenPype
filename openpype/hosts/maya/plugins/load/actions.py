@@ -118,7 +118,7 @@ class ImportMayaLoader(load.LoaderPlugin):
             "clean_import",
             label="Clean import",
             default=False,
-            help="Should all occurences of cbId be purged?"
+            help="Should all occurrences of cbId be purged?"
         )
     ]
 
@@ -137,8 +137,9 @@ class ImportMayaLoader(load.LoaderPlugin):
             suffix="_",
         )
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
-            nodes = cmds.file(self.fname,
+            nodes = cmds.file(path,
                               i=True,
                               preserveReferences=True,
                               namespace=namespace,
