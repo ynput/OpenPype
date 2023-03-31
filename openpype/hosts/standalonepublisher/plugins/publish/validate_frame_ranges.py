@@ -29,7 +29,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                for pattern in self.skip_timelines_check):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
-        # TODO repace query with using 'instance.data["assetEntity"]'
+        # TODO replace query with using 'instance.data["assetEntity"]'
         asset_data = get_current_project_asset(instance.data["asset"])["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]

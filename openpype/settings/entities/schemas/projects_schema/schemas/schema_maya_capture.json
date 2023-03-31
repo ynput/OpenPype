@@ -48,7 +48,11 @@
                             "type": "label",
                             "label": "<b>Display Options</b>"
                         },
-
+                        {
+                            "type": "boolean",
+                            "key": "override_display",
+                            "label": "Override display options"
+                        },
                         {
                             "type": "color",
                             "key": "background",
@@ -66,8 +70,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "override_display",
-                            "label": "Override display options"
+                            "key": "displayGradient",
+                            "label": "Display background gradient"
                         }
                     ]
                 },

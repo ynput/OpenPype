@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -562,7 +562,7 @@ Object.defineProperty($.oNode.prototype, 'height', {
 
 
 /**
- * The list of oNodeLinks objects descibing the connections to the inport of this node, in order of inport.
+ * The list of oNodeLinks objects describing the connections to the inport of this node, in order of inport.
  * @name $.oNode#inLinks
  * @readonly
  * @deprecated returns $.oNodeLink instances but $.oLink is preferred. Use oNode.getInLinks() instead.
@@ -658,7 +658,7 @@ Object.defineProperty($.oNode.prototype, 'outPorts', {
 
 
 /**
- * The list of oNodeLinks objects descibing the connections to the outports of this node, in order of outport.
+ * The list of oNodeLinks objects describing the connections to the outports of this node, in order of outport.
  * @name $.oNode#outLinks
  * @readonly
  * @type {$.oNodeLink[]}
@@ -1666,7 +1666,7 @@ $.oNode.prototype.refreshAttributes = function( ){
  * It represents peg nodes in the scene.
  * @constructor
  * @augments   $.oNode
- * @classdesc  Peg Moudle Class
+ * @classdesc  Peg Module Class
  * @param   {string}         path                          Path to the node in the network.
  * @param   {oScene}         oSceneObject                  Access to the oScene object of the DOM.
  */
@@ -1886,7 +1886,7 @@ $.oDrawingNode.prototype.getDrawingAtFrame = function(frameNumber){
 
 
  /**
- * Gets the list of palettes containing colors used by a drawing node. This only gets palettes with the first occurence of the colors.
+ * Gets the list of palettes containing colors used by a drawing node. This only gets palettes with the first occurrence of the colors.
  * @return  {$.oPalette[]}   The palettes that contain the color IDs used by the drawings of the node.
  */
 $.oDrawingNode.prototype.getUsedPalettes = function(){
@@ -1968,7 +1968,7 @@ $.oDrawingNode.prototype.unlinkPalette = function(oPaletteObject){
  * Duplicates a node by creating an independent copy.
  * @param   {string}    [newName]              The new name for the duplicated node.
  * @param   {oPoint}    [newPosition]          The new position for the duplicated node.
- * @param   {bool}      [duplicateElement]     Wether to also duplicate the element.
+ * @param   {bool}      [duplicateElement]     Whether to also duplicate the element.
  */
 $.oDrawingNode.prototype.duplicate = function(newName, newPosition, duplicateElement){
   if (typeof newPosition === 'undefined') var newPosition = this.nodePosition;
@@ -2464,7 +2464,7 @@ $.oGroupNode.prototype.getNodeByName = function(name){
  * Returns all the nodes of a certain type in the group.
  * Pass a value to recurse to look into the groups as well.
  * @param   {string}        typeName      The type of the nodes.
- * @param   {bool}          recurse       Wether to look inside the groups.
+ * @param   {bool}          recurse       Whether to look inside the groups.
  *
  * @return  {$.oNode[]}     The nodes found.
  */
@@ -2626,7 +2626,7 @@ $.oGroupNode.prototype.orderNodeView = function(recurse){
  *
  * peg.linkOutNode(drawingNode);
  *
- * //through all this we didn't specify nodePosition parameters so we'll sort evertything at once
+ * //through all this we didn't specify nodePosition parameters so we'll sort everything at once
  *
  * sceneRoot.orderNodeView();
  *
@@ -3333,7 +3333,7 @@ $.oGroupNode.prototype.importImageAsTVG = function(path, alignment, nodePosition
  * imports an image sequence as a node into the current group.
  * @param {$.oFile[]} imagePaths           a list of paths to the images to import (can pass a list of strings or $.oFile)
  * @param {number}    [exposureLength=1]   the number of frames each drawing should be exposed at. If set to 0/false, each drawing will use the numbering suffix of the file to set its frame.
- * @param {boolean}   [convertToTvg=false] wether to convert the files to tvg during import
+ * @param {boolean}   [convertToTvg=false] whether to convert the files to tvg during import
  * @param {string}    [alignment="ASIS"]   the alignment to apply to the node
  * @param {$.oPoint}  [nodePosition]       the position of the node in the nodeview
  *
@@ -3346,7 +3346,7 @@ $.oGroupNode.prototype.importImageSequence = function(imagePaths, exposureLength
 
   if (typeof extendScene === 'undefined') var extendScene = false;
 
-  // match anything but capture trailing numbers and separates punctuation preceeding it
+  // match anything but capture trailing numbers and separates punctuation preceding it
   var numberingRe = /(.*?)([\W_]+)?(\d*)$/i;
 
   // sanitize imagePaths
