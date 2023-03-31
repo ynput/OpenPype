@@ -164,6 +164,11 @@ class BaseGroupWidget(QtWidgets.QWidget):
     def _on_widget_selection(self, instance_id, group_id, selection_type):
         self.selected.emit(instance_id, group_id, selection_type)
 
+    def set_active_toggle_enabled(self, enabled):
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceCardWidget):
+                widget.set_active_toggle_enabled(enabled)
+
 
 class ConvertorItemsGroupWidget(BaseGroupWidget):
     def update_items(self, items_by_id):
@@ -385,6 +390,7 @@ class InstanceCardWidget(CardWidget):
 
         self._last_subset_name = None
         self._last_variant = None
+        self._last_label = None
 
         icon_widget = IconValuePixmapLabel(group_icon, self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -436,6 +442,9 @@ class InstanceCardWidget(CardWidget):
 
         self.update_instance_values()
 
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
     def set_active(self, new_value):
         """Set instance as active."""
         checkbox_value = self._active_checkbox.isChecked()
@@ -462,14 +471,17 @@ class InstanceCardWidget(CardWidget):
     def _update_subset_name(self):
         variant = self.instance["variant"]
         subset_name = self.instance["subset"]
+        label = self.instance.label
         if (
             variant == self._last_variant
             and subset_name == self._last_subset_name
+            and label == self._last_label
         ):
             return
 
         self._last_variant = variant
         self._last_subset_name = subset_name
+        self._last_label = label
         # Make `variant` bold
         label = html_escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))
@@ -547,6 +559,7 @@ class InstanceCardView(AbstractInstanceView):
 
         self._context_widget = None
         self._convertor_items_group = None
+        self._active_toggle_enabled = True
         self._widgets_by_group = {}
         self._ordered_groups = []
 
@@ -662,6 +675,9 @@ class InstanceCardView(AbstractInstanceView):
             widget_idx += 1
             group_widget.update_instances(
                 instances_by_group[group_name]
+            )
+            group_widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
             )
 
         self._update_ordered_group_names()
@@ -1087,3 +1103,10 @@ class InstanceCardView(AbstractInstanceView):
 
         self._explicitly_selected_groups = selected_groups
         self._explicitly_selected_instance_ids = selected_instances
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+        self._active_toggle_enabled = enabled
+        for group_widget in self._widgets_by_group.values():
+            group_widget.set_active_toggle_enabled(enabled)

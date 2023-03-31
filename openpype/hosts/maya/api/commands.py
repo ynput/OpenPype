@@ -57,68 +57,6 @@ def edit_shader_definitions():
         window.show()
 
 
-def reset_frame_range():
-    """Set frame range to current asset"""
-    # Set FPS first
-    fps = {15: 'game',
-           24: 'film',
-           25: 'pal',
-           30: 'ntsc',
-           48: 'show',
-           50: 'palf',
-           60: 'ntscf',
-           23.98: '23.976fps',
-           23.976: '23.976fps',
-           29.97: '29.97fps',
-           47.952: '47.952fps',
-           47.95: '47.952fps',
-           59.94: '59.94fps',
-           44100: '44100fps',
-           48000: '48000fps'
-           }.get(float(legacy_io.Session.get("AVALON_FPS", 25)), "pal")
-
-    cmds.currentUnit(time=fps)
-
-    # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset = get_asset_by_name(project_name, asset_name)
-
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
-
-    if frame_start is None or frame_end is None:
-        cmds.warning("No edit information found for %s" % asset_name)
-        return
-
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
-
-    handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
-
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
-
-    cmds.playbackOptions(minTime=frame_start)
-    cmds.playbackOptions(maxTime=frame_end)
-    cmds.playbackOptions(animationStartTime=frame_start)
-    cmds.playbackOptions(animationEndTime=frame_end)
-    cmds.playbackOptions(minTime=frame_start)
-    cmds.playbackOptions(maxTime=frame_end)
-    cmds.currentTime(frame_start)
-
-    cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-    cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
-
-
 def _resolution_from_document(doc):
     if not doc or "data" not in doc:
         print("Entered document is not valid. \"{}\"".format(str(doc)))
@@ -131,7 +69,7 @@ def _resolution_from_document(doc):
         resolution_width = doc["data"].get("resolution_width")
         resolution_height = doc["data"].get("resolution_height")
 
-    # Make sure both width and heigh are set
+    # Make sure both width and height are set
     if resolution_width is None or resolution_height is None:
         cmds.warning(
             "No resolution information found for \"{}\"".format(doc["name"])

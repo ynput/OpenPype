@@ -267,12 +267,6 @@
                             "object_type": "text"
                         },
                         {
-                            "type": "list",
-                            "key": "representations",
-                            "label": "Representations",
-                            "object_type": "text"
-                        },
-                        {
                             "type": "text",
                             "key": "clip_name_template",
                             "label": "Clip name template"

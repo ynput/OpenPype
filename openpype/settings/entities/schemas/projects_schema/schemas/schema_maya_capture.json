@@ -19,12 +19,12 @@
                         {
                             "type": "text",
                             "key": "compression",
-                            "label": "Compression type"
+                            "label": "Encoding"
                         },
                         {
                             "type": "text",
                             "key": "format",
-                            "label": "Data format"
+                            "label": "Format"
                         },
                         {
                             "type": "number",
@@ -48,7 +48,11 @@
                             "type": "label",
                             "label": "<b>Display Options</b>"
                         },
-
+                        {
+                            "type": "boolean",
+                            "key": "override_display",
+                            "label": "Override display options"
+                        },
                         {
                             "type": "color",
                             "key": "background",
@@ -66,8 +70,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "override_display",
-                            "label": "Override display options"
+                            "key": "displayGradient",
+                            "label": "Display background gradient"
                         }
                     ]
                 },
@@ -91,6 +95,11 @@
                             "type": "boolean",
                             "key": "off_screen",
                             "label": "            Off Screen"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "pan_zoom",
+                            "label": "            2D Pan/Zoom"
                         }
                     ]
                 },
@@ -156,7 +165,7 @@
                         {
                             "type": "boolean",
                             "key": "override_viewport_options",
-                            "label": "override_viewport_options"
+                            "label": "Override Viewport Options"
                         },
                         {
                             "type": "enum",
@@ -183,6 +192,10 @@
                         },
                         {
                             "type": "splitter"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Display</b>"
                         },
                         {
                             "type":"boolean",
@@ -220,6 +233,31 @@
                         },
                         {
                             "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "useDefaultMaterial",
+                            "label": "Use Default Material"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "wireframeOnShaded",
+                            "label": "Wireframe On Shaded"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "xray",
+                            "label": "X-Ray"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "jointXray",
+                            "label": "X-Ray Joints"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "backfaceCulling",
+                            "label": "Backface Culling"
                         },
                         {
                             "type": "boolean",

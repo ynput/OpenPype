@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 import logging
 from typing import List
 from contextlib import contextmanager
 import semver
+import time
 
 import pyblish.api
 
@@ -16,13 +18,14 @@ from openpype.pipeline import (
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
-from openpype.host import HostBase, ILoadHost
+from openpype.host import HostBase, ILoadHost, IPublishHost
 
 import unreal  # noqa
 
-
 logger = logging.getLogger("openpype.hosts.unreal")
+
 OPENPYPE_CONTAINERS = "OpenPypeContainers"
+CONTEXT_CONTAINER = "OpenPype/context.json"
 UNREAL_VERSION = semver.VersionInfo(
     *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
 )
@@ -35,7 +38,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class UnrealHost(HostBase, ILoadHost):
+class UnrealHost(HostBase, ILoadHost, IPublishHost):
     """Unreal host implementation.
 
     For some time this class will re-use functions from module based
@@ -59,6 +62,32 @@ class UnrealHost(HostBase, ILoadHost):
         """Show tools dialog with actions leading to show other tools."""
 
         show_tools_dialog()
+
+    def update_context_data(self, data, changes):
+        content_path = unreal.Paths.project_content_dir()
+        op_ctx = content_path + CONTEXT_CONTAINER
+        attempts = 3
+        for i in range(attempts):
+            try:
+                with open(op_ctx, "w+") as f:
+                    json.dump(data, f)
+                break
+            except IOError:
+                if i == attempts - 1:
+                    raise Exception("Failed to write context data. Aborting.")
+                unreal.log_warning("Failed to write context data. Retrying...")
+                i += 1
+                time.sleep(3)
+                continue
+
+    def get_context_data(self):
+        content_path = unreal.Paths.project_content_dir()
+        op_ctx = content_path + CONTEXT_CONTAINER
+        if not os.path.isfile(op_ctx):
+            return {}
+        with open(op_ctx, "r") as fp:
+            data = json.load(fp)
+        return data
 
 
 def install():
@@ -125,6 +154,31 @@ def ls():
     # Asset Registry Project settings (and there is no way to set it with
     # python short of editing ini configuration file).
     for asset_data in openpype_containers:
+        asset = asset_data.get_asset()
+        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+        data["objectName"] = asset_data.asset_name
+        data = cast_map_to_str_dict(data)
+
+        yield data
+
+
+def ls_inst():
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    # UE 5.1 changed how class name is specified
+    class_name = [
+        "/Script/OpenPype",
+        "OpenPypePublishInstance"
+    ] if (
+            UNREAL_VERSION.major == 5
+            and UNREAL_VERSION.minor > 0
+    ) else "OpenPypePublishInstance"  # noqa
+    instances = ar.get_assets_by_class(class_name, True)
+
+    # get_asset_by_class returns AssetData. To get all metadata we need to
+    # load asset. get_tag_values() work only on metadata registered in
+    # Asset Registry Project settings (and there is no way to set it with
+    # python short of editing ini configuration file).
+    for asset_data in instances:
         asset = asset_data.get_asset()
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
@@ -252,7 +306,7 @@ def imprint(node, data):
 def show_tools_popup():
     """Show popup with tools.
 
-    Popup will disappear on click or loosing focus.
+    Popup will disappear on click or losing focus.
     """
     from openpype.hosts.unreal.api import tools_ui
 

@@ -193,7 +193,7 @@ class ImageCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = legacy_io.Session.get("AVALON_TASK")
+            instance_data["task"] = self.create_context.get_current_task_name()
 
         if not instance_data.get("variant"):
             instance_data["variant"] = ''

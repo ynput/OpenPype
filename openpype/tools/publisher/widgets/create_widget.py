@@ -457,13 +457,14 @@ class CreateWidget(QtWidgets.QWidget):
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
+                is_new = False
                 item = existing_items[identifier]
             else:
+                is_new = True
                 item = QtGui.QStandardItem()
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
-                self._creators_model.appendRow(item)
 
             item.setData(creator_item.label, QtCore.Qt.DisplayRole)
             item.setData(creator_item.show_order, CREATOR_SORT_ROLE)
@@ -473,6 +474,8 @@ class CreateWidget(QtWidgets.QWidget):
                 CREATOR_THUMBNAIL_ENABLED_ROLE
             )
             item.setData(creator_item.family, FAMILY_ROLE)
+            if is_new:
+                self._creators_model.appendRow(item)
 
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):

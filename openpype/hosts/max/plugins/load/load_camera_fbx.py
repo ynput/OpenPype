@@ -1,7 +1,10 @@
 import os
 from openpype.pipeline import (
-    load
+    load,
+    get_representation_path
 )
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api import lib
 
 
 class FbxLoader(load.LoaderPlugin):
@@ -36,14 +39,26 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         container_name = f"{name}_CON"
 
         asset = rt.getNodeByName(f"{name}")
-        # rename the container with "_CON"
-        container = rt.container(name=container_name)
-        asset.Parent = container
 
-        return container
+        return containerise(
+            name, [asset], context, loader=self.__class__.__name__)
+
+    def update(self, container, representation):
+        from pymxs import runtime as rt
+
+        path = get_representation_path(representation)
+        node = rt.getNodeByName(container["instance_node"])
+
+        fbx_objects = self.get_container_children(node)
+        for fbx_object in fbx_objects:
+            fbx_object.source = path
+
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = container["node"]
+        node = rt.getNodeByName(container["instance_node"])
         rt.delete(node)

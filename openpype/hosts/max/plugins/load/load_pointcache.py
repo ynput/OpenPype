@@ -80,7 +80,7 @@ importFile @"{file_path}" #noPrompt
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = container["node"]
+        node = rt.getNodeByName(container["instance_node"])
         rt.delete(node)
 
     @staticmethod

@@ -79,6 +79,10 @@ class SubsetConvertorPlugin(object):
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
+    @property
+    def host(self):
+        return self._create_context.host
+
     @abstractproperty
     def identifier(self):
         """Converted identifier.
@@ -153,6 +157,12 @@ class BaseCreator:
     Single object should be used for multiple instances instead of single
     instance per one creator object. Do not store temp data or mid-process data
     to `self` if it's not Plugin specific.
+
+    Args:
+        project_settings (Dict[str, Any]): Project settings.
+        system_settings (Dict[str, Any]): System settings.
+        create_context (CreateContext): Context which initialized creator.
+        headless (bool): Running in headless mode.
     """
 
     # Label shown in UI
@@ -605,12 +615,12 @@ class AutoCreator(BaseCreator):
         pass
 
 
-def discover_creator_plugins():
-    return discover(BaseCreator)
+def discover_creator_plugins(*args, **kwargs):
+    return discover(BaseCreator, *args, **kwargs)
 
 
-def discover_convertor_plugins():
-    return discover(SubsetConvertorPlugin)
+def discover_convertor_plugins(*args, **kwargs):
+    return discover(SubsetConvertorPlugin, *args, **kwargs)
 
 
 def discover_legacy_creator_plugins():

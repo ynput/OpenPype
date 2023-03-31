@@ -1,7 +1,10 @@
 import json
 
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
 from openpype.hosts.tvpaint.api.lib import execute_george
 
 
@@ -23,7 +26,10 @@ class ValidateMarksRepair(pyblish.api.Action):
         )
 
 
-class ValidateMarks(pyblish.api.ContextPlugin):
+class ValidateMarks(
+    OptionalPyblishPluginMixin,
+    pyblish.api.ContextPlugin
+):
     """Validate mark in and out are enabled and it's duration.
 
     Mark In/Out does not have to match frameStart and frameEnd but duration is
@@ -59,6 +65,9 @@ class ValidateMarks(pyblish.api.ContextPlugin):
         }
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
+
         current_data = {
             "markIn": context.data["sceneMarkIn"],
             "markInState": context.data["sceneMarkInState"],

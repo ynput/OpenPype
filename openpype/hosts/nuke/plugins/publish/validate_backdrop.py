@@ -48,7 +48,7 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
 
 class ValidateBackdrop(pyblish.api.InstancePlugin):
     """ Validate amount of nodes on backdrop node in case user
-    forgoten to add nodes above the publishing backdrop node.
+    forgotten to add nodes above the publishing backdrop node.
     """
 
     order = pyblish.api.ValidatorOrder

@@ -8,7 +8,10 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
-from openpype.client import get_assets
+import pyblish.logic
+import pyblish.api
+
+from openpype.client import get_assets, get_asset_by_name
 from openpype.settings import (
     get_system_settings,
     get_project_settings
@@ -17,13 +20,11 @@ from openpype.lib.attribute_definitions import (
     UnknownDef,
     serialize_attr_defs,
     deserialize_attr_defs,
+    get_default_values,
 )
-from openpype.host import IPublishHost
+from openpype.host import IPublishHost, IWorkfileHost
 from openpype.pipeline import legacy_io
-from openpype.pipeline.mongodb import (
-    AvalonMongoDB,
-    session_data_from_environment,
-)
+from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
     Creator,
@@ -1338,8 +1339,6 @@ class CreateContext:
     Args:
         host(ModuleType): Host implementation which handles implementation and
             global metadata.
-        dbcon(AvalonMongoDB): Connection to mongo with context (at least
-            project).
         headless(bool): Context is created out of UI (Current not used).
         reset(bool): Reset context on initialization.
         discover_publish_plugins(bool): Discover publish plugins during reset
@@ -1347,16 +1346,8 @@ class CreateContext:
     """
 
     def __init__(
-        self, host, dbcon=None, headless=False, reset=True,
-        discover_publish_plugins=True
+        self, host, headless=False, reset=True, discover_publish_plugins=True
     ):
-        # Create conncetion if is not passed
-        if dbcon is None:
-            session = session_data_from_environment(True)
-            dbcon = AvalonMongoDB(session)
-            dbcon.install()
-
-        self.dbcon = dbcon
         self.host = host
 
         # Prepare attribute for logger (Created on demand in `log` property)
@@ -1380,6 +1371,11 @@ class CreateContext:
                 " Missing methods: {}"
             ).format(joined_methods))
 
+        self._current_project_name = None
+        self._current_asset_name = None
+        self._current_task_name = None
+        self._current_workfile_path = None
+
         self._host_is_valid = host_is_valid
         # Currently unused variable
         self.headless = headless
@@ -1387,12 +1383,16 @@ class CreateContext:
         # Instances by their ID
         self._instances_by_id = {}
 
+        self.creator_discover_result = None
+        self.convertor_discover_result = None
         # Discovered creators
         self.creators = {}
         # Prepare categories of creators
         self.autocreators = {}
         # Manual creators
         self.manual_creators = {}
+        # Creators that are disabled
+        self.disabled_creators = {}
 
         self.convertors_plugins = {}
         self.convertor_items_by_id = {}
@@ -1499,11 +1499,68 @@ class CreateContext:
 
     @property
     def host_name(self):
+        if hasattr(self.host, "name"):
+            return self.host.name
         return os.environ["AVALON_APP"]
 
+    def get_current_project_name(self):
+        """Project name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Project name.
+        """
+
+        return self._current_project_name
+
+    def get_current_asset_name(self):
+        """Asset name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Asset name.
+        """
+
+        return self._current_asset_name
+
+    def get_current_task_name(self):
+        """Task name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Task name.
+        """
+
+        return self._current_task_name
+
+    def get_current_workfile_path(self):
+        """Workfile path which was opened on context reset.
+
+        Returns:
+            Union[str, None]: Workfile path.
+        """
+
+        return self._current_workfile_path
+
     @property
-    def project_name(self):
-        return self.dbcon.active_project()
+    def context_has_changed(self):
+        """Host context has changed.
+
+        As context is used project, asset, task name and workfile path if
+        host does support workfiles.
+
+        Returns:
+            bool: Context changed.
+        """
+
+        project_name, asset_name, task_name, workfile_path = (
+            self._get_current_host_context()
+        )
+        return (
+            self._current_project_name != project_name
+            or self._current_asset_name != asset_name
+            or self._current_task_name != task_name
+            or self._current_workfile_path != workfile_path
+        )
+
+    project_name = property(get_current_project_name)
 
     @property
     def log(self):
@@ -1520,7 +1577,7 @@ class CreateContext:
 
         self.reset_preparation()
 
-        self.reset_avalon_context()
+        self.reset_current_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
@@ -1567,17 +1624,8 @@ class CreateContext:
         self._collection_shared_data = None
         self.refresh_thumbnails()
 
-    def reset_avalon_context(self):
-        """Give ability to reset avalon context.
-
-        Reset is based on optional host implementation of `get_current_context`
-        function or using `legacy_io.Session`.
-
-        Some hosts have ability to change context file without using workfiles
-        tool but that change is not propagated to
-        """
-
-        project_name = asset_name = task_name = None
+    def _get_current_host_context(self):
+        project_name = asset_name = task_name = workfile_path = None
         if hasattr(self.host, "get_current_context"):
             host_context = self.host.get_current_context()
             if host_context:
@@ -1585,19 +1633,45 @@ class CreateContext:
                 asset_name = host_context.get("asset_name")
                 task_name = host_context.get("task_name")
 
+        if isinstance(self.host, IWorkfileHost):
+            workfile_path = self.host.get_current_workfile()
+
+        # --- TODO remove these conditions ---
         if not project_name:
             project_name = legacy_io.Session.get("AVALON_PROJECT")
         if not asset_name:
             asset_name = legacy_io.Session.get("AVALON_ASSET")
         if not task_name:
             task_name = legacy_io.Session.get("AVALON_TASK")
+        # ---
+        return project_name, asset_name, task_name, workfile_path
 
-        if project_name:
-            self.dbcon.Session["AVALON_PROJECT"] = project_name
-        if asset_name:
-            self.dbcon.Session["AVALON_ASSET"] = asset_name
-        if task_name:
-            self.dbcon.Session["AVALON_TASK"] = task_name
+    def reset_current_context(self):
+        """Refresh current context.
+
+        Reset is based on optional host implementation of `get_current_context`
+        function or using `legacy_io.Session`.
+
+        Some hosts have ability to change context file without using workfiles
+        tool but that change is not propagated to 'legacy_io.Session'
+        nor 'os.environ'.
+
+        Todos:
+            UI: Current context should be also checked on save - compare
+                initial values vs. current values.
+            Related to UI checks: Current workfile can be also considered
+                as current context information as that's where the metadata
+                are stored. We should store the workfile (if is available) too.
+        """
+
+        project_name, asset_name, task_name, workfile_path = (
+            self._get_current_host_context()
+        )
+
+        self._current_project_name = project_name
+        self._current_asset_name = asset_name
+        self._current_task_name = task_name
+        self._current_workfile_path = workfile_path
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.
@@ -1611,18 +1685,15 @@ class CreateContext:
         self._reset_convertor_plugins()
 
     def _reset_publish_plugins(self, discover_publish_plugins):
-        import pyblish.logic
-
         from openpype.pipeline import OpenPypePyblishPluginMixin
         from openpype.pipeline.publish import (
-            publish_plugins_discover,
-            DiscoverResult
+            publish_plugins_discover
         )
 
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
-        discover_result = DiscoverResult()
+        discover_result = DiscoverResult(pyblish.api.Plugin)
         plugins_with_defs = []
         plugins_by_targets = []
         plugins_mismatch_targets = []
@@ -1659,9 +1730,12 @@ class CreateContext:
 
         # Discover and prepare creators
         creators = {}
+        disabled_creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in discover_creator_plugins():
+        report = discover_creator_plugins(return_report=True)
+        self.creator_discover_result = report
+        for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -1693,6 +1767,9 @@ class CreateContext:
                 self,
                 self.headless
             )
+            if not creator.enabled:
+                disabled_creators[creator_identifier] = creator
+                continue
             creators[creator_identifier] = creator
             if isinstance(creator, AutoCreator):
                 autocreators[creator_identifier] = creator
@@ -1703,10 +1780,13 @@ class CreateContext:
         self.manual_creators = manual_creators
 
         self.creators = creators
+        self.disabled_creators = disabled_creators
 
     def _reset_convertor_plugins(self):
         convertors_plugins = {}
-        for convertor_class in discover_convertor_plugins():
+        report = discover_convertor_plugins(return_report=True)
+        self.convertor_discover_result = report
+        for convertor_class in report.plugins:
             if inspect.isabstract(convertor_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(convertor_class))
@@ -1792,40 +1872,128 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
-    def create(self, identifier, *args, **kwargs):
-        """Wrapper for creators to trigger created.
+    def _get_creator_in_create(self, identifier):
+        """Creator by identifier with unified error.
 
-        Different types of creators may expect different arguments thus the
-        hints for args are blind.
+        Helper method to get creator by identifier with same error when creator
+        is not available.
 
         Args:
-            identifier (str): Creator's identifier.
-            *args (Tuple[Any]): Arguments for create method.
-            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+            identifier (str): Identifier of creator plugin.
+
+        Returns:
+            BaseCreator: Creator found by identifier.
+
+        Raises:
+            CreatorError: When identifier is not known.
         """
 
-        error_message = "Failed to run Creator with identifier \"{}\". {}"
         creator = self.creators.get(identifier)
-        label = getattr(creator, "label", None)
-        failed = False
-        add_traceback = False
-        exc_info = None
-        try:
-            # Fake CreatorError (Could be maybe specific exception?)
-            if creator is None:
+        # Fake CreatorError (Could be maybe specific exception?)
+        if creator is None:
+            raise CreatorError(
+                "Creator {} was not found".format(identifier)
+            )
+        return creator
+
+    def create(
+        self,
+        creator_identifier,
+        variant,
+        asset_doc=None,
+        task_name=None,
+        pre_create_data=None
+    ):
+        """Trigger create of plugins with standartized arguments.
+
+        Arguments 'asset_doc' and 'task_name' use current context as default
+        values. If only 'task_name' is provided it will be overriden by
+        task name from current context. If 'task_name' is not provided
+        when 'asset_doc' is, it is considered that task name is not specified,
+        which can lead to error if subset name template requires task name.
+
+        Args:
+            creator_identifier (str): Identifier of creator plugin.
+            variant (str): Variant used for subset name.
+            asset_doc (Dict[str, Any]): Asset document which define context of
+                creation (possible context of created instance/s).
+            task_name (str): Name of task to which is context related.
+            pre_create_data (Dict[str, Any]): Pre-create attribute values.
+
+        Returns:
+            Any: Output of triggered creator's 'create' method.
+
+        Raises:
+            CreatorError: If creator was not found or asset is empty.
+        """
+
+        creator = self._get_creator_in_create(creator_identifier)
+
+        project_name = self.project_name
+        if asset_doc is None:
+            asset_name = self.get_current_asset_name()
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            task_name = self.get_current_task_name()
+            if asset_doc is None:
                 raise CreatorError(
-                    "Creator {} was not found".format(identifier)
+                    "Asset with name {} was not found".format(asset_name)
                 )
 
-            creator.create(*args, **kwargs)
+        if pre_create_data is None:
+            pre_create_data = {}
+
+        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        # Create default values of precreate data
+        _pre_create_data = get_default_values(precreate_attr_defs)
+        # Update passed precreate data to default values
+        # TODO validate types
+        _pre_create_data.update(pre_create_data)
+
+        subset_name = creator.get_subset_name(
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            self.host_name
+        )
+        instance_data = {
+            "asset": asset_doc["name"],
+            "task": task_name,
+            "family": creator.family,
+            "variant": variant
+        }
+        return creator.create(
+            subset_name,
+            instance_data,
+            _pre_create_data
+        )
+
+    def _create_with_unified_error(
+        self, identifier, creator, *args, **kwargs
+    ):
+        error_message = "Failed to run Creator with identifier \"{}\". {}"
+
+        label = None
+        add_traceback = False
+        result = None
+        fail_info = None
+        success = False
+
+        try:
+            # Try to get creator and his label
+            if creator is None:
+                creator = self._get_creator_in_create(identifier)
+            label = getattr(creator, "label", label)
+
+            # Run create
+            result = creator.create(*args, **kwargs)
+            success = True
 
         except CreatorError:
-            failed = True
             exc_info = sys.exc_info()
             self.log.warning(error_message.format(identifier, exc_info[1]))
 
         except:
-            failed = True
             add_traceback = True
             exc_info = sys.exc_info()
             self.log.warning(
@@ -1833,12 +2001,35 @@ class CreateContext:
                 exc_info=True
             )
 
-        if failed:
-            raise CreatorsCreateFailed([
-                prepare_failed_creator_operation_info(
-                    identifier, label, exc_info, add_traceback
-                )
-            ])
+        if not success:
+            fail_info = prepare_failed_creator_operation_info(
+                identifier, label, exc_info, add_traceback
+            )
+        return result, fail_info
+
+    def create_with_unified_error(self, identifier, *args, **kwargs):
+        """Trigger create but raise only one error if anything fails.
+
+        Added to raise unified exception. Capture any possible issues and
+        reraise it with unified information.
+
+        Args:
+            identifier (str): Identifier of creator.
+            *args (Tuple[Any]): Arguments for create method.
+            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+
+        Raises:
+            CreatorsCreateFailed: When creation fails due to any possible
+                reason. If anything goes wrong this is only possible exception
+                the method should raise.
+        """
+
+        result, fail_info = self._create_with_unified_error(
+            identifier, None, *args, **kwargs
+        )
+        if fail_info is not None:
+            raise CreatorsCreateFailed([fail_info])
+        return result
 
     def _remove_instance(self, instance):
         self._instances_by_id.pop(instance.id, None)
@@ -1968,38 +2159,12 @@ class CreateContext:
         Reset instances if any autocreator executed properly.
         """
 
-        error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
         failed_info = []
         for creator in self.sorted_autocreators:
             identifier = creator.identifier
-            label = creator.label
-            failed = False
-            add_traceback = False
-            try:
-                creator.create()
-
-            except CreatorError:
-                failed = True
-                exc_info = sys.exc_info()
-                self.log.warning(error_message.format(identifier, exc_info[1]))
-
-            # Use bare except because some hosts raise their exceptions that
-            #   do not inherit from python's `BaseException`
-            except:
-                failed = True
-                add_traceback = True
-                exc_info = sys.exc_info()
-                self.log.warning(
-                    error_message.format(identifier, ""),
-                    exc_info=True
-                )
-
-            if failed:
-                failed_info.append(
-                    prepare_failed_creator_operation_info(
-                        identifier, label, exc_info, add_traceback
-                    )
-                )
+            _, fail_info = self._create_with_unified_error(identifier, creator)
+            if fail_info is not None:
+                failed_info.append(fail_info)
 
         if failed_info:
             raise CreatorsCreateFailed(failed_info)

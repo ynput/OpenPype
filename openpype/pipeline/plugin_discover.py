@@ -135,11 +135,12 @@ class PluginDiscoverContext(object):
             allow_duplicates (bool): Validate class name duplications.
             ignore_classes (list): List of classes that will be ignored
                 and not added to result.
+            return_report (bool): Output will be full report if set to 'True'.
 
         Returns:
-            DiscoverResult: Object holding succesfully discovered plugins,
-                ignored plugins, plugins with missing abstract implementation
-                and duplicated plugin.
+            Union[DiscoverResult, list[Any]]: Object holding successfully
+                discovered plugins, ignored plugins, plugins with missing
+                abstract implementation and duplicated plugin.
         """
 
         if not ignore_classes:
@@ -268,9 +269,34 @@ class _GlobalDiscover:
         return cls._context
 
 
-def discover(superclass, allow_duplicates=True):
+def discover(
+    superclass,
+    allow_duplicates=True,
+    ignore_classes=None,
+    return_report=False
+):
+    """Find and return subclasses of `superclass`
+
+    Args:
+        superclass (type): Class which determines discovered subclasses.
+        allow_duplicates (bool): Validate class name duplications.
+        ignore_classes (list): List of classes that will be ignored
+            and not added to result.
+        return_report (bool): Output will be full report if set to 'True'.
+
+    Returns:
+        Union[DiscoverResult, list[Any]]: Object holding successfully
+            discovered plugins, ignored plugins, plugins with missing
+            abstract implementation and duplicated plugin.
+    """
+
     context = _GlobalDiscover.get_context()
-    return context.discover(superclass, allow_duplicates)
+    return context.discover(
+        superclass,
+        allow_duplicates,
+        ignore_classes,
+        return_report
+    )
 
 
 def get_last_discovered_plugins(superclass):

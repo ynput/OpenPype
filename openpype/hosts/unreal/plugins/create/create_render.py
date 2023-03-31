@@ -1,117 +1,138 @@
+# -*- coding: utf-8 -*-
 import unreal
 
-from openpype.hosts.unreal.api import pipeline
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import CreatorError
+from openpype.hosts.unreal.api.pipeline import (
+    get_subsequences
+)
+from openpype.hosts.unreal.api.plugin import (
+    UnrealAssetCreator
+)
+from openpype.lib import UILabelDef
 
 
-class CreateRender(LegacyCreator):
+class CreateRender(UnrealAssetCreator):
     """Create instance for sequence for rendering"""
 
-    name = "unrealRender"
-    label = "Unreal - Render"
+    identifier = "io.openpype.creators.unreal.render"
+    label = "Render"
     family = "render"
-    icon = "cube"
-    asset_types = ["LevelSequence"]
+    icon = "eye"
 
-    root = "/Game/OpenPype/PublishInstances"
-    suffix = "_INS"
-
-    def process(self):
-        subset = self.data["subset"]
-
+    def create(self, subset_name, instance_data, pre_create_data):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        # The asset name is the the third element of the path which contains
-        # the map.
-        # The index of the split path is 3 because the first element is an
-        # empty string, as the path begins with "/Content".
-        a = unreal.EditorUtilityLibrary.get_selected_assets()[0]
-        asset_name = a.get_path_name().split("/")[3]
+        sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+        selection = [
+            a.get_path_name() for a in sel_objects
+            if a.get_class().get_name() == "LevelSequence"]
 
-        # Get the master sequence and the master level.
-        # There should be only one sequence and one level in the directory.
-        filter = unreal.ARFilter(
-            class_names=["LevelSequence"],
-            package_paths=[f"/Game/OpenPype/{asset_name}"],
-            recursive_paths=False)
-        sequences = ar.get_assets(filter)
-        ms = sequences[0].get_editor_property('object_path')
-        filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=[f"/Game/OpenPype/{asset_name}"],
-            recursive_paths=False)
-        levels = ar.get_assets(filter)
-        ml = levels[0].get_editor_property('object_path')
+        if not selection:
+            raise CreatorError("Please select at least one Level Sequence.")
 
-        selection = []
-        if (self.options or {}).get("useSelection"):
-            sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
-            selection = [
-                a.get_path_name() for a in sel_objects
-                if a.get_class().get_name() in self.asset_types]
-        else:
-            selection.append(self.data['sequence'])
+        seq_data = None
 
-        unreal.log(f"selection: {selection}")
+        for sel in selection:
+            selected_asset = ar.get_asset_by_object_path(sel).get_asset()
+            selected_asset_path = selected_asset.get_path_name()
 
-        path = f"{self.root}"
-        unreal.EditorAssetLibrary.make_directory(path)
+            # Check if the selected asset is a level sequence asset.
+            if selected_asset.get_class().get_name() != "LevelSequence":
+                unreal.log_warning(
+                    f"Skipping {selected_asset.get_name()}. It isn't a Level "
+                    "Sequence.")
 
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+            # The asset name is the third element of the path which
+            # contains the map.
+            # To take the asset name, we remove from the path the prefix
+            # "/Game/OpenPype/" and then we split the path by "/".
+            sel_path = selected_asset_path
+            asset_name = sel_path.replace("/Game/OpenPype/", "").split("/")[0]
 
-        for a in selection:
-            ms_obj = ar.get_asset_by_object_path(ms).get_asset()
+            # Get the master sequence and the master level.
+            # There should be only one sequence and one level in the directory.
+            ar_filter = unreal.ARFilter(
+                class_names=["LevelSequence"],
+                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                recursive_paths=False)
+            sequences = ar.get_assets(ar_filter)
+            master_seq = sequences[0].get_asset().get_path_name()
+            master_seq_obj = sequences[0].get_asset()
+            ar_filter = unreal.ARFilter(
+                class_names=["World"],
+                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                recursive_paths=False)
+            levels = ar.get_assets(ar_filter)
+            master_lvl = levels[0].get_asset().get_path_name()
 
-            seq_data = None
+            # If the selected asset is the master sequence, we get its data
+            # and then we create the instance for the master sequence.
+            # Otherwise, we cycle from the master sequence to find the selected
+            # sequence and we get its data. This data will be used to create
+            # the instance for the selected sequence. In particular,
+            # we get the frame range of the selected sequence and its final
+            # output path.
+            master_seq_data = {
+                "sequence": master_seq_obj,
+                "output": f"{master_seq_obj.get_name()}",
+                "frame_range": (
+                    master_seq_obj.get_playback_start(),
+                    master_seq_obj.get_playback_end())}
 
-            if a == ms:
-                seq_data = {
-                    "sequence": ms_obj,
-                    "output": f"{ms_obj.get_name()}",
-                    "frame_range": (
-                        ms_obj.get_playback_start(), ms_obj.get_playback_end())
-                }
+            if selected_asset_path == master_seq:
+                seq_data = master_seq_data
             else:
-                seq_data_list = [{
-                    "sequence": ms_obj,
-                    "output": f"{ms_obj.get_name()}",
-                    "frame_range": (
-                        ms_obj.get_playback_start(), ms_obj.get_playback_end())
-                }]
+                seq_data_list = [master_seq_data]
 
-                for s in seq_data_list:
-                    subscenes = pipeline.get_subsequences(s.get('sequence'))
+                for seq in seq_data_list:
+                    subscenes = get_subsequences(seq.get('sequence'))
 
-                    for ss in subscenes:
+                    for sub_seq in subscenes:
+                        sub_seq_obj = sub_seq.get_sequence()
                         curr_data = {
-                            "sequence": ss.get_sequence(),
-                            "output": (f"{s.get('output')}/"
-                                       f"{ss.get_sequence().get_name()}"),
+                            "sequence": sub_seq_obj,
+                            "output": (f"{seq.get('output')}/"
+                                       f"{sub_seq_obj.get_name()}"),
                             "frame_range": (
-                                ss.get_start_frame(), ss.get_end_frame() - 1)
-                        }
+                                sub_seq.get_start_frame(),
+                                sub_seq.get_end_frame() - 1)}
 
-                        if ss.get_sequence().get_path_name() == a:
+                        # If the selected asset is the current sub-sequence,
+                        # we get its data and we break the loop.
+                        # Otherwise, we add the current sub-sequence data to
+                        # the list of sequences to check.
+                        if sub_seq_obj.get_path_name() == selected_asset_path:
                             seq_data = curr_data
                             break
+
                         seq_data_list.append(curr_data)
 
+                    # If we found the selected asset, we break the loop.
                     if seq_data is not None:
                         break
 
+            # If we didn't find the selected asset, we don't create the
+            # instance.
             if not seq_data:
+                unreal.log_warning(
+                    f"Skipping {selected_asset.get_name()}. It isn't a "
+                    "sub-sequence of the master sequence.")
                 continue
 
-            d = self.data.copy()
-            d["members"] = [a]
-            d["sequence"] = a
-            d["master_sequence"] = ms
-            d["master_level"] = ml
-            d["output"] = seq_data.get('output')
-            d["frameStart"] = seq_data.get('frame_range')[0]
-            d["frameEnd"] = seq_data.get('frame_range')[1]
+            instance_data["members"] = [selected_asset_path]
+            instance_data["sequence"] = selected_asset_path
+            instance_data["master_sequence"] = master_seq
+            instance_data["master_level"] = master_lvl
+            instance_data["output"] = seq_data.get('output')
+            instance_data["frameStart"] = seq_data.get('frame_range')[0]
+            instance_data["frameEnd"] = seq_data.get('frame_range')[1]
 
-            container_name = f"{subset}{self.suffix}"
-            pipeline.create_publish_instance(
-                instance=container_name, path=path)
-            pipeline.imprint(f"{path}/{container_name}", d)
+            super(CreateRender, self).create(
+                subset_name,
+                instance_data,
+                pre_create_data)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            UILabelDef("Select the sequence to render.")
+        ]

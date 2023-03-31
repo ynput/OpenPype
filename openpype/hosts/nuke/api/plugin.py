@@ -239,7 +239,11 @@ class NukeCreator(NewCreator):
 
     def get_pre_create_attr_defs(self):
         return [
-            BoolDef("use_selection", label="Use selection")
+            BoolDef(
+                "use_selection",
+                default=not self.create_context.headless,
+                label="Use selection"
+            )
         ]
 
     def get_creator_settings(self, project_settings, settings_key=None):
@@ -558,9 +562,7 @@ class ExporterReview(object):
         self.path_in = self.instance.data.get("path", None)
         self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
-        self.data = dict({
-            "representations": list()
-        })
+        self.data = {"representations": []}
 
     def get_file_info(self):
         if self.collection:
@@ -592,7 +594,7 @@ class ExporterReview(object):
                                         Defaults to None.
             range (bool, optional): flag for adding ranges.
                                     Defaults to False.
-            custom_tags (list[str], optional): user inputed custom tags.
+            custom_tags (list[str], optional): user inputted custom tags.
                                                Defaults to None.
         """
         add_tags = tags or []
@@ -626,7 +628,7 @@ class ExporterReview(object):
         nuke_imageio = opnlib.get_nuke_imageio_settings()
 
         # TODO: this is only securing backward compatibility lets remove
-        # this once all projects's anotomy are updated to newer config
+        # this once all projects's anatomy are updated to newer config
         if "baking" in nuke_imageio.keys():
             return nuke_imageio["baking"]["viewerProcess"]
         else:
@@ -823,8 +825,41 @@ class ExporterReviewMov(ExporterReview):
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
+
+        # TODO: remove this when `reformat_nodes_config`
+        # is changed in settings
         reformat_node_add = kwargs["reformat_node_add"]
         reformat_node_config = kwargs["reformat_node_config"]
+
+        # TODO: make this required in future
+        reformat_nodes_config = kwargs.get("reformat_nodes_config", {})
+
+        # TODO: remove this once deprecated is removed
+        # make sure only reformat_nodes_config is used in future
+        if reformat_node_add and reformat_nodes_config.get("enabled"):
+            self.log.warning(
+                "`reformat_node_add` is deprecated. "
+                "Please use only `reformat_nodes_config` instead.")
+            reformat_nodes_config = None
+
+        # TODO: reformat code when backward compatibility is not needed
+        # warning if reformat_nodes_config is not set
+        if not reformat_nodes_config:
+            self.log.warning(
+                "Please set `reformat_nodes_config` in settings. "
+                "Using `reformat_node_config` instead."
+            )
+            reformat_nodes_config = {
+                "enabled": reformat_node_add,
+                "reposition_nodes": [
+                    {
+                        "node_class": "Reformat",
+                        "knobs": reformat_node_config
+                    }
+                ]
+            }
+
+
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -846,7 +881,6 @@ class ExporterReviewMov(ExporterReview):
 
         subset = self.instance.data["subset"]
         self._temp_nodes[subset] = []
-        # ---------- start nodes creation
 
         # Read node
         r_node = nuke.createNode("Read")
@@ -860,25 +894,24 @@ class ExporterReviewMov(ExporterReview):
         if read_raw:
             r_node["raw"].setValue(1)
 
-        # connect
-        self._temp_nodes[subset].append(r_node)
-        self.previous_node = r_node
-        self.log.debug("Read...   `{}`".format(self._temp_nodes[subset]))
+        # connect to Read node
+        self._shift_to_previous_node_and_temp(subset, r_node, "Read...   `{}`")
 
         # add reformat node
-        if reformat_node_add:
+        if reformat_nodes_config["enabled"]:
+            reposition_nodes = reformat_nodes_config["reposition_nodes"]
+            for reposition_node in reposition_nodes:
+                node_class = reposition_node["node_class"]
+                knobs = reposition_node["knobs"]
+                node = nuke.createNode(node_class)
+                set_node_knobs_from_settings(node, knobs)
+
+                # connect in order
+                self._connect_to_above_nodes(
+                    node, subset, "Reposition node...   `{}`"
+                )
             # append reformated tag
             add_tags.append("reformated")
-
-            rf_node = nuke.createNode("Reformat")
-            set_node_knobs_from_settings(rf_node, reformat_node_config)
-
-            # connect
-            rf_node.setInput(0, self.previous_node)
-            self._temp_nodes[subset].append(rf_node)
-            self.previous_node = rf_node
-            self.log.debug(
-                "Reformat...   `{}`".format(self._temp_nodes[subset]))
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
@@ -886,18 +919,14 @@ class ExporterReviewMov(ExporterReview):
                 # View Process node
                 ipn = get_view_process_node()
                 if ipn is not None:
-                    # connect
-                    ipn.setInput(0, self.previous_node)
-                    self._temp_nodes[subset].append(ipn)
-                    self.previous_node = ipn
-                    self.log.debug(
-                        "ViewProcess...   `{}`".format(
-                            self._temp_nodes[subset]))
+                    # connect to ViewProcess node
+                    self._connect_to_above_nodes(ipn, subset, "ViewProcess...   `{}`")
 
             if not self.viewer_lut_raw:
                 # OCIODisplay
                 dag_node = nuke.createNode("OCIODisplay")
 
+                # assign display
                 display, viewer = get_viewer_config_from_string(
                     str(baking_view_profile)
                 )
@@ -907,13 +936,7 @@ class ExporterReviewMov(ExporterReview):
                 # assign viewer
                 dag_node["view"].setValue(viewer)
 
-                # connect
-                dag_node.setInput(0, self.previous_node)
-                self._temp_nodes[subset].append(dag_node)
-                self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(
-                    self._temp_nodes[subset]))
-
+                self._connect_to_above_nodes(dag_node, subset, "OCIODisplay...   `{}`")
         # Write node
         write_node = nuke.createNode("Write")
         self.log.debug("Path: {}".format(self.path))
@@ -966,6 +989,15 @@ class ExporterReviewMov(ExporterReview):
         nuke.scriptSave()
 
         return self.data
+
+    def _shift_to_previous_node_and_temp(self, subset, node, message):
+        self._temp_nodes[subset].append(node)
+        self.previous_node = node
+        self.log.debug(message.format(self._temp_nodes[subset]))
+
+    def _connect_to_above_nodes(self, node, subset, message):
+        node.setInput(0, self.previous_node)
+        self._shift_to_previous_node_and_temp(subset, node, message)
 
 
 @deprecated("openpype.hosts.nuke.api.plugin.NukeWriteCreator")
@@ -1078,7 +1110,7 @@ class AbstractWriteRender(OpenPypeCreator):
     def is_legacy(self):
         """Check if it needs to run legacy code
 
-        In case where `type` key is missing in singe
+        In case where `type` key is missing in single
         knob it is legacy project anatomy.
 
         Returns:
@@ -1236,7 +1268,7 @@ def convert_to_valid_instaces():
                     creator_attr["farm_chunk"] = (
                         node["deadlineChunkSize"].value())
                 if "deadlineConcurrentTasks" in node.knobs():
-                    creator_attr["farm_concurency"] = (
+                    creator_attr["farm_concurrency"] = (
                         node["deadlineConcurrentTasks"].value())
 
         _remove_old_knobs(node)
