@@ -1,0 +1,102 @@
+# Add type: unittest label if any changes in tests folders
+'type: unittest':
+- '*/*tests*/**/*'
+
+# any changes in documentation structure
+'type: documentation':
+- '*/**/*website*/**/*'
+- '*/**/*docs*/**/*'
+
+# hosts triage
+'host: Nuke':
+- '*/**/*nuke*'
+- '*/**/*nuke*/**/*'
+
+'host: Photoshop':
+- '*/**/*photoshop*'
+- '*/**/*photoshop*/**/*'
+
+'host: Harmony':
+- '*/**/*harmony*'
+- '*/**/*harmony*/**/*'
+
+'host: UE':
+- '*/**/*unreal*'
+- '*/**/*unreal*/**/*'
+
+'host: Houdini':
+- '*/**/*houdini*'
+- '*/**/*houdini*/**/*'
+
+'host: Maya':
+- '*/**/*maya*'
+- '*/**/*maya*/**/*'
+
+'host: Resolve':
+- '*/**/*resolve*'
+- '*/**/*resolve*/**/*'
+
+'host: Blender':
+- '*/**/*blender*'
+- '*/**/*blender*/**/*'
+
+'host: Hiero':
+- '*/**/*hiero*'
+- '*/**/*hiero*/**/*'
+
+'host: Fusion':
+- '*/**/*fusion*'
+- '*/**/*fusion*/**/*'
+
+'host: Flame':
+- '*/**/*flame*'
+- '*/**/*flame*/**/*'
+
+'host: TrayPublisher':
+- '*/**/*traypublisher*'
+- '*/**/*traypublisher*/**/*'
+
+'host: 3dsmax':
+- '*/**/*max*'
+- '*/**/*max*/**/*'
+
+'host: TV Paint':
+- '*/**/*tvpaint*'
+- '*/**/*tvpaint*/**/*'
+
+'host: CelAction':
+- '*/**/*celaction*'
+- '*/**/*celaction*/**/*'
+
+'host: After Effects':
+- '*/**/*aftereffects*'
+- '*/**/*aftereffects*/**/*'
+
+'host: Substance Painter':
+- '*/**/*substancepainter*'
+- '*/**/*substancepainter*/**/*'
+
+# modules triage
+'module: Deadline':
+- '*/**/*deadline*'
+- '*/**/*deadline*/**/*'
+
+'module: RoyalRender':
+- '*/**/*royalrender*'
+- '*/**/*royalrender*/**/*'
+
+'module: Sitesync':
+- '*/**/*sync_server*'
+- '*/**/*sync_server*/**/*'
+
+'module: Ftrack':
+- '*/**/*ftrack*'
+- '*/**/*ftrack*/**/*'
+
+'module: Shotgrid':
+- '*/**/*shotgrid*'
+- '*/**/*shotgrid*/**/*'
+
+'module: Kitsu':
+- '*/**/*kitsu*'
+- '*/**/*kitsu*/**/*'
