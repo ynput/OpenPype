@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -193,7 +193,7 @@ $.oPoint.prototype.pointSubtract = function( sub_pt ){
 /**
  * Subtracts the point to the coordinates of the current oPoint and returns a new oPoint with the result.
  * @param {$.oPoint}   point                The point to subtract to this point.
- * @returns {$.oPoint} a new independant oPoint.
+ * @returns {$.oPoint} a new independent oPoint.
  */
 $.oPoint.prototype.subtractPoint = function( point ){
   var x = this.x - point.x;
@@ -298,9 +298,9 @@ $.oPoint.prototype.convertToWorldspace = function(){
 
 
 /**
- * Linearily Interpolate between this (0.0) and the provided point (1.0)
+ * Linearly Interpolate between this (0.0) and the provided point (1.0)
  * @param   {$.oPoint}       point                The target point at 100%
- * @param   {double}       perc                 0-1.0 value to linearily interp
+ * @param   {double}       perc                 0-1.0 value to linearly interp
  *
  * @return: { $.oPoint }                          The interpolated value.
  */
@@ -410,9 +410,9 @@ $.oBox.prototype.include = function(box){
 
 
 /**
- * Checks wether the box contains another $.oBox.
+ * Checks whether the box contains another $.oBox.
  * @param   {$.oBox}       box                The $.oBox to check for.
- * @param   {bool}         [partial=false]    wether to accept partially contained boxes.
+ * @param   {bool}         [partial=false]    whether to accept partially contained boxes.
  */
 $.oBox.prototype.contains = function(box, partial){
   if (typeof partial === 'undefined') var partial = false;
@@ -537,7 +537,7 @@ $.oMatrix.prototype.toString = function(){
  * @classdesc The $.oVector is a replacement for the Vector3d objects of Harmony.
  * @param {float} x a x coordinate for this vector.
  * @param {float} y a y coordinate for this vector.
- * @param {float} [z=0] a z coordinate for this vector. If ommited, will be set to 0 and vector will be 2D.
+ * @param {float} [z=0] a z coordinate for this vector. If omitted, will be set to 0 and vector will be 2D.
  */
 $.oVector = function(x, y, z){
   if (typeof z === "undefined" || isNaN(z)) var z = 0;

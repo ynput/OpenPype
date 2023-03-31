@@ -110,6 +110,7 @@
         "CreateLook": {
             "enabled": true,
             "make_tx": true,
+            "rs_tex": false,
             "defaults": [
                 "Main"
             ]
@@ -795,6 +796,7 @@
                     "quality": 95
                 },
                 "Display Options": {
+                    "override_display": true,
                     "background": [
                         125,
                         125,
@@ -813,7 +815,7 @@
                         125,
                         255
                     ],
-                    "override_display": true
+                    "displayGradient": true
                 },
                 "Generic": {
                     "isolate_view": true,
@@ -927,6 +929,9 @@
             "enabled": true,
             "active": true,
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
+        },
+        "ExtractLook": {
+            "maketx_arguments": []
         }
     },
     "load": {

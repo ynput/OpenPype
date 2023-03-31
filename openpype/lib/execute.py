@@ -163,7 +163,7 @@ def run_subprocess(*args, **kwargs):
 
 
 def clean_envs_for_openpype_process(env=None):
-    """Modify environemnts that may affect OpenPype process.
+    """Modify environments that may affect OpenPype process.
 
     Main reason to implement this function is to pop PYTHONPATH which may be
     affected by in-host environments.

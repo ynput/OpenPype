@@ -4,7 +4,7 @@
 //                            openHarmony Library v0.01
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney...
+//         Developed by Mathieu Chaptel, Chris Fourney...
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -87,7 +87,7 @@ $.oNetwork = function( ){
  * @param   {function}     callback_func              Providing a callback function prevents blocking, and will respond on this function. The callback function is in form func( results ){}
  * @param   {bool}         use_json                   In the event of a JSON api, this will return an object converted from the returned JSON.
  *  
- * @return: {string/object}       The resulting object/string from the query -- otherwise a bool as false when an error occured..
+ * @return: {string/object}       The resulting object/string from the query -- otherwise a bool as false when an error occurred..
  */
 $.oNetwork.prototype.webQuery = function ( address, callback_func, use_json ){
   if (typeof callback_func === 'undefined') var callback_func = false;
@@ -272,7 +272,7 @@ $.oNetwork.prototype.webQuery = function ( address, callback_func, use_json ){
  * @param   {function}     path                       The local file path to save the download.
  * @param   {bool}         replace                    Replace the file if it exists.
  *  
- * @return: {string/object}       The resulting object/string from the query -- otherwise a bool as false when an error occured..
+ * @return: {string/object}       The resulting object/string from the query -- otherwise a bool as false when an error occurred..
  */
 $.oNetwork.prototype.downloadSingle = function ( address, path, replace ){
   if (typeof replace === 'undefined') var replace = false;
