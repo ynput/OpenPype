@@ -160,7 +160,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
             "frameOut": end_frame,
             "frameCache": end_frame,
             "useFrameExtension": True
-        }:
+        }.items():
             plug = "{}.{}".format(image_plane_shape, attr)
             cmds.setAttr(plug, value)
 
