@@ -36,7 +36,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # validate required settings
         if len(cameras) == 0:
-            raise KnownPublishError("Not camera found in review "
+            raise KnownPublishError("No camera found in review "
                                     "instance: {}".format(instance))
         elif len(cameras) > 2:
             raise KnownPublishError(
