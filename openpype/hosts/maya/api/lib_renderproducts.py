@@ -1437,6 +1437,9 @@ class RenderProducts3Delight(ARenderProducts):
     def __init__(self, layer, render_instance):
         super(RenderProducts3Delight, self).__init__(layer, render_instance)
 
+    def get_multipart(self):
+        return False
+
     def get_render_products(self):
         """3delight puts all render products into a single .exr with
         the name of the dlRenderSettings as <pass>
