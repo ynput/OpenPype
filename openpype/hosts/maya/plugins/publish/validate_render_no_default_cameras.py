@@ -35,4 +35,4 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
             invalid = self.get_invalid(instance)
             if invalid:
                 raise RuntimeError("Renderable default cameras "
-                                "found: {0}".format(invalid))
+                                   "found: {0}".format(invalid))
