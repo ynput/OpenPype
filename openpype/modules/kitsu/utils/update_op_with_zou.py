@@ -347,6 +347,15 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
+    # Get all statuses for projects from Kitsu
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project['project_status_id'] == status['id']:
+            project['project_status_name'] = status['name']
+
+    if not get_project(project['name']) and project['project_status_name'] == "Closed":  # noqa
+        return
+
     log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
@@ -364,12 +373,6 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         + all_shots
         if naming_pattern.match(item["name"])
     ]
-
-    # Get all statuses for projects from Kitsu
-    all_status = gazu.project.all_project_status()
-    for status in all_status:
-        if project['project_status_id'] == status['id']:
-            project['project_status_name'] = status['name']
 
     # Sync project. Create if doesn't exist
     bulk_writes.append(write_project_to_op(project, dbcon))
