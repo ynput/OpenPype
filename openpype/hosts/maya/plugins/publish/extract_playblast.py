@@ -241,7 +241,6 @@ class ExtractPlayblast(publish.Extractor):
             "frameStart": start,
             "frameEnd": end,
             "fps": fps,
-            "preview": True,
             "tags": tags,
             "camera_name": camera_node_name
         }

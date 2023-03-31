@@ -39,7 +39,7 @@ class LegacyConverted(SubsetConvertorPlugin):
             break
 
         if legacy_found:
-            # if not item do not add legacy instance convertor
+            # if not item do not add legacy instance converter
             self.add_convertor_item("Convert legacy instances")
 
     def convert(self):
