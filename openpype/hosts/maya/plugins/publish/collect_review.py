@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.hosts.maya.api.lib import get_attribute_input
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -22,6 +23,11 @@ class CollectReview(pyblish.api.InstancePlugin):
         self.log.debug('instance: {}'.format(instance))
 
         task = legacy_io.Session["AVALON_TASK"]
+
+        # Get panel.
+        instance.data["panel"] = cmds.playblast(
+            activeEditor=True
+        ).split("|")[-1]
 
         # get cameras
         members = instance.data['setMembers']
@@ -74,6 +80,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data['review_width'] = instance.data['review_width']
                 data['review_height'] = instance.data['review_height']
                 data["isolate"] = instance.data["isolate"]
+                data["panZoom"] = instance.data.get("panZoom", False)
+                data["panel"] = instance.data["panel"]
                 cmds.setAttr(str(instance) + '.active', 1)
                 self.log.debug('data {}'.format(instance.context[i].data))
                 instance.context[i].data.update(data)
@@ -139,3 +147,21 @@ class CollectReview(pyblish.api.InstancePlugin):
                         "filename": node.filename.get()
                     }
                 )
+
+        # Collect focal length.
+        attr = camera + ".focalLength"
+        focal_length = None
+        if get_attribute_input(attr):
+            start = instance.data["frameStart"]
+            end = instance.data["frameEnd"] + 1
+            focal_length = [
+                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
+            ]
+        else:
+            focal_length = cmds.getAttr(attr)
+
+        key = "focalLength"
+        try:
+            instance.data["burninDataMembers"][key] = focal_length
+        except KeyError:
+            instance.data["burninDataMembers"] = {key: focal_length}

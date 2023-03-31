@@ -415,11 +415,11 @@ class CreateRenderPass(TVPaintCreator):
                 .get("creator_attributes", {})
                 .get("render_layer_instance_id")
             )
-            render_layer_info = render_layers.get(render_layer_instance_id)
+            render_layer_info = render_layers.get(render_layer_instance_id, {})
             self.update_instance_labels(
                 instance_data,
-                render_layer_info["variant"],
-                render_layer_info["template_data"]
+                render_layer_info.get("variant"),
+                render_layer_info.get("template_data")
             )
             instance = CreatedInstance.from_existing(instance_data, self)
             self._add_instance_to_context(instance)
@@ -607,11 +607,11 @@ class CreateRenderPass(TVPaintCreator):
         current_instances = self.host.list_instances()
         render_layers = [
             {
-                "value": instance["instance_id"],
-                "label": instance["subset"]
+                "value": inst["instance_id"],
+                "label": inst["subset"]
             }
-            for instance in current_instances
-            if instance["creator_identifier"] == CreateRenderlayer.identifier
+            for inst in current_instances
+            if inst.get("creator_identifier") == CreateRenderlayer.identifier
         ]
         if not render_layers:
             render_layers.append({"value": None, "label": "N/A"})
@@ -697,6 +697,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             ["create"]
             ["auto_detect_render"]
         )
+        self.enabled = plugin_settings.get("enabled", False)
         self.allow_group_rename = plugin_settings["allow_group_rename"]
         self.group_name_template = plugin_settings["group_name_template"]
         self.group_idx_offset = plugin_settings["group_idx_offset"]
