@@ -31,7 +31,7 @@ jobs:
           gh_token: ${{ secrets.YNPUT_BOT_TOKEN }}
           organization: ynput
           project_id: 11
-          resource_node_id: ${{ github.event.pull_request.node_id }} || ${{ github.event.issue.node_id }}
+          resource_node_id: ${{ github.event.pull_request.node_id || github.event.issue.node_id }}
           status_value: Review In Progress
 
   # pr_review_requested:
