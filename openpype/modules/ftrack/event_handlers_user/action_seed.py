@@ -325,8 +325,8 @@ class SeedDebugProject(BaseAction):
                     ):
                         index = 0
 
-        self.log.debug("*** Commiting Assets")
-        self.log.debug("Commiting entities. {}/{}".format(
+        self.log.debug("*** Committing Assets")
+        self.log.debug("Committing entities. {}/{}".format(
             created_entities, to_create_length
         ))
         self.session.commit()
@@ -414,8 +414,8 @@ class SeedDebugProject(BaseAction):
                     ):
                         index = 0
 
-        self.log.debug("*** Commiting Shots")
-        self.log.debug("Commiting entities. {}/{}".format(
+        self.log.debug("*** Committing Shots")
+        self.log.debug("Committing entities. {}/{}".format(
             created_entities, to_create_length
         ))
         self.session.commit()
@@ -423,7 +423,7 @@ class SeedDebugProject(BaseAction):
     def temp_commit(self, index, created_entities, to_create_length):
         if index < self.max_entities_created_at_one_commit:
             return False
-        self.log.debug("Commiting {} entities. {}/{}".format(
+        self.log.debug("Committing {} entities. {}/{}".format(
             index, created_entities, to_create_length
         ))
         self.session.commit()

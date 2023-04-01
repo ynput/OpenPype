@@ -171,7 +171,7 @@ class CameraLoader(plugin.Loader):
 
         project_name = legacy_io.active_project()
         # TODO refactor
-        #   - Creationg of hierarchy should be a function in unreal integration
+        #   - Creating of hierarchy should be a function in unreal integration
         #       - it's used in multiple loaders but must not be loader's logic
         #       - hard to say what is purpose of the loop
         #   - variables does not match their meaning

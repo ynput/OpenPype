@@ -2,7 +2,7 @@
 
 Idea for current dirmap implementation was used from Maya where is possible to
 enter source and destination roots and maya will try each found source
-in referenced file replace with each destionation paths. First path which
+in referenced file replace with each destination paths. First path which
 exists is used.
 """
 
@@ -183,7 +183,7 @@ class HostDirmap(object):
                 project_name, remote_site
             )
             # dirmap has sense only with regular disk provider, in the workfile
-            # wont be root on cloud or sftp provider
+            # won't be root on cloud or sftp provider
             if remote_provider != "local_drive":
                 remote_site = "studio"
             for root_name, active_site_dir in active_overrides.items():
