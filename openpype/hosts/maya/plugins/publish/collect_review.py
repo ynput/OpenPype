@@ -24,6 +24,11 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         task = legacy_io.Session["AVALON_TASK"]
 
+        # Get panel.
+        instance.data["panel"] = cmds.playblast(
+            activeEditor=True
+        ).split("|")[-1]
+
         # get cameras
         members = instance.data['setMembers']
         cameras = cmds.ls(members, long=True,
@@ -75,6 +80,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data['review_width'] = instance.data['review_width']
                 data['review_height'] = instance.data['review_height']
                 data["isolate"] = instance.data["isolate"]
+                data["panZoom"] = instance.data.get("panZoom", False)
+                data["panel"] = instance.data["panel"]
                 cmds.setAttr(str(instance) + '.active', 1)
                 self.log.debug('data {}'.format(instance.context[i].data))
                 instance.context[i].data.update(data)
@@ -145,6 +152,28 @@ class CollectReview(pyblish.api.InstancePlugin):
         index = instance.data.get("displayLights", 0)
         display_lights = lib.DISPLAY_LIGHTS[index]
         if display_lights == "project_settings":
-            # project_settings/maya/publish/ExtractPlayblast/capture_preset/Viewport Options/displayLights
-            display_lights = instance.context.data["project_settings"]["maya"]["publish"]["ExtractPlayblast"]["capture_preset"]["Viewport Options"]["displayLights"]  # noqa
+            # project_settings/maya/publish/ExtractPlayblast/capture_preset
+            # /Viewport Options/displayLights
+            settings = instance.context.data["project_settings"]
+            settings = settings["maya"]["publish"]["ExtractPlayblast"]
+            settings = settings["capture_preset"]["Viewport Options"]
+            display_lights = settings["displayLights"]
         instance.data["displayLights"] = display_lights
+
+        # Collect focal length.
+        attr = camera + ".focalLength"
+        focal_length = None
+        if lib.get_attribute_input(attr):
+            start = instance.data["frameStart"]
+            end = instance.data["frameEnd"] + 1
+            focal_length = [
+                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
+            ]
+        else:
+            focal_length = cmds.getAttr(attr)
+
+        key = "focalLength"
+        try:
+            instance.data["burninDataMembers"][key] = focal_length
+        except KeyError:
+            instance.data["burninDataMembers"] = {key: focal_length}

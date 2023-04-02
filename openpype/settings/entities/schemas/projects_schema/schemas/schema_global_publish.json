@@ -597,7 +597,7 @@
                     "type": "dict",
                     "collapsible": true,
                     "key": "options",
-                    "label": "Burnin formating options",
+                    "label": "Burnin formatting options",
                     "children": [
                         {
                             "type": "number",

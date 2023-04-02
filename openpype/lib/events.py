@@ -156,7 +156,7 @@ class EventCallback(object):
         self._enabled = enabled
 
     def deregister(self):
-        """Calling this funcion will cause that callback will be removed."""
+        """Calling this function will cause that callback will be removed."""
         # Fake reference
         self._ref_valid = False
 

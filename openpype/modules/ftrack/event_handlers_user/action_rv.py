@@ -66,7 +66,7 @@ class RVAction(BaseAction):
     def get_components_from_entity(self, session, entity, components):
         """Get components from various entity types.
 
-        The components dictionary is modifid in place, so nothing is returned.
+        The components dictionary is modified in place, so nothing is returned.
 
             Args:
                 entity (Ftrack entity)

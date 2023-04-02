@@ -23,7 +23,7 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "tile_assembler_plugin": "OpenPypeTileAssembler",
+            "tile_assembler_plugin": "DraftTileAssembler",
             "use_published": true,
             "import_reference": false,
             "asset_dependencies": true,
@@ -43,16 +43,12 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "group": "none",
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "framePerTask": 1
+            "group": "none"
         },
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
-            "use_published": true,
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
