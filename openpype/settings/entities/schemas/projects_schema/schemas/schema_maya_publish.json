@@ -996,6 +996,35 @@
                     "label": "GLSL Shader Directory"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractLook",
+            "label": "Extract Look",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "maketx_arguments",
+                    "label": "Extra arguments for maketx command line",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "argument",
+                                "label": "Argument",
+                                "type": "text"
+                            },
+                            {
+                                "key": "parameters",
+                                "label": "Parameters",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     ]
 }

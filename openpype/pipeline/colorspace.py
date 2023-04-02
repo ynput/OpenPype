@@ -159,7 +159,7 @@ def parse_colorspace_from_filepath(
     colorspaces = get_ocio_config_colorspaces(config_path)
     for colorspace_key in colorspaces:
         # check underscored variant of colorspace name
-        # since we are reformating it in integrate.py
+        # since we are reformatting it in integrate.py
         if colorspace_key.replace(" ", "_") in path:
             colorspace_name = colorspace_key
             break
