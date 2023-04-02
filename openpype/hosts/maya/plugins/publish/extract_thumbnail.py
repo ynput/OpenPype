@@ -105,11 +105,8 @@ class ExtractThumbnail(publish.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
-        # Show lighting mode.
-        display_lights = instance.data["displayLights"]
-        if display_lights != "project_settings":
-            preset["viewport_options"]["displayLights"] = display_lights
-
+        # Use displayLights setting from instance
+        preset["viewport_options"]["displayLights"] = instance.data["displayLights"]
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
         if transparency != 0:
