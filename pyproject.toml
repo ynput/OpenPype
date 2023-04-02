@@ -124,7 +124,7 @@ version = "5.15.2"
 
 [openpype.qtbinding.darwin]
 package = "PySide6"
-version = "6.4.1"
+version = "6.4.3"
 
 [openpype.qtbinding.linux]
 package = "PySide2"
