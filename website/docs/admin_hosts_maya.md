@@ -192,7 +192,7 @@ Here's the different variables you can use:
 </div>
 </div>
 
-Example: `{asset[name]}_{subset[name]}:GRP`
+Example: `{asset_name}_{subset}_:_GRP`
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
