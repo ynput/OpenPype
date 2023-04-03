@@ -379,7 +379,7 @@ class FilesWidget(QtWidgets.QWidget):
 
             # Disable/Enable buttons based on available files in model
             has_valid_items = self._workarea_files_model.has_valid_items()
-            self._btn_browse.setEnabled(has_valid_items)
+            self._btn_browse.setEnabled(True)
             self._btn_open.setEnabled(has_valid_items)
 
             if self._publish_context_select_mode:
