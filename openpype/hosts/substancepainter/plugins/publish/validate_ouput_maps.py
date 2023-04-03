@@ -72,17 +72,19 @@ class ValidateOutputMaps(pyblish.api.InstancePlugin):
                     self.log.warning(f"Missing texture: {filepath}")
                     missing.append(filepath)
 
+            if not missing:
+                continue
+
             if allow_skipped_maps:
                 # TODO: This is changing state on the instance's which
-                #   usually should not be done during validation.
+                #   should not be done during validation.
                 self.log.warning(f"Disabling texture instance: "
                                  f"{image_instance}")
                 image_instance.data["active"] = False
                 image_instance.data["integrate"] = False
                 representation.setdefault("tags", []).append("delete")
                 continue
-
-            if missing:
+            else:
                 error_report_missing.append((image_instance, missing))
 
         if error_report_missing:
