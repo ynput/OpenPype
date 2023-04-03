@@ -5,7 +5,8 @@ from openpype.pipeline import CreatedInstance, Creator, CreatorError
 from openpype.lib import (
     EnumDef,
     UILabelDef,
-    NumberDef
+    NumberDef,
+    BoolDef
 )
 
 from openpype.hosts.substancepainter.api.pipeline import (
@@ -80,6 +81,13 @@ class CreateTextures(Creator):
             EnumDef("exportPresetUrl",
                     items=get_export_presets(),
                     label="Output Template"),
+            BoolDef("allowSkippedMaps",
+                    label="Allow Skipped Output Maps",
+                    tooltip="When enabled this allows the publish to ignore "
+                            "output maps in the used output template if one "
+                            "or more maps are skipped due to the required "
+                            "channels not being present in the current file.",
+                    default=True),
             EnumDef("exportFileFormat",
                     items={
                         None: "Based on output template",

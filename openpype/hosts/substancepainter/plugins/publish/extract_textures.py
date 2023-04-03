@@ -1,5 +1,6 @@
-from openpype.pipeline import KnownPublishError, publish
 import substance_painter.export
+
+from openpype.pipeline import KnownPublishError, publish
 
 
 class ExtractTextures(publish.Extractor,
@@ -31,21 +32,19 @@ class ExtractTextures(publish.Extractor,
                 "Failed to export texture set: {}".format(result.message)
             )
 
+        # Log what files we generated
         for (texture_set_name, stack_name), maps in result.textures.items():
             # Log our texture outputs
-            self.log.info(f"Processing stack: {texture_set_name} {stack_name}")
+            self.log.info(f"Exported stack: {texture_set_name} {stack_name}")
             for texture_map in maps:
                 self.log.info(f"Exported texture: {texture_map}")
-
-            # TODO: Confirm outputs match what we collected
-            # TODO: Confirm the files indeed exist
-            # TODO: make sure representations are registered
 
         # We'll insert the color space data for each image instance that we
         # added into this texture set. The collector couldn't do so because
         # some anatomy and other instance data needs to be collected prior
         context = instance.context
         for image_instance in instance:
+            representation = next(iter(image_instance.data["representations"]))
 
             colorspace = image_instance.data.get("colorspace")
             if not colorspace:
@@ -53,10 +52,9 @@ class ExtractTextures(publish.Extractor,
                                f"{image_instance}")
                 continue
 
-            for representation in image_instance.data["representations"]:
-                self.set_representation_colorspace(representation,
-                                                   context=context,
-                                                   colorspace=colorspace)
+            self.set_representation_colorspace(representation,
+                                               context=context,
+                                               colorspace=colorspace)
 
         # The TextureSet instance should not be integrated. It generates no
         # output data. Instead the separated texture instances are generated
