@@ -35,7 +35,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         container.name = name
         rs_proxy.Parent = container
 
-        asset = rt.getNodeByName(f"{name}")
+        asset = rt.getNodeByName(name)
 
         return containerise(
             name, [asset], context, loader=self.__class__.__name__)
@@ -45,10 +45,10 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-
-        proxy_objects = self.get_container_children(node)
-        for proxy in proxy_objects:
-            proxy.source = path
+        for children in node.Children:
+            children_node = rt.getNodeByName(children.name)
+            for proxy in children_node.Children:
+                proxy.file = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
