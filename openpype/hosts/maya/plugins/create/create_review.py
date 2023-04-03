@@ -1,8 +1,14 @@
 from collections import OrderedDict
+import json
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
+from openpype.lib.profiles_filtering import filter_profiles
+from openpype.client import get_asset_by_name
 
 
 class CreateReview(plugin.Creator):
@@ -32,6 +38,30 @@ class CreateReview(plugin.Creator):
         super(CreateReview, self).__init__(*args, **kwargs)
         data = OrderedDict(**self.data)
 
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        profiles = get_project_settings(
+            project_name
+        )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
+
+        preset = None
+        if not profiles:
+            self.log.warning("No profiles present for extract playblast.")
+        else:
+            asset_doc = get_asset_by_name(project_name, data["asset"])
+            task_name = legacy_io.Session["AVALON_TASK"]
+            task_type = asset_doc["data"]["tasks"][task_name]["type"]
+
+            filtering_criteria = {
+                "hosts": "maya",
+                "families": "review",
+                "task_names": task_name,
+                "task_types": task_type,
+                "subset": data["subset"]
+            }
+            preset = filter_profiles(
+                profiles, filtering_criteria, logger=self.log
+            )["capture_preset"]
+
         # Option for using Maya or asset frame range in settings.
         frame_range = lib.get_frame_range()
         if self.useMayaTimeline:
@@ -40,6 +70,7 @@ class CreateReview(plugin.Creator):
             data[key] = value
 
         data["fps"] = lib.collect_animation_data(fps=True)["fps"]
+
         data["review_width"] = self.Width
         data["review_height"] = self.Height
         data["isolate"] = self.isolate
@@ -47,5 +78,17 @@ class CreateReview(plugin.Creator):
         data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
         data["panZoom"] = self.panZoom
+
+        if preset:
+            self.log.info(
+                "Using preset: {}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
+            )
+            data["review_width"] = preset["Resolution"]["width"]
+            data["review_height"] = preset["Resolution"]["height"]
+            data["isolate"] = preset["Generic"]["isolate_view"]
+            data["imagePlane"] = preset["Viewport Options"]["imagePlane"]
+            data["panZoom"] = preset["Generic"]["pan_zoom"]
 
         self.data = data
