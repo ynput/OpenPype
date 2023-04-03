@@ -100,8 +100,13 @@
             "children": [
                 {
                     "type": "text",
-                    "label": "Naming",
-                    "key": "naming"
+                    "label": "Namespace",
+                    "key": "namespace"
+                },
+                {
+                    "type": "text",
+                    "label": "Group name",
+                    "key": "group_name"
                 },
                 {
                     "type": "label",

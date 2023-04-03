@@ -1049,7 +1049,8 @@
             ]
         },
         "reference_loader": {
-            "naming": "{asset_name}_{subset}_:_GRP"
+            "namespace": "{asset_name}_{subset}",
+            "group_name": "GRP"
         }
     },
     "workfile_build": {
