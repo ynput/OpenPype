@@ -35,7 +35,7 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         xgd_file = xgen_file.replace(".xgen", ".xgd")
         return xgen_file, xgd_file
 
-    def process_reference(self, context, name, namespace, options):
+    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
         # Validate workfile has a path.
         if current_file() is None:
             QtWidgets.QMessageBox.warning(
