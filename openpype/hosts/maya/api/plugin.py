@@ -148,35 +148,35 @@ class ReferenceLoader(Loader):
         custom_naming = settings['maya']['load']['reference_loader']['naming']
         loaded_containers = []
 
+        if ':' not in custom_naming:
+            raise ValueError(
+                "Wrong format for namespace, missing ':' separator"
+            )
+        elif custom_naming.strip()[0] == ':':
+            raise ValueError(
+                "Wrong format for namespace, missing content before ':' "
+                "separator"
+            )
+        elif custom_naming.strip()[-1] == ':':
+            raise ValueError(
+                "Wrong format for namespace, missing content after ':' "
+                "separator"
+            )
+
+        custom_naming = custom_naming.format(
+            asset_name=asset['name'],
+            asset_type=asset['type'],
+            subset=subset['name'],
+            family=(
+                subset['data'].get('family') or
+                subset['data']['families'][0]
+            )
+        )
+
         count = options.get("count") or 1
 
         for c in range(0, count):
             group_name = None
-
-            if ':' not in custom_naming:
-                raise ValueError(
-                    "Wrong format for namespace, missing ':' separator"
-                )
-            elif custom_naming.strip()[0] == ':':
-                raise ValueError(
-                    "Wrong format for namespace, missing content before ':' "
-                    "separator"
-                )
-            elif custom_naming.strip()[-1] == ':':
-                raise ValueError(
-                    "Wrong format for namespace, missing content after ':' "
-                    "separator"
-                )
-
-            custom_naming = custom_naming.format(
-                asset_name=asset['name'],
-                asset_type=asset['type'],
-                subset=subset['name'],
-                family=(
-                    subset['data'].get('family') or
-                    subset['data']['families'][0]
-                )
-            )
 
             namespace = custom_naming.split(':')[0]
             namespace = lib.unique_namespace(
