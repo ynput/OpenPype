@@ -412,7 +412,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("{}".format(op_session.to_data()))
         op_session.commit()
 
-        # Backwards compatibility
+        # Backwards compatibility used in hero integration.
         # todo: can we avoid the need to store this?
         instance.data["published_representations"] = {
             p["representation"]["_id"]: p for p in prepared_representations
