@@ -71,8 +71,26 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 4))
 
+        additional_args = {"context.subset": "workfileTest_task",
+                           "context.ext": "nk"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
         additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "h264_mov"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
