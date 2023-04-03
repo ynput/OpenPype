@@ -2,6 +2,7 @@ from openpype.pipeline import (
     load,
     get_representation_path,
 )
+from openpype.pipeline.load import LoadError
 from openpype.hosts.substancepainter.api.pipeline import (
     imprint_container,
     set_container_metadata,
@@ -105,7 +106,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
             if status == substance_painter.project.ReloadMeshStatus.SUCCESS:
                 print("Reload succeeded")
             else:
-                raise LoaderError("Reload of mesh failed")
+                raise LoadError("Reload of mesh failed")
 
         substance_painter.project.reload_mesh(path, settings, on_mesh_reload)
 
