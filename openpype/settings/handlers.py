@@ -189,6 +189,7 @@ class SettingsStateInfo:
 class SettingsHandler(object):
     global_keys = {
         "openpype_path",
+        "local_openpype_path",
         "admin_password",
         "log_to_server",
         "disk_mapping",
