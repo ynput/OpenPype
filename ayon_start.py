@@ -96,19 +96,6 @@ else:
 sys.path.append(_dependencies_path)
 _python_paths.append(_dependencies_path)
 
-# -------------------------------------------------
-# Temporary solution to add ayon_api to python path
-# -------------------------------------------------
-# This is to avoid need of new build & release when ayon-python-api is updated.
-ayon_dependency_dir = os.path.join(
-    AYON_ROOT, "openpype", "vendor", "python", "ayon"
-)
-if ayon_dependency_dir in _python_paths:
-    _python_paths.remove(ayon_dependency_dir)
-_python_paths.insert(0, _dependencies_path)
-sys.path.insert(0, ayon_dependency_dir)
-# -------------------------------------------------
-
 # Vendored python modules that must not be in PYTHONPATH environment but
 #   are required for OpenPype processes
 sys.path.insert(0, os.path.join(AYON_ROOT, "vendor", "python"))
