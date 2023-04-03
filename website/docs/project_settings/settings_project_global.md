@@ -194,6 +194,72 @@ A profile may generate multiple outputs from a single input. Each output must de
         - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/add_custom_tags`
     - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
 
+    
+### Extract Burnin
+
+Plugin is responsible for adding burnins into review representations.
+
+Burnins are text values painted on top of input and may be surrounded with box in 6 available positions `Top Left`, `Top Center`, `Top Right`, `Bottom Left`, `Bottom Center`, `Bottom Right`.
+
+![presets_plugins_extract_burnin](../assets/presets_plugins_extract_burnin_01.png)
+
+The Extract Burnin plugin creates new representations based on plugin presets and representations in instance based on whether the reviewable matches the profile filter.
+A burnin can also be directly linked by name in the output definitions of the Extract Review plug-in settings so _can_ be triggered without a matching profile.
+
+#### Burnin formatting options (`options`)
+
+The formatting options define the font style for the burnin texts.
+The X and Y offset define the margin around texts and (background) boxes.
+
+#### Burnin profiles (`profiles`)
+Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each profile item has **burnins**, where definitions of possible burnins are, and may have specified filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [ExtractReview](#profile-filters).
+
+#### Profile burnins
+Profile may have set multiple burnin outputs from one input and that's why **burnins** is dictionary where key represents **filename suffix** to avoid overriding files with same name and value represents burnin definition. Burnin definition may contain multiple optional keys.
+
+| Key | Description | Type | Example |
+| --- | --- | --- | --- |
+| **top_left** | Top left corner content. | str | "{dd}.{mm}.{yyyy}" |
+| **top_centered** | Top center content. | str | "v{version:0>3}" |
+| **top_right** | Top right corner content. | str | "Static text" |
+| **bottom_left** | Bottom left corner content. | str | "{asset}" |
+| **bottom_centered** | Bottom center content. | str | "{username}" |
+| **bottom_right** | Bottom right corner content. | str | "{frame_start}-{current_frame}-{frame_end}" |
+
+Each burnin profile can be configured with additional family filtering and can 
+add additional tags to the burnin representation, these can be configured under 
+the profile's **Additional filtering** section.
+
+:::note Filename suffix
+The filename suffix is appended to filename of the source representation. For 
+example, if the source representation has suffix **"h264"** and the burnin 
+suffix is **"client"** then the final suffix is **"h264_client"**.
+:::
+
+**Available keys in burnin content**
+
+- It is possible to use same keys as in [Anatomy](admin_settings_project_anatomy.md#available-template-keys).
+- It is allowed to use Anatomy templates themselves in burnins if they can be filled with available data.
+
+- Additional keys in burnins:
+
+  | Burnin key | Description |
+  | --- | --- |
+  | frame_start | First frame number. |
+  | frame_end | Last frame number. |
+  | current_frame | Frame number for each frame. |
+  | duration | Count number of frames. |
+  | resolution_width | Resolution width. |
+  | resolution_height | Resolution height. |
+  | fps | Fps of an output. |
+  | timecode | Timecode by frame start and fps. |
+  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
+
+:::warning
+`timecode` is a specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
+:::
+
+
 ### IntegrateAssetNew
 
 Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
