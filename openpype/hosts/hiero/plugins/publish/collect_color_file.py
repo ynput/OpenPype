@@ -4,6 +4,7 @@ import hiero
 import pyblish.api
 from glob import glob
 from datetime import datetime
+import opentimelineio as otio
 from qtpy import QtWidgets, QtCore, QtGui
 
 
@@ -13,82 +14,96 @@ TWOD_LUTS = ["ccc", "cc", "cdl"]
 # EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
 COLOR_FILE_EXTS = TWOD_LUTS + THREED_LUTS + ["edl"]
 
+
+
 def parse_edl_events(path, color_edits_only=False):
-    with open(path, "r") as f:
-        edl_data = f.read()
+    """
+    EDL is parsed using OTIO and then placed into a data struture for output "edl"
+    Data is stored under the understanding that it will be used for identifying plate names which are linked to CDLs
 
-    # Define regex patterns
-    edit_pattern = r"(?<=[\n\r])(?P<edit>\d+\s+[\s\S]*?)(?=([\n\r]+\d+)|\Z)"
-    sop_pattern = r"[*]\s?ASC[_]SOP\s+[(]\s?(?P<sR>[-]?\d+[.]\d{4,6})\s+(?P<sG>[-]?\d+[.]\d{4,6})\s+(?P<sB>[-]?\d+[.]\d{4,6})\s?[)]\s?[(]\s?(?P<oR>[-]?\d+[.]\d{4,6})\s+(?P<oG>[-]?\d+[.]\d{4,6})\s+(?P<oB>[-]?\d+[.]\d{4,6})\s?[)]\s?[(]\s?(?P<pR>[-]?\d+[.]\d{4,6})\s+(?P<pG>[-]?\d+[.]\d{4,6})\s+(?P<pB>[-]?\d+[.]\d{4,6})\s?[)]\s?"
-    sat_pattern = r"[*]\s?ASC_SAT\s+(?P<sat>\d+[.]*\d*)"
-    tape_pattern = r"\d+\s*(?P<source>[\S]*)(?=\s*)"
-    clip_name_pattern = r"[*]\s?FROM[ ]*CLIP[ ]*NAME:\s*(?P<clip_name>.+)"
-    loc_pattern = r"[*]\s?LOC:\s?.+\b(?<!_)(?P<LOC>[\w]{3,4}_((?<=_)[\w]{3,4}_){1,2}[\w]{3,4}(?<!_)(_[\w]{1,}){0,})\b"
+    EDL LOC metadata is parsed with OTIO under markers and then regexed to find the main bit of information which
+    will link it to a plate name further down the line
 
-    # Need to find first entry in edit list for range
-    first_match = re.search(edit_pattern, edl_data)
-    first_entry = int(first_match.group().split(" ", 1)[0]) if first_match else 1
+    Underscores are not counted ({0,}) but are left greedy incase naming doesn't follow normal shot convention
+    but instead follows plate pull naming convention.
+    Example: abc_101_010_010_element
+    Example: abc_101_010_010_element_fire
+
+    Examples of targeted matches:
+    abc_101_010_010_element
+    abc_101_010_010
+    abc_101_010
+    101_010_010
+
+    Examples of what does not match:
+    abc_101
+    101_001
+    _abc_101_010
+    abc_101_010_
+    """
+    shot_pattern = r"(?<!_)(?P<LOC>[a-zA-Z0-9]{3,4}_((?<=_)[a-zA-Z0-9]{3,4}_){1,2}[a-zA-Z0-9]{3,4}(?<!_)(_[a-zA-Z0-9]{1,}){0,})\b"
+
+    # ignore_timecode_mismatch is set to True to ensure that OTIO doesn't get confused by
+    # TO CLIP NAME and FROM CLIP NAME timecode ranges
+    timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
+
+    if len(timeline.tracks) > 1:
+        raise Exception('EDL can not contain more than one track. Something went wrong')
 
     edl = {"events": {}}
-    for edit_match in re.finditer(edit_pattern, edl_data):
-        slope, offset, power, sat = None, None, None, None
 
-        edit_value = edit_match.group("edit")
-        # Determine if color data is present in event and store it
-        sop_match = re.search(sop_pattern, edit_value)
-        if sop_match:
-            slope, offset, power = (
-                tuple(map(float, (sop_match.group("sR"), sop_match.group("sG"), sop_match.group("sB")))),
-                tuple(map(float, (sop_match.group("oR"), sop_match.group("oG"), sop_match.group("oB")))),
-                tuple(map(float, (sop_match.group("pR"), sop_match.group("pG"), sop_match.group("pB")))),
-            )
+    # There is a possibility that the entry count doesn't start at 1.
+    # However it's extremely rare and it's purpose is to keep track of order
+    entry_count = 0
+    for clip in timeline.tracks[0].each_child():
+        if isinstance(clip, otio.schema.Clip):
+            entry_count += 1
+            loc_value = ""
+            tape_value = ""
+            entry = {"clip_name":clip.name}
+            if clip.metadata.get('cdl'):
+                cdl = clip.metadata['cdl']
+                entry.update(
+                    {
+                    "slope": tuple(cdl['asc_sop']["slope"]),
+                    "offset": tuple(cdl['asc_sop']["offset"]),
+                    "power": tuple(cdl['asc_sop']["power"]),
+                    "sat": cdl.get('asc_sat') or 1.0,
+                    }
+                )
+            else:
+                if color_edits_only:
+                    continue
 
-        # Always record even numbers
-        entry = str(int(edit_value.split(" ", 1)[0]))
-        # edl["entries"].append(entry)
+            if clip.markers:
+                # Join markers (*LOC). The data is strictly being stored to parse shot name
+                # Space is added to make parsing much easier and predictable
+                full_clip_loc = ' '.join([" "] + [m.name for m in clip.markers])
+                loc_match = re.search(shot_pattern, full_clip_loc)
+                loc_value = loc_match.group("LOC") if loc_match else ""
 
-        # Clip Name value
-        clip_name_match = re.search(clip_name_pattern, edit_value)
-        clip_name_value = clip_name_match.group("clip_name") if clip_name_match else ""
+            # Capture tape and source name
+            if clip.metadata.get("cmx_3600"):
+                if clip.metadata["cmx_3600"].get("reel"):
+                    tape_value = clip.metadata["cmx_3600"].get("reel")
+                # No need for source name? If matches clip name and clip name is more intentional?
+                # if clip.metadata("cmx_3600").get("comments"):
+                #     for comment in clip.metadata("cmx_3600").get("comments"):
+                #         if "source file" in comment.lower():
+                #             source_file_value = comment.split(":", 1)[-1].strip()
+                #             break
 
-        # Tape value
-        tape_match = re.search(tape_pattern, edit_value)
-        tape_value = tape_match.group("source") if tape_match else ""
-
-        # LOC value
-        loc_match = re.search(loc_pattern, edit_value)
-        loc_value = loc_match.group("LOC") if loc_match else ""
-
-
-        # Do rest of regex find if color data was found.
-        if not (slope is None and offset is None and power is None):
-            # Sat value doesn't need to be found. If not found default to 1
-            sat_match = re.search(sat_pattern, edit_value)
-            sat = sat_match.group("sat") if sat_match else 1
-
-            edl["events"][entry] = {
-                "tape": tape_value,
-                "clip_name": clip_name_value,
-                "LOC": loc_value,
-                "slope": slope,
-                 "offset": offset,
-                 "power": power,
-                 "sat": sat,
-                 }
-        else:
-            if not color_edits_only:
-                edl["events"][entry] = {
+            entry.update(
+                {
                     "tape": tape_value,
-                    "clip_name": clip_name_value,
                     "LOC": loc_value,
                 }
-
-    # Add last found entry from edit list iteration
-    last_entry = int(edit_value.split(" ", 1)[0])
+            )
+            edl["events"][str(entry_count)] = entry
 
     # Finish EDL info
-    edl["first_entry"] = first_entry
-    edl["last_entry"] = last_entry
+    edl["first_entry"] = 1
+    edl["last_entry"] = entry_count
 
     return edl
 
@@ -364,29 +379,29 @@ class MissingColorFile(QtWidgets.QDialog):
         self.entry_number.valueChanged.connect(self.set_edl_info)
         self.open_file.pressed.connect(self.open_text_file)
 
-    def set_edl_entry_widgets(self):
-        color_file_path = self.file_path_input.text()
-        if self.prev_file_path_input == color_file_path:
-            return
-
-        is_edl = False
-        if color_file_path.lower().endswith(".edl"):
-            is_edl = True
-
-        if os.path.isfile(color_file_path) and is_edl:
-            self.edl_widget.show()
-            self.edl_sops_seperator.show()
-
-            edl = parse_edl_events(color_file_path)
-            self.edl = edl
-            self.entry_number.setMinimum(edl["first_entry"])
-            self.entry_number.setMaximum(edl["last_entry"])
-
-        else:
-            self.edl_widget.hide()
-            self.edl_sops_seperator.hide()
-
-        self.prev_file_path_input = color_file_path
+    # def set_edl_entry_widgets(self):
+    #     color_file_path = self.file_path_input.text()
+    #     if self.prev_file_path_input == color_file_path:
+    #         return
+    #
+    #     is_edl = False
+    #     if color_file_path.lower().endswith(".edl"):
+    #         is_edl = True
+    #
+    #     if os.path.isfile(color_file_path) and is_edl:
+    #         self.edl_widget.show()
+    #         self.edl_sops_seperator.show()
+    #
+    #         edl = parse_edl_events(color_file_path)
+    #         self.edl = edl
+    #         self.entry_number.setMinimum(edl["first_entry"])
+    #         self.entry_number.setMaximum(edl["last_entry"])
+    #
+    #     else:
+    #         self.edl_widget.hide()
+    #         self.edl_sops_seperator.hide()
+    #
+    #     self.prev_file_path_input = color_file_path
 
     def set_edl_info(self):
         event_number = self.entry_number.value()
@@ -441,12 +456,13 @@ class MissingColorFile(QtWidgets.QDialog):
             return
 
         if file_extention == "edl":
-            self.set_edl_info()
-
             edl = parse_edl_events(color_file_path)
             self.edl = edl
             self.entry_number.setMinimum(edl["first_entry"])
             self.entry_number.setMaximum(edl["last_entry"])
+
+            # Right after parse update edl info
+            self.set_edl_info()
 
         if file_extention in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
             cdl = parse_cdl(file_path)
