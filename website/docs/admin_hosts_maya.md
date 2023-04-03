@@ -203,7 +203,7 @@ These options are set on the camera shape when publishing the review. They corre
 ## Include/exclude handles by task type
 You can include or exclude handles, globally or by task type.
 
-The "Include handles by default" defines wether by default handles are included or not for all task type. Additionally you can add a per task type override wether you want to include handles or not.
+The "Include handles by default" defines whether by default handles are included. Additionally you can add a per task type override whether you want to include or exclude handles.
 
 For example, in this image you can see that handles are included by default in all task types, except for the 'Lighting' task, where the toggle is disabled.
 ![Include/exclude handles](assets/maya-admin_exclude_handles.png)
