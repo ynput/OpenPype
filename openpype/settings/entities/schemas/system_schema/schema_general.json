@@ -128,7 +128,7 @@
         {
             "type": "collapsible-wrap",
             "label": "OpenPype deployment control",
-            "collapsible": false,
+            "collapsible": true,
             "children": [
                 {
                     "type": "label",
