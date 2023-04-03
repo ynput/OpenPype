@@ -3,7 +3,7 @@ from maya import cmds, mel
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, KnownPublishError
 from openpype.hosts.maya.api.lib import get_attribute_input
 
 
@@ -15,7 +15,6 @@ class CollectReview(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.3
     label = 'Collect Review Data'
     families = ["review"]
-    legacy = True
 
     def process(self, instance):
 
@@ -35,57 +34,68 @@ class CollectReview(pyblish.api.InstancePlugin):
         self.log.debug('members: {}'.format(members))
 
         # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
+        if len(cameras) == 0:
+            raise KnownPublishError("No camera found in review "
+                                    "instance: {}".format(instance))
+        elif len(cameras) > 2:
+            raise KnownPublishError(
+                "Only a single camera is allowed for a review instance but "
+                "more than one camera found in review instance: {}. "
+                "Cameras found: {}".format(instance, ", ".join(cameras)))
+
         camera = cameras[0]
         self.log.debug('camera: {}'.format(camera))
 
-        objectset = instance.context.data['objectsets']
+        context = instance.context
+        objectset = context.data['objectsets']
 
-        reviewable_subset = None
-        reviewable_subset = list(set(members) & set(objectset))
-        if reviewable_subset:
-            assert len(reviewable_subset) <= 1, "Multiple subsets for review"
-            self.log.debug('subset for review: {}'.format(reviewable_subset))
+        reviewable_subsets = list(set(members) & set(objectset))
+        if reviewable_subsets:
+            if len(reviewable_subsets) > 1:
+                raise KnownPublishError(
+                    "Multiple attached subsets for review are not supported. "
+                    "Attached: {}".format(", ".join(reviewable_subsets))
+                )
 
-            i = 0
-            for inst in instance.context:
+            reviewable_subset = reviewable_subsets[0]
+            self.log.debug(
+                "Subset attached to review: {}".format(reviewable_subset)
+            )
 
-                self.log.debug('filtering {}'.format(inst))
-                data = instance.context[i].data
+            # Find the relevant publishing instance in the current context
+            reviewable_inst = next(inst for inst in context
+                                   if inst.name == reviewable_subset)
+            data = reviewable_inst.data
 
-                if inst.name != reviewable_subset[0]:
-                    self.log.debug('subset name does not match {}'.format(
-                        reviewable_subset[0]))
-                    i += 1
-                    continue
+            self.log.debug(
+                'Adding review family to {}'.format(reviewable_subset)
+            )
+            if data.get('families'):
+                data['families'].append('review')
+            else:
+                data['families'] = ['review']
 
-                if data.get('families'):
-                    data['families'].append('review')
-                else:
-                    data['families'] = ['review']
-                self.log.debug('adding review family to {}'.format(
-                    reviewable_subset))
-                data['review_camera'] = camera
-                # data["publish"] = False
-                data['frameStartFtrack'] = instance.data["frameStartHandle"]
-                data['frameEndFtrack'] = instance.data["frameEndHandle"]
-                data['frameStartHandle'] = instance.data["frameStartHandle"]
-                data['frameEndHandle'] = instance.data["frameEndHandle"]
-                data["frameStart"] = instance.data["frameStart"]
-                data["frameEnd"] = instance.data["frameEnd"]
-                data['handles'] = instance.data.get('handles', None)
-                data['step'] = instance.data['step']
-                data['fps'] = instance.data['fps']
-                data['review_width'] = instance.data['review_width']
-                data['review_height'] = instance.data['review_height']
-                data["isolate"] = instance.data["isolate"]
-                data["panZoom"] = instance.data.get("panZoom", False)
-                data["panel"] = instance.data["panel"]
-                cmds.setAttr(str(instance) + '.active', 1)
-                self.log.debug('data {}'.format(instance.context[i].data))
-                instance.context[i].data.update(data)
-                instance.data['remove'] = True
-                self.log.debug('isntance data {}'.format(instance.data))
+            data['review_camera'] = camera
+            data['frameStartFtrack'] = instance.data["frameStartHandle"]
+            data['frameEndFtrack'] = instance.data["frameEndHandle"]
+            data['frameStartHandle'] = instance.data["frameStartHandle"]
+            data['frameEndHandle'] = instance.data["frameEndHandle"]
+            data["frameStart"] = instance.data["frameStart"]
+            data["frameEnd"] = instance.data["frameEnd"]
+            data['handles'] = instance.data.get('handles', None)
+            data['step'] = instance.data['step']
+            data['fps'] = instance.data['fps']
+            data['review_width'] = instance.data['review_width']
+            data['review_height'] = instance.data['review_height']
+            data["isolate"] = instance.data["isolate"]
+            data["panZoom"] = instance.data.get("panZoom", False)
+            data["panel"] = instance.data["panel"]
+
+            # The review instance must be active
+            cmds.setAttr(str(instance) + '.active', 1)
+
+            instance.data['remove'] = True
+
         else:
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
@@ -107,7 +117,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data["frameEndHandle"]
 
             # make ftrack publishable
-            instance.data["families"] = ['ftrack']
+            instance.data.setdefault("families", []).append('ftrack')
 
             cmds.setAttr(str(instance) + '.active', 1)
 
