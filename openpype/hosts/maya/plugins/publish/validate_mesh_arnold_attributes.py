@@ -42,14 +42,12 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
         # Get default arnold attribute values for mesh type.
         defaults = {}
         with delete_after() as tmp:
-            cube_transform = cmds.polyCube()[0]
-            tmp.append(cube_transform)
-            cube_mesh = cmds.listRelatives(cube_transform,
-                                           shapes=True,
-                                           fullPath=True)[0]
+            transform = cmds.createNode("transform")
+            tmp.append(transform)
 
-            for attr in cmds.listAttr(cube_mesh, string="ai*"):
-                plug = "{}.{}".format(cube_mesh, attr)
+            mesh = cmds.createNode("mesh", parent=transform)
+            for attr in cmds.listAttr(mesh, string="ai*"):
+                plug = "{}.{}".format(mesh, attr)
                 try:
                     defaults[attr] = get_attribute(plug)
                 except RuntimeError:
