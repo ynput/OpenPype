@@ -204,7 +204,7 @@ Burnins are text values painted on top of input and may be surrounded with box i
 ![presets_plugins_extract_burnin](../assets/presets_plugins_extract_burnin_01.png)
 
 The Extract Burnin plugin creates new representations based on plugin presets and representations in instance based on whether the reviewable matches the profile filter.
-A burnin can also be directly linked by name in the output definitions of the Extract Review plug-in settings so _can_ be triggered without a matching profile.
+A burnin can also be directly linked by name in the output definitions of the [Extract Review plug-in settings](#extract-review) so _can_ be triggered without a matching profile.
 
 #### Burnin formatting options (`options`)
 
@@ -212,7 +212,7 @@ The formatting options define the font style for the burnin texts.
 The X and Y offset define the margin around texts and (background) boxes.
 
 #### Burnin profiles (`profiles`)
-Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each profile item has **burnins**, where definitions of possible burnins are, and may have specified filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [ExtractReview](#profile-filters).
+Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each profile item has **burnins**, where definitions of possible burnins are, and may have specified filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [Profile Filters](#profile-filters).
 
 #### Profile burnins
 Profile may have set multiple burnin outputs from one input and that's why **burnins** is dictionary where key represents **filename suffix** to avoid overriding files with same name and value represents burnin definition. Burnin definition may contain multiple optional keys.
