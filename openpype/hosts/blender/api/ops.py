@@ -1037,7 +1037,7 @@ class BuildWorkFile(bpy.types.Operator):
                 bpy.data.libraries.remove(library)
 
         build_workfile()
-        
+
         if save_as:
             # Saving workfile
             print("Saving workfile")
