@@ -9,17 +9,23 @@ import substance_painter.ui
 import substance_painter.event
 import substance_painter.project
 
-from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
-from openpype.settings import get_current_project_settings
-
 import pyblish.api
 
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
+from openpype.settings import (
+    get_current_project_settings,
+    get_system_settings
+)
+
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
-    AVALON_CONTAINER_ID
+    AVALON_CONTAINER_ID,
+    Anatomy
 )
 from openpype.lib import (
+    StringTemplate,
     register_event_callback,
     emit_event,
 )
@@ -234,9 +240,32 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def _install_shelves(self, project_settings):
 
         shelves = project_settings["substancepainter"].get("shelves", {})
+        if not shelves:
+            return
+
+        # Prepare formatting data if we detect any path which might have
+        # template tokens like {asset} in there.
+        formatting_data = {}
+        has_formatting_entries = any("{" in path for path in shelves.values())
+        if has_formatting_entries:
+            project_name = self.get_current_project_name()
+            asset_name = self.get_current_asset_name()
+            task_name = self.get_current_asset_name()
+            system_settings = get_system_settings()
+            formatting_data = get_template_data_with_names(project_name,
+                                                           asset_name,
+                                                           task_name,
+                                                           system_settings)
+            anatomy = Anatomy(project_name)
+            formatting_data["root"] = anatomy.roots
+
         for name, path in shelves.items():
-            # TODO: Allow formatting with anatomy for the paths
             shelf_name = None
+
+            # Allow formatting with anatomy for the paths
+            if "{" in path:
+                path = StringTemplate.format_template(path, formatting_data)
+
             try:
                 shelf_name = lib.load_shelf(path, name=name)
             except ValueError as exc:
