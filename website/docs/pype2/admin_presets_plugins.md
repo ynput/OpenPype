@@ -294,16 +294,16 @@ If source representation has suffix **"h264"** and burnin suffix is **"client"**
 
 - Additional keys in burnins:
 
-  | Burnin key | Description                                                                                                                                                                                                                                             |
-  |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --- |
-  | frame_start | First frame number.                                                                                                                                                                                                                                     |
-  | frame_end | Last frame number.                                                                                                                                                                                                                                      |
-  | current_frame | Frame number for each frame.                                                                                                                                                                                                                            |
-  | duration | Count number of frames.                                                                                                                                                                                                                                 |
-  | resolution_width | Resolution width.                                                                                                                                                                                                                                       |
-  | resolution_height | Resolution height.                                                                                                                                                                                                                                      |
-  | fps | Fps of an output.                                                                                                                                                                                                                                       |
-  | timecode | Timecode by frame start and fps.                                                                                                                                                                                                                        |
+  | Burnin key | Description |
+  | --- | --- |
+  | frame_start | First frame number. |
+  | frame_end | Last frame number. |
+  | current_frame | Frame number for each frame. |
+  | duration | Count number of frames. |
+  | resolution_width | Resolution width. |
+  | resolution_height | Resolution height. |
+  | fps | Fps of an output. |
+  | timecode | Timecode by frame start and fps. |
   | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
 
 :::warning
