@@ -2478,8 +2478,8 @@ def load_capture_preset(data=None):
                     float(value[2]) / 255
                 ]
             disp_options[key] = value
-        else:
-            disp_options['displayGradient'] = True
+        elif key == "displayGradient":
+            disp_options[key] = value
 
     options['display_options'] = disp_options
 
@@ -3675,3 +3675,43 @@ def len_flattened(components):
         else:
             n += 1
     return n
+
+
+def get_all_children(nodes):
+    """Return all children of `nodes` including each instanced child.
+    Using maya.cmds.listRelatives(allDescendents=True) includes only the first
+    instance. As such, this function acts as an optimal replacement with a
+    focus on a fast query.
+
+    """
+
+    sel = OpenMaya.MSelectionList()
+    traversed = set()
+    iterator = OpenMaya.MItDag(OpenMaya.MItDag.kDepthFirst)
+    for node in nodes:
+
+        if node in traversed:
+            # Ignore if already processed as a child
+            # before
+            continue
+
+        sel.clear()
+        sel.add(node)
+        dag = sel.getDagPath(0)
+
+        iterator.reset(dag)
+        # ignore self
+        iterator.next()  # noqa: B305
+        while not iterator.isDone():
+
+            path = iterator.fullPathName()
+
+            if path in traversed:
+                iterator.prune()
+                iterator.next()  # noqa: B305
+                continue
+
+            traversed.add(path)
+            iterator.next()  # noqa: B305
+
+    return list(traversed)

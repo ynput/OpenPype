@@ -3,7 +3,7 @@
 Goal is that most of functions here are called on (or with) an object
 that has project name as a context (e.g. on 'ProjectEntity'?).
 
-+ We will need more specific functions doing wery specific queires really fast.
++ We will need more specific functions doing very specific queries really fast.
 """
 
 import re
@@ -193,7 +193,7 @@ def _get_assets(
             be found.
         asset_names (Iterable[str]): Name assets that should be found.
         parent_ids (Iterable[Union[str, ObjectId]]): Parent asset ids.
-        standard (bool): Query standart assets (type 'asset').
+        standard (bool): Query standard assets (type 'asset').
         archived (bool): Query archived assets (type 'archived_asset').
         fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -1185,7 +1185,7 @@ def get_representations(
     standard=True,
     fields=None
 ):
-    """Representaion entities data from one project filtered by filters.
+    """Representation entities data from one project filtered by filters.
 
     Filters are additive (all conditions must pass to return subset).
 
@@ -1231,7 +1231,7 @@ def get_archived_representations(
     names_by_version_ids=None,
     fields=None
 ):
-    """Archived representaion entities data from project with applied filters.
+    """Archived representation entities data from project with applied filters.
 
     Filters are additive (all conditions must pass to return subset).
 

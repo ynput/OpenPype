@@ -50,10 +50,6 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-:::info getting attribute values
-If you do not know what an attributes value is supposed to be, for example for dropdown menu (enum), try changing the attribute and look in the script editor where it should log what the attribute was set to.
-:::
-
 ### Model Name Validator
 
 `ValidateRenderSettings`
@@ -109,6 +105,70 @@ or Deadlines **Draft Tile Assembler**.
  - **Scene patches** - configure mechanism to add additional lines to published Maya Ascii scene files before they are used for rendering.
 This is useful to fix some specific renderer glitches and advanced hacking of Maya Scene files. `Patch name` is label for patch for easier orientation.
 `Patch regex` is regex used to find line in file, after `Patch line` string is inserted. Note that you need to add line ending.
+
+### Extract GPU Cache
+
+![Maya GPU Cache](assets/maya-admin_gpu_cache.png)
+
+- **Step** Specifies how often samples are taken during file creation. By default, one sample of your object's transformations is taken every frame and saved to the Alembic file.
+
+  For example, a value of 2 caches the transformations of the current object at every other frame of the Cache Time Range.
+
+- **Step Save** Specifies which samples are saved during cache creation. For example, a value of 2 specifies that only every other sample specified by the Step # frame(s) option is saved to your Alembic file.
+
+- **Optimize Hierarchy** When on, nodes and objects in a selected hierarchy are consolidated to maximize the performance of the cache file during playback.
+- **Optimization Threshold** (Available only when Optimize Hierarchy is on.) Specifies the maximum number of vertices contained in a single draw primitive. The default value of 40000 may be ideal for most Maya supported graphics cards. When set to the default value, after optimization, each object in the GPU cache file(s) will have no more than 40000 vertices. This value can be set higher depending on the memory available on your system graphics card.
+
+- **Optimize Animations for Motion Blur** When on, objects with animated transform nodes display with motion blur when the cache is played back in Viewport 2.0 render mode. See Viewport 2.0 options.
+
+  Maya first determines if the GPU cache includes animation data. If the GPU cache is static and does not contain animation data, Maya does not optimize the GPU cache for motion blur.
+
+:::note Motion Blur does not support Cached Playback.
+:::
+
+- **Write Materials** When on, Maya exports the Lambert and Phong materials from source geometry to the GPU Cache file. These materials display when the GPU-cached file is played back in Viewport 2.0.
+
+  GPU-cached objects support all the high-quality lighting and shading effects provide by the Viewport 2.0 rendering mode. See Viewport 2.0 options.
+
+:::note Lambert and Phong materials do not display on GPU-cached files when they are played back in scene view's High Quality Rendering or Default Quality Rendering modes.
+:::
+
+- **Use Base Tessellation** Exports geometry with base tessellation and no smoothing applied. If this setting is turned off, the extractor will export geometry with the current Smooth Mesh Preview setting applied.
+
+### Extract Playblast Settings (review)
+These settings provide granular control over how the playblasts or reviews are produced in Maya.
+
+Some of these settings are also available on the instance itself, in which case these settings will become the default value when creating the review instance.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings.png)
+
+- **Compression type** which file encoding to use.
+- **Data format** what format is the file encoding.
+- **Quality** lets you control the compression value for the output. Results can vary depending on the compression you selected. Quality values can range from 0 to 100, with a default value of 95.
+- **Background Color** the viewports background color.
+- **Background Bottom** the viewports background bottom color.
+- **Background Top** the viewports background top color.
+- **Override display options** override the viewports display options to use what is set in the settings.
+- **Isolate view** isolates the view to what is in the review instance. If only a camera is present in the review instance, all nodes are displayed in view.
+- **Off Screen** records the playblast hidden from the user.
+- **2D Pan/Zoom** enables the 2D Pan/Zoom functionality of the camera.
+- **Renderer name** which renderer to use for playblasting.
+- **Width** width of the output resolution. If this value is `0`, the asset's width is used.
+- **Height** height of the output resolution. If this value is `0`, the asset's height is used.
+
+#### Viewport Options
+
+Most settings to override in the viewport are self explanatory and can be found in Maya.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_viewport_options.png)
+
+- **Override Viewport Options** enable to use the settings below for the viewport when publishing the review.
+
+#### Camera Options
+
+These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
+
+![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
