@@ -578,7 +578,6 @@ class BootstrapRepos:
             self._print(f"overriding local folder: {data_dir}")
             self.data_dir = data_dir
 
-
     @staticmethod
     def get_version_path_from_list(
             version: str, version_list: list) -> Union[Path, None]:
