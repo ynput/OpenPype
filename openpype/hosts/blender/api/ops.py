@@ -1019,7 +1019,7 @@ class BuildWorkFile(bpy.types.Operator):
         if not bpy.app.timers.is_registered(_process_app_events):
             bpy.app.timers.register(_process_app_events, persistent=True)
 
-    def _build_first_workfile(self, clear_scene):
+    def _build_first_workfile(self, clear_scene, save_as):
         if clear_scene:
             # clear all objects and collections
             for obj in set(bpy.data.objects):
@@ -1036,13 +1036,9 @@ class BuildWorkFile(bpy.types.Operator):
                 bpy.data.libraries.remove(library)
 
         build_workfile()
-
-    def execute(self, context):
-        mti = MainThreadItem(self._build_first_workfile, self.clear_scene)
-        execute_in_main_thread(mti)
-
-        # Saving workfile
-        if self.save_as:
+        
+        if save_as:
+            # Saving workfile
             print("Saving workfile")
 
             with qt_app_context():
@@ -1070,6 +1066,12 @@ class BuildWorkFile(bpy.types.Operator):
                     save_file(file_path, copy=False)
                 else:
                     print("Failed to save")
+
+    def execute(self, context):
+        mti = MainThreadItem(
+            self._build_first_workfile, self.clear_scene, self.save_as
+        )
+        execute_in_main_thread(mti)
 
         return {"FINISHED"}
 
