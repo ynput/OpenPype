@@ -128,14 +128,30 @@
         {
             "type": "collapsible-wrap",
             "label": "OpenPype deployment control",
-            "collapsible": false,
+            "collapsible": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "Define location accessible by artist machine to check for zip updates with Openpype code."
+                },
                 {
                     "type": "path",
                     "key": "openpype_path",
                     "label": "Versions Repository",
                     "multiplatform": true,
                     "multipath": true,
+                    "require_restart": true
+                },
+                {
+                    "type": "label",
+                    "label": "Define custom location for artist machine where to unzip versions of Openpype code. By default it is in user app data folder."
+                },
+                {
+                    "type": "path",
+                    "key": "local_openpype_path",
+                    "label": "Custom Local Versions Folder",
+                    "multiplatform": true,
+                    "multipath": false,
                     "require_restart": true
                 },
                 {

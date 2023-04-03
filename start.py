@@ -268,6 +268,7 @@ from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_settings,
+    get_local_openpype_path_from_settings,
     validate_mongo_connection,
     OpenPypeVersionNotFound,
     OpenPypeVersionIncompatible
@@ -1038,6 +1039,10 @@ def boot():
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_settings(global_settings)
 
+    # Check if local versions should be installed in custom folder and not in
+    # user app data
+    data_dir = get_local_openpype_path_from_settings(global_settings)
+    bootstrap.set_data_dir(data_dir)
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
     else:
@@ -1075,7 +1080,7 @@ def boot():
             _print(f"!!! {e}")
             sys.exit(1)
         # validate version
-        _print(f">>> Validating version [ {str(version_path)} ]")
+        _print(f">>> Validating version in frozen [ {str(version_path)} ]")
         result = bootstrap.validate_openpype_version(version_path)
         if not result[0]:
             _print(f"!!! Invalid version: {result[1]}")
