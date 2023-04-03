@@ -145,25 +145,15 @@ class ReferenceLoader(Loader):
         asset = context['asset']
         subset = context['subset']
         settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load']['reference_loader']['naming']
+        custom_naming = settings['maya']['load']['reference_loader']
         loaded_containers = []
 
-        if ':' not in custom_naming:
-            raise ValueError(
-                "Wrong format for namespace, missing ':' separator"
-            )
-        elif custom_naming.strip()[0] == ':':
-            raise ValueError(
-                "Wrong format for namespace, missing content before ':' "
-                "separator"
-            )
-        elif custom_naming.strip()[-1] == ':':
-            raise ValueError(
-                "Wrong format for namespace, missing content after ':' "
-                "separator"
-            )
+        if not custom_naming['namespace']:
+            raise ValueError("No namespace specified")
+        elif not custom_naming['group_name']:
+            raise ValueError("No group name specified")
 
-        custom_naming = custom_naming.format(
+        custom_namespace = custom_naming['namespace'].format(
             asset_name=asset['name'],
             asset_type=asset['type'],
             subset=subset['name'],
@@ -173,22 +163,29 @@ class ReferenceLoader(Loader):
             )
         )
 
+        custom_group_name = custom_naming['group_name'].format(
+            asset_name=asset['name'],
+            asset_type=asset['type'],
+            subset=subset['name'],
+            family=(
+                subset['data'].get('family') or
+                subset['data']['families'][0]
+            )
+        )
+
+        namespace = lib.unique_namespace(
+            custom_namespace,
+            prefix="_" if custom_namespace[0].isdigit() else "",
+            suffix=""
+        )
+        group_name = "{}:{}".format(
+            namespace,
+            custom_group_name
+        )
+
         count = options.get("count") or 1
 
         for c in range(0, count):
-            group_name = None
-
-            namespace = custom_naming.split(':')[0]
-            namespace = lib.unique_namespace(
-                namespace,
-                prefix="_" if namespace[0].isdigit() else "",
-                suffix=""
-            )
-            group_name = "{}:{}".format(
-                namespace,
-                custom_naming.split(":")[-1]
-            )
-
             # Offset loaded subset
             if "offset" in options:
                 offset = [i * c for i in options["offset"]]
