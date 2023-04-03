@@ -1,6 +1,6 @@
 import traceback
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from ayon_api.exceptions import UrlError
 from ayon_api.utils import validate_url, login_to_server
@@ -171,7 +171,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         password_label = QtWidgets.QLabel("Password:", user_cred_widget)
         password_input = PlaceholderLineEdit(user_cred_widget)
         password_input.setPlaceholderText("< *********** >")
-        password_input.setEchoMode(password_input.Password)
+        password_input.setEchoMode(PlaceholderLineEdit.Password)
 
         api_label = QtWidgets.QLabel("API key:", user_cred_widget)
         api_preview = QtWidgets.QLineEdit(user_cred_widget)
@@ -405,14 +405,18 @@ class ServerLoginWindow(QtWidgets.QDialog):
     def _center_window(self):
         """Move window to center of screen."""
 
-        desktop = QtWidgets.QApplication.desktop()
-        screen_idx = desktop.screenNumber(self)
-        screen_geo = desktop.screenGeometry(screen_idx)
+        if hasattr(QtWidgets.QApplication, "desktop"):
+            desktop = QtWidgets.QApplication.desktop()
+            screen_idx = desktop.screenNumber(self)
+            screen_geo = desktop.screenGeometry(screen_idx)
+        else:
+            screen = self.screen()
+            screen_geo = screen.geometry()
+
         geo = self.frameGeometry()
         geo.moveCenter(screen_geo.center())
         if geo.y() < screen_geo.y():
             geo.setY(screen_geo.y())
-
         self.move(geo.topLeft())
 
     def _on_url_change(self, text):
