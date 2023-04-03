@@ -46,12 +46,14 @@
                                     {
                                         "type": "text",
                                         "key": "compression",
-                                        "label": "Encoding"
+                                        "label": "Encoding",
+                                        "default": "png"
                                     },
                                     {
                                         "type": "text",
                                         "key": "format",
-                                        "label": "Format"
+                                        "label": "Format",
+                                        "default": "image"
                                     },
                                     {
                                         "type": "number",
@@ -59,7 +61,8 @@
                                         "label": "Quality",
                                         "decimal": 0,
                                         "minimum": 0,
-                                        "maximum": 100
+                                        "maximum": 100,
+                                        "default": 95
                                     },
 
                                     {
@@ -79,22 +82,26 @@
                                     {
                                         "type": "color",
                                         "key": "background",
-                                        "label": "Background Color:    "
+                                        "label": "Background Color:    ",
+                                        "default": [125, 125, 125, 255]
                                     },
                                     {
                                         "type": "color",
                                         "key": "backgroundBottom",
-                                        "label": "Background Bottom:    "
+                                        "label": "Background Bottom:    ",
+                                        "default": [125, 125, 125, 255]
                                     },
                                     {
                                         "type": "color",
                                         "key": "backgroundTop",
-                                        "label": "Background Top:    "
+                                        "label": "Background Top:    ",
+                                        "default": [125, 125, 125, 255]
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "override_display",
-                                        "label": "Override display options"
+                                        "label": "Override display options",
+                                        "default": true
                                     }
                                 ]
                             },
@@ -112,17 +119,20 @@
                                     {
                                         "type": "boolean",
                                         "key": "isolate_view",
-                                        "label": "            Isolate view"
+                                        "label": "            Isolate view",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "off_screen",
-                                        "label": "            Off Screen"
+                                        "label": "            Off Screen",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "pan_zoom",
-                                        "label": "            2D Pan/Zoom"
+                                        "label": "            2D Pan/Zoom",
+                                        "default": false
                                     }
                                 ]
                             },
@@ -143,7 +153,8 @@
                                         "label": "Renderer name",
                                         "enum_items": [
                                             { "vp2Renderer": "Viewport 2.0" }
-                                        ]
+                                        ],
+                                        "default": "vp2Renderer"
                                     }
                                 ]
                             },
@@ -164,7 +175,8 @@
                                         "label": "                  Width",
                                         "decimal": 0,
                                         "minimum": 0,
-                                        "maximum": 99999
+                                        "maximum": 99999,
+                                        "default": 0
                                     },
                                     {
                                         "type": "number",
@@ -172,7 +184,8 @@
                                         "label": "Height",
                                         "decimal": 0,
                                         "minimum": 0,
-                                        "maximum": 99999
+                                        "maximum": 99999,
+                                        "default": 0
                                     }
                                 ]
                             },
@@ -188,7 +201,8 @@
                                     {
                                         "type": "boolean",
                                         "key": "override_viewport_options",
-                                        "label": "Override Viewport Options"
+                                        "label": "Override Viewport Options",
+                                        "default": true
                                     },
                                     {
                                         "type": "enum",
@@ -200,18 +214,21 @@
                                             { "selected": "Selected Lights"},
                                             { "flat": "Flat Lighting"},
                                             { "nolights": "No Lights"}
-                                        ]
+                                        ],
+                                        "default": "default"
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayTextures",
-                                        "label": "Display Textures"
+                                        "label": "Display Textures",
+                                        "default": true
                                     },
                                     {
                                         "type": "number",
                                         "key": "textureMaxResolution",
                                         "label": "Texture Clamp Resolution",
-                                        "decimal": 0
+                                        "decimal": 0,
+                                        "default": 1024
                                     },
                                     {
                                         "type": "splitter"
@@ -223,7 +240,8 @@
                                     {
                                         "type":"boolean",
                                         "key": "renderDepthOfField",
-                                        "label": "Depth of Field"
+                                        "label": "Depth of Field",
+                                        "default": true
                                     },
                                     {
                                         "type": "splitter"
@@ -231,12 +249,14 @@
                                     {
                                         "type": "boolean",
                                         "key": "shadows",
-                                        "label": "Display Shadows"
+                                        "label": "Display Shadows",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "twoSidedLighting",
-                                        "label": "Two Sided Lighting"
+                                        "label": "Two Sided Lighting",
+                                        "default": true
                                     },
                                     {
                                         "type": "splitter"
@@ -244,7 +264,8 @@
                                     {
                                         "type": "boolean",
                                         "key": "lineAAEnable",
-                                        "label": "Enable Anti-Aliasing"
+                                        "label": "Enable Anti-Aliasing",
+                                        "default": true
                                     },
                                     {
                                         "type": "number",
@@ -252,7 +273,8 @@
                                         "label": "Anti Aliasing Samples",
                                         "decimal": 0,
                                         "minimum": 0,
-                                        "maximum": 32
+                                        "maximum": 32,
+                                        "default": 8
                                     },
                                     {
                                         "type": "splitter"
@@ -260,42 +282,50 @@
                                     {
                                         "type": "boolean",
                                         "key": "useDefaultMaterial",
-                                        "label": "Use Default Material"
+                                        "label": "Use Default Material",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "wireframeOnShaded",
-                                        "label": "Wireframe On Shaded"
+                                        "label": "Wireframe On Shaded",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "xray",
-                                        "label": "X-Ray"
+                                        "label": "X-Ray",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "jointXray",
-                                        "label": "X-Ray Joints"
+                                        "label": "X-Ray Joints",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "backfaceCulling",
-                                        "label": "Backface Culling"
+                                        "label": "Backface Culling",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "ssaoEnable",
-                                        "label": "Screen Space Ambient Occlusion"
+                                        "label": "Screen Space Ambient Occlusion",
+                                        "default": false
                                     },
                                     {
                                         "type": "number",
                                         "key": "ssaoAmount",
-                                        "label": "SSAO Amount"
+                                        "label": "SSAO Amount",
+                                        "default": 1
                                     },
                                     {
                                         "type": "number",
                                         "key": "ssaoRadius",
-                                        "label": "SSAO Radius"
+                                        "label": "SSAO Radius",
+                                        "default": 16
                                     },
                                     {
                                         "type": "number",
@@ -303,7 +333,8 @@
                                         "label": "SSAO Filter Radius",
                                         "decimal": 0,
                                         "minimum": 1,
-                                        "maximum": 32
+                                        "maximum": 32,
+                                        "default": 16
                                     },
                                     {
                                         "type": "number",
@@ -311,7 +342,8 @@
                                         "label": "SSAO Samples",
                                         "decimal": 0,
                                         "minimum": 8,
-                                        "maximum": 32
+                                        "maximum": 32,
+                                        "default": 16
                                     },
                                     {
                                         "type": "splitter"
@@ -319,7 +351,8 @@
                                     {
                                         "type": "boolean",
                                         "key": "fogging",
-                                        "label": "Enable Hardware Fog"
+                                        "label": "Enable Hardware Fog",
+                                        "default": false
                                     },
                                     {
                                         "type": "enum",
@@ -329,7 +362,8 @@
                                             { "0": "Linear"},
                                             { "1": "Exponential"},
                                             { "2": "Exponential Squared"}
-                                        ]
+                                        ],
+                                        "default": "0"
                                     },
                                     {
                                         "type": "number",
@@ -337,22 +371,26 @@
                                         "label": "Fog Density",
                                         "decimal": 2,
                                         "minimum": 0,
-                                        "maximum": 1
+                                        "maximum": 1,
+                                        "default": 0
                                     },
                                     {
                                         "type": "number",
                                         "key": "hwFogStart",
-                                        "label": "Fog Start"
+                                        "label": "Fog Start",
+                                        "default": 0
                                     },
                                     {
                                         "type": "number",
                                         "key": "hwFogEnd",
-                                        "label": "Fog End"
+                                        "label": "Fog End",
+                                        "default": 100
                                     },
                                     {
                                         "type": "number",
                                         "key": "hwFogAlpha",
-                                        "label": "Fog Alpha"
+                                        "label": "Fog Alpha",
+                                        "default": 0
                                     },
                                     {
                                         "type": "number",
@@ -360,7 +398,8 @@
                                         "label": "Fog Color R",
                                         "decimal": 2,
                                         "minimum": 0,
-                                        "maximum": 1
+                                        "maximum": 1,
+                                        "default": 1
                                     },
                                     {
                                         "type": "number",
@@ -368,7 +407,8 @@
                                         "label": "Fog Color G",
                                         "decimal": 2,
                                         "minimum": 0,
-                                        "maximum": 1
+                                        "maximum": 1,
+                                        "default": 1
                                     },
                                     {
                                         "type": "number",
@@ -376,7 +416,8 @@
                                         "label": "Fog Color B",
                                         "decimal": 2,
                                         "minimum": 0,
-                                        "maximum": 1
+                                        "maximum": 1,
+                                        "default": 1
                                     },
                                     {
                                         "type": "splitter"
@@ -384,7 +425,8 @@
                                     {
                                         "type": "boolean",
                                         "key": "motionBlurEnable",
-                                        "label": "Enable Motion Blur"
+                                        "label": "Enable Motion Blur",
+                                        "default": false
                                     },
                                     {
                                         "type": "number",
@@ -392,7 +434,8 @@
                                         "label": "Motion Blur Sample Count",
                                         "decimal": 0,
                                         "minimum": 8,
-                                        "maximum": 32
+                                        "maximum": 32,
+                                        "default": 8
                                     },
                                     {
                                         "type": "number",
@@ -400,7 +443,8 @@
                                         "label": "Shutter Open Fraction",
                                         "decimal": 3,
                                         "minimum": 0.01,
-                                        "maximum": 32
+                                        "maximum": 32,
+                                        "default": 0.2
                                     },
                                     {
                                         "type": "splitter"
@@ -412,182 +456,218 @@
                                     {
                                         "type": "boolean",
                                         "key": "cameras",
-                                        "label": "Cameras"
+                                        "label": "Cameras",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "clipGhosts",
-                                        "label": "Clip Ghosts"
+                                        "label": "Clip Ghosts",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "deformers",
-                                        "label": "Deformers"
+                                        "label": "Deformers",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "dimensions",
-                                        "label": "Dimensions"
+                                        "label": "Dimensions",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "dynamicConstraints",
-                                        "label": "Dynamic Constraints"
+                                        "label": "Dynamic Constraints",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "dynamics",
-                                        "label": "Dynamics"
+                                        "label": "Dynamics",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "fluids",
-                                        "label": "Fluids"
+                                        "label": "Fluids",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "follicles",
-                                        "label": "Follicles"
+                                        "label": "Follicles",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "gpuCacheDisplayFilter",
-                                        "label": "GPU Cache"
+                                        "label": "GPU Cache",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "greasePencils",
-                                        "label": "Grease Pencil"
+                                        "label": "Grease Pencil",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "grid",
-                                        "label": "Grid"
+                                        "label": "Grid",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "hairSystems",
-                                        "label": "Hair Systems"
+                                        "label": "Hair Systems",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "handles",
-                                        "label": "Handles"
+                                        "label": "Handles",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "headsUpDisplay",
-                                        "label": "HUD"
+                                        "label": "HUD",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "ikHandles",
-                                        "label": "IK Handles"
+                                        "label": "IK Handles",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "imagePlane",
-                                        "label": "Image Planes"
+                                        "label": "Image Planes",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "joints",
-                                        "label": "Joints"
+                                        "label": "Joints",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "lights",
-                                        "label": "Lights"
+                                        "label": "Lights",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "locators",
-                                        "label": "Locators"
+                                        "label": "Locators",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "manipulators",
-                                        "label": "Manipulators"
+                                        "label": "Manipulators",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "motionTrails",
-                                        "label": "Motion Trails"
+                                        "label": "Motion Trails",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "nCloths",
-                                        "label": "nCloths"
+                                        "label": "nCloths",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "nParticles",
-                                        "label": "nParticles"
+                                        "label": "nParticles",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "nRigids",
-                                        "label": "nRigids"
+                                        "label": "nRigids",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "controlVertices",
-                                        "label": "NURBS CVs"
+                                        "label": "NURBS CVs",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "nurbsCurves",
-                                        "label": "NURBS Curves"
+                                        "label": "NURBS Curves",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "hulls",
-                                        "label": "NURBS Hulls"
+                                        "label": "NURBS Hulls",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "nurbsSurfaces",
-                                        "label": "NURBS Surfaces"
+                                        "label": "NURBS Surfaces",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "particleInstancers",
-                                        "label": "Particle Instancers"
+                                        "label": "Particle Instancers",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "pivots",
-                                        "label": "Pivots"
+                                        "label": "Pivots",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "planes",
-                                        "label": "Planes"
+                                        "label": "Planes",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "pluginShapes",
-                                        "label": "Plugin Shapes"
+                                        "label": "Plugin Shapes",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "polymeshes",
-                                        "label": "Polygons"
+                                        "label": "Polygons",
+                                        "default": true
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "strokes",
-                                        "label": "Strokes"
+                                        "label": "Strokes",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "subdivSurfaces",
-                                        "label": "Subdiv Surfaces"
+                                        "label": "Subdiv Surfaces",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "textures",
-                                        "label": "Texture Placements"
+                                        "label": "Texture Placements",
+                                        "default": false
                                     }
                                 ]
                             },
@@ -600,42 +680,50 @@
                                     {
                                         "type": "boolean",
                                         "key": "displayGateMask",
-                                        "label": "Display Gate Mask"
+                                        "label": "Display Gate Mask",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayResolution",
-                                        "label": "Display Resolution"
+                                        "label": "Display Resolution",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayFilmGate",
-                                        "label": "Display Film Gate"
+                                        "label": "Display Film Gate",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayFieldChart",
-                                        "label": "Display Field Chart"
+                                        "label": "Display Field Chart",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displaySafeAction",
-                                        "label": "Display Safe Action"
+                                        "label": "Display Safe Action",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displaySafeTitle",
-                                        "label": "Display Safe Title"
+                                        "label": "Display Safe Title",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayFilmPivot",
-                                        "label": "Display Film Pivot"
+                                        "label": "Display Film Pivot",
+                                        "default": false
                                     },
                                     {
                                         "type": "boolean",
                                         "key": "displayFilmOrigin",
-                                        "label": "Display Film Origin"
+                                        "label": "Display Film Origin",
+                                        "default": false
                                     },
                                     {
                                         "type": "number",
@@ -643,7 +731,8 @@
                                         "label": "Overscan",
                                         "decimal": 1,
                                         "minimum": 0,
-                                        "maximum": 10
+                                        "maximum": 10,
+                                        "default": 1
                                     }
                                 ]
                             }

@@ -829,8 +829,8 @@
                             "rendererName": "vp2Renderer"
                         },
                         "Resolution": {
-                            "width": 1920,
-                            "height": 1080
+                            "width": 0,
+                            "height": 0
                         },
                         "Viewport Options": {
                             "override_viewport_options": true,
@@ -896,7 +896,7 @@
                             "pivots": false,
                             "planes": false,
                             "pluginShapes": false,
-                            "polymeshes": false,
+                            "polymeshes": true,
                             "strokes": false,
                             "subdivSurfaces": false,
                             "textures": false

@@ -11,7 +11,9 @@ class ColorEntity(InputEntity):
 
     def _item_initialization(self):
         self.valid_value_types = (list, )
-        self.value_on_not_set = [0, 0, 0, 255]
+        self.value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", [0, 0, 0, 255])
+        )
         self.use_alpha = self.schema_data.get("use_alpha", True)
 
     def set_override_state(self, *args, **kwargs):
@@ -64,6 +66,6 @@ class ColorEntity(InputEntity):
             new_value.append(item)
 
         # Make sure
-        if not self.use_alpha:
+        if hasattr(self, "use_alpha") and not self.use_alpha:
             new_value[3] = 255
         return new_value
