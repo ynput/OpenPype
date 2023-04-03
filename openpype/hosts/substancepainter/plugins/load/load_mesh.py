@@ -62,7 +62,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
                 if status == substance_painter.project.ReloadMeshStatus.SUCCESS:  # noqa
                     print("Reload succeeded")
                 else:
-                    raise RuntimeError("Reload of mesh failed")
+                    raise LoadError("Reload of mesh failed")
 
             path = self.fname
             substance_painter.project.reload_mesh(path,
@@ -105,7 +105,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
             if status == substance_painter.project.ReloadMeshStatus.SUCCESS:
                 print("Reload succeeded")
             else:
-                raise RuntimeError("Reload of mesh failed")
+                raise LoaderError("Reload of mesh failed")
 
         substance_painter.project.reload_mesh(path, settings, on_mesh_reload)
 

@@ -15,7 +15,7 @@ class ExtractTextures(publish.Extractor,
     """
 
     label = "Extract Texture Set"
-    hosts = ['substancepainter']
+    hosts = ["substancepainter"]
     families = ["textureSet"]
 
     # Run before thumbnail extractors

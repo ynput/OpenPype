@@ -7,7 +7,7 @@ class CollectWorkfileRepresentation(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Workfile representation"
-    hosts = ['substancepainter']
+    hosts = ["substancepainter"]
     families = ["workfile"]
 
     def process(self, instance):
@@ -18,9 +18,9 @@ class CollectWorkfileRepresentation(pyblish.api.InstancePlugin):
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
 
-        instance.data['representations'] = [{
-            'name': ext.lstrip("."),
-            'ext': ext.lstrip("."),
-            'files': file,
+        instance.data["representations"] = [{
+            "name": ext.lstrip("."),
+            "ext": ext.lstrip("."),
+            "files": file,
             "stagingDir": folder,
         }]

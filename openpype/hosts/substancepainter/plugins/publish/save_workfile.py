@@ -16,7 +16,7 @@ class SaveCurrentWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
 
         host = registered_host()
-        if context.data['currentFile'] != host.get_current_workfile():
+        if context.data["currentFile"] != host.get_current_workfile():
             raise KnownPublishError("Workfile has changed during publishing!")
 
         if host.has_unsaved_changes():

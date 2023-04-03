@@ -19,7 +19,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
     # TODO: Detect what source data channels end up in each file
 
     label = "Collect Texture Set images"
-    hosts = ['substancepainter']
+    hosts = ["substancepainter"]
     families = ["textureSet"]
     order = pyblish.api.CollectorOrder
 
@@ -55,7 +55,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         first_filepath = outputs[0]["filepath"]
         fnames = [os.path.basename(output["filepath"]) for output in outputs]
         ext = os.path.splitext(first_filepath)[1]
-        assert ext.lstrip('.'), f"No extension: {ext}"
+        assert ext.lstrip("."), f"No extension: {ext}"
         map_identifier = strip_template(template)
 
         # Define the suffix we want to give this particular texture
@@ -78,9 +78,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
 
         # Prepare representation
         representation = {
-            'name': ext.lstrip("."),
-            'ext': ext.lstrip("."),
-            'files': fnames if len(fnames) > 1 else fnames[0],
+            "name": ext.lstrip("."),
+            "ext": ext.lstrip("."),
+            "files": fnames if len(fnames) > 1 else fnames[0],
         }
 
         # Mark as UDIM explicitly if it has UDIM tiles.
@@ -105,7 +105,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         image_instance.data["subset"] = image_subset
         image_instance.data["family"] = "image"
         image_instance.data["families"] = ["image", "textures"]
-        image_instance.data['representations'] = [representation]
+        image_instance.data["representations"] = [representation]
 
         # Group the textures together in the loader
         image_instance.data["subsetGroup"] = instance.data["subset"]
