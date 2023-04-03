@@ -20,6 +20,8 @@ class ExtractGPUCache(publish.Extractor):
     useBaseTessellation = True
 
     def process(self, instance):
+        cmds.loadPlugin("gpuCache", quiet=True)
+
         staging_dir = self.staging_dir(instance)
         filename = "{}_gpu_cache".format(instance.name)
 
