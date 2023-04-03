@@ -23,36 +23,37 @@ class ShowInKitsu(LauncherAction):
         return True
 
     def process(self, session, **kwargs):
-
         # Context inputs
         project_name = session["AVALON_PROJECT"]
         asset_name = session.get("AVALON_ASSET", None)
         task_name = session.get("AVALON_TASK", None)
 
-        project = get_project(project_name=project_name,
-                              fields=["data.zou_id"])
+        project = get_project(
+            project_name=project_name, fields=["data.zou_id"]
+        )
         if not project:
-            raise RuntimeError(f"Project {project_name} not found.")
+            raise RuntimeError("Project {} not found.".format(project_name))
 
         project_zou_id = project["data"].get("zou_id")
         if not project_zou_id:
-            raise RuntimeError(f"Project {project_name} has no "
-                               f"connected kitsu id.")
+            raise RuntimeError(
+                "Project {} has no connected kitsu id.".format(project_name)
+            )
 
         asset_zou_name = None
         asset_zou_id = None
-        asset_zou_type = 'Assets'
+        asset_zou_type = "Assets"
         task_zou_id = None
-        zou_sub_type = ['AssetType', 'Sequence']
+        zou_sub_type = ["AssetType", "Sequence"]
         if asset_name:
             asset_zou_name = asset_name
             asset_fields = ["data.zou.id", "data.zou.type"]
             if task_name:
-                asset_fields.append(f"data.tasks.{task_name}.zou.id")
+                asset_fields.append("data.tasks.{}.zou.id".format(task_name))
 
-            asset = get_asset_by_name(project_name,
-                                      asset_name=asset_name,
-                                      fields=asset_fields)
+            asset = get_asset_by_name(
+                project_name, asset_name=asset_name, fields=asset_fields
+            )
 
             asset_zou_data = asset["data"].get("zou")
 
@@ -67,40 +68,47 @@ class ShowInKitsu(LauncherAction):
                 task_data = asset["data"]["tasks"][task_name]
                 task_zou_data = task_data.get("zou", {})
                 if not task_zou_data:
-                    self.log.debug(f"No zou task data for task: {task_name}")
+                    self.log.debug(
+                        "No zou task data for task: {}".format(task_name)
+                    )
                 task_zou_id = task_zou_data["id"]
 
         # Define URL
-        url = self.get_url(project_id=project_zou_id,
-                           asset_name=asset_zou_name,
-                           asset_id=asset_zou_id,
-                           asset_type=asset_zou_type,
-                           task_id=task_zou_id)
+        url = self.get_url(
+            project_id=project_zou_id,
+            asset_name=asset_zou_name,
+            asset_id=asset_zou_id,
+            asset_type=asset_zou_type,
+            task_id=task_zou_id,
+        )
 
         # Open URL in webbrowser
-        self.log.info(f"Opening URL: {url}")
-        webbrowser.open(url,
-                        # Try in new tab
-                        new=2)
+        self.log.info("Opening URL: {}".format(url))
+        webbrowser.open(
+            url,
+            # Try in new tab
+            new=2,
+        )
 
-    def get_url(self,
-                project_id,
-                asset_name=None,
-                asset_id=None,
-                asset_type=None,
-                task_id=None):
-
-        shots_url = {'Shots', 'Sequence', 'Shot'}
-        sub_type = {'AssetType', 'Sequence'}
+    def get_url(
+        self,
+        project_id,
+        asset_name=None,
+        asset_id=None,
+        asset_type=None,
+        task_id=None,
+    ):
+        shots_url = {"Shots", "Sequence", "Shot"}
+        sub_type = {"AssetType", "Sequence"}
         kitsu_module = self.get_kitsu_module()
 
         # Get kitsu url with /api stripped
         kitsu_url = kitsu_module.server_url
         if kitsu_url.endswith("/api"):
-            kitsu_url = kitsu_url[:-len("/api")]
+            kitsu_url = kitsu_url[: -len("/api")]
 
         sub_url = f"/productions/{project_id}"
-        asset_type_url = "Shots" if asset_type in shots_url else "Assets"
+        asset_type_url = "shots" if asset_type in shots_url else "assets"
 
         if task_id:
             # Go to task page
@@ -120,6 +128,6 @@ class ShowInKitsu(LauncherAction):
             # Add search method if is a sub_type
             sub_url += f"/{asset_type_url}"
             if asset_type in sub_type:
-                sub_url += f'?search={asset_name}'
+                sub_url += f"?search={asset_name}"
 
         return f"{kitsu_url}{sub_url}"

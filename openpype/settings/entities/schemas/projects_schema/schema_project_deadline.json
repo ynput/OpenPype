@@ -121,7 +121,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "OpenPypeTileAssembler": "Open Image IO"
+                                    "OpenPypeTileAssembler": "OpenPype Tile Assembler"
                                 }
                             ]
                         },
@@ -239,27 +239,12 @@
                         {
                             "type": "number",
                             "key": "chunk_size",
-                            "label": "Chunk Size"
+                            "label": "Frame per Task"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool",
-                            "label": "Deadline pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool_secondary",
-                            "label": "Deadline pool (secondary)"
-                        },
-                        {
-                            "type": "number",
-                            "key": "framePerTask",
-                            "label": "Frame Per Task"
                         }
                     ]
                 },
@@ -284,11 +269,6 @@
                             "type": "boolean",
                             "key": "active",
                             "label": "Active"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
                         },
                         {
                             "type": "splitter"

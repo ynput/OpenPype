@@ -60,7 +60,7 @@ class Creator(LegacyCreator):
 
             def process(self):
                 instance =  super(CreateEpicNode, self, process()
-                # Set paramaters for Alembic node
+                # Set parameters for Alembic node
                 instance.setParms(
                     {"sop_path": "$HIP/%s.abc" % self.nodes[0]}
                 )

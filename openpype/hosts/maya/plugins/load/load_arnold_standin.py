@@ -2,7 +2,6 @@ import os
 import clique
 
 import maya.cmds as cmds
-import mtoa.ui.arnoldmenu
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
@@ -36,6 +35,11 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
+
+        # Make sure to load arnold before importing `mtoa.ui.arnoldmenu`
+        cmds.loadPlugin("mtoa", quiet=True)
+        import mtoa.ui.arnoldmenu
+
         version = context['version']
         version_data = version.get("data", {})
 
@@ -176,7 +180,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
         # Whether there is proxy or so, we still update the string operator.
-        # If no proxy exists, the string operator wont replace anything.
+        # If no proxy exists, the string operator won't replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
             "resources/" + proxy_basename,

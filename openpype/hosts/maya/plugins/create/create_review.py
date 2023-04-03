@@ -25,21 +25,27 @@ class CreateReview(plugin.Creator):
         "depth peeling",
         "alpha cut"
     ]
+    useMayaTimeline = True
+    panZoom = False
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
-
-        # get basic animation data : start / end / handles / steps
         data = OrderedDict(**self.data)
-        animation_data = lib.collect_animation_data(fps=True)
-        for key, value in animation_data.items():
+
+        # Option for using Maya or asset frame range in settings.
+        frame_range = lib.get_frame_range()
+        if self.useMayaTimeline:
+            frame_range = lib.collect_animation_data(fps=True)
+        for key, value in frame_range.items():
             data[key] = value
 
+        data["fps"] = lib.collect_animation_data(fps=True)["fps"]
         data["review_width"] = self.Width
         data["review_height"] = self.Height
         data["isolate"] = self.isolate
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
+        data["panZoom"] = self.panZoom
 
         self.data = data

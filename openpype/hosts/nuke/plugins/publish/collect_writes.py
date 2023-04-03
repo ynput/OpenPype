@@ -3,12 +3,14 @@ from pprint import pformat
 import nuke
 import pyblish.api
 from openpype.hosts.nuke import api as napi
+from openpype.pipeline import publish
 
 
-class CollectNukeWrites(pyblish.api.InstancePlugin):
+class CollectNukeWrites(pyblish.api.InstancePlugin,
+                        publish.ColormanagedPyblishPluginMixin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder - 0.48
+    order = pyblish.api.CollectorOrder + 0.0021
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["render", "prerender", "image"]
@@ -65,6 +67,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         write_file_path = nuke.filename(write_node)
         output_dir = os.path.dirname(write_file_path)
+
+        # get colorspace and add to version data
+        colorspace = napi.get_colorspace_from_node(write_node)
 
         self.log.debug('output dir: {}'.format(output_dir))
 
@@ -128,25 +133,30 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 else:
                     representation['files'] = collected_frames
 
+            # inject colorspace data
+            self.set_representation_colorspace(
+                representation, instance.context,
+                colorspace=colorspace
+            )
+
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
         elif render_target == "farm":
-            farm_priority = creator_attributes.get("farm_priority")
-            farm_chunk = creator_attributes.get("farm_chunk")
-            farm_concurency = creator_attributes.get("farm_concurency")
-            instance.data.update({
-                "deadlineChunkSize": farm_chunk or 1,
-                "deadlinePriority": farm_priority or 50,
-                "deadlineConcurrentTasks": farm_concurency or 0
-            })
+            farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
+            for key in farm_keys:
+                # Skip if key is not in creator attributes
+                if key not in creator_attributes:
+                    continue
+                # Add farm attributes to instance
+                instance.data[key] = creator_attributes[key]
+
             # Farm rendering
             instance.data["transfer"] = False
             instance.data["farm"] = True
             self.log.info("Farm rendering ON ...")
 
-        # get colorspace and add to version data
-        colorspace = napi.get_colorspace_from_node(write_node)
+        # TODO: remove this when we have proper colorspace support
         version_data = {
             "colorspace": colorspace
         }
@@ -179,7 +189,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             })
 
         # make sure rendered sequence on farm will
-        # be used for exctract review
+        # be used for extract review
         if not instance.data["review"]:
             instance.data["useSequenceForReview"] = False
 

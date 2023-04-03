@@ -22,6 +22,11 @@
                     "label": "Make tx files"
                 },
                 {
+                    "type": "boolean",
+                    "key": "rs_tex",
+                    "label": "Make Redshift texture files"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -134,6 +139,11 @@
                 },
                 {
                     "type": "boolean",
+                    "key": "include_parent_hierarchy",
+                    "label": "Include Parent Hierarchy"
+                },
+                {
+                    "type": "boolean",
                     "key": "include_user_defined_attributes",
                     "label": "Include User Defined Attributes"
                 },
@@ -237,6 +247,31 @@
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateReview",
+            "label": "Create Review",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "useMayaTimeline",
+                    "label": "Use Maya Timeline for Frame Range."
                 }
             ]
         },
@@ -397,10 +432,6 @@
                 {
                     "key": "CreateRenderSetup",
                     "label": "Create Render Setup"
-                },
-                {
-                    "key": "CreateReview",
-                    "label": "Create Review"
                 },
                 {
                     "key": "CreateRig",

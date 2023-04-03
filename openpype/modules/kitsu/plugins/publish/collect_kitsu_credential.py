@@ -13,6 +13,5 @@ class CollectKitsuSession(pyblish.api.ContextPlugin):  # rename log in
     # families = ["kitsu"]
 
     def process(self, context):
-
         gazu.client.set_host(os.environ["KITSU_SERVER"])
         gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
