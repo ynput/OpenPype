@@ -17,6 +17,22 @@ from openpype.hosts.maya.api.lib_renderproducts import (
 )
 
 
+def convert_to_int_or_float(string_value):
+    # Order of types are important here since float can convert string
+    # representation of integer.
+    types = [int, float]
+    for t in types:
+        try:
+            result = t(string_value)
+        except ValueError:
+            continue
+        else:
+            return result
+
+    # Neither integer or float.
+    return string_value
+
+
 def get_redshift_image_format_labels():
     """Return nice labels for Redshift image formats."""
     var = "$g_redshiftImageFormatLabels"
@@ -26,10 +42,10 @@ def get_redshift_image_format_labels():
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
-    * File Name Prefix must start with: `maya/<Scene>`
+    * File Name Prefix must start with: `<Scene>`
         all other token are customizable but sane values for Arnold are:
 
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         <Camera> token is supported also, useful for multiple renderable
         cameras per render layer.
@@ -60,14 +76,14 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>{aov_separator}<RenderPass>"  # noqa: E501
 
-    renderman_dir_prefix = "maya/<scene>/<layer>"
+    renderman_dir_prefix = "<scene>/<layer>"
 
     R_CAMERA_TOKEN = re.compile(r'%c|Camera>')
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
     DEFAULT_PADDING = 4
-    VRAY_PREFIX = "maya/<Scene>/<Layer>/<Layer>"
-    DEFAULT_PREFIX = "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
+    VRAY_PREFIX = "<Scene>/<Layer>/<Layer>"
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
 
@@ -227,25 +243,60 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         settings_lights_flag = render_settings.get("enable_all_lights", False)
         instance_lights_flag = instance.data.get("renderSetupIncludeLights")
         if settings_lights_flag != instance_lights_flag:
-            cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag)) # noqa
+            cls.log.warning(
+                "Instance flag for \"Render Setup Include Lights\" is set to "
+                "{} and Settings flag is set to {}".format(
+                    instance_lights_flag, settings_lights_flag
+                )
+            )
 
-        # Validate render settings attributes per renderer
-        attr_validations = (
-            instance.context.data["project_settings"]
-                                 ["maya"]
-                                 ["publish"]
-                                 ["ValidateRenderSettings"]
-        ).get("{}_render_attributes".format(renderer)) or []
-        for attr, value in attr_validations:
-            # go through definitions and test if such node.attribute exists.
-            # if so, compare its value from the one required.
-
-            # first get node of that type
-            cls.log.debug("{}: {}".format(attr, value))
-            if "." not in attr:
-                cls.log.warning("Skipping invalid attribute defined in "
-                                "validation settings: '{}'".format(attr))
+        # go through definitions and test if such node.attribute exists.
+        # if so, compare its value from the one required.
+        for attribute, data in cls.get_nodes(instance, renderer).items():
+            # Validate the settings has values.
+            if not data["values"]:
+                cls.log.error(
+                    "Settings for {} is missing values.".format(attribute)
+                )
                 continue
+
+            for node in data["nodes"]:
+                plug = "{}.{}".format(node, attribute)
+                try:
+                    render_value = cmds.getAttr(plug)
+                except RuntimeError:
+                    invalid = True
+                    cls.log.error("Cannot get value of {}".format(plug))
+                else:
+                    if render_value not in data["values"]:
+                        invalid = True
+                        cls.log.error(
+                            "Invalid value {} set on {}. Expecting {}".format(
+                                render_value, plug, data["values"]
+                            )
+                        )
+
+        return invalid
+
+    @classmethod
+    def get_nodes(cls, instance, renderer):
+        maya_settings = instance.context.data["project_settings"]["maya"]
+        validation_settings = (
+            maya_settings["publish"]["ValidateRenderSettings"].get(
+                "{}_render_attributes".format(renderer)
+            ) or []
+        )
+        result = {}
+        for attr, values in validation_settings:
+            cls.log.debug("{}: {}".format(attr, values))
+            if "." not in attr:
+                cls.log.warning(
+                    "Skipping invalid attribute defined in validation "
+                    "settings: \"{}\"".format(attr)
+                )
+                continue
+
+            values = [convert_to_int_or_float(v) for v in values]
 
             node_type, attribute_name = attr.split(".", 1)
 
@@ -254,25 +305,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
             if not nodes:
                 cls.log.warning(
-                    "No nodes of type '{}' found.".format(node_type))
+                    "No nodes of type \"{}\" found.".format(node_type)
+                )
                 continue
 
-            for node in nodes:
-                plug = "{}.{}".format(node, attribute_name)
-                try:
-                    render_value = cmds.getAttr(plug)
-                except RuntimeError:
-                    invalid = True
-                    cls.log.error("Cannot get value of {}".format(plug))
-                else:
-                    if str(value) != str(render_value):
-                        invalid = True
-                        cls.log.error(
-                            "Invalid value {} set on {}. Expecting {}"
-                            "".format(render_value, plug, value)
-                        )
+            result[attribute_name] = {"nodes": nodes, "values": values}
 
-        return invalid
+        return result
 
     @classmethod
     def repair(cls, instance):
@@ -284,6 +323,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         default_prefix = render_settings.get_default_image_prefix(renderer)
         aov_separator = render_settings.get_aov_separator()
+
+        for attribute, data in cls.get_nodes(instance, renderer).items():
+            if not data["values"]:
+                continue
+            for node in data["nodes"]:
+                lib.set_attribute(attribute, data["values"][0], node)
 
         with lib.renderlayer(layer_node):
 

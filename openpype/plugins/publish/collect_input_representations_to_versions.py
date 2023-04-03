@@ -23,7 +23,8 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
         representations = set()
         for instance in context:
             inst_repre = instance.data.get("inputRepresentations", [])
-            representations.update(inst_repre)
+            if inst_repre:
+                representations.update(inst_repre)
 
         representations_docs = get_representations(
             project_name=context.data["projectEntity"]["name"],
@@ -31,7 +32,8 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
             fields=["_id", "parent"])
 
         representation_id_to_version_id = {
-            repre["_id"]: repre["parent"] for repre in representations_docs
+            str(repre["_id"]): repre["parent"]
+            for repre in representations_docs
         }
 
         for instance in context:
@@ -39,9 +41,8 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
             if not inst_repre:
                 continue
 
-            input_versions = instance.data.get("inputVersions", [])
+            input_versions = instance.data.setdefault("inputVersions", [])
             for repre_id in inst_repre:
-                repre_id = ObjectId(repre_id)
-                version_id = representation_id_to_version_id[repre_id]
-                input_versions.append(version_id)
-            instance.data["inputVersions"] = input_versions
+                version_id = representation_id_to_version_id.get(repre_id)
+                if version_id:
+                    input_versions.append(version_id)

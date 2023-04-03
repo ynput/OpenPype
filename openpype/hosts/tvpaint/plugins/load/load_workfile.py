@@ -11,7 +11,13 @@ from openpype.pipeline.workfile import (
     get_last_workfile_with_version,
 )
 from openpype.pipeline.template_data import get_template_data_with_names
-from openpype.hosts.tvpaint.api import lib, pipeline, plugin
+from openpype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api.lib import (
+    execute_george_through_file,
+)
+from openpype.hosts.tvpaint.api.pipeline import (
+    get_current_workfile_context,
+)
 
 
 class LoadWorkfile(plugin.Loader):
@@ -26,9 +32,9 @@ class LoadWorkfile(plugin.Loader):
         # Load context of current workfile as first thing
         #   - which context and extension has
         host = registered_host()
-        current_file = host.current_file()
+        current_file = host.get_current_workfile()
 
-        context = pipeline.get_current_workfile_context()
+        context = get_current_workfile_context()
 
         filepath = self.fname.replace("\\", "/")
 
@@ -40,7 +46,7 @@ class LoadWorkfile(plugin.Loader):
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
             filepath
         )
-        lib.execute_george_through_file(george_script)
+        execute_george_through_file(george_script)
 
         # Save workfile.
         host_name = "tvpaint"
@@ -69,12 +75,13 @@ class LoadWorkfile(plugin.Loader):
         file_template = anatomy.templates[template_key]["file"]
 
         # Define saving file extension
+        extensions = host.get_workfile_extensions()
         if current_file:
             # Match the extension of current file
             _, extension = os.path.splitext(current_file)
         else:
             # Fall back to the first extension supported for this host.
-            extension = host.file_extensions()[0]
+            extension = extensions[0]
 
         data["ext"] = extension
 
@@ -83,7 +90,7 @@ class LoadWorkfile(plugin.Loader):
             folder_template, data
         )
         version = get_last_workfile_with_version(
-            work_root, file_template, data, host.file_extensions()
+            work_root, file_template, data, extensions
         )[1]
 
         if version is None:
@@ -97,4 +104,4 @@ class LoadWorkfile(plugin.Loader):
             file_template, data
         )
         path = os.path.join(work_root, filename)
-        host.save_file(path)
+        host.save_workfile(path)

@@ -5,7 +5,7 @@ import traceback
 import functools
 import datetime
 
-from Qt import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.settings.entities import ProjectSettings
 from openpype.tools.settings import CHILD_OFFSET

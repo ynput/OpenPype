@@ -24,6 +24,11 @@ def pytest_addoption(parser):
         help="Overwrite default timeout"
     )
 
+    parser.addoption(
+        "--setup_only", action="store", default=None,
+        help="True - only setup test, do not run any tests"
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -43,3 +48,20 @@ def app_variant(request):
 @pytest.fixture(scope="module")
 def timeout(request):
     return request.config.getoption("--timeout")
+
+
+@pytest.fixture(scope="module")
+def setup_only(request):
+    return request.config.getoption("--setup_only")
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    # execute all other hooks to obtain the report object
+    outcome = yield
+    rep = outcome.get_result()
+
+    # set a report attribute for each phase of a call, which can
+    # be "setup", "call", "teardown"
+
+    setattr(item, "rep_" + rep.when, rep)

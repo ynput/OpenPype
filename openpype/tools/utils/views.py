@@ -1,6 +1,5 @@
-import os
 from openpype.resources import get_image_path
-from Qt import QtWidgets, QtCore, QtGui, QtSvg
+from qtpy import QtWidgets, QtCore, QtGui, QtSvg
 
 
 class DeselectableTreeView(QtWidgets.QTreeView):

@@ -1,5 +1,6 @@
-import qargparse
-from openpype.hosts.tvpaint.api import lib, plugin
+from openpype.lib.attribute_definitions import BoolDef
+from openpype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api.lib import execute_george_through_file
 
 
 class ImportImage(plugin.Loader):
@@ -26,26 +27,28 @@ class ImportImage(plugin.Loader):
         "preload": True
     }
 
-    options = [
-        qargparse.Boolean(
-            "stretch",
-            label="Stretch to project size",
-            default=True,
-            help="Stretch loaded image/s to project resolution?"
-        ),
-        qargparse.Boolean(
-            "timestretch",
-            label="Stretch to timeline length",
-            default=True,
-            help="Clip loaded image/s to timeline length?"
-        ),
-        qargparse.Boolean(
-            "preload",
-            label="Preload loaded image/s",
-            default=True,
-            help="Preload image/s?"
-        )
-    ]
+    @classmethod
+    def get_options(cls, contexts):
+        return [
+            BoolDef(
+                "stretch",
+                label="Stretch to project size",
+                default=cls.defaults["stretch"],
+                tooltip="Stretch loaded image/s to project resolution?"
+            ),
+            BoolDef(
+                "timestretch",
+                label="Stretch to timeline length",
+                default=cls.defaults["timestretch"],
+                tooltip="Clip loaded image/s to timeline length?"
+            ),
+            BoolDef(
+                "preload",
+                label="Preload loaded image/s",
+                default=cls.defaults["preload"],
+                tooltip="Preload image/s?"
+            )
+        ]
 
     def load(self, context, name, namespace, options):
         stretch = options.get("stretch", self.defaults["stretch"])
@@ -79,4 +82,4 @@ class ImportImage(plugin.Loader):
             layer_name,
             load_options_str
         )
-        return lib.execute_george_through_file(george_script)
+        return execute_george_through_file(george_script)

@@ -1,5 +1,6 @@
 import os
 import glob
+import tempfile
 
 import capture
 
@@ -25,28 +26,28 @@ class ExtractThumbnail(publish.Extractor):
     def process(self, instance):
         self.log.info("Extracting capture..")
 
-        camera = instance.data['review_camera']
+        camera = instance.data["review_camera"]
 
-        capture_preset = (
-            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
-        )
+        maya_setting = instance.context.data["project_settings"]["maya"]
+        plugin_setting = maya_setting["publish"]["ExtractPlayblast"]
+        capture_preset = plugin_setting["capture_preset"]
         override_viewport_options = (
-            capture_preset['Viewport Options']['override_viewport_options']
+            capture_preset["Viewport Options"]["override_viewport_options"]
         )
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
         except KeyError as ke:
-            self.log.error('Error loading capture presets: {}'.format(str(ke)))
+            self.log.error("Error loading capture presets: {}".format(str(ke)))
             preset = {}
-        self.log.info('Using viewport preset: {}'.format(preset))
+        self.log.info("Using viewport preset: {}".format(preset))
 
         # preset["off_screen"] =  False
 
-        preset['camera'] = camera
-        preset['start_frame'] = instance.data["frameStart"]
-        preset['end_frame'] = instance.data["frameStart"]
-        preset['camera_options'] = {
+        preset["camera"] = camera
+        preset["start_frame"] = instance.data["frameStart"]
+        preset["end_frame"] = instance.data["frameStart"]
+        preset["camera_options"] = {
             "displayGateMask": False,
             "displayResolution": False,
             "displayFilmGate": False,
@@ -73,28 +74,41 @@ class ExtractThumbnail(publish.Extractor):
         # used, if not then the asset resolution is
         # used
         if review_instance_width and review_instance_height:
-            preset['width'] = review_instance_width
-            preset['height'] = review_instance_height
+            preset["width"] = review_instance_width
+            preset["height"] = review_instance_height
         elif width_preset and height_preset:
-            preset['width'] = width_preset
-            preset['height'] = height_preset
+            preset["width"] = width_preset
+            preset["height"] = height_preset
         elif asset_width and asset_height:
-            preset['width'] = asset_width
-            preset['height'] = asset_height
-        stagingDir = self.staging_dir(instance)
+            preset["width"] = asset_width
+            preset["height"] = asset_height
+
+        # Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            "Create temp directory {} for thumbnail".format(dst_staging)
+        )
+        # Store new staging to cleanup paths
+        instance.context.data["cleanupFullPaths"].append(dst_staging)
         filename = "{0}".format(instance.name)
-        path = os.path.join(stagingDir, filename)
+        path = os.path.join(dst_staging, filename)
 
         self.log.info("Outputting images to %s" % path)
 
-        preset['filename'] = path
-        preset['overwrite'] = True
+        preset["filename"] = path
+        preset["overwrite"] = True
 
         pm.refresh(f=True)
 
         refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
+
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
@@ -108,16 +122,20 @@ class ExtractThumbnail(publish.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Disable Pan/Zoom.
+        preset.pop("pan_zoom", None)
+        preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
-            preset['viewer'] = False
+            preset["viewer"] = False
 
             # Update preset with current panel setting
             # if override_viewport_options is turned off
-            if not override_viewport_options:
-                panel = cmds.getPanel(withFocus=True)
+            panel = cmds.getPanel(withFocus=True) or ""
+            if not override_viewport_options and "modelPanel" in panel:
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
@@ -127,17 +145,16 @@ class ExtractThumbnail(publish.Extractor):
 
         _, thumbnail = os.path.split(playblast)
 
-
         self.log.info("file list  {}".format(thumbnail))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'thumbnail',
-            'ext': 'jpg',
-            'files': thumbnail,
-            "stagingDir": stagingDir,
+            "name": "thumbnail",
+            "ext": "jpg",
+            "files": thumbnail,
+            "stagingDir": dst_staging,
             "thumbnail": True
         }
         instance.data["representations"].append(representation)

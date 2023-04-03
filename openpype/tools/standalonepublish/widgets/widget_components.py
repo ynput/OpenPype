@@ -4,7 +4,7 @@ import tempfile
 import random
 import string
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.pipeline import legacy_io
 from openpype.lib import (

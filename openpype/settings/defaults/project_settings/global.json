@@ -1,4 +1,22 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "filepath": [
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio",
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/nuke-default/config.ocio"
+            ]
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {
+                "example": {
+                    "pattern": ".*(beauty).*",
+                    "colorspace": "ACES - ACEScg",
+                    "ext": "exr"
+                }
+            }
+        }
+    },
     "publish": {
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
@@ -24,6 +42,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "collect_comment_per_instance": {
+            "enabled": false,
+            "families": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -46,6 +68,10 @@
                 "output": []
             }
         },
+        "ExtractOIIOTranscode": {
+            "enabled": true,
+            "profiles": []
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [
@@ -53,11 +79,68 @@
                     "families": [],
                     "hosts": [],
                     "outputs": {
+                        "png": {
+                            "ext": "png",
+                            "tags": [
+                                "ftrackreview"
+                            ],
+                            "burnins": [],
+                            "ffmpeg_args": {
+                                "video_filters": [],
+                                "audio_filters": [],
+                                "input": [],
+                                "output": []
+                            },
+                            "filter": {
+                                "families": [
+                                    "render",
+                                    "review",
+                                    "ftrack"
+                                ],
+                                "subsets": [],
+                                "custom_tags": [],
+                                "single_frame_filter": "single_frame"
+                            },
+                            "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
+                            "width": 1920,
+                            "height": 1080,
+                            "scale_pixel_aspect": true,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "letter_box": {
+                                "enabled": false,
+                                "ratio": 0.0,
+                                "fill_color": [
+                                    0,
+                                    0,
+                                    0,
+                                    255
+                                ],
+                                "line_thickness": 0,
+                                "line_color": [
+                                    255,
+                                    0,
+                                    0,
+                                    255
+                                ]
+                            }
+                        },
                         "h264": {
                             "ext": "mp4",
                             "tags": [
                                 "burnin",
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
@@ -78,7 +161,9 @@
                                     "review",
                                     "ftrack"
                                 ],
-                                "subsets": []
+                                "subsets": [],
+                                "custom_tags": [],
+                                "single_frame_filter": "multi_frame"
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -147,6 +232,9 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
                     "burnins": {
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
@@ -161,8 +249,35 @@
                             }
                         }
                     }
+                },
+                {
+                    "families": [],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
+                    "burnins": {
+                        "maya_burnin": {
+                            "TOP_LEFT": "{yy}-{mm}-{dd}",
+                            "TOP_CENTERED": "{focalLength:.2f} mm",
+                            "TOP_RIGHT": "{anatomy[version]}",
+                            "BOTTOM_LEFT": "{username}",
+                            "BOTTOM_CENTERED": "{asset}",
+                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                            "filter": {
+                                "families": [],
+                                "tags": []
+                            }
+                        }
+                    }
                 }
             ]
+        },
+        "PreIntegrateThumbnails": {
+            "enabled": true,
+            "integrate_profiles": []
         },
         "IntegrateSubsetGroup": {
             "subset_grouping_profiles": [
@@ -226,6 +341,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
                 }
             ]
         },
@@ -343,14 +469,14 @@
                 },
                 {
                     "families": [
-                        "renderLocal"
+                        "render"
                     ],
                     "hosts": [
                         "aftereffects"
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "render{Task}{Variant}"
+                    "template": "{family}{Task}{Composition}{Variant}"
                 },
                 {
                     "families": [
@@ -396,7 +522,8 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "enabled": true
+                    "enabled": true,
+                    "use_last_published_workfile": false
                 }
             ],
             "open_workfile_tool_on_startup": [
@@ -421,8 +548,74 @@
             ]
         },
         "publish": {
-            "template_name_profiles": [],
-            "hero_template_name_profiles": []
+            "template_name_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "publish"
+                },
+                {
+                    "families": [
+                        "review",
+                        "render",
+                        "prerender"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTexture"
+                },
+                {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "online"
+                }
+            ],
+            "hero_template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
+                }
+            ],
+            "custom_staging_dir_profiles": []
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",

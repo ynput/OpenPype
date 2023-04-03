@@ -23,6 +23,7 @@ CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
 CURRENT_ASSET_DOC_SCHEMA = "openpype:asset-3.0"
 CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
 CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
+CURRENT_HERO_VERSION_SCHEMA = "openpype:hero_version-1.0"
 CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
 CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
 CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
@@ -162,6 +163,34 @@ def new_version_doc(version, subset_id, data=None, entity_id=None):
     }
 
 
+def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
+    """Create skeleton data of hero version document.
+
+    Args:
+        version_id (ObjectId): Is considered as unique identifier of version
+            under subset.
+        subset_id (Union[str, ObjectId]): Id of parent subset.
+        data (Dict[str, Any]): Version document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of version document.
+    """
+
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "schema": CURRENT_HERO_VERSION_SCHEMA,
+        "type": "hero_version",
+        "version_id": version_id,
+        "parent": subset_id,
+        "data": data
+    }
+
+
 def new_representation_doc(
     name, version_id, context, data=None, entity_id=None
 ):
@@ -293,6 +322,20 @@ def prepare_version_update_data(old_doc, new_doc, replace=True):
     return _prepare_update_data(old_doc, new_doc, replace)
 
 
+def prepare_hero_version_update_data(old_doc, new_doc, replace=True):
+    """Compare two hero version documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
+    return _prepare_update_data(old_doc, new_doc, replace)
+
+
 def prepare_representation_update_data(old_doc, new_doc, replace=True):
     """Compare two representation documents and prepare update data.
 
@@ -325,7 +368,7 @@ def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
 class AbstractOperation(object):
     """Base operation class.
 
-    Opration represent a call into database. The call can create, change or
+    Operation represent a call into database. The call can create, change or
     remove data.
 
     Args:
@@ -366,7 +409,7 @@ class AbstractOperation(object):
         pass
 
     def to_data(self):
-        """Convert opration to data that can be converted to json or others.
+        """Convert operation to data that can be converted to json or others.
 
         Warning:
             Current state returns ObjectId objects which cannot be parsed by
@@ -385,7 +428,7 @@ class AbstractOperation(object):
 
 
 class CreateOperation(AbstractOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -442,7 +485,7 @@ class CreateOperation(AbstractOperation):
 
 
 class UpdateOperation(AbstractOperation):
-    """Opeartion to update an entity.
+    """Operation to update an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -509,7 +552,7 @@ class UpdateOperation(AbstractOperation):
 
 
 class DeleteOperation(AbstractOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.

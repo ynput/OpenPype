@@ -19,8 +19,6 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     order = ValidateMeshOrder
     families = ['model']
     hosts = ['maya']
-    category = 'geometry'
-    version = (0, 1, 0)
     label = 'Mesh Edge Length Non Zero'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     optional = True
@@ -30,7 +28,10 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Return the invalid edges.
-        Also see: http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=Mesh__Cleanup
+
+        Also see:
+
+        http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=Mesh__Cleanup
 
         """
 
@@ -38,8 +39,21 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
         if not meshes:
             return list()
 
+        valid_meshes = []
+        for mesh in meshes:
+            num_vertices = cmds.polyEvaluate(mesh, vertex=True)
+
+            if num_vertices == 0:
+                cls.log.warning(
+                    "Skipping \"{}\", cause it does not have any "
+                    "vertices.".format(mesh)
+                )
+                continue
+
+            valid_meshes.append(mesh)
+
         # Get all edges
-        edges = ['{0}.e[*]'.format(node) for node in meshes]
+        edges = ['{0}.e[*]'.format(node) for node in valid_meshes]
 
         # Filter by constraint on edge length
         invalid = lib.polyConstraint(edges,

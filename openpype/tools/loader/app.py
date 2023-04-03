@@ -1,7 +1,7 @@
 import sys
 import traceback
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.client import get_projects, get_project
 from openpype import style

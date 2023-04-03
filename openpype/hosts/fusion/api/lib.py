@@ -3,8 +3,6 @@ import sys
 import re
 import contextlib
 
-from Qt import QtGui
-
 from openpype.lib import Logger
 from openpype.client import (
     get_asset_by_name,
@@ -92,7 +90,7 @@ def set_asset_resolution():
     })
 
 
-def validate_comp_prefs(comp=None):
+def validate_comp_prefs(comp=None, force_repair=False):
     """Validate current comp defaults with asset settings.
 
     Validates fps, resolutionWidth, resolutionHeight, aspectRatio.
@@ -135,20 +133,21 @@ def validate_comp_prefs(comp=None):
         asset_value = asset_data[key]
         comp_value = comp_frame_format_prefs.get(comp_key)
         if asset_value != comp_value:
-            # todo: Actually show dialog to user instead of just logging
-            log.warning(
-                "Comp {pref} {value} does not match asset "
-                "'{asset_name}' {pref} {asset_value}".format(
-                    pref=label,
-                    value=comp_value,
-                    asset_name=asset_doc["name"],
-                    asset_value=asset_value)
-            )
-
             invalid_msg = "{} {} should be {}".format(label,
                                                       comp_value,
                                                       asset_value)
             invalid.append(invalid_msg)
+
+            if not force_repair:
+                # Do not log warning if we force repair anyway
+                log.warning(
+                    "Comp {pref} {value} does not match asset "
+                    "'{asset_name}' {pref} {asset_value}".format(
+                        pref=label,
+                        value=comp_value,
+                        asset_name=asset_doc["name"],
+                        asset_value=asset_value)
+                )
 
     if invalid:
 
@@ -159,6 +158,11 @@ def validate_comp_prefs(comp=None):
                 comp_key_full = "Comp.FrameFormat.{}".format(comp_key)
                 attributes[comp_key_full] = value
             comp.SetPrefs(attributes)
+
+        if force_repair:
+            log.info("Applying default Comp preferences..")
+            _on_repair()
+            return
 
         from . import menu
         from openpype.widgets import popup
@@ -206,7 +210,8 @@ def switch_item(container,
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
-        repre_parent_docs = get_representation_parents(representation)
+        repre_parent_docs = get_representation_parents(
+            project_name, representation)
         if repre_parent_docs:
             version, subset, asset, _ = repre_parent_docs
         else:
@@ -298,10 +303,18 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
-def get_current_comp():
-    """Hack to get current comp in this session"""
+def get_fusion_module():
+    """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
+    return fusion
+
+
+def get_current_comp():
+    """Get current comp in this session"""
+    fusion = get_fusion_module()
+    if fusion is not None:
+        comp = fusion.CurrentComp
+        return comp
 
 
 @contextlib.contextmanager

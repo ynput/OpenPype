@@ -9,8 +9,9 @@ import time
 import queue
 import collections
 import appdirs
-import pymongo
+import socket
 
+import pymongo
 import requests
 import ftrack_api
 import ftrack_api.session
@@ -30,6 +31,16 @@ from openpype.lib import Logger
 
 TOPIC_STATUS_SERVER = "openpype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "openpype.event.server.status.result"
+
+
+def get_host_ip():
+    host_name = socket.gethostname()
+    try:
+        return socket.gethostbyname(host_name)
+    except Exception:
+        pass
+
+    return None
 
 
 class SocketBaseEventHub(ftrack_api.event.hub.EventHub):

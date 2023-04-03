@@ -43,8 +43,7 @@ You can use following command line arguments:
 openpype_console --use-version=3.0.1
 ```
 
-`--use-staging` - to specify you prefer staging version. In that case it will be used
-(if found) instead of production one.
+`--use-staging` - to specify you prefer staging version. In that case it will be used instead of production one.
 
 :::tip List available versions
 To list all available versions, use:
@@ -52,8 +51,6 @@ To list all available versions, use:
 ```shell
 openpype_console --list-versions
 ```
-
-You can add `--use-staging` to list staging versions.
 :::
 
 If you want to validate integrity of some available version, you can use:
@@ -71,7 +68,7 @@ Add `--headless` to run OpenPype without graphical UI (useful on server or on au
 
 `--verbose` `<level>` - change log verbose level of OpenPype loggers.
 
-Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"ciritcal" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
+Level value can be integer in range `0-50` or one of enum strings `"notset" (0)`, `"debug" (10)`, `"info" (20)`, `"warning" (30)`, `"error" (40)`, `"critical" (50)`. Value is stored to `OPENPYPE_LOG_LEVEL` environment variable for next processes.
 
 ```shell
 openpype_console --verbose debug

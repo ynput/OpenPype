@@ -2,9 +2,11 @@
 """Unreal Editor OpenPype host API."""
 
 from .plugin import (
-    Loader,
-    Creator
+    UnrealActorCreator,
+    UnrealAssetCreator,
+    Loader
 )
+
 from .pipeline import (
     install,
     uninstall,
@@ -20,12 +22,12 @@ from .pipeline import (
     show_tools_popup,
     instantiate,
     UnrealHost,
+    maintained_selection
 )
 
 __all__ = [
     "install",
     "uninstall",
-    "Creator",
     "Loader",
     "ls",
     "publish",
@@ -39,4 +41,5 @@ __all__ = [
     "show_tools_popup",
     "instantiate",
     "UnrealHost",
+    "maintained_selection"
 ]

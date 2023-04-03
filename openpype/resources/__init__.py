@@ -39,15 +39,21 @@ def get_liberation_font_path(bold=False, italic=False):
     return font_path
 
 
+def get_openpype_production_icon_filepath():
+    return get_resource("icons", "openpype_icon.png")
+
+
+def get_openpype_staging_icon_filepath():
+    return get_resource("icons", "openpype_icon_staging.png")
+
+
 def get_openpype_icon_filepath(staging=None):
     if staging is None:
         staging = is_running_staging()
 
     if staging:
-        icon_file_name = "openpype_icon_staging.png"
-    else:
-        icon_file_name = "openpype_icon.png"
-    return get_resource("icons", icon_file_name)
+        return get_openpype_staging_icon_filepath()
+    return get_openpype_production_icon_filepath()
 
 
 def get_openpype_splash_filepath(staging=None):

@@ -12,7 +12,7 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.api import (
+from openpype.settings import (
     get_system_settings,
     get_project_settings
 )

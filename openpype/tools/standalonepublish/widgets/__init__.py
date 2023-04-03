@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 HelpRole = QtCore.Qt.UserRole + 2
 FamilyRole = QtCore.Qt.UserRole + 3

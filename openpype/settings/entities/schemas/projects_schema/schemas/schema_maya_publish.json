@@ -36,6 +36,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectGLTF",
+            "label": "Collect Assets for GLTF/GLB export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {
@@ -62,7 +76,7 @@
                 }
             ]
         },
-        {   
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateFrameRange",
@@ -130,6 +144,10 @@
                 {
                     "key": "ValidateShadingEngine",
                     "label": "Validate Look Shading Engine Naming"
+                },
+                {
+                    "key": "ValidateMayaColorSpace",
+                    "label": "ValidateMayaColorSpace"
                 }
             ]
         },
@@ -302,6 +320,45 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidatePluginPathAttributes",
+            "label": "Plug-in Path Attributes",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill in the node types and attributes you want to validate. <p>e.g. <b>AlembicNode.abc_file</b>, the node type is <b>AlembicNode</b> and the node attribute is <b>abc_file</b>"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "attribute",
+                    "label": "File Attribute",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateRenderSettings",
             "label": "ValidateRenderSettings",
             "children": [
@@ -312,7 +369,8 @@
                     "label": "Arnold Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -322,7 +380,8 @@
                     "label": "Vray Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -332,7 +391,8 @@
                     "label": "Redshift Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -342,7 +402,8 @@
                     "label": "Renderman Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 }
             ]
@@ -354,6 +415,14 @@
                 {
                     "key": "ValidateCurrentRenderLayerIsRenderable",
                     "label": "Validate Current Render Layer Has Renderable Camera"
+                },
+                {
+                    "key": "ValidateGLSLMaterial",
+                    "label": "Validate GLSL Material"
+                },
+                {
+                    "key": "ValidateGLSLPlugin",
+                    "label": "Validate GLSL Plugin"
                 },
                 {
                     "key": "ValidateRenderImageRule",
@@ -641,6 +710,26 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ExtractProxyAlembic",
+                    "label": "Extract Proxy Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractAlembic",
                     "label": "Extract Alembic",
                     "checkbox_key": "enabled",
@@ -655,6 +744,25 @@
                             "label": "Families",
                             "type": "list",
                             "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractObj",
+                    "label": "Extract OBJ",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
                         }
                     ]
                 }
@@ -862,6 +970,59 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGLB",
+            "label": "Extract GLB",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "text",
+                    "key": "ogsfx_path",
+                    "label": "GLSL Shader Directory"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractLook",
+            "label": "Extract Look",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "maketx_arguments",
+                    "label": "Extra arguments for maketx command line",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "argument",
+                                "label": "Argument",
+                                "type": "text"
+                            },
+                            {
+                                "key": "parameters",
+                                "label": "Parameters",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
                 }
             ]
         }

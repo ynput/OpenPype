@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.modules.kitsu.utils.credentials import (

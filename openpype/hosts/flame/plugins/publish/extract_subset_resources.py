@@ -143,6 +143,9 @@ class ExtractSubsetResources(publish.Extractor):
         # create staging dir path
         staging_dir = self.staging_dir(instance)
 
+        # append staging dir for later cleanup
+        instance.context.data["cleanupFullPaths"].append(staging_dir)
+
         # add default preset type for thumbnail and reviewable video
         # update them with settings and override in case the same
         # are found in there
@@ -224,7 +227,7 @@ class ExtractSubsetResources(publish.Extractor):
                 self.hide_others(
                     exporting_clip, segment_name, s_track_name)
 
-                # change name patern
+                # change name pattern
                 name_patern_xml = (
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
@@ -355,7 +358,7 @@ class ExtractSubsetResources(publish.Extractor):
                 representation_data["stagingDir"] = n_stage_dir
                 files = n_files
 
-            # add files to represetation but add
+            # add files to representation but add
             # imagesequence as list
             if (
                 # first check if path in files is not mov extension
@@ -548,30 +551,3 @@ class ExtractSubsetResources(publish.Extractor):
                 "Path `{}` is containing more that one clip".format(path)
             )
         return clips[0]
-
-    def staging_dir(self, instance):
-        """Provide a temporary directory in which to store extracted files
-
-        Upon calling this method the staging directory is stored inside
-        the instance.data['stagingDir']
-        """
-        staging_dir = instance.data.get('stagingDir', None)
-        openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
-
-        if not staging_dir:
-            if openpype_temp_dir and os.path.exists(openpype_temp_dir):
-                staging_dir = os.path.normpath(
-                    tempfile.mkdtemp(
-                        prefix="pyblish_tmp_",
-                        dir=openpype_temp_dir
-                    )
-                )
-            else:
-                staging_dir = os.path.normpath(
-                    tempfile.mkdtemp(prefix="pyblish_tmp_")
-                )
-            instance.data['stagingDir'] = staging_dir
-
-        instance.context.data["cleanupFullPaths"].append(staging_dir)
-
-        return staging_dir

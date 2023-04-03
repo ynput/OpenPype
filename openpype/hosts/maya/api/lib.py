@@ -4,7 +4,7 @@ import os
 import sys
 import platform
 import uuid
-import math
+import re
 
 import json
 import logging
@@ -14,7 +14,7 @@ from math import ceil
 from six import string_types
 
 from maya import cmds, mel
-import maya.api.OpenMaya as om
+from maya.api import OpenMaya
 
 from openpype.client import (
     get_project,
@@ -23,7 +23,7 @@ from openpype.client import (
     get_last_versions,
     get_representation_by_name
 )
-from openpype.api import get_anatomy_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     discover_loader_plugins,
@@ -33,7 +33,6 @@ from openpype.pipeline import (
     registered_host,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
-from .commands import reset_frame_range
 
 
 self = sys.modules[__name__]
@@ -103,7 +102,7 @@ RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 def get_main_window():
     """Acquire Maya's main window"""
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     if self._parent is None:
         self._parent = {
@@ -114,14 +113,19 @@ def get_main_window():
 
 
 @contextlib.contextmanager
-def suspended_refresh():
-    """Suspend viewport refreshes"""
+def suspended_refresh(suspend=True):
+    """Suspend viewport refreshes
 
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=True)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=False)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager
@@ -236,11 +240,6 @@ def read(node):
     return data
 
 
-def _get_mel_global(name):
-    """Return the value of a mel global variable"""
-    return mel.eval("$%s = $%s;" % (name, name))
-
-
 def matrix_equals(a, b, tolerance=1e-10):
     """
     Compares two matrices with an imperfection tolerance
@@ -269,73 +268,6 @@ def pairwise(iterable):
 
     a = iter(iterable)
     return zip(a, a)
-
-
-def export_alembic(nodes,
-                   file,
-                   frame_range=None,
-                   write_uv=True,
-                   write_visibility=True,
-                   attribute_prefix=None):
-    """Wrap native MEL command with limited set of arguments
-
-    Arguments:
-        nodes (list): Long names of nodes to cache
-
-        file (str): Absolute path to output destination
-
-        frame_range (tuple, optional): Start- and end-frame of cache,
-            default to current animation range.
-
-        write_uv (bool, optional): Whether or not to include UVs,
-            default to True
-
-        write_visibility (bool, optional): Turn on to store the visibility
-        state of objects in the Alembic file. Otherwise, all objects are
-        considered visible, default to True
-
-        attribute_prefix (str, optional): Include all user-defined
-            attributes with this prefix.
-
-    """
-
-    if frame_range is None:
-        frame_range = (
-            cmds.playbackOptions(query=True, ast=True),
-            cmds.playbackOptions(query=True, aet=True)
-        )
-
-    options = [
-        ("file", file),
-        ("frameRange", "%s %s" % frame_range),
-    ] + [("root", mesh) for mesh in nodes]
-
-    if isinstance(attribute_prefix, string_types):
-        # Include all attributes prefixed with "mb"
-        # TODO(marcus): This would be a good candidate for
-        #   external registration, so that the developer
-        #   doesn't have to edit this function to modify
-        #   the behavior of Alembic export.
-        options.append(("attrPrefix", str(attribute_prefix)))
-
-    if write_uv:
-        options.append(("uvWrite", ""))
-
-    if write_visibility:
-        options.append(("writeVisibility", ""))
-
-    # Generate MEL command
-    mel_args = list()
-    for key, value in options:
-        mel_args.append("-{0} {1}".format(key, value))
-
-    mel_args_string = " ".join(mel_args)
-    mel_cmd = "AbcExport -j \"{0}\"".format(mel_args_string)
-
-    # For debuggability, put the string passed to MEL in the Script editor.
-    print("mel.eval('%s')" % mel_cmd)
-
-    return mel.eval(mel_cmd)
 
 
 def collect_animation_data(fps=False):
@@ -457,9 +389,9 @@ def lsattrs(attrs):
 
     """
 
-    dep_fn = om.MFnDependencyNode()
-    dag_fn = om.MFnDagNode()
-    selection_list = om.MSelectionList()
+    dep_fn = OpenMaya.MFnDependencyNode()
+    dag_fn = OpenMaya.MFnDagNode()
+    selection_list = OpenMaya.MSelectionList()
 
     first_attr = next(iter(attrs))
 
@@ -473,7 +405,7 @@ def lsattrs(attrs):
     matches = set()
     for i in range(selection_list.length()):
         node = selection_list.getDependNode(i)
-        if node.hasFn(om.MFn.kDagNode):
+        if node.hasFn(OpenMaya.MFn.kDagNode):
             fn_node = dag_fn.setObject(node)
             full_path_names = [path.fullPathName()
                                for path in fn_node.getAllPaths()]
@@ -673,13 +605,13 @@ class delete_after(object):
             cmds.delete(self._nodes)
 
 
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+
 def get_renderer(layer):
     with renderlayer(layer):
         return cmds.getAttr("defaultRenderGlobals.currentRenderer")
-
-
-def get_current_renderlayer():
-    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
 
 
 @contextlib.contextmanager
@@ -922,11 +854,11 @@ def maintained_selection_api():
     Warning: This is *not* added to the undo stack.
 
     """
-    original = om.MGlobal.getActiveSelectionList()
+    original = OpenMaya.MGlobal.getActiveSelectionList()
     try:
         yield
     finally:
-        om.MGlobal.setActiveSelectionList(original)
+        OpenMaya.MGlobal.setActiveSelectionList(original)
 
 
 @contextlib.contextmanager
@@ -1336,11 +1268,11 @@ def get_id(node):
     if node is None:
         return
 
-    sel = om.MSelectionList()
+    sel = OpenMaya.MSelectionList()
     sel.add(node)
 
     api_node = sel.getDependNode(0)
-    fn = om.MFnDependencyNode(api_node)
+    fn = OpenMaya.MFnDependencyNode(api_node)
 
     if not fn.hasAttribute("cbId"):
         return
@@ -1422,27 +1354,6 @@ def set_id(node, unique_id, overwrite=False):
         cmds.setAttr(attr, unique_id, type="string")
 
 
-# endregion ID
-def get_reference_node(path):
-    """
-    Get the reference node when the path is found being used in a reference
-    Args:
-        path (str): the file path to check
-
-    Returns:
-        node (str): name of the reference node in question
-    """
-    try:
-        node = cmds.file(path, query=True, referenceNode=True)
-    except RuntimeError:
-        log.debug('File is not referenced : "{}"'.format(path))
-        return
-
-    reference_path = cmds.referenceQuery(path, filename=True)
-    if os.path.normpath(path) == os.path.normpath(reference_path):
-        return node
-
-
 def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 
@@ -1519,7 +1430,7 @@ def get_container_members(container):
         if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
             continue
 
-        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.referenceQuery(ref, nodes=True, dagPath=True)
         reference_members = cmds.ls(reference_members,
                                     long=True,
                                     objectsOnly=True)
@@ -2044,8 +1955,6 @@ def get_id_from_sibling(node, history_only=True):
             return first_id
 
 
-
-# Project settings
 def set_scene_fps(fps, update=True):
     """Set FPS from project configuration
 
@@ -2058,30 +1967,23 @@ def set_scene_fps(fps, update=True):
 
     """
 
-    fps_mapping = {'15': 'game',
-                   '24': 'film',
-                   '25': 'pal',
-                   '30': 'ntsc',
-                   '48': 'show',
-                   '50': 'palf',
-                   '60': 'ntscf',
-                   '23.98': '23.976fps',
-                   '23.976': '23.976fps',
-                   '29.97': '29.97fps',
-                   '47.952': '47.952fps',
-                   '47.95': '47.952fps',
-                   '59.94': '59.94fps',
-                   '44100': '44100fps',
-                   '48000': '48000fps'}
+    fps_mapping = {
+        '15': 'game',
+        '24': 'film',
+        '25': 'pal',
+        '30': 'ntsc',
+        '48': 'show',
+        '50': 'palf',
+        '60': 'ntscf',
+        '23.976023976023978': '23.976fps',
+        '29.97002997002997': '29.97fps',
+        '47.952047952047955': '47.952fps',
+        '59.94005994005994': '59.94fps',
+        '44100': '44100fps',
+        '48000': '48000fps'
+    }
 
-    # pull from mapping
-    # this should convert float string to float and int to int
-    # so 25.0 is converted to 25, but 23.98 will be still float.
-    dec, ipart = math.modf(fps)
-    if dec == 0.0:
-        fps = int(ipart)
-
-    unit = fps_mapping.get(str(fps), None)
+    unit = fps_mapping.get(str(convert_to_maya_fps(fps)), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
 
@@ -2148,6 +2050,78 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def get_frame_range():
+    """Get the current assets frame range and handles."""
+
+    # Set frame start/end
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = get_asset_by_name(project_name, asset_name)
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        cmds.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range(playback=True, render=True, fps=True):
+    """Set frame range to current asset
+
+    Args:
+        playback (bool, Optional): Whether to set the maya timeline playback
+            frame range. Defaults to True.
+        render (bool, Optional): Whether to set the maya render frame range.
+            Defaults to True.
+        fps (bool, Optional): Whether to set scene FPS. Defaults to True.
+    """
+
+    if fps:
+        fps = convert_to_maya_fps(
+            float(legacy_io.Session.get("AVALON_FPS", 25))
+        )
+        set_scene_fps(fps)
+
+    frame_range = get_frame_range()
+
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+
+    if playback:
+        cmds.playbackOptions(minTime=frame_start)
+        cmds.playbackOptions(maxTime=frame_end)
+        cmds.playbackOptions(animationStartTime=frame_start)
+        cmds.playbackOptions(animationEndTime=frame_end)
+        cmds.playbackOptions(minTime=frame_start)
+        cmds.playbackOptions(maxTime=frame_end)
+        cmds.currentTime(frame_start)
+
+    if render:
+        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+
+
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition
 
@@ -2199,7 +2173,9 @@ def set_context_settings():
     asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = asset_data.get("fps", project_data.get("fps", 25))
+    fps = convert_to_maya_fps(
+        asset_data.get("fps", project_data.get("fps", 25))
+    )
     legacy_io.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
@@ -2221,15 +2197,12 @@ def validate_fps():
 
     """
 
-    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    # TODO(antirotor): This is hack as for framerates having multiple
-    # decimal places. FTrack is ceiling decimal values on
-    # fps to two decimal places but Maya 2019+ is reporting those fps
-    # with much higher resolution. As we currently cannot fix Ftrack
-    # rounding, we have to round those numbers coming from Maya.
-    current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
+    expected_fps = convert_to_maya_fps(
+        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
+    )
+    current_fps = mel.eval('currentTimeUnitToFPS()')
 
-    fps_match = current_fps == fps
+    fps_match = current_fps == expected_fps
     if not fps_match and not IS_HEADLESS:
         from openpype.widgets import popup
 
@@ -2238,14 +2211,19 @@ def validate_fps():
         dialog = popup.PopupUpdateKeys(parent=parent)
         dialog.setModal(True)
         dialog.setWindowTitle("Maya scene does not match project FPS")
-        dialog.setMessage("Scene %i FPS does not match project %i FPS" %
-                          (current_fps, fps))
+        dialog.setMessage(
+            "Scene {} FPS does not match project {} FPS".format(
+                current_fps, expected_fps
+            )
+        )
         dialog.setButtonText("Fix")
 
         # Set new text for button (add optional argument for the popup?)
         toggle = dialog.widgets["toggle"]
         update = toggle.isChecked()
-        dialog.on_clicked_state.connect(lambda: set_scene_fps(fps, update))
+        dialog.on_clicked_state.connect(
+            lambda: set_scene_fps(expected_fps, update)
+        )
 
         dialog.show()
 
@@ -2446,181 +2424,119 @@ def bake_to_world_space(nodes,
 
 
 def load_capture_preset(data=None):
+    """Convert OpenPype Extract Playblast settings to `capture` arguments
+
+    Input data is the settings from:
+        `project_settings/maya/publish/ExtractPlayblast/capture_preset`
+
+    Args:
+        data (dict): Capture preset settings from OpenPype settings
+
+    Returns:
+        dict: `capture.capture` compatible keyword arguments
+
+    """
+
     import capture
 
-    preset = data
-
     options = dict()
+    viewport_options = dict()
+    viewport2_options = dict()
+    camera_options = dict()
 
-    # CODEC
-    id = 'Codec'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
+    # Straight key-value match from settings to capture arguments
+    options.update(data["Codec"])
+    options.update(data["Generic"])
+    options.update(data["Resolution"])
 
-    # GENERIC
-    id = 'Generic'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
-
-    # RESOLUTION
-    id = 'Resolution'
-    options['height'] = preset[id]['height']
-    options['width'] = preset[id]['width']
+    camera_options.update(data['Camera Options'])
+    viewport_options.update(data["Renderer"])
 
     # DISPLAY OPTIONS
-    id = 'Display Options'
     disp_options = {}
-    for key in preset[id]:
+    for key, value in data['Display Options'].items():
         if key.startswith('background'):
-            disp_options[key] = preset['Display Options'][key]
-            if len(disp_options[key]) == 4:
-                disp_options[key][0] = (float(disp_options[key][0])/255)
-                disp_options[key][1] = (float(disp_options[key][1])/255)
-                disp_options[key][2] = (float(disp_options[key][2])/255)
-                disp_options[key].pop()
-        else:
-            disp_options['displayGradient'] = True
+            # Convert background, backgroundTop, backgroundBottom colors
+            if len(value) == 4:
+                # Ignore alpha + convert RGB to float
+                value = [
+                    float(value[0]) / 255,
+                    float(value[1]) / 255,
+                    float(value[2]) / 255
+                ]
+            disp_options[key] = value
+        elif key == "displayGradient":
+            disp_options[key] = value
 
     options['display_options'] = disp_options
 
-    # VIEWPORT OPTIONS
-    temp_options = {}
-    id = 'Renderer'
-    for key in preset[id]:
-        temp_options[str(key)] = preset[id][key]
+    # Viewport Options has a mixture of Viewport2 Options and Viewport Options
+    # to pass along to capture. So we'll need to differentiate between the two
+    VIEWPORT2_OPTIONS = {
+        "textureMaxResolution",
+        "renderDepthOfField",
+        "ssaoEnable",
+        "ssaoSamples",
+        "ssaoAmount",
+        "ssaoRadius",
+        "ssaoFilterRadius",
+        "hwFogStart",
+        "hwFogEnd",
+        "hwFogAlpha",
+        "hwFogFalloff",
+        "hwFogColorR",
+        "hwFogColorG",
+        "hwFogColorB",
+        "hwFogDensity",
+        "motionBlurEnable",
+        "motionBlurSampleCount",
+        "motionBlurShutterOpenFraction",
+        "lineAAEnable"
+    }
+    for key, value in data['Viewport Options'].items():
 
-    temp_options2 = {}
-    id = 'Viewport Options'
-    for key in preset[id]:
+        # There are some keys we want to ignore
+        if key in {"override_viewport_options", "high_quality"}:
+            continue
+
+        # First handle special cases where we do value conversion to
+        # separate option values
         if key == 'textureMaxResolution':
-            if preset[id][key] > 0:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = True
-                temp_options2['textureMaxResMode'] = 1
+            viewport2_options['textureMaxResolution'] = value
+            if value > 0:
+                viewport2_options['enableTextureMaxRes'] = True
+                viewport2_options['textureMaxResMode'] = 1
             else:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = False
-                temp_options2['textureMaxResMode'] = 0
+                viewport2_options['enableTextureMaxRes'] = False
+                viewport2_options['textureMaxResMode'] = 0
 
-        if key == 'multiSample':
-            if preset[id][key] > 0:
-                temp_options2['multiSampleEnable'] = True
-                temp_options2['multiSampleCount'] = preset[id][key]
-            else:
-                temp_options2['multiSampleEnable'] = False
-                temp_options2['multiSampleCount'] = preset[id][key]
+        elif key == 'multiSample':
+            viewport2_options['multiSampleEnable'] = value > 0
+            viewport2_options['multiSampleCount'] = value
 
-        if key == 'renderDepthOfField':
-            temp_options2['renderDepthOfField'] = preset[id][key]
+        elif key == 'alphaCut':
+            viewport2_options['transparencyAlgorithm'] = 5
+            viewport2_options['transparencyQuality'] = 1
 
-        if key == 'ssaoEnable':
-            if preset[id][key] is True:
-                temp_options2['ssaoEnable'] = True
-            else:
-                temp_options2['ssaoEnable'] = False
+        elif key == 'hwFogFalloff':
+            # Settings enum value string to integer
+            viewport2_options['hwFogFalloff'] = int(value)
 
-        if key == 'ssaoSamples':
-            temp_options2['ssaoSamples'] = preset[id][key]
+        # Then handle Viewport 2.0 Options
+        elif key in VIEWPORT2_OPTIONS:
+            viewport2_options[key] = value
 
-        if key == 'ssaoAmount':
-            temp_options2['ssaoAmount'] = preset[id][key]
-
-        if key == 'ssaoRadius':
-            temp_options2['ssaoRadius'] = preset[id][key]
-
-        if key == 'hwFogDensity':
-            temp_options2['hwFogDensity'] = preset[id][key]
-
-        if key == 'ssaoFilterRadius':
-            temp_options2['ssaoFilterRadius'] = preset[id][key]
-
-        if key == 'alphaCut':
-            temp_options2['transparencyAlgorithm'] = 5
-            temp_options2['transparencyQuality'] = 1
-
-        if key == 'headsUpDisplay':
-            temp_options['headsUpDisplay'] = True
-
-        if key == 'fogging':
-            temp_options['fogging'] = preset[id][key] or False
-
-        if key == 'hwFogStart':
-            temp_options2['hwFogStart'] = preset[id][key]
-
-        if key == 'hwFogEnd':
-            temp_options2['hwFogEnd'] = preset[id][key]
-
-        if key == 'hwFogAlpha':
-            temp_options2['hwFogAlpha'] = preset[id][key]
-
-        if key == 'hwFogFalloff':
-            temp_options2['hwFogFalloff'] = int(preset[id][key])
-
-        if key == 'hwFogColorR':
-            temp_options2['hwFogColorR'] = preset[id][key]
-
-        if key == 'hwFogColorG':
-            temp_options2['hwFogColorG'] = preset[id][key]
-
-        if key == 'hwFogColorB':
-            temp_options2['hwFogColorB'] = preset[id][key]
-
-        if key == 'motionBlurEnable':
-            if preset[id][key] is True:
-                temp_options2['motionBlurEnable'] = True
-            else:
-                temp_options2['motionBlurEnable'] = False
-
-        if key == 'motionBlurSampleCount':
-            temp_options2['motionBlurSampleCount'] = preset[id][key]
-
-        if key == 'motionBlurShutterOpenFraction':
-            temp_options2['motionBlurShutterOpenFraction'] = preset[id][key]
-
-        if key == 'lineAAEnable':
-            if preset[id][key] is True:
-                temp_options2['lineAAEnable'] = True
-            else:
-                temp_options2['lineAAEnable'] = False
-
+        # Then assume remainder is Viewport Options
         else:
-            temp_options[str(key)] = preset[id][key]
+            viewport_options[key] = value
 
-    for key in ['override_viewport_options',
-                'high_quality',
-                'alphaCut',
-                'gpuCacheDisplayFilter',
-                'multiSample',
-                'ssaoEnable',
-                'ssaoSamples',
-                'ssaoAmount',
-                'ssaoFilterRadius',
-                'ssaoRadius',
-                'hwFogStart',
-                'hwFogEnd',
-                'hwFogAlpha',
-                'hwFogFalloff',
-                'hwFogColorR',
-                'hwFogColorG',
-                'hwFogColorB',
-                'hwFogDensity',
-                'textureMaxResolution',
-                'motionBlurEnable',
-                'motionBlurSampleCount',
-                'motionBlurShutterOpenFraction',
-                'lineAAEnable',
-                'renderDepthOfField'
-                ]:
-        temp_options.pop(key, None)
-
-    options['viewport_options'] = temp_options
-    options['viewport2_options'] = temp_options2
+    options['viewport_options'] = viewport_options
+    options['viewport2_options'] = viewport2_options
+    options['camera_options'] = camera_options
 
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
-
-    # options['display_options'] = temp_options
 
     return options
 
@@ -3062,7 +2978,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -3146,7 +3062,7 @@ def set_colorspace():
     """Set Colorspace from project configuration
     """
     project_name = os.getenv("AVALON_PROJECT")
-    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+    imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that
     # can override the old color managenement preferences. OpenPype has
@@ -3435,15 +3351,15 @@ def iter_visible_nodes_in_range(nodes, start, end):
     @memodict
     def get_visibility_mplug(node):
         """Return api 2.0 MPlug with cached memoize decorator"""
-        sel = om.MSelectionList()
+        sel = OpenMaya.MSelectionList()
         sel.add(node)
         dag = sel.getDagPath(0)
-        return om.MFnDagNode(dag).findPlug("visibility", True)
+        return OpenMaya.MFnDagNode(dag).findPlug("visibility", True)
 
     @contextlib.contextmanager
     def dgcontext(mtime):
         """MDGContext context manager"""
-        context = om.MDGContext(mtime)
+        context = OpenMaya.MDGContext(mtime)
         try:
             previous = context.makeCurrent()
             yield context
@@ -3452,9 +3368,9 @@ def iter_visible_nodes_in_range(nodes, start, end):
 
     # We skip the first frame as we already used that frame to check for
     # overall visibilities. And end+1 to include the end frame.
-    scene_units = om.MTime.uiUnit()
+    scene_units = OpenMaya.MTime.uiUnit()
     for frame in range(start + 1, end + 1):
-        mtime = om.MTime(frame, unit=scene_units)
+        mtime = OpenMaya.MTime(frame, unit=scene_units)
 
         # Build little cache so we don't query the same MPlug's value
         # again if it was checked on this frame and also is a dependency
@@ -3485,3 +3401,264 @@ def iter_visible_nodes_in_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
+
+
+def get_attribute_input(attr):
+    connections = cmds.listConnections(attr, plugs=True, destination=False)
+    return connections[0] if connections else None
+
+
+def convert_to_maya_fps(fps):
+    """Convert any fps to supported Maya framerates."""
+    float_framerates = [
+        23.976023976023978,
+        # WTF is 29.97 df vs fps?
+        29.97002997002997,
+        47.952047952047955,
+        59.94005994005994
+    ]
+    # 44100 fps evaluates as 41000.0. Why? Omitting for now.
+    int_framerates = [
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        10,
+        12,
+        15,
+        16,
+        20,
+        24,
+        25,
+        30,
+        40,
+        48,
+        50,
+        60,
+        75,
+        80,
+        90,
+        100,
+        120,
+        125,
+        150,
+        200,
+        240,
+        250,
+        300,
+        375,
+        400,
+        500,
+        600,
+        750,
+        1200,
+        1500,
+        2000,
+        3000,
+        6000,
+        48000
+    ]
+
+    # If input fps is a whole number we'll return.
+    if float(fps).is_integer():
+        # Validate fps is part of Maya's fps selection.
+        if int(fps) not in int_framerates:
+            raise ValueError(
+                "Framerate \"{}\" is not supported in Maya".format(fps)
+            )
+        return int(fps)
+    else:
+        # Differences to supported float frame rates.
+        differences = []
+        for i in float_framerates:
+            differences.append(abs(i - fps))
+
+        # Validate difference does not stray too far from supported framerates.
+        min_difference = min(differences)
+        min_index = differences.index(min_difference)
+        supported_framerate = float_framerates[min_index]
+        if min_difference > 0.1:
+            raise ValueError(
+                "Framerate \"{}\" strays too far from any supported framerate"
+                " in Maya. Closest supported framerate is \"{}\"".format(
+                    fps, supported_framerate
+                )
+            )
+
+        return supported_framerate
+
+
+def write_xgen_file(data, filepath):
+    """Overwrites data in .xgen files.
+
+    Quite naive approach to mainly overwrite "xgDataPath" and "xgProjectPath".
+
+    Args:
+        data (dict): Dictionary of key, value. Key matches with xgen file.
+        For example:
+            {"xgDataPath": "some/path"}
+        filepath (string): Absolute path of .xgen file.
+    """
+    # Generate regex lookup for line to key basically
+    # match any of the keys in `\t{key}\t\t`
+    keys = "|".join(re.escape(key) for key in data.keys())
+    re_keys = re.compile("^\t({})\t\t".format(keys))
+
+    lines = []
+    with open(filepath, "r") as f:
+        for line in f:
+            match = re_keys.match(line)
+            if match:
+                key = match.group(1)
+                value = data[key]
+                line = "\t{}\t\t{}\n".format(key, value)
+
+            lines.append(line)
+
+    with open(filepath, "w") as f:
+        f.writelines(lines)
+
+
+def get_color_management_preferences():
+    """Get and resolve OCIO preferences."""
+    data = {
+        # Is color management enabled.
+        "enabled": cmds.colorManagementPrefs(
+            query=True, cmEnabled=True
+        ),
+        "rendering_space": cmds.colorManagementPrefs(
+            query=True, renderingSpaceName=True
+        ),
+        "output_transform": cmds.colorManagementPrefs(
+            query=True, outputTransformName=True
+        ),
+        "output_transform_enabled": cmds.colorManagementPrefs(
+            query=True, outputTransformEnabled=True
+        ),
+        "view_transform": cmds.colorManagementPrefs(
+            query=True, viewTransformName=True
+        )
+    }
+
+    # Split view and display from view_transform. view_transform comes in
+    # format of "{view} ({display})".
+    regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    match = regex.match(data["view_transform"])
+    data.update({
+        "display": match.group("display"),
+        "view": match.group("view")
+    })
+
+    # Get config absolute path.
+    path = cmds.colorManagementPrefs(
+        query=True, configFilePath=True
+    )
+
+    # The OCIO config supports a custom <MAYA_RESOURCES> token.
+    maya_resources_token = "<MAYA_RESOURCES>"
+    maya_resources_path = OpenMaya.MGlobal.getAbsolutePathToResources()
+    path = path.replace(maya_resources_token, maya_resources_path)
+
+    data["config"] = path
+
+    return data
+
+
+def get_color_management_output_transform():
+    preferences = get_color_management_preferences()
+    colorspace = preferences["rendering_space"]
+    if preferences["output_transform_enabled"]:
+        colorspace = preferences["output_transform"]
+    return colorspace
+
+
+def image_info(file_path):
+    # type: (str) -> dict
+    """Based on tha texture path, get its bit depth and format information.
+    Take reference from makeTx.py in Arnold:
+        ImageInfo(filename): Get Image Information for colorspace
+        AiTextureGetFormat(filename): Get Texture Format
+        AiTextureGetBitDepth(filename): Get Texture bit depth
+    Args:
+        file_path (str): Path to the texture file.
+    Returns:
+        dict: Dictionary with the information about the texture file.
+    """
+    from arnold import (
+        AiTextureGetBitDepth,
+        AiTextureGetFormat
+    )
+    # Get Texture Information
+    img_info = {'filename': file_path}
+    if os.path.isfile(file_path):
+        img_info['bit_depth'] = AiTextureGetBitDepth(file_path)  # noqa
+        img_info['format'] = AiTextureGetFormat(file_path)  # noqa
+    else:
+        img_info['bit_depth'] = 8
+        img_info['format'] = "unknown"
+    return img_info
+
+
+def guess_colorspace(img_info):
+    # type: (dict) -> str
+    """Guess the colorspace of the input image filename.
+    Note:
+        Reference from makeTx.py
+    Args:
+        img_info (dict): Image info generated by :func:`image_info`
+    Returns:
+        str: color space name use in the `--colorconvert`
+             option of maketx.
+    """
+    from arnold import (
+        AiTextureInvalidate,
+        # types
+        AI_TYPE_BYTE,
+        AI_TYPE_INT,
+        AI_TYPE_UINT
+    )
+    try:
+        if img_info['bit_depth'] <= 16:
+            if img_info['format'] in (AI_TYPE_BYTE, AI_TYPE_INT, AI_TYPE_UINT): # noqa
+                return 'sRGB'
+            else:
+                return 'linear'
+        # now discard the image file as AiTextureGetFormat has loaded it
+        AiTextureInvalidate(img_info['filename'])       # noqa
+    except ValueError:
+        print(("[maketx] Error: Could not guess"
+               "colorspace for {}").format(img_info["filename"]))
+        return "linear"
+
+
+def len_flattened(components):
+    """Return the length of the list as if it was flattened.
+
+    Maya will return consecutive components as a single entry
+    when requesting with `maya.cmds.ls` without the `flatten`
+    flag. Though enabling `flatten` on a large list (e.g. millions)
+    will result in a slow result. This command will return the amount
+    of entries in a non-flattened list by parsing the result with
+    regex.
+
+    Args:
+        components (list): The non-flattened components.
+
+    Returns:
+        int: The amount of entries.
+
+    """
+    assert isinstance(components, (list, tuple))
+    n = 0
+
+    pattern = re.compile(r"\[(\d+):(\d+)\]")
+    for c in components:
+        match = pattern.search(c)
+        if match:
+            start, end = match.groups()
+            n += int(end) - int(start) + 1
+        else:
+            n += 1
+    return n

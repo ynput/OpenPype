@@ -76,9 +76,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.00001
     families = ["workfile",
                 "pointcache",
+                "pointcloud",
+                "proxyAbc",
                 "camera",
                 "animation",
                 "model",
+                "maxScene",
                 "mayaAscii",
                 "mayaScene",
                 "setdress",
@@ -106,6 +109,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "image",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "harmony.template",
@@ -121,7 +125,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "staticMesh",
                 "skeletalMesh",
                 "mvLook",
-                "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
                 "simpleUnrealTexture"
@@ -968,7 +971,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
-            "comment": context.data.get("comment"),
+            "comment": instance.data["comment"],
             "machine": context.data.get("machine"),
             "fps": context.data.get(
                 "fps", instance.data.get("fps")

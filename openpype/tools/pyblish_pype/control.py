@@ -11,7 +11,7 @@ import inspect
 import logging
 import collections
 
-from Qt import QtCore
+from qtpy import QtCore
 
 import pyblish.api
 import pyblish.util
@@ -22,7 +22,7 @@ import pyblish.version
 from . import util
 from .constants import InstanceStates
 
-from openpype.api import get_project_settings
+from openpype.settings import get_current_project_settings
 
 
 class IterationBreak(Exception):
@@ -204,7 +204,7 @@ class Controller(QtCore.QObject):
 
     def presets_by_hosts(self):
         # Get global filters as base
-        presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
+        presets = get_current_project_settings()
         if not presets:
             return {}
 

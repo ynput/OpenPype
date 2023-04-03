@@ -3,6 +3,8 @@ import os
 import pyblish.api
 import openpype.hosts.houdini.api.usd as usdlib
 
+import hou
+
 
 class CollectUsdLayers(pyblish.api.InstancePlugin):
     """Collect the USD Layers that have configured save paths."""
@@ -19,7 +21,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             self.log.debug("No output node found..")
             return
 
-        rop_node = instance[0]
+        rop_node = hou.node(instance.data["instance_node"])
 
         save_layers = []
         for layer in usdlib.get_configured_save_layers(rop_node):
@@ -54,8 +56,11 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             layer_inst.data["subset"] = "__stub__"
             layer_inst.data["label"] = label
             layer_inst.data["asset"] = instance.data["asset"]
-            layer_inst.append(instance[0])              # include same USD ROP
-            layer_inst.append((layer, save_path))       # include layer data
+            layer_inst.data["instance_node"] = instance.data["instance_node"]
+            # include same USD ROP
+            layer_inst.append(rop_node)
+            # include layer data
+            layer_inst.append((layer, save_path))
 
             # Allow this subset to be grouped into a USD Layer on creation
             layer_inst.data["subsetGroup"] = "USD Layer"

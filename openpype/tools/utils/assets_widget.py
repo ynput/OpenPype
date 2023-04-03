@@ -1,8 +1,8 @@
 import time
 import collections
 
-import Qt
-from Qt import QtWidgets, QtCore, QtGui
+import qtpy
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
@@ -26,9 +26,9 @@ from .lib import (
     get_asset_icon
 )
 
-if Qt.__binding__ == "PySide":
+if qtpy.API == "pyside":
     from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
+elif qtpy.API == "pyqt4":
     from PyQt4.QtGui import QStyleOptionViewItemV4
 
 ASSET_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -60,7 +60,7 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
         self._flick_charm_activated = True
         self._before_flick_scroll_mode = self.verticalScrollMode()
         self._flick_charm.activateOn(self)
-        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
     def deactivate_flick_charm(self):
         if not self._flick_charm_activated:
@@ -136,7 +136,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
     def paint(self, painter, option, index):
         """Replicate painting of an item and draw color bars if needed."""
         # Qt4 compat
-        if Qt.__binding__ in ("PySide", "PyQt4"):
+        if qtpy.API in ("pyside", "pyqt4"):
             option = QStyleOptionViewItemV4(option)
 
         painter.save()
@@ -623,7 +623,8 @@ class AssetsWidget(QtWidgets.QWidget):
             filter_input,
         ):
             size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
 
         # Layout
@@ -778,7 +779,10 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model = self._view.selectionModel()
         selection_model.clearSelection()
 
-        mode = selection_model.Select | selection_model.Rows
+        mode = (
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
+        )
         for index in valid_indexes:
             self._view.expand(self._proxy.parent(index))
             selection_model.select(index, mode)
@@ -817,7 +821,9 @@ class MultiSelectAssetsWidget(AssetsWidget):
     """
     def __init__(self, *args, **kwargs):
         super(MultiSelectAssetsWidget, self).__init__(*args, **kwargs)
-        self._view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        self._view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
 
         delegate = UnderlinesAssetDelegate()
         self._view.setItemDelegate(delegate)

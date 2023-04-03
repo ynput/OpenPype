@@ -1,5 +1,5 @@
 import html
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 import qtawesome
 from .models import LogModel, LogsFilterProxy
 
@@ -11,7 +11,7 @@ class SearchComboBox(QtWidgets.QComboBox):
         super(SearchComboBox, self).__init__(parent)
 
         self.setEditable(True)
-        self.setInsertPolicy(self.NoInsert)
+        self.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
         self.lineEdit().setPlaceholderText(placeholder)
 
         # Apply completer settings

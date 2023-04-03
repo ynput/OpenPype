@@ -1,4 +1,37 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
+        "workfile": {
+            "ocioConfigName": "nuke-default",
+            "ocioconfigpath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "workingSpace": "linear",
+            "sixteenBitLut": "sRGB",
+            "eightBitLut": "sRGB",
+            "floatLut": "linear",
+            "logLut": "Cineon",
+            "viewerLut": "sRGB",
+            "thumbnailLut": "sRGB"
+        },
+        "regexInputs": {
+            "inputs": [
+                {
+                    "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
+                    "colorspace": "sRGB"
+                }
+            ]
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -26,16 +59,6 @@
                 "plate",
                 "render",
                 "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4"
             ],
             "clip_name_template": "{asset}_{subset}_{representation}"
         }

@@ -403,13 +403,13 @@ class CollectLook(pyblish.api.InstancePlugin):
             # history = cmds.listHistory(look_sets)
             history = []
             for material in materials:
-                history.extend(cmds.listHistory(material))
+                history.extend(cmds.listHistory(material, ac=True))
 
             # handle VrayPluginNodeMtl node - see #1397
             vray_plugin_nodes = cmds.ls(
                 history, type="VRayPluginNodeMtl", long=True)
             for vray_node in vray_plugin_nodes:
-                history.extend(cmds.listHistory(vray_node))
+                history.extend(cmds.listHistory(vray_node, ac=True))
 
             # handling render attribute sets
             render_set_types = [
@@ -440,7 +440,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             for res in self.collect_resources(n):
                 instance.data["resources"].append(res)
 
-        self.log.info("Collected resources: {}".format(instance.data["resources"]))
+        self.log.info("Collected resources: {}".format(
+            instance.data["resources"]))
 
         # Log warning when no relevant sets were retrieved for the look.
         if (
@@ -548,6 +549,11 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if not cmds.attributeQuery(attr, node=node, exists=True):
                     continue
                 attribute = "{}.{}".format(node, attr)
+                # We don't support mixed-type attributes yet.
+                if cmds.attributeQuery(attr, node=node, multi=True):
+                    self.log.warning("Attribute '{}' is mixed-type and is "
+                                     "not supported yet.".format(attribute))
+                    continue
                 if cmds.getAttr(attribute, type=True) == "message":
                     continue
                 node_attributes[attr] = cmds.getAttr(attribute)

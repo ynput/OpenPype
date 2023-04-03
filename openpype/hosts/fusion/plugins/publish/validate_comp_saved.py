@@ -1,6 +1,7 @@
 import os
 
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateFusionCompSaved(pyblish.api.ContextPlugin):
@@ -19,10 +20,12 @@ class ValidateFusionCompSaved(pyblish.api.ContextPlugin):
 
         filename = attrs["COMPS_FileName"]
         if not filename:
-            raise RuntimeError("Comp is not saved.")
+            raise PublishValidationError("Comp is not saved.",
+                                         title=self.label)
 
         if not os.path.exists(filename):
-            raise RuntimeError("Comp file does not exist: %s" % filename)
+            raise PublishValidationError(
+                "Comp file does not exist: %s" % filename, title=self.label)
 
         if attrs["COMPB_Modified"]:
             self.log.warning("Comp is modified. Save your comp to ensure your "

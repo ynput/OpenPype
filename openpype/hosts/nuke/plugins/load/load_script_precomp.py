@@ -20,8 +20,9 @@ from openpype.hosts.nuke.api import (
 class LinkAsGroup(load.LoaderPlugin):
     """Copy the published file to be pasted at the desired location"""
 
-    representations = ["nk"]
     families = ["workfile", "nukenodes"]
+    representations = ["*"]
+    extension = {"nk"}
 
     label = "Load Precomp"
     order = 0
@@ -70,6 +71,9 @@ class LinkAsGroup(load.LoaderPlugin):
         P = nuke.createNode(
             "Precomp",
             "file {}".format(file))
+
+        # hide property panel
+        P.hideControlPanel()
 
         # Set colorspace defined in version data
         colorspace = context["version"]["data"].get("colorspace", None)

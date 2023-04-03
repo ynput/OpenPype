@@ -19,6 +19,9 @@ from openpype.hosts.nuke.api import (
     update_container,
     viewer_update_and_undo_stop
 )
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS
+)
 
 
 class LoadImage(load.LoaderPlugin):
@@ -33,7 +36,10 @@ class LoadImage(load.LoaderPlugin):
         "review",
         "image"
     ]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd", "tiff"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS
+    )
 
     label = "Load Image"
     order = -10
@@ -58,11 +64,13 @@ class LoadImage(load.LoaderPlugin):
 
     @classmethod
     def get_representations(cls):
-        return cls.representations + cls._representations
+        return cls._representations or cls.representations
 
     def load(self, context, name, namespace, options):
         self.log.info("__ options: `{}`".format(options))
-        frame_number = options.get("frame_number", 1)
+        frame_number = options.get(
+            "frame_number", int(nuke.root()["first_frame"].getValue())
+        )
 
         version = context['version']
         version_data = version.get("data", {})
@@ -112,6 +120,10 @@ class LoadImage(load.LoaderPlugin):
             r = nuke.createNode(
                 "Read",
                 "name {}".format(read_name))
+
+            # hide property panel
+            r.hideControlPanel()
+
             r["file"].setValue(file)
 
             # Set colorspace defined in version data

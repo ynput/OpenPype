@@ -10,8 +10,60 @@ import TabItem from '@theme/TabItem';
 Project settings can have project specific values. Each new project is using studio values defined in **default** project but these values can be modified or overridden per project.
 
 :::warning Default studio values
-Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.
+Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orange colour). Any changes in default project may affect all existing projects.
 :::
+
+## Color Management (ImageIO)
+
+:::info Default OCIO config
+OpenPype distributes its own OCIO configs. Those can be found in `{openpype install dir}/{version}/vendor/bin/ocioconfig/OpenColorIOConfigs`. Windows example: `C:\Program Files (x86)\OpenPype\3.14.0\vendor\bin\ocioconfig\OpenColorIOConfigs`
+:::
+
+### Using OCIO config
+Global config path is set by default to OpenPype distributed configs. At the moment there are only two - **aces_1.2** and **nuke-default**. Since this path input is not platform specific it is required to use at least an environment variable do platform specific config root directory. Order of paths matter so first path found and existing first served.
+
+Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`.
+
+If the project settings for a particular host has its own OCIO config **enabled** and set to at least one path and the path exists, it overrides the global OCIO config for that host.
+
+**For example**
+
+Project nuke-specific OCIO config: `project_settings/nuke/imageio/ocio_config`
+
+If config path is defined to particular shot target with following path inputs:
+1. `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
+2. `{root[work]}/{project[name]}/{hierarchy}/config/aces.ocio`
+
+Procedure of resolving path (from above example) will look first into path 1st and if the path is not existing then it will try 2nd and if even that is not existing then it will fall back to global default.
+
+### Using File rules
+File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Each rule has a unique name which can be overridden by host-specific _File rules_ (example: `project_settings/nuke/imageio/file_rules/rules`).
+
+The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator format publish template path, make sure the pattern is working or any work render path.
+
+:::warning Colorspace name input
+The **colorspace name** value is a raw string input and no validation is run after saving project settings. We recommend to open the specified `config.ocio` file and copy pasting the exact colorspace names.
+:::
+
+### Extract OIIO Transcode
+OIIOTools transcoder plugin with configurable output presets. Any incoming representation with `colorspaceData` is convertible to single or multiple representations with different target colorspaces or display and viewer names found in linked **config.ocio** file.
+
+`oiiotool` is used for transcoding, eg. `oiiotool` must be present in `vendor/bin/oiio` or environment variable `OPENPYPE_OIIO_PATHS` must be provided for custom oiio installation.
+
+Notable parameters:
+- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation loses its 'review' tag if present.
+- **`Extension`** - target extension. If left empty, original extension is used.
+- **`Transcoding type`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both at the same time.
+- **`Colorspace`** - target colorspace, which must be available in used color config. (If `Transcoding type` is `Use Colorspace` value in configuration is used OR if empty value collected on instance from DCC).
+- **`Display & View`** - display and viewer colorspace. (If `Transcoding type` is `Use Display&View` values in configuration is used OR if empty values collected on instance from DCC).
+- **`Arguments`** - special additional command line arguments for `oiiotool`.
+
+
+Example here describes use case for creation of new color coded review of png image sequence. Original representation's files are kept intact, review is created from transcoded files, but these files are removed in cleanup process.
+![global_oiio_transcode](assets/global_oiio_transcode.png)
+
+Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
 
 ## Profile filters
 
@@ -30,8 +82,8 @@ All context filters are lists which may contain strings or Regular expressions (
 - **`tasks`** - Currently processed task. `["modeling", "animation"]`
 
 :::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority that profile without filters.
-(Eg. order of when filter is added doesn't matter, only the precision of matching does.)
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
 :::
 
 ## Publish plugins
@@ -42,7 +94,7 @@ Publish plugins used across all integrations.
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
 
-Extract review is using [profile filtering](#profile-filters) to be able render different outputs for different situations.
+Extract review uses [profile filtering](#profile-filters) to render different outputs for different situations.
 
 Applicable context filters:
  **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
@@ -52,7 +104,7 @@ Applicable context filters:
 
 **Output Definitions**
 
-Profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
+A profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
 
 ![global_extract_review_output_defs](assets/global_extract_review_output_defs.png)
 - **`Tags`**
@@ -66,7 +118,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - **Output arguments** other FFmpeg output arguments like codec definition.
 
 - **`Output width`** and **`Output height`**
-    - it is possible to rescale output to specified resolution and keep aspect ratio.
+    - It is possible to rescale output to specified resolution and keep aspect ratio.
     - If value is set to 0, source resolution will be used.
 
 - **`Overscan crop`**
@@ -135,6 +187,12 @@ Profile may generate multiple outputs from a single input. Each output must defi
         - set alpha to `0` to not use this option at all (in most of cases background stays black)
         - other than `0` alpha will draw color as background
 
+- **`Additional filtering`**
+    - Profile filtering defines which group of output definitions is used but output definitions may require more specific filters on their own.
+    - They may filter by subset name (regex can be used) or publish families. Publish families are more complex as are based on knowing code base.
+    - Filtering by custom tags -> this is used for targeting to output definitions from other extractors using settings (at this moment only Nuke bake extractor can target using custom tags).
+        - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/add_custom_tags`
+    - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
 
 ### IntegrateAssetNew
 
@@ -156,7 +214,7 @@ Applicable context filters:
 
 #### Subset grouping profiles
 
-Published subsets might be grouped together for cleaner and easier selection in **[Loader](artist_tools.md#subset-groups)**
+Published subsets might be grouped together for cleaner and easier selection in the **[Subset Manager](artist_tools_subset_manager)**
 
 Group name is chosen with use of [profile filtering](#profile-filters)
 
@@ -172,10 +230,10 @@ Applicable context filters:
 ## Tools
 Settings for OpenPype tools.
 
-## Creator
-Settings related to [Creator tool](artist_tools.md#details).
+### Creator
+Settings related to [Creator tool](artist_tools_creator).
 
-### Subset name profiles
+#### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
 
 Subset name helps to identify published content. More specific name helps with organization and avoid mixing of published content. Subset name is defined using one of templates defined in **Subset name profiles settings**. The template is filled with context information at the time of creation.
@@ -205,10 +263,31 @@ Template may look like `"{family}{Task}{Variant}"`.
 Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
 
 
-## Workfiles
+### Publish
+
+#### Custom Staging Directory Profiles
+With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
+
+![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
+
+Staging directories are used as a destination for intermediate files (as renders) before they are renamed and copied to proper location during the integration phase. They could be created completely dynamically in the temp folder or for some DCCs in the `work` area.
+Example could be Nuke where artist might want to temporarily render pictures into `work` area to check them before they get published with the choice of "Use existing frames" on the write node.
+
+One of the key advantages of this feature is that it allows users to choose the folder for writing such intermediate files to take advantage of faster storage for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their intermediate extracted data persistent, and use their own infrastructure for regular cleaning.
+
+In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
+
+The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
+
+##### Known issues
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
+
+### Workfiles
 All settings related to Workfile tool.
 
-### Open last workfile at launch
+#### Open last workfile at launch
 This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
 
 ![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)

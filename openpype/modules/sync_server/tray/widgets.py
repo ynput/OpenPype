@@ -3,8 +3,7 @@ import subprocess
 import sys
 from functools import partial
 
-from Qt import QtWidgets, QtCore, QtGui
-from Qt.QtCore import Qt
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.tools.settings import style
@@ -157,8 +156,10 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         if selected_index and \
            selected_index.isValid() and \
            not self._selection_changed:
-            mode = QtCore.QItemSelectionModel.Select | \
-                QtCore.QItemSelectionModel.Rows
+            mode = (
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
+            )
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
@@ -260,7 +261,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         self._selected_ids = set()
 
         for index in idxs:
-            self._selected_ids.add(self.model.data(index, Qt.UserRole))
+            self._selected_ids.add(self.model.data(index, QtCore.Qt.UserRole))
 
     def _set_selection(self):
         """
@@ -272,8 +273,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         for selected_id in self._selected_ids:
             index = self.model.get_index(selected_id)
             if index and index.isValid():
-                mode = QtCore.QItemSelectionModel.Select | \
-                    QtCore.QItemSelectionModel.Rows
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows
+                )
                 self.selection_model.select(index, mode)
                 existing_ids.add(selected_id)
 
@@ -291,7 +294,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                 self.table_view.openPersistentEditor(index)
                 return
 
-        _id = self.model.data(index, Qt.UserRole)
+        _id = self.model.data(index, QtCore.Qt.UserRole)
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.model.project, parent=self)
         detail_window.exec()
@@ -615,7 +618,7 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectRows)
         table_view.horizontalHeader().setSortIndicator(
-            -1, Qt.AscendingOrder)
+            -1, QtCore.Qt.AscendingOrder)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()
         table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
@@ -773,7 +776,8 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
             QtWidgets.QAbstractItemView.ExtendedSelection)
         table_view.setSelectionBehavior(
             QtWidgets.QTableView.SelectRows)
-        table_view.horizontalHeader().setSortIndicator(-1, Qt.AscendingOrder)
+        table_view.horizontalHeader().setSortIndicator(
+            -1, QtCore.Qt.AscendingOrder)
         table_view.horizontalHeader().setSortIndicatorShown(True)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()

@@ -43,7 +43,7 @@ def menu_install():
 
     """
 
-    from Qt import QtGui
+    from qtpy import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
         apply_colorspace_project, apply_colorspace_clips

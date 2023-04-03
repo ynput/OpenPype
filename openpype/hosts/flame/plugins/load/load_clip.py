@@ -1,8 +1,13 @@
+from copy import deepcopy
 import os
 import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 
 class LoadClip(opfapi.ClipLoader):
@@ -13,7 +18,10 @@ class LoadClip(opfapi.ClipLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip"
     order = -10
@@ -24,6 +32,14 @@ class LoadClip(opfapi.ClipLoader):
     reel_group_name = "OpenPype_Reels"
     reel_name = "Loaded"
     clip_name_template = "{asset}_{subset}<_{output}>"
+
+    """ Anatomy keys from version context data and dynamically added:
+        - {layerName} - original layer name token
+        - {layerUID} - original layer UID token
+        - {originalBasename} - original clip name taken from file
+    """
+    layer_rename_template = "{asset}_{subset}<_{output}>"
+    layer_rename_patterns = []
 
     def load(self, context, name, namespace, options):
 
@@ -36,14 +52,23 @@ class LoadClip(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
-        clip_name = StringTemplate(self.clip_name_template).format(
-            context["representation"]["context"])
+        colorspace = self.get_colorspace(context)
 
-        # TODO: settings in imageio
+        # in case output is not in context replace key to representation
+        if not context["representation"]["context"].get("output"):
+            self.clip_name_template = self.clip_name_template.replace(
+                "output", "representation")
+            self.layer_rename_template = self.layer_rename_template.replace(
+                "output", "representation")
+
+        formatting_data = deepcopy(context["representation"]["context"])
+        clip_name = StringTemplate(self.clip_name_template).format(
+            formatting_data)
+
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
-        colorspace = colorspace
+        colorspace = self.get_native_colorspace(colorspace)
+        self.log.info("Loading with colorspace: `{}`".format(colorspace))
 
         # create workfile path
         workfile_dir = os.environ["AVALON_WORKDIR"]
@@ -61,6 +86,9 @@ class LoadClip(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
+            "layer_rename_template": self.layer_rename_template,
+            "layer_rename_patterns": self.layer_rename_patterns,
+            "context_data": formatting_data
         }
         self.log.debug(pformat(
             loading_context

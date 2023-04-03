@@ -13,10 +13,7 @@ import click
 from openpype.modules import (
     JsonFilesSettingsDef,
     OpenPypeAddOn,
-    ModulesManager
-)
-# Import interface defined by this addon to be able find other addons using it
-from openpype_interfaces import (
+    ModulesManager,
     IPluginPaths,
     ITrayAction
 )
@@ -47,7 +44,7 @@ class AddonSettingsDef(JsonFilesSettingsDef):
 
 
 class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
-    """This Addon has defined it's settings and interface.
+    """This Addon has defined its settings and interface.
 
     This example has system settings with an enabled option. And use
     few other interfaces:

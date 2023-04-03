@@ -1,7 +1,7 @@
 import os
 import webbrowser
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.modules.shotgrid.lib import credentials
 from openpype.modules.shotgrid.tray.credential_dialog import (

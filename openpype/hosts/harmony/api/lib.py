@@ -14,7 +14,7 @@ import json
 import signal
 import time
 from uuid import uuid4
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import collections
 
 from .server import Server
@@ -394,7 +394,7 @@ def get_scene_data():
                 "function": "AvalonHarmony.getSceneData"
             })["result"]
     except json.decoder.JSONDecodeError:
-        # Means no sceen metadata has been made before.
+        # Means no scene metadata has been made before.
         return {}
     except KeyError:
         # Means no existing scene metadata has been made.
@@ -465,7 +465,7 @@ def imprint(node_id, data, remove=False):
     Example:
         >>> from openpype.hosts.harmony.api import lib
         >>> node = "Top/Display"
-        >>> data = {"str": "someting", "int": 1, "float": 0.32, "bool": True}
+        >>> data = {"str": "something", "int": 1, "float": 0.32, "bool": True}
         >>> lib.imprint(layer, data)
     """
     scene_data = get_scene_data()
@@ -550,7 +550,7 @@ def save_scene():
     method prevents this double request and safely saves the scene.
 
     """
-    # Need to turn off the backgound watcher else the communication with
+    # Need to turn off the background watcher else the communication with
     # the server gets spammed with two requests at the same time.
     scene_path = send(
         {"function": "AvalonHarmony.saveScene"})["result"]
