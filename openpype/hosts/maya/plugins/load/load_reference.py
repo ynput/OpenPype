@@ -168,19 +168,19 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                cmds.setAttr(group_name + ".displayHandle", 1)
+                cmds.setAttr("{}.displayHandle".format(group_name), 1)
 
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
-                    cmds.setAttr(group_name + ".useOutlinerColor", 1)
-                    cmds.setAttr(group_name + ".outlinerColor",
+                    cmds.setAttr("{}.useOutlinerColor".format(group_name), 1)
+                    cmds.setAttr("{}.outlinerColor".format(group_name),
                                  (float(c[0]) / 255),
                                  (float(c[1]) / 255),
                                  (float(c[2]) / 255))
 
-                cmds.setAttr(group_name + ".displayHandle", 1)
+                cmds.setAttr("{}.displayHandle".format(group_name), 1)
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -194,15 +194,16 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 cy = cy + pivot[1]
                 cz = cz + pivot[2]
                 # set selection handle offset to center of bounding box
-                cmds.setAttr(group_name + ".selectHandleX", cx)
-                cmds.setAttr(group_name + ".selectHandleY", cy)
-                cmds.setAttr(group_name + ".selectHandleZ", cz)
+                cmds.setAttr("{}.selectHandleX".format(group_name), cx)
+                cmds.setAttr("{}.selectHandleY".format(group_name), cy)
+                cmds.setAttr("{}.selectHandleZ".format(group_name), cz)
 
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
             else:
                 if "translate" in options:
-                    cmds.setAttr(group_name + ".t", *options["translate"])
+                    cmds.setAttr("{}.translate".format(group_name),
+                                 *options["translate"])
             return new_nodes
 
     def switch(self, container, representation):

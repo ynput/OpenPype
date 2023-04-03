@@ -138,8 +138,9 @@ class ImagePlaneLoader(load.LoaderPlugin):
             return
 
         try:
-            cmds.setAttr(camera + ".displayResolution", True)
-            cmds.setAttr(camera + ".farClipPlane", image_plane_depth * 10)
+            cmds.setAttr("{}.displayResolution".format(camera), True)
+            cmds.setAttr("{}.farClipPlane".format(camera),
+                         image_plane_depth * 10)
         except RuntimeError:
             pass
 
@@ -215,7 +216,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
         cmds.setAttr("{}.imageName".format(image_plane_shape),
                      path,
                      type="string")
-        cmds.setAttr(container["objectName"] + ".representation",
+        cmds.setAttr("{}.representation".format(container["objectName"]),
                      str(representation["_id"]),
                      type="string")
 
