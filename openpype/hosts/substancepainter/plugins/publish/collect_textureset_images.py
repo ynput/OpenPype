@@ -41,10 +41,12 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             for template, outputs in template_maps.items():
                 self.log.info(f"Processing {template}")
                 self.create_image_instance(instance, template, outputs,
-                                           asset_doc=asset_doc)
+                                           asset_doc=asset_doc,
+                                           texture_set_name=texture_set_name,
+                                           stack_name=stack_name)
 
     def create_image_instance(self, instance, template, outputs,
-                              asset_doc):
+                              asset_doc, texture_set_name, stack_name):
         """Create a new instance per image or UDIM sequence.
 
         The new instances will be of family `image`.
@@ -56,14 +58,27 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         fnames = [os.path.basename(output["filepath"]) for output in outputs]
         ext = os.path.splitext(first_filepath)[1]
         assert ext.lstrip("."), f"No extension: {ext}"
-        map_identifier = strip_template(template)
+
+        always_include_texture_set_name = False  # todo: make this configurable
+        all_texture_sets = substance_painter.textureset.all_texture_sets()
+        texture_set = substance_painter.textureset.TextureSet.from_name(
+            texture_set_name
+        )
 
         # Define the suffix we want to give this particular texture
         # set and set up a remapped subset naming for it.
-        # TODO (Critical) Support needs to be added to have multiple materials
-        #      with each their own maps. So we might need to include the
-        #      material or alike in the variant suffix too?
-        suffix = f".{map_identifier}"
+        suffix = ""
+        if always_include_texture_set_name or len(all_texture_sets) > 1:
+            # More than one texture set, include texture set name
+            suffix += f".{texture_set_name}"
+        if texture_set.is_layered_material() and stack_name:
+            # More than one stack, include stack name
+            suffix += f".{stack_name}"
+
+        # Always include the map identifier
+        map_identifier = strip_template(template)
+        suffix += f".{map_identifier}"
+
         image_subset = get_subset_name(
             # TODO: The family actually isn't 'texture' currently but for now
             #       this is only done so the subset name starts with 'texture'
@@ -109,6 +124,10 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
 
         # Group the textures together in the loader
         image_instance.data["subsetGroup"] = instance.data["subset"]
+
+        # Store the texture set name and stack name on the instance
+        image_instance.data["textureSetName"] = texture_set_name
+        image_instance.data["textureStackName"] = stack_name
 
         # Store color space with the instance
         # Note: The extractor will assign it to the representation
