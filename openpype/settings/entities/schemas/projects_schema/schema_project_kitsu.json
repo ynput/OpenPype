@@ -54,30 +54,62 @@
                             "label": "Note shortname"
                         },
                         {
-                            "type": "list",
-                            "key": "status_conditions",
-                            "label": "Status conditions",
-                            "object_type": {
-                                "type": "dict",
-                                "key": "conditions_dict",
-                                "children": [
-                                    {
-                                        "type": "enum",
-                                        "key": "condition",
-                                        "label": "Condition",
-                                        "enum_items": [
-                                            {"equal": "Equal"},
-                                            {"not_equal": "Not equal"}
+                            "type": "dict",
+                            "collapsible": true,
+                            "key": "status_change_conditions",
+                            "label": "Status change conditions",
+                            "children": [
+                                 {
+                                    "type": "list",
+                                    "key": "status_conditions",
+                                    "label": "Status conditions",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "key": "condition_dict",
+                                        "children": [
+                                            {
+                                                "type": "enum",
+                                                "key": "condition",
+                                                "label": "Condition",
+                                                "enum_items": [
+                                                    {"equal": "Equal"},
+                                                    {"not_equal": "Not equal"}
+                                                ]
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "short_name",
+                                                "label": "Short name"
+                                            }
                                         ]
-                                    },
-                                    {
-                                        "type": "text",
-                                        "key": "short_name",
-                                        "label": "Short name"
                                     }
-                                ]
-                            },
-                            "label": "Status shortname"
+                                },
+                                {
+                                    "type": "list",
+                                    "key": "family_requirements",
+                                    "label": "Family requirements",
+                                    "object_type": {
+                                        "type": "dict",
+                                        "key": "requirement_dict",
+                                        "children": [
+                                            {
+                                                "type": "enum",
+                                                "key": "condition",
+                                                "label": "Condition",
+                                                "enum_items": [
+                                                    {"equal": "Equal"},
+                                                    {"not_equal": "Not equal"}
+                                                ]
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "family",
+                                                "label": "Family"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
                         },
                         {
                             "type": "dict",

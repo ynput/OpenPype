@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 import clique
 
-# Global variable which store attribude definitions by type
+# Global variable which store attribute definitions by type
 #   - default types are registered on import
 _attr_defs_by_type = {}
 
@@ -93,7 +93,7 @@ class AbstractAttrDefMeta(ABCMeta):
 
 @six.add_metaclass(AbstractAttrDefMeta)
 class AbstractAttrDef(object):
-    """Abstraction of attribute definiton.
+    """Abstraction of attribute definition.
 
     Each attribute definition must have implemented validation and
     conversion method.
@@ -427,7 +427,7 @@ class EnumDef(AbstractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted using
+        items: Items definition that can be converted using
             'prepare_enum_items'.
         default: Default value. Must be one key(value) from passed items.
     """
