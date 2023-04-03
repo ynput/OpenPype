@@ -352,7 +352,9 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     for status in all_status:
         if project['project_status_id'] == status['id']:
             project['project_status_name'] = status['name']
+            break
 
+    #  Do not sync closed kitsu project that is not found in openpype
     if (
         project['project_status_name'] == "Closed"
         and not get_project(project['name'])
