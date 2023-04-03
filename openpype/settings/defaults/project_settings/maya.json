@@ -930,6 +930,21 @@
         },
         "ExtractLook": {
             "maketx_arguments": []
+        },
+        "ExtractGPUCache": {
+            "enabled": false,
+            "families": [
+                "model",
+                "animation",
+                "pointcache"
+            ],
+            "step": 1.0,
+            "stepSave": 1,
+            "optimize": true,
+            "optimizationThreshold": 40000,
+            "optimizeAnimationsForMotionBlur": true,
+            "writeMaterials": true,
+            "useBaseTessellation": true
         }
     },
     "load": {
