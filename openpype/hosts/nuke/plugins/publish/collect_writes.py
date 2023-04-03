@@ -189,7 +189,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             })
 
         # make sure rendered sequence on farm will
-        # be used for exctract review
+        # be used for extract review
         if not instance.data["review"]:
             instance.data["useSequenceForReview"] = False
 

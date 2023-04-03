@@ -129,7 +129,6 @@ class ExtractReview(publish.Extractor):
             "frameStart": 1,
             "frameEnd": no_of_frames,
             "fps": fps,
-            "preview": True,
             "tags": self.mov_options['tags']
         })
 
