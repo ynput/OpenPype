@@ -1,7 +1,7 @@
 import os
 
 from openpype.settings import get_project_settings
-from openpype.pipeline import install_host
+from openpype.pipeline import install_host, get_current_project_name
 from openpype.hosts.maya.api import MayaHost
 
 from maya import cmds
@@ -12,7 +12,8 @@ install_host(host)
 
 print("Starting OpenPype usersetup...")
 
-project_settings = get_project_settings(os.environ['AVALON_PROJECT'])
+project_name = get_current_project_name()
+settings = get_project_settings(project_name)
 
 # Loading plugins explicitly.
 explicit_plugins_loading = project_settings["maya"]["explicit_plugins_loading"]
@@ -46,17 +47,16 @@ if bool(int(os.environ.get(key, "0"))):
     )
 
 # Build a shelf.
-shelf_preset = project_settings['maya'].get('project_shelf')
-
+shelf_preset = settings['maya'].get('project_shelf')
 if shelf_preset:
-    project = os.environ["AVALON_PROJECT"]
-
-    icon_path = os.path.join(os.environ['OPENPYPE_PROJECT_SCRIPTS'],
-                             project, "icons")
+    icon_path = os.path.join(
+        os.environ['OPENPYPE_PROJECT_SCRIPTS'],
+        project_name,
+        "icons")
     icon_path = os.path.abspath(icon_path)
 
     for i in shelf_preset['imports']:
-        import_string = "from {} import {}".format(project, i)
+        import_string = "from {} import {}".format(project_name, i)
         print(import_string)
         exec(import_string)
 

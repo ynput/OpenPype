@@ -7,7 +7,7 @@ from openpype.client import (
 # from openpype.hosts import resolve
 from openpype.pipeline import (
     get_representation_path,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.resolve.api import lib, plugin
 from openpype.hosts.resolve.api.pipeline import (
@@ -110,7 +110,7 @@ class LoadClip(plugin.TimelineItemLoader):
         namespace = container['namespace']
         timeline_item_data = lib.get_pype_timeline_item_by_name(namespace)
         timeline_item = timeline_item_data["clip"]["item"]
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version = get_version_by_id(project_name, representation["parent"])
         version_data = version.get("data", {})
         version_name = version.get("name", None)
@@ -153,7 +153,7 @@ class LoadClip(plugin.TimelineItemLoader):
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name,
             version["parent"],

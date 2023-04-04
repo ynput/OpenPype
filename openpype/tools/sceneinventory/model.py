@@ -15,7 +15,7 @@ from openpype.client import (
     get_representation_by_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     schema,
     HeroVersionType,
     registered_host,
@@ -62,7 +62,7 @@ class InventoryModel(TreeModel):
         if not self.sync_enabled:
             return
 
-        project_name = legacy_io.current_project()
+        project_name = get_current_project_name()
         active_site = sync_server.get_active_site(project_name)
         remote_site = sync_server.get_remote_site(project_name)
 
@@ -320,7 +320,7 @@ class InventoryModel(TreeModel):
         """
 
         # NOTE: @iLLiCiTiT this need refactor
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
 
         self.beginResetModel()
 

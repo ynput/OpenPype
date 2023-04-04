@@ -3,8 +3,8 @@ from maya import cmds, mel
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-from openpype.pipeline import legacy_io, KnownPublishError
 from openpype.hosts.maya.api import lib
+from openpype.pipeline import KnownPublishError
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -20,7 +20,8 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug('instance: {}'.format(instance))
 
-        task = legacy_io.Session["AVALON_TASK"]
+        project_name = instance.context.data["projectName"]
+        task = instance.context.data["task"]
 
         # Get panel.
         instance.data["panel"] = cmds.playblast(
@@ -114,7 +115,6 @@ class CollectReview(pyblish.api.InstancePlugin):
         else:
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
-            project_name = legacy_io.active_project()
             subset_doc = get_subset_by_name(
                 project_name,
                 legacy_subset_name,
