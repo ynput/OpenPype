@@ -90,7 +90,7 @@ If there is an option of automatic repair, there will be `Repair` button on the 
 
 There are currently 2 options of `render` item:
 - Render of farm - allows offload rendering and publishing to Deadline - requires Deadline module being enabled
-- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrak) and scene itself
+- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrack) and scene itself
 
 ![Configuration of render instance](assets/aftereffects_render_instance.png)
 
