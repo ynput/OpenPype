@@ -348,27 +348,6 @@ def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
         comp.EndUndo()
 
 
-def get_extreme_positions(nodes):
-    """Get the 4 numbers that represent the box of a group of nodes."""
-
-    if not nodes:
-        raise ValueError("there is no nodes in the list")
-
-    nodes_xpos = []
-    nodes_ypos = []
-
-    comp = get_current_comp()
-    flow = comp.CurrentFrame.FlowView
-    for n in nodes:
-        x, y = flow.GetPosTable(n).values()
-        nodes_xpos.append(x)
-        nodes_ypos.append(y)
-
-    min_x, min_y = (min(nodes_xpos), min(nodes_ypos))
-    max_x, max_y = (max(nodes_xpos), max(nodes_ypos))
-    return min_x, min_y, max_x, max_y
-
-
 def get_names_from_nodes(nodes):
     """Get list of nodes names.
 
