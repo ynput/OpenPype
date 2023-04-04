@@ -25,7 +25,8 @@ from openpype.client import (
 )
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
@@ -1392,8 +1393,8 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
         assert asset_doc, "No current asset found in Session"
         asset_id = asset_doc['_id']
@@ -1585,17 +1586,15 @@ def get_container_members(container):
 
 
 # region LOOKDEV
-def list_looks(asset_id):
+def list_looks(project_name, asset_id):
     """Return all look subsets for the given asset
 
     This assumes all look subsets start with "look*" in their names.
     """
-
     # # get all subsets with look leading in
     # the name associated with the asset
     # TODO this should probably look for family 'look' instead of checking
     #   subset name that can not start with family
-    project_name = legacy_io.active_project()
     subset_docs = get_subsets(project_name, asset_ids=[asset_id])
     return [
         subset_doc
@@ -1617,7 +1616,7 @@ def assign_look_by_version(nodes, version_id):
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
 
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
@@ -1683,7 +1682,7 @@ def assign_look(nodes, subset="lookDefault"):
         parts = pype_id.split(":", 1)
         grouped[parts[0]].append(node)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     subset_docs = get_subsets(
         project_name, subset_names=[subset], asset_ids=grouped.keys()
     )
@@ -2197,6 +2196,35 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def get_fps_for_current_context():
+    """Get fps that should be set for current context.
+
+    Todos:
+        - Skip project value.
+        - Merge logic with 'get_frame_range' and 'reset_scene_resolution' ->
+            all the values in the functions can be collected at one place as
+            they have same requirements.
+
+    Returns:
+        Union[int, float]: FPS value.
+    """
+
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["data.fps"]
+    ) or {}
+    fps = asset_doc.get("data", {}).get("fps")
+    if not fps:
+        project_doc = get_project(project_name, fields=["data.fps"]) or {}
+        fps = project_doc.get("data", {}).get("fps")
+
+        if not fps:
+            fps = 25
+
+    return convert_to_maya_fps(fps)
+
+
 def get_frame_range(include_animation_range=False):
     """Get the current assets frame range and handles.
 
@@ -2271,10 +2299,7 @@ def reset_frame_range(playback=True, render=True, fps=True):
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
     if fps:
-        fps = convert_to_maya_fps(
-            float(legacy_io.Session.get("AVALON_FPS", 25))
-        )
-        set_scene_fps(fps)
+        set_scene_fps(get_fps_for_current_context())
 
     frame_range = get_frame_range(include_animation_range=True)
     if not frame_range:
@@ -2310,7 +2335,7 @@ def reset_scene_resolution():
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
     asset_data = get_current_project_asset()["data"]
@@ -2343,19 +2368,9 @@ def set_context_settings():
         None
     """
 
-    # Todo (Wijnand): apply renderer and resolution of project
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_doc = get_current_project_asset(fields=["data.fps"])
-    asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = convert_to_maya_fps(
-        asset_data.get("fps", project_data.get("fps", 25))
-    )
-    legacy_io.Session["AVALON_FPS"] = str(fps)
-    set_scene_fps(fps)
+    set_scene_fps(get_fps_for_current_context())
 
     reset_scene_resolution()
 
@@ -2375,9 +2390,7 @@ def validate_fps():
 
     """
 
-    expected_fps = convert_to_maya_fps(
-        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    )
+    expected_fps = get_fps_for_current_context()
     current_fps = mel.eval('currentTimeUnitToFPS()')
 
     fps_match = current_fps == expected_fps
@@ -3239,7 +3252,7 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 def set_colorspace():
     """Set Colorspace from project configuration
     """
-    project_name = os.getenv("AVALON_PROJECT")
+    project_name = get_current_project_name()
     imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that

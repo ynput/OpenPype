@@ -638,12 +638,12 @@ def discover_convertor_plugins(*args, **kwargs):
 
 
 def discover_legacy_creator_plugins():
-    from openpype.lib import Logger
+    from openpype.pipeline import get_current_project_name
 
     log = Logger.get_logger("CreatorDiscover")
 
     plugins = discover(LegacyCreator)
-    project_name = os.environ.get("AVALON_PROJECT")
+    project_name = get_current_project_name()
     system_settings = get_system_settings()
     project_settings = get_project_settings(project_name)
     for plugin in plugins:

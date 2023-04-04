@@ -9,7 +9,7 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
@@ -77,8 +77,8 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         # Get the asset ID from the database for the asset of current context
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
 
@@ -473,8 +473,8 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
     asset_doc = get_asset_by_name(project_name, asset_name)
     asset_data = asset_doc["data"]

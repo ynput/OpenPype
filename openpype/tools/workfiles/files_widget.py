@@ -21,6 +21,7 @@ from openpype.pipeline import (
     registered_host,
     legacy_io,
     Anatomy,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import (
     compute_session_changes,
@@ -99,7 +100,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._task_type = None
 
         # Pype's anatomy object for current project
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = get_current_project_name()
         self.anatomy = Anatomy(project_name)
         self.project_name = project_name
         # Template key used to get work template from anatomy templates

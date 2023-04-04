@@ -303,6 +303,24 @@ pycodestyle = ">=2.10.0"
 tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
+name = "ayon-python-api"
+version = "0.1.16"
+description = "AYON Python API"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "ayon-python-api-0.1.16.tar.gz", hash = "sha256:666110954dd75b2be1699a29b4732cfb0bcb09d01f64fba4449bfc8ac1fb43f1"},
+    {file = "ayon_python_api-0.1.16-py3-none-any.whl", hash = "sha256:bbcd6df1f80ddf32e653a1bb31289cb5fd1a8bea36ab4c8e6aef08c41b6393de"},
+]
+
+[package.dependencies]
+appdirs = ">=1,<2"
+requests = ">=2.27.1"
+six = ">=1.15"
+Unidecode = ">=1.2.0"
+
+[[package]]
 name = "babel"
 version = "2.11.0"
 description = "Internationalization utilities"

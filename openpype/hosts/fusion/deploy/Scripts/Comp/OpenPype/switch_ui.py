@@ -11,7 +11,7 @@ from openpype.client import get_assets
 from openpype import style
 from openpype.pipeline import (
     install_host,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.fusion import api
 from openpype.pipeline.context_tools import get_workdir_from_session
@@ -167,7 +167,7 @@ class App(QtWidgets.QWidget):
         return items
 
     def collect_asset_names(self):
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset_docs = get_assets(project_name, fields=["name"])
         asset_names = {
             asset_doc["name"]

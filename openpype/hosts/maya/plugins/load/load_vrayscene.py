@@ -56,7 +56,8 @@ class VRaySceneLoader(load.LoaderPlugin):
             return
 
         # colour the group node
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = context["project"]["name"]
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:

@@ -1,7 +1,6 @@
 import pyblish.api
 
 from openpype.client import get_assets
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
@@ -43,7 +42,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                                                       nodes=instance[:])
 
         # check ids against database ids
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
         asset_docs = get_assets(project_name, fields=["_id"])
         db_asset_ids = {
             str(asset_doc["_id"])
