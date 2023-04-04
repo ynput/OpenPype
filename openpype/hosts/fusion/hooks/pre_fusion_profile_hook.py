@@ -1,10 +1,10 @@
 import os
 import shutil
 import platform
+import tempfile
 from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import (
-    FUSION_HOST_DIR,
     FUSION_VERSIONS_DICT,
     get_fusion_version,
 )
@@ -125,6 +125,8 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
             force_sync,
         ) = self.get_copy_fusion_prefs_settings()
 
+        self.log.info("Hello")
+
         # Get launched application context and return correct app version
         app_name = self.launch_context.env.get("AVALON_APP_NAME")
         app_version = get_fusion_version(app_name)
@@ -152,30 +154,27 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {fu_profile_dir_variable}: {fu_profile_dir}")
         self.launch_context.env[fu_profile_dir_variable] = str(fu_profile_dir)
 
-        self.set_masterprefs(
-            # TODO: Maybe this shouldn't be inside the profile directory?
-            folder=fu_profile_dir,
-            profile_version=profile_version
-        )
+        self.set_masterprefs(profile_version)
 
-    def set_masterprefs(self, folder, profile_version):
+    def set_masterprefs(self, profile_version):
         """Write the MasterPrefs file and set the environment variable"""
-
-        # Write the masterprefs for Fusion
-        try:
-            Path(folder).mkdir(exist_ok=True, parents=True)
-        except PermissionError:
-            raise ApplicationLaunchFailed(
-                f"Unable to create folder for Fusion master prefs at {folder}"
-            )
 
         master_pref_contents = self.data["project_settings"]["fusion"].get(
             "masterprefs", ""
         )
-        master_pref_path = Path(folder, "fusion_masterprefs.prefs")
-        self.log.info(f"Writing {master_pref_path}..")
-        with open(master_pref_path, "w") as f:
-            f.write(master_pref_contents)
+        if not master_pref_contents:
+            self.log.debug("No Fusion master preferences contents set in "
+                           "project settings. Skipping setting of Fusion "
+                           "master preferences.")
+            return
+
+        with tempfile.NamedTemporaryFile(
+                prefix="fusion_masterprefs_",
+                suffix=".prefs",
+                # Do not directly delete so that fusion can access it on launch
+                delete=False) as f:
+            f.write(master_pref_contents.encode("utf-8"))
+        master_pref_path = f.name
 
         # Add custom Fusion Master Prefs and the temporary
         # profile directory variables to customize Fusion
