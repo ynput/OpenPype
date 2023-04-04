@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Static Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
 from maya import cmds  # noqa
 
 
@@ -14,20 +13,14 @@ class CreateUnrealStaticMesh(plugin.Creator):
     icon = "cube"
     dynamic_subset_keys = ["asset"]
 
-    def __init__(self, *args, **kwargs):
-        """Constructor."""
-        super(CreateUnrealStaticMesh, self).__init__(*args, **kwargs)
-        self._project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"])
-
     @classmethod
     def get_dynamic_data(
-            cls, variant, task_name, asset_id, project_name, host_name
+        cls, variant, task_name, asset_id, project_name, host_name
     ):
         dynamic_data = super(CreateUnrealStaticMesh, cls).get_dynamic_data(
             variant, task_name, asset_id, project_name, host_name
         )
-        dynamic_data["asset"] = legacy_io.Session.get("AVALON_ASSET")
+        dynamic_data["asset"] = get_current_asset_name()
         return dynamic_data
 
     def process(self):

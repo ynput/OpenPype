@@ -41,8 +41,10 @@ from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     get_current_project_name,
     discover_legacy_creator_plugins,
-    legacy_io,
     Anatomy,
+    get_current_host_name,
+    get_current_project_name,
+    get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
     get_current_project_asset,
@@ -965,7 +967,7 @@ def check_inventory_versions():
     if not repre_ids:
         return
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     # Find representations based on found containers
     repre_docs = get_representations(
         project_name,
@@ -1141,7 +1143,7 @@ def format_anatomy(data):
     project_name = anatomy.project_name
     asset_name = data["asset"]
     task_name = data["task"]
-    host_name = os.environ["AVALON_APP"]
+    host_name = get_current_host_name()
     context_data = get_template_data_with_names(
         project_name, asset_name, task_name, host_name
     )
@@ -1469,7 +1471,7 @@ def create_write_node_legacy(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
+    host_name = get_current_host_name()
     try:
         data.update({
             "app": host_name,
@@ -1922,13 +1924,13 @@ class WorkfileSettings(object):
     def __init__(self, root_node=None, nodes=None, **kwargs):
         project_doc = kwargs.get("project")
         if project_doc is None:
-            project_name = legacy_io.active_project()
+            project_name = get_current_project_name()
             project_doc = get_project(project_name)
 
         Context._project_doc = project_doc
         self._asset = (
             kwargs.get("asset_name")
-            or legacy_io.Session["AVALON_ASSET"]
+            or get_current_asset_name()
         )
         self._asset_entity = get_current_project_asset(self._asset)
         self._root_node = root_node or nuke.root()
@@ -2329,9 +2331,8 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project_name = legacy_io.active_project()
-        project = get_project(project_name)
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         asset = get_asset_by_name(project_name, asset_name)
         asset_data = asset.get('data', {})
 
@@ -2345,7 +2346,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": project["name"]
+            "name": project_name
         }
 
         if any(x for x in data.values() if x is None):
@@ -2408,7 +2409,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         from .utils import set_context_favorites
 
         work_dir = os.getenv("AVALON_WORKDIR")
-        asset = os.getenv("AVALON_ASSET")
+        asset = get_current_asset_name()
         favorite_items = OrderedDict()
 
         # project
@@ -2817,7 +2818,8 @@ def add_scripts_menu():
         return
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     config = project_settings["nuke"]["scriptsmenu"]["definition"]
     _menu = project_settings["nuke"]["scriptsmenu"]["name"]
 
@@ -2835,7 +2837,8 @@ def add_scripts_menu():
 def add_scripts_gizmo():
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     platform_name = platform.system().lower()
 
     for gizmo_settings in project_settings["nuke"]["gizmo"]:
