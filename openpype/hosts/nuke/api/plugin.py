@@ -208,12 +208,24 @@ class NukeCreator(NewCreator):
 
     def collect_instances(self):
         cached_instances = _collect_and_cache_nodes(self)
+        attr_def_keys = {
+            attr_def.key
+            for attr_def in self.get_instance_attr_defs()
+        }
+        attr_def_keys.discard(None)
+
         for (node, data) in cached_instances[self.identifier]:
             created_instance = CreatedInstance.from_existing(
                 data, self
             )
             created_instance.transient_data["node"] = node
             self._add_instance_to_context(created_instance)
+
+            for key in (
+                set(created_instance["creator_attributes"].keys())
+                - attr_def_keys
+            ):
+                created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
