@@ -72,8 +72,7 @@ class FusionSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
             return
 
         # Include handles
-        handles = version_data.get("handles", 0)
-        start -= handles
-        end += handles
+        start -= version_data.get("handleStart", 0)
+        end += version_data.get("handleEnd", 0)
 
         lib.update_frame_range(start, end)

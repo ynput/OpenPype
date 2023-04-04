@@ -987,7 +987,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "frameStart", "frameEnd", "step", "handles",
+            "frameStart", "frameEnd", "step",
             "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:
