@@ -30,7 +30,7 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
             cmds.setAttr(palette + ".xgExportAsDelta", True)
 
         # Need to save the scene, cause the attribute changes above does not
-        # mark the scene as modified so user can exit without commiting the
+        # mark the scene as modified so user can exit without committing the
         # changes.
         self.log.info("Saving changes.")
         cmds.file(save=True)

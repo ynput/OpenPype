@@ -1,5 +1,3 @@
-import maya.cmds as cmds
-
 import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder, PublishValidationError
@@ -22,10 +20,11 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     families = ["ass"]
     label = "Validate Arnold Scene Source"
 
-    def _get_nodes_data(self, nodes):
+    def _get_nodes_by_name(self, nodes):
         ungrouped_nodes = []
         nodes_by_name = {}
         parents = []
+        same_named_nodes = {}
         for node in nodes:
             node_split = node.split("|")
             if len(node_split) == 2:
@@ -35,21 +34,38 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
             if parent:
                 parents.append(parent)
 
-            nodes_by_name[node_split[-1]] = node
-            for shape in cmds.listRelatives(node, shapes=True):
-                nodes_by_name[shape.split("|")[-1]] = shape
+            node_name = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
+
+            # Check for same same nodes, which can happen in different
+            # hierarchies.
+            if node_name in nodes_by_name:
+                try:
+                    same_named_nodes[node_name].append(node)
+                except KeyError:
+                    same_named_nodes[node_name] = [
+                        nodes_by_name[node_name], node
+                    ]
+
+            nodes_by_name[node_name] = node
+
+        if same_named_nodes:
+            message = "Found nodes with the same name:"
+            for name, nodes in same_named_nodes.items():
+                message += "\n\n\"{}\":\n{}".format(name, "\n".join(nodes))
+
+            raise PublishValidationError(message)
 
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
         ungrouped_nodes = []
 
-        nodes, content_nodes_by_name, content_parents = self._get_nodes_data(
-            instance.data["setMembers"]
+        nodes, content_nodes_by_name, content_parents = (
+            self._get_nodes_by_name(instance.data["contentMembers"])
         )
         ungrouped_nodes.extend(nodes)
 
-        nodes, proxy_nodes_by_name, proxy_parents = self._get_nodes_data(
+        nodes, proxy_nodes_by_name, proxy_parents = self._get_nodes_by_name(
             instance.data.get("proxy", [])
         )
         ungrouped_nodes.extend(nodes)
@@ -66,11 +82,11 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
             return
 
         # Validate for content and proxy nodes amount being the same.
-        if len(instance.data["setMembers"]) != len(instance.data["proxy"]):
+        if len(instance.data["contentMembers"]) != len(instance.data["proxy"]):
             raise PublishValidationError(
                 "Amount of content nodes ({}) and proxy nodes ({}) needs to "
                 "be the same.".format(
-                    len(instance.data["setMembers"]),
+                    len(instance.data["contentMembers"]),
                     len(instance.data["proxy"])
                 )
             )
