@@ -9,7 +9,7 @@ from unreal import EditorLevelUtils
 from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -169,7 +169,7 @@ class CameraLoader(plugin.Loader):
         EditorLevelLibrary.save_all_dirty_levels()
         EditorLevelLibrary.load_level(level)
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         # TODO refactor
         #   - Creating of hierarchy should be a function in unreal integration
         #       - it's used in multiple loaders but must not be loader's logic

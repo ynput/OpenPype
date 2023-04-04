@@ -5,8 +5,6 @@ import re
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline import legacy_io
-from openpype.settings import get_project_settings
 from openpype.pipeline.publish import ValidateContentsOrder
 
 
@@ -64,9 +62,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
+        project_settings = instance.context.data["project_settings"]
         collision_prefixes = (
             project_settings
             ["maya"]

@@ -50,7 +50,6 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 import pyblish.api
 
 from openpype.lib import get_formatted_current_time
-from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -92,7 +91,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
-        asset = legacy_io.Session["AVALON_ASSET"]
+        asset = context.data["asset"]
         workspace = context.data["workspaceDir"]
 
         # Retrieve render setup layers

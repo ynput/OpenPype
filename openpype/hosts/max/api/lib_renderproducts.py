@@ -10,7 +10,7 @@ from openpype.hosts.max.api.lib import (
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 
 
 class RenderProducts(object):
@@ -19,7 +19,7 @@ class RenderProducts(object):
         self._project_settings = project_settings
         if not self._project_settings:
             self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
+                get_current_project_name()
             )
 
     def render_product(self, container):

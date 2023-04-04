@@ -2,7 +2,6 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 import openpype.hosts.maya.api.action
-from openpype.pipeline import legacy_io
 
 
 class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
@@ -35,7 +34,7 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     def get_invalid(self, instance):
         invalid = []
 
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
         asset_doc = instance.data["assetEntity"]
         render_passes = instance.data.get("renderPasses", [])
         for render_pass in render_passes:
