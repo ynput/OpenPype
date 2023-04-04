@@ -280,8 +280,21 @@ class TemplatesDict(object):
     def objected_templates(self):
         return self._objected_templates
 
-    @classmethod
-    def create_ojected_templates(cls, templates):
+    def _create_template_object(self, template):
+        """Create template object from a template string.
+
+        Separated into method to give option change class of templates.
+
+        Args:
+            template (str): Template string.
+
+        Returns:
+            StringTemplate: Object of template.
+        """
+
+        return StringTemplate(template)
+
+    def create_ojected_templates(self, templates):
         if not isinstance(templates, dict):
             raise TypeError("Expected dict object, got {}".format(
                 str(type(templates))
@@ -297,7 +310,7 @@ class TemplatesDict(object):
             for key in tuple(item.keys()):
                 value = item[key]
                 if isinstance(value, six.string_types):
-                    item[key] = StringTemplate(value)
+                    item[key] = self._create_template_object(value)
                 elif isinstance(value, dict):
                     inner_queue.append(value)
         return objected_templates
