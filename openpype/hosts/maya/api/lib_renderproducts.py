@@ -858,6 +858,7 @@ class RenderProductsVray(ARenderProducts):
         if default_ext in {"exr (multichannel)", "exr (deep)"}:
             default_ext = "exr"
 
+        colorspace = lib.get_color_management_output_transform()
         products = []
 
         # add beauty as default when not disabled
@@ -869,7 +870,7 @@ class RenderProductsVray(ARenderProducts):
                         productName="",
                         ext=default_ext,
                         camera=camera,
-                        colorspace=lib.get_color_management_output_transform(),
+                        colorspace=colorspace,
                         multipart=self.multipart
                     )
                 )
@@ -883,6 +884,7 @@ class RenderProductsVray(ARenderProducts):
                         productName="Alpha",
                         ext=default_ext,
                         camera=camera,
+                        colorspace=colorspace,
                         multipart=self.multipart
                     )
                 )
@@ -918,7 +920,8 @@ class RenderProductsVray(ARenderProducts):
                         product = RenderProduct(productName=name,
                                                 ext=default_ext,
                                                 aov=aov,
-                                                camera=camera)
+                                                camera=camera,
+                                                colorspace=colorspace)
                         products.append(product)
                 # Continue as we've processed this special case AOV
                 continue
@@ -930,7 +933,7 @@ class RenderProductsVray(ARenderProducts):
                     ext=default_ext,
                     aov=aov,
                     camera=camera,
-                    colorspace=lib.get_color_management_output_transform()
+                    colorspace=colorspace
                 )
                 products.append(product)
 
@@ -1131,6 +1134,7 @@ class RenderProductsRedshift(ARenderProducts):
         products = []
         light_groups_enabled = False
         has_beauty_aov = False
+        colorspace = lib.get_color_management_output_transform()
         for aov in aovs:
             enabled = self._get_attr(aov, "enabled")
             if not enabled:
@@ -1174,7 +1178,8 @@ class RenderProductsRedshift(ARenderProducts):
                             ext=ext,
                             multipart=False,
                             camera=camera,
-                            driver=aov)
+                            driver=aov,
+                            colorspace=colorspace)
                         products.append(product)
 
             if light_groups:
@@ -1189,7 +1194,8 @@ class RenderProductsRedshift(ARenderProducts):
                                         ext=ext,
                                         multipart=False,
                                         camera=camera,
-                                        driver=aov)
+                                        driver=aov,
+                                        colorspace=colorspace)
                 products.append(product)
 
         # When a Beauty AOV is added manually, it will be rendered as
@@ -1205,7 +1211,8 @@ class RenderProductsRedshift(ARenderProducts):
                             RenderProduct(productName=beauty_name,
                                           ext=ext,
                                           multipart=self.multipart,
-                                          camera=camera))
+                                          camera=camera,
+                                          colorspace=colorspace))
 
         return products
 
@@ -1236,6 +1243,8 @@ class RenderProductsRenderman(ARenderProducts):
 
         """
         from rfm2.api.displays import get_displays  # noqa
+
+        colorspace = lib.get_color_management_output_transform()
 
         cameras = [
             self.sanitize_camera_name(c)
@@ -1303,7 +1312,8 @@ class RenderProductsRenderman(ARenderProducts):
                         productName=aov_name,
                         ext=extensions,
                         camera=camera,
-                        multipart=True
+                        multipart=True,
+                        colorspace=colorspace
                     )
 
                     if has_cryptomatte and matte_enabled:
@@ -1312,7 +1322,8 @@ class RenderProductsRenderman(ARenderProducts):
                             aov=cryptomatte_aov,
                             ext=extensions,
                             camera=camera,
-                            multipart=True
+                            multipart=True,
+                            colorspace=colorspace
                         )
                 else:
                     # this code should handle the case where no multipart
