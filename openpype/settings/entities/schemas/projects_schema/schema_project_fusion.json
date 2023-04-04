@@ -51,7 +51,7 @@
             "multiline" : true,
             "use_label_wrap": true,
             "key": "masterprefs",
-            "label": "Fusion MasterPrefs"
+            "label": "Fusion Master Preferences"
          },
         {
             "type": "dict",

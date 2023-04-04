@@ -129,7 +129,7 @@ def update_op_assets(
                 frame_out = frame_in + frames_duration - 1
             else:
                 frame_out = project_doc["data"].get("frameEnd", frame_in)
-        item_data["frameEnd"] = frame_out
+        item_data["frameEnd"] = int(frame_out)
         # Fps, fallback to project's value or default value (25.0)
         try:
             fps = float(item_data.get("fps"))
@@ -147,33 +147,37 @@ def update_op_assets(
             item_data["resolutionWidth"] = int(match_res.group(1))
             item_data["resolutionHeight"] = int(match_res.group(2))
         else:
-            item_data["resolutionWidth"] = project_doc["data"].get(
-                "resolutionWidth"
+            item_data["resolutionWidth"] = int(
+                project_doc["data"].get("resolutionWidth")
             )
-            item_data["resolutionHeight"] = project_doc["data"].get(
-                "resolutionHeight"
+            item_data["resolutionHeight"] = int(
+                project_doc["data"].get("resolutionHeight")
             )
         # Properties that doesn't fully exist in Kitsu.
         # Guessing those property names below:
         # Pixel Aspect Ratio
-        item_data["pixelAspect"] = item_data.get(
-            "pixel_aspect", project_doc["data"].get("pixelAspect")
+        item_data["pixelAspect"] = float(
+            item_data.get(
+                "pixel_aspect", project_doc["data"].get("pixelAspect")
+            )
         )
         # Handle Start
-        item_data["handleStart"] = item_data.get(
-            "handle_start", project_doc["data"].get("handleStart")
+        item_data["handleStart"] = int(
+            item_data.get(
+                "handle_start", project_doc["data"].get("handleStart")
+            )
         )
         # Handle End
-        item_data["handleEnd"] = item_data.get(
-            "handle_end", project_doc["data"].get("handleEnd")
+        item_data["handleEnd"] = int(
+            item_data.get("handle_end", project_doc["data"].get("handleEnd"))
         )
         # Clip In
-        item_data["clipIn"] = item_data.get(
-            "clip_in", project_doc["data"].get("clipIn")
+        item_data["clipIn"] = int(
+            item_data.get("clip_in", project_doc["data"].get("clipIn"))
         )
         # Clip Out
-        item_data["clipOut"] = item_data.get(
-            "clip_out", project_doc["data"].get("clipOut")
+        item_data["clipOut"] = int(
+            item_data.get("clip_out", project_doc["data"].get("clipOut"))
         )
 
         # Tasks

@@ -43,10 +43,7 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "group": "none",
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "framePerTask": 1
+            "group": "none"
         },
         "NukeSubmitDeadline": {
             "enabled": true,
