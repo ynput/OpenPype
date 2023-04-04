@@ -5,15 +5,6 @@ from pymxs import runtime as rt
 from openpype.hosts.max.api import (
     maintained_selection
 )
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-
-
-def get_setting(project_setting=None):
-    project_setting = get_project_settings(
-        legacy_io.Session["AVALON_PROJECT"]
-    )
-    return (project_setting["max"]["PointCloud"])
 
 
 class ExtractPointCloud(publish.Extractor):
@@ -48,6 +39,8 @@ class ExtractPointCloud(publish.Extractor):
     def process(self, instance):
         start = int(instance.context.data.get("frameStart"))
         end = int(instance.context.data.get("frameEnd"))
+        project_setting = instance.context.data["project_settings"]
+        point_cloud_settings = project_setting["max"]["PointCloud"]
         container = instance.data["instance_node"]
         self.log.info("Extracting PRT...")
 
@@ -59,7 +52,8 @@ class ExtractPointCloud(publish.Extractor):
             job_args = self.export_particle(container,
                                             start,
                                             end,
-                                            path)
+                                            path,
+                                            point_cloud_settings)
             for job in job_args:
                 rt.execute(job)
 
@@ -88,7 +82,8 @@ class ExtractPointCloud(publish.Extractor):
                         container,
                         start,
                         end,
-                        filepath):
+                        filepath,
+                        point_cloud_settings):
         job_args = []
         opt_list = self.get_operators(container)
         for operator in opt_list:
@@ -107,7 +102,8 @@ class ExtractPointCloud(publish.Extractor):
             mode = "{0}.PRTPartitionsMode=2".format(operator)
             job_args.append(mode)
 
-            additional_args = self.get_custom_attr(operator)
+            additional_args = self.get_custom_attr(
+                operator, point_cloud_settings)
             for args in additional_args:
                 job_args.append(args)
 
@@ -137,11 +133,11 @@ class ExtractPointCloud(publish.Extractor):
 
         return opt_list
 
-    def get_custom_attr(self, operator):
+    def get_custom_attr(self, operator, point_cloud_settings):
         """Get Custom Attributes"""
 
         custom_attr_list = []
-        attr_settings = get_setting()["attribute"]
+        attr_settings = point_cloud_settings["attribute"]
         for key, value in attr_settings.items():
             custom_attr = "{0}.PRTChannels_{1}=True".format(operator,
                                                             value)

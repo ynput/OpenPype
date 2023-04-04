@@ -7,7 +7,6 @@ import platform
 from maya import cmds
 
 import pyblish.api
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
@@ -71,7 +70,13 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             invalid.append(top_group)
         else:
             if "asset" in r.groupindex:
-                if m.group("asset") != legacy_io.Session["AVALON_ASSET"]:
+                # TODO change to only 'instance.data["asset"]' when legacy
+                #   create is not used in Maya
+                asset_name = (
+                    instance.data.get("asset")
+                    or instance.context.data["asset"]
+                )
+                if m.group("asset") != asset_name:
                     cls.log.error("Invalid asset name in top level group.")
                     return top_group
             if "subset" in r.groupindex:
@@ -79,7 +84,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
                     cls.log.error("Invalid subset name in top level group.")
                     return top_group
             if "project" in r.groupindex:
-                if m.group("project") != legacy_io.Session["AVALON_PROJECT"]:
+                if m.group("project") != instance.context.data["projectName"]:
                     cls.log.error("Invalid project name in top level group.")
                     return top_group
 

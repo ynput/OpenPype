@@ -1,7 +1,6 @@
 import bpy
 
 import pyblish.api
-from openpype.pipeline import legacy_io
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -39,7 +38,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         if not instance.data.get("remove"):
 
-            task = legacy_io.Session.get("AVALON_TASK")
+            task = instance.context.data["task"]
 
             instance.data.update({
                 "subset": f"{task}Review",

@@ -20,7 +20,7 @@ from openpype.pipeline import (
     load_container,
     get_representation_path,
     AVALON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_current_project_settings
@@ -363,7 +363,7 @@ class LayoutLoader(plugin.Loader):
             factory=unreal.LevelSequenceFactoryNew()
         )
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset_data = get_asset_by_name(
             project_name,
             h_dir.split('/')[-1],
@@ -421,7 +421,7 @@ class LayoutLoader(plugin.Loader):
         if not version_ids:
             return output
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         repre_docs = get_representations(
             project_name,
             representation_names=["fbx", "abc"],
@@ -722,7 +722,7 @@ class LayoutLoader(plugin.Loader):
                     frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                     [level])
 
-            project_name = legacy_io.active_project()
+            project_name = get_current_project_name()
             data = get_asset_by_name(project_name, asset)["data"]
             shot.set_display_rate(
                 unreal.FrameRate(data.get("fps"), 1.0))

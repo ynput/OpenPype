@@ -11,7 +11,7 @@ from openpype.pipeline import (
     load_container,
     get_representation_path,
     AVALON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as upipeline
@@ -435,7 +435,7 @@ class ExistingLayoutLoader(plugin.Loader):
         asset_dir = container.get('namespace')
 
         source_path = get_representation_path(representation)
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         containers = self._process(source_path, project_name)
 
         data = {

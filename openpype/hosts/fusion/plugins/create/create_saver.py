@@ -147,9 +147,9 @@ class CreateSaver(Creator):
         comp = tool.Comp()
 
         # Allow regular non-managed savers to also be picked up
-        project = legacy_io.Session["AVALON_PROJECT"]
-        asset = legacy_io.Session["AVALON_ASSET"]
-        task = legacy_io.Session["AVALON_TASK"]
+        project = self.create_context.get_current_project_name()
+        asset = self.create_context.get_current_asset_name()
+        task = self.create_context.get_current_task_name()
 
         asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
 
