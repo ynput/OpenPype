@@ -5,8 +5,8 @@ from openpype.client import (
     get_last_version_by_subset_id
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api import (
@@ -108,7 +108,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
             None
         """
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         object_name = container['objectName']
@@ -180,7 +180,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
         """ Coloring a node by correct color by actual version
         """
         # get all versions in list
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
         )

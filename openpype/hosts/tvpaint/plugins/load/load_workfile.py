@@ -3,7 +3,7 @@ import os
 from openpype.lib import StringTemplate
 from openpype.pipeline import (
     registered_host,
-    legacy_io,
+    get_current_context,
     Anatomy,
 )
 from openpype.pipeline.workfile import (
@@ -55,9 +55,10 @@ class LoadWorkfile(plugin.Loader):
         task_name = work_context.get("task")
         # Far cases when there is workfile without work_context
         if not asset_name:
-            project_name = legacy_io.active_project()
-            asset_name = legacy_io.Session["AVALON_ASSET"]
-            task_name = legacy_io.Session["AVALON_TASK"]
+            context = get_current_context()
+            project_name = context["project_name"]
+            asset_name = context["asset_name"]
+            task_name = context["task_name"]
 
         template_key = get_workfile_template_key_from_context(
             asset_name,

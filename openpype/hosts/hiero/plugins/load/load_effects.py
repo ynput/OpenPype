@@ -9,8 +9,8 @@ from openpype.client import (
 from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     load,
-    legacy_io,
-    get_representation_path
+    get_representation_path,
+    get_current_project_name
 )
 from openpype.hosts.hiero import api as phiero
 from openpype.lib import Logger
@@ -168,7 +168,7 @@ class LoadEffects(load.LoaderPlugin):
         namespace = container['namespace']
 
         # get timeline in out data
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         version_data = version_doc["data"]
         clip_in = version_data["clipIn"]

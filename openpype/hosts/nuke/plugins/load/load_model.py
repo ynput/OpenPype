@@ -5,8 +5,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import maintained_selection
@@ -112,7 +112,7 @@ class AlembicModelLoader(load.LoaderPlugin):
             None
         """
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         object_name = container['objectName']
         # get corresponding node
@@ -187,7 +187,7 @@ class AlembicModelLoader(load.LoaderPlugin):
     def node_version_color(self, version, node):
         """ Coloring a node by correct color by actual version"""
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name, version["parent"], fields=["_id"]
         )
