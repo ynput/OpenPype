@@ -90,7 +90,7 @@ If there is an option of automatic repair, there will be `Repair` button on the 
 
 There are currently 2 options of `render` item:
 - Render of farm - allows offload rendering and publishing to Deadline - requires Deadline module being enabled
-- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrak) and scene itself
+- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrack) and scene itself
 
 ![Configuration of render instance](assets/aftereffects_render_instance.png)
 
@@ -99,6 +99,23 @@ There are currently 2 options of `render` item:
 - `Stop/pause publishing` - if you would like to pause publishing process at any time
 - `Validate` - if you would like to run only collecting and validating phases (nothing will be published yet)
 - `Publish` - standard way how to kick off full publishing process
+
+#### Support help
+If you would like to ask for help admin or support, you could use any of the three options on the `Note` button on bottom left:
+- `Go to details` - switches into a more detailed list of published instances and plugins.
+- `Copy report` - stash full publishing log to a clipboard
+- `Export report` - save log into a file for sending it via mail or any communication tool
+
+If you are able to fix the workfile yourself, use the first button on the right to set the UI to initial state before publish. (Click the `Publish` button to start again.)
+
+#### Legacy instances
+
+All screenshots from Publish are from updated dialog, before publishing was being done by regular `Pyblish` tool.
+New publishing process should be backward compatible, eg. if you have a workfile with instances created in the previous publishing approach, they will be translated automatically and
+could be used right away.
+
+If you hit on unexpected behaviour with old instances, contact support first, then you could try to delete and recreate instances from scratch.
+Nuclear option is to purge workfile metadata in `Window > Metadata > Basic > Label`. This is only for most determined daredevils though!
 
 ### Load
 
@@ -134,20 +151,3 @@ You can switch to a previous version of the image or update to the latest.
 
 ![Loader](assets/photoshop_manage_switch.gif)
 ![Loader](assets/photoshop_manage_update.gif)
-
-#### Support help
-If you would like to ask for help admin or support, you could use any of the three options on the `Note` button on bottom left:
-- `Go to details` - switches into a more detailed list of published instances and plugins.
-- `Copy report` - stash full publishing log to a clipboard
-- `Export report` - save log into a file for sending it via mail or any communication tool
-
-If you are able to fix the workfile yourself, use the first button on the right to set the UI to initial state before publish. (Click the `Publish` button to start again.)
-
-#### Legacy instances
-
-All screenshots from Publish are from updated dialog, before publishing was being done by regular `Pyblish` tool.
-New publishing process should be backward compatible, eg. if you have a workfile with instances created in the previous publishing approach, they will be translated automatically and
-could be used right away.
-
-If you hit on unexpected behaviour with old instances, contact support first, then you could try to delete and recreate instances from scratch.
-Nuclear option is to purge workfile metadata in `Window > Metadata > Basic > Label`. This is only for most determined daredevils though!
