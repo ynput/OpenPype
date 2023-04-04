@@ -1019,7 +1019,7 @@ class BuildWorkFile(bpy.types.Operator):
         if not bpy.app.timers.is_registered(_process_app_events):
             bpy.app.timers.register(_process_app_events, persistent=True)
 
-    def _build_first_workfile(self, clear_scene, save_as):
+    def _build_first_workfile(self, clear_scene: bool, save_as: bool):
         """Execute Build First workfile process.
         
         Args:
