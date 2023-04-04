@@ -1,6 +1,6 @@
 import os
-from time import sleep
-from typing import Set
+from time import sleep, time
+from typing import List, Set, Tuple
 import bpy
 
 from openpype.client import (
@@ -9,7 +9,9 @@ from openpype.client import (
     get_last_version_by_subset_id,
     get_representations,
 )
+from openpype.client.entity_links import get_linked_representation_id
 from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.lib.local_settings import get_local_site_id
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     legacy_io,
@@ -21,22 +23,20 @@ from openpype.pipeline import (
 from openpype.pipeline.create import get_legacy_creator_by_name
 
 
-def load_subset(
-    project_name, asset_name, subset_name, loader_type=None, ext="blend"
-):
-    """Load the representation of the last version of subset.
+def download_subset(
+    project_name, asset_name, subset_name, ext="blend"
+) -> dict:
+    """Download the representation of the subset last version on current site.
 
     Args:
         project_name (str): The project name.
         asset_name (str): The asset name.
         subset_name (str): The subset name.
-        loader_type (str, optional): The loader name. Defaults to None.
         ext (str, optional): The representation extension. Defaults to "blend".
 
     Returns:
-        The return of the `load_container()` function.
+        dict: The subset representation.
     """
-
     asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
     if not asset:
         return
@@ -69,11 +69,106 @@ def load_subset(
     if not representation:
         return
 
+    # Get sync server
+    modules_manager = ModulesManager()
+    sync_server = modules_manager.get("sync_server")
+    local_site_id = get_local_site_id()
+
+    # Add linked representations
+    representation_ids = {representation["_id"]}
+    representation_ids.update(
+        get_linked_representation_id(
+            project_name, repre_id=representation["_id"]
+        )
+    )
+
+    # Add local site to representations
+    for repre_id in representation_ids:
+        # Check if representation is already on site
+        if not sync_server.is_representation_on_site(
+            project_name, repre_id, local_site_id
+        ):
+            sync_server.add_site(
+                project_name,
+                repre_id,
+                local_site_id,
+                priority=99,
+                force=True,
+            )
+
+    return representation
+
+
+def wait_for_download(project_name, representations: List[dict]):
+    """Wait for download of representations.
+
+    Args:
+        project_name (str): Project name.
+        representations (List[dict]): List of representations to wait for.
+    """
+    # Get sync server
+    modules_manager = ModulesManager()
+    sync_server = modules_manager.get("sync_server")
+
+    # Reset timer
+    sync_server.reset_timer()
+
+    # Wait for download
+    local_site_id = get_local_site_id()
+    start = time()  # 5 minutes timeout
+    while (
+        not all(
+            sync_server.is_representation_on_site(
+                project_name, r["_id"], local_site_id
+            )
+            for r in representations
+            if r
+        )
+        and time() - start < 300
+    ):
+        sleep(5)
+
+
+def load_subset(
+    project_name, representation, loader_type=None
+) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+    """Load the representation of the subset last version.
+
+    Args:
+        project_name (str): The project name.
+        representation (dict): The representation.
+        loader_type (str, optional): The loader name. Defaults to None.
+
+    Returns:
+        Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+            (Container, Datablocks)
+    """
+
     all_loaders = discover_loader_plugins(project_name=project_name)
     loaders = loaders_from_representation(all_loaders, representation)
     for loader in loaders:
         if loader_type in loader.__name__:
             return load_container(loader, representation)
+
+
+def download_and_load_subset(
+    project_name, asset_name, subset_name, loader_type=None
+) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+    """Download and load the representation of the subset last version.
+
+    Args:
+        project_name (str): The project name.
+        asset_name (str): The asset name.
+        subset_name (str): The subset name.
+        loader_type (str, optional): The loader name. Defaults to None.
+
+    Returns:
+        Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+            (Container, Datablocks)
+    """
+    representation = download_subset(project_name, asset_name, subset_name)
+    wait_for_download(project_name, [representation])
+    return load_subset(project_name, representation, loader_type)
 
 
 def create_instance(creator_name, instance_name, **options):
@@ -106,7 +201,7 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
     shot = gazu.shot.get_shot(shot_data["zou"]["id"])
     casting = gazu.casting.get_shot_casting(shot)
 
-    containers = []
+    representations = []
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
             if actor["asset_type_name"] == "Environment":
@@ -115,14 +210,27 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
             else:
                 subset_name = "rigMain"
                 loader_name = "LinkRigLoader"
-            try:
-                container, _datablocks = load_subset(
-                    project_name, actor["asset_name"], subset_name, loader_name
-                )
-                containers.append(container)
-                sleep(1)  # TODO blender is too fast for windows
-            except TypeError:
-                print(f"Cannot load {actor['asset_name']} {subset_name}.")
+
+            # Download subset
+            representation = download_subset(
+                project_name, actor["asset_name"], subset_name
+            )
+            if representation:
+                representations.append(representation)
+
+    wait_for_download(project_name, representations)
+
+    # Load downloaded subsets
+    containers = []
+    for representation in representations:
+        try:
+
+            container, _datablocks = load_subset(
+                project_name, representation, loader_name
+            )
+            containers.append(container)
+        except TypeError:
+            print(f"Cannot load {actor['asset_name']} {subset_name}.")
 
     gazu.log_out()
 
@@ -141,7 +249,7 @@ def build_model(project_name, asset_name):
     bpy.context.object.data.name = f"{asset_name}_model"
     create_instance("CreateModel", "modelMain", useSelection=True)
     # load the concept reference as image reference in the scene.
-    load_subset(
+    download_and_load_subset(
         project_name, asset_name, "ConceptReference", "Reference", "jpg"
     )
 
@@ -154,7 +262,9 @@ def build_look(project_name, asset_name):
         asset_name (str):  The current asset name from OpenPype Session.
     """
     create_instance("CreateLook", "lookMain")
-    load_subset(project_name, asset_name, "modelMain", "AppendModelLoader")
+    download_and_load_subset(
+        project_name, asset_name, "modelMain", "AppendModelLoader"
+    )
 
 
 def build_rig(project_name, asset_name):
@@ -168,7 +278,9 @@ def build_rig(project_name, asset_name):
     bpy.context.object.name = f"{asset_name}_armature"
     bpy.context.object.data.name = f"{asset_name}_armature"
     create_instance("CreateRig", "rigMain", useSelection=True)
-    load_subset(project_name, asset_name, "modelMain", "AppendModelLoader")
+    download_and_load_subset(
+        project_name, asset_name, "modelMain", "AppendModelLoader"
+    )
 
 
 def create_gdeformer_collection(parent_collection: bpy.types.Collection):
@@ -197,12 +309,24 @@ def build_layout(project_name, asset_name):
         project_name (str):  The current project name from OpenPype Session.
         asset_name (str):  The current asset name from OpenPype Session.
     """
+    # Download not casting subsets
+    board_repre = download_subset(
+        project_name, asset_name, "BoardReference", "mov"
+    )
+    audio_repre = download_subset(
+        project_name, asset_name, "AudioReference", "wav"
+    )
+    concept_repre = download_subset(
+        project_name, asset_name, "ConceptReference", "jpg"
+    )
 
+    # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
 
     # Load casting from kitsu breakdown.
     try:
         load_casting(project_name, asset_name)
+        # NOTE load_casting runs wait_for_download
 
         # NOTE cannot rely on containers from load_casting, memory is shuffled
         containers = bpy.context.scene.openpype_containers
@@ -221,6 +345,11 @@ def build_layout(project_name, asset_name):
     except RuntimeError:
         containers = {}
 
+        # Wait for download
+        wait_for_download(
+            project_name, [board_repre, audio_repre, concept_repre]
+        )
+
     # Try to load camera from environment's setdress
     camera_collection = None
     env_asset_name = None
@@ -236,11 +365,11 @@ def build_layout(project_name, asset_name):
         )
         if env_asset_name:
             # Load camera published at environment task
-            cam_container, _cam_datablocks = load_subset(
+            cam_container, _cam_datablocks = download_and_load_subset(
                 project_name,
                 env_asset_name,
                 "cameraMain",
-                "AppendCameraLoader"
+                "AppendCameraLoader",
             )
 
             # Make cam container publishable
@@ -282,9 +411,7 @@ def build_layout(project_name, asset_name):
     )
 
     # load the board mov as image background linked into the camera
-    load_subset(
-        project_name, asset_name, "BoardReference", "Background", "mov"
-    )
+    load_subset(project_name, board_repre, "Background")
 
     # Delete sound sequence from board mov
     if len(bpy.context.scene.sequence_editor.sequences) > 0:
@@ -293,18 +420,14 @@ def build_layout(project_name, asset_name):
             bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
 
     # load the audio reference as sound into sequencer
-    load_subset(
-        project_name, asset_name, "AudioReference", "Audio", "wav"
-    )
+    load_subset(project_name, audio_repre, "Audio")
 
     # load the concept reference of the environment as image background.
     if env_asset_name:
         load_subset(
             project_name,
-            env_asset_name,
-            "ConceptReference",
+            concept_repre,
             "Background",
-            "jpg",
         )
 
 
@@ -315,8 +438,23 @@ def build_anim(project_name, asset_name):
         project_name (str):  The current project name from OpenPype Session.
         asset_name (str):  The current asset name from OpenPype Session.
     """
+    # Download not casting subsets
+    workfile_layout_repre = download_subset(
+        project_name, asset_name, "workfileLayout"
+    )
+    layout_repre = download_subset(project_name, asset_name, "layoutMain")
+    board_repre = download_subset(
+        project_name, asset_name, "BoardReference", "mov"
+    )
+    camera_repre = download_subset(project_name, asset_name, "cameraMain")
+    wait_for_download(
+        project_name,
+        [workfile_layout_repre, layout_repre, board_repre, camera_repre],
+    )
+
+    # Load layout subset
     layout_container, _layout_datablocks = load_subset(
-        project_name, asset_name, "layoutMain", "LinkLayoutLoader"
+        project_name, layout_repre, "LinkLayoutLoader"
     )
 
     # Make container publishable, expose its content
@@ -335,7 +473,7 @@ def build_anim(project_name, asset_name):
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
-        project_name, asset_name, "cameraMain", "AppendCameraLoader"
+        project_name, camera_repre, "AppendCameraLoader"
     )
 
     # Clean cam container from review collection
@@ -384,9 +522,7 @@ def build_anim(project_name, asset_name):
     )
 
     # load the board mov as image background linked into the camera
-    load_subset(
-        project_name, asset_name, "BoardReference", "Background", "mov"
-    )
+    load_subset(project_name, board_repre, "Background")
 
 
 def build_render(project_name, asset_name):
@@ -396,14 +532,20 @@ def build_render(project_name, asset_name):
         project_name (str):  The current project name from OpenPype Session.
         asset_name (str):  The current asset name from OpenPype Session.
     """
+    # Download subsets
+    layout_repre = download_subset(project_name, asset_name, "layoutMain")
+    camera_repre = download_subset(project_name, asset_name, "cameraMain")
+    anim_repre = download_subset(project_name, asset_name, "animationMain")
+    wait_for_download(project_name, [layout_repre, camera_repre, anim_repre])
 
-    load_subset(project_name, asset_name, "layoutMain", "AppendLayoutLoader")
-    load_subset(project_name, asset_name, "cameraMain", "LinkCameraLoader")
+    # Load subsets
+    load_subset(project_name, layout_repre, "AppendLayoutLoader")
+    load_subset(project_name, camera_repre, "LinkCameraLoader")
 
     # TODO : Because subset animationMain no longer be used,
     # we need to load all animation subsets from the asset.
     _anim_container, anim_datablocks = load_subset(
-        project_name, asset_name, "animationMain", "LinkAnimationLoader"
+        project_name, anim_repre, "LinkAnimationLoader"
     )
 
     # Try to assign linked actions by parsing their name
