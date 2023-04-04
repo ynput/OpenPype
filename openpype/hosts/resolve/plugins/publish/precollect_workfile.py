@@ -1,8 +1,8 @@
 import pyblish.api
 from pprint import pformat
 
+from openpype.pipeline import get_current_asset_name
 from openpype.hosts.resolve import api as rapi
-from openpype.pipeline import legacy_io
 from openpype.hosts.resolve.otio import davinci_export
 
 
@@ -14,7 +14,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        asset = legacy_io.Session["AVALON_ASSET"]
+        asset = get_current_asset_name()
         subset = "workfile"
         project = rapi.get_current_project()
         fps = project.GetSetting("timelineFrameRate")

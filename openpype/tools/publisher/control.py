@@ -26,7 +26,6 @@ from openpype.pipeline import (
     PublishValidationError,
     KnownPublishError,
     registered_host,
-    legacy_io,
     get_process_id,
 )
 from openpype.pipeline.create import (

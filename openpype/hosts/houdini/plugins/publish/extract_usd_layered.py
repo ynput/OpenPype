@@ -14,7 +14,6 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     get_representation_path,
-    legacy_io,
     publish,
 )
 import openpype.hosts.houdini.api.usd as hou_usdlib
@@ -250,7 +249,7 @@ class ExtractUSDLayered(publish.Extractor):
 
         # Set up the dependency for publish if they have new content
         # compared to previous publishes
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
         for dependency in active_dependencies:
             dependency_fname = dependency.data["usdFilename"]
 

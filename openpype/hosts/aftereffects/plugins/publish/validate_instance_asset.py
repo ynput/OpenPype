@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
@@ -30,7 +30,7 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
         for instance in instances:
             data = stub.read(instance[0])
 
-            data["asset"] = legacy_io.Session["AVALON_ASSET"]
+            data["asset"] = get_current_asset_name()
             stub.imprint(instance[0].instance_id, data)
 
 
@@ -54,7 +54,7 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         instance_asset = instance.data["asset"]
-        current_asset = legacy_io.Session["AVALON_ASSET"]
+        current_asset = get_current_asset_name()
         msg = (
             f"Instance asset {instance_asset} is not the same "
             f"as current context {current_asset}."
