@@ -3,7 +3,6 @@
 
 """
 import pyblish.api
-
 from openpype.lib import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
@@ -14,7 +13,11 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
 
     order = pyblish.api.CollectorOrder + 0.420
     label = "Collect Deadline Pools"
-    families = ["rendering", "render.farm", "renderFarm", "renderlayer"]
+    families = ["rendering",
+                "render.farm",
+                "renderFarm",
+                "renderlayer",
+                "maxrender"]
 
     primary_pool = None
     secondary_pool = None
@@ -29,7 +32,6 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     def process(self, instance):
 
         attr_values = self.get_attr_values_from_data(instance.data)
-
         if not instance.data.get("primaryPool"):
             instance.data["primaryPool"] = (
                 attr_values.get("primaryPool") or self.primary_pool or "none"
@@ -42,7 +44,6 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-
         # TODO: Preferably this would be an enum for the user
         #       but the Deadline server URL can be dynamic and
         #       can be set per render instance. Since get_attribute_defs

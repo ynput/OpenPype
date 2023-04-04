@@ -17,6 +17,7 @@ class CreateLook(plugin.MayaCreator):
     icon = "paint-brush"
 
     make_tx = True
+    rs_tex = False
 
     def get_instance_attr_defs(self):
 
@@ -31,6 +32,11 @@ class CreateLook(plugin.MayaCreator):
             BoolDef("maketx",
                     label="MakeTX",
                     tooltip="Whether to generate .tx files for your textures",
+                    default=self.make_tx),
+            BoolDef("rstex",
+                    label="Convert textures to .rstex",
+                    tooltip="Whether to generate Redshift .rstex files for "
+                            "your textures",
                     default=self.make_tx),
             BoolDef("forceCopy",
                     label="Force Copy",

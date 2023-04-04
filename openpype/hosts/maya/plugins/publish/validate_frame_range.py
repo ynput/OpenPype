@@ -54,7 +54,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
         frame_start_handle = int(context.data.get("frameStartHandle"))
         frame_end_handle = int(context.data.get("frameEndHandle"))
-        handles = int(context.data.get("handles"))
         handle_start = int(context.data.get("handleStart"))
         handle_end = int(context.data.get("handleEnd"))
         frame_start = int(context.data.get("frameStart"))
@@ -70,8 +69,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         # basic sanity checks
         assert frame_start_handle <= frame_end_handle, (
             "start frame is lower then end frame")
-
-        assert handles >= 0, ("handles cannot have negative values")
 
         # compare with data on instance
         errors = []

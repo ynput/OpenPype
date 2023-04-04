@@ -26,14 +26,15 @@ class CreateReview(plugin.MayaCreator):
     family = "review"
     icon = "video-camera"
 
-    use_maya_timeline = True
+    useMayaTimeline = True
+    panZoom = False
 
     def get_instance_attr_defs(self):
 
         defs = lib.collect_animation_defs()
 
         # Option for using Maya or asset frame range in settings.
-        if not self.use_maya_timeline:
+        if not self.useMayaTimeline:
             # Update the defaults to be the asset frame range
             frame_range = lib.get_frame_range()
             defs_by_key = {attr_def.key: attr_def for attr_def in defs}
@@ -72,7 +73,10 @@ class CreateReview(plugin.MayaCreator):
                     default=True),
             EnumDef("transparency",
                     label="Transparency",
-                    items=TRANSPARENCIES)
+                    items=TRANSPARENCIES),
+            BoolDef("panZoom",
+                    label="Enable camera pan/zoom",
+                    default=True),
         ])
 
         return defs

@@ -127,7 +127,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        # TODO repace query with using 'context.data["assetEntity"]'
+        # TODO replace query with using 'context.data["assetEntity"]'
         asset_doc = get_current_project_asset()
         asset_fps = asset_doc["data"]["fps"]
         mayalib.set_scene_fps(asset_fps)
