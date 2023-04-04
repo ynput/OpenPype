@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -263,7 +263,7 @@ Object.defineProperty($.oFrame.prototype, 'duration', {
           return _sceneLength;
         }
 
-        // walk up the frames of the scene to the next keyFrame to determin duration
+        // walk up the frames of the scene to the next keyFrame to determine duration
         var _frames = this.column.frames
         for (var i=this.frameNumber+1; i<_sceneLength; i++){
             if (_frames[i].isKeyframe) return _frames[i].frameNumber - _startFrame;
@@ -426,7 +426,7 @@ Object.defineProperty($.oFrame.prototype, 'velocity', {
  * easeIn : a $.oPoint object representing the left handle for bezier columns, or a {point, ease} object for ease columns.
  * easeOut : a $.oPoint object representing the left handle for bezier columns, or a {point, ease} object for ease columns.
  * continuity : the type of bezier used by the point.
- * constant : wether the frame is interpolated or a held value.
+ * constant : whether the frame is interpolated or a held value.
  * @name $.oFrame#ease
  * @type {oPoint/object}
  */
@@ -520,7 +520,7 @@ Object.defineProperty($.oFrame.prototype, 'easeOut', {
 
 
 /**
- * Determines the frame's continuity setting. Can take the values "CORNER", (two independant bezier handles on each side), "SMOOTH"(handles are aligned) or "STRAIGHT" (no handles and in straight lines).
+ * Determines the frame's continuity setting. Can take the values "CORNER", (two independent bezier handles on each side), "SMOOTH"(handles are aligned) or "STRAIGHT" (no handles and in straight lines).
  * @name $.oFrame#continuity
  * @type {string}
  */
