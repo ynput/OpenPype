@@ -130,8 +130,8 @@ def loader_shift(loader, frame, relative=True):
     return int(shift)
 
 
-class FusionLoadClip(load.LoaderPlugin):
-    """Load a clip into Fusion"""
+class FusionLoadSequence(load.LoaderPlugin):
+    """Load image sequence into Fusion"""
 
     families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
@@ -139,7 +139,7 @@ class FusionLoadClip(load.LoaderPlugin):
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
     )
 
-    label = "Load Clip"
+    label = "Load sequence"
     order = -10
     icon = "code-fork"
     color = "orange"

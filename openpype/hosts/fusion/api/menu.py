@@ -70,7 +70,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
             "Build workfile from template...", self
         )
         create_placeholder_btn = QtWidgets.QPushButton(
-            "Creat placeholder...", self
+            "Create placeholder...", self
         )
         update_placeholder_btn = QtWidgets.QPushButton(
             "Update placeholder...", self
