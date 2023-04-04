@@ -4,7 +4,7 @@ import contextlib
 from maya import cmds
 
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
 from openpype.pipeline.create import (
     legacy_create,
     get_legacy_creator_by_name,
@@ -125,6 +125,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
+        project_name = context["project"]["name"]
+
         group_name = "{}:_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
@@ -132,8 +134,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            file_url = self.prepare_root_value(path,
-                                               context["project"]["name"])
+            file_url = self.prepare_root_value(path, project_name)
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -171,7 +172,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
                 cmds.setAttr("{}.displayHandle".format(group_name), 1)
 
-                settings = get_project_settings(os.environ['AVALON_PROJECT'])
+                settings = get_project_settings(project_name)
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
@@ -233,7 +234,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = legacy_io.Session["AVALON_ASSET"]
+        asset = get_current_asset_name()
         dependency = str(context["representation"]["_id"])
 
         self.log.info("Creating subset: {}".format(namespace))

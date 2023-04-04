@@ -5,7 +5,6 @@ import pyblish.api
 from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
 from openpype.lib import prepare_template_data
-from openpype.pipeline import legacy_io
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -92,7 +91,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "CreateImage", {}).get(
                 "defaults", [''])
             family = "image"
-            task_name = legacy_io.Session["AVALON_TASK"]
+            task_name = context.data["task"]
             asset_name = context.data["assetEntity"]["name"]
 
             variant = context.data.get("variant") or variants[0]

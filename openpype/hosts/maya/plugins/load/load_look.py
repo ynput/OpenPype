@@ -7,7 +7,7 @@ from qtpy import QtWidgets
 
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     get_representation_path,
 )
 import openpype.hosts.maya.api.plugin
@@ -78,7 +78,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         shader_nodes = cmds.ls(members, type='shadingEngine')
         nodes = set(self._get_nodes_with_shader(shader_nodes))
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         json_representation = get_representation_by_name(
             project_name, "json", representation["parent"]
         )
