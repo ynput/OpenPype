@@ -257,13 +257,12 @@ class FusionPlaceholderLoadPlugin(
 
         # fix the problem of z_order for backdrops
         self._setdata_siblings(placeholder)
-        self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
             # save initial nodes postions and dimensions, update them
             # and set inputs and outputs of loaded nodes
 
-            self._imprint_inits()
+            self._setdata_inits()
             self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
             self._set_loaded_connections(placeholder)
 
@@ -370,7 +369,7 @@ class FusionPlaceholderLoadPlugin(
                 z_order + max_order - min_order + 1
             )
 
-    def _imprint_siblings(self, placeholder):
+    def _setdata_siblings(self, placeholder):
         """
         - add siblings names to placeholder attributes (nodes loaded with it)
         - add Id to the attributes of all the other nodes
@@ -378,27 +377,21 @@ class FusionPlaceholderLoadPlugin(
 
         loaded_nodes = placeholder.data["last_loaded"]
         loaded_nodes_set = set(loaded_nodes)
-        data = {"repre_id": str(placeholder.data["last_repre_id"])}
 
         for node in loaded_nodes:
-            node_knobs = node.knobs()
-            if "builder_type" not in node_knobs:
+            if node["builder_type"] is None:
                 # save the id of representation for all imported nodes
-                imprint(node, data)
-                node.knob("repre_id").setVisible(False)
-                refresh_node(node)
+                node.SetData(
+                    "repre_id", str(placeholder.data["last_repre_id"])
+                )
                 continue
 
-            if "is_placeholder" not in node_knobs or (
-                "is_placeholder" in node_knobs
-                and node.knob("is_placeholder").value()
-            ):
+            if node.GetData("is_placeholder"):
                 siblings = list(loaded_nodes_set - {node})
                 siblings_name = get_names_from_nodes(siblings)
-                siblings = {"siblings": siblings_name}
-                imprint(node, siblings)
+                node.SetData("siblings", siblings_name)
 
-    def _imprint_inits(self):
+    def _setdata_inits(self):
         """Add initial positions and dimensions to the attributes"""
 
         for node in nuke.allNodes():
@@ -656,13 +649,13 @@ class FusionPlaceholderCreatePlugin(
 
         # fix the problem of z_order for backdrops
         self._fix_z_order(placeholder)
-        self._imprint_siblings(placeholder)
+        self._setdata_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
             # save initial nodes postions and dimensions, update them
             # and set inputs and outputs of created nodes
 
-            self._imprint_inits()
+            self._setdata_inits()
             self._update_nodes(placeholder, nuke.allNodes(), nodes_created)
             self._set_created_connections(placeholder)
 
@@ -768,7 +761,7 @@ class FusionPlaceholderCreatePlugin(
                 z_order + max_order - min_order + 1
             )
 
-    def _imprint_siblings(self, placeholder):
+    def _setdata_siblings(self, placeholder):
         """
         - add siblings names to placeholder attributes (nodes created with it)
         - add Id to the attributes of all the other nodes
@@ -789,7 +782,7 @@ class FusionPlaceholderCreatePlugin(
                 siblings = {"siblings": siblings_name}
                 imprint(node, siblings)
 
-    def _imprint_inits(self):
+    def _setdata_inits(self):
         """Add initial positions and dimensions to the attributes"""
 
         for node in nuke.allNodes():
