@@ -206,10 +206,8 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
         for _ in range(actor["nb_occurences"]):
             if actor["asset_type_name"] == "Environment":
                 subset_name = "setdressMain"
-                loader_name = "LinkSetdressLoader"
             else:
                 subset_name = "rigMain"
-                loader_name = "LinkRigLoader"
 
             # Download subset
             representation = download_subset(
@@ -224,13 +222,16 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
     containers = []
     for representation in representations:
         try:
-
             container, _datablocks = load_subset(
-                project_name, representation, loader_name
+                project_name,
+                representation,
+                f"Link{representation['context']['family'].capitalize()}Loader",
             )
             containers.append(container)
         except TypeError:
-            print(f"Cannot load {actor['asset_name']} {subset_name}.")
+            print(
+                f"Cannot load {representation['context']['asset']} {representation['context']['subset']}."
+            )
 
     gazu.log_out()
 
