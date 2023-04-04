@@ -19,6 +19,7 @@ from openpype.client import get_project
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
+    StringTemplate,
     TemplatesDict,
     FormatObject,
 )
@@ -606,6 +607,29 @@ class AnatomyTemplateResult(TemplateResult):
         return self.__class__(tmp, self.rootless)
 
 
+class AnatomyStringTemplate(StringTemplate):
+    """String template which has access to anatomy."""
+
+    def __init__(self, anatomy, template):
+        self._anatomy = anatomy
+        super(AnatomyStringTemplate, self).__init__(template)
+
+    def format(self, data):
+        """Format template and add 'root' key to data if not available.
+
+        Args:
+            data (dict[str, Any]): Formatting data for template.
+
+        Returns:
+            AnatomyTemplateResult: Formatting result.
+        """
+
+        if not data.get("root"):
+            data = copy.deepcopy(data)
+            data["root"] = self.anatomy.roots
+        return super(AnatomyStringTemplate, self).format(data)
+
+
 class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
@@ -692,6 +716,9 @@ class AnatomyTemplates(TemplatesDict):
         self._objected_templates = self.create_ojected_templates(
             solved_templates
         )
+
+    def _create_template_object(self, template):
+        return AnatomyStringTemplate(self, template)
 
     def default_templates(self):
         """Return default templates data with solved inner keys."""
