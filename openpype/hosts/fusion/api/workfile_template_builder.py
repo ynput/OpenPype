@@ -1,4 +1,3 @@
-import collections
 from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
