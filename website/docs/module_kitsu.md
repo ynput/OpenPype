@@ -53,5 +53,5 @@ There are four settings available:
 
 ## Q&A
 ### Is it safe to rename an entity from Kitsu?
-Absolutely! Entities are linked by their unique IDs between the two databases.  
+Absolutely! Entities are linked by their unique IDs between the two databases.
 But renaming from the OP's Project Manager won't apply the change to Kitsu, it'll be overridden during the next synchronization.
