@@ -486,18 +486,9 @@ def build_anim(project_name, asset_name):
             bpy.data.collections.remove(d_ref.datablock)
             cam_container.datablock_refs.remove(i)
 
-    # Get main camera
-    camera_collection = next(
-        (
-            d_ref.datablock
-            for d_ref in cam_container.datablock_refs
-            if isinstance(d_ref.datablock, bpy.types.Collection)
-        ),
-        None,
-    )
-
     # Make cam container publishable
     bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
+    cam_instance = bpy.context.scene.openpype_instances[-1]
 
     for obj in bpy.context.scene.objects:
         if obj.type == "ARMATURE":
@@ -513,6 +504,14 @@ def build_anim(project_name, asset_name):
             )
 
     # Create review
+    camera_collection = next(
+        (
+            d_ref.datablock
+            for d_ref in cam_instance.datablock_refs
+            if isinstance(d_ref.datablock, bpy.types.Collection)
+        ),
+        None,
+    )
     bpy.ops.scene.create_openpype_instance(
         creator_name="CreateReview",
         asset_name=asset_name,
