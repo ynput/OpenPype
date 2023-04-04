@@ -336,8 +336,7 @@ class ExtractBurnin(publish.Extractor):
 
                 # Run burnin script
                 process_kwargs = {
-                    "logger": self.log,
-                    "env": {}
+                    "logger": self.log
                 }
 
                 run_openpype_process(*args, **process_kwargs)
@@ -456,12 +455,6 @@ class ExtractBurnin(publish.Extractor):
             )
             frame_end = 1
         frame_end = int(frame_end)
-
-        handles = instance.data.get("handles")
-        if handles is None:
-            handles = context.data.get("handles")
-            if handles is None:
-                handles = 0
 
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
