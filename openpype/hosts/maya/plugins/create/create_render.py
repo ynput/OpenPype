@@ -159,6 +159,11 @@ class CreateRender(plugin.Creator):
                     collection = render_layer.createCollection(
                         "defaultCollection")
                     collection.getSelector().setPattern('*')
+                    self.log.info("Renaming..")
+                    for obj in cmds.ls(type="objectSet"):
+                        if render_layer_name in obj:
+                            cmds.rename(obj, "{}.{}".format(namespace,
+                                                            render_layer_name))
             else:
                 layers = rs.getRenderLayers()
                 if use_selection:
