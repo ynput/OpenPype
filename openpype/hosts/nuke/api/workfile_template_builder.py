@@ -42,7 +42,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was successfully imported or not
+            bool: Whether the template was successfully imported or not
         """
 
         # TODO check if the template is already imported
@@ -222,7 +222,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
         self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
-            # save initial nodes postions and dimensions, update them
+            # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of loaded nodes
 
             self._imprint_inits()
@@ -231,7 +231,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         elif placeholder.data["siblings"]:
             # create copies of placeholder siblings for the new loaded nodes,
-            # set their inputs and outpus and update all nodes positions and
+            # set their inputs and outputs and update all nodes positions and
             # dimensions and siblings names
 
             siblings = get_nodes_by_names(placeholder.data["siblings"])
@@ -632,7 +632,7 @@ class NukePlaceholderCreatePlugin(
         self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
-            # save initial nodes postions and dimensions, update them
+            # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of created nodes
 
             self._imprint_inits()
@@ -641,7 +641,7 @@ class NukePlaceholderCreatePlugin(
 
         elif placeholder.data["siblings"]:
             # create copies of placeholder siblings for the new created nodes,
-            # set their inputs and outpus and update all nodes positions and
+            # set their inputs and outputs and update all nodes positions and
             # dimensions and siblings names
 
             siblings = get_nodes_by_names(placeholder.data["siblings"])

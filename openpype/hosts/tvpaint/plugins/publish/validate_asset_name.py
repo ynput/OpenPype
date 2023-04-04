@@ -38,7 +38,7 @@ class ValidateAssetName(
     OptionalPyblishPluginMixin,
     pyblish.api.ContextPlugin
 ):
-    """Validate assset name present on instance.
+    """Validate asset name present on instance.
 
     Asset name on instance should be the same as context's.
     """

@@ -66,7 +66,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             NumberDef(
                 "concurrency",
-                label="Concurency",
+                label="Concurrency",
                 default=cls.concurrent_tasks,
                 decimals=0,
                 minimum=1,
