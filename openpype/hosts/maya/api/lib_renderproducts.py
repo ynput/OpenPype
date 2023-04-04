@@ -1572,6 +1572,17 @@ class RenderProducts3Delight(ARenderProducts):
         prefix, postfix = fname.split("#")
         return prefix[:-1]
 
+    def _get_layer_data(self):
+        # type: () -> LayerMetadata
+        """Override to get 3delight specific extension."""
+        layer_data = super(RenderProducts3Delight, self)._get_layer_data()
+        assert layer_data.layerName.endswith("_RL")
+        layerName = layer_data.layerName[:-3]
+        layer_data.frameStart = self._get_attr(f"{layerName}.startFrame")
+        layer_data.frameEnd = self._get_attr(f"{layerName}.endFrame")
+
+        return layer_data
+
     @staticmethod
     def get_render_settings(layer):
         # We first need to get the rendersetup layer belonging to this layer.
@@ -1582,7 +1593,7 @@ class RenderProducts3Delight(ARenderProducts):
         # With that name, we can remove the trailing '_RL' to get the correct
         # dlRenderSettings class and assert if it doesn't exist.
         assert rs_layer.endswith("_RL"), \
-            "RenderLayer has wrong suffix [{}] (not '*_RL')".format(rs_layer)
+            "RenderLayer has wrong suffix [{}] (not '*_RL'), please rename to _RL".format(rs_layer)
         dl_render_settings = rs_layer[:-3]
         # There's a chance that it will be prefixed with "rs_", so remove that
         # too if it's present.

@@ -225,6 +225,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             frame_end_render = int(self.get_render_attribute(
                 "endFrame", layer=layer_name))
 
+            check_renderer = self.get_render_attribute("currentRenderer",
+                                                       layer=layer_name)
+
+            if check_renderer.lower() == "_3delight":
+                layer_data = layer_render_products.layer_data
+                layerName = layer_data.layerName[:-3]
+                frame_start_render = int(cmds.getAttr("{0}.{1}".format(
+                    layerName, "startFrame"
+                )))
+                frame_end_render = int(cmds.getAttr("{0}.{1}".format(
+                    layerName, "endFrame"
+                )))
+
             if (int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
 
