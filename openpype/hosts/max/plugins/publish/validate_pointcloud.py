@@ -1,15 +1,6 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 from pymxs import runtime as rt
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-
-
-def get_setting(project_setting=None):
-    project_setting = get_project_settings(
-        legacy_io.Session["AVALON_PROJECT"]
-    )
-    return (project_setting["max"]["PointCloud"])
 
 
 class ValidatePointCloud(pyblish.api.InstancePlugin):
@@ -107,6 +98,9 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
         self.log.info("Validating tyFlow custom "
                       "attributes for {}".format(container))
 
+        project_setting = instance.context.data["project_settings"]
+        point_cloud_settings = project_setting["max"]["PointCloud"]
+
         con = rt.getNodeByName(container)
         selection_list = list(con.Children)
         for sel in selection_list:
@@ -121,7 +115,7 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                 if boolean:
                     opt = "${0}.{1}.export_particles".format(sel.name,
                                                              event_name)
-                    attributes = get_setting()["attribute"]
+                    attributes = point_cloud_settings["attribute"]
                     for key, value in attributes.items():
                         custom_attr = "{0}.PRTChannels_{1}".format(opt,
                                                                    value)

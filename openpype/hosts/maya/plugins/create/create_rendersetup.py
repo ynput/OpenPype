@@ -1,8 +1,8 @@
+from maya import cmds
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from maya import cmds
 
 
 class CreateRenderSetup(plugin.Creator):
@@ -30,7 +30,7 @@ class CreateRenderSetup(plugin.Creator):
 
         # from pype.api import get_project_settings
         # import maya.app.renderSetup.model.renderSetup as renderSetup
-        # settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        # settings = get_project_settings(get_current_project_name())
         # layer = settings['maya']['create']['renderSetup']["layer"]
 
         # rs = renderSetup.instance()
