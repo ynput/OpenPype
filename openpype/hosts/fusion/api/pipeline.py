@@ -25,15 +25,11 @@ from openpype.tools.utils import host_tools
 from .workfile_template_builder import (
     FusionPlaceholderLoadPlugin,
     FusionPlaceholderCreatePlugin,
-    build_workfile_template,
-    create_placeholder,
-    update_placeholder,
 )
 
 
 from .lib import (
     get_current_comp,
-    comp_lock_and_undo_chunk,
     validate_comp_prefs,
 )
 

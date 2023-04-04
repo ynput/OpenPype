@@ -19,8 +19,6 @@ from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
 
 from .workfile_template_builder import (
-    FusionPlaceholderLoadPlugin,
-    FusionPlaceholderCreatePlugin,
     build_workfile_template,
     create_placeholder,
     update_placeholder,
