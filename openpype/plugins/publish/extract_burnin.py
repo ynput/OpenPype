@@ -319,8 +319,7 @@ class ExtractBurnin(publish.Extractor):
 
                 # Run burnin script
                 process_kwargs = {
-                    "logger": self.log,
-                    "env": {}
+                    "logger": self.log
                 }
 
                 run_openpype_process(*args, **process_kwargs)
