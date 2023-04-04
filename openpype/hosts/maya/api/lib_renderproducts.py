@@ -1593,7 +1593,7 @@ class RenderProducts3Delight(ARenderProducts):
         # With that name, we can remove the trailing '_RL' to get the correct
         # dlRenderSettings class and assert if it doesn't exist.
         assert rs_layer.endswith("_RL"), \
-            "RenderLayer has wrong suffix [{}] (not '*_RL'), please rename to _RL".format(rs_layer)
+            "RenderLayer has wrong suffix [{}] (not '*_RL')".format(rs_layer)
         dl_render_settings = rs_layer[:-3]
         # There's a chance that it will be prefixed with "rs_", so remove that
         # too if it's present.
