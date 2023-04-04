@@ -76,7 +76,7 @@ class CollectFtrackCustomAttributeData(pyblish.api.ContextPlugin):
 
         for entity_id, instances in instances_by_entity_id.items():
             if entity_id not in values_by_entity_id:
-                # Use defaut empty values
+                # Use default empty values
                 entity_id = None
 
             for instance in instances:

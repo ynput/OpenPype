@@ -19,12 +19,12 @@
                         {
                             "type": "text",
                             "key": "compression",
-                            "label": "Compression type"
+                            "label": "Encoding"
                         },
                         {
                             "type": "text",
                             "key": "format",
-                            "label": "Data format"
+                            "label": "Format"
                         },
                         {
                             "type": "number",
@@ -48,7 +48,11 @@
                             "type": "label",
                             "label": "<b>Display Options</b>"
                         },
-
+                        {
+                            "type": "boolean",
+                            "key": "override_display",
+                            "label": "Override display options"
+                        },
                         {
                             "type": "color",
                             "key": "background",
@@ -66,8 +70,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "override_display",
-                            "label": "Override display options"
+                            "key": "displayGradient",
+                            "label": "Display background gradient"
                         }
                     ]
                 },
@@ -91,6 +95,11 @@
                             "type": "boolean",
                             "key": "off_screen",
                             "label": "            Off Screen"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "pan_zoom",
+                            "label": "            2D Pan/Zoom"
                         }
                     ]
                 },
@@ -156,7 +165,7 @@
                         {
                             "type": "boolean",
                             "key": "override_viewport_options",
-                            "label": "override_viewport_options"
+                            "label": "Override Viewport Options"
                         },
                         {
                             "type": "enum",
@@ -419,11 +428,6 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "gpuCacheDisplayFilter",
-                            "label": "GPU Cache"
-                        },
-                        {
-                            "type": "boolean",
                             "key": "greasePencils",
                             "label": "Grease Pencil"
                         },
@@ -556,6 +560,12 @@
                             "type": "boolean",
                             "key": "textures",
                             "label": "Texture Placements"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "pluginObjects",
+                            "label": "Plugin Objects",
+                            "object_type": "boolean"
                         }
                     ]
                 },

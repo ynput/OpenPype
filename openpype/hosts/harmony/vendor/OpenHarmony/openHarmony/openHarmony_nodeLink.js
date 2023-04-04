@@ -4,7 +4,7 @@
 //                            openHarmony Library v0.01
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney...
+//         Developed by Mathieu Chaptel, Chris Fourney...
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -174,7 +174,7 @@ Object.defineProperty($.oNodeLink.prototype, 'outNode', {
         return;
       }
 
-      this.apply(); // do we really want to apply everytime we set?
+      this.apply(); // do we really want to apply every time we set?
     }
 });
 
@@ -198,7 +198,7 @@ Object.defineProperty($.oNodeLink.prototype, 'inNode', {
         return;
       }
 
-      this.apply();  // do we really want to apply everytime we set?
+      this.apply();  // do we really want to apply every time we set?
     }
 });
 
@@ -222,7 +222,7 @@ Object.defineProperty($.oNodeLink.prototype, 'outPort', {
         return;
       }
 
-      this.apply();  // do we really want to apply everytime we set?
+      this.apply();  // do we really want to apply every time we set?
     }
 });
 
@@ -256,7 +256,7 @@ Object.defineProperty($.oNodeLink.prototype, 'inPort', {
         return;
       }
 
-      this.apply();  // do we really want to apply everytime we set?
+      this.apply();  // do we really want to apply every time we set?
     }
 });
 
@@ -983,7 +983,7 @@ $.oNodeLink.prototype.validate = function ( ) {
  * @return {bool}      Whether the connection is a valid connection that exists currently in the node system.
  */
 $.oNodeLink.prototype.validateUpwards = function( inport, outportProvided ) {
-  //IN THE EVENT OUTNODE WASNT PROVIDED.
+  //IN THE EVENT OUTNODE WASN'T PROVIDED.
   this.path = this.findInputPath( this._inNode, inport, [] );
   if( !this.path || this.path.length == 0 ){
     return false;
@@ -1173,7 +1173,7 @@ Object.defineProperty($.oLink.prototype, 'outPort', {
 
 
 /**
- * The index of the link comming out of the out-port.
+ * The index of the link coming out of the out-port.
  * <br>In the event this value wasn't known by the link object but the link is actually connected, the correct value will be found.
  * @name $.oLink#outLink
  * @readonly
@@ -1323,7 +1323,7 @@ $.oLink.prototype.getValidLink = function(createOutPorts, createInPorts){
 
 
 /**
- * Attemps to connect a link. Will guess the ports if not provided.
+ * Attempts to connect a link. Will guess the ports if not provided.
  * @return {bool}
  */
 $.oLink.prototype.connect = function(){
@@ -1623,11 +1623,11 @@ $.oLinkPath.prototype.findExistingPath = function(){
 
 
 /**
- * Gets a link object from two nodes that can be succesfully connected. Provide port numbers if there are specific requirements to match. If a link already exists, it will be returned.
+ * Gets a link object from two nodes that can be successfully connected. Provide port numbers if there are specific requirements to match. If a link already exists, it will be returned.
  * @param  {$.oNode}         start          The node from which the link originates.
  * @param  {$.oNode}         end            The node at which the link ends.
- * @param  {int}             [outPort]      A prefered out-port for the link to use.
- * @param  {int}             [inPort]       A prefered in-port for the link to use.
+ * @param  {int}             [outPort]      A preferred out-port for the link to use.
+ * @param  {int}             [inPort]       A preferred in-port for the link to use.
  *
  * @return {$.oLink} the valid $.oLink object.  Returns null if no such link could be created (for example if the node's in-port is already linked)
  */

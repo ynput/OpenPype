@@ -111,7 +111,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
-        - expectedFiles (list or dict): explained bellow
+        - expectedFiles (list or dict): explained below
 
     """
 
@@ -161,8 +161,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
 
-    # mapping of instance properties to be transfered to new instance for every
-    # specified family
+    # mapping of instance properties to be transferred to new instance
+    #     for every specified family
     instance_transfer = {
         "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
@@ -405,7 +405,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     continue
                 r_col.indexes.remove(frame)
 
-        # now we need to translate published names from represenation
+        # now we need to translate published names from representation
         # back. This is tricky, right now we'll just use same naming
         # and only switch frame numbers
         resource_files = []
@@ -542,7 +542,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if preview:
                 new_instance["review"] = True
 
-            # create represenation
+            # create representation
             if isinstance(col, (list, tuple)):
                 files = [os.path.basename(f) for f in col]
             else:
@@ -755,7 +755,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # type: (pyblish.api.Instance) -> None
         """Process plugin.
 
-        Detect type of renderfarm submission and create and post dependend job
+        Detect type of renderfarm submission and create and post dependent job
         in case of Deadline. It creates json file with metadata needed for
         publishing in directory of render.
 
@@ -993,7 +993,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             instances = [instance_skeleton_data]
 
         # if we are attaching to other subsets, create copy of existing
-        # instances, change data to match thats subset and replace
+        # instances, change data to match its subset and replace
         # existing instances with modified data
         if instance.data.get("attachTo"):
             self.log.info("Attaching render to subset:")

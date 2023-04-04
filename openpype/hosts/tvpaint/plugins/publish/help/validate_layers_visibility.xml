@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
 <error id="main">
-<title>Layers visiblity</title>
+<title>Layers visibility</title>
 <description>## All layers are not visible
 
 Layers visibility was changed during publishing which caused that all layers for subset "{instance_name}" are hidden.

@@ -153,7 +153,7 @@ class FlamePrelaunch(PreLaunchHook):
     def _add_pythonpath(self):
         pythonpath = self.launch_context.env.get("PYTHONPATH")
 
-        # separate it explicity by `;` that is what we use in settings
+        # separate it explicitly by `;` that is what we use in settings
         new_pythonpath = self.flame_pythonpath.split(os.pathsep)
         new_pythonpath += pythonpath.split(os.pathsep)
 

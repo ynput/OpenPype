@@ -11,9 +11,24 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.maya.api.pipeline import containerise
-from openpype.hosts.maya.api.lib import unique_namespace
+from openpype.hosts.maya.api.lib import (
+    unique_namespace,
+    namespaced,
+    pairwise,
+    get_container_members
+)
 
 from maya import cmds
+
+
+def disconnect_inputs(plug):
+    overrides = cmds.listConnections(plug,
+                                     source=True,
+                                     destination=False,
+                                     plugs=True,
+                                     connections=True) or []
+    for dest, src in pairwise(overrides):
+        cmds.disconnectAttr(src, dest)
 
 
 class CameraWindow(QtWidgets.QDialog):
@@ -74,6 +89,7 @@ class CameraWindow(QtWidgets.QDialog):
         self.camera = None
         self.close()
 
+
 class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
 
@@ -84,9 +100,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data, options=None):
-        import pymel.core as pm
 
-        new_nodes = []
         image_plane_depth = 1000
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
@@ -96,16 +110,20 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
 
         # Get camera from user selection.
-        camera = None
         # is_static_image_plane = None
         # is_in_all_views = None
-        if data:
-            camera = pm.PyNode(data.get("camera"))
+        camera = data.get("camera") if data else None
 
         if not camera:
-            cameras = pm.ls(type="camera")
-            camera_names = {x.getParent().name(): x for x in cameras}
-            camera_names["Create new camera."] = "create_camera"
+            cameras = cmds.ls(type="camera")
+
+            # Cameras by names
+            camera_names = {}
+            for camera in cameras:
+                parent = cmds.listRelatives(camera, parent=True, path=True)[0]
+                camera_names[parent] = camera
+
+            camera_names["Create new camera."] = "create-camera"
             window = CameraWindow(camera_names.keys())
             window.exec_()
             # Skip if no camera was selected (Dialog was closed)
@@ -113,43 +131,48 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 return
             camera = camera_names[window.camera]
 
-        if camera == "create_camera":
-            camera = pm.createNode("camera")
+        if camera == "create-camera":
+            camera = cmds.createNode("camera")
 
         if camera is None:
             return
 
         try:
-            camera.displayResolution.set(1)
-            camera.farClipPlane.set(image_plane_depth * 10)
+            cmds.setAttr("{}.displayResolution".format(camera), True)
+            cmds.setAttr("{}.farClipPlane".format(camera),
+                         image_plane_depth * 10)
         except RuntimeError:
             pass
 
         # Create image plane
-        image_plane_transform, image_plane_shape = pm.imagePlane(
-            fileName=context["representation"]["data"]["path"],
-            camera=camera)
-        image_plane_shape.depth.set(image_plane_depth)
+        with namespaced(namespace):
+            # Create inside the namespace
+            image_plane_transform, image_plane_shape = cmds.imagePlane(
+                fileName=context["representation"]["data"]["path"],
+                camera=camera
+            )
+        start_frame = cmds.playbackOptions(query=True, min=True)
+        end_frame = cmds.playbackOptions(query=True, max=True)
 
-
-        start_frame = pm.playbackOptions(q=True, min=True)
-        end_frame = pm.playbackOptions(q=True, max=True)
-
-        image_plane_shape.frameOffset.set(0)
-        image_plane_shape.frameIn.set(start_frame)
-        image_plane_shape.frameOut.set(end_frame)
-        image_plane_shape.frameCache.set(end_frame)
-        image_plane_shape.useFrameExtension.set(1)
+        for attr, value in {
+            "depth": image_plane_depth,
+            "frameOffset": 0,
+            "frameIn": start_frame,
+            "frameOut": end_frame,
+            "frameCache": end_frame,
+            "useFrameExtension": True
+        }.items():
+            plug = "{}.{}".format(image_plane_shape, attr)
+            cmds.setAttr(plug, value)
 
         movie_representations = ["mov", "preview"]
         if context["representation"]["name"] in movie_representations:
-            # Need to get "type" by string, because its a method as well.
-            pm.Attribute(image_plane_shape + ".type").set(2)
+            cmds.setAttr(image_plane_shape + ".type", 2)
 
         # Ask user whether to use sequence or still image.
         if context["representation"]["name"] == "exr":
             # Ensure OpenEXRLoader plugin is loaded.
-            pm.loadPlugin("OpenEXRLoader.mll", quiet=True)
+            cmds.loadPlugin("OpenEXRLoader", quiet=True)
 
             message = (
                 "Hold image sequence on first frame?"
@@ -161,32 +184,18 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 None,
                 "Frame Hold.",
                 message,
-                QtWidgets.QMessageBox.Ok,
-                QtWidgets.QMessageBox.Cancel
+                QtWidgets.QMessageBox.Yes,
+                QtWidgets.QMessageBox.No
             )
-            if reply == QtWidgets.QMessageBox.Ok:
-                # find the input and output of frame extension
-                expressions = image_plane_shape.frameExtension.inputs()
-                frame_ext_output = image_plane_shape.frameExtension.outputs()
-                if expressions:
-                    # the "time1" node is non-deletable attr
-                    # in Maya, use disconnectAttr instead
-                    pm.disconnectAttr(expressions, frame_ext_output)
+            if reply == QtWidgets.QMessageBox.Yes:
+                frame_extension_plug = "{}.frameExtension".format(image_plane_shape)  # noqa
 
-                if not image_plane_shape.frameExtension.isFreeToChange():
-                    raise RuntimeError("Can't set frame extension for {}".format(image_plane_shape)) # noqa
-                # get the node of time instead and set the time for it.
-                image_plane_shape.frameExtension.set(start_frame)
+                # Remove current frame expression
+                disconnect_inputs(frame_extension_plug)
 
-        new_nodes.extend(
-            [
-                image_plane_transform.longName().split("|")[-1],
-                image_plane_shape.longName().split("|")[-1]
-            ]
-        )
+                cmds.setAttr(frame_extension_plug, start_frame)
 
-        for node in new_nodes:
-            pm.rename(node, "{}:{}".format(namespace, node))
+        new_nodes = [image_plane_transform, image_plane_shape]
 
         return containerise(
             name=name,
@@ -197,21 +206,19 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
 
     def update(self, container, representation):
-        import pymel.core as pm
-        image_plane_shape = None
-        for node in pm.PyNode(container["objectName"]).members():
-            if node.nodeType() == "imagePlane":
-                image_plane_shape = node
 
-        assert image_plane_shape is not None, "Image plane not found."
+        members = get_container_members(container)
+        image_planes = cmds.ls(members, type="imagePlane")
+        assert image_planes, "Image plane not found."
+        image_plane_shape = image_planes[0]
 
         path = get_representation_path(representation)
-        image_plane_shape.imageName.set(path)
-        cmds.setAttr(
-            container["objectName"] + ".representation",
-            str(representation["_id"]),
-            type="string"
-        )
+        cmds.setAttr("{}.imageName".format(image_plane_shape),
+                     path,
+                     type="string")
+        cmds.setAttr("{}.representation".format(container["objectName"]),
+                     str(representation["_id"]),
+                     type="string")
 
         # Set frame range.
         project_name = legacy_io.active_project()
@@ -227,10 +234,14 @@ class ImagePlaneLoader(load.LoaderPlugin):
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
 
-        image_plane_shape.frameOffset.set(0)
-        image_plane_shape.frameIn.set(start_frame)
-        image_plane_shape.frameOut.set(end_frame)
-        image_plane_shape.frameCache.set(end_frame)
+        for attr, value in {
+            "frameOffset": 0,
+            "frameIn": start_frame,
+            "frameOut": end_frame,
+            "frameCache": end_frame
+        }:
+            plug = "{}.{}".format(image_plane_shape, attr)
+            cmds.setAttr(plug, value)
 
     def switch(self, container, representation):
         self.update(container, representation)
