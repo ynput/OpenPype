@@ -325,8 +325,9 @@ class FusionPlaceholderLoadPlugin(
         """
 
         groups_name = placeholder.data["group_name"]
-        reset_selection()
-        select_nodes(nodes_loaded)
+        comp = get_current_comp()
+        flow = comp.CurrentFrame.FlowView
+        flow.Select(nodes_loaded)
         if groups_name:
             with node_tempfile() as filepath:
                 nuke.nodeCopy(filepath)
