@@ -4,7 +4,7 @@
 from .plugin import (
     UnrealActorCreator,
     UnrealAssetCreator,
-    Loader
+    UnrealBaseLoader,
 )
 
 from .pipeline import (
@@ -14,12 +14,12 @@ from .pipeline import (
     ls,
     ls_inst,
     publish,
-    containerise,
     show_creator,
     show_loader,
     show_publisher,
     show_manager,
     show_experimental_tools,
+    containerise,
     instantiate,
     UnrealHost,
     maintained_selection
@@ -28,17 +28,19 @@ from .pipeline import (
 __all__ = [
     "install",
     "uninstall",
-    "Loader",
+    "UnrealActorCreator",
+    "UnrealAssetCreator",
+    "UnrealBaseLoader",
     "imprint",
     "ls",
     "ls_inst",
     "publish",
-    "containerise",
     "show_creator",
     "show_loader",
     "show_publisher",
     "show_manager",
     "show_experimental_tools",
+    "containerise",
     "instantiate",
     "UnrealHost",
     "maintained_selection"
