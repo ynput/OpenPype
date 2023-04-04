@@ -365,8 +365,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         handle_end = version_data.get("handleEnd", None)
         if handle_start is not None and handle_end is not None:
             handles = "{}-{}".format(str(handle_start), str(handle_end))
-        else:
-            handles = version_data.get("handles", None)
 
         if frame_start is not None and frame_end is not None:
             # Remove superfluous zeros from numbers (3.0 -> 3) to improve
