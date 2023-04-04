@@ -1020,7 +1020,16 @@ class BuildWorkFile(bpy.types.Operator):
             bpy.app.timers.register(_process_app_events, persistent=True)
 
     def _build_first_workfile(self, clear_scene, save_as):
+        """Execute Build First workfile process.
+        
+        Args:
+            clear_scene (bool): Clear scene content before the build. 
+            save_as (bool): Save as new incremented workfile after the build.
+        """
         if clear_scene:
+            # Clear scene content
+            print("Clear scene content")
+
             # clear all objects and collections
             for obj in set(bpy.data.objects):
                 bpy.data.objects.remove(obj)
@@ -1035,6 +1044,7 @@ class BuildWorkFile(bpy.types.Operator):
             for library in list(bpy.data.libraries):
                 bpy.data.libraries.remove(library)
 
+        print("Build Workfile")
         build_workfile()
 
         if save_as:
