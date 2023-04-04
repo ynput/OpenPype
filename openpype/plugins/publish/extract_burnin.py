@@ -456,12 +456,6 @@ class ExtractBurnin(publish.Extractor):
             frame_end = 1
         frame_end = int(frame_end)
 
-        handles = instance.data.get("handles")
-        if handles is None:
-            handles = context.data.get("handles")
-            if handles is None:
-                handles = 0
-
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
             handle_start = context.data.get("handleStart")

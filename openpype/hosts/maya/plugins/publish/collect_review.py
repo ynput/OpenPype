@@ -83,7 +83,6 @@ class CollectReview(pyblish.api.InstancePlugin):
             data['frameEndHandle'] = instance.data["frameEndHandle"]
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
-            data['handles'] = instance.data.get('handles', None)
             data['step'] = instance.data['step']
             data['fps'] = instance.data['fps']
             data['review_width'] = instance.data['review_width']
