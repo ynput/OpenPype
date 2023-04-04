@@ -68,8 +68,9 @@ class YetiCacheLoader(load.LoaderPlugin):
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
+        project_name = context["project"]["name"]
 
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)

@@ -8,7 +8,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -268,7 +268,7 @@ class LoadClip(plugin.NukeLoader):
             if "addRetime" in key
         ]
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         version_data = version_doc.get("data", {})

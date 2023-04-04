@@ -15,7 +15,7 @@ from openpype.settings import (
 )
 from openpype.lib import requests_get
 from openpype.modules import ModulesManager
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 from openpype.hosts.maya.api import (
     lib,
     lib_rendersettings,
@@ -76,7 +76,7 @@ class CreateRender(plugin.Creator):
 
         # Defaults
         self._project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"])
+            get_current_project_name())
         if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]: # noqa
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
 

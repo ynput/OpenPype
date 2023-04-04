@@ -18,7 +18,11 @@ from openpype.style import (
 from openpype.resources import get_image_path
 from openpype.lib import filter_profiles, Logger
 from openpype.settings import get_project_settings
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    get_current_context,
+    get_current_host_name,
+)
 
 from .constants import CHECKED_INT, UNCHECKED_INT
 
@@ -44,7 +48,6 @@ def checkstate_enum_to_int(state):
     if state == QtCore.Qt.PartiallyChecked:
         return 1
     return 2
-
 
 
 def center_window(window):
@@ -496,10 +499,11 @@ class FamilyConfigCache:
             return
 
         # Update the icons from the project configuration
-        project_name = os.environ.get("AVALON_PROJECT")
-        asset_name = os.environ.get("AVALON_ASSET")
-        task_name = os.environ.get("AVALON_TASK")
-        host_name = os.environ.get("AVALON_APP")
+        context = get_current_context()
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
+        host_name = get_current_host_name()
         if not all((project_name, asset_name, task_name)):
             return
 

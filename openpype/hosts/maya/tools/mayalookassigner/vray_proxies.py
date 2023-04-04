@@ -6,7 +6,7 @@ import logging
 from maya import cmds
 
 from openpype.client import get_last_version_by_subset_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 import openpype.hosts.maya.lib as maya_lib
 from . import lib
 from .alembic import get_alembic_ids_cache
@@ -76,7 +76,7 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
         asset_id = node_id.split(":", 1)[0]
         node_ids_by_asset_id[asset_id].add(node_id)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version
