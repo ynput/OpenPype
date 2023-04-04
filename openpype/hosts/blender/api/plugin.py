@@ -1230,8 +1230,8 @@ class AssetLoader(Loader):
                         d
                         for d in datablocks
                         if type(d) is type(old_datablock)
-                        and old_datablock["original_name"].rstrip(f".{digits}")
-                        == d.name.rstrip(f".{digits}")
+                        and old_datablock["original_name"].rsplit(".", 1)[0]
+                        == d.name.rsplit(".", 1)[0]
                     ),
                     None,
                 )
