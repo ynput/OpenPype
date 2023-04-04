@@ -14,6 +14,7 @@ from openpype.tools.workfile_template_build import (
 from .lib import (
     get_current_comp,
     get_bmd_library,
+    get_names_from_nodes,
     comp_lock_and_undo_chunk,
 )
 
@@ -177,9 +178,10 @@ class FusionPlaceholderLoadPlugin(
 
     def _before_repre_load(self, placeholder, representation):
         comp = get_current_comp()
-        placeholder.data["nodes_init"] = list(
-            comp.GetToolList(False, "Fuse.OPEmpty").values()
-        )
+        nodes_init = []
+        for node in comp.GetToolList(False, "Fuse.OPEmpty").values():
+            nodes_init.append(node.Name)
+        placeholder.data["nodes_init"] = list(nodes_init)
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -214,14 +216,21 @@ class FusionPlaceholderLoadPlugin(
     def cleanup_placeholder(self, placeholder, failed):
         # deselect all selected nodes
         comp = get_current_comp()
-        node = comp.FindTool(placeholder_item.scene_identifier)
-        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        placeholder_node = comp.FindTool(placeholder.scene_identifier)
 
         # getting the latest nodes added
         # TODO get from shared populate data!
         nodes_init = placeholder.data["nodes_init"]
-        nodes_loaded = list(set(nuke.allNodes()) - set(nodes_init))
+        added_nodes = []
+        for node in comp.GetToolList().values():
+            added_nodes.append(node.Name)
+        nodes_loaded_names = list(set(added_nodes) - set(nodes_init))
+        nodes_loaded = []
+        for name in nodes_loaded_names:
+            nodes_loaded.append(comp.FindTool(name))
+
         self.log.debug("Loaded nodes: {}".format(nodes_loaded))
+
         if not nodes_loaded:
             return
 
@@ -231,18 +240,23 @@ class FusionPlaceholderLoadPlugin(
             placeholder, nodes_loaded
         )
         placeholder.data["last_loaded"] = nodes_loaded
-        refresh_nodes(nodes_loaded)
 
         # positioning of the loaded nodes
-        min_x, min_y, _, _ = get_extreme_positions(nodes_loaded)
-        for node in nodes_loaded:
-            xpos = (node.xpos() - min_x) + placeholder_node.xpos()
-            ypos = (node.ypos() - min_y) + placeholder_node.ypos()
-            node.setXYpos(xpos, ypos)
-        refresh_nodes(nodes_loaded)
+        # FUSION! - I don't think this is needed at all?
+
+        # flow = comp.CurrentFrame.FlowView
+        # min_x, min_y, _, _ = get_extreme_positions(nodes_loaded)
+        # for node in nodes_loaded:
+        #    node_xPos, node_yPos = flow.GetPosTable(node).values()
+        #    placeholder_xPos, placeholder_yPos = flow.GetPosTable(
+        #        placeholder_node
+        #    ).values()
+        #    xpos = (node_xPos - min_x) + placeholder_xPos
+        #    ypos = (node_yPos - min_y) + placeholder_yPos
+        #    flow.SetPos(node, xpos, ypos)
 
         # fix the problem of z_order for backdrops
-        self._fix_z_order(placeholder)
+        self._setdata_siblings(placeholder)
         self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
