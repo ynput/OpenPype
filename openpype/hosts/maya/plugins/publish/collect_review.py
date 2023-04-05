@@ -31,14 +31,11 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, long=True,
-                          dag=True, cameras=True)
         self.log.debug('members: {}'.format(members))
-
-        # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
-        camera = cameras[0]
-        self.log.debug('camera: {}'.format(camera))
+        cameras = cmds.ls(members, long=True, dag=True, cameras=True)
+        camera = None
+        if cameras:
+            camera = cameras[0]
 
         objectset = instance.context.data['objectsets']
 
