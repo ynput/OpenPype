@@ -26,7 +26,7 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = instance.context.data["projectName"]
         profiles = get_project_settings(
             project_name
         )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
