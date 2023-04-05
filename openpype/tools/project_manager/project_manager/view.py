@@ -72,8 +72,8 @@ class HierarchyView(QtWidgets.QTreeView):
     column_delegate_defs = {
         "name": NameDef(),
         "type": TypeDef(),
-        "frameStart": NumberDef(1),
-        "frameEnd": NumberDef(1),
+        "frameStart": NumberDef(0),
+        "frameEnd": NumberDef(0),
         "fps": NumberDef(1, decimals=3, step=1),
         "resolutionWidth": NumberDef(0),
         "resolutionHeight": NumberDef(0),
