@@ -20,7 +20,7 @@ class CreateCamera(plugin.MayaCreator):
         defs.extend([
             BoolDef("bakeToWorldSpace",
                     label="Bake to World-Space",
-                    tooltip="Bake to World-Space (for mayaScene export only!)",
+                    tooltip="Bake to World-Space",
                     default=True),
         ])
 
