@@ -66,6 +66,6 @@ class ColorEntity(InputEntity):
             new_value.append(item)
 
         # Make sure
-        if hasattr(self, "use_alpha") and not self.use_alpha:
+        if not self.use_alpha:
             new_value[3] = 255
         return new_value
