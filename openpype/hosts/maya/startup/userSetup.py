@@ -12,14 +12,12 @@ install_host(host)
 
 print("Starting OpenPype usersetup...")
 
-settings = get_project_settings(os.environ['AVALON_PROJECT'])
+project_settings = get_project_settings(os.environ['AVALON_PROJECT'])
 
 # Loading plugins explicitly.
-if settings["maya"]["explicit_plugins_loading"]["enabled"]:
+explicit_plugins_loading = project_settings["maya"]["explicit_plugins_loading"]
+if explicit_plugins_loading["enabled"]:
     def _explicit_load_plugins():
-        project_settings = get_project_settings(os.environ["AVALON_PROJECT"])
-        maya_settings = project_settings["maya"]
-        explicit_plugins_loading = maya_settings["explicit_plugins_loading"]
         for plugin in explicit_plugins_loading["plugins_to_load"]:
             if plugin["enabled"]:
                 print("Loading plug-in: " + plugin["name"])
@@ -46,7 +44,7 @@ if bool(int(os.environ.get(key, "0"))):
     )
 
 # Build a shelf.
-shelf_preset = settings['maya'].get('project_shelf')
+shelf_preset = project_settings['maya'].get('project_shelf')
 
 if shelf_preset:
     project = os.environ["AVALON_PROJECT"]
