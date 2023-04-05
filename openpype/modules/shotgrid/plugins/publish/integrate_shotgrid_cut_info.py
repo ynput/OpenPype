@@ -16,7 +16,6 @@ def openpype_publish_tag(track_item):
 
 def get_tag_handles(track_item):
     tag = openpype_publish_tag(track_item)
-    print(tag, 'tag')
     try:
         handle_start = int(tag.get("tag.handleStart", "0"))
         handle_end = int(tag.get("tag.handleEnd", "0"))
