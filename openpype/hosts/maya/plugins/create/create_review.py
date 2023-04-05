@@ -48,7 +48,7 @@ class CreateReview(plugin.Creator):
             self.log.warning("No profiles present for extract playblast.")
         else:
             asset_doc = get_asset_by_name(project_name, data["asset"])
-            task_name = legacy_io.Session["AVALON_TASK"]
+            task_name = get_current_task_name()
             task_type = asset_doc["data"]["tasks"][task_name]["type"]
 
             filtering_criteria = {
