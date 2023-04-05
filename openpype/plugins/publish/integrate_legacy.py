@@ -600,9 +600,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             if not instance.data.get("publishDir"):
                 instance.data["publishDir"] = (
-                    anatomy.templates_obj[template_name]["folder"].format_strict(
-                        template_data
-                    )
+                    anatomy.templates_obj[template_name]["folder"]
+                        .format_strict(template_data)
                 )
             if repre.get("udim"):
                 repre_context["udim"] = repre.get("udim")  # store list
