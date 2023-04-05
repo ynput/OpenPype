@@ -26,6 +26,8 @@ if explicit_plugins_loading["enabled"]:
                 except RuntimeError as e:
                     print(e)
 
+    # We need to load plugins deferred as loading them directly does not work
+    # correctly due to Maya's initialization.
     cmds.evalDeferred(
         _explicit_load_plugins,
         lowestPriority=True
