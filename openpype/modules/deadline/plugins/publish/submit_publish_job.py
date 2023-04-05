@@ -951,16 +951,27 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
 
-            config = instance.data["colorspaceConfig"]
             additional_data = {
                 "renderProducts": instance.data["renderProducts"],
                 "colorspaceConfig": instance.data["colorspaceConfig"],
                 "display": instance.data["colorspaceDisplay"],
-                "view": instance.data["colorspaceView"],
-                "colorspaceTemplate": config.replace(
-                    str(context.data["anatomy"].roots["work"]), "{root[work]}"
-                )
+                "view": instance.data["colorspaceView"]
             }
+
+            # Get templated path from absolute config path.
+            anatomy = instance.context.data["anatomy"]
+            colorspaceTemplate = instance.data["colorspaceConfig"]
+            success, rootless_staging_dir = (
+                anatomy.find_root_template_from_path(colorspaceTemplate)
+            )
+            if success:
+                colorspaceTemplate = rootless_staging_dir
+            else:
+                self.log.warning((
+                    "Could not find root path for remapping \"{}\"."
+                    " This may cause issues on farm."
+                ).format(colorspaceTemplate))
+            additional_data["colorspaceTemplate"] = colorspaceTemplate
 
             if len(data.get("attachTo")) > 0:
                 assert len(data.get("expectedFiles")[0].keys()) == 1, (
