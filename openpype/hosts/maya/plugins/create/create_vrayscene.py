@@ -1,266 +1,241 @@
 # -*- coding: utf-8 -*-
 """Create instance of vrayscene."""
-import os
-import json
-import appdirs
-import requests
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 from openpype.hosts.maya.api import (
     lib,
+    lib_rendersettings,
     plugin
 )
-from openpype.settings import (
-    get_system_settings,
-    get_project_settings
-)
-
-from openpype.lib import requests_get
 from openpype.pipeline import (
     CreatorError,
     legacy_io,
+    Creator,
+    CreatedInstance
 )
-from openpype.modules import ModulesManager
+from openpype.lib import (
+    BoolDef,
+    NumberDef
+)
 
 
-class CreateVRayScene(plugin.Creator):
+def ensure_namespace(namespace):
+    """Make sure the namespace exists.
+
+    Args:
+        namespace (str): The preferred namespace name.
+
+    Returns:
+        str: The generated or existing namespace
+
+    """
+    exists = cmds.namespace(exists=namespace)
+    if exists:
+        return namespace
+    else:
+        return cmds.namespace(add=namespace)
+
+
+class CreateVRayScene(Creator, plugin.MayaCreatorBase):
     """Create Vray Scene."""
 
-    label = "VRay Scene"
+    identifier = "io.openpype.creators.maya.vrayscene"
+
     family = "vrayscene"
+    label = "VRay Scene"
     icon = "cubes"
 
-    _project_settings = None
+    render_settings = {}
+    singleton_node_name = "vraysceneMain"
 
-    def __init__(self, *args, **kwargs):
-        """Entry."""
-        super(CreateVRayScene, self).__init__(*args, **kwargs)
-        self._rs = renderSetup.instance()
-        self.data["exportOnFarm"] = False
-        deadline_settings = get_system_settings()["modules"]["deadline"]
+    def _get_singleton_node(self, return_all=False):
+        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
+        if nodes:
+            return nodes if return_all else nodes[0]
 
-        manager = ModulesManager()
-        self.deadline_module = manager.modules_by_name["deadline"]
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        cls.render_settings = project_settings["maya"]["RenderSettings"]
 
-        if not deadline_settings["enabled"]:
-            self.deadline_servers = {}
-            return
-        self._project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"])
+    def create(self, subset_name, instance_data, pre_create_data):
+        # A Renderlayer is never explicitly created using the create method.
+        # Instead, renderlayers from the scene are collected. Thus "create"
+        # would only ever be called to say, 'hey, please refresh collect'
 
-        try:
-            default_servers = deadline_settings["deadline_urls"]
-            project_servers = (
-                self._project_settings["deadline"]["deadline_servers"]
-            )
-            self.deadline_servers = {
-                k: default_servers[k]
-                for k in project_servers
-                if k in default_servers
-            }
+        # Only allow a single render instance to exist
+        if self._get_singleton_node():
+            raise CreatorError("A Render instance already exists - only "
+                               "one can be configured.")
 
-            if not self.deadline_servers:
-                self.deadline_servers = default_servers
+        # Apply default project render settings on create
+        if self.render_settings.get("apply_render_settings"):
+            lib_rendersettings.RenderSettings().set_default_renderer_settings()
 
-        except AttributeError:
-            # Handle situation were we had only one url for deadline.
-            # get default deadline webservice url from deadline module
-            self.deadline_servers = self.deadline_module.deadline_urls
+        # if no render layers are present, create default one with
+        # asterisk selector
+        rs = renderSetup.instance()
+        if not rs.getRenderLayers():
+            render_layer = rs.createRenderLayer('Main')
+            collection = render_layer.createCollection("defaultCollection")
+            collection.getSelector().setPattern('*')
 
-    def process(self):
-        """Entry point."""
-        exists = cmds.ls(self.name)
-        if exists:
-            return cmds.warning("%s already exists." % exists[0])
-
-        use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
-            self._create_vray_instance_settings()
-            self.instance = super(CreateVRayScene, self).process()
+            node = cmds.sets(empty=True, name=self.singleton_node_name)
+            lib.imprint(node, data={
+                "pre_creator_identifier": self.identifier
+            })
 
-            index = 1
-            namespace_name = "_{}".format(str(self.instance))
-            try:
-                cmds.namespace(rm=namespace_name)
-            except RuntimeError:
-                # namespace is not empty, so we leave it untouched
-                pass
+            # By RenderLayerCreator.create we make it so that the renderlayer
+            # instances directly appear even though it just collects scene
+            # renderlayers. This doesn't actually 'create' any scene contents.
+            self.collect_instances()
 
-            while(cmds.namespace(exists=namespace_name)):
-                namespace_name = "_{}{}".format(str(self.instance), index)
-                index += 1
+    def collect_instances(self):
 
-            namespace = cmds.namespace(add=namespace_name)
+        # We only collect if the global render instance exists
+        if not self._get_singleton_node():
+            return
 
-            # add Deadline server selection list
-            if self.deadline_servers:
-                cmds.scriptJob(
-                    attributeChange=[
-                        "{}.deadlineServers".format(self.instance),
-                        self._deadline_webservice_changed
-                    ])
-
-            # create namespace with instance
-            layers = self._rs.getRenderLayers()
-            if use_selection:
-                print(">>> processing existing layers")
-                sets = []
-                for layer in layers:
-                    print("  - creating set for {}".format(layer.name()))
-                    render_set = cmds.sets(
-                        n="{}:{}".format(namespace, layer.name()))
-                    sets.append(render_set)
-                cmds.sets(sets, forceElement=self.instance)
-
-            # if no render layers are present, create default one with
-            # asterix selector
-            if not layers:
-                render_layer = self._rs.createRenderLayer('Main')
-                collection = render_layer.createCollection("defaultCollection")
-                collection.getSelector().setPattern('*')
-
-    def _deadline_webservice_changed(self):
-        """Refresh Deadline server dependent options."""
-        # get selected server
-        from maya import cmds
-        webservice = self.deadline_servers[
-            self.server_aliases[
-                cmds.getAttr("{}.deadlineServers".format(self.instance))
-            ]
-        ]
-        pools = self.deadline_module.get_deadline_pools(webservice)
-        cmds.deleteAttr("{}.primaryPool".format(self.instance))
-        cmds.deleteAttr("{}.secondaryPool".format(self.instance))
-        cmds.addAttr(self.instance, longName="primaryPool",
-                     attributeType="enum",
-                     enumName=":".join(pools))
-        cmds.addAttr(self.instance, longName="secondaryPool",
-                     attributeType="enum",
-                     enumName=":".join(["-"] + pools))
-
-    def _create_vray_instance_settings(self):
-        # get pools
-        pools = []
-
-        system_settings = get_system_settings()["modules"]
-
-        deadline_enabled = system_settings["deadline"]["enabled"]
-        muster_enabled = system_settings["muster"]["enabled"]
-        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
-
-        if deadline_enabled and muster_enabled:
-            self.log.error(
-                "Both Deadline and Muster are enabled. " "Cannot support both."
-            )
-            raise CreatorError("Both Deadline and Muster are enabled")
-
-        self.server_aliases = self.deadline_servers.keys()
-        self.data["deadlineServers"] = self.server_aliases
-
-        if deadline_enabled:
-            # if default server is not between selected, use first one for
-            # initial list of pools.
-            try:
-                deadline_url = self.deadline_servers["default"]
-            except KeyError:
-                deadline_url = [
-                    self.deadline_servers[k]
-                    for k in self.deadline_servers.keys()
-                ][0]
-
-            pool_names = self.deadline_module.get_deadline_pools(deadline_url)
-
-        if muster_enabled:
-            self.log.info(">>> Loading Muster credentials ...")
-            self._load_credentials()
-            self.log.info(">>> Getting pools ...")
-            try:
-                pools = self._get_muster_pools()
-            except requests.exceptions.HTTPError as e:
-                if e.startswith("401"):
-                    self.log.warning("access token expired")
-                    self._show_login()
-                    raise CreatorError("Access token expired")
-            except requests.exceptions.ConnectionError:
-                self.log.error("Cannot connect to Muster API endpoint.")
-                raise CreatorError("Cannot connect to {}".format(muster_url))
-            pool_names = []
-            for pool in pools:
-                self.log.info("  - pool: {}".format(pool["name"]))
-                pool_names.append(pool["name"])
-
-            self.data["primaryPool"] = pool_names
-
-        self.data["suspendPublishJob"] = False
-        self.data["priority"] = 50
-        self.data["whitelist"] = False
-        self.data["machineList"] = ""
-        self.data["vraySceneMultipleFiles"] = False
-        self.options = {"useSelection": False}  # Force no content
-
-    def _load_credentials(self):
-        """Load Muster credentials.
-
-        Load Muster credentials from file and set ``MUSTER_USER``,
-        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
-
-        Raises:
-            CreatorError: If loaded credentials are invalid.
-            AttributeError: If ``MUSTER_REST_URL`` is not set.
-
-        """
-        app_dir = os.path.normpath(appdirs.user_data_dir("pype-app", "pype"))
-        file_name = "muster_cred.json"
-        fpath = os.path.join(app_dir, file_name)
-        file = open(fpath, "r")
-        muster_json = json.load(file)
-        self._token = muster_json.get("token", None)
-        if not self._token:
-            self._show_login()
-            raise CreatorError("Invalid access token for Muster")
-        file.close()
-        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
-        if not self.MUSTER_REST_URL:
-            raise AttributeError("Muster REST API url not set")
-
-    def _get_muster_pools(self):
-        """Get render pools from Muster.
-
-        Raises:
-            CreatorError: If pool list cannot be obtained from Muster.
-
-        """
-        params = {"authToken": self._token}
-        api_entry = "/api/pools/list"
-        response = requests_get(self.MUSTER_REST_URL + api_entry,
-                                params=params)
-        if response.status_code != 200:
-            if response.status_code == 401:
-                self.log.warning("Authentication token expired.")
-                self._show_login()
+        rs = renderSetup.instance()
+        layers = rs.getRenderLayers()
+        for layer in layers:
+            layer_instance_node = self.find_layer_instance_node(layer)
+            if layer_instance_node:
+                data = self.read_instance_node(layer_instance_node)
+                instance = CreatedInstance.from_existing(data, creator=self)
             else:
-                self.log.error(
-                    ("Cannot get pools from "
-                     "Muster: {}").format(response.status_code)
+                # No existing scene instance node for this layer. Note that
+                # this instance will not have the `instance_node` data yet
+                # until it's been saved/persisted at least once.
+                # TODO: Correctly define the subset name using templates
+                subset_name = "{}{}".format(self.family, layer.name())
+                instance_data = {
+                    "asset": legacy_io.Session["AVALON_ASSET"],
+                    "task": legacy_io.Session["AVALON_TASK"],
+                    "variant": layer.name(),
+                }
+                instance = CreatedInstance(
+                    family=self.family,
+                    subset_name=subset_name,
+                    data=instance_data,
+                    creator=self
                 )
-                raise CreatorError("Cannot get pools from Muster")
-        try:
-            pools = response.json()["ResponseData"]["pools"]
-        except ValueError as e:
-            self.log.error("Invalid response from Muster server {}".format(e))
-            raise CreatorError("Invalid response from Muster server")
 
-        return pools
+            instance.transient_data["layer"] = layer
+            self._add_instance_to_context(instance)
 
-    def _show_login(self):
-        # authentication token expired so we need to login to Muster
-        # again to get it. We use Pype API call to show login window.
-        api_url = "{}/muster/show_login".format(
-            os.environ["OPENPYPE_WEBSERVER_URL"])
-        self.log.debug(api_url)
-        login_response = requests_get(api_url, timeout=1)
-        if login_response.status_code != 200:
-            self.log.error("Cannot show login form to Muster")
-            raise CreatorError("Cannot show login form to Muster")
+    def find_layer_instance_node(self, layer):
+        connected_sets = cmds.listConnections(
+            "{}.message".format(layer.name()),
+            source=False,
+            destination=True,
+            type="objectSet"
+        ) or []
+
+        for node in connected_sets:
+            if not cmds.attributeQuery("creator_identifier",
+                                       node=node,
+                                       exists=True):
+                continue
+
+            creator_identifier = cmds.getAttr(node + ".creator_identifier")
+            if creator_identifier == self.identifier:
+                self.log.info(f"Found node: {node}")
+                return node
+
+    def _create_layer_instance_node(self, layer):
+
+        # We only collect if a CreateRender instance exists
+        create_render_set = self._get_singleton_node()
+        if not create_render_set:
+            raise CreatorError("Creating a renderlayer instance node is not "
+                               "allowed if no 'CreateVRayScene' instance "
+                               "exists")
+
+        namespace = "_{}".format(self.singleton_node_name)
+        namespace = ensure_namespace(namespace)
+
+        name = "{}:{}".format(namespace, layer.name())
+        render_set = cmds.sets(name=name, empty=True)
+
+        # Keep an active link with the renderlayer so we can retrieve it
+        # later by a physical maya connection instead of relying on the layer
+        # name
+        cmds.addAttr(render_set, longName="renderlayer", at="message")
+        cmds.connectAttr("{}.message".format(layer.name()),
+                         "{}.renderlayer".format(render_set), force=True)
+
+        # Add the set to the 'CreateRender' set.
+        cmds.sets(render_set, forceElement=create_render_set)
+
+        return render_set
+
+    def update_instances(self, update_list):
+        # We only generate the persisting layer data into the scene once
+        # we save with the UI on e.g. validate or publish
+        for instance, _changes in update_list:
+            instance_node = instance.data.get("instance_node")
+
+            # Ensure a node exists to persist the data to
+            if not instance_node:
+                layer = instance.transient_data["layer"]
+                instance_node = self._create_layer_instance_node(layer)
+                instance.data["instance_node"] = instance_node
+            else:
+                # TODO: Keep name in sync with the actual renderlayer?
+                self.log.warning("No instance node found for to be updated "
+                                 "instance: {}".format(instance))
+                continue
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+
+    def imprint_instance_node(self, node, data):
+        # Do not ever try to update the `renderlayer` since it'll try
+        # to remove the attribute and recreate it but fail to keep it a
+        # message attribute link. We only ever imprint that on the initial
+        # node creation.
+        # TODO: Improve how this is handled
+        data.pop("renderlayer", None)
+        data.get("creator_attributes", {}).pop("renderlayer", None)
+
+        return super(CreateVRayScene, self).imprint_instance_node(node,
+                                                                  data=data)
+
+    def remove_instances(self, instances):
+        """Remove specified instances from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        # Instead of removing the single instance or renderlayers we instead
+        # remove the CreateRender node this creator relies on to decide whether
+        # it should collect anything at all.
+        nodes = self._get_singleton_node(return_all=True)
+        if nodes:
+            cmds.delete(nodes)
+
+        # Remove ALL the instances even if only one gets deleted
+        for instance in list(self.create_context.instances):
+            if instance.get("creator_identifier") == self.identifier:
+                self._remove_instance_from_context(instance)
+
+                # Remove the stored settings per renderlayer too
+                node = instance.data.get("instance_node")
+                if node and cmds.objExists(node):
+                    cmds.delete(node)
+
+    def get_instance_attr_defs(self):
+        """Create instance settings."""
+
+        return [
+            BoolDef("vraySceneMultipleFiles",
+                    label="V-Ray Scene Multiple Files",
+                    default=False),
+            BoolDef("exportOnFarm",
+                    label="Export on farm",
+                    default=False)
+        ]
