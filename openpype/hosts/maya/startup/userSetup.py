@@ -20,14 +20,13 @@ if settings["maya"]["explicit_plugins_loading"]["enabled"]:
         project_settings = get_project_settings(os.environ["AVALON_PROJECT"])
         maya_settings = project_settings["maya"]
         explicit_plugins_loading = maya_settings["explicit_plugins_loading"]
-        if explicit_plugins_loading["enabled"]:
-            for plugin in explicit_plugins_loading["plugins_to_load"]:
-                if plugin["enabled"]:
-                    print("Loading " + plugin["name"])
-                    try:
-                        cmds.loadPlugin(plugin["name"], quiet=True)
-                    except RuntimeError as e:
-                        print(e)
+        for plugin in explicit_plugins_loading["plugins_to_load"]:
+            if plugin["enabled"]:
+                print("Loading plug-in: " + plugin["name"])
+                try:
+                    cmds.loadPlugin(plugin["name"], quiet=True)
+                except RuntimeError as e:
+                    print(e)
 
     cmds.evalDeferred(
         _explicit_load_plugins,
