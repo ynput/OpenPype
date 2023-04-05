@@ -172,8 +172,8 @@ class CreateRender(plugin.Creator):
                                 try:
                                     self.log.info("Renaming..")
                                     new_name = "{}:{}".format(namespace,
-                                                              render_layer_name)
-                                    cmds.rename(obj ,new_name)
+                                                              render_layer_name)            # noqa
+                                    cmds.rename(obj, new_name)
                                 except RuntimeError:
                                     continue
 
