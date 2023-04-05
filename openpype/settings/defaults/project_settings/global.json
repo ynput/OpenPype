@@ -355,9 +355,6 @@
                 }
             ]
         },
-        "IntegrateAsset": {
-            "skip_host_families": []
-        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
