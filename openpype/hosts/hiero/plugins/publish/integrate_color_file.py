@@ -7,12 +7,106 @@ import pyblish.api
 import xml.etree.ElementTree
 from glob import glob
 from datetime import datetime
+import opentimelineio as otio
 
 THREED_LUTS = ["cube", "3dl", "csp", "lut"]
 TWOD_LUTS = ["ccc", "cc", "cdl"]
 
 # EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
 COLOR_FILE_EXTS = TWOD_LUTS + THREED_LUTS + ["edl"]
+
+
+def parse_edl_events(path, color_edits_only=False):
+    """
+    EDL is parsed using OTIO and then placed into a data struture for output "edl"
+    Data is stored under the understanding that it will be used for identifying plate names which are linked to CDLs
+
+    EDL LOC metadata is parsed with OTIO under markers and then regexed to find the main bit of information which
+    will link it to a plate name further down the line
+
+    Underscores are not counted ({0,}) but are left greedy incase naming doesn't follow normal shot convention
+    but instead follows plate pull naming convention.
+    Example: abc_101_010_010_element
+    Example: abc_101_010_010_element_fire
+
+    Examples of targeted matches:
+    abc_101_010_010_element
+    abc_101_010_010
+    abc_101_010
+    101_010_010
+
+    Examples of what does not match:
+    abc_101
+    101_001
+    _abc_101_010
+    abc_101_010_
+    """
+    shot_pattern = r"(?<!_)(?P<LOC>[a-zA-Z0-9]{3,4}_((?<=_)[a-zA-Z0-9]{3,4}_){1,2}[a-zA-Z0-9]{3,4}(?<!_)(_[a-zA-Z0-9]{1,}){0,})\b"
+
+    # ignore_timecode_mismatch is set to True to ensure that OTIO doesn't get confused by
+    # TO CLIP NAME and FROM CLIP NAME timecode ranges
+    timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
+
+    if len(timeline.tracks) > 1:
+        raise Exception('EDL can not contain more than one track. Something went wrong')
+
+    edl = {"events": {}}
+
+    # There is a possibility that the entry count doesn't start at 1.
+    # However it's extremely rare and it's purpose is to keep track of order
+    entry_count = 0
+    for clip in timeline.tracks[0].each_child():
+        if isinstance(clip, otio.schema.Clip):
+            entry_count += 1
+            loc_value = ""
+            tape_value = ""
+            entry = {"clip_name":clip.name}
+            if clip.metadata.get('cdl'):
+                cdl = clip.metadata['cdl']
+                entry.update(
+                    {
+                    "slope": tuple(cdl['asc_sop']["slope"]),
+                    "offset": tuple(cdl['asc_sop']["offset"]),
+                    "power": tuple(cdl['asc_sop']["power"]),
+                    "sat": cdl.get('asc_sat') or 1.0,
+                    }
+                )
+            else:
+                if color_edits_only:
+                    continue
+
+            if clip.markers:
+                # Join markers (*LOC). The data is strictly being stored to parse shot name
+                # Space is added to make parsing much easier and predictable
+                full_clip_loc = ' '.join([" "] + [m.name for m in clip.markers])
+                loc_match = re.search(shot_pattern, full_clip_loc)
+                loc_value = loc_match.group("LOC") if loc_match else ""
+
+            # Capture tape and source name
+            if clip.metadata.get("cmx_3600"):
+                if clip.metadata["cmx_3600"].get("reel"):
+                    tape_value = clip.metadata["cmx_3600"].get("reel")
+                # No need for source name? If matches clip name and clip name is more intentional?
+                # if clip.metadata("cmx_3600").get("comments"):
+                #     for comment in clip.metadata("cmx_3600").get("comments"):
+                #         if "source file" in comment.lower():
+                #             source_file_value = comment.split(":", 1)[-1].strip()
+                #             break
+
+            entry.update(
+                {
+                    "tape": tape_value,
+                    "LOC": loc_value,
+                }
+            )
+            edl["events"][str(entry_count)] = entry
+
+    # Finish EDL info
+    edl["first_entry"] = 1
+    edl["last_entry"] = entry_count
+
+    return edl
+
 
 def parse_cdl(path):
     with open(path, "r") as f:
