@@ -43,7 +43,13 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             ))
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
-        new_nodes = cmds.file(path, i=True, returnNewNodes=True)
+        new_nodes = cmds.file(
+            path,
+            i=True,
+            returnNewNodes=True,
+            preserveReferences=True,
+            loadReferenceDepth="all",
+        )
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
 
