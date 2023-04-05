@@ -58,6 +58,5 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
             raise KnownPublishError("Unable to retrieve version number from "
                                     "filename: {}".format(filename))
 
-        rootVersion = int(version)
-        context.data['version'] = rootVersion
+        context.data['version'] = int(version)
         self.log.info('Scene Version: %s' % context.data.get('version'))
