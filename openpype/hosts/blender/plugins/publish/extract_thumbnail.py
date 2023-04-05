@@ -20,7 +20,7 @@ class ExtractThumbnail(Extractor):
 
     label = "Extract Thumbnail"
     hosts = ["blender"]
-    families = ["review", "model", "rig"]
+    families = ["model", "rig"]
     order = pyblish.api.ExtractorOrder + 0.01
 
     def process(self, instance):
