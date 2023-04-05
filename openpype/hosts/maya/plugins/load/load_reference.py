@@ -117,7 +117,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     # Name of creator class that will be used to create animation instance
     animation_creator_name = "CreateAnimation"
 
-    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
+    def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
 
         try:
@@ -127,6 +127,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)

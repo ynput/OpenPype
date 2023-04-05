@@ -186,6 +186,8 @@ class ReferenceLoader(Loader):
                 custom_group_name
             )
 
+            options['group_name'] = group_name
+
             # Offset loaded subset
             if "offset" in options:
                 offset = [i * c for i in options["offset"]]
@@ -197,8 +199,7 @@ class ReferenceLoader(Loader):
                 context=context,
                 name=name,
                 namespace=namespace,
-                options=options,
-                group_name=group_name
+                options=options
             )
 
             # Only containerize if any nodes were loaded by the Loader
@@ -221,7 +222,7 @@ class ReferenceLoader(Loader):
 
         return loaded_containers
 
-    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
+    def process_reference(self, context, name, namespace, options):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
