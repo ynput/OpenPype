@@ -12,6 +12,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     Anatomy,
 )
+from openpype.pipeline.load import LoadError
 from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
@@ -149,9 +150,11 @@ class ReferenceLoader(Loader):
         loaded_containers = []
 
         if not custom_naming['namespace']:
-            raise ValueError("No namespace specified")
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
         elif not custom_naming['group_name']:
-            raise ValueError("No group name specified")
+            raise LoadError("No group name specified in "
+                            "Maya ReferenceLoader settings")
 
         custom_namespace = custom_naming['namespace'].format(
             asset_name=asset['name'],
