@@ -25,13 +25,6 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        maya_settings = instance.context.data["project_settings"]["maya"]
-        profiles = maya_settings["publish"]["ExtractPlayblast"]["profiles"]
-
-        if not profiles:
-            self.log.warning("No profiles present for Extract Playblast")
-            return
-
         self.log.info("Extracting capture..")
 
         camera = instance.data["review_camera"]
@@ -50,12 +43,26 @@ class ExtractThumbnail(publish.Extractor):
             "task_types": task_type,
             "subset": subset
         }
-        capture_preset = filter_profiles(
-            profiles, filtering_criteria, logger=self.log
-        )["capture_preset"]
-        preset = lib.load_capture_preset(
-            data=capture_preset
-        )
+
+        maya_settings = instance.context.data["project_settings"]["maya"]
+        plugin_settings = maya_settings["publish"]["ExtractPlayblast"]
+
+        capture_preset = plugin_settings["capture_preset"]
+        preset = {}
+        try:
+            preset = lib.load_capture_preset(data=capture_preset)
+        except KeyError as ke:
+            self.log.error("Error loading capture presets: {}".format(str(ke)))
+
+        if plugin_settings["profiles"]:
+            capture_preset = filter_profiles(
+                plugin_settings["profiles"],
+                filtering_criteria,
+                logger=self.log
+            )["capture_preset"]
+            preset = lib.load_capture_preset(data=capture_preset)
+        else:
+            self.log.warning("No profiles present for Extract Playblast")
 
         # "isolate_view" will already have been applied at creation, so we'll
         # ignore it here.

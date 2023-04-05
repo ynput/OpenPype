@@ -34,6 +34,7 @@ class ExtractPlayblast(publish.Extractor):
     hosts = ["maya"]
     families = ["review"]
     optional = True
+    capture_preset = {}
     profiles = None
 
     def _capture(self, preset):
@@ -48,10 +49,6 @@ class ExtractPlayblast(publish.Extractor):
         self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
-        if not self.profiles:
-            self.log.warning("No profiles present for Extract Playblast")
-            return
-
         self.log.info("Extracting capture..")
 
         # get scene fps
@@ -85,12 +82,15 @@ class ExtractPlayblast(publish.Extractor):
             "task_types": task_type,
             "subset": subset
         }
-        capture_preset = filter_profiles(
-            self.profiles, filtering_criteria, logger=self.log
-        )["capture_preset"]
-        preset = lib.load_capture_preset(
-            data=capture_preset
-        )
+        capture_preset = self.capture_preset
+        preset = lib.load_capture_preset(data=self.capture_preset)
+        if self.profiles:
+            capture_preset = filter_profiles(
+                self.profiles, filtering_criteria, logger=self.log
+            )["capture_preset"]
+            preset = lib.load_capture_preset(data=capture_preset)
+        else:
+            self.log.warning("No profiles present for Extract Playblast")
 
         # "isolate_view" will already have been applied at creation, so we'll
         # ignore it here.
