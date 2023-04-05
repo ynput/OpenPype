@@ -173,19 +173,19 @@ class ReferenceLoader(Loader):
             )
         )
 
-        namespace = lib.unique_namespace(
-            custom_namespace,
-            prefix="_" if custom_namespace[0].isdigit() else "",
-            suffix=""
-        )
-        group_name = "{}:{}".format(
-            namespace,
-            custom_group_name
-        )
-
         count = options.get("count") or 1
 
         for c in range(0, count):
+            namespace = lib.unique_namespace(
+                custom_namespace,
+                prefix="_" if custom_namespace[0].isdigit() else "",
+                suffix=""
+            )
+            group_name = "{}:{}".format(
+                namespace,
+                custom_group_name
+            )
+
             # Offset loaded subset
             if "offset" in options:
                 offset = [i * c for i in options["offset"]]
@@ -221,7 +221,7 @@ class ReferenceLoader(Loader):
 
         return loaded_containers
 
-    def process_reference(self, context, name, namespace, data, group_name=None):  # noqa
+    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
