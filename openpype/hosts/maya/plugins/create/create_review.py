@@ -45,9 +45,7 @@ class CreateReview(plugin.Creator):
         )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
 
         preset = None
-        if not profiles:
-            self.log.warning("No profiles present for extract playblast.")
-        else:
+        if profiles:
             asset_doc = get_asset_by_name(project_name, data["asset"])
             task_name = get_current_task_name()
             task_type = asset_doc["data"]["tasks"][task_name]["type"]
@@ -62,6 +60,8 @@ class CreateReview(plugin.Creator):
             preset = filter_profiles(
                 profiles, filtering_criteria, logger=self.log
             )["capture_preset"]
+        else:
+            self.log.warning("No profiles present for extract playblast.")
 
         # Option for using Maya or asset frame range in settings.
         frame_range = lib.get_frame_range()
