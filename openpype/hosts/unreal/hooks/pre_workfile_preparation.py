@@ -210,7 +210,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
             self.log.info((
-                f"{self.signature} using OpenPype plugin from "
+                f"{self.signature} using Ayon plugin from "
                 f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
             ))
         env_key = "OPENPYPE_UNREAL_PLUGIN"

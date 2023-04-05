@@ -93,7 +93,7 @@ class UEProjectGenerationWorker(QtCore.QObject):
         commandlet_cmd = [
             f"{ue_editor_exe.as_posix()}",
             f"{cmdlet_project.as_posix()}",
-            "-run=OPGenerateProject",
+            "-run=AyonGenerateProject",
             f"{project_file.resolve().as_posix()}",
         ]
 
@@ -300,7 +300,7 @@ class UEPluginInstallWorker(QtCore.QObject):
 
         temp_dir: Path = src_plugin_dir.parent / "Temp"
         temp_dir.mkdir(exist_ok=True)
-        uplugin_path: Path = src_plugin_dir / "OpenPype.uplugin"
+        uplugin_path: Path = src_plugin_dir / "Ayon.uplugin"
 
         # in order to successfully build the plugin,
         # It must be built outside the Engine directory and then moved
@@ -332,7 +332,7 @@ class UEPluginInstallWorker(QtCore.QObject):
             raise RuntimeError(msg)
 
         # Copy the contents of the 'Temp' dir into the
-        # 'OpenPype' directory in the engine
+        # 'Ayon' directory in the engine
         dir_util.copy_tree(temp_dir.as_posix(),
                            plugin_build_path.as_posix())
 
@@ -356,7 +356,7 @@ class UEPluginInstallWorker(QtCore.QObject):
 
         # Create a path to the plugin in the engine
         op_plugin_path = self.engine_path / "Engine/Plugins/Marketplace" \
-                                            "/OpenPype"
+                                            "/Ayon"
 
         if not op_plugin_path.is_dir():
             self.installing.emit("Installing and building the plugin ...")
