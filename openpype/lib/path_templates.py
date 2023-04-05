@@ -256,7 +256,8 @@ class TemplatesDict(object):
         elif isinstance(templates, dict):
             self._raw_templates = copy.deepcopy(templates)
             self._templates = templates
-            self._objected_templates = self.create_objected_templates(templates)
+            self._objected_templates = self.create_objected_templates(
+                templates)
         else:
             raise TypeError("<{}> argument must be a dict, not {}.".format(
                 self.__class__.__name__, str(type(templates))
