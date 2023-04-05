@@ -1202,10 +1202,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         template_data["family"] = "render"
         template_data["version"] = version
 
-        anatomy_filled = anatomy.format(template_data)
-
         if "folder" in anatomy.templates["render"]:
-            publish_folder = anatomy_filled["render"]["folder"]
+            publish_folder = anatomy.templates_obj["render"]["folder"].format(
+                template_data
+            )
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
@@ -1215,8 +1215,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["render"]["path"]
-            # Directory
+            file_path = anatomy.templates_obj["render"]["path"].format(
+                template_data
+            )
             publish_folder = os.path.dirname(file_path)
 
         return publish_folder
