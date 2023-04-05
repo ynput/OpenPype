@@ -682,7 +682,7 @@ class AnatomyTemplates(TemplatesDict):
 
         result = super(AnatomyTemplates, self)._format_value(value, data)
         if isinstance(result, TemplateResult):
-            rootless_path = self._rootless_path(result, data)
+            rootless_path = self.rootless_path_from_result(result)
             result = AnatomyTemplateResult(result, rootless_path)
         return result
 
@@ -913,7 +913,8 @@ class AnatomyTemplates(TemplatesDict):
 
         return keys_by_subkey
 
-    def _dict_to_subkeys_list(self, subdict, pre_keys=None):
+    @classmethod
+    def _dict_to_subkeys_list(cls, subdict, pre_keys=None):
         if pre_keys is None:
             pre_keys = []
         output = []
@@ -922,7 +923,7 @@ class AnatomyTemplates(TemplatesDict):
             result = list(pre_keys)
             result.append(key)
             if isinstance(value, dict):
-                for item in self._dict_to_subkeys_list(value, result):
+                for item in cls._dict_to_subkeys_list(value, result):
                     output.append(item)
             else:
                 output.append(result)
@@ -935,7 +936,17 @@ class AnatomyTemplates(TemplatesDict):
             return {key_list[0]: value}
         return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
 
-    def _rootless_path(self, result, final_data):
+    @classmethod
+    def rootless_path_from_result(cls, result):
+        """Calculate rootless path from formatting result.
+
+        Args:
+            result (StringTemplate): Result of StringTemplate formatting.
+
+        Returns:
+            str: Rootless path if result contains one of anatomy roots.
+        """
+
         used_values = result.used_values
         missing_keys = result.missing_keys
         template = result.template
@@ -951,7 +962,7 @@ class AnatomyTemplates(TemplatesDict):
             if "root" in invalid_type:
                 return
 
-        root_keys = self._dict_to_subkeys_list({"root": used_values["root"]})
+        root_keys = cls._dict_to_subkeys_list({"root": used_values["root"]})
         if not root_keys:
             return
 
