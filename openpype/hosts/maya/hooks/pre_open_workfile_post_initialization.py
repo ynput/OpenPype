@@ -1,10 +1,10 @@
 from openpype.lib import PreLaunchHook
 
 
-class MayaPreAutoLoadPlugins(PreLaunchHook):
-    """Define -noAutoloadPlugins command flag."""
+class MayaPreOpenWorkfilePostInitialization(PreLaunchHook):
+    """Define whether open last workfile should run post initialize."""
 
-    # Before AddLastWorkfileToLaunchArgs
+    # Before AddLastWorkfileToLaunchArgs.
     order = 9
     app_groups = ["maya"]
 
@@ -15,15 +15,11 @@ class MayaPreAutoLoadPlugins(PreLaunchHook):
             return
 
         maya_settings = self.data["project_settings"]["maya"]
-        enabled = maya_settings["explicit_plugins_loading"]["enabled"]
+        enabled = maya_settings["open_workfile_post_initialization"]
         if enabled:
             # Force disable the `AddLastWorkfileToLaunchArgs`.
             self.data.pop("start_last_workfile")
 
-            # Force post initialization so our dedicated plug-in load can run
-            # prior to Maya opening a scene file.
+            self.log.debug("Opening workfile post initialization.")
             key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
             self.launch_context.env[key] = "1"
-
-            self.log.debug("Explicit plugins loading.")
-            self.launch_context.launch_args.append("-noAutoloadPlugins")

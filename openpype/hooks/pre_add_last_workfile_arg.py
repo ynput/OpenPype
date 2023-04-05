@@ -42,18 +42,5 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
             self.log.info("Current context does not have any workfile yet.")
             return
 
-        # Determine whether to open workfile post initialization.
-        if self.host_name == "maya":
-            keys = [
-                "open_workfile_post_initialization", "explicit_plugins_loading"
-            ]
-            maya_settings = self.data["project_settings"]["maya"]
-            values = [maya_settings[k] for k in keys]
-            if any(values):
-                self.log.debug("Opening workfile post initialization.")
-                key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
-                self.data["env"][key] = "1"
-                return
-
         # Add path to workfile to arguments
         self.launch_context.launch_args.append(last_workfile)
