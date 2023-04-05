@@ -60,5 +60,4 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
 
         rootVersion = int(version)
         context.data['version'] = rootVersion
-        self.log.info("{}".format(type(rootVersion)))
         self.log.info('Scene Version: %s' % context.data.get('version'))
