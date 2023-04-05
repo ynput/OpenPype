@@ -699,7 +699,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     src_file_name)
 
                 template_obj = anatomy.templates_obj[template_name]["path"]
-                dst = template_obj.format(template_data)
+                dst = template_obj.format_strict(template_data)
                 src = os.path.join(stagingdir, src_file_name)
                 transfers.append((src, dst))
                 if repre_context is None:
@@ -760,7 +760,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 else:
                     template_data["frame"] = index
                 template_obj = anatomy.templates_obj[template_name]["path"]
-                template_filled = template_obj.format(template_data)
+                template_filled = template_obj.format_strict(template_data)
                 dst_filepaths.append(template_filled)
                 if repre_context is None:
                     self.log.debug(
@@ -797,7 +797,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["udim"] = repre["udim"][0]
             # Construct destination filepath from template
             template_obj = anatomy.templates_obj[template_name]["path"]
-            template_filled = template_obj.format(template_data)
+            template_filled = template_obj.format_strict(template_data)
             repre_context = template_filled.used_values
             dst = os.path.normpath(template_filled)
 
@@ -809,7 +809,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       ends up in the same folder is valid?
         if not instance.data.get("publishDir"):
             template_obj = anatomy.templates_obj[template_name]["folder"]
-            template_filled = template_obj.format(template_data)
+            template_filled = template_obj.format_strict(template_data)
             instance.data["publishDir"] = template_filled
 
         for key in self.db_representation_context_keys:
