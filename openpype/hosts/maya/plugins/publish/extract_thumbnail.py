@@ -5,10 +5,9 @@ import json
 
 import capture
 
-from openpype.pipeline import publish, legacy_io
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.settings import get_project_settings
 
 from maya import cmds
 
@@ -26,11 +25,8 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        project_name = instance.context.data["projectName"]
-        project_settings = instance.context.data["project_settings"]
-        profiles = project_settings["maya"]["publish"]["ExtractPlayblast"]["profiles"]
-            project_name
-        )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
+        maya_settings = instance.context.data["project_settings"]["maya"]
+        profiles = maya_settings["publish"]["ExtractPlayblast"]["profiles"]
 
         if not profiles:
             self.log.warning("No profiles present for Extract Playblast")

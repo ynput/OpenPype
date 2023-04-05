@@ -7,7 +7,7 @@ from openpype.hosts.maya.api import (
     plugin
 )
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_task_name
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.client import get_asset_by_name
 
