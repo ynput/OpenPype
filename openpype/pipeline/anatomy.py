@@ -642,12 +642,6 @@ class AnatomyTemplates(TemplatesDict):
         self.anatomy = anatomy
         self.loaded_project = None
 
-    def __getitem__(self, key):
-        return self.templates[key]
-
-    def get(self, key, default=None):
-        return self.templates.get(key, default)
-
     def reset(self):
         self._raw_templates = None
         self._templates = None
