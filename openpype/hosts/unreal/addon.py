@@ -15,7 +15,7 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         """Modify environments to contain all required for implementation."""
         # Set OPENPYPE_UNREAL_PLUGIN required for Unreal implementation
 
-        ue_version = app.name.replace("-",".")
+        ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
             UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
         )
