@@ -83,10 +83,10 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "hierarchy": instance.data["hierarchy"]
             })
 
-        anatomy_filled = anatomy.format(template_data)
-
         if "folder" in anatomy.templates["publish"]:
-            publish_folder = anatomy_filled["publish"]["folder"]
+            publish_folder = anatomy.templates_obj["publish"]["folder"].format(
+                template_data
+            )
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
@@ -95,8 +95,9 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(anatomy.project_name))
 
-            file_path = anatomy_filled["publish"]["path"]
-            # Directory
+            file_path = anatomy.templates_obj["publish"]["path"].format(
+                template_data
+            )
             publish_folder = os.path.dirname(file_path)
 
         publish_folder = os.path.normpath(publish_folder)
