@@ -108,7 +108,7 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
         label += "  [{0}-{1}]".format(
             int(data["frameStartHandle"]), int(data["frameEndHandle"])
         )
-        instance.data.["label"] = label
+        instance.data["label"] = label
 
     def get_render_attribute(self, attr, layer):
         """Get attribute from render options.
