@@ -38,8 +38,9 @@ if settings["maya"]["explicit_plugins_loading"]["enabled"]:
 key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
 if bool(int(os.environ.get(key, "0"))):
     def _log_and_open():
-        print("Opening \"{}\"".format(os.environ["AVALON_LAST_WORKFILE"]))
-        cmds.file(os.environ["AVALON_LAST_WORKFILE"], open=True, force=True)
+        path = os.environ["AVALON_LAST_WORKFILE"]
+        print("Opening \"{}\"".format(path))
+        cmds.file(path, open=True, force=True)
     cmds.evalDeferred(
         _log_and_open,
         lowestPriority=True
