@@ -263,10 +263,10 @@ class TemplatesDict(object):
             ))
 
     def __getitem__(self, key):
-        return self.templates[key]
+        return self.objected_templates[key]
 
     def get(self, key, *args, **kwargs):
-        return self.templates.get(key, *args, **kwargs)
+        return self.objected_templates.get(key, *args, **kwargs)
 
     @property
     def raw_templates(self):
