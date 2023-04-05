@@ -263,7 +263,6 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
                 for standin in arnold_standins:
                     if standin in nodes:
                         arnold_standin.assign_look(standin, subset_name)
-                        
                 nodes = list(set(item["nodes"]).difference(arnold_standins))
             else:
                 self.echo(
