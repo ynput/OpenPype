@@ -77,12 +77,23 @@
                                         "type": "label",
                                         "label": "<b>Display Options</b>"
                                     },
-
+                                    {
+                                        "type": "boolean",
+                                        "key": "override_display",
+                                        "label": "Override display options",
+                                        "default": true
+                                    },
                                     {
                                         "type": "color",
                                         "key": "background",
                                         "label": "Background Color:    ",
                                         "default": [125, 125, 125, 255]
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "displayGradient",
+                                        "label": "Display background gradient",
+                                        "default": true
                                     },
                                     {
                                         "type": "color",
@@ -95,18 +106,6 @@
                                         "key": "backgroundTop",
                                         "label": "Background Top:    ",
                                         "default": [125, 125, 125, 255]
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "override_display",
-                                        "label": "Override display options",
-                                        "default": true
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "displayGradient",
-                                        "label": "Display background gradient",
-                                        "default": true
                                     }
                                 ]
                             },
