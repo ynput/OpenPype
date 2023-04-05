@@ -38,7 +38,7 @@ class CreateReview(plugin.Creator):
         super(CreateReview, self).__init__(*args, **kwargs)
         data = OrderedDict(**self.data)
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = get_current_project_name()
         profiles = get_project_settings(
             project_name
         )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
