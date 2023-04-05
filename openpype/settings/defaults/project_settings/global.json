@@ -267,7 +267,9 @@
                             "BOTTOM_CENTERED": "{asset}",
                             "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
                             "filter": {
-                                "families": [],
+                                "families": [
+                                    "review"
+                                ],
                                 "tags": []
                             }
                         }
