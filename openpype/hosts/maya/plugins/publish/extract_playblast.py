@@ -37,11 +37,12 @@ class ExtractPlayblast(publish.Extractor):
     profiles = None
 
     def _capture(self, preset):
-        self.log.info(
-            "Using preset:\n{}".format(
-                json.dumps(preset, sort_keys=True, indent=4)
+        if os.environ.get("OPENPYPE_DEBUG") == "1":
+            self.log.debug(
+                "Using preset: {}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
             )
-        )
 
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))

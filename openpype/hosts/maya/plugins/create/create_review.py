@@ -1,3 +1,4 @@
+import os
 from collections import OrderedDict
 import json
 
@@ -80,11 +81,12 @@ class CreateReview(plugin.Creator):
         data["panZoom"] = self.panZoom
 
         if preset:
-            self.log.info(
-                "Using preset: {}".format(
-                    json.dumps(preset, indent=4, sort_keys=True)
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.debug(
+                    "Using preset: {}".format(
+                        json.dumps(preset, indent=4, sort_keys=True)
+                    )
                 )
-            )
             data["review_width"] = preset["Resolution"]["width"]
             data["review_height"] = preset["Resolution"]["height"]
             data["isolate"] = preset["Generic"]["isolate_view"]

@@ -164,11 +164,12 @@ class ExtractThumbnail(publish.Extractor):
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
 
-            self.log.info(
-                "Using preset: {}".format(
-                    json.dumps(preset, indent=4, sort_keys=True)
+            if os.environ.get("OPENPYPE_DEBUG") == "1":
+                self.log.debug(
+                    "Using preset: {}".format(
+                        json.dumps(preset, indent=4, sort_keys=True)
+                    )
                 )
-            )
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
