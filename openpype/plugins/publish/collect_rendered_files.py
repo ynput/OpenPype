@@ -99,6 +99,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             self.log.info("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
+
             instance.data.update(instance_data)
 
             # stash render job id for later validation
@@ -109,15 +110,11 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
-                files = repre_data["files"]
-                staging_dir = repre_data["stagingDir"]
-                if isinstance(files, str):
-                    files = [files]
+                staging_dir = repre_data.get("stagingDir")
 
-                for file_name in files:
-                    expected_file = os.path.join(staging_dir, file_name)
+                if staging_dir:
                     instance.context.data["cleanupFullPaths"].append(
-                        expected_file)
+                        staging_dir)
 
             instance.data["representations"] = representations
 
