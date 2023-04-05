@@ -3,8 +3,8 @@ from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.maya.api import plugin
 
 
-class LegacyConverted(SubsetConvertorPlugin,
-                      plugin.MayaCreatorBase):
+class MayaLegacyConvertor(SubsetConvertorPlugin,
+                          plugin.MayaCreatorBase):
     """Find and convert any legacy subsets in the scene.
 
     This Convertor will find all legacy subsets in the scene and will
