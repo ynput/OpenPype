@@ -10,12 +10,14 @@ from openpype.hosts.maya.api.lib import (
     set_attribute
 )
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     RepairAction,
     ValidateMeshOrder,
 )
 
 
-class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
+class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validate the mesh has default Arnold attributes.
 
     It compares all Arnold attributes from a default mesh. This is to ensure
@@ -30,12 +32,14 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
         openpype.hosts.maya.api.action.SelectInvalidAction,
         RepairAction
     ]
-    optional = True
-    if cmds.getAttr(
-       "defaultRenderGlobals.currentRenderer").lower() == "arnold":
-        active = True
-    else:
-        active = False
+
+    optional = False
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        # todo: this should not be done this way
+        attr = "defaultRenderGlobals.currentRenderer"
+        cls.active = cmds.getAttr(attr).lower() == "arnold"
 
     @classmethod
     def get_default_attributes(cls):
@@ -101,6 +105,8 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
                     )
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid_attributes(instance, compute=True)
         if invalid:
