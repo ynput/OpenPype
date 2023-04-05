@@ -933,7 +933,7 @@ class AnatomyTemplates(TemplatesDict):
         """Calculate rootless path from formatting result.
 
         Args:
-            result (StringTemplate): Result of StringTemplate formatting.
+            result (TemplateResult): Result of StringTemplate formatting.
 
         Returns:
             str: Rootless path if result contains one of anatomy roots.
