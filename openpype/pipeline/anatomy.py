@@ -610,8 +610,8 @@ class AnatomyTemplateResult(TemplateResult):
 class AnatomyStringTemplate(StringTemplate):
     """String template which has access to anatomy."""
 
-    def __init__(self, anatomy, template):
-        self._anatomy = anatomy
+    def __init__(self, anatomy_templates, template):
+        self.anatomy_templates = anatomy_templates
         super(AnatomyStringTemplate, self).__init__(template)
 
     def format(self, data):
@@ -624,10 +624,13 @@ class AnatomyStringTemplate(StringTemplate):
             AnatomyTemplateResult: Formatting result.
         """
 
+        anatomy_templates = self.anatomy_templates
         if not data.get("root"):
             data = copy.deepcopy(data)
-            data["root"] = self.anatomy.roots
-        return super(AnatomyStringTemplate, self).format(data)
+            data["root"] = anatomy_templates.anatomy.roots
+        result = StringTemplate.format(self, data)
+        rootless_path = anatomy_templates.rootless_path_from_result(result)
+        return AnatomyTemplateResult(result, rootless_path)
 
 
 class AnatomyTemplates(TemplatesDict):
@@ -679,12 +682,7 @@ class AnatomyTemplates(TemplatesDict):
     def _format_value(self, value, data):
         if isinstance(value, RootItem):
             return self._solve_dict(value, data)
-
-        result = super(AnatomyTemplates, self)._format_value(value, data)
-        if isinstance(result, TemplateResult):
-            rootless_path = self.rootless_path_from_result(result)
-            result = AnatomyTemplateResult(result, rootless_path)
-        return result
+        return super(AnatomyTemplates, self)._format_value(value, data)
 
     def set_templates(self, templates):
         if not templates:
