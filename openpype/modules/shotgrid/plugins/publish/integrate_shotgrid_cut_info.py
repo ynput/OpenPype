@@ -26,7 +26,7 @@ def get_tag_handles(track_item):
 
 
 class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
-
+    """Gathers cut info from instance and clip tag data. That data is then updated on the shot entity in Shotgrid"""
     order = pyblish.api.IntegratorOrder + 0.4999
     label = "Integrate Shotgrid Cut Info"
     hosts = ["hiero"]
@@ -39,14 +39,11 @@ class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
         self.sg = context.data.get("shotgridSession")
         shotgrid_version = instance.data.get("shotgridVersion")
 
-        # If cut already added to shotgrid shot then don't update cut?
         if not shotgrid_version:
             self.log.warning("No Shotgrid version collect. Cut Info could not be integrated into shot")
             return
 
-
         track_item = instance.data["item"]
-        openpype_tag = phiero.get_track_item_tags(track_item)
 
         # handleStart and handleEnd are overriden to reflect media range and not absolute handles
         # Solution is to take the handle values directly from the tag instead of instance data
@@ -68,9 +65,10 @@ class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
             )
         )
 
-        result = self.sg.update("Shot",
-                       shotgrid_version["entity"]["id"],
-                       shot_data,
-                       )
+        result = self.sg.update(
+            "Shot",
+            shotgrid_version["entity"]["id"],
+            shot_data,
+       )
         if not result:
             self.log.warning('Failed to update shot cut information. Most likely SG connection was severed')
