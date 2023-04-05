@@ -15,5 +15,7 @@ class CreateLayout(plugin.MayaCreator):
         return [
             BoolDef("groupLoadedAssets",
                     label="Group Loaded Assets",
+                    tooltip="Enable this when you want to publish group of "
+                            "loaded asset",
                     default=False)
         ]
