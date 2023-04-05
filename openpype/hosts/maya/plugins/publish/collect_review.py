@@ -31,9 +31,6 @@ class CollectReview(pyblish.api.InstancePlugin):
         members = instance.data['setMembers']
         self.log.debug('members: {}'.format(members))
         cameras = cmds.ls(members, long=True, dag=True, cameras=True)
-        camera = None
-        if cameras:
-            camera = cameras[0]
 
         context = instance.context
         objectset = context.data['objectsets']
@@ -64,7 +61,8 @@ class CollectReview(pyblish.api.InstancePlugin):
             else:
                 data['families'] = ['review']
 
-            data['review_camera'] = camera
+            data["cameras"] = cameras
+            data['review_camera'] = cameras[0] if cameras else None
             data['frameStartFtrack'] = instance.data["frameStartHandle"]
             data['frameEndFtrack'] = instance.data["frameEndHandle"]
             data['frameStartHandle'] = instance.data["frameStartHandle"]
@@ -98,7 +96,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 self.log.debug("Existing subsets found, keep legacy name.")
                 instance.data['subset'] = legacy_subset_name
 
-            instance.data['review_camera'] = camera
+            instance.data["cameras"] = cameras
+            instance.data['review_camera'] = cameras[0] if cameras else None
             instance.data['frameStartFtrack'] = \
                 instance.data["frameStartHandle"]
             instance.data['frameEndFtrack'] = \

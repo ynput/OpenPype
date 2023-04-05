@@ -15,9 +15,7 @@ class ValidateReview(pyblish.api.InstancePlugin):
     families = ["review"]
 
     def process(self, instance):
-        cameras = cmds.ls(
-            instance.data["setMembers"], long=True, dag=True, cameras=True
-        )
+        cameras = instance.data["cameras"]
 
         # validate required settings
         if len(cameras) == 0:
@@ -31,5 +29,4 @@ class ValidateReview(pyblish.api.InstancePlugin):
                 "Cameras found: {}".format(instance, ", ".join(cameras))
             )
 
-        camera = cameras[0]
-        self.log.debug('camera: {}'.format(camera))
+        self.log.debug('camera: {}'.format(instance.data["review_camera"]))
