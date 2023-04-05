@@ -1,12 +1,9 @@
 """Python 3 only implementation."""
 import os
-import shutil
 import asyncio
 import threading
 import concurrent.futures
 from time import sleep
-
-from openpype.pipeline.template_data import get_template_data
 
 from .providers import lib
 from openpype.client.entity_links import get_linked_representation_id
@@ -14,12 +11,8 @@ from openpype.lib import Logger
 from openpype.lib.local_settings import get_local_site_id
 from openpype.modules.base import ModulesManager
 from openpype.pipeline import Anatomy
+from openpype.client.entities import get_asset_by_name
 from openpype.pipeline.load.utils import get_representation_path_with_anatomy
-from openpype.pipeline.workfile.path_resolving import (
-    get_workfile_template_key,
-)
-from openpype.settings.lib import get_project_settings
-from openpype.client.entities import get_asset_by_name, get_project
 
 from .utils import SyncStatus, ResumableError
 
@@ -205,39 +198,28 @@ def _site_is_working(module, project_name, site_name, site_config):
 def download_last_published_workfile(
     host_name: str,
     project_name: str,
-    asset_name: str,
     task_name: str,
-    last_published_workfile_path: str,
     workfile_representation: dict,
     max_retries: int,
     anatomy: Anatomy = None,
-    asset_doc: dict = None,
 ) -> str:
-    """Download the last published workfile, and return its path.
+    """Download the last published workfile
 
     Args:
         host_name (str): Host name.
         project_name (str): Project name.
-        asset_name (str): Asset name.
         task_name (str): Task name.
-        last_published_workfile_path (str): Last published workfile
-            path.
         workfile_representation (dict): Workfile representation.
         max_retries (int): complete file failure only after so many attempts
         anatomy (Anatomy, optional): Anatomy (Used for optimization).
             Defaults to None.
-        asset_doc (dict, optional): Asset doc (Used for optimization).
-            Defaults to None.
 
     Returns:
-        str: New local workfile path.
+        str: last published workfile path localized
     """
 
     if not anatomy:
         anatomy = Anatomy(project_name)
-
-    if not asset_doc:
-        asset_doc = get_asset_by_name(project_name, asset_name)
 
     # Get sync server module
     sync_server = ModulesManager().modules_by_name.get("sync_server")
@@ -251,6 +233,13 @@ def download_last_published_workfile(
                 task_name, host_name
             )
         )
+        return
+
+    last_published_workfile_path = get_representation_path_with_anatomy(
+        workfile_representation, anatomy
+    )
+    if (not last_published_workfile_path or
+            not os.path.exists(last_published_workfile_path)):
         return
 
     # If representation isn't available on remote site, then return.
@@ -287,7 +276,7 @@ def download_last_published_workfile(
                 priority=99
             )
     sync_server.reset_timer()
-
+    print("Starting to download:{}".format(last_published_workfile_path))
     # While representation unavailable locally, wait.
     while not sync_server.is_representation_on_site(
         project_name, workfile_representation["_id"], local_site_id,
@@ -295,38 +284,7 @@ def download_last_published_workfile(
     ):
         sleep(5)
 
-    if not last_published_workfile_path:
-        last_published_workfile_path = get_representation_path_with_anatomy(
-            workfile_representation, anatomy
-        )
-    project_doc = get_project(project_name)
-
-    # Get workfile data
-    workfile_data = get_template_data(
-        project_doc, asset_doc, task_name, host_name
-    )
-
-    extension = last_published_workfile_path.split(".")[-1]
-
-    project_settings = get_project_settings(project_name)
-    template_key = get_workfile_template_key(
-        task_name, host_name, project_name, project_settings
-    )
-
-    workfile_data["version"] = (
-        workfile_representation["context"]["version"] + 1)
-    workfile_data["ext"] = extension
-
-    anatomy_result = anatomy.format(workfile_data)
-    local_workfile_path = anatomy_result[template_key]["path"]
-
-    # Copy last published workfile to local workfile directory
-    shutil.copy(
-        last_published_workfile_path,
-        local_workfile_path,
-    )
-
-    return local_workfile_path
+    return last_published_workfile_path
 
 
 class SyncServerThread(threading.Thread):

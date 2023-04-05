@@ -1,15 +1,21 @@
 import os
+import shutil
+
 from openpype.client.entities import (
     get_representations,
+    get_project
 )
 
 from openpype.lib import PreLaunchHook
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.pipeline.load.utils import get_representation_path_with_anatomy
-from openpype.settings.lib import get_project_settings
 from openpype.modules.sync_server.sync_server import (
     download_last_published_workfile,
 )
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.workfile.path_resolving import (
+    get_workfile_template_key,
+)
+from openpype.settings.lib import get_project_settings
 
 
 class CopyLastPublishedWorkfile(PreLaunchHook):
@@ -131,22 +137,48 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         workfile_representation = max(
             filtered_repres, key=lambda r: r["context"]["version"]
         )
-        # Get last published
-        published_workfile_path = get_representation_path_with_anatomy(
-            workfile_representation, anatomy
-        )
 
         # Copy file and substitute path
-        self.data["last_workfile_path"] = download_last_published_workfile(
+        last_published_workfile_path = download_last_published_workfile(
             host_name,
             project_name,
-            asset_name,
             task_name,
-            published_workfile_path,
             workfile_representation,
             max_retries,
-            anatomy=anatomy,
-            asset_doc=asset_doc,
+            anatomy=anatomy
         )
+        if not last_published_workfile_path:
+            self.log.debug(
+                "Couldn't download {}".format(last_published_workfile_path)
+            )
+            return
+
+        project_doc = get_project(project_name)
+
+        project_settings = get_project_settings(project_name)
+        template_key = get_workfile_template_key(
+            task_name, host_name, project_name, project_settings
+        )
+
+        # Get workfile data
+        workfile_data = get_template_data(
+            project_doc, asset_doc, task_name, host_name
+        )
+
+        extension = last_published_workfile_path.split(".")[-1]
+        workfile_data["version"] = (
+                workfile_representation["context"]["version"] + 1)
+        workfile_data["ext"] = extension
+
+        anatomy_result = anatomy.format(workfile_data)
+        local_workfile_path = anatomy_result[template_key]["path"]
+
+        # Copy last published workfile to local workfile directory
+        shutil.copy(
+            last_published_workfile_path,
+            local_workfile_path,
+        )
+
+        self.data["last_workfile_path"] = local_workfile_path
         # Keep source filepath for further path conformation
-        self.data["source_filepath"] = published_workfile_path
+        self.data["source_filepath"] = last_published_workfile_path
