@@ -271,9 +271,9 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
                 "thumbnail_type": "thumbnail"
             })
 
-            thumbnail_template = anatomy.templates["publish"]["thumbnail"]
             template_obj = anatomy.templates_obj["publish"]["thumbnail"]
             template_filled = template_obj.format_strict(template_data)
+            thumbnail_template = template_filled.template
 
             dst_full_path = os.path.normpath(str(template_filled))
             self.log.debug("Copying file .. {} -> {}".format(
