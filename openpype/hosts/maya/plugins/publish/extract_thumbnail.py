@@ -27,7 +27,8 @@ class ExtractThumbnail(publish.Extractor):
 
     def process(self, instance):
         project_name = instance.context.data["projectName"]
-        profiles = get_project_settings(
+        project_settings = instance.context.data["project_settings"]
+        profiles = project_settings["maya"]["publish"]["ExtractPlayblast"]["profiles"]
             project_name
         )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
 
