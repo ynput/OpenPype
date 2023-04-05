@@ -3,10 +3,9 @@ import clique
 
 import bpy
 
-import pyblish.api
-
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
+from openpype.hosts.blender.plugins.publish import extract_thumbnail
 from openpype.pipeline.publish.publish_plugins import Extractor
 
 
@@ -22,7 +21,7 @@ class ExtractPlayblast(Extractor):
     hosts = ["blender"]
     families = ["review"]
     optional = True
-    order = pyblish.api.ExtractorOrder + 0.01
+    order = extract_thumbnail.ExtractThumbnail.order - 0.002
 
     def process(self, instance):
         self.log.info("Extracting capture..")
