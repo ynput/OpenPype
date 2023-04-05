@@ -532,6 +532,8 @@ class MissingColorFile(QtWidgets.QDialog):
         }
         self.data["cdl"] = cdl
         self.data["path"] = ""
+        self.data["ignore"] = False
+        self.data["type"] = "ccc"
 
         self.accept()
 
@@ -760,10 +762,11 @@ class CollectColorFile(pyblish.api.InstancePlugin):
                 if color_ext == "edl":
                     color_info["cdl"] = cdl
 
-            color_info.update({
+            color_info.update(
+                {
                 "path": color_file,
                 "type": color_ext,
-                "ignore":False
+                "ignore": False
                 }
             )
 
