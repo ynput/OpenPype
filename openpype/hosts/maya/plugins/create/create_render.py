@@ -84,7 +84,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
         # asterisk selector
         rs = renderSetup.instance()
         if not rs.getRenderLayers():
-            render_layer = rs.createRenderLayer('Main')
+            render_layer = rs.createRenderLayer("Main")
             collection = render_layer.createCollection("defaultCollection")
             collection.getSelector().setPattern('*')
 
