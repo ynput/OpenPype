@@ -2191,6 +2191,15 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
+    current_renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")             # noqa
+    if current_renderer.lower() == "_3delight":
+        dl_render_settings = cmds.ls(type="dlRenderSettings")
+        for dl_render_setting in dl_render_settings:
+            cmds.setAttr(
+            "{}.startFrame".format(dl_render_setting), frame_start)
+            cmds.setAttr(
+            "{}.endFrame".format(dl_render_setting), frame_end)
+
 
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition

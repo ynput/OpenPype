@@ -142,6 +142,7 @@ class CreateRender(plugin.Creator):
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             rs = renderSetup.instance()
+            layers = rs.getRenderLayers()
             if self._get_renderer() == "_3delight":
                 self.log.info("Creating for _3delight")
                 # With 3delight, we have dlRenderSettings, which need to be
@@ -165,16 +166,25 @@ class CreateRender(plugin.Creator):
                         "defaultCollection")
                     collection.getSelector().setPattern('*')
                     self.log.info("Renaming..")
-                    for obj in cmds.ls(type="objectSet"):
-                        if render_layer_name in obj:
-                            cmds.rename(obj, "{}.{}".format(namespace,
-                                                            render_layer_name))
+                    object_set = cmds.ls(type="objectSet")
+                    if object_set:
+                        for obj in object_set:
+                            if render_layer_name in obj:
+                                try:
+                                    cmds.rename(obj, "{}:{}".format(namespace,
+                                                                    render_layer_name))
+                                except RuntimeError:
+                                        continue
+
             else:
-                layers = rs.getRenderLayers()
                 if use_selection:
                     self.log.info("Processing existing layers")
                     sets = []
+
                     for layer in layers:
+                        if "dlRenderSettings" in layer.name():
+                            self.log.info("dl_render_setting will be skipped..")
+                            return
                         self.log.info("  - creating set for {}:{}".format(
                             namespace, layer.name()))
                         render_set = cmds.sets(
