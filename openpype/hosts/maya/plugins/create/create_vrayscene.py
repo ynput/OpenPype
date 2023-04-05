@@ -16,8 +16,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import (
-    BoolDef,
-    NumberDef
+    BoolDef
 )
 
 
@@ -38,6 +37,8 @@ def ensure_namespace(namespace):
         return cmds.namespace(add=namespace)
 
 
+# TODO: This implementation is almost a match with CreateRender
+#   We should rely on a base class for both
 class CreateVRayScene(Creator, plugin.MayaCreatorBase):
     """Create Vray Scene."""
 
