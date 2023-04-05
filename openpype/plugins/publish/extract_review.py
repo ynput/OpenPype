@@ -24,6 +24,9 @@ from openpype.lib.transcoding import (
     get_transcode_temp_directory,
 )
 from openpype.pipeline.publish import KnownPublishError
+from openpype.lib.file_transaction import (
+    fill_cleanupFullPaths_for_representation
+)
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -423,6 +426,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Adding new representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
+
+            fill_cleanupFullPaths_for_representation(instance, new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""

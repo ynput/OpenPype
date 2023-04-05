@@ -212,3 +212,21 @@ class FileTransaction(object):
             return os.stat(src) == os.stat(dst)
 
         return src == dst
+
+
+def fill_cleanupFullPaths_for_representation(instance, repre):
+    """ Explicitly mark repre files to be deleted.
+
+    Should be used on intermediate files (eg. review, thumbnails) to be
+    explicitly deleted.
+    """
+    files = repre["files"]
+    staging_dir = repre["stagingDir"]
+    if isinstance(files, str):
+        files = [files]
+
+    for file_name in files:
+        expected_file = os.path.join(staging_dir, file_name)
+        print("Explicitly marking {} for cleanup".format(expected_file))
+        instance.context.data["cleanupFullPaths"].append(
+            expected_file)
