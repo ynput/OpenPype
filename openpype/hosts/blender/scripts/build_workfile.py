@@ -10,6 +10,11 @@ from openpype.client import (
     get_representations,
 )
 from openpype.client.entity_links import get_linked_representation_id
+from openpype.client.entities import (
+    get_representation_by_name,
+    get_representation_by_id,
+    get_version_by_id,
+)
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.lib.local_settings import get_local_site_id
 from openpype.modules import ModulesManager
@@ -21,6 +26,25 @@ from openpype.pipeline import (
     loaders_from_representation,
 )
 from openpype.pipeline.create import get_legacy_creator_by_name
+from openpype.pipeline.load.utils import switch_container
+
+
+def get_loader(project_name, representation, loader_type=None):
+    """Get loader from representation by matching type.
+
+    Args:
+        project_name (str): The project name.
+        representation (dict): The representation.
+        loader_type (str, optional): The loader name. Defaults to None.
+
+    Returns:
+        The matched loader class.
+    """
+    all_loaders = discover_loader_plugins(project_name=project_name)
+    loaders = loaders_from_representation(all_loaders, representation)
+    for loader in loaders:
+        if loader_type in loader.__name__:
+            return loader
 
 
 def download_subset(
@@ -463,6 +487,52 @@ def build_anim(project_name, asset_name):
     bpy.ops.scene.make_container_publishable(
         container_name=layout_container.name
     )
+
+    # Switch hero containers to versioned
+    for container in bpy.context.scene.openpype_containers:
+        container_metadata = container["avalon"]
+        # Get version representation
+        current_version = get_version_by_id(
+            project_name,
+            container_metadata.get("parent"),
+            fields=["_id", "parent", "type"],
+        )
+
+        # If current_version is None retry with other methods.
+        if not current_version:
+            current_representation = get_representation_by_id(
+                project_name,
+                container_metadata.get("representation"),
+                fields=["parent"],
+            )
+            current_version = get_version_by_id(
+                project_name,
+                current_representation["parent"],
+                fields=["_id", "parent", "type"],
+            )
+            # current_version is None again, skip this container.
+            if not current_version:
+                continue
+
+        # Skip if current version representation is not hero
+        if current_version["type"] != "hero_version":
+            continue
+
+        # Get last version representation
+        last_version = get_last_version_by_subset_id(
+            project_name, current_version["parent"], fields=["_id"]
+        )
+        version_representation = get_representation_by_name(
+            project_name, "blend", last_version["_id"]
+        )
+
+        # Switch container to versioned
+        loader = get_loader(
+            project_name,
+            version_representation,
+            container_metadata.get("loader"),
+        )
+        switch_container(container_metadata, version_representation, loader)
 
     # Substitute overridden GDEFORMER collection by local one
     old_gdeform_collection = bpy.data.collections.get("GDEFORMER")
