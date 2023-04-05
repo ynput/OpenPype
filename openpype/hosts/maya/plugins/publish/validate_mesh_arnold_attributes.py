@@ -33,7 +33,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
         RepairAction
     ]
 
-    optional = False
+    optional = True
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
