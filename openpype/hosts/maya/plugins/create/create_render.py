@@ -165,16 +165,17 @@ class CreateRender(plugin.Creator):
                     collection = render_layer.createCollection(
                         "defaultCollection")
                     collection.getSelector().setPattern('*')
-                    self.log.info("Renaming..")
                     object_set = cmds.ls(type="objectSet")
                     if object_set:
                         for obj in object_set:
                             if render_layer_name in obj:
                                 try:
-                                    cmds.rename(obj, "{}:{}".format(namespace,
-                                                                    render_layer_name))
+                                    self.log.info("Renaming..")
+                                    new_name = "{}:{}".format(namespace,
+                                                              render_layer_name)
+                                    cmds.rename(obj ,new_name)
                                 except RuntimeError:
-                                        continue
+                                    continue
 
             else:
                 if use_selection:
@@ -183,7 +184,8 @@ class CreateRender(plugin.Creator):
 
                     for layer in layers:
                         if "dlRenderSettings" in layer.name():
-                            self.log.info("dl_render_setting will be skipped..")
+                            self.log.info("dl_render_setting"
+                                          "will be skipped..")
                             return
                         self.log.info("  - creating set for {}:{}".format(
                             namespace, layer.name()))

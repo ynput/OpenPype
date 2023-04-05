@@ -164,9 +164,9 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             dl_render_settings = cmds.ls(type="dlRenderSettings")
             for dl_render_setting in dl_render_settings:
                 cmds.setAttr(
-                "{}.startFrame".format(dl_render_setting), start_attr)
+                    "{}.startFrame".format(dl_render_setting), start_attr)
                 cmds.setAttr(
-                "{}.endFrame".format(dl_render_setting), end_attr)
+                    "{}.endFrame".format(dl_render_setting), end_attr)
         else:
             cls._set_attr_in_layer(start_attr, layer, frame_start_handle)
             cls._set_attr_in_layer(end_attr, layer, frame_end_handle)
