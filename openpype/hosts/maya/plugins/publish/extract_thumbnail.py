@@ -1,11 +1,14 @@
 import os
 import glob
 import tempfile
+import json
 
 import capture
 
-from openpype.pipeline import publish
+from openpype.pipeline import publish, legacy_io
 from openpype.hosts.maya.api import lib
+from openpype.lib.profiles_filtering import filter_profiles
+from openpype.settings import get_project_settings
 
 from maya import cmds
 import pymel.core as pm
@@ -24,25 +27,47 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        profiles = get_project_settings(
+            project_name
+        )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
+
+        if not profiles:
+            self.log.warning("No profiles present for Extract Playblast")
+            return
+
         self.log.info("Extracting capture..")
 
         camera = instance.data["review_camera"]
 
-        maya_setting = instance.context.data["project_settings"]["maya"]
-        plugin_setting = maya_setting["publish"]["ExtractPlayblast"]
-        capture_preset = plugin_setting["capture_preset"]
+        host_name = instance.context.data["hostName"]
+        family = instance.data["family"]
+        task_data = instance.data["anatomyData"].get("task", {})
+        task_name = task_data.get("name")
+        task_type = task_data.get("type")
+        subset = instance.data["subset"]
+
+        filtering_criteria = {
+            "hosts": host_name,
+            "families": family,
+            "task_names": task_name,
+            "task_types": task_type,
+            "subset": subset
+        }
+        capture_preset = filter_profiles(
+            profiles, filtering_criteria, logger=self.log
+        )["capture_preset"]
+        preset = lib.load_capture_preset(
+            data=capture_preset
+        )
+
+        # "isolate_view" will already have been applied at creation, so we'll
+        # ignore it here.
+        preset.pop("isolate_view")
+
         override_viewport_options = (
             capture_preset["Viewport Options"]["override_viewport_options"]
         )
-
-        try:
-            preset = lib.load_capture_preset(data=capture_preset)
-        except KeyError as ke:
-            self.log.error("Error loading capture presets: {}".format(str(ke)))
-            preset = {}
-        self.log.info("Using viewport preset: {}".format(preset))
-
-        # preset["off_screen"] =  False
 
         preset["camera"] = camera
         preset["start_frame"] = instance.data["frameStart"]
@@ -59,10 +84,9 @@ class ExtractThumbnail(publish.Extractor):
             "overscan": 1.0,
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
         }
-        capture_presets = capture_preset
         # Set resolution variables from capture presets
-        width_preset = capture_presets["Resolution"]["width"]
-        height_preset = capture_presets["Resolution"]["height"]
+        width_preset = capture_preset["Resolution"]["width"]
+        height_preset = capture_preset["Resolution"]["height"]
         # Set resolution variables from asset values
         asset_data = instance.data["assetEntity"]["data"]
         asset_width = asset_data.get("resolutionWidth")
@@ -111,8 +135,9 @@ class ExtractThumbnail(publish.Extractor):
             preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
         # Isolate view is requested by having objects in the set besides a
-        # camera.
-        if preset.pop("isolate_view", False) and instance.data.get("isolate"):
+        # camera. If there is only 1 member it'll be the camera because we
+        # validate to have 1 camera only.
+        if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
             preset["isolate"] = instance.data["setMembers"]
 
         # Show or Hide Image Plane
@@ -139,6 +164,12 @@ class ExtractThumbnail(publish.Extractor):
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
+
+            self.log.info(
+                "Using preset: {}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
+            )
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)

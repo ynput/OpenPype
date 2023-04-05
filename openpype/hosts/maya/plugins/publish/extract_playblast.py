@@ -7,6 +7,7 @@ import capture
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
+from openpype.lib.profiles_filtering import filter_profiles
 
 from maya import cmds
 import pymel.core as pm
@@ -34,7 +35,7 @@ class ExtractPlayblast(publish.Extractor):
     hosts = ["maya"]
     families = ["review"]
     optional = True
-    capture_preset = {}
+    profiles = None
 
     def _capture(self, preset):
         self.log.info(
@@ -47,6 +48,10 @@ class ExtractPlayblast(publish.Extractor):
         self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
+        if not self.profiles:
+            self.log.warning("No profiles present for Extract Playblast")
+            return
+
         self.log.info("Extracting capture..")
 
         # get scene fps
@@ -66,12 +71,35 @@ class ExtractPlayblast(publish.Extractor):
         # get cameras
         camera = instance.data["review_camera"]
 
-        preset = lib.load_capture_preset(data=self.capture_preset)
-        # Grab capture presets from the project settings
-        capture_presets = self.capture_preset
+        host_name = instance.context.data["hostName"]
+        family = instance.data["family"]
+        task_data = instance.data["anatomyData"].get("task", {})
+        task_name = task_data.get("name")
+        task_type = task_data.get("type")
+        subset = instance.data["subset"]
+
+        filtering_criteria = {
+            "hosts": host_name,
+            "families": family,
+            "task_names": task_name,
+            "task_types": task_type,
+            "subset": subset
+        }
+        capture_preset = filter_profiles(
+            self.profiles, filtering_criteria, logger=self.log
+        )["capture_preset"]
+        preset = lib.load_capture_preset(
+            data=capture_preset
+        )
+
+        # "isolate_view" will already have been applied at creation, so we'll
+        # ignore it here.
+        preset.pop("isolate_view")
+
         # Set resolution variables from capture presets
-        width_preset = capture_presets["Resolution"]["width"]
-        height_preset = capture_presets["Resolution"]["height"]
+        width_preset = capture_preset["Resolution"]["width"]
+        height_preset = capture_preset["Resolution"]["height"]
+
         # Set resolution variables from asset values
         asset_data = instance.data["assetEntity"]["data"]
         asset_width = asset_data.get("resolutionWidth")
@@ -122,8 +150,9 @@ class ExtractPlayblast(publish.Extractor):
             preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
         # Isolate view is requested by having objects in the set besides a
-        # camera.
-        if preset.pop("isolate_view", False) and instance.data.get("isolate"):
+        # camera. If there is only 1 member it'll be the camera because we
+        # validate to have 1 camera only.
+        if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
@@ -158,7 +187,7 @@ class ExtractPlayblast(publish.Extractor):
                 )
 
         override_viewport_options = (
-            capture_presets["Viewport Options"]["override_viewport_options"]
+            capture_preset["Viewport Options"]["override_viewport_options"]
         )
 
         # Force viewer to False in call to capture because we have our own
@@ -234,8 +263,8 @@ class ExtractPlayblast(publish.Extractor):
             collected_files = collected_files[0]
 
         representation = {
-            "name": self.capture_preset["Codec"]["compression"],
-            "ext": self.capture_preset["Codec"]["compression"],
+            "name": capture_preset["Codec"]["compression"],
+            "ext": capture_preset["Codec"]["compression"],
             "files": collected_files,
             "stagingDir": stagingdir,
             "frameStart": start,
