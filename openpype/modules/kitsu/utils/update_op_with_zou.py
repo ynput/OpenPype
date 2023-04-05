@@ -359,7 +359,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
 
 
 def sync_all_projects(
-    login: str, password: str, ignore_projects: list = None
+    login: str, password: str, ignore_projects: list = None, specific_projects: list = None
 ):
     """Update all OP projects in DB with Zou data.
 
@@ -367,6 +367,7 @@ def sync_all_projects(
         login (str): Kitsu user login
         password (str): Kitsu user password
         ignore_projects (list): List of unsynced project names
+        specific_projects (list): List of synced project names
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -381,7 +382,27 @@ def sync_all_projects(
     dbcon = AvalonMongoDB()
     dbcon.install()
     all_projects = gazu.project.all_projects()
-    for project in all_projects:
+
+
+    project_to_sync = []
+    if specific_projects == ['*']:
+        project_to_sync = all_projects
+
+    elif specific_projects == ['^']:
+        return
+
+    elif isinstance(specific_projects, list):
+        all_kitsu_projects = {p['name']: p for p in all_projects}
+        for proj_name in specific_projects:
+            if proj_name in all_kitsu_projects:
+                project_to_sync.append(all_kitsu_projects[proj_name])
+            else:
+                log.info(f'`{proj_name}` project does not exists in kitsu.'
+                         f' Please make sure you write the project correctly.')
+    else:
+        return
+
+    for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
             continue
         sync_project_from_kitsu(dbcon, project)
