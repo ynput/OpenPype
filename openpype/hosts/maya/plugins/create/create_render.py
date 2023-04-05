@@ -155,6 +155,11 @@ class CreateRender(plugin.Creator):
                     self.log.info(
                         "  Created {}/{}".format(dl_render_setting,
                                                  render_layer_name))
+                    prev_render_layer = cmds.ls(type="renderLayer")
+                    if prev_render_layer:
+                        for l in prev_render_layer:
+                            if not l.endswith("_RL"):
+                                cmds.delete(l)
                     render_layer = rs.createRenderLayer(render_layer_name)
                     collection = render_layer.createCollection(
                         "defaultCollection")
