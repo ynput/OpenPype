@@ -11,7 +11,6 @@ from openpype.lib.profiles_filtering import filter_profiles
 from openpype.settings import get_project_settings
 
 from maya import cmds
-import pymel.core as pm
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -123,11 +122,11 @@ class ExtractThumbnail(publish.Extractor):
         preset["filename"] = path
         preset["overwrite"] = True
 
-        pm.refresh(f=True)
+        cmds.refresh(force=True)
 
-        refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
-        pm.currentTime(refreshFrameInt - 1, edit=True)
-        pm.currentTime(refreshFrameInt, edit=True)
+        refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
+        cmds.currentTime(refreshFrameInt - 1, edit=True)
+        cmds.currentTime(refreshFrameInt, edit=True)
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)

@@ -1,12 +1,12 @@
 import os
+from collections import defaultdict
+import json
 
 from maya import cmds
 import arnold
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import (
-    maintained_selection, attribute_values, delete_after
-)
+from openpype.hosts.maya.api import lib
 
 
 class ExtractArnoldSceneSource(publish.Extractor):
@@ -19,8 +19,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filename = "{}.ass".format(instance.name)
-        file_path = os.path.join(staging_dir, filename)
+        file_path = os.path.join(staging_dir, "{}.ass".format(instance.name))
 
         # Mask
         mask = arnold.AI_NODE_ALL
@@ -71,8 +70,8 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "mask": mask
         }
 
-        filenames = self._extract(
-            instance.data["setMembers"], attribute_data, kwargs
+        filenames, nodes_by_id = self._extract(
+            instance.data["contentMembers"], attribute_data, kwargs
         )
 
         if "representations" not in instance.data:
@@ -88,6 +87,19 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
         instance.data["representations"].append(representation)
 
+        json_path = os.path.join(staging_dir, "{}.json".format(instance.name))
+        with open(json_path, "w") as f:
+            json.dump(nodes_by_id, f)
+
+        representation = {
+            "name": "json",
+            "ext": "json",
+            "files": os.path.basename(json_path),
+            "stagingDir": staging_dir
+        }
+
+        instance.data["representations"].append(representation)
+
         self.log.info(
             "Extracted instance {} to: {}".format(instance.name, staging_dir)
         )
@@ -97,7 +109,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             return
 
         kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
-        filenames = self._extract(
+        filenames, _ = self._extract(
             instance.data["proxy"], attribute_data, kwargs
         )
 
@@ -113,34 +125,60 @@ class ExtractArnoldSceneSource(publish.Extractor):
         instance.data["representations"].append(representation)
 
     def _extract(self, nodes, attribute_data, kwargs):
-        self.log.info("Writing: " + kwargs["filename"])
+        self.log.info(
+            "Writing {} with:\n{}".format(kwargs["filename"], kwargs)
+        )
         filenames = []
+        nodes_by_id = defaultdict(list)
         # Duplicating nodes so they are direct children of the world. This
         # makes the hierarchy of any exported ass file the same.
-        with delete_after() as delete_bin:
+        with lib.delete_after() as delete_bin:
             duplicate_nodes = []
             for node in nodes:
+                # Only interested in transforms:
+                if cmds.nodeType(node) != "transform":
+                    continue
+
+                # Only interested in transforms with shapes.
+                shapes = cmds.listRelatives(
+                    node, shapes=True, noIntermediate=True
+                )
+                if not shapes:
+                    continue
+
                 duplicate_transform = cmds.duplicate(node)[0]
 
-                # Discard the children.
-                shapes = cmds.listRelatives(duplicate_transform, shapes=True)
+                if cmds.listRelatives(duplicate_transform, parent=True):
+                    duplicate_transform = cmds.parent(
+                        duplicate_transform, world=True
+                    )[0]
+
+                basename = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
+                duplicate_transform = cmds.rename(
+                    duplicate_transform, basename
+                )
+
+                # Discard children nodes that are not shapes
+                shapes = cmds.listRelatives(
+                    duplicate_transform, shapes=True, fullPath=True
+                )
                 children = cmds.listRelatives(
-                    duplicate_transform, children=True
+                    duplicate_transform, children=True, fullPath=True
                 )
                 cmds.delete(set(children) - set(shapes))
 
-                duplicate_transform = cmds.parent(
-                    duplicate_transform, world=True
-                )[0]
-
-                cmds.rename(duplicate_transform, node.split("|")[-1])
-                duplicate_transform = "|" + node.split("|")[-1]
-
                 duplicate_nodes.append(duplicate_transform)
+                duplicate_nodes.extend(shapes)
                 delete_bin.append(duplicate_transform)
 
-            with attribute_values(attribute_data):
-                with maintained_selection():
+            # Copy cbId to mtoa_constant.
+            for node in duplicate_nodes:
+                # Converting Maya hierarchy separator "|" to Arnold
+                # separator "/".
+                nodes_by_id[lib.get_id(node)].append(node.replace("|", "/"))
+
+            with lib.attribute_values(attribute_data):
+                with lib.maintained_selection():
                     self.log.info(
                         "Writing: {}".format(duplicate_nodes)
                     )
@@ -157,4 +195,4 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
                     self.log.info("Exported: {}".format(filenames))
 
-        return filenames
+        return filenames, nodes_by_id

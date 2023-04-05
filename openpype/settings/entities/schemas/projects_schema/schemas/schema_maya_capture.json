@@ -64,7 +64,6 @@
                                         "maximum": 100,
                                         "default": 95
                                     },
-
                                     {
                                         "type": "splitter"
                                     }
@@ -101,6 +100,12 @@
                                         "type": "boolean",
                                         "key": "override_display",
                                         "label": "Override display options",
+                                        "default": true
+                                    },
+                                    {
+                                        "type": "boolean",
+                                        "key": "displayGradient",
+                                        "label": "Display background gradient",
                                         "default": true
                                     }
                                 ]
