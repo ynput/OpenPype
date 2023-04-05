@@ -31,6 +31,7 @@ class CollectReview(pyblish.api.InstancePlugin):
         members = instance.data['setMembers']
         self.log.debug('members: {}'.format(members))
         cameras = cmds.ls(members, long=True, dag=True, cameras=True)
+        camera = cameras[0] if cameras else None
 
         context = instance.context
         objectset = context.data['objectsets']
@@ -62,7 +63,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data['families'] = ['review']
 
             data["cameras"] = cameras
-            data['review_camera'] = cameras[0] if cameras else None
+            data['review_camera'] = camera
             data['frameStartFtrack'] = instance.data["frameStartHandle"]
             data['frameEndFtrack'] = instance.data["frameEndHandle"]
             data['frameStartHandle'] = instance.data["frameStartHandle"]
@@ -97,7 +98,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data['subset'] = legacy_subset_name
 
             instance.data["cameras"] = cameras
-            instance.data['review_camera'] = cameras[0] if cameras else None
+            instance.data['review_camera'] = camera
             instance.data['frameStartFtrack'] = \
                 instance.data["frameStartHandle"]
             instance.data['frameEndFtrack'] = \
@@ -145,6 +146,9 @@ class CollectReview(pyblish.api.InstancePlugin):
             instance.data["audio"] = audio_data
 
         # Collect focal length.
+        if camera is None:
+            return
+
         attr = camera + ".focalLength"
         if get_attribute_input(attr):
             start = instance.data["frameStart"]
