@@ -705,7 +705,7 @@ class AnatomyTemplates(TemplatesDict):
 
         solved_templates = self.solve_template_inner_links(templates)
         self._templates = solved_templates
-        self._objected_templates = self.create_ojected_templates(
+        self._objected_templates = self.create_objected_templates(
             solved_templates
         )
 

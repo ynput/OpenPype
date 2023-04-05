@@ -256,7 +256,7 @@ class TemplatesDict(object):
         elif isinstance(templates, dict):
             self._raw_templates = copy.deepcopy(templates)
             self._templates = templates
-            self._objected_templates = self.create_ojected_templates(templates)
+            self._objected_templates = self.create_objected_templates(templates)
         else:
             raise TypeError("<{}> argument must be a dict, not {}.".format(
                 self.__class__.__name__, str(type(templates))
@@ -294,7 +294,7 @@ class TemplatesDict(object):
 
         return StringTemplate(template)
 
-    def create_ojected_templates(self, templates):
+    def create_objected_templates(self, templates):
         if not isinstance(templates, dict):
             raise TypeError("Expected dict object, got {}".format(
                 str(type(templates))
