@@ -425,21 +425,21 @@ def filter_pyblish_plugins(plugins):
     # TODO: Don't use host from 'pyblish.api' but from defined host by us.
     #   - kept becau on farm is probably used host 'shell' which propably
     #       affect how settings are applied there
-    host = pyblish.api.current_host()
+    host_name = pyblish.api.current_host()
     project_name = os.environ.get("AVALON_PROJECT")
 
-    project_setting = get_project_settings(project_name)
+    project_settings = get_project_settings(project_name)
     system_settings = get_system_settings()
 
     # iterate over plugins
     for plugin in plugins[:]:
+        # Apply settings to plugins
         if hasattr(plugin, "apply_settings"):
+            # Use classmethod 'apply_settings'
+            # - can be used to target settings from custom settings place
+            # - skip default behavior when successful
             try:
-                # Use classmethod 'apply_settings'
-                # - can be used to target settings from custom settings place
-                # - skip default behavior when successful
-                plugin.apply_settings(project_setting, system_settings)
-                continue
+                plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -448,52 +448,19 @@ def filter_pyblish_plugins(plugins):
                     ).format(plugin.__name__),
                     exc_info=True
                 )
-
-        try:
-            config_data = (
-                project_setting
-                [host]
-                ["publish"]
-                [plugin.__name__]
+        else:
+            # Automated
+            plugin_settins = _get_plugin_settings(
+                host_name, project_settings, plugin, log
             )
-        except KeyError:
-            # host determined from path
-            file = os.path.normpath(inspect.getsourcefile(plugin))
-            file = os.path.normpath(file)
-
-            split_path = file.split(os.path.sep)
-            if len(split_path) < 4:
-                log.warning(
-                    'plugin path too short to extract host {}'.format(file)
-                )
-                continue
-
-            host_from_file = split_path[-4]
-            plugin_kind = split_path[-2]
-
-            # TODO: change after all plugins are moved one level up
-            if host_from_file == "openpype":
-                host_from_file = "global"
-
-            try:
-                config_data = (
-                    project_setting
-                    [host_from_file]
-                    [plugin_kind]
-                    [plugin.__name__]
-                )
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
-                    option, value, plugin.__name__))
-
-                setattr(plugin, option, value)
+            for option, value in plugin_settins.items():
+                if option == "enabled" and value is False:
+                    log.info('removing plugin {}'.format(plugin.__name__))
+                    plugins.remove(plugin)
+                else:
+                    log.info('setting {}:{} on plugin {}'.format(
+                        option, value, plugin.__name__))
+                    setattr(plugin, option, value)
 
 
 def find_close_plugin(close_plugin_name, log):
