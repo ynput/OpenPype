@@ -33,12 +33,12 @@ class RenderSettings(object):
     """
 
     _image_prefix_nodes = {
-        'vray': 'vraySettings.fileNamePrefix',
-        'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix',
-        'mentalray': 'defaultRenderGlobals.imageFilePrefix',
-        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
+        "vray": "vraySettings.fileNamePrefix",
+        "arnold": "defaultRenderGlobals.imageFilePrefix",
+        "renderman": "rmanGlobals.imageFileFormat",
+        "redshift": "defaultRenderGlobals.imageFilePrefix",
+        "mentalray": "defaultRenderGlobals.imageFilePrefix",
+        "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
     }
 
     _aov_chars = {
@@ -57,9 +57,9 @@ class RenderSettings(object):
         # Renderman only image dir
         renderman_settings = self["renderman_renderer"]
         self._image_dir = {
-            'renderman': renderman_settings["image_dir"],
-            'cryptomatte': renderman_settings["cryptomatte_dir"],
-            'imageDisplay': renderman_settings["imageDisplay_dir"],
+            "renderman": renderman_settings["image_dir"],
+            "cryptomatte": renderman_settings["cryptomatte_dir"],
+            "imageDisplay": renderman_settings["imageDisplay_dir"],
             "watermark": renderman_settings["watermark_dir"]
         }
 
@@ -100,9 +100,9 @@ class RenderSettings(object):
 
         # todo: do not hardcode, implement in settings
         hardcoded_prefixes = {
-            "renderman": 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-            'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
-            'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
+            "renderman": "maya/<Scene>/<layer>/<layer>{aov_separator}<aov>",
+            "mentalray": "maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>",  # noqa: E501
+            "mayahardware2": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
         }
         if renderer in hardcoded_prefixes:
             prefix = hardcoded_prefixes[renderer]
@@ -126,7 +126,7 @@ class RenderSettings(object):
         """Set basic settings based on renderer."""
         if not renderer:
             renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
+                "defaultRenderGlobals.currentRenderer").lower()
 
         asset_doc = get_current_project_asset()
         # TODO: handle not having res values in the doc
@@ -188,7 +188,7 @@ class RenderSettings(object):
         for aov in aovs:
             if aov in current_aovs and not remove_aovs:
                 continue
-            AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
+            AOVInterface("defaultArnoldRenderOptions").addAOV(aov)
 
         cmds.setAttr(
             "defaultArnoldDriver.ai_translator", img_ext, type="string")
@@ -229,7 +229,7 @@ class RenderSettings(object):
         redshift_render_presets = self["redshift_renderer"]
 
         remove_aovs = self["remove_aovs"]
-        all_rs_aovs = cmds.ls(type='RedshiftAOV')
+        all_rs_aovs = cmds.ls(type="RedshiftAOV")
         if remove_aovs:
             for aov in all_rs_aovs:
                 enabled = cmds.getAttr("{}.enabled".format(aov))
@@ -238,7 +238,7 @@ class RenderSettings(object):
 
         redshift_aovs = redshift_render_presets["aov_list"]
         # list all the aovs
-        all_rs_aovs = cmds.ls(type='RedshiftAOV')
+        all_rs_aovs = cmds.ls(type="RedshiftAOV")
         for rs_aov in redshift_aovs:
             if " " in rs_aov:
                 rs_renderlayer = rs_aov.replace(" ", "")
@@ -286,8 +286,8 @@ class RenderSettings(object):
 
         # vrayRenderElement
         remove_aovs = self["remove_aovs"]
-        all_vray_aovs = cmds.ls(type='VRayRenderElement')
-        lightSelect_aovs = cmds.ls(type='VRayRenderElementSet')
+        all_vray_aovs = cmds.ls(type="VRayRenderElement")
+        lightSelect_aovs = cmds.ls(type="VRayRenderElementSet")
         if remove_aovs:
             for aov in all_vray_aovs:
                 # remove all aovs except LightSelect
