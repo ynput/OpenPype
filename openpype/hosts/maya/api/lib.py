@@ -32,7 +32,12 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_asset,
+    get_current_project_name,
+    get_current_task_name
+)
 
 
 self = sys.modules[__name__]
@@ -2139,9 +2144,9 @@ def get_frame_range():
     """Get the current assets frame range and handles."""
 
     # Set frame start/end
-    project_name = legacy_io.active_project()
-    task_name = legacy_io.Session["AVALON_TASK"]
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    task_name = get_current_task_name()
+    asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
     settings = get_project_settings(project_name)
     include_handles_settings = settings["maya"]["include_handles"]
