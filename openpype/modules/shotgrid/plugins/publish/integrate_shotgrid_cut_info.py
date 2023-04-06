@@ -4,10 +4,10 @@ import pyblish.api
 def openpype_publish_tag(track_item):
     """Get tag that was used to publish track item"""
     for item_tag in track_item.tags():
-        tag_metadata = dict(item_tag.metadata())
+        tag_metadata = item_tag.metadata().dict()
         tag_family = tag_metadata.get("tag.family", "")
         if tag_family == "reference":
-            return dict(item_tag.metadata())
+            return tag_metadata
 
     return {}
 
