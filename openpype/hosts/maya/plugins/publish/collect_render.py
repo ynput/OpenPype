@@ -49,7 +49,10 @@ import pyblish.api
 
 from openpype.pipeline import KnownPublishError
 from openpype.lib import get_formatted_current_time
-from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
+from openpype.hosts.maya.api.lib_renderproducts import (
+    get as get_layer_render_products,
+    UnsupportedRendererException
+)
 from openpype.hosts.maya.api import lib
 
 
@@ -109,7 +112,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         # collect all frames we are expecting to be rendered
         # return all expected files for all cameras and aovs in given
         # frame range
-        layer_render_products = get_layer_render_products(layer.name())
+        try:
+            layer_render_products = get_layer_render_products(layer.name())
+        except UnsupportedRendererException as exc:
+            raise KnownPublishError(exc)
         render_products = layer_render_products.layer_data.products
         assert render_products, "no render products generated"
         expected_files = []
