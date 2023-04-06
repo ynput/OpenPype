@@ -37,7 +37,6 @@ class RenderSettings(object):
         "arnold": "defaultRenderGlobals.imageFilePrefix",
         "renderman": "rmanGlobals.imageFileFormat",
         "redshift": "defaultRenderGlobals.imageFilePrefix",
-        "mentalray": "defaultRenderGlobals.imageFilePrefix",
         "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
     }
 
@@ -101,7 +100,6 @@ class RenderSettings(object):
         # todo: do not hardcode, implement in settings
         hardcoded_prefixes = {
             "renderman": "maya/<Scene>/<layer>/<layer>{aov_separator}<aov>",
-            "mentalray": "maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>",  # noqa: E501
             "mayahardware2": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
         }
         if renderer in hardcoded_prefixes:
