@@ -4,6 +4,7 @@ from maya import cmds
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError,
     OptionalPyblishPluginMixin
 )
 from openpype.hosts.maya.api.lib_rendersetup import (
@@ -106,10 +107,14 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
                     "({}).".format(label.title(), values[1], values[0])
                 )
 
-        for e in errors:
-            self.log.error(e)
+        if errors:
+            report = "Frame range settings are incorrect.\n\n"
+            for error in errors:
+                report += "- {}\n\n".format(error)
 
-        assert len(errors) == 0, ("Frame range settings are incorrect")
+            raise PublishValidationError(report, title="Frame Range incorrect")
+
+        assert len(errors) == 0, ()
 
     @classmethod
     def repair(cls, instance):
