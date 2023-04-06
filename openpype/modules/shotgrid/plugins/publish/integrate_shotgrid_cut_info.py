@@ -7,7 +7,7 @@ def openpype_publish_tag(track_item):
         tag_metadata = dict(item_tag.metadata())
         tag_family = tag_metadata.get("tag.family", "")
         if tag_family == "reference":
-            return tag_metadata
+            return dict(item_tag.metadata())
 
     return {}
 
