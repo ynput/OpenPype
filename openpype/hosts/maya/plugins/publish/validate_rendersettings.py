@@ -127,6 +127,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         if renderer == "_3delight":
             # 3delight is different enough to need it do it its own validation
+            cls.log.debug("the renderer is 3delight, "
+                          "this validation will be skipped")
             return invalid
 
         # Get the node attributes for current renderer

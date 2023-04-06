@@ -41,6 +41,8 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
         if renderer == "_3delight":
             # 3delight manages its own render/camera settings and therefore
             # doesn't play nicely with the "standard" way of doing things.
+            cls.log.debug("current renderer is 3delight, "
+                          "this validation will be skipped!")
             return
 
         file_prefix = cmds.getAttr(

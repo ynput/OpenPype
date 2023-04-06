@@ -399,7 +399,7 @@ class RenderSettings(object):
                                              animationEndTime=True))
 
         dl_render_settings = cmds.ls(type="dlRenderSettings")
-        assert len(dl_render_settings) >= 1
+        assert len(dl_render_settings) >= 1, ("No dlRenderSetting found!")
         for dl_render_setting in dl_render_settings:
             cmds.setAttr(
                 "{}.startFrame".format(dl_render_setting), start_frame)
