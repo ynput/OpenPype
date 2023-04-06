@@ -31,12 +31,6 @@ from .pipeline import containerise
 from . import lib
 
 
-CREATOR_INSTANCE_ATTRS = {
-    "id", "asset", "subset", "task", "variant", "family", "instance_id",
-    "creator_identifier", "creator_attributes", "publish_attributes", "active"
-}
-
-
 def _get_attr(node, attr, default=None):
     """Helper to get attribute which allows attribute to not exist."""
     if not cmds.attributeQuery(attr, node=node, exists=True):
@@ -183,13 +177,22 @@ class MayaCreatorBase(object):
         # will not clash in names with `subset`, `task`, etc. and other
         # default names. This is just so these attributes in many cases
         # are still editable in the maya UI by artists.
-        data.update(data.pop("creator_attributes", {}))
+        # pop to move to end of dict to sort attributes last on the node
+        creator_attributes = data.pop("creator_attributes", {})
+        data.update(creator_attributes)
 
         # We know the "publish_attributes" will be complex data of
         # settings per plugins, we'll store this as a flattened json structure
-        publish_attributes = json.dumps(data.get("publish_attributes", {}))
-        data.pop("publish_attributes", None)    # pop to move to end of dict
-        data["publish_attributes"] = publish_attributes
+        # pop to move to end of dict to sort attributes last on the node
+        data["publish_attributes"] = json.dumps(
+            data.pop("publish_attributes", {})
+        )
+
+        # Since we flattened the data structure for creator attributes we want
+        # to correctly detect which flattened attributes should end back in the
+        # creator attributes when reading the data from the node, so we store
+        # the relevant keys as a string
+        data["__creator_attributes_keys"] = ",".join(creator_attributes.keys())
 
         # Kill any existing attributes just so we can imprint cleanly again
         for attr in data.keys():
@@ -208,9 +211,11 @@ class MayaCreatorBase(object):
         # Move the relevant attributes into "creator_attributes" that
         # we flattened originally
         node_data["creator_attributes"] = {}
-        for key, value in node_data.items():
-            if key not in CREATOR_INSTANCE_ATTRS:
-                node_data["creator_attributes"][key] = value
+        creator_attribute_keys = node_data.pop("__creator_attributes_keys",
+                                               "").split(",")
+        for key in creator_attribute_keys:
+            if key in node_data:
+                node_data["creator_attributes"][key] = node_data.pop(key)
 
         publish_attributes = node_data.get("publish_attributes")
         if publish_attributes:
@@ -301,26 +306,22 @@ def ensure_namespace(namespace):
 
 
 class RenderlayerCreator(NewCreator, MayaCreatorBase):
-    """Create and manages renderlayer subset per renderLayer in workfile.
+    """Creator which creates an instance per renderlayer in the workfile.
 
-    This generates a single node in the scene which if it exist tell the
-    Creator collect Maya rendersetup renderlayers as individual instances.
+    Create and manages renderlayer subset per renderLayer in workfile.
+    This generates a singleton node in the scene which, if it exists, tells the
+    Creator to collect Maya rendersetup renderlayers as individual instances.
     As such, triggering create doesn't actually create the instance node per
     layer but only the node which tells the Creator it may now collect
     an instance per renderlayer.
 
     """
 
-    identifier = "io.openpype.creators.maya.renderlayer"
-    family = "renderlayer"
-    label = "Render"
-    icon = "eye"
-
-    # These are optional to be overridden in subclass
-    layer_instance_prefix = ""
-
     # These are required to be overridden in subclass
     singleton_node_name = ""
+
+    # These are optional to be overridden in subclass
+    layer_instance_prefix = None
 
     def _get_singleton_node(self, return_all=False):
         nodes = lib.lsattr("pre_creator_identifier", self.identifier)
