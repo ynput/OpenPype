@@ -118,17 +118,11 @@ class ExtractThumbnail(Extractor):
         tags = ["thumbnail", "review"]
 
         # Removed `review` tags from thumbnail if current subset instance
-        # already has a representation with `review` tag or if there is a
-        # `Review` subset in the current publish context.
+        # already has a representation with `review` tag.
         for repre in instance.data["representations"]:
             if "review" in repre.get("tags", []):
                 tags.remove("review")
                 break
-        else:
-            for context_instance in instance.context:
-                if context_instance.data.get("family") == "review":
-                    tags.remove("review")
-                    break
 
         representation = {
             "name": "thumbnail",
