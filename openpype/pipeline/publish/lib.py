@@ -378,29 +378,29 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
     except KeyError:
         pass
 
-    # Category determined from path
+    # Settings category determined from path
     # - usually path is './<category>/plugins/publish/<plugin file>'
+    # - category can be host name of addon name ('maya', 'deadline', ...)
     filepath = os.path.normpath(inspect.getsourcefile(plugin))
-    filepath = os.path.normpath(filepath)
 
-    split_path = filepath.split(os.path.sep)
+    split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
         log.warning(
             'plugin path too short to extract host {}'.format(filepath)
         )
         return {}
 
-    host_from_file = split_path[-4]
+    category_from_file = split_path[-4]
     plugin_kind = split_path[-2]
 
     # TODO: change after all plugins are moved one level up
-    if host_from_file == "openpype":
-        host_from_file = "global"
+    if category_from_file == "openpype":
+        category_from_file = "global"
 
     try:
         return (
             project_settings
-            [host_from_file]
+            [category_from_file]
             [plugin_kind]
             [plugin.__name__]
         )
