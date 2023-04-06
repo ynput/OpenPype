@@ -24,7 +24,10 @@ from openpype.client import (
     get_version_by_name,
 )
 from openpype.lib import source_hash
-from openpype.lib.file_transaction import FileTransaction
+from openpype.lib.file_transaction import (
+    FileTransaction,
+    DuplicateDestinationError
+)
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_template_name,
@@ -170,9 +173,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             ).format(instance.data["family"]))
             return
 
-        file_transactions = FileTransaction(log=self.log)
+        file_transactions = FileTransaction(log=self.log,
+                                            # Enforce unique transfers
+                                            allow_queue_replacements=False)
         try:
             self.register(instance, file_transactions, filtered_repres)
+        except DuplicateDestinationError as exc:
+            # Raise DuplicateDestinationError as KnownPublishError
+            # and rollback the transactions
+            file_transactions.rollback()
+            six.reraise(KnownPublishError,
+                        KnownPublishError(exc),
+                        sys.exc_info()[2])
         except Exception:
             # clean destination
             # todo: preferably we'd also rollback *any* changes to the database
@@ -400,7 +412,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("{}".format(op_session.to_data()))
         op_session.commit()
 
-        # Backwards compatibility
+        # Backwards compatibility used in hero integration.
         # todo: can we avoid the need to store this?
         instance.data["published_representations"] = {
             p["representation"]["_id"]: p for p in prepared_representations
@@ -900,7 +912,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "frameStart", "frameEnd", "step", "handles",
+            "frameStart", "frameEnd", "step",
             "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:

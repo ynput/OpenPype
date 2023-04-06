@@ -31,7 +31,7 @@ bool UOpenPypeLib::SetFolderColor(const FString& FolderPath, const FLinearColor&
 }
 
 /**
- * Returns all poperties on  given object
+ * Returns all properties on  given object
  * @param cls - class
  * @return TArray of properties
  */
