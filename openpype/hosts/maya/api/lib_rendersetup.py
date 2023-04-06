@@ -19,6 +19,8 @@ from maya.app.renderSetup.model.override import (
     UniqueOverride
 )
 
+from openpype.hosts.maya.api.lib import get_attribute
+
 EXACT_MATCH = 0
 PARENT_MATCH = 1
 CLIENT_MATCH = 2
@@ -96,9 +98,6 @@ def get_attr_in_layer(node_attr, layer):
 
     """
 
-    # Delay pymel import to here because it's slow to load
-    import pymel.core as pm
-
     def _layer_needs_update(layer):
         """Return whether layer needs updating."""
         # Use `getattr` as e.g. DEFAULT_RENDER_LAYER does not have
@@ -125,7 +124,7 @@ def get_attr_in_layer(node_attr, layer):
             node = history_overrides[-1] if history_overrides else override
             node_attr_ = node + ".original"
 
-        return pm.getAttr(node_attr_, asString=True)
+        return get_attribute(node_attr_, asString=True)
 
     layer = get_rendersetup_layer(layer)
     rs = renderSetup.instance()
@@ -145,7 +144,7 @@ def get_attr_in_layer(node_attr, layer):
                 # we will let it error out.
                 rs.switchToLayer(current_layer)
 
-        return pm.getAttr(node_attr, asString=True)
+        return get_attribute(node_attr, asString=True)
 
     overrides = get_attr_overrides(node_attr, layer)
     default_layer_value = get_default_layer_value(node_attr)
@@ -156,7 +155,7 @@ def get_attr_in_layer(node_attr, layer):
     for match, layer_override, index in overrides:
         if isinstance(layer_override, AbsOverride):
             # Absolute override
-            value = pm.getAttr(layer_override.name() + ".attrValue")
+            value = get_attribute(layer_override.name() + ".attrValue")
             if match == EXACT_MATCH:
                 # value = value
                 pass
@@ -168,8 +167,8 @@ def get_attr_in_layer(node_attr, layer):
         elif isinstance(layer_override, RelOverride):
             # Relative override
             # Value = Original * Multiply + Offset
-            multiply = pm.getAttr(layer_override.name() + ".multiply")
-            offset = pm.getAttr(layer_override.name() + ".offset")
+            multiply = get_attribute(layer_override.name() + ".multiply")
+            offset = get_attribute(layer_override.name() + ".offset")
 
             if match == EXACT_MATCH:
                 value = value * multiply + offset
