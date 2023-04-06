@@ -13,7 +13,8 @@ class OCIOEnvHook(PreLaunchHook):
         "blender",
         "aftereffects",
         "3dsmax",
-        "houdini"
+        "houdini",
+        "maya"
     ]
 
     def execute(self):
