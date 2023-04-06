@@ -1,4 +1,4 @@
-name: project-task-statuses
+name: 📊 Project task statuses
 
 on:
   pull_request_review:
