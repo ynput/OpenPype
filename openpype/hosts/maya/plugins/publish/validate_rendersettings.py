@@ -352,6 +352,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                              cls.renderman_dir_prefix,
                              type="string")
 
+            # Repair Arnold merge AOVs
+            if renderer == "arnold":
+                attr = "defaultArnoldDriver.mergeAOVs"
+                multipart_default = render_settings.get(
+                    "arnold_renderer/multilayer_exr", True
+                )
+                if cmds.getAttr(attr) != multipart_default:
+                    cmds.setAttr(attr, multipart_default)
+
             # Repair AOV separators
             if renderer == "vray":
                 vray_settings = cmds.ls(type="VRaySettingsNode")
