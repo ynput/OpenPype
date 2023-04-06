@@ -28,7 +28,7 @@ from openpype.pipeline import (
     KnownPublishError,
     registered_host,
     get_process_id,
-    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -2312,9 +2312,9 @@ class PublisherController(BasePublisherController):
         """Decide if publish plugin is active.
 
         This is hack because 'active' is mis-used in mixin
-        'OpenPypePyblishPluginMixin' where 'active' is used for default value
+        'OptionalPyblishPluginMixin' where 'active' is used for default value
         of optional plugins. Because of that is 'active' state of plugin
-        which inherit from 'OpenPypePyblishPluginMixin' ignored. That affects
+        which inherit from 'OptionalPyblishPluginMixin' ignored. That affects
         headless publishing inside host, potentially remote publishing.
 
         We have to change that to match pyblish base, but we can do that
@@ -2335,7 +2335,7 @@ class PublisherController(BasePublisherController):
         if not plugin.optional:
             return False
 
-        if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+        if OptionalPyblishPluginMixin in inspect.getmro(plugin):
             return True
         return False
 
