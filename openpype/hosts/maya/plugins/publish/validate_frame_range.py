@@ -114,8 +114,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
             raise PublishValidationError(report, title="Frame Range incorrect")
 
-        assert len(errors) == 0, ()
-
     @classmethod
     def repair(cls, instance):
         """
