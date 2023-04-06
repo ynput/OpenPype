@@ -354,6 +354,59 @@ def publish_plugins_discover(paths=None):
     return result
 
 
+def _get_plugin_settings(host_name, project_settings, plugin, log):
+    """Get plugin settings based on host name and plugin name.
+
+    Args:
+        host_name (str): Name of host.
+        project_settings (dict[str, Any]): Project settings.
+        plugin (pyliblish.Plugin): Plugin where settings are applied.
+        log (logging.Logger): Logger to log messages.
+
+    Returns:
+        dict[str, Any]: Plugin settings {'attribute': 'value'}.
+    """
+
+    try:
+        return (
+            project_settings
+            [host_name]
+            ["publish"]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+
+    # host determined from path
+    filepath = os.path.normpath(inspect.getsourcefile(plugin))
+    filepath = os.path.normpath(filepath)
+
+    split_path = filepath.split(os.path.sep)
+    if len(split_path) < 4:
+        log.warning(
+            'plugin path too short to extract host {}'.format(filepath)
+        )
+        return {}
+
+    host_from_file = split_path[-4]
+    plugin_kind = split_path[-2]
+
+    # TODO: change after all plugins are moved one level up
+    if host_from_file == "openpype":
+        host_from_file = "global"
+
+    try:
+        return (
+            project_settings
+            [host_from_file]
+            [plugin_kind]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+    return {}
+
+
 def filter_pyblish_plugins(plugins):
     """Pyblish plugin filter which applies OpenPype settings.
 
