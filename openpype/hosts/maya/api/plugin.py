@@ -156,24 +156,22 @@ class ReferenceLoader(Loader):
             raise LoadError("No group name specified in "
                             "Maya ReferenceLoader settings")
 
-        custom_namespace = custom_naming['namespace'].format(
-            asset_name=asset['name'],
-            asset_type=asset['type'],
-            subset=subset['name'],
-            family=(
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "subset": subset['name'],
+            "family": (
                 subset['data'].get('family') or
                 subset['data']['families'][0]
             )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
         )
 
         custom_group_name = custom_naming['group_name'].format(
-            asset_name=asset['name'],
-            asset_type=asset['type'],
-            subset=subset['name'],
-            family=(
-                subset['data'].get('family') or
-                subset['data']['families'][0]
-            )
+            **formatting_data
         )
 
         count = options.get("count") or 1
