@@ -413,3 +413,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         "redshiftOptions.imageFormat", asString=True)
                     cmds.setAttr(
                         "{}.fileFormat".format(aov), default_ext)
+
+            if renderer == "arnold":
+                mergeAOVs = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                if mergeAOVs:
+                    # Validate against having render pass token if merging
+                    # AOVs, so need to repair it as well.
+                    default_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
+
+                cmds.setAttr(
+                    "{}.{}".format(node, prefix_attr),
+                    default_prefix,
+                    type="string"
+                )
