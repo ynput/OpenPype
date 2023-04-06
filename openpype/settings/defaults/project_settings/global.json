@@ -251,7 +251,7 @@
                     }
                 },
                 {
-                    "families": [],
+                    "families": ["review"],
                     "hosts": [
                         "maya"
                     ],
@@ -259,7 +259,7 @@
                     "task_names": [],
                     "subsets": [],
                     "burnins": {
-                        "maya_burnin": {
+                        "maya_review_burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
                             "TOP_CENTERED": "{focalLength:.2f} mm",
                             "TOP_RIGHT": "{anatomy[version]}",
@@ -267,9 +267,7 @@
                             "BOTTOM_CENTERED": "{asset}",
                             "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
                             "filter": {
-                                "families": [
-                                    "review"
-                                ],
+                                "families": [],
                                 "tags": []
                             }
                         }
