@@ -1,6 +1,4 @@
-import os
 import pyblish.api
-from openpype.hosts.hiero import api as phiero
 
 
 def openpype_publish_tag(track_item):
@@ -27,6 +25,7 @@ def get_tag_handles(track_item):
 
 class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
     """Gathers cut info from instance and clip tag data. That data is then updated on the shot entity in Shotgrid"""
+
     order = pyblish.api.IntegratorOrder + 0.4999
     label = "Integrate Shotgrid Cut Info"
     hosts = ["hiero"]
@@ -40,7 +39,9 @@ class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
         shotgrid_version = instance.data.get("shotgridVersion")
 
         if not shotgrid_version:
-            self.log.warning("No Shotgrid version collect. Cut Info could not be integrated into shot")
+            self.log.warning(
+                "No Shotgrid version collect. Cut Info could not be integrated into shot"
+            )
             return
 
         track_item = instance.data["item"]
@@ -57,11 +58,11 @@ class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
             "sg_cut_in": cut_in,
             "sg_cut_out": cut_out,
             "sg_head_in": head_in,
-            "sg_tail_out": tail_out
+            "sg_tail_out": tail_out,
         }
-        self.log.info("Setting cut info on shot '{0}' - {1}".format(
-            shotgrid_version["entity"]["name"],
-            shot_data
+        self.log.info(
+            "Setting cut info on shot '{0}' - {1}".format(
+                shotgrid_version["entity"]["name"], shot_data
             )
         )
 
@@ -69,6 +70,8 @@ class IntegrateShotgridCutInfo(pyblish.api.InstancePlugin):
             "Shot",
             shotgrid_version["entity"]["id"],
             shot_data,
-       )
+        )
         if not result:
-            self.log.warning('Failed to update shot cut information. Most likely SG connection was severed')
+            self.log.warning(
+                "Failed to update shot cut information. Most likely SG connection was severed"
+            )
