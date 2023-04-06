@@ -260,11 +260,11 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
             # Assign Arnold Standin look.
             if cmds.pluginInfo("mtoa", query=True, loaded=True):
                 arnold_standins = set(cmds.ls(type="aiStandIn", long=True))
-                
+
                 for standin in arnold_standins:
                     if standin in nodes:
                         arnold_standin.assign_look(standin, subset_name)
-                
+
                 nodes = list(set(nodes).difference(arnold_standins))
             else:
                 self.echo(
