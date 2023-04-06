@@ -2347,11 +2347,9 @@ class PublisherController(BasePublisherController):
         states of currently processed publish plugin and instance. Also
         change state of processed orders like validation order has passed etc.
 
-        Also stops publishing if should stop on validation.
-
-        QUESTION:
-        Does validate button still make sense?
+        Also stops publishing, if should stop on validation.
         """
+
         for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
@@ -2487,7 +2485,11 @@ def collect_families_from_instances(instances, only_active=False):
         instances(list<pyblish.api.Instance>): List of publish instances from
             which are families collected.
         only_active(bool): Return families only for active instances.
+
+    Returns:
+        list[str]: Families available on instances.
     """
+
     all_families = set()
     for instance in instances:
         if only_active:
