@@ -183,6 +183,7 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
+from ayon_api.constants import SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
@@ -252,12 +253,12 @@ def _connect_to_ayon_server():
     if HEADLESS_MODE_ENABLED:
         _print("!!! Cannot open v4 Login dialog in headless mode.")
         _print((
-            "!!! Please use `AYON_SERVER_URL` to specify server address"
-            " and 'AYON_TOKEN' to specify user's token."
-        ))
+            "!!! Please use `{}` to specify server address"
+            " and '{}' to specify user's token."
+        ).format(SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY))
         sys.exit(1)
 
-    current_url = os.environ.get("AYON_SERVER_URL")
+    current_url = os.environ.get(SERVER_URL_ENV_KEY)
     url, token, username = ask_to_login_ui(current_url, always_on_top=True)
     if url is not None and token is not None:
         confirm_server_login(url, token, username)
@@ -345,10 +346,10 @@ def boot():
             t.echo(i)
 
     try:
-        cli.main(obj={}, prog_name="openpype")
+        cli.main(obj={}, prog_name="ayon")
     except Exception:  # noqa
         exc_info = sys.exc_info()
-        _print("!!! OpenPype crashed:")
+        _print("!!! AYON crashed:")
         traceback.print_exception(*exc_info)
         sys.exit(1)
 
