@@ -6,6 +6,7 @@ import collections
 import uuid
 import tempfile
 import shutil
+import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -26,8 +27,8 @@ from openpype.pipeline import (
     PublishValidationError,
     KnownPublishError,
     registered_host,
-    legacy_io,
     get_process_id,
+    OpenPypePyblishPluginMixin,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -2307,6 +2308,37 @@ class PublisherController(BasePublisherController):
     def _process_main_thread_item(self, item):
         item()
 
+    def _is_publish_plugin_active(self, plugin):
+        """Decide if publish plugin is active.
+
+        This is hack because 'active' is mis-used in mixin
+        'OpenPypePyblishPluginMixin' where 'active' is used for default value
+        of optional plugins. Because of that is 'active' state of plugin
+        which inherit from 'OpenPypePyblishPluginMixin' ignored. That affects
+        headless publishing inside host, potentially remote publishing.
+
+        We have to change that to match pyblish base, but we can do that
+        only when all hosts use Publisher because the change requires
+        change of settings schemas.
+
+        Args:
+            plugin (pyblish.Plugin): Plugin which should be checked if is
+                active.
+
+        Returns:
+            bool: Is plugin active.
+        """
+
+        if plugin.active:
+            return True
+
+        if not plugin.optional:
+            return False
+
+        if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+            return True
+        return False
+
     def _publish_iterator(self):
         """Main logic center of publishing.
 
@@ -2343,6 +2375,11 @@ class PublisherController(BasePublisherController):
 
             # Add plugin to publish report
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
+
+            # WARNING This is hack fix for optional plugins
+            if not self._is_publish_plugin_active(plugin):
+                self._publish_report.set_plugin_skipped()
+                continue
 
             # Trigger callback that new plugin is going to be processed
             plugin_label = plugin.__name__
