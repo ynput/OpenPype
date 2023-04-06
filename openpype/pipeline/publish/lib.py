@@ -454,13 +454,13 @@ def filter_pyblish_plugins(plugins):
                 host_name, project_settings, plugin, log
             )
             for option, value in plugin_settins.items():
-                if option == "enabled" and value is False:
-                    log.info('removing plugin {}'.format(plugin.__name__))
-                    plugins.remove(plugin)
-                else:
-                    log.info('setting {}:{} on plugin {}'.format(
-                        option, value, plugin.__name__))
-                    setattr(plugin, option, value)
+                log.info("setting {}:{} on plugin {}".format(
+                    option, value, plugin.__name__))
+                setattr(plugin, option, value)
+
+        # Remove disabled plugins
+        if getattr(plugin, "enabled", True) is False:
+            plugins.remove(plugin)
 
 
 def find_close_plugin(close_plugin_name, log):
