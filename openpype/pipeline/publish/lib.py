@@ -367,6 +367,7 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
 
+    # Use project settings from host name category when available
     try:
         return (
             project_settings
@@ -377,7 +378,8 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
     except KeyError:
         pass
 
-    # host determined from path
+    # Category determined from path
+    # - usually path is './<category>/plugins/publish/<plugin file>'
     filepath = os.path.normpath(inspect.getsourcefile(plugin))
     filepath = os.path.normpath(filepath)
 
