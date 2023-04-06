@@ -25,7 +25,11 @@ jobs:
     if: |
       (github.event_name == 'issue_comment' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.comment.user.id != 82967070) ||
       (github.event_name == 'pull_request_review_comment' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.comment.user.type != 'Bot') ||
-      (github.event_name == 'pull_request_review' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.review.state != 'changes_requested' && github.event.review.user.type != 'Bot')
+      (github.event_name == 'pull_request_review' &&
+      github.event.pull_request.head.repo.owner.login == 'ynput' &&
+      github.event.review.state != 'changes_requested' &&
+      github.event.review.state != 'approved' &&
+      github.event.review.user.type != 'Bot')
     steps:
       - name: Move PR to 'Review In Progress'
         uses: leonsteinhaeuser/project-beta-automations@v2.1.0
@@ -70,10 +74,7 @@ jobs:
   size-label:
     name: pr_size_label
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'pull_request' && github.event.action == 'assigned') ||
-      (github.event_name == 'pull_request' && github.event.action == 'opened')
-
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
     steps:
       - name: Add size label
         uses: "pascalgn/size-label-action@v0.4.3"
@@ -94,9 +95,7 @@ jobs:
   label_prs_branch:
     name: pr_branch_label
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'pull_request' && github.event.action == 'assigned') ||
-      (github.event_name == 'pull_request' && github.event.action == 'opened')
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
     steps:
     - name: Label PRs - Branch name detection
       uses: ffittschen/pr-branch-labeler@v1
@@ -106,9 +105,7 @@ jobs:
   label_prs_globe:
     name: pr_globe_label
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'pull_request' && github.event.action == 'assigned') ||
-      (github.event_name == 'pull_request' && github.event.action == 'opened')
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
     steps:
     - name: Label PRs - Globe detection
       uses: actions/labeler@v4.0.3
