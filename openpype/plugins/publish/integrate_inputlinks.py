@@ -3,6 +3,7 @@ from collections import OrderedDict
 from bson.objectid import ObjectId
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 
 
@@ -34,6 +35,11 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
             plugin.
 
         """
+
+        if AYON_SERVER_ENABLED:
+            self.log.info("Skipping, in AYON mode")
+            return
+
         workfile = None
         publishing = []
 
