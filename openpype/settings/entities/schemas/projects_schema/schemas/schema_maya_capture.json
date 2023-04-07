@@ -176,7 +176,7 @@
                                 { "all": "All Lights"},
                                 { "selected": "Selected Lights"},
                                 { "flat": "Flat Lighting"},
-                                { "nolights": "No Lights"}
+                                { "none": "No Lights"}
                             ]
                         },
                         {
