@@ -4,6 +4,39 @@ import hou
 from openpype.pipeline import PublishXmlValidationError
 
 
+def group_consecutive_numbers(nums):
+    """
+    Args:
+        nums (list): List of sorted integer numbers.
+
+    Yields:
+        str: Group ranges as {start}-{end} if more than one number in the range
+            else it yields {end}
+
+    """
+    start = None
+    end = None
+
+    def _result(a, b):
+        if a == b:
+            return "{}".format(a)
+        else:
+            return "{}-{}".format(a, b)
+
+    for num in nums:
+        if start is None:
+            start = num
+            end = num
+        elif num == end + 1:
+            end = num
+        else:
+            yield _result(start, end)
+            start = num
+            end = num
+    if start is not None:
+        yield _result(start, end)
+
+
 class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     """Validate that the node connected to the output node is of type VDB.
 
@@ -61,14 +94,15 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             if not isinstance(prim, hou.VDB):
                 invalid_prims.append(prim)
         if invalid_prims:
-            # TODO Log all invalid primitives in a short readable way, like 0-5
-            # This logging can be really slow for many primitives, say 20000+
-            # which might be fixed by logging only consecutive ranges
+            # Log prim numbers as consecutive ranges so logging isn't very
+            # slow for large number of primitives
             cls.log.error(
                 "Found non-VDB primitives for '{}', "
                 "primitive indices: {}".format(
                     node.path(),
-                    ", ".join(str(prim.number()) for prim in invalid_prims)
+                    ", ".join(group_consecutive_numbers(
+                        prim.number() for prim in invalid_prims
+                    ))
                 )
             )
             return [instance]
