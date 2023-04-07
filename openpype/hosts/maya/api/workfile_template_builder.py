@@ -49,7 +49,10 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
         default_cameras = [cam for cam in cmds.ls(cameras=True)
                            if cmds.camera(cam, query=True, startupCamera=True)]
         for cam in default_cameras:
-            if not cmds.objExists("{}.renderable".format(cam)):
+            if not cmds.attributeQuery("renderable", node=cam, exists=True):
+                self.log.debug(
+                    "Camera {} has no attribute 'renderable'".format(cam)
+                )
                 continue
             cmds.setAttr("{}.renderable".format(cam), 0)
 
