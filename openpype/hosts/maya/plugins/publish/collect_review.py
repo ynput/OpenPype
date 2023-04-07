@@ -18,8 +18,6 @@ class CollectReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.debug('instance: {}'.format(instance))
-
         # Get panel.
         instance.data["panel"] = cmds.playblast(
             activeEditor=True
