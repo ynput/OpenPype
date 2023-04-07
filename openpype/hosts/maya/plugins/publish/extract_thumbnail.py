@@ -8,7 +8,6 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 from maya import cmds
-import pymel.core as pm
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -99,11 +98,11 @@ class ExtractThumbnail(publish.Extractor):
         preset["filename"] = path
         preset["overwrite"] = True
 
-        pm.refresh(f=True)
+        cmds.refresh(force=True)
 
-        refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
-        pm.currentTime(refreshFrameInt - 1, edit=True)
-        pm.currentTime(refreshFrameInt, edit=True)
+        refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
+        cmds.currentTime(refreshFrameInt - 1, edit=True)
+        cmds.currentTime(refreshFrameInt, edit=True)
 
         # Use displayLights setting from instance
         key = "displayLights"
