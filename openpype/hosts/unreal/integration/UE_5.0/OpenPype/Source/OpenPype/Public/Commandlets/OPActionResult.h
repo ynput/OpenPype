@@ -16,7 +16,7 @@
 /**
 * @brief This enum values are humanly readable mapping of error codes.
 * Here should be all error codes to be possible find what went wrong.
-* TODO: In the future should exists an web document where is mapped error code & what problem occured & how to repair it...
+* TODO: In the future a web document should exists with the mapped error code & what problem occurred & how to repair it...
 */
 UENUM()
 namespace EOP_ActionResult
@@ -27,11 +27,11 @@ namespace EOP_ActionResult
 		ProjectNotCreated,
 		ProjectNotLoaded,
 		ProjectNotSaved,
-		//....Here insert another values 
+		//....Here insert another values
 
 		//Do not remove!
 		//Usable for looping through enum values
-		__Last UMETA(Hidden) 
+		__Last UMETA(Hidden)
 	};
 }
 
@@ -63,10 +63,10 @@ public:
 
 private:
 	/** @brief Action status  */
-	EOP_ActionResult::Type Status;	
+	EOP_ActionResult::Type Status;
 
 	/** @brief Optional reason of fail	 */
-	FText Reason;	
+	FText Reason;
 
 public:
 	/**
@@ -77,7 +77,7 @@ public:
 	EOP_ActionResult::Type& GetStatus();
 	FText& GetReason();
 
-private:	
+private:
 	void TryLog() const;
 };
 

@@ -11,7 +11,7 @@ Your scene does not contain metadata about {missing_metadata}.
 Resave the scene using Workfiles tool or hit the "Repair" button on the right.
 </description>
 <detail>
-### How this could happend?
+### How this could happen?
 
 You're using scene file that was not created using Workfiles tool.
 </detail>

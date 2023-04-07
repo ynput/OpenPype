@@ -504,7 +504,7 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
      * Args:
      *  comp_id (int): id of target composition
      *  item_id (int): FootageItem.id
-     *  found_comp (CompItem, optional): to limit quering if
+     *  found_comp (CompItem, optional): to limit querying if
      *      comp already found previously
      */
     var comp = found_comp || app.project.itemByID(comp_id);

@@ -227,7 +227,7 @@ class ExtractSubsetResources(publish.Extractor):
                 self.hide_others(
                     exporting_clip, segment_name, s_track_name)
 
-                # change name patern
+                # change name pattern
                 name_patern_xml = (
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
@@ -358,7 +358,7 @@ class ExtractSubsetResources(publish.Extractor):
                 representation_data["stagingDir"] = n_stage_dir
                 files = n_files
 
-            # add files to represetation but add
+            # add files to representation but add
             # imagesequence as list
             if (
                 # first check if path in files is not mov extension
