@@ -6,8 +6,16 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class ValidateMeshNormalsUnlocked(pyblish.api.Validator,
@@ -26,6 +34,10 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator,
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
     optional = True
+
+    @classmethod
+    def apply_settings(cls, a, b):
+        return
 
     @staticmethod
     def has_locked_normals(mesh):
@@ -55,8 +67,12 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator,
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Meshes found with "
-                             "locked normals: {0}".format(invalid))
+            raise PublishValidationError(
+                "Meshes found with locked normals:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Locked normals"
+            )
 
     @classmethod
     def repair(cls, instance):
