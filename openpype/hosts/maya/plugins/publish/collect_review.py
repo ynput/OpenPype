@@ -150,10 +150,8 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # Convert enum attribute index to string.
         index = instance.data.get("displayLights", 0)
-        display_lights = lib.DISPLAY_LIGHTS[index]
+        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
         if display_lights == "project_settings":
-            # project_settings/maya/publish/ExtractPlayblast/capture_preset
-            # /Viewport Options/displayLights
             settings = instance.context.data["project_settings"]
             settings = settings["maya"]["publish"]["ExtractPlayblast"]
             settings = settings["capture_preset"]["Viewport Options"]
