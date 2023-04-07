@@ -1,5 +1,13 @@
 import pyblish.api
 from maya import cmds
+from openpype.pipeline.publish import PublishValidationError
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
@@ -11,6 +19,9 @@ class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        if not cmds.pluginInfo("vrayformaya", query=True, loaded=True):
+            return
+
         shapes = cmds.ls(instance,
                          shapes=True,
                          type="mesh")
@@ -20,5 +31,11 @@ class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
                                       source=True) or []
         vray_meshes = cmds.ls(inputs, type='VRayMesh')
         if vray_meshes:
-            raise RuntimeError("Meshes that are VRayMeshes shouldn't "
-                               "be pointcached: {0}".format(vray_meshes))
+            raise PublishValidationError(
+                "Meshes that are V-Ray Proxies should not be in an Alembic "
+                "pointcache.\n"
+                "Found V-Ray proxies:\n\n{}".format(
+                    _as_report_list(sorted(vray_meshes))
+                ),
+                title="V-Ray Proxies in pointcache"
+            )

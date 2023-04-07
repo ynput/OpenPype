@@ -4,8 +4,16 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class ValidateNoAnimation(pyblish.api.Validator,
@@ -31,7 +39,12 @@ class ValidateNoAnimation(pyblish.api.Validator,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Keyframes found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Keyframes found on:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Keyframes on model"
+            )
 
     @staticmethod
     def get_invalid(instance):

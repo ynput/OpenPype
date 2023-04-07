@@ -4,8 +4,16 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class ValidateNoUnknownNodes(pyblish.api.InstancePlugin,
@@ -38,4 +46,9 @@ class ValidateNoUnknownNodes(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Unknown nodes found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Unknown nodes found:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Unknown nodes"
+            )
