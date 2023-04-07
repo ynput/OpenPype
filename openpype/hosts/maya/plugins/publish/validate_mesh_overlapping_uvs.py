@@ -8,8 +8,16 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class GetOverlappingUVs(object):
@@ -259,7 +267,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin,
         # Store original uv set
         original_current_uv_set = cmds.polyUVSet(mesh,
                                                  query=True,
-                                                 currentUVSet=True)
+                                                 currentUVSet=True)[0]
 
         overlapping_faces = []
         for uv_set in cmds.polyUVSet(mesh, query=True, allUVSets=True):
@@ -290,6 +298,10 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError(
-                "Meshes found with overlapping UVs: {0}".format(invalid)
+            raise PublishValidationError(
+                "Meshes found with overlapping UVs:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Overlapping UVs"
             )
+
