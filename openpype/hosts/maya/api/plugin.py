@@ -1,4 +1,5 @@
 import os
+import re
 
 from maya import cmds
 
@@ -81,6 +82,25 @@ def get_reference_node_parents(ref):
                                      referenceNode=True,
                                      parent=True)
     return parents
+
+
+def get_custom_namespace(custom_namespace):
+    split = re.split("([#]+)", custom_namespace, 1)
+
+    if len(split) == 3:
+        base, padding, suffix = split
+        padding = "%0{}d".format(len(padding))
+    else:
+        base = split[0]
+        padding = "%02d"
+        suffix = ""
+
+    return lib.unique_namespace(
+        base,
+        format=padding,
+        prefix="_" if not base or base[0].isdigit() else "",
+        suffix=suffix
+    )
 
 
 class Creator(LegacyCreator):
@@ -177,11 +197,7 @@ class ReferenceLoader(Loader):
         count = options.get("count") or 1
 
         for c in range(0, count):
-            namespace = lib.unique_namespace(
-                custom_namespace,
-                prefix="_" if custom_namespace[0].isdigit() else "",
-                suffix=""
-            )
+            namespace = get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name
