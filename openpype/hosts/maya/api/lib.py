@@ -284,32 +284,6 @@ def pairwise(iterable):
     return zip(a, a)
 
 
-def collect_animation_data(fps=False):
-    """Get the basic animation data
-
-    Returns:
-        OrderedDict
-
-    """
-
-    # get scene values as defaults
-    start = cmds.playbackOptions(query=True, animationStartTime=True)
-    end = cmds.playbackOptions(query=True, animationEndTime=True)
-
-    # build attributes
-    data = OrderedDict()
-    data["frameStart"] = start
-    data["frameEnd"] = end
-    data["handleStart"] = 0
-    data["handleEnd"] = 0
-    data["step"] = 1.0
-
-    if fps:
-        data["fps"] = mel.eval('currentTimeUnitToFPS()')
-
-    return data
-
-
 def collect_animation_defs(fps=False):
     """Get the basic animation attribute defintions for the publisher.
 
