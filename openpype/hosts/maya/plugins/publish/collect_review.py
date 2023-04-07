@@ -20,8 +20,6 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug('instance: {}'.format(instance))
 
-        task = legacy_io.Session["AVALON_TASK"]
-
         # Get panel.
         instance.data["panel"] = cmds.playblast(
             activeEditor=True
@@ -96,6 +94,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             instance.data['remove'] = True
 
         else:
+            task = legacy_io.Session["AVALON_TASK"]
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
             project_name = legacy_io.active_project()
