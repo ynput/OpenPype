@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating workfiles."""
 from openpype.pipeline import CreatedInstance, AutoCreator
-from openpype.pipeline import legacy_io
 from openpype.client import get_asset_by_name
 from openpype.hosts.maya.api import plugin
 from maya import cmds
@@ -26,9 +25,9 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
             ), None)
 
         project_name = self.project_name
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        host_name = legacy_io.Session["AVALON_APP"]
+        asset_name = self.create_context.get_current_asset_name()
+        task_name = self.create_context.get_current_task_name()
+        host_name = self.create_context.host_name
 
         if current_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)

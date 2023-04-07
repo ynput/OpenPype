@@ -1,4 +1,3 @@
-from openpype.pipeline import legacy_io
 from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.maya.api import plugin
 
@@ -58,7 +57,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # instances didn't store that data on the instances. The old style
         # logic was thus to be live to the current task to begin with.
         data = dict()
-        data["task"] = legacy_io.Session.get("AVALON_TASK")
+        data["task"] = self.create_context.get_current_task_name()
         for family, instance_nodes in legacy.items():
             if family in family_to_id:
                 # We only imprint the creator identifier for it to identify
