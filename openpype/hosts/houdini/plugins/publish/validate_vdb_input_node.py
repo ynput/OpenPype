@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import (
-    PublishValidationError
+    PublishXmlValidationError
 )
 
 
@@ -27,10 +27,9 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError(
+            raise PublishXmlValidationError(
                 self,
-                "Node connected to the output node is not of type VDB",
-                title=self.label
+                "Node connected to the output node is not of type VDB"
             )
 
     @classmethod
