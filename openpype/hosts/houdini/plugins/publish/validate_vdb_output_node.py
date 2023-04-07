@@ -68,7 +68,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
                 "Found non-VDB primitives for '{}', "
                 "primitive indices: {}".format(
                     node.path(),
-                    ", ".join(prim.number() for prim in invalid_prims)
+                    ", ".join(str(prim.number()) for prim in invalid_prims)
                 )
             )
             return [instance]
