@@ -1,6 +1,6 @@
 name: Bug Report
 description: File a bug report
-title: 'bug: '
+title: 'Bug: '
 labels:
   - 'type: bug'
 body:
@@ -88,11 +88,11 @@ body:
       required: true
   - type: checkboxes
     attributes:
-      label: Is there any more labels you wish to add?
+      label: Are there any labels you wish to add?
       description: Please search labels and identify those related to your bug.
       options:
-        - label: I have searched labels and added any
-          required: true
+      - label: I have added the relevant labels to the bug report.
+        required: true
   - type: textarea
     id: logs
     attributes:
