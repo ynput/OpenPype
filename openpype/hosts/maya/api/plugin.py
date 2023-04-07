@@ -85,6 +85,25 @@ def get_reference_node_parents(ref):
 
 
 def get_custom_namespace(custom_namespace):
+    """Return unique namespace.
+
+    The input namespace can contain a single group
+    of '#' number tokens to indicate where the namespace's
+    unique index should go. The amount of tokens defines
+    the zero padding of the number, e.g ### turns into 001.
+
+    Warning: Note that a namespace will always be
+        prefixed with a _ if it starts with a digit
+
+    Example:
+        >>> get_custom_namespace("myspace_##_")
+        # myspace_01_
+        >>> get_custom_namespace("##_myspace")
+        # _01_myspace
+        >>> get_custom_namespace("myspace##")
+        # myspace01
+
+    """
     split = re.split("([#]+)", custom_namespace, 1)
 
     if len(split) == 3:
@@ -92,7 +111,7 @@ def get_custom_namespace(custom_namespace):
         padding = "%0{}d".format(len(padding))
     else:
         base = split[0]
-        padding = "%02d"
+        padding = "%02d"  # default padding
         suffix = ""
 
     return lib.unique_namespace(
