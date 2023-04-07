@@ -35,10 +35,6 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator,
                RepairAction]
     optional = True
 
-    @classmethod
-    def apply_settings(cls, a, b):
-        return
-
     @staticmethod
     def has_locked_normals(mesh):
         """Return whether mesh has at least one locked normal"""
