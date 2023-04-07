@@ -304,4 +304,3 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin,
                 ),
                 title="Overlapping UVs"
             )
-
