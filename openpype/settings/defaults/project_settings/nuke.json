@@ -363,6 +363,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateBackdrop": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateScript": {
             "enabled": true,
             "optional": true,
