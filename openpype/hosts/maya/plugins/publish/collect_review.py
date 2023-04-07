@@ -23,7 +23,7 @@ class CollectReview(pyblish.api.InstancePlugin):
         # Get panel.
         instance.data["panel"] = cmds.playblast(
             activeEditor=True
-        ).split("|")[-1]
+        ).rsplit("|", 1)[-1]
 
         # get cameras
         members = instance.data['setMembers']
