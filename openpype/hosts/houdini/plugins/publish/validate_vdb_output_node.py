@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 import hou
-from openpype.pipeline import PublishValidationError
-import clique
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
@@ -27,9 +26,9 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError(
-                "Node connected to the output node is not" " of type VDB!",
-                title=self.label
+            raise PublishXmlValidationError(
+                self,
+                "Node connected to the output node is not" " of type VDB!"
             )
 
     @classmethod
@@ -62,16 +61,16 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             if not isinstance(prim, hou.VDB):
                 invalid_prims.append(prim)
         if invalid_prims:
-            # Log all invalid primitives in a short readable way, like 0-5
-            collections, remainder = clique.assemble(
-                    str(prim.number()) for prim in invalid_prims
+            # TODO Log all invalid primitives in a short readable way, like 0-5
+            # This logging can be really slow for many primitives, say 20000+
+            # which might be fixed by logging only consecutive ranges
+            cls.log.error(
+                "Found non-VDB primitives for '{}', "
+                "primitive indices: {}".format(
+                    node.path(),
+                    ", ".join(prim.number() for prim in invalid_prims)
+                )
             )
-            collection = collections[0]
-            cls.log.error("Found non-VDB primitives for '{}', "
-                          "primitive indices: {}".format(
-                node.path(),
-                collection.format("{ranges}")
-            ))
             return [instance]
 
         nr_of_points = len(geometry.points())
