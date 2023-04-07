@@ -28,7 +28,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
         if invalid:
             raise PublishXmlValidationError(
                 self,
-                "Node connected to the output node is not" " of type VDB!"
+                "Node connected to the output node is not of type VDB."
             )
 
     @classmethod
