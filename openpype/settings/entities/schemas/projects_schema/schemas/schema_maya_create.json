@@ -357,13 +357,13 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "maskColor_manager",
-                    "label": "Export Color Managers"
+                    "key": "maskOperator",
+                    "label": "Export Operators"
                 },
                 {
                     "type": "boolean",
-                    "key": "maskOperator",
-                    "label": "Export Operators"
+                    "key": "maskColor_manager",
+                    "label": "Export Color Managers"
                 }
             ]
         },

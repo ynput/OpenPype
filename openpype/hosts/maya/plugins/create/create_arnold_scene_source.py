@@ -76,12 +76,12 @@ class CreateArnoldSceneSource(plugin.MayaCreator):
             BoolDef("maskFilter",
                     label="Export Filters",
                     default=self.maskFilter),
-            BoolDef("maskColor_manager",
-                    label="Export Color Managers",
-                    default=self.maskColor_manager),
             BoolDef("maskOperator",
                     label="Export Operators",
                     default=self.maskOperator),
+            BoolDef("maskColor_manager",
+                    label="Export Color Managers",
+                    default=self.maskColor_manager),
         ])
 
         return defs
