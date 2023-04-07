@@ -67,7 +67,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        node = instance.data["output_node"]
+        node = instance.data.get("output_node")
         if node is None:
             cls.log.error(
                 "SOP path is not correctly set on "
