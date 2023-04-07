@@ -46,7 +46,8 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
         new_nodes = cmds.file(path, i=True, returnNewNodes=True)
 
         # make default cameras non-renderable
-        default_cameras = [u'perspShape']
+        default_cameras = [cam for cam in cmds.ls(cameras=True)
+                           if cmds.camera(cam, query=True, startupCamera=True)]
         for cam in default_cameras:
             if not cmds.objExists("{}.renderable".format(cam)):
                 continue
