@@ -242,6 +242,18 @@ class SettingsLineEdit(PlaceholderLineEdit):
         if self._completer is not None:
             self._completer.set_text_filter(text)
 
+    def _completer_should_be_visible(self):
+        return (
+            self.isVisible()
+            and (self.hasFocus() or self._completer.hasFocus())
+        )
+
+    def _show_completer(self):
+        if self._completer_should_be_visible():
+            self._focus_timer.start()
+            self._completer.show()
+            self._update_completer()
+
     def _update_completer(self):
         if self._completer is None or not self._completer.isVisible():
             return
@@ -250,7 +262,7 @@ class SettingsLineEdit(PlaceholderLineEdit):
         self._completer.move(new_point)
 
     def _on_focus_timer(self):
-        if not self.hasFocus() and not self._completer.hasFocus():
+        if not self._completer_should_be_visible():
             self._completer.hide()
             self._focus_timer.stop()
 
@@ -259,9 +271,7 @@ class SettingsLineEdit(PlaceholderLineEdit):
         self.focused_in.emit()
 
         if self._completer is not None:
-            self._focus_timer.start()
-            self._completer.show()
-            self._update_completer()
+            self._show_completer()
 
     def paintEvent(self, event):
         super(SettingsLineEdit, self).paintEvent(event)
