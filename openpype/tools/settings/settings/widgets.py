@@ -97,6 +97,7 @@ class CompleterView(QtWidgets.QListView):
 
         # Open the widget unactivated
         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+        self.setAttribute(QtCore.Qt.WA_NoMouseReplay)
         delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(delegate)
 
