@@ -4,7 +4,6 @@ from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import get_projects
-from openpype.pipeline import AvalonMongoDB
 from openpype.style import get_objected_colors
 from openpype.tools.utils.widgets import ImageButton
 from openpype.tools.utils.lib import paint_image_with_color
