@@ -89,7 +89,7 @@ all share the same provider).
 
 Handles files stored on disk storage.
 
-Local drive provider is the most basic one that is used for accessing all standard hard disk storage scenarios. It will work with any storage that can be mounted on your system in a standard way. This could correspond to a physical external hard drive, network mounted storage, internal drive or even VPN connected network drive. It doesn't care about how te drive is mounted, but you must be able to point to it with a simple directory path.
+Local drive provider is the most basic one that is used for accessing all standard hard disk storage scenarios. It will work with any storage that can be mounted on your system in a standard way. This could correspond to a physical external hard drive, network mounted storage, internal drive or even VPN connected network drive. It doesn't care about how the drive is mounted, but you must be able to point to it with a simple directory path.
 
 Default sites `local` and `studio` both use local drive provider.
 

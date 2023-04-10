@@ -10,11 +10,11 @@ from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
 class UserAssigmentEvent(BaseEvent):
     """
-    This script will intercept user assigment / de-assigment event and
+    This script will intercept user assignment / de-assignment event and
     run shell script, providing as much context as possible.
 
     It expects configuration file ``presets/ftrack/user_assigment_event.json``.
-    In it, you define paths to scripts to be run for user assigment event and
+    In it, you define paths to scripts to be run for user assignment event and
     for user-deassigment::
         {
             "add": [
