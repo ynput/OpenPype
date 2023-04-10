@@ -62,7 +62,7 @@
             "template_data": [
                 {
                     "key": "ValidateCorrectAssetName",
-                    "label": "Validate Correct Asset name"
+                    "label": "Validate Correct Asset Name"
                 }
             ]
         },
@@ -72,7 +72,7 @@
             "template_data": [
                 {
                     "key": "ValidateContainers",
-                    "label": "ValidateContainers"
+                    "label": "Validate Containers"
                 }
             ]
         },
@@ -81,7 +81,7 @@
             "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateKnobs",
-            "label": "ValidateKnobs",
+            "label": "Validate Knobs",
             "is_group": true,
             "children": [
                 {
@@ -103,6 +103,10 @@
                 {
                     "key": "ValidateOutputResolution",
                     "label": "Validate Output Resolution"
+                },
+                {
+                    "key": "ValidateBackdrop",
+                    "label": "Validate Backdrop"
                 },
                 {
                     "key": "ValidateGizmo",

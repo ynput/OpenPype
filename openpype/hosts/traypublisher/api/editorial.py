@@ -8,10 +8,10 @@ from openpype.pipeline.create import CreatorError
 class ShotMetadataSolver:
     """ Solving hierarchical metadata
 
-    Used during editorial publishing. Works with imput
+    Used during editorial publishing. Works with input
     clip name and settings defining python formatable
     template. Settings also define searching patterns
-    and its token keys used for formating in templates.
+    and its token keys used for formatting in templates.
     """
 
     NO_DECOR_PATERN = re.compile(r"\{([a-z]*?)\}")
@@ -40,13 +40,13 @@ class ShotMetadataSolver:
         """Shot renaming function
 
         Args:
-            data (dict): formating data
+            data (dict): formatting data
 
         Raises:
             CreatorError: If missing keys
 
         Returns:
-            str: formated new name
+            str: formatted new name
         """
         shot_rename_template = self.shot_rename[
             "shot_rename_template"]
@@ -58,7 +58,7 @@ class ShotMetadataSolver:
                 "Make sure all keys in settings are correct:: \n\n"
                 f"From template string {shot_rename_template} > "
                 f"`{_E}` has no equivalent in \n"
-                f"{list(data.keys())} input formating keys!"
+                f"{list(data.keys())} input formatting keys!"
             ))
 
     def _generate_tokens(self, clip_name, source_data):
@@ -68,7 +68,7 @@ class ShotMetadataSolver:
 
         Args:
             clip_name (str): name of clip in editorial
-            source_data (dict): data for formating
+            source_data (dict): data for formatting
 
         Raises:
             CreatorError: if missing key
@@ -106,14 +106,14 @@ class ShotMetadataSolver:
         return output_data
 
     def _create_parents_from_settings(self, parents, data):
-        """Formating parent components.
+        """formatting parent components.
 
         Args:
             parents (list): list of dict parent components
-            data (dict): formating data
+            data (dict): formatting data
 
         Raises:
-            CreatorError: missing formating key
+            CreatorError: missing formatting key
             CreatorError: missing token key
             KeyError: missing parent token
 
@@ -126,7 +126,7 @@ class ShotMetadataSolver:
 
         # fill parent keys data template from anatomy data
         try:
-            _parent_tokens_formating_data = {
+            _parent_tokens_formatting_data = {
                 parent_token["name"]: parent_token["value"].format(**data)
                 for parent_token in hierarchy_parents
             }
@@ -143,17 +143,17 @@ class ShotMetadataSolver:
         for _index, _parent in enumerate(
                 shot_hierarchy["parents_path"].split("/")
         ):
-            # format parent token with value which is formated
+            # format parent token with value which is formatted
             try:
                 parent_name = _parent.format(
-                    **_parent_tokens_formating_data)
+                    **_parent_tokens_formatting_data)
             except KeyError as _E:
                 raise CreatorError((
                     "Make sure all keys in settings are correct : \n\n"
                     f"`{_E}` from template string "
                     f"{shot_hierarchy['parents_path']}, "
                     f" has no equivalent in \n"
-                    f"{list(_parent_tokens_formating_data.keys())} parents"
+                    f"{list(_parent_tokens_formatting_data.keys())} parents"
                 ))
 
             parent_token_name = (
@@ -225,7 +225,7 @@ class ShotMetadataSolver:
         visual_hierarchy = [asset_doc]
         current_doc = asset_doc
 
-        # looping trought all available visual parents
+        # looping through all available visual parents
         # if they are not available anymore than it breaks
         while True:
             visual_parent_id = current_doc["data"]["visualParent"]
@@ -288,7 +288,7 @@ class ShotMetadataSolver:
 
         Args:
             clip_name (str): clip name
-            source_data (dict): formating data
+            source_data (dict): formatting data
 
         Returns:
             (str, dict): shot name and hierarchy data
@@ -301,19 +301,19 @@ class ShotMetadataSolver:
         # match clip to shot name at start
         shot_name = clip_name
 
-        # parse all tokens and generate formating data
-        formating_data = self._generate_tokens(shot_name, source_data)
+        # parse all tokens and generate formatting data
+        formatting_data = self._generate_tokens(shot_name, source_data)
 
         # generate parents from selected asset
         parents = self._get_parents_from_selected_asset(asset_doc, project_doc)
 
         if self.shot_rename["enabled"]:
-            shot_name = self._rename_template(formating_data)
+            shot_name = self._rename_template(formatting_data)
             self.log.info(f"Renamed shot name: {shot_name}")
 
         if self.shot_hierarchy["enabled"]:
             parents = self._create_parents_from_settings(
-                parents, formating_data)
+                parents, formatting_data)
 
         if self.shot_add_tasks:
             tasks = self._generate_tasks_from_settings(
