@@ -5,7 +5,7 @@ from openpype.pipeline.template_data import get_template_data_with_names
 
 
 class OCIOEnvHook(PreLaunchHook):
-   """Set OCIO environment variable for hosts that use OpenColorIO."""
+    """Set OCIO environment variable for hosts that use OpenColorIO."""
 
     def execute(self):
         """Hook entry method."""
