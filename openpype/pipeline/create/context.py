@@ -596,7 +596,14 @@ class AttributeValues(object):
             self[_key] = _value
 
     def pop(self, key, default=None):
-        return self._data.pop(key, default)
+        value = self._data.pop(key, default)
+        # Remove attribute definition if is 'UnknownDef'
+        # - gives option to get rid of unknown values
+        attr_def = self._attr_defs_by_key.get(key)
+        if isinstance(attr_def, UnknownDef):
+            self._attr_defs_by_key.pop(key)
+            self._attr_defs.remove(attr_def)
+        return value
 
     def reset_values(self):
         self._data = {}
