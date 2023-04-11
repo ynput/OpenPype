@@ -2314,18 +2314,16 @@ def reset_frame_range(playback=True, render=True, fps=True):
     }
 
     for instance in instances:
-        if not cmds.attributeQuery("id", node=instance, exists=True):
-            continue
-
         id_attr = "{}.id".format(instance)
         if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
             continue
 
         for key, value in frames_attributes.items():
-            cmds.setAttr(
-                "{}.{}".format(instance, key),
-                value
-            )
+            if cmds.attributeQuery(key, node=instance, exists=True):
+                cmds.setAttr(
+                    "{}.{}".format(instance, key),
+                    value
+                )
 
 
 def reset_scene_resolution():
