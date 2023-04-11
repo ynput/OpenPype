@@ -7,4 +7,4 @@ class IntegrateThumbnails(integrate_thumbnail.IntegrateThumbnails):
 
     label = "Integrate Thumbnails"
     order = pyblish.api.IntegratorOrder + 0.01
-    families = ["review", "model", "rig", "look"]
+    families = ["model", "rig"]
