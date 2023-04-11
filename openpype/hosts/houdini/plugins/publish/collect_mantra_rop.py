@@ -22,6 +22,7 @@ def get_top_referenced_parm(parm):
         else:
             parm = ref
 
+
 def evalParmNoFrame(node, parm, pad_character="#"):
 
     parameter = node.parm(parm)
@@ -106,8 +107,8 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
                             )
                             render_products.append(aov_product)
 
-                            files_by_aov[var] = self.generate_expected_files(instance,
-                                                                             aov_product)   # noqa
+                            files_by_aov[var] = self.generate_expected_files(instance, aov_product)     # noqa
+
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
             filenames = list(render_products)
