@@ -39,16 +39,20 @@ class ShotgridModule(OpenPypeModule, ITrayModule, IPluginPaths):
     def get_launch_hook_paths(self):
         return os.path.join(SHOTGRID_MODULE_DIR, "hooks")
 
-    def tray_init(self):
-        from .tray.shotgrid_tray import ShotgridTrayWrapper
+    ### Starts Alkemy-X Override ###
+    # Remove Shotgrid Login Dialog as it's useless for us, we can use $USER directly
 
-        self.tray_wrapper = ShotgridTrayWrapper(self)
+    # def tray_init(self):
+        # from .tray.shotgrid_tray import ShotgridTrayWrapper
 
-    def tray_start(self):
-        return self.tray_wrapper.validate()
+        # self.tray_wrapper = ShotgridTrayWrapper(self)
 
-    def tray_exit(self, *args, **kwargs):
-        return self.tray_wrapper
+    # def tray_start(self):
+    #     return self.tray_wrapper.validate()
 
-    def tray_menu(self, tray_menu):
-        return self.tray_wrapper.tray_menu(tray_menu)
+    # def tray_exit(self, *args, **kwargs):
+    #     return self.tray_wrapper
+
+    # def tray_menu(self, tray_menu):
+        # return self.tray_wrapper.tray_menu(tray_menu)
+    ### Ends Alkemy-X Override ###
