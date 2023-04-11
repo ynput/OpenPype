@@ -39,6 +39,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     hosts = ["houdini"]
     families = ["usdrender",
                 "redshift_rop",
+                "arnold_rop",
                 "mantra_rop",
                 "karma_rop"]
     targets = ["local"]
