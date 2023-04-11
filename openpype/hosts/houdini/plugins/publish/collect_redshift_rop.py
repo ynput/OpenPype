@@ -109,7 +109,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             render_products.append(aov_product)
 
             files_by_aov[aov_suffix] = self.generate_expected_files(instance,
-                                                                    aov_product)
+                                                                    aov_product)    # noqa
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)

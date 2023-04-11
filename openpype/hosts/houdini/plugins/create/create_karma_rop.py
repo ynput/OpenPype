@@ -34,12 +34,12 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             hou.text.expandString("$HIP/pyblish/"),
             "{}.$F4.{}".format(subset_name, ext)
         )
-        checkpoint =  "{}{}".format(
+        checkpoint = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/"),
             "{}.$F4.checkpoint".format(subset_name)
         )
 
-        usd_directory =  "{}{}".format(
+        usd_directory = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/usd_renders/"),
             "{}_$RENDERID".format(subset_name)
         )
@@ -74,12 +74,11 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             if not camera:
                 self.log.warning("No render camera found in selection")
 
-
             parms.update({
                 "camera": camera or "",
                 "resolutionx": res_x,
                 "resolutiony": res_y,
-                })
+            })
 
         instance_node.setParms(parms)
 
