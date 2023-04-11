@@ -665,6 +665,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # - template_data (Dict[str, Any]): source data used to fill template
         #   - to add required data to 'repre_context' not used for
         #       formatting
+        path_template_obj = anatomy.templates_obj[template_name]["path"]
 
         # Treat template with 'orignalBasename' in special way
         if "{originalBasename}" in template:
@@ -698,8 +699,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["originalBasename"], _ = os.path.splitext(
                     src_file_name)
 
-                template_obj = anatomy.templates_obj[template_name]["path"]
-                dst = template_obj.format_strict(template_data)
+                dst = path_template_obj.format_strict(template_data)
                 src = os.path.join(stagingdir, src_file_name)
                 transfers.append((src, dst))
                 if repre_context is None:
@@ -759,8 +759,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     template_data["udim"] = index
                 else:
                     template_data["frame"] = index
-                template_obj = anatomy.templates_obj[template_name]["path"]
-                template_filled = template_obj.format_strict(template_data)
+                template_filled = path_template_obj.format_strict(
+                    template_data
+                )
                 dst_filepaths.append(template_filled)
                 if repre_context is None:
                     self.log.debug(
@@ -796,8 +797,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if is_udim:
                 template_data["udim"] = repre["udim"][0]
             # Construct destination filepath from template
-            template_obj = anatomy.templates_obj[template_name]["path"]
-            template_filled = template_obj.format_strict(template_data)
+            template_filled = path_template_obj.format_strict(template_data)
             repre_context = template_filled.used_values
             dst = os.path.normpath(template_filled)
 
