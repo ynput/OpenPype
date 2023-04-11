@@ -93,6 +93,11 @@
                                     "type": "text",
                                     "key": "thumbnailLut",
                                     "label": "Thumbnails"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "monitorOutLut",
+                                    "label": "Monitor"
                                 }
                             ]
                         }
