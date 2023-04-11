@@ -996,37 +996,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "IntegrateAsset",
-            "label": "Integrate Asset",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "list",
-                    "key": "skip_host_families",
-                    "label": "Skip hosts and families",
-                    "use_label_wrap": true,
-                    "object_type": {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "type": "hosts-enum",
-                                "key": "host",
-                                "label": "Host"
-                            },
-                            {
-                                "type": "list",
-                                "key": "families",
-                                "label": "Families",
-                                "object_type": "text"
-                            }
-                        ]
-                    }
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "IntegrateHeroVersion",
             "label": "IntegrateHeroVersion",
