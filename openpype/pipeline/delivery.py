@@ -1,5 +1,6 @@
 """Functions useful for delivery of published representations."""
 import os
+import copy
 import shutil
 import glob
 import clique
@@ -146,12 +147,11 @@ def deliver_single_file(
         report_items["Source file was not found"].append(msg)
         return report_items, 0
 
-    anatomy_filled = anatomy.format(anatomy_data)
     if format_dict:
-        template_result = anatomy_filled["delivery"][template_name]
-        delivery_path = template_result.rootless.format(**format_dict)
-    else:
-        delivery_path = anatomy_filled["delivery"][template_name]
+        anatomy_data = copy.deepcopy(anatomy_data)
+        anatomy_data["root"] = format_dict["root"]
+    template_obj = anatomy.templates_obj["delivery"][template_name]
+    delivery_path = template_obj.format_strict(anatomy_data)
 
     # Backwards compatibility when extension contained `.`
     delivery_path = delivery_path.replace("..", ".")
@@ -269,14 +269,12 @@ def deliver_sequence(
 
     frame_indicator = "@####@"
 
+    anatomy_data = copy.deepcopy(anatomy_data)
     anatomy_data["frame"] = frame_indicator
-    anatomy_filled = anatomy.format(anatomy_data)
-
     if format_dict:
-        template_result = anatomy_filled["delivery"][template_name]
-        delivery_path = template_result.rootless.format(**format_dict)
-    else:
-        delivery_path = anatomy_filled["delivery"][template_name]
+        anatomy_data["root"] = format_dict["root"]
+    template_obj = anatomy.templates_obj["delivery"][template_name]
+    delivery_path = template_obj.format_strict(anatomy_data)
 
     delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
     delivery_folder = os.path.dirname(delivery_path)
