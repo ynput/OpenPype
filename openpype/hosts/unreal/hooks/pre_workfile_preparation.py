@@ -61,10 +61,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
             project_name=project_doc["name"]
         )
         # Fill templates
-        filled_anatomy = anatomy.format(workdir_data)
+        template_obj = anatomy.templates_obj[workfile_template_key]["file"]
 
         # Return filename
-        return filled_anatomy[workfile_template_key]["file"]
+        return template_obj.format_strict(workdir_data)
 
     def exec_plugin_install(self, engine_path: Path, env: dict = None):
         # set up the QThread and worker with necessary signals
