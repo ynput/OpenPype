@@ -15,6 +15,7 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
+    legacy_io
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.houdini import HOUDINI_HOST_DIR
@@ -64,6 +65,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
+        register_event_callback("taskChanged", on_task_changed)
 
         pyblish.api.register_callback(
             "instanceToggled", on_pyblish_instance_toggled
@@ -358,6 +360,17 @@ def on_new():
         # Run without execute deferred when no UI is available because
         # without UI `hdefereval` is not available to import
         _enforce_start_frame()
+
+
+def on_task_changed():
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
+
+    # Update Houdini JOB variable
+    log.info("Updating JOB variable to: {}".format(workdir))
+    hou.hscript("set JOB={}".format(workdir.replace("\\", "/")))
+
+    # Dirty all nodes using the $JOB variable
+    hou.hscript("varchange -V JOB")
 
 
 def _set_context_settings():
