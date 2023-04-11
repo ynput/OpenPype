@@ -242,9 +242,15 @@ def launch_zip_file(filepath):
     print(f"Localizing {filepath}")
 
     temp_path = get_local_harmony_path(filepath)
+    scene_name = os.path.basename(temp_path)
+    if os.path.exists(os.path.join(temp_path, scene_name)):
+        # unzipped with duplicated scene_name
+        temp_path = os.path.join(temp_path, scene_name)
+
     scene_path = os.path.join(
-        temp_path, os.path.basename(temp_path) + ".xstage"
+        temp_path, scene_name + ".xstage"
     )
+
     unzip = False
     if os.path.exists(scene_path):
         # Check remote scene is newer than local.
@@ -261,6 +267,10 @@ def launch_zip_file(filepath):
     if unzip:
         with _ZipFile(filepath, "r") as zip_ref:
             zip_ref.extractall(temp_path)
+
+        if os.path.exists(os.path.join(temp_path, scene_name)):
+            # unzipped with duplicated scene_name
+            temp_path = os.path.join(temp_path, scene_name)
 
     # Close existing scene.
     if ProcessContext.pid:
@@ -309,7 +319,7 @@ def launch_zip_file(filepath):
         )
 
     if not os.path.exists(scene_path):
-        print("error: cannot determine scene file")
+        print("error: cannot determine scene file {}".format(scene_path))
         ProcessContext.server.stop()
         return
 
