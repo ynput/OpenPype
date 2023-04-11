@@ -7,7 +7,7 @@ import appdirs
 import requests
 
 from maya import cmds
-from maya.app.renderSetup.model import renderSetup
+from maya.app.renderSetup.model import renderSetup, renderLayer
 
 from openpype.settings import (
     get_system_settings,
@@ -145,6 +145,10 @@ class CreateRender(plugin.Creator):
             layers = rs.getRenderLayers()
             if self._get_renderer() == "_3delight":
                 self.log.info("Creating for _3delight")
+                # clear all the dlrendersetting renderlayer except "Main"
+                for layer in layers:
+                    if layer.name() != "Main":
+                        renderLayer.delete(layer)
                 # With 3delight, we have dlRenderSettings, which need to be
                 # assigned layers so they can be processed the same way. We
                 # first create renderLayers with the same name as the
@@ -184,9 +188,9 @@ class CreateRender(plugin.Creator):
 
                     for layer in layers:
                         if "dlRenderSettings" in layer.name():
-                            self.log.info("dl_render_setting"
+                            self.log.info("dl_render_setting "
                                           "will be skipped..")
-                            return
+                            continue
                         self.log.info("  - creating set for {}:{}".format(
                             namespace, layer.name()))
                         render_set = cmds.sets(
