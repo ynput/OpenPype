@@ -42,7 +42,7 @@ class CreateReview(plugin.Creator):
         project_name = get_current_project_name()
         profiles = get_project_settings(
             project_name
-        )["maya"]["publish"]["ExtractPlayblast"]["profiles"]
+        )["maya"]["publish"]["ExtractPlayblast"].get("profiles")
 
         preset = None
         if profiles:
@@ -57,9 +57,10 @@ class CreateReview(plugin.Creator):
                 "task_types": task_type,
                 "subset": data["subset"]
             }
-            preset = filter_profiles(
+            profile = filter_profiles(
                 profiles, filtering_criteria, logger=self.log
-            )["capture_preset"]
+            )
+            preset = profile["capture_preset"] if profile else None
         else:
             self.log.warning("No profiles present for extract playblast.")
 

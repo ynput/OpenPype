@@ -44,25 +44,22 @@ class ExtractThumbnail(publish.Extractor):
             "subset": subset
         }
 
-        maya_settings = instance.context.data["project_settings"]["maya"]
-        plugin_settings = maya_settings["publish"]["ExtractPlayblast"]
-
-        capture_preset = plugin_settings["capture_preset"]
-        preset = {}
-        try:
-            preset = lib.load_capture_preset(data=capture_preset)
-        except KeyError as ke:
-            self.log.error("Error loading capture presets: {}".format(str(ke)))
-
-        if plugin_settings["profiles"]:
-            capture_preset = filter_profiles(
-                plugin_settings["profiles"],
-                filtering_criteria,
-                logger=self.log
-            )["capture_preset"]
-            preset = lib.load_capture_preset(data=capture_preset)
+        if self.profiles:
+            profile = filter_profiles(
+                self.profiles, filtering_criteria, logger=self.log
+            )
+            capture_preset = profile.get("capture_preset")
         else:
             self.log.warning("No profiles present for Extract Playblast")
+
+        # Backward compatibility for deprecated Extract Playblast settings
+        # without profiles.
+        if capture_preset is None:
+            maya_settings = instance.context.data["project_settings"]["maya"]
+            plugin_settings = maya_settings["publish"]["ExtractPlayblast"]
+            capture_preset = plugin_settings["capture_preset"]
+
+        preset = lib.load_capture_preset(data=capture_preset)
 
         # "isolate_view" will already have been applied at creation, so we'll
         # ignore it here.

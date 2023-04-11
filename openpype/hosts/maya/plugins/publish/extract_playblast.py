@@ -82,15 +82,20 @@ class ExtractPlayblast(publish.Extractor):
             "task_types": task_type,
             "subset": subset
         }
-        capture_preset = self.capture_preset
-        preset = lib.load_capture_preset(data=self.capture_preset)
+
         if self.profiles:
             profile = filter_profiles(
                 self.profiles, filtering_criteria, logger=self.log
             )
-            capture_preset = profile.get("capture_preset") or capture_preset
+            capture_preset = profile.get("capture_preset")
         else:
             self.log.warning("No profiles present for Extract Playblast")
+
+        # Backward compatibility for deprecated Extract Playblast settings
+        # without profiles.
+        if capture_preset is None:
+            capture_preset = self.capture_preset
+
         preset = lib.load_capture_preset(data=capture_preset)
 
         # "isolate_view" will already have been applied at creation, so we'll
