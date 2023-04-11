@@ -14,7 +14,12 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["houdini"]
-    families = ["workfile"]
+    families = ["workfile",
+                "redshift_rop",
+                "arnold_rop",
+                "mantra_rop",
+                "karma_rop",
+                "usdrender"]
     optional = True
 
     def process(self, context):

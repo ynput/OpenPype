@@ -122,7 +122,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
              "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
+                "renderlayer", "imagesequence",
+                "maxrender", "vrayscene",
+                "mantra_rop", "karma_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
@@ -140,7 +142,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER",
+        "OPENPYPE_VERSION",
+        "OPENPYPE_SG_USER"
     ]
 
     # Add OpenPype version if we are running from build.

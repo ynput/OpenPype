@@ -52,8 +52,8 @@ def evalParmNoFrame(node, parm, pad_character="#"):
         return hou.expandStringAtFrame(expression, 0)
 
 
-class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
-    """Collect USD Render Products
+class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
+    """Collect Mantra Render Products
 
     Collects the instance.data["files"] for the render products.
 
@@ -62,10 +62,10 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Redshift ROP Render Products"
+    label = "Mantra ROP Render Products"
     order = pyblish.api.CollectorOrder + 0.4
     hosts = ["houdini"]
-    families = ["redshift_rop"]
+    families = ["mantra_rop"]
 
     def process(self, instance):
 
@@ -78,39 +78,37 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             instance.data["chunkSize"] = chunk_size
             self.log.debug("Chunk Size: %s" % chunk_size)
 
-        default_prefix = evalParmNoFrame(rop, "RS_outputFileNamePrefix")
-        beauty_suffix = rop.evalParm("RS_outputBeautyAOVSuffix")
-        render_products = []
+            default_prefix = evalParmNoFrame(rop, "vm_picture")
+            render_products = []
 
-        # Default beauty AOV
-        beauty_product = self.get_render_product_name(
-            prefix=default_prefix, suffix=beauty_suffix
-        )
-        render_products.append(beauty_product)
-        files_by_aov = {
-            "beauty": self.generate_expected_files(instance,
-                                                   beauty_product)
+            # Default beauty AOV
+            beauty_product = self.get_render_product_name(
+                prefix=default_prefix, suffix=None
+            )
+            render_products.append(beauty_product)
+
+            files_by_aov = {
+                "beauty": self.generate_expected_files(instance,
+                                                       beauty_product)
             }
 
-        num_aovs = rop.evalParm("RS_aov")
-        for index in range(num_aovs):
-            i = index + 1
+            aov_numbers = rop.evalParm("vm_numaux")
+            if aov_numbers > 0:
+                # get the filenames of the AOVs
+                for i in range(1, aov_numbers + 1):
+                    var = rop.evalParm("vm_variable_plane%d" % i)
+                    if var:
+                        aov_name = "vm_filename_plane%d" % i
+                        has_aov_path = rop.evalParm(aov_name)
+                        if has_aov_path:
+                            aov_prefix = evalParmNoFrame(rop, aov_name)
+                            aov_product = self.get_render_product_name(
+                                prefix=aov_prefix, suffix=None
+                            )
+                            render_products.append(aov_product)
 
-            # Skip disabled AOVs
-            if not rop.evalParm("RS_aovEnable_%s" % i):
-                continue
-
-            aov_suffix = rop.evalParm("RS_aovSuffix_%s" % i)
-            aov_prefix = evalParmNoFrame(rop, "RS_aovCustomPrefix_%s" % i)
-            if not aov_prefix:
-                aov_prefix = default_prefix
-
-            aov_product = self.get_render_product_name(aov_prefix, aov_suffix)
-            render_products.append(aov_product)
-
-            files_by_aov[aov_suffix] = self.generate_expected_files(instance,
-                                                                    aov_product)
-
+                            files_by_aov[var] = self.generate_expected_files(instance,
+                                                                             aov_product)
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
             filenames = list(render_products)
@@ -123,28 +121,16 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
         instance.data["expectedFiles"].append(files_by_aov)
+        self.log.debug("expectedFiles: %s" % files_by_aov)
+
 
     def get_render_product_name(self, prefix, suffix):
-        """Return the output filename using the AOV prefix and suffix"""
-
-        # When AOV is explicitly defined in prefix we just swap it out
-        # directly with the AOV suffix to embed it.
-        # Note: ${AOV} seems to be evaluated in the parameter as %AOV%
-        has_aov_in_prefix = "%AOV%" in prefix
-        if has_aov_in_prefix:
-            # It seems that when some special separator characters are present
-            # before the %AOV% token that Redshift will secretly remove it if
-            # there is no suffix for the current product, for example:
-            # foo_%AOV% -> foo.exr
-            pattern = "%AOV%" if suffix else "[._-]?%AOV%"
-            product_name = re.sub(pattern, suffix, prefix, flags=re.IGNORECASE)
+        if suffix:
+            # Add ".{suffix}" before the extension
+            prefix_base, ext = os.path.splitext(prefix)
+            product_name = prefix_base + "." + suffix + ext
         else:
-            if suffix:
-                # Add ".{suffix}" before the extension
-                prefix_base, ext = os.path.splitext(prefix)
-                product_name = prefix_base + "." + suffix + ext
-            else:
-                product_name = prefix
+            product_name = prefix
 
         return product_name
 
