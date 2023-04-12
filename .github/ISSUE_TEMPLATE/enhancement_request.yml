@@ -1,6 +1,6 @@
 name: Enhancement Request
 description: Create a report to help us enhance a particular feature
-title: "enhancement: "
+title: "Enhancement: "
 labels:
   - "type: enhancement"
 body:
@@ -13,28 +13,28 @@ body:
       label: Is there an existing issue for this?
       description: Please search to see if an issue already exists for the bug you encountered.
       options:
-      - label: I have searched the existing issues
+      - label: I have searched the existing issues.
         required: true
   - type: textarea
     id: related-feature
     attributes:
-      label: Please state which of feature you have in mind and describe what are its shortcomings?
+      label: Please describe the feature you have in mind and explain what the current shortcomings are?
       description: A clear and concise description of what the problem is.
     validations:
       required: true
   - type: textarea
     id: enhancement-proposal
     attributes:
-      label: How would you imagine the enhancement of the feature?
+      label: How would you imagine the implementation of the feature?
       description: A clear and concise description of what you want to happen.
     validations:
       required: true
   - type: checkboxes
     attributes:
-      label: Is there any more labels you wish to add?
+      label: Are there any labels you wish to add?
       description: Please search labels and identify those related to your enhancement.
       options:
-      - label: I have searched labels and added any
+      - label: I have added the relevant labels to the enhancement request.
         required: true
   - type: textarea
     id: alternatives

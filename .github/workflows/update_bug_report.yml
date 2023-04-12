@@ -20,6 +20,6 @@ jobs:
           github_token: ${{ secrets.YNPUT_BOT_TOKEN }}
           registry: github
           dropdown: _version
-          limit_to: 25
+          limit_to: 100
           form: .github/ISSUE_TEMPLATE/bug_report.yml
           commit_message: 'chore(): update bug report / version'
