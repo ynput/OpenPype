@@ -523,7 +523,7 @@ class Creator(LegacyCreator):
 
         Args:
             datablocks (List[bpy.types.ID], optional): Datablocks to process and append to instance. Defaults to None.
-            gather_into_collection (bool): 
+            gather_into_collection (bool):
                 Process outliner gathering of elements under a single collection.
                 Defaults to True.
 
@@ -713,7 +713,7 @@ class AssetLoader(Loader):
                 linked datablocks. Defaults to False.
 
         Returns:
-            Tuple[OpenpypeContainer, Set[bpy.types.ID]]: 
+            Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
                 (Created scene container, Loaded datablocks)
         """
         # Load datablocks from libpath library.
@@ -751,6 +751,43 @@ class AssetLoader(Loader):
             datacol.foreach_set("use_fake_user", seq)
 
         if self.bl_types & BL_OUTLINER_TYPES:
+            # Override datablocks if needed
+            if do_override:
+                # Get datablocks to override, which have no user in the loaded datablocks (orphan at this point)
+                datablocks_to_override = {
+                    d
+                    for d, users in bpy.data.user_map(
+                        subset=datablocks
+                    ).items()
+                    if not users & datablocks
+                }
+                datablocks = set()
+                for d in datablocks_to_override:
+                    override_datablock = d.override_hierarchy_create(
+                        bpy.context.scene,
+                        bpy.context.view_layer
+                        # NOTE After BL3.4: do_fully_editable=True
+                    )
+                    # Ensure user override NOTE: will be unecessary after BL3.4
+                    override_datablock.override_library.is_system_override = (
+                        False
+                    )
+
+                    # Update datablocks because could have been renamed
+                    datablocks.add(override_datablock)
+                    if isinstance(
+                        override_datablock, tuple(BL_OUTLINER_TYPES)
+                    ):
+                        datablocks.update(
+                            override_datablock.children_recursive
+                        )
+                        if isinstance(
+                            override_datablock, bpy.types.Collection
+                        ):
+                            datablocks.update(
+                                set(override_datablock.all_objects)
+                            )
+
             # Get the right asset container from imported collections.
             outliner_entity = next(
                 (
@@ -763,37 +800,12 @@ class AssetLoader(Loader):
             )
 
             if outliner_entity:
-                # Create override for the library collection and its elements
-                if do_override:
-                    outliner_entity = (
-                        outliner_entity.override_hierarchy_create(
-                            bpy.context.scene,
-                            bpy.context.view_layer
-                            # NOTE After BL3.4: do_fully_editable=True
-                        )
-                    )
-
-                    # Update datablocks because could have been renamed
-                    datablocks = set(
-                        outliner_entity.children_recursive
-                    )
-                    if isinstance(outliner_entity, bpy.types.Collection):
-                        datablocks.update(set(outliner_entity.all_objects))
-                    datablocks.add(outliner_entity)
-
-                    # Ensure user override NOTE: will be unecessary after BL3.4
-                    for d in datablocks:
-                        if hasattr(d.override_library, "is_system_override"):
-                            d.override_library.is_system_override = False
-
                 # Set color
                 if hasattr(outliner_entity, "color_tag"):
                     outliner_entity.color_tag = self.color_tag
 
                 # Substitute name in case renamed with .###
                 container_name = outliner_entity.name
-        else:
-            outliner_entity = None
 
         # Put into container
         container = self._containerize_datablocks(
@@ -956,7 +968,7 @@ class AssetLoader(Loader):
                 Defaults to None.
 
         Returns:
-            Tuple[List[bpy.types.ID], OpenpypeContainer]: 
+            Tuple[List[bpy.types.ID], OpenpypeContainer]:
                 (Created scene container, Linked datablocks)
         """
         container, all_datablocks = self._link_blend(
