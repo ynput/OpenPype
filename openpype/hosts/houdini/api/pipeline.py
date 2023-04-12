@@ -367,7 +367,7 @@ def on_task_changed():
 
     # Update Houdini JOB variable
     log.info("Updating JOB variable to: {}".format(workdir))
-    hou.hscript("set JOB={}".format(workdir.replace("\\", "/")))
+    hou.hscript("set -g JOB={}".format(workdir.replace("\\", "/")))
 
     # Dirty all nodes using the $JOB variable
     hou.hscript("varchange -V JOB")
