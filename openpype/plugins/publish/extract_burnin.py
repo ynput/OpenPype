@@ -34,24 +34,6 @@ class ExtractBurnin(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.03
 
     families = ["review", "burnin"]
-    hosts = [
-        "nuke",
-        "maya",
-        "shell",
-        "hiero",
-        "premiere",
-        "traypublisher",
-        "standalonepublisher",
-        "harmony",
-        "fusion",
-        "aftereffects",
-        "tvpaint",
-        "webpublisher",
-        "aftereffects",
-        "photoshop",
-        "flame"
-        # "resolve"
-    ]
 
     optional = True
 
@@ -78,9 +60,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
