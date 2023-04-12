@@ -753,22 +753,23 @@ class CollectColorFile(pyblish.api.InstancePlugin):
         # TODO: Check to make sure that the source_path is in incoming
         incoming_pattern = r"\/proj\/.*\/incoming"
         incoming_match = re.match(incoming_pattern, source_path)
+        color_info = {}
         if incoming_match:
             priority, cdl, color_file = get_color_file(source_path, item_name, source_name)
-            color_ext = color_file.rsplit(".", 1)[-1]
+            if color_file:
+                color_ext = color_file.rsplit(".", 1)[-1]
 
-            color_info = {}
-            if color_ext == "edl":
                 if color_ext == "edl":
-                    color_info["cdl"] = cdl
+                    if color_ext == "edl":
+                        color_info["cdl"] = cdl
 
-            color_info.update(
-                {
-                "path": color_file,
-                "type": color_ext,
-                "ignore": False
-                }
-            )
+                color_info.update(
+                    {
+                    "path": color_file,
+                    "type": color_ext,
+                    "ignore": False
+                    }
+                )
 
         if not color_file:
             dialog = MissingColorFile(item_name, source_name, main_grade)
@@ -777,7 +778,9 @@ class CollectColorFile(pyblish.api.InstancePlugin):
                 color_info = dialog.data
             else:
                 self.log.critical("No color file found for plate '{0}'-'{1}'".format(item_name, source_name))
-                return
+
+        if not color_info:
+            raise Exception("User canceled Color File Collect")
 
         instance.data["shot_grade"] = color_info
         self.log.info("Collected Color File: {0}".format(color_info))
