@@ -3,12 +3,11 @@
     "type": "dict",
     "label": "OCIO config",
     "collapsible": true,
-    "checkbox_key": "enabled",
     "children": [
         {
             "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "key": "override_global_config",
+            "label": "Override global OCIO config"
         },
         {
             "type": "path",

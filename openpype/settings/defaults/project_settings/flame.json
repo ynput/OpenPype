@@ -1,12 +1,12 @@
 {
     "imageio": {
-        "enabled": true,
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "override_global_rules": false,
             "rules": {}
         },
         "project": {

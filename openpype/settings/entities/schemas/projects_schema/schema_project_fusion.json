@@ -10,12 +10,12 @@
             "type": "dict",
             "label": "Color Management (ImageIO)",
             "collapsible": true,
-            "checkbox_key": "enabled",
+            "is_group": true,
             "children": [
                 {
                     "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
+                    "key": "activate_host_color_management",
+                    "label": "Enable Color Management in host"
                 },
                 {
                     "type": "schema",

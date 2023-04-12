@@ -4,16 +4,11 @@
     "label": "Color Management (ImageIO)",
     "collapsible": true,
     "is_group": true,
-    "checkbox_key": "enabled",
     "children": [
         {
             "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
-        },
-        {
-            "type": "label",
-            "label": "<b style='color:red'>'Custom OCIO config path'</b> has deprecated. <br> If you need to set custom config, just enable and add path into 'OCIO config'. <br>Anatomy keys are supported.</i>."
+            "key": "activate_host_color_management",
+            "label": "Enable Color Management in host"
         },
         {
             "type": "schema",
@@ -108,18 +103,8 @@
                                 },
                                 {
                                     "cg-config-v1.0.0_aces-v1.3_ocio-v2.1": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
-                                },
-                                {
-                                    "custom": "custom"
                                 }
                             ]
-                        },
-                        {
-                            "type": "path",
-                            "key": "customOCIOConfigPath",
-                            "label": "Custom OCIO config path",
-                            "multiplatform": true,
-                            "multipath": true
                         },
                         {
                             "type": "text",

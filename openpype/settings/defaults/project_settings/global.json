@@ -7,7 +7,6 @@
             ]
         },
         "file_rules": {
-            "enabled": false,
             "rules": {
                 "example": {
                     "pattern": ".*(beauty).*",

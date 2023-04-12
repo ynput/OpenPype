@@ -3,12 +3,11 @@
     "type": "dict",
     "label": "File Rules",
     "collapsible": true,
-    "checkbox_key": "enabled",
     "children": [
         {
             "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "key": "override_global_rules",
+            "label": "Override global file rules"
         },
         {
             "key": "rules",
