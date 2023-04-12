@@ -271,44 +271,25 @@ def _convert_blender_project_settings(ayon_settings, output):
     if "blender" not in ayon_settings:
         return
     ayon_blender = ayon_settings["blender"]
-    blender_settings = output["blender"]
     _convert_host_imageio(ayon_blender)
 
-    ayon_workfile_build = ayon_blender["workfile_builder"]
-    blender_workfile_build = blender_settings["workfile_builder"]
-    for key in ("create_first_version", "custom_templates"):
-        blender_workfile_build[key] = ayon_workfile_build[key]
-
     ayon_publish = ayon_blender["publish"]
-    model_validators = ayon_publish.pop("model_validators", None)
-    if model_validators is not None:
-        for src_key, dst_key in (
-            ("validate_mesh_has_uvs", "ValidateMeshHasUvs"),
-            ("validate_mesh_no_negative_scale", "ValidateMeshNoNegativeScale"),
-            ("validate_transform_zero", "ValidateTransformZero"),
-        ):
-            ayon_publish[dst_key] = model_validators.pop(src_key)
 
-    blender_publish = blender_settings["publish"]
-    for key in tuple(ayon_publish.keys()):
-        blender_publish[key] = ayon_publish[key]
+    for plugin in ("ExtractThumbnail", "ExtractPlayblast"):
+        plugin_settings = ayon_publish[plugin]
+        plugin_settings["presets"] = json.loads(plugin_settings["presets"])
+
+    output["blender"] = ayon_blender
 
 
 def _convert_celaction_project_settings(ayon_settings, output):
     if "celaction" not in ayon_settings:
         return
-    ayon_celaction_publish = ayon_settings["celaction"]["publish"]
-    celaction_publish_settings = output["celaction"]["publish"]
 
-    output["celaction"]["imageio"] = _convert_host_imageio(
-        ayon_celaction_publish
-    )
+    ayon_celaction = ayon_settings["celaction"]
+    _convert_host_imageio(ayon_celaction)
 
-    for plugin_name in tuple(celaction_publish_settings.keys()):
-        if plugin_name in ayon_celaction_publish:
-            celaction_publish_settings[plugin_name] = (
-                ayon_celaction_publish[plugin_name]
-            )
+    output["celaction"] = ayon_celaction
 
 
 def _convert_flame_project_settings(ayon_settings, output):
@@ -316,25 +297,8 @@ def _convert_flame_project_settings(ayon_settings, output):
         return
 
     ayon_flame = ayon_settings["flame"]
-    flame_settings = output["flame"]
-    flame_settings["create"] = ayon_flame["create"]
-
-    ayon_load_flame = ayon_flame["load"]
-    load_flame_settings = flame_settings["load"]
-    # Wrong settings model on server side
-    for src_key, dst_key in (
-        ("load_clip", "LoadClip"),
-        ("load_clip_batch", "LoadClipBatch"),
-    ):
-        if src_key in ayon_load_flame:
-            ayon_load_flame[dst_key] = ayon_load_flame.pop(src_key)
-
-    for plugin_name in tuple(load_flame_settings.keys()):
-        if plugin_name in ayon_load_flame:
-            load_flame_settings[plugin_name] = ayon_load_flame[plugin_name]
 
     ayon_publish_flame = ayon_flame["publish"]
-    flame_publish_settings = flame_settings["publish"]
     # 'ExtractSubsetResources' changed model of 'export_presets_mapping'
     # - some keys were moved under 'other_parameters'
     ayon_subset_resources = ayon_publish_flame["ExtractSubsetResources"]
@@ -347,11 +311,6 @@ def _convert_flame_project_settings(ayon_settings, output):
         new_subset_resources[name] = item
 
     ayon_subset_resources["export_presets_mapping"] = new_subset_resources
-    for plugin_name in tuple(flame_publish_settings.keys()):
-        if plugin_name in ayon_publish_flame:
-            flame_publish_settings[plugin_name] = (
-                ayon_publish_flame[plugin_name]
-            )
 
     # 'imageio' changed model
     # - missing subkey 'project' which is in root of 'imageio' model
@@ -359,17 +318,21 @@ def _convert_flame_project_settings(ayon_settings, output):
     ayon_imageio_flame = ayon_flame["imageio"]
     if "project" not in ayon_imageio_flame:
         profile_mapping = ayon_imageio_flame.pop("profilesMapping")
-        ayon_imageio_flame = {
+        ayon_flame["imageio"] = {
             "project": ayon_imageio_flame,
             "profilesMapping": profile_mapping
         }
-    flame_settings["imageio"] = ayon_imageio_flame
+
+    output["flame"] = ayon_flame
 
 
 def _convert_fusion_project_settings(ayon_settings, output):
     if "fusion" not in ayon_settings:
         return
+
     ayon_fusion = ayon_settings["fusion"]
+    _convert_host_imageio(ayon_fusion)
+
     ayon_imageio_fusion = ayon_fusion["imageio"]
 
     if "ocioSettings" in ayon_imageio_fusion:
@@ -383,14 +346,18 @@ def _convert_fusion_project_settings(ayon_settings, output):
 
         ayon_ocio_setting["configFilePath"] = paths
         ayon_imageio_fusion["ocio"] = ayon_ocio_setting
+    else:
+        paths = ayon_imageio_fusion["ocio"].pop("configFilePath")
+        for key, value in tuple(paths.items()):
+            new_value = []
+            if value:
+                new_value.append(value)
+            paths[key] = new_value
+        ayon_imageio_fusion["ocio"]["configFilePath"] = paths
 
     _convert_host_imageio(ayon_imageio_fusion)
 
-    imageio_fusion_settings = output["fusion"]["imageio"]
-    for key in (
-        "imageio",
-    ):
-        imageio_fusion_settings[key] = ayon_fusion[key]
+    output["fusion"] = ayon_fusion
 
 
 def _convert_maya_project_settings(ayon_settings, output):
@@ -398,7 +365,6 @@ def _convert_maya_project_settings(ayon_settings, output):
         return
 
     ayon_maya = ayon_settings["maya"]
-    openpype_maya = output["maya"]
 
     # Change key of render settings
     ayon_maya["RenderSettings"] = ayon_maya.pop("render_settings")
@@ -474,6 +440,12 @@ def _convert_maya_project_settings(ayon_settings, output):
             for item in validate_rendern_settings[key]
         ]
 
+    plugin_path_attributes = ayon_publish["ValidatePluginPathAttributes"]
+    plugin_path_attributes["attribute"] = {
+        item["name"]: item["value"]
+        for item in plugin_path_attributes["attribute"]
+    }
+
     ayon_capture_preset = ayon_publish["ExtractPlayblast"]["capture_preset"]
     display_options = ayon_capture_preset["DisplayOptions"]
     for key in ("background", "backgroundBottom", "backgroundTop"):
@@ -485,6 +457,12 @@ def _convert_maya_project_settings(ayon_settings, output):
         ("CameraOptions", "Camera Options"),
     ):
         ayon_capture_preset[dst_key] = ayon_capture_preset.pop(src_key)
+
+    viewport_options = ayon_capture_preset["Viewport Options"]
+    viewport_options["pluginObjects"] = {
+        item["name"]: item["value"]
+        for item in viewport_options["pluginObjects"]
+    }
 
     # Extract Camera Alembic bake attributes
     try:
@@ -509,32 +487,23 @@ def _convert_maya_project_settings(ayon_settings, output):
 
     _convert_host_imageio(ayon_maya)
 
-    same_keys = {
-        "imageio",
-        "scriptsmenu",
-        "templated_workfile_build",
-        "load",
-        "create",
-        "publish",
-        "mel_workspace",
-        "ext_mapping",
-        "workfile_build",
-        "filters",
-        "maya-dirmap",
-        "RenderSettings",
-    }
-    for key in same_keys:
-        openpype_maya[key] = ayon_maya[key]
+    output["maya"] = ayon_maya
 
 
 def _convert_nuke_knobs(knobs):
     new_knobs = []
     for knob in knobs:
         knob_type = knob["type"]
-        value = knob[knob_type]
 
         if knob_type == "boolean":
             knob_type = "bool"
+
+        if knob_type != "bool":
+            value = knob[knob_type]
+        elif knob_type in knob:
+            value = knob[knob_type]
+        else:
+            value = knob["boolean"]
 
         new_knob = {
             "type": knob_type,
@@ -569,7 +538,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
         return
 
     ayon_nuke = ayon_settings["nuke"]
-    openpype_nuke = output["nuke"]
 
     # --- Dirmap ---
     dirmap = ayon_nuke.pop("dirmap")
@@ -627,10 +595,15 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
     new_review_data_outputs = {}
     for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
-        name = item.pop("name")
         item["reformat_node_config"] = _convert_nuke_knobs(
             item["reformat_node_config"])
+
+        for node in item["reformat_nodes_config"]["reposition_nodes"]:
+            node["knobs"] = _convert_nuke_knobs(node["knobs"])
+
+        name = item.pop("name")
         new_review_data_outputs[name] = item
+
     ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
 
     # TODO 'ExtractThumbnail' does not have ideal schema in v3
@@ -659,18 +632,7 @@ def _convert_nuke_project_settings(ayon_settings, output):
     for item in ayon_imageio["nodes"]["overrideNodes"]:
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
-    # Store converted values to openpype values
-    for key in (
-        "scriptsmenu",
-        "nuke-dirmap",
-        "filters",
-        "load",
-        "create",
-        "publish",
-        "workfile_builder",
-        "imageio",
-    ):
-        openpype_nuke[key] = ayon_nuke[key]
+    output["nuke"] = ayon_nuke
 
 
 def _convert_hiero_project_settings(ayon_settings, output):
@@ -678,7 +640,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
         return
 
     ayon_hiero = ayon_settings["hiero"]
-    openpype_hiero = output["hiero"]
+    _convert_host_imageio(ayon_hiero)
 
     new_gui_filters = {}
     for item in ayon_hiero.pop("filters"):
@@ -689,17 +651,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
         new_gui_filters[key] = subvalue
     ayon_hiero["filters"] = new_gui_filters
 
-    _convert_host_imageio(ayon_hiero)
-
-    for key in (
-        "create",
-        "filters",
-        "imageio",
-        "load",
-        "publish",
-        "scriptsmenu",
-    ):
-        openpype_hiero[key] = ayon_hiero[key]
+    output["hiero"] = ayon_hiero
 
 
 def _convert_photoshop_project_settings(ayon_settings, output):
@@ -707,37 +659,21 @@ def _convert_photoshop_project_settings(ayon_settings, output):
         return
 
     ayon_photoshop = ayon_settings["photoshop"]
-    photoshop_settings = output["photoshop"]
+    _convert_host_imageio(ayon_photoshop)
+
     collect_review = ayon_photoshop["publish"]["CollectReview"]
     if "active" in collect_review:
         collect_review["publish"] = collect_review.pop("active")
 
-    _convert_host_imageio(ayon_photoshop)
-
-    for key in (
-        "create",
-        "publish",
-        "workfile_builder",
-        "imageio",
-    ):
-        photoshop_settings[key] = ayon_photoshop[key]
+    output["photoshop"] = ayon_photoshop
 
 
 def _convert_tvpaint_project_settings(ayon_settings, output):
     if "tvpaint" not in ayon_settings:
         return
     ayon_tvpaint = ayon_settings["tvpaint"]
-    tvpaint_settings = output["tvpaint"]
 
     _convert_host_imageio(ayon_tvpaint)
-
-    for key in (
-        "stop_timer_on_application_exit",
-        "load",
-        "workfile_builder",
-        "imageio",
-    ):
-        tvpaint_settings[key] = ayon_tvpaint[key]
 
     filters = {}
     for item in ayon_tvpaint["filters"]:
@@ -748,15 +684,9 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
         except ValueError:
             value = {}
         filters[item["name"]] = value
-    tvpaint_settings["filters"] = filters
+    ayon_tvpaint["filters"] = filters
 
     ayon_publish_settings = ayon_tvpaint["publish"]
-    tvpaint_publish_settings = tvpaint_settings["publish"]
-    for plugin_name in ("CollectRenderScene", "ExtractConvertToEXR"):
-        tvpaint_publish_settings[plugin_name] = (
-            ayon_publish_settings[plugin_name]
-        )
-
     for plugin_name in (
         "ValidateProjectSettings",
         "ValidateMarks",
@@ -764,18 +694,19 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
         "ValidateAssetName",
     ):
         ayon_value = ayon_publish_settings[plugin_name]
-        tvpaint_value = tvpaint_publish_settings[plugin_name]
         for src_key, dst_key in (
             ("action_enabled", "optional"),
             ("action_enable", "active"),
         ):
             if src_key in ayon_value:
-                tvpaint_value[dst_key] = ayon_value[src_key]
+                ayon_value[dst_key] = ayon_value.pop(src_key)
 
-    review_color = ayon_publish_settings["ExtractSequence"]["review_bg"]
-    tvpaint_publish_settings["ExtractSequence"]["review_bg"] = _convert_color(
-        review_color
+    extract_sequence_setting = ayon_publish_settings["ExtractSequence"]
+    extract_sequence_setting["review_bg"] = _convert_color(
+        extract_sequence_setting["review_bg"]
     )
+
+    output["tvpaint"] = ayon_tvpaint
 
 
 def _convert_traypublisher_project_settings(ayon_settings, output):
@@ -783,10 +714,8 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
         return
 
     ayon_traypublisher = ayon_settings["traypublisher"]
-    traypublisher_settings = output["traypublisher"]
 
     _convert_host_imageio(ayon_traypublisher)
-    traypublisher_settings["imageio"] = ayon_traypublisher["imageio"]
 
     ayon_editorial_simple = (
         ayon_traypublisher["editorial_creators"]["editorial_simple"]
@@ -822,9 +751,7 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     }
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
 
-    traypublisher_settings["editorial_creators"][
-        "editorial_simple"
-    ] = ayon_editorial_simple
+    output["traypublisher"] = ayon_traypublisher
 
 
 def _convert_webpublisher_project_settings(ayon_settings, output):
@@ -841,8 +768,8 @@ def _convert_webpublisher_project_settings(ayon_settings, output):
         item["name"]: item["value"]
         for item in ayon_collect_files["task_type_to_family"]
     }
-    output["webpublisher"]["publish"] = ayon_publish
-    output["webpublisher"]["imageio"] = ayon_webpublisher["imageio"]
+
+    output["webpublisher"] = ayon_webpublisher
 
 
 def _convert_deadline_project_settings(ayon_settings, output):
@@ -850,7 +777,6 @@ def _convert_deadline_project_settings(ayon_settings, output):
         return
 
     ayon_deadline = ayon_settings["deadline"]
-    deadline_settings = output["deadline"]
 
     for key in ("deadline_urls",):
         ayon_deadline.pop(key)
@@ -885,21 +811,17 @@ def _convert_deadline_project_settings(ayon_settings, output):
         item["name"]: item["value"]
         for item in process_subsetted_job.pop("aov_filter")
     }
-    deadline_publish_settings = deadline_settings["publish"]
-    for key in tuple(deadline_publish_settings.keys()):
-        if key in ayon_deadline_publish:
-            deadline_publish_settings[key] = ayon_deadline_publish[key]
+
+    output["deadline"] = ayon_deadline
 
 
 def _convert_kitsu_project_settings(ayon_settings, output):
     if "kitsu" not in ayon_settings:
         return
 
-    ayon_kitsu = ayon_settings["kitsu"]
-    kitsu_settings = output["kitsu"]
-    for key in tuple(kitsu_settings.keys()):
-        if key in ayon_kitsu:
-            kitsu_settings[key] = ayon_kitsu[key]
+    ayon_kitsu_settings = ayon_settings["kitsu"]
+    ayon_kitsu_settings.pop("server")
+    output["kitsu"] = ayon_kitsu_settings
 
 
 def _convert_shotgrid_project_settings(ayon_settings, output):
@@ -922,10 +844,7 @@ def _convert_shotgrid_project_settings(ayon_settings, output):
     if "task" in task_field:
         task_field["step"] = task_field.pop("task")
 
-    shotgrid_settings = output["shotgrid"]
-    for key in tuple(shotgrid_settings.keys()):
-        if key in ayon_shotgrid:
-            shotgrid_settings[key] = ayon_shotgrid[key]
+    output["shotgrid"] = ayon_settings["shotgrid"]
 
 
 def _convert_slack_project_settings(ayon_settings, output):
@@ -933,23 +852,28 @@ def _convert_slack_project_settings(ayon_settings, output):
         return
 
     ayon_slack = ayon_settings["slack"]
-    slack_settings = output["slack"]
     ayon_slack.pop("enabled", None)
     for profile in ayon_slack["publish"]["CollectSlackFamilies"]["profiles"]:
         profile["tasks"] = profile.pop("task_names")
         profile["subsets"] = profile.pop("subset_names")
 
-    for key in tuple(slack_settings.keys()):
-        if key in ayon_settings:
-            slack_settings[key] = ayon_settings[key]
+    output["slack"] = ayon_slack
 
 
-def _convert_global_project_settings(ayon_settings, output):
+def _convert_global_project_settings(ayon_settings, output, default_settings):
     if "core" not in ayon_settings:
         return
 
     ayon_core = ayon_settings["core"]
-    global_settings = output["global"]
+
+    _convert_host_imageio(ayon_core)
+
+    for key in (
+        "environments",
+        "studio_name",
+        "studio_code",
+    ):
+        ayon_core.pop(key)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -988,39 +912,26 @@ def _convert_global_project_settings(ayon_settings, output):
             for extract_burnin_def in extract_burnin_defs
         }
 
-    global_publish = global_settings["publish"]
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    global_integrate_hero = global_publish["IntegrateHeroVersion"]
-    for key, value in global_integrate_hero.items():
-        if key not in ayon_integrate_hero:
-            ayon_integrate_hero[key] = value
-
     ayon_cleanup = ayon_publish["CleanUp"]
     if "patterns" in ayon_cleanup:
         ayon_cleanup["paterns"] = ayon_cleanup.pop("patterns")
 
-    for key in tuple(global_publish.keys()):
-        if key in ayon_publish:
-            global_publish[key] = ayon_publish[key]
-
     # Project root settings
-    for json_key in ("project_folder_structure", "project_environments"):
-        try:
-            value = json.loads(ayon_core[json_key])
-        except ValueError:
-            value = {}
-        global_publish[json_key] = value
+    ayon_core["project_environments"] = json.loads(
+        ayon_core["project_environments"]
+    )
+    ayon_core["project_folder_structure"] = json.dumps(json.loads(
+        ayon_core["project_folder_structure"]
+    ))
 
     # Tools settings
     ayon_tools = ayon_core["tools"]
-    global_tools = global_settings["tools"]
     ayon_create_tool = ayon_tools["creator"]
     new_smart_select_families = {
         item["name"]: item["task_names"]
         for item in ayon_create_tool["families_smart_select"]
     }
     ayon_create_tool["families_smart_select"] = new_smart_select_families
-    global_tools["creator"] = ayon_create_tool
 
     ayon_loader_tool = ayon_tools["loader"]
     for profile in ayon_loader_tool["family_filter_profiles"]:
@@ -1028,15 +939,18 @@ def _convert_global_project_settings(ayon_settings, output):
             profile["filter_families"] = (
                 profile.pop("template_publish_families")
             )
-    global_tools["loader"] = ayon_loader_tool
 
-    global_tools["publish"] = ayon_tools["publish"]
+    ayon_core["sync_server"] = (
+        default_settings["global"]["sync_server"]
+    )
+    output["global"] = ayon_core
 
 
 def convert_project_settings(ayon_settings, default_settings):
     # Missing settings
     # - standalonepublisher
-    output = copy.deepcopy(default_settings)
+    default_settings = copy.deepcopy(default_settings)
+    output = {}
     exact_match = {
         "aftereffects",
         "harmony",
@@ -1047,6 +961,7 @@ def convert_project_settings(ayon_settings, default_settings):
     for key in exact_match:
         if key in ayon_settings:
             output[key] = ayon_settings[key]
+            _convert_host_imageio(output[key])
 
     _convert_blender_project_settings(ayon_settings, output)
     _convert_celaction_project_settings(ayon_settings, output)
@@ -1065,7 +980,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_shotgrid_project_settings(ayon_settings, output)
     _convert_slack_project_settings(ayon_settings, output)
 
-    _convert_global_project_settings(ayon_settings, output)
+    _convert_global_project_settings(ayon_settings, output, default_settings)
 
     return output
 
