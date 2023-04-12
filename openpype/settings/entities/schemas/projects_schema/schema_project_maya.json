@@ -188,35 +188,19 @@
         },
         {
             "type": "dict",
-            "key": "include_handles",
             "collapsible": true,
-            "label": "Include/Exclude Handles in default playback & render range",
+            "key": "update_instances",
+            "label": "Update animation instances on Reset Frame Range",
+            "checkbox_key": "enabled",
             "children": [
                 {
-                    "key": "include_handles_default",
-                    "label": "Include handles by default",
-                    "type": "boolean"
+                    "type": "label",
+                    "label": "If enabled, the frame range and the handles of all the animation instances will be updated when using the 'Reset Frange Range' functionality"
                 },
                 {
-                    "type": "list",
-                    "key": "per_task_type",
-                    "label": "Include/exclude handles by task type",
-                    "use_label_wrap": true,
-                    "object_type": {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "type": "task-types-enum",
-                                "key": "task_type",
-                                "label": "Task types"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "include_handles",
-                                "label": "Include handles"
-                            }
-                        ]
-                    }
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 }
             ]
         },
