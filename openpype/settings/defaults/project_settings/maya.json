@@ -456,7 +456,7 @@
             "destination-path": []
         }
     },
-    "update_publishable_frame_range": {
+    "update_instances": {
         "enabled": false
     },
     "scriptsmenu": {
