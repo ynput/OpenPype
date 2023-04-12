@@ -456,6 +456,9 @@
             "destination-path": []
         }
     },
+    "update_instances": {
+        "enabled": false
+    },
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [
