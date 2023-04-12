@@ -92,6 +92,11 @@ def get_imageio_colorspace_from_filepath(
         )
         config_data = get_imageio_config(
             project_name, host_name, project_settings)
+
+        # in case host color management is not enabled
+        if not config_data:
+            return None
+
         file_rules = get_imageio_file_rules(
             project_name, host_name, project_settings)
 
@@ -354,6 +359,10 @@ def get_imageio_config(
     if not activate_host_color_management:
         # if host settings are disabled return False because
         # it is expected that no colorspace management is needed
+        log.info(
+            "Colorspace management for host '{}' is disabled.".format(
+                host_name)
+        )
         return False
 
     config_host = imageio_host.get("ocio_config", {})
@@ -456,13 +465,11 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     frules_host = imageio_host.get("file_rules", {})
 
     # compile file rules dictionary
-    file_rules = {}
-    if frules_global["enabled"]:
-        file_rules.update(frules_global["rules"])
-    if frules_host and frules_host["enabled"]:
-        file_rules.update(frules_host["rules"])
-
-    return file_rules
+    override_global_rules = frules_host.get("override_global_rules")
+    if override_global_rules:
+        return frules_host["rules"]
+    else:
+        return frules_global["rules"]
 
 
 def _get_imageio_settings(project_settings, host_name):
