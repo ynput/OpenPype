@@ -344,28 +344,31 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # check if host settings group is having enabled key
-    imageio_enabled = imageio_host.get("enabled")
-    if imageio_enabled  is None:
-        # it it does not have enabled key, use global settings
-        imageio_enabled = True
+    # check if host settings group is having activate_host_color_management
+    # it it does not have activation key then use global settings
+    # this is for backward compatibility
+    # TODO: in future rewrite this to be more explicit
+    activate_host_color_management = imageio_host.get(
+        "activate_host_color_management", True)
 
-    if not imageio_enabled :
+    if not activate_host_color_management:
         # if host settings are disabled return False because
         # it is expected that no colorspace management is needed
         return False
 
     config_host = imageio_host.get("ocio_config", {})
 
-    if config_host.get("enabled"):
+    # get config path from either global or host_name
+    # depending on override flag
+    # TODO: in future rewrite this to be more explicit
+    config_data = None
+    override_global_rules = config_host.get("override_global_rules")
+    if override_global_rules:
         config_data = _get_config_data(
             config_host["filepath"], formatting_data
         )
     else:
-        config_data = None
-
-    if not config_data:
-        # get config path from either global or host_name
+        # get config path from global
         config_global = imageio_global["ocio_config"]
         config_data = _get_config_data(
             config_global["filepath"], formatting_data
