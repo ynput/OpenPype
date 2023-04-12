@@ -829,6 +829,10 @@ def _convert_shotgrid_project_settings(ayon_settings, output):
         return
 
     ayon_shotgrid = ayon_settings["shotgrid"]
+    # This means that a different variant of addon is used
+    if "leecher_backend_url" not in ayon_shotgrid:
+        return
+
     for key in {
         "leecher_backend_url",
         "filter_projects_by_login",
