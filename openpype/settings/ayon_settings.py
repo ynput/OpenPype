@@ -296,7 +296,9 @@ def _convert_modules_system(
 
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
     default_settings = copy.deepcopy(default_settings)
-    output = {"modules": {}}
+    output = {
+        "modules": {}
+    }
     if "applications" in ayon_settings:
         _convert_applications_system_settings(ayon_settings, output, False)
 
@@ -309,6 +311,9 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
         addon_versions,
         default_settings
     )
+    for key, value in default_settings.items():
+        if key not in output:
+            output[key] = value
     return output
 
 
@@ -1051,6 +1056,10 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output, default_settings)
+
+    for key, value in default_settings.items():
+        if key not in output:
+            output[key] = value
 
     return output
 
