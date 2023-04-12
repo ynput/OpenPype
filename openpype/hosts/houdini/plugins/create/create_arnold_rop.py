@@ -12,7 +12,7 @@ class CreateArnoldRop(plugin.HoudiniCreator):
     defaults = ["master"]
 
     # Default extension
-    ext = ".exr"
+    ext = "exr"
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou
@@ -41,7 +41,7 @@ class CreateArnoldRop(plugin.HoudiniCreator):
 
         filepath = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4{}".format(subset_name, ext)
+            "{}.$F4.{}".format(subset_name, ext)
         )
         parms = {
             # Render frame range
