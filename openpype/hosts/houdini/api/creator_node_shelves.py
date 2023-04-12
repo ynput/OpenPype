@@ -42,9 +42,16 @@ def create_interactive(creator_identifier):
     """
 
     # TODO Use Qt instead
-    result, variant = hou.ui.readInput('Set variant', initial_contents='Main')
-    if result == -1:
-        raise RuntimeError("User interrupted")
+    result, variant = hou.ui.readInput('Define variant name',
+                                       buttons=("Ok", "Cancel"),
+                                       initial_contents='Main',
+                                       title="Define variant",
+                                       help="Set the variant for the "
+                                            "publish instance",
+                                       close_choice=1)
+    if result == 1:
+        # User interrupted
+        return
     variant = variant.strip()
     if not variant:
         raise RuntimeError("Empty variant value entered.")
