@@ -1,5 +1,5 @@
 from openpype.hosts.houdini.api import plugin
-
+from openpype.lib import EnumDef
 
 class CreateArnoldRop(plugin.HoudiniCreator):
     """Arnold ROP"""
@@ -36,9 +36,11 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         parm_template_group.hideFolder("Properties", True)
         instance_node.setParmTemplateGroup(parm_template_group)
 
+        ext = pre_create_data.get("image_format")
+
         filepath = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4{}".format(subset_name, self.ext)
+            "{}.$F4{}".format(subset_name, ext)
         )
         parms = {
             # Render frame range
@@ -54,3 +56,18 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         # Lock any parameters in this list
         to_lock = ["family", "id"]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_pre_create_attr_defs(self):
+        attrs = super(CreateArnoldRop, self).get_pre_create_attr_defs()
+
+        image_format_enum = [
+            "bmp", "cin", "exr", "jpg", "pic", "pic.gz", "png",
+            "rad", "rat", "rta", "sgi", "tga", "tif",
+        ]
+
+        return attrs + [
+            EnumDef("image_format",
+                    image_format_enum,
+                    default=self.ext,
+                    label="Image Format Options")
+        ]
