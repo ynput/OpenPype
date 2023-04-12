@@ -2214,6 +2214,7 @@ def get_frame_range(include_animation_range=False):
     project_name = get_current_project_name()
     asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
+    settings = get_project_settings(project_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
@@ -2299,31 +2300,33 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
-    instances = cmds.ls(
-        "*.id",
-        long=True,
-        type="objectSet",
-        recursive=True,
-        objectsOnly=True
-    )
-    frames_attributes = {
-        'frameStart': frame_start,
-        'frameEnd': frame_end,
-        'handleStart': handle_start,
-        'handleEnd': handle_end
-    }
+    # Update animation instances attributes if enabled in settings
+    if settings["maya"]["update_instances"]["enabled"]:
+        instances = cmds.ls(
+            "*.id",
+            long=True,
+            type="objectSet",
+            recursive=True,
+            objectsOnly=True
+        )
+        frames_attributes = {
+            'frameStart': frame_start,
+            'frameEnd': frame_end,
+            'handleStart': handle_start,
+            'handleEnd': handle_end
+        }
 
-    for instance in instances:
-        id_attr = "{}.id".format(instance)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-            continue
+        for instance in instances:
+            id_attr = "{}.id".format(instance)
+            if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+                continue
 
-        for key, value in frames_attributes.items():
-            if cmds.attributeQuery(key, node=instance, exists=True):
-                cmds.setAttr(
-                    "{}.{}".format(instance, key),
-                    value
-                )
+            for key, value in frames_attributes.items():
+                if cmds.attributeQuery(key, node=instance, exists=True):
+                    cmds.setAttr(
+                        "{}.{}".format(instance, key),
+                        value
+                    )
 
 
 def reset_scene_resolution():
