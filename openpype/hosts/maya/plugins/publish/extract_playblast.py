@@ -7,7 +7,6 @@ import capture
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-from openpype.lib.profiles_filtering import filter_profiles
 
 from maya import cmds
 
@@ -68,33 +67,14 @@ class ExtractPlayblast(publish.Extractor):
         # get cameras
         camera = instance.data["review_camera"]
 
-        host_name = instance.context.data["hostName"]
-        family = instance.data["family"]
         task_data = instance.data["anatomyData"].get("task", {})
-        task_name = task_data.get("name")
-        task_type = task_data.get("type")
-        subset = instance.data["subset"]
-
-        filtering_criteria = {
-            "hosts": host_name,
-            "families": family,
-            "task_names": task_name,
-            "task_types": task_type,
-            "subset": subset
-        }
-
-        if self.profiles:
-            profile = filter_profiles(
-                self.profiles, filtering_criteria, logger=self.log
-            )
-            capture_preset = profile.get("capture_preset")
-        else:
-            self.log.warning("No profiles present for Extract Playblast")
-
-        # Backward compatibility for deprecated Extract Playblast settings
-        # without profiles.
-        if capture_preset is None:
-            capture_preset = self.capture_preset
+        capture_preset = lib.get_capture_preset(
+            task_data.get("name"),
+            task_data.get("type"),
+            instance.data["subset"],
+            instance.context.data["project_settings"],
+            self.log
+        )
 
         preset = lib.load_capture_preset(data=capture_preset)
 

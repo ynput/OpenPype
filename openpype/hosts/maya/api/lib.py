@@ -33,6 +33,7 @@ from openpype.pipeline import (
     registered_host,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.lib.profiles_filtering import filter_profiles
 
 
 self = sys.modules[__name__]
@@ -3812,3 +3813,47 @@ def get_all_children(nodes):
             iterator.next()  # noqa: B305
 
     return list(traversed)
+
+
+def get_capture_preset(task_name, task_type, subset, project_settings, log):
+    """Get capture preset for playblasting.
+
+    Logic for transitioning from old style capture preset to new capture preset
+    profiles.
+
+    Args:
+        task_name (str): Task name.
+        take_type (str): Task type.
+        subset (str): Subset name.
+        project_settings (dict): Project settings.
+        log (object): Logging object.
+    """
+    filtering_criteria = {
+        "hosts": "maya",
+        "families": "review",
+        "task_names": task_name,
+        "task_types": task_type,
+        "subset": subset
+    }
+
+    plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
+    if plugin_settings["profiles"]:
+        profile = filter_profiles(
+            plugin_settings["profiles"],
+            filtering_criteria,
+            logger=log
+        )
+        capture_preset = profile.get("capture_preset")
+    else:
+        log.warning("No profiles present for Extract Playblast")
+
+    # Backward compatibility for deprecated Extract Playblast settings
+    # without profiles.
+    if capture_preset is None:
+        log.debug(
+            "Falling back to deprecated Extract Playblast capture preset "
+            "because no new style playblast profiles are defined."
+        )
+        capture_preset = plugin_settings["capture_preset"]
+
+    return capture_preset
