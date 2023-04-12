@@ -75,4 +75,3 @@ class CreateMantraROP(plugin.HoudiniCreator):
                     default="exr",
                     label="Image Format Options")
         ]
-        # Extract Import Plane parameters(Should be in the setting)

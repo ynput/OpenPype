@@ -1,6 +1,7 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef
 
+
 class CreateArnoldRop(plugin.HoudiniCreator):
     """Arnold ROP"""
 
