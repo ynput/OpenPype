@@ -2,7 +2,7 @@
 """Creator plugin to create Mantra ROP."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
-from openpype.lib import EnumDef
+from openpype.lib import EnumDef, BoolDef
 
 
 class CreateMantraROP(plugin.HoudiniCreator):
@@ -55,6 +55,9 @@ class CreateMantraROP(plugin.HoudiniCreator):
 
             parms.update({"camera": camera or ""})
 
+        custom_res = pre_create_data.get("override_resolution")
+        if custom_res:
+            parms.update({"override_camerares": 1})
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
@@ -73,5 +76,10 @@ class CreateMantraROP(plugin.HoudiniCreator):
             EnumDef("image_format",
                     image_format_enum,
                     default="exr",
-                    label="Image Format Options")
+                    label="Image Format Options"),
+            BoolDef("override_resolution",
+                    label="Override Camera Resolution",
+                    tooltip="Override the current camera "
+                            "resolution, recommended for IPR.",
+                    default=False)
         ]
