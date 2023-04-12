@@ -56,11 +56,11 @@ class CreateVrayROP(plugin.HoudiniCreator):
         parms = {
             "trange": 1,
             "SettingsOutput_img_file_path": filepath,
-             "SettingsEXR_bits_per_channel": "16"   # half precision
+            "SettingsEXR_bits_per_channel": "16"   # half precision
         }
 
         if self.selected_nodes:
-        # set up the render camera from the selected node
+            # set up the render camera from the selected node
             camera = None
             for node in self.selected_nodes:
                 if node.type().name() == "cam":
@@ -69,7 +69,7 @@ class CreateVrayROP(plugin.HoudiniCreator):
                 "render_camera": camera or ""
             })
 
-        #TODO:Add Render Element
+        # Enable render element
         has_re = pre_create_data.get("render_element_enabled")
         if has_re:
             re_rop = instance_node.parent().createNode(
