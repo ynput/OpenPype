@@ -89,7 +89,7 @@ def shelves_change_block():
 def install():
     """Install the Creator plug-ins to show in Houdini's TAB node search menu.
 
-    This function can is re-entrant and can be called again to reinstall and
+    This function is re-entrant and can be called again to reinstall and
     update the node definitions. For example during development it can be
     useful to call it manually:
         >>> from openpype.hosts.houdini.api.creator_node_shelves import install
