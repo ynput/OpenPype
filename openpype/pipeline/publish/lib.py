@@ -306,15 +306,7 @@ def publish_plugins_discover(paths=None):
                 continue
 
             try:
-                if six.PY3:
-                    # Use loader so module has full specs
-                    module_loader = importlib.machinery.SourceFileLoader(
-                        mod_name, abspath
-                    )
-                    module_loader.exec_module(module)
-                else:
-                    with open(abspath, "rb") as f:
-                        six.exec_(f.read(), module.__dict__)
+                module = import_filepath(abspath, mod_name)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
@@ -694,7 +686,7 @@ def get_publish_repre_path(instance, repre, only_published=False):
 
     # Expand the staging dir path in case it's been stored with the root
     # template syntax
-    anatomy = instance.context.data.get("anatomy")
+    anatomy = instance.context.data["anatomy"]
     staging_dir = anatomy.fill_root(staging_dir)
 
     src_path = os.path.normpath(os.path.join(staging_dir, filename))
