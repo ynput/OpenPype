@@ -31,7 +31,7 @@ class TestPipelineColorspace(TestPipeline):
 
     TEST_FILES = [
         (
-            "1d7t9_cVKeZRVF0ppCHiE5MJTTtTlJgBe",
+            "1YinxOToVyAd3-jAMFgVf7EWQa2x8Ma-O",
             "test_pipeline_colorspace.zip",
             ""
         )
@@ -120,7 +120,7 @@ class TestPipelineColorspace(TestPipeline):
         )
         assert config_data["template"] == expected_template, (
             f"Config template \'{config_data['template']}\' doesn't match "
-            f"expected tempalte \'{expected_template}\'"
+            f"expected template \'{expected_template}\'"
         )
 
     def test_parse_colorspace_from_filepath(
