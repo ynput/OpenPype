@@ -94,7 +94,9 @@ def _convert_applications_groups(groups, clear_metadata):
         variant_dynamic_labels = {}
         for variant in group.pop("variants"):
             variant_name = variant.pop("name")
-            variant_dynamic_labels[variant_name] = variant.pop("label")
+            label = variant.get("label")
+            if label and label != variant_name:
+                variant_dynamic_labels[variant_name] = label
             variant_envs = variant[environment_key]
             if isinstance(variant_envs, six.string_types):
                 variant[environment_key] = json.loads(variant_envs)
@@ -110,12 +112,20 @@ def _convert_applications_groups(groups, clear_metadata):
     return output
 
 
-def _convert_applications(ayon_settings, output, clear_metadata):
+def _convert_applications_system_settings(
+    ayon_settings, output, clear_metadata
+):
     # Addon settings
     addon_settings = ayon_settings["applications"]
 
+    # Remove project settings
+    addon_settings.pop("only_available", None)
+
     # Applications settings
     ayon_apps = addon_settings["applications"]
+    if "adsk_3dsmax" in ayon_apps:
+        ayon_apps["3dsmax"] = ayon_apps.pop("adsk_3dsmax")
+
     additional_apps = ayon_apps.pop("additional_apps")
     applications = _convert_applications_groups(
         ayon_apps, clear_metadata
@@ -133,40 +143,49 @@ def _convert_applications(ayon_settings, output, clear_metadata):
     output["tools"] = {"tool_groups": tools}
 
 
-def _convert_general(ayon_settings, output):
+def _convert_general(ayon_settings, output, default_settings):
     # TODO get studio name/code
     core_settings = ayon_settings["core"]
     environments = core_settings["environments"]
     if isinstance(environments, six.string_types):
         environments = json.loads(environments)
 
-    output["general"].update({
+    general = default_settings["general"]
+    general.update({
         "log_to_server": False,
         "studio_name": core_settings["studio_name"],
         "studio_code": core_settings["studio_code"],
         "environments": environments
     })
+    output["general"] = general
 
 
 def _convert_kitsu_system_settings(ayon_settings, output):
-    kitsu_settings = output["modules"]["kitsu"]
-    kitsu_settings["server"] = ayon_settings["kitsu"]["server"]
+    output["modules"]["kitsu"] = {
+        "server": ayon_settings["kitsu"]["server"]
+    }
 
 
 def _convert_ftrack_system_settings(ayon_settings, output):
-    # TODO implement and convert rest of ftrack settings
-    ftrack_settings = output["modules"]["ftrack"]
     ayon_ftrack = ayon_settings["ftrack"]
-    ftrack_settings["ftrack_server"] = ayon_ftrack["ftrack_server"]
+    # Ignore if new ftrack addon is used
+    if "service_settings" in ayon_ftrack:
+        output["ftrack"] = ayon_ftrack
+        return
+
+    output["modules"]["ftrack"] = {
+        "ftrack_server": ayon_ftrack["ftrack_server"]
+    }
 
 
 def _convert_shotgrid_system_settings(ayon_settings, output):
     ayon_shotgrid = ayon_settings["shotgrid"]
     # Skip conversion if different ayon addon is used
     if "leecher_manager_url" not in ayon_shotgrid:
+        output["shotgrid"] = ayon_shotgrid
         return
 
-    shotgrid_settings = output["modules"]["shotgrid"]
+    shotgrid_settings = {}
     for key in (
         "leecher_manager_url",
         "leecher_backend_url",
@@ -180,73 +199,94 @@ def _convert_shotgrid_system_settings(ayon_settings, output):
         new_items[name] = item
     shotgrid_settings["shotgrid_settings"] = new_items
 
+    output["modules"]["shotgrid"] = shotgrid_settings
 
-def _convert_timers_manager(ayon_settings, output):
-    manager_settings = output["modules"]["timers_manager"]
+
+def _convert_timers_manager_system_settings(ayon_settings, output):
     ayon_manager = ayon_settings["timers_manager"]
-    for key in {
-        "auto_stop", "full_time", "message_time", "disregard_publishing"
-    }:
-        manager_settings[key] = ayon_manager[key]
+    manager_settings = {
+        key: ayon_manager[key]
+        for key in {
+            "auto_stop", "full_time", "message_time", "disregard_publishing"
+        }
+    }
+    output["modules"]["timers_manager"] = manager_settings
 
 
-def _convert_clockify(ayon_settings, output):
-    clockify_settings = output["modules"]["clockify"]
-    ayon_clockify = ayon_settings["clockify"]
-    for key in {
-        "worskpace_name",
-    }:
-        clockify_settings[key] = ayon_clockify[key]
+def _convert_clockify_system_settings(ayon_settings, output):
+    output["modules"]["clockify"] = ayon_settings["clockify"]
 
 
-def _convert_deadline(ayon_settings, output):
-    deadline_settings = output["modules"]["deadline"]
+def _convert_deadline_system_settings(ayon_settings, output):
     ayon_deadline = ayon_settings["deadline"]
-    deadline_urls = {}
-    for item in ayon_deadline["deadline_urls"]:
-        deadline_urls[item["name"]] = item["value"]
-    deadline_settings["deadline_urls"] = deadline_urls
+    deadline_settings = {
+        "deadline_urls": {
+            item["name"]: item["value"]
+            for item in ayon_deadline["deadline_urls"]
+        }
+    }
+    output["modules"]["deadline"] = deadline_settings
 
 
-def _convert_muster(ayon_settings, output):
-    muster_settings = output["modules"]["muster"]
+def _convert_muster_system_settings(ayon_settings, output):
     ayon_muster = ayon_settings["muster"]
-    templates_mapping = {}
-    for item in ayon_muster["templates_mapping"]:
-        templates_mapping[item["name"]] = item["value"]
-    muster_settings["templates_mapping"] = templates_mapping
-    muster_settings["MUSTER_REST_URL"] = ayon_muster["MUSTER_REST_URL"]
-
-
-def _convert_royalrender(ayon_settings, output):
-    royalrender_settings = output["modules"]["royalrender"]
-    ayon_royalrender = ayon_settings["royalrender"]
-    royalrender_settings["rr_paths"] = {
+    templates_mapping = {
         item["name"]: item["value"]
-        for item in ayon_royalrender["rr_paths"]
+        for item in ayon_muster["templates_mapping"]
+    }
+    output["modules"]["muster"] = {
+        "templates_mapping": templates_mapping,
+        "MUSTER_REST_URL": ayon_muster["MUSTER_REST_URL"]
     }
 
 
-def _convert_modules(ayon_settings, output, addon_versions):
+def _convert_royalrender_system_settings(ayon_settings, output):
+    ayon_royalrender = ayon_settings["royalrender"]
+    output["modules"]["royalrender"] = {
+        "rr_paths": {
+            item["name"]: item["value"]
+            for item in ayon_royalrender["rr_paths"]
+        }
+    }
+
+
+def _convert_modules_system(
+    ayon_settings, output, addon_versions, default_settings
+):
+    # TODO remove when not needed
+    # - these modules are not and won't be in AYON avaialble
+    for module_name in (
+        "addon_paths",
+        "avalon",
+        "job_queue",
+        "log_viewer",
+        "project_manager",
+    ):
+        output["modules"][module_name] = (
+            default_settings["modules"][module_name]
+        )
+
     # TODO add all modules
     # TODO add 'enabled' values
     for key, func in (
         ("kitsu", _convert_kitsu_system_settings),
         ("ftrack", _convert_ftrack_system_settings),
         ("shotgrid", _convert_shotgrid_system_settings),
-        ("timers_manager", _convert_timers_manager),
-        ("clockify", _convert_clockify),
-        ("deadline", _convert_deadline),
-        ("muster", _convert_muster),
-        ("royalrender", _convert_royalrender),
+        ("timers_manager", _convert_timers_manager_system_settings),
+        ("clockify", _convert_clockify_system_settings),
+        ("deadline", _convert_deadline_system_settings),
+        ("muster", _convert_muster_system_settings),
+        ("royalrender", _convert_royalrender_system_settings),
     ):
         if key in ayon_settings:
             func(ayon_settings, output)
 
-    for module_name, value in output["modules"].items():
-        if "enabled" not in value:
+    output_modules = output["modules"]
+    for module_name, value in default_settings["modules"].items():
+        if "enabled" not in value or module_name not in output_modules:
             continue
-        value["enabled"] = module_name in addon_versions
+
+        output_modules[module_name]["enabled"] = module_name in addon_versions
 
     # Missing modules conversions
     # - "sync_server" -> renamed to sitesync
@@ -255,14 +295,20 @@ def _convert_modules(ayon_settings, output, addon_versions):
 
 
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
-    output = copy.deepcopy(default_settings)
+    default_settings = copy.deepcopy(default_settings)
+    output = {"modules": {}}
     if "applications" in ayon_settings:
-        _convert_applications(ayon_settings, output, False)
+        _convert_applications_system_settings(ayon_settings, output, False)
 
     if "core" in ayon_settings:
-        _convert_general(ayon_settings, output)
+        _convert_general(ayon_settings, output, default_settings)
 
-    _convert_modules(ayon_settings, output, addon_versions)
+    _convert_modules_system(
+        ayon_settings,
+        output,
+        addon_versions,
+        default_settings
+    )
     return output
 
 
