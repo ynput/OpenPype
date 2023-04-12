@@ -91,7 +91,7 @@ def create_interactive(creator_identifier, **kwargs):
             hou.cop2NodeTypeCategory(): cop2toolutils.genericTool
         }.get(pwd.childTypeCategory())
 
-        if tool_fn != None:
+        if tool_fn is not None:
             out_null = tool_fn(kwargs, "null")
             out_null.setName("OUT_{}".format(subset_name), unique_name=True)
 

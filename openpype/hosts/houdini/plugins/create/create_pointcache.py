@@ -57,4 +57,3 @@ class CreatePointCache(plugin.HoudiniCreator):
             hou.ropNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
-
