@@ -267,6 +267,15 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
 
 
 # --------- Project settings ---------
+def _convert_applications_project_settings(ayon_settings, output):
+    if "applications" not in ayon_settings:
+        return
+
+    output["applications"] = {
+        "only_available": ayon_settings["applications"]["only_available"]
+    }
+
+
 def _convert_blender_project_settings(ayon_settings, output):
     if "blender" not in ayon_settings:
         return
@@ -815,6 +824,15 @@ def _convert_deadline_project_settings(ayon_settings, output):
     output["deadline"] = ayon_deadline
 
 
+def _convert_royalrender_project_settings(ayon_settings, output):
+    if "royalrender" not in ayon_settings:
+        return
+    ayon_royalrender = ayon_settings["royalrender"]
+    output["royalrender"] = {
+        "publish": ayon_royalrender["publish"]
+    }
+
+
 def _convert_kitsu_project_settings(ayon_settings, output):
     if "kitsu" not in ayon_settings:
         return
@@ -967,6 +985,7 @@ def convert_project_settings(ayon_settings, default_settings):
             output[key] = ayon_settings[key]
             _convert_host_imageio(output[key])
 
+    _convert_applications_project_settings(ayon_settings, output)
     _convert_blender_project_settings(ayon_settings, output)
     _convert_celaction_project_settings(ayon_settings, output)
     _convert_flame_project_settings(ayon_settings, output)
@@ -980,6 +999,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_webpublisher_project_settings(ayon_settings, output)
 
     _convert_deadline_project_settings(ayon_settings, output)
+    _convert_royalrender_project_settings(ayon_settings, output)
     _convert_kitsu_project_settings(ayon_settings, output)
     _convert_shotgrid_project_settings(ayon_settings, output)
     _convert_slack_project_settings(ayon_settings, output)
