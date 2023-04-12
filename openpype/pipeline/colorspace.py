@@ -362,8 +362,8 @@ def get_imageio_config(
     # depending on override flag
     # TODO: in future rewrite this to be more explicit
     config_data = None
-    override_global_rules = config_host.get("override_global_rules")
-    if override_global_rules:
+    override_global_config = config_host.get("override_global_config")
+    if override_global_config:
         config_data = _get_config_data(
             config_host["filepath"], formatting_data
         )
