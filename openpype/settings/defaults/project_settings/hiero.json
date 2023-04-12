@@ -22,7 +22,8 @@
             "floatLut": "linear",
             "logLut": "Cineon",
             "viewerLut": "sRGB",
-            "thumbnailLut": "sRGB"
+            "thumbnailLut": "sRGB",
+            "monitorOutLut": "sRGB"
         },
         "regexInputs": {
             "inputs": [
