@@ -3642,7 +3642,17 @@ def get_color_management_preferences():
     # Split view and display from view_transform. view_transform comes in
     # format of "{view} ({display})".
     regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    if int(cmds.about(version=True)) <= 2020:
+        # view_transform comes in format of "{view} {display}" in 2020.
+        regex = re.compile(r"^(?P<view>.+) (?P<display>.+)$")
+
     match = regex.match(data["view_transform"])
+    if not match:
+        raise ValueError(
+            "Unable to parse view and display from Maya view transform: '{}' "
+            "using regex '{}'".format(data["view_transform"], regex.pattern)
+        )
+
     data.update({
         "display": match.group("display"),
         "view": match.group("view")
