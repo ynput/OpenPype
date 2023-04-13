@@ -31,11 +31,16 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
             ))
             prop_namespace = container + ".openpype.namespace"
             prop_representation = container + ".openpype.representation"
-            data_prop_namespace = rv.commands.getStringProperty(prop_namespace)[0]
-            data_prop_representation_id = rv.commands.getStringProperty(prop_representation)[0]
+            data_prop_namespace = rv.commands.getStringProperty(
+                prop_namespace
+            )[0]
+            data_prop_representation_id = rv.commands.getStringProperty(
+                prop_representation
+            )[0]
 
-            representations = get_representations(project_name,
-                                                  representation_ids=[data_prop_representation_id])
+            representations = get_representations(
+                project_name, representation_ids=[data_prop_representation_id]
+            )
             first_repre = next(iter(representations))  # first representation
             repre_context = first_repre["context"]
             source_representation_project = repre_context["project"]["name"]
@@ -71,7 +76,7 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 #     "name": "thumbnail",
                 #     "ext": "jpg",
                 #     "files": "frames_1001.jpg",
-                #     "stagingDir": "X:\\projects\\Sync\\DaliesPrep\\work\\prepDaily",
+                #     "stagingDir": "path\\to\\prepDaily",
                 #     # "thumbnail": True,
                 #     # "comment": "NEW COMMENT FROM UI"
                 #     "frameStart": noted_frame,
@@ -80,7 +85,6 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 # }
 
                 data = {
-                    # "subset": source_representation_subset + "_review_{}".format(noted_frame),
                     "subset": "annotation_{}".format(str(noted_frame)),
                     "tags": ["review", "ftrackreview"],
                     "asset": source_representation_asset,
@@ -100,7 +104,9 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 # if "representations" not in instance.data:
                 #     instance.data["representations"] = []
                 #
-                # instance.data["representations"].append(annotation_representation)
+                # instance.data["representations"].append(
+                #     annotation_representation
+                # )
 
             view_node = rv.commands.viewNode()
             intent = context.data.get("intent")
