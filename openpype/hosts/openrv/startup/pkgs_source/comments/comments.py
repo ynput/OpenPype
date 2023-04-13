@@ -302,11 +302,11 @@ class ReviewMenu(MinorMode):
         import ftrack_api
         session = ftrack_api.Session(auto_connect_event_hub=False)
         self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        project_entity = session.query((
-            "select project_schema from Project where full_name is \"{}\""
-        ).format(project_name)).one()
-        project_schema = project_entity["project_schema"]
+        # project_name = legacy_io.Session["AVALON_PROJECT"]
+        # project_entity = session.query((
+        #     "select project_schema from Project where full_name is \"{}\""
+        # ).format(project_name)).one()
+        # project_schema = project_entity["project_schema"]
 
 
 def createMode():
