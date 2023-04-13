@@ -46,7 +46,9 @@ class OpenPypeMenus(MinorMode):
         if not isConsoleVisible():
             showConsole()
 
-        self._parent = rv.qtutils.sessionWindow()
+    @property
+    def _parent(self):
+        return rv.qtutils.sessionWindow()
 
     def create(self, event):
         print("Launching Creator")
