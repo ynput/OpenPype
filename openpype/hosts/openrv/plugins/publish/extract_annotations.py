@@ -34,7 +34,7 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
         #
         # # save the frame
         #
-        # #extract_annotated_frame(filepath=annotated_frame)
+        # # extract_annotated_frame(filepath=annotated_frame)
         #
         # assert os.path.isfile(annotated_frame)
         #
