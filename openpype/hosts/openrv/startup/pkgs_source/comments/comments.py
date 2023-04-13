@@ -69,7 +69,6 @@ class ReviewMenu(MinorMode):
         self.notes_layout.addWidget(self.btn_note_prev)
         self.notes_layout.addWidget(self.btn_note_next)
 
-
         self.review_main_layout.addLayout(self.review_main_layout_head)
         self.review_main_layout.addLayout(self.notes_layout)
         self.review_main_layout.addStretch(1)
