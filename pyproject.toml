@@ -41,7 +41,7 @@ Click = "^7"
 dnspython = "^2.1.0"
 ftrack-python-api = "^2.3.3"
 shotgun_api3 = {git = "https://github.com/shotgunsoftware/python-api.git", rev = "v3.3.3"}
-gazu = "^0.8.34"
+gazu = "^0.9.3"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
 jsonschema = "^2.6.0"
 keyring = "^22.0.1"
