@@ -14,15 +14,6 @@ SET_AOV_CONFIGS = None
 SET_STARTUP_PROJECT = None
 
 
-def show_env(launch_env=None):
-    project_name = launch_env.env.get("AVALON_PROJECT")
-    workdir = launch_env.env.get("AVALON_WORKDIR")
-    print("OVERRIDES {}".format(project_name))
-
-    for k in launch_env.env.keys():
-        print(k, launch_env.env[k])
-
-
 class PreConfigSetups(PreLaunchHook):
     app_groups = ["openrv"]
 

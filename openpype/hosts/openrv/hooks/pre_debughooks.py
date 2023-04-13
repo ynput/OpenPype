@@ -6,15 +6,6 @@ class PreDebugHook(PreLaunchHook):
     """
     app_groups = ["openrv"]
 
-    def show_env(launch_env=None):
-        project_name = launch_env.env.get("AVALON_PROJECT")
-        workdir = launch_env.env.get("AVALON_WORKDIR")
-        print("------- project_name {}".format(project_name))
-        print("------- LAUNCHDATA", launch_env.data)
-
-        for k in launch_env.env.keys():
-            print(k, launch_env.env[k])
-
     def execute(self):
         print("----- ---- ---- ---- ---")
         print("-------  OPENRV PREHOOK DEBUG ")
