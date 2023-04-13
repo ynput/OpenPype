@@ -252,9 +252,21 @@ class ReviewMenu(MinorMode):
         self.current_shot_comment.setPlainText("")
 
     def get_gui_image(self, filename=None):
-        data = rv.commands.exportCurrentFrame("c:/temp/jpg.jpg")
-        print(data)
-        print("File saved")
+
+        if not filename:
+            # Allow user to pick filename
+            filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                self.customDockWidget,
+                "Save image",
+                "image.png",
+                "Images (*.png *.jpg *.jpeg *.exr)"
+            )
+            if not filename:
+                # User cancelled
+                return
+
+        rv.commands.exportCurrentFrame(filename)
+        print("Current frame exported to: {}".format(filename))
 
     def annotate_next(self):
         """Set frame to next annotated frame"""
