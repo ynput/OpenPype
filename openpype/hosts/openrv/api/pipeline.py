@@ -55,7 +55,11 @@ class OpenRVHost(HostBase, IWorkfileHost, ILoadHost):
             return work_dir
 
     def get_current_workfile(self):
-        return rv.commands.sessionFileName()
+        filename = rv.commands.sessionFileName()
+        if filename == "Untitled":
+            return
+        else:
+            return filename
 
     def workfile_has_unsaved_changes(self):
         # dont ask to save if we are on the startup scene without a name
