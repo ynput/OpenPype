@@ -66,11 +66,12 @@ class OpenPypeMenus(MinorMode):
 
 
 def data_loader():
-    incoming_data_file = os.environ.get("OPENPYPE_LOADER_REPRESENTATIONS",
-                                        None)
+    incoming_data_file = os.environ.get(
+        "OPENPYPE_LOADER_REPRESENTATIONS", None
+    )
     if incoming_data_file:
-        with open(incoming_data_file, 'rb') as pypefile:
-            decoded_data = json.load(pypefile)
+        with open(incoming_data_file, 'rb') as file:
+            decoded_data = json.load(file)
         os.remove(incoming_data_file)
         load_data(dataset=decoded_data["representations"])
     else:
