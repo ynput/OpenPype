@@ -260,7 +260,8 @@ class ReviewMenu(MinorMode):
                     except KeyError:
                         return data[0]
                 else:
-                    for y, num in enumerate(frames_in, start=set_start):
+                    # todo: there seems to be no reason for the enumerate here
+                    for _, num in enumerate(frames_in, start=set_start):
                         return num
             else:
                 if do == "next":
