@@ -282,15 +282,20 @@ class ReviewMenu(MinorMode):
     def annotate_next(self):
         """Set frame to next annotated frame"""
         all_notes = self.get_annotated_for_view()
+        if not all_notes:
+            return
         nxt = get_cycle_frame(frame=rv.commands.frame(),
                               frames_lookup=all_notes,
                               direction="next")
+
         rv.commands.setFrame(int(nxt))
         rv.commands.redraw()
 
     def annotate_prev(self):
         """Set frame to previous annotated frame"""
         all_notes = self.get_annotated_for_view()
+        if not all_notes:
+            return
         previous = get_cycle_frame(frame=rv.commands.frame(),
                                    frames_lookup=all_notes,
                                    direction="prev")
