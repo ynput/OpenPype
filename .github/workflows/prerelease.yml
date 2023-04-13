@@ -1,4 +1,4 @@
-name: Nightly Prerelease
+name: ⏳ Nightly Prerelease
 
 on:
   workflow_dispatch:
