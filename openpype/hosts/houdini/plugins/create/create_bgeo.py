@@ -38,13 +38,17 @@ class CreateBGEO(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            parms["soppath"] = self.selected_nodes[0].path()
-
-            # try to find output node
-            for child in self.selected_nodes[0].children():
-                if child.type().name() == "output":
-                    parms["soppath"] = child.path()
-                    break
+            # if selection is on SOP level, use it
+            if isinstance(self.selected_nodes[0], hou.SopNode):
+                parms["soppath"] = self.selected_nodes[0].path()
+            else:
+                # try to find output node with the lowest index
+                outputs = [
+                    child for child in self.selected_nodes[0].children()
+                    if child.type().name() == "output"
+                ]
+                outputs.sort(key=lambda output: output.evalParm("outputidx"))
+                parms["soppath"] = outputs[0].path()
 
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)
