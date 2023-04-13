@@ -200,6 +200,16 @@ Most settings to override in the viewport are self explanatory and can be found 
 These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
 
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
+## Include/exclude handles by task type
+You can include or exclude handles, globally or by task type.
+
+The "Include handles by default" defines whether by default handles are included. Additionally you can add a per task type override whether you want to include or exclude handles.
+
+For example, in this image you can see that handles are included by default in all task types, except for the 'Lighting' task, where the toggle is disabled.
+![Include/exclude handles](assets/maya-admin_exclude_handles.png)
+
+And here you can see that the handles are disabled by default, except in 'Animation' task where it's enabled.
+![Custom menu definition](assets/maya-admin_include_handles.png)
 
 
 ## Custom Menu
