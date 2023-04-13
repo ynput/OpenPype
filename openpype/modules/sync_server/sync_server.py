@@ -11,7 +11,6 @@ from openpype.lib import Logger
 from openpype.lib.local_settings import get_local_site_id
 from openpype.modules.base import ModulesManager
 from openpype.pipeline import Anatomy
-from openpype.client.entities import get_asset_by_name
 from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 
 from .utils import SyncStatus, ResumableError
