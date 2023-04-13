@@ -15,7 +15,6 @@ LUTS_2D = ["ccc", "cc", "cdl"]
 COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
 
 
-
 def parse_edl_events(path, color_edits_only=False):
     """
     EDL is parsed using OTIO and then placed into a data struture for output "edl"
@@ -48,7 +47,7 @@ def parse_edl_events(path, color_edits_only=False):
     timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
 
     if len(timeline.tracks) > 1:
-        raise Exception('EDL can not contain more than one track. Something went wrong')
+        raise Exception("EDL can not contain more than one track. Something went wrong")
 
     edl = {"events": {}}
 
@@ -61,14 +60,14 @@ def parse_edl_events(path, color_edits_only=False):
             loc_value = ""
             tape_value = ""
             entry = {"clip_name":clip.name}
-            if clip.metadata.get('cdl'):
-                cdl = clip.metadata['cdl']
+            if clip.metadata.get("cdl"):
+                cdl = clip.metadata["cdl"]
                 entry.update(
                     {
-                    "slope": tuple(cdl['asc_sop']["slope"]),
-                    "offset": tuple(cdl['asc_sop']["offset"]),
-                    "power": tuple(cdl['asc_sop']["power"]),
-                    "sat": cdl.get('asc_sat') or 1.0,
+                    "slope": tuple(cdl["asc_sop"]["slope"]),
+                    "offset": tuple(cdl["asc_sop"]["offset"]),
+                    "power": tuple(cdl["asc_sop"]["power"]),
+                    "sat": cdl.get("asc_sat") or 1.0,
                     }
                 )
             else:
@@ -78,7 +77,7 @@ def parse_edl_events(path, color_edits_only=False):
             if clip.markers:
                 # Join markers (*LOC). The data is strictly being stored to parse shot name
                 # Space is added to make parsing much easier and predictable
-                full_clip_loc = ' '.join([" "] + [m.name for m in clip.markers])
+                full_clip_loc = " ".join([" "] + [m.name for m in clip.markers])
                 loc_match = re.search(shot_pattern, full_clip_loc)
                 loc_value = loc_match.group("LOC") if loc_match else ""
 
