@@ -162,8 +162,7 @@ class RVActionReview(BaseAction):
                                 {
                                     "label": label.format(
                                         entity["version"]["asset"]["name"],
-                                        str(entity["version"][
-                                                "version"]).zfill(3),
+                                        str(entity["version"]["version"]).zfill(3),  # noqa
                                         entity["file_type"][1:]
                                     ),
                                     "value": entity["id"]
