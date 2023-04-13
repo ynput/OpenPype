@@ -18,7 +18,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.houdini import HOUDINI_HOST_DIR
-from openpype.hosts.houdini.api import lib, shelves
+from openpype.hosts.houdini.api import lib, shelves, creator_node_shelves
 
 from openpype.lib import (
     register_event_callback,
@@ -82,6 +82,10 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         #       opening with last workfile.
         _set_context_settings()
         shelves.generate_shelves()
+
+        if not IS_HEADLESS:
+            import hdefereval # noqa, hdefereval is only available in ui mode
+            hdefereval.executeDeferred(creator_node_shelves.install)
 
     def has_unsaved_changes(self):
         return hou.hipFile.hasUnsavedChanges()
