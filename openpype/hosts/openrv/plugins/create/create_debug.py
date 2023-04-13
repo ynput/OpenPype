@@ -38,5 +38,3 @@ class CreateDebugLogs(LegacyCreator):
 
         print(self.name)
         print("-----done ")
-
-
