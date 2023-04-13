@@ -78,6 +78,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             "hosts": host_name,
         }
         last_workfile_settings = filter_profiles(profiles, filter_data)
+        if not last_workfile_settings:
+            return
         use_last_published_workfile = last_workfile_settings.get(
             "use_last_published_workfile"
         )
