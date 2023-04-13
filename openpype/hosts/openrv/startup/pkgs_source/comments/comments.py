@@ -307,34 +307,6 @@ class ReviewMenu(MinorMode):
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
         return annotated_frames
 
-    def echo_change_update(self):
-        print("CHANGE")
-
-        print("node", self.current_loaded_viewnode)
-        node = self.current_loaded_viewnode
-        if node is None:
-            return
-        # representation
-        print("node properties", rv.commands.properties(node))
-        prop_representation = node + ".openpype.representation"
-        prop_namespace = node + ".openpype.namespace"
-        data_prop_namespace = rv.commands.getStringProperty(prop_namespace)[0]
-        data_prop_representation_id = rv.commands.getStringProperty(
-            prop_representation
-        )[0]
-        print("data_prop_namespace", data_prop_namespace)
-        print("data_prop_representation_id", data_prop_representation_id)
-        from openpype.client import get_representations
-        project_name = os.environ["AVALON_PROJECT"]
-        representations = get_representations(
-            project_name, representation_ids=[data_prop_representation_id]
-        )
-        print("REPR")
-        for rep in representations:
-            print(rep)
-        info = rv.extra_commands.sourceMetaInfoAtFrame(rv.commands.frame())
-        print("info", info)
-
     def get_task_status(self):
         import ftrack_api
         session = ftrack_api.Session(auto_connect_event_hub=False)
