@@ -448,6 +448,8 @@ class TextEntity(InputEntity):
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
         self.value_hints = self.schema_data.get("value_hints") or []
+        self.minimum_lines_count = (
+            self.schema_data.get("minimum_lines_count") or 0)
 
     def schema_validations(self):
         if self.multiline and self.value_hints:
