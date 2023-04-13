@@ -133,8 +133,6 @@ class ReviewMenu(MinorMode):
 
     def runme(self, arg1=None, arg2=None):
         self.rvWindow = rv.qtutils.sessionWindow()
-        # TODO: There can actually be multiple session windows and as such we
-        #  should actually be able to have a review widget per session window
         if self.dockWidget is None:
             # Create DockWidget and add the Custom Widget on first run
             self.dockWidget = QtWidgets.QDockWidget("OpenPype Review",
