@@ -25,7 +25,7 @@ class MovLoader(load.LoaderPlugin):
         # Command fails on unicode so we must force it to be strings
         filepath = str(filepath)
 
-        node_name = "{}_{}".format(namespace, name) if namespace else name
+        # node_name = "{}_{}".format(namespace, name) if namespace else name
         namespace = namespace if namespace else context["asset"]["name"]
 
         set_session_fps()
@@ -47,7 +47,7 @@ class MovLoader(load.LoaderPlugin):
         set_session_fps()
         reset_frame_range()
         # change path
-        update_node = rv.commands.setSourceMedia(node, [filepath])
+        _update_node = rv.commands.setSourceMedia(node, [filepath])
         # update name
         rv.commands.setStringProperty(node + ".media.name",
                                       ["newname"], True)
@@ -58,5 +58,5 @@ class MovLoader(load.LoaderPlugin):
 
     def remove(self, container):
         # todo: implement remove
-        node = container["node"]
+        # node = container["node"]
         return
