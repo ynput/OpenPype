@@ -150,7 +150,6 @@ class RVActionReview(BaseAction):
                         )
 
                 # Items to present to user.
-
                 label = "{} - v{} - {}"
                 loadables = ["exr"]
                 for parent_name, entities in components.items():
