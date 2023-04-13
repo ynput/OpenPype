@@ -26,7 +26,7 @@ class FramesLoader(load.LoaderPlugin):
         # Command fails on unicode so we must force it to be strings
         filepath = str(filepath)
 
-        node_name = "{}_{}".format(namespace, name) if namespace else name
+        # node_name = "{}_{}".format(namespace, name) if namespace else name
         namespace = namespace if namespace else context["asset"]["name"]
 
         set_session_fps()
@@ -59,5 +59,5 @@ class FramesLoader(load.LoaderPlugin):
 
     def remove(self, container):
         # todo: implement remove
-        node = container["node"]
+        # node = container["node"]
         return
