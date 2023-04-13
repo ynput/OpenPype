@@ -2,8 +2,6 @@ import os
 import traceback
 import json
 
-import ftrack_api
-
 from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
@@ -12,9 +10,7 @@ from openpype.client import (
 )
 from openpype.lib import ApplicationManager
 from openpype.pipeline import (
-    get_representation_path,
     AvalonMongoDB,
-    Anatomy,
 )
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
@@ -36,7 +32,6 @@ class RVActionReview(BaseAction):
         self.rv_app = "openrv/1-0"
         self.application_manager = ApplicationManager()
 
-
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
         data = event['data']
@@ -50,10 +45,8 @@ class RVActionReview(BaseAction):
                             }]
                     }
 
-
     def preregister(self):
         return True
-
 
     def get_components_from_list_entity(self, entity):
         """Get components from list entity types.
@@ -83,7 +76,6 @@ class RVActionReview(BaseAction):
                     items_components.append(components)
 
         return items_components
-
 
     def interface(self, session, entities, event):
         if event['data'].get('values', {}):
@@ -122,8 +114,6 @@ class RVActionReview(BaseAction):
         session.commit()
 
         return {"items": items}
-
-
 
     def get_interface_items(self, session, entities):
 
@@ -185,7 +175,6 @@ class RVActionReview(BaseAction):
                                     }
                                 )
         return all_item_for_ui
-
 
     def launch(self, session, entities, event):
         """Callback method for RV action."""
@@ -261,7 +250,6 @@ class RVActionReview(BaseAction):
             extra=component_representation
         )
         return True
-
 
     def get_representations(self, session, event, entities):
         """Get representations from selected components."""
