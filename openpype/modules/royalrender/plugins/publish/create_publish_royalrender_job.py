@@ -8,7 +8,8 @@ from pyblish.api import InstancePlugin, IntegratorOrder
 from openpype.pipeline import legacy_io
 from openpype.modules.royalrender.rr_job import RRJob, RREnvList
 from openpype.pipeline.publish import KnownPublishError
-from openpype.lib.openpype_version import get_OpenPypeVersion, get_openpype_version
+from openpype.lib.openpype_version import (
+    get_OpenPypeVersion, get_openpype_version)
 
 
 class CreatePublishRoyalRenderJob(InstancePlugin):
