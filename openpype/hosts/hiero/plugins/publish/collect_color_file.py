@@ -329,12 +329,12 @@ class MissingColorFile(QtWidgets.QDialog):
                                                      QtWidgets.QSizePolicy.Fixed)
         info_display_layout.addItem(info_h_spacer_item_1)
         info_display_layout.addWidget(self.edl_widget)
-        self.edl_sops_seperator = QtWidgets.QFrame()
-        self.edl_sops_seperator.setFrameShape(QtWidgets.QFrame.VLine)
-        self.edl_sops_seperator.setFrameShadow(QtWidgets.QFrame.Sunken)
-        self.edl_sops_seperator.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.edl_sops_seperator.hide()
-        info_display_layout.addWidget(self.edl_sops_seperator)
+        self.edl_sops_separator = QtWidgets.QFrame()
+        self.edl_sops_separator.setFrameShape(QtWidgets.QFrame.VLine)
+        self.edl_sops_separator.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.edl_sops_separator.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.edl_sops_separator.hide()
+        info_display_layout.addWidget(self.edl_sops_separator)
         info_display_layout.addWidget(sops_widget)
         info_h_spacer_item_3 = QtWidgets.QSpacerItem(10, 8, QtWidgets.QSizePolicy.Expanding,
                                                      QtWidgets.QSizePolicy.Fixed)
@@ -389,7 +389,7 @@ class MissingColorFile(QtWidgets.QDialog):
     #
     #     if os.path.isfile(color_file_path) and is_edl:
     #         self.edl_widget.show()
-    #         self.edl_sops_seperator.show()
+    #         self.edl_sops_separator.show()
     #
     #         edl = parse_edl_events(color_file_path)
     #         self.edl = edl
@@ -398,7 +398,7 @@ class MissingColorFile(QtWidgets.QDialog):
     #
     #     else:
     #         self.edl_widget.hide()
-    #         self.edl_sops_seperator.hide()
+    #         self.edl_sops_separator.hide()
     #
     #     self.prev_file_path_input = color_file_path
 
@@ -445,10 +445,10 @@ class MissingColorFile(QtWidgets.QDialog):
 
         if file_extention == "edl":
             self.edl_widget.show()
-            self.edl_sops_seperator.show()
+            self.edl_sops_separator.show()
         else:
             self.edl_widget.hide()
-            self.edl_sops_seperator.hide()
+            self.edl_sops_separator.hide()
 
         color_file_path = file_path
         if self.prev_file_path_input == color_file_path:
