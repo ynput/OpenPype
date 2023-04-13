@@ -13,7 +13,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["vdbcache", "imagesequence", "ass", "redshiftproxy", "bgeo"]
+    families = ["vdbcache", "imagesequence", "ass",
+                "redshiftproxy", "review", "bgeo"]
 
     def process(self, instance):
 

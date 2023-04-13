@@ -146,6 +146,8 @@ class CreatorWidget(QtWidgets.QDialog):
         return " ".join([str(m.group(0)).capitalize() for m in matches])
 
     def create_row(self, layout, type, text, **kwargs):
+        value_keys = ["setText", "setCheckState", "setValue", "setChecked"]
+
         # get type attribute from qwidgets
         attr = getattr(QtWidgets, type)
 
@@ -167,13 +169,26 @@ class CreatorWidget(QtWidgets.QDialog):
 
         # assign the created attribute to variable
         item = getattr(self, attr_name)
+
+        # set attributes to item which are not values
         for func, val in kwargs.items():
+            if func in value_keys:
+                continue
+
             if getattr(item, func):
+                log.debug("Setting {} to {}".format(func, val))
                 func_attr = getattr(item, func)
                 if isinstance(val, tuple):
                     func_attr(*val)
                 else:
                     func_attr(val)
+
+        # set values to item
+        for value_item in value_keys:
+            if value_item not in kwargs:
+                continue
+            if getattr(item, value_item):
+                getattr(item, value_item)(kwargs[value_item])
 
         # add to layout
         layout.addRow(label, item)
@@ -276,8 +291,11 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMinimum=0,
+                    setValue=v["value"],
+                    setDisplayIntegerBase=10000,
+                    setRange=(0, 99999), setMinimum=0,
                     setMaximum=100000, setToolTip=tool_tip)
+
         return data
 
 
@@ -393,7 +411,7 @@ class ClipLoader:
         self.with_handles = options.get("handles") or bool(
             options.get("handles") is True)
         # try to get value from options or evaluate key value for `load_how`
-        self.sequencial_load = options.get("sequencially") or bool(
+        self.sequencial_load = options.get("sequentially") or bool(
             "Sequentially in order" in options.get("load_how", ""))
         # try to get value from options or evaluate key value for `load_to`
         self.new_sequence = options.get("newSequence") or bool(
@@ -818,7 +836,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = {}
+        hierarchy_formatting_data = {}
         hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.track_item_default_data.copy()
         if self.ui_inputs:
@@ -853,13 +871,13 @@ class PublishClip:
 
             # fill up pythonic expresisons in hierarchy data
             for k, _v in hierarchy_data.items():
-                hierarchy_formating_data[k] = _v["value"].format(**_data)
+                hierarchy_formatting_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = hierarchy_data
+            hierarchy_formatting_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
-            hierarchy_formating_data
+            hierarchy_formatting_data
         )
 
         tag_hierarchy_data.update({"heroTrack": True})
@@ -887,20 +905,20 @@ class PublishClip:
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
 
-    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+    def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
-        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
-        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formatting_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formatting_data)
 
         # remove shot from hierarchy data: is not needed anymore
-        hierarchy_formating_data.pop("shot")
+        hierarchy_formatting_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
             "parents": self.parents,
-            "hierarchyData": hierarchy_formating_data,
+            "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
             "families": [self.data["family"]]
@@ -916,16 +934,16 @@ class PublishClip:
         )
 
         # first collect formatting data to use for formatting template
-        formating_data = {}
+        formatting_data = {}
         for _k, _v in self.hierarchy_data.items():
             value = _v["value"].format(
                 **self.track_item_default_data)
-            formating_data[_k] = value
+            formatting_data[_k] = value
 
         return {
             "entity_type": entity_type,
             "entity_name": template.format(
-                **formating_data
+                **formatting_data
             )
         }
 

@@ -20,13 +20,15 @@ from openpype.settings import (
     get_system_settings,
 )
 from openpype.pipeline import (
-    tempdir
+    tempdir,
+    Anatomy
 )
 from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .contants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
+    TRANSIENT_DIR_TEMPLATE
 )
 
 
@@ -352,6 +354,61 @@ def publish_plugins_discover(paths=None):
     return result
 
 
+def _get_plugin_settings(host_name, project_settings, plugin, log):
+    """Get plugin settings based on host name and plugin name.
+
+    Args:
+        host_name (str): Name of host.
+        project_settings (dict[str, Any]): Project settings.
+        plugin (pyliblish.Plugin): Plugin where settings are applied.
+        log (logging.Logger): Logger to log messages.
+
+    Returns:
+        dict[str, Any]: Plugin settings {'attribute': 'value'}.
+    """
+
+    # Use project settings from host name category when available
+    try:
+        return (
+            project_settings
+            [host_name]
+            ["publish"]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+
+    # Settings category determined from path
+    # - usually path is './<category>/plugins/publish/<plugin file>'
+    # - category can be host name of addon name ('maya', 'deadline', ...)
+    filepath = os.path.normpath(inspect.getsourcefile(plugin))
+
+    split_path = filepath.rsplit(os.path.sep, 5)
+    if len(split_path) < 4:
+        log.warning(
+            'plugin path too short to extract host {}'.format(filepath)
+        )
+        return {}
+
+    category_from_file = split_path[-4]
+    plugin_kind = split_path[-2]
+
+    # TODO: change after all plugins are moved one level up
+    if category_from_file == "openpype":
+        category_from_file = "global"
+
+    try:
+        return (
+            project_settings
+            [category_from_file]
+            [plugin_kind]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+    return {}
+
+
 def filter_pyblish_plugins(plugins):
     """Pyblish plugin filter which applies OpenPype settings.
 
@@ -370,21 +427,21 @@ def filter_pyblish_plugins(plugins):
     # TODO: Don't use host from 'pyblish.api' but from defined host by us.
     #   - kept becau on farm is probably used host 'shell' which propably
     #       affect how settings are applied there
-    host = pyblish.api.current_host()
+    host_name = pyblish.api.current_host()
     project_name = os.environ.get("AVALON_PROJECT")
 
-    project_setting = get_project_settings(project_name)
+    project_settings = get_project_settings(project_name)
     system_settings = get_system_settings()
 
     # iterate over plugins
     for plugin in plugins[:]:
+        # Apply settings to plugins
         if hasattr(plugin, "apply_settings"):
+            # Use classmethod 'apply_settings'
+            # - can be used to target settings from custom settings place
+            # - skip default behavior when successful
             try:
-                # Use classmethod 'apply_settings'
-                # - can be used to target settings from custom settings place
-                # - skip default behavior when successful
-                plugin.apply_settings(project_setting, system_settings)
-                continue
+                plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -393,52 +450,19 @@ def filter_pyblish_plugins(plugins):
                     ).format(plugin.__name__),
                     exc_info=True
                 )
-
-        try:
-            config_data = (
-                project_setting
-                [host]
-                ["publish"]
-                [plugin.__name__]
+        else:
+            # Automated
+            plugin_settins = _get_plugin_settings(
+                host_name, project_settings, plugin, log
             )
-        except KeyError:
-            # host determined from path
-            file = os.path.normpath(inspect.getsourcefile(plugin))
-            file = os.path.normpath(file)
-
-            split_path = file.split(os.path.sep)
-            if len(split_path) < 4:
-                log.warning(
-                    'plugin path too short to extract host {}'.format(file)
-                )
-                continue
-
-            host_from_file = split_path[-4]
-            plugin_kind = split_path[-2]
-
-            # TODO: change after all plugins are moved one level up
-            if host_from_file == "openpype":
-                host_from_file = "global"
-
-            try:
-                config_data = (
-                    project_setting
-                    [host_from_file]
-                    [plugin_kind]
-                    [plugin.__name__]
-                )
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
+            for option, value in plugin_settins.items():
+                log.info("setting {}:{} on plugin {}".format(
                     option, value, plugin.__name__))
-
                 setattr(plugin, option, value)
+
+        # Remove disabled plugins
+        if getattr(plugin, "enabled", True) is False:
+            plugins.remove(plugin)
 
 
 def find_close_plugin(close_plugin_name, log):
@@ -690,3 +714,79 @@ def get_publish_repre_path(instance, repre, only_published=False):
     if os.path.exists(src_path):
         return src_path
     return None
+
+
+def get_custom_staging_dir_info(project_name, host_name, family, task_name,
+                                task_type, subset_name,
+                                project_settings=None,
+                                anatomy=None, log=None):
+    """Checks profiles if context should use special custom dir as staging.
+
+    Args:
+        project_name (str)
+        host_name (str)
+        family (str)
+        task_name (str)
+        task_type (str)
+        subset_name (str)
+        project_settings(Dict[str, Any]): Prepared project settings.
+        anatomy (Dict[str, Any])
+        log (Logger) (optional)
+
+    Returns:
+        (tuple)
+    Raises:
+        ValueError - if misconfigured template should be used
+    """
+    settings = project_settings or get_project_settings(project_name)
+    custom_staging_dir_profiles = (settings["global"]
+                                           ["tools"]
+                                           ["publish"]
+                                           ["custom_staging_dir_profiles"])
+    if not custom_staging_dir_profiles:
+        return None, None
+
+    if not log:
+        log = Logger.get_logger("get_custom_staging_dir_info")
+
+    filtering_criteria = {
+        "hosts": host_name,
+        "families": family,
+        "task_names": task_name,
+        "task_types": task_type,
+        "subsets": subset_name
+    }
+    profile = filter_profiles(custom_staging_dir_profiles,
+                              filtering_criteria,
+                              logger=log)
+
+    if not profile or not profile["active"]:
+        return None, None
+
+    if not anatomy:
+        anatomy = Anatomy(project_name)
+
+    template_name = profile["template_name"] or TRANSIENT_DIR_TEMPLATE
+    _validate_transient_template(project_name, template_name, anatomy)
+
+    custom_staging_dir = anatomy.templates[template_name]["folder"]
+    is_persistent = profile["custom_staging_dir_persistent"]
+
+    return custom_staging_dir, is_persistent
+
+
+def _validate_transient_template(project_name, template_name, anatomy):
+    """Check that transient template is correctly configured.
+
+    Raises:
+        ValueError - if misconfigured template
+    """
+    if template_name not in anatomy.templates:
+        raise ValueError(("Anatomy of project \"{}\" does not have set"
+                          " \"{}\" template key!"
+                          ).format(project_name, template_name))
+
+    if "folder" not in anatomy.templates[template_name]:
+        raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
+                             " for project \"{}\"."
+                         ).format(template_name, project_name))
