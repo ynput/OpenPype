@@ -47,7 +47,7 @@ class OpenPypeMenus(MinorMode):
 
     def load(self, event):
         print("Launching Loader")
-        host_tools.show_loader(parent=[], use_context=True)
+        host_tools.show_loader(use_context=True)
 
     def publish(self, event):
         print("Launching Pyblish")
