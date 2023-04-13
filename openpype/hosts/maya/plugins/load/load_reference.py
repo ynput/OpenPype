@@ -125,14 +125,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
-        group_name = "{}:_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             file_url = self.prepare_root_value(self.fname,
                                                context["project"]["name"])
+
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
