@@ -217,13 +217,17 @@ class ReviewMenu(MinorMode):
 
     def annotate_next(self):
         all_notes = self.get_annotated_for_view()
-        nxt = self.get_cycle_frame(frame=rv.commands.frame(), frames_in=all_notes, do="next")
+        nxt = self.get_cycle_frame(frame=rv.commands.frame(),
+                                   frames_in=all_notes,
+                                   do="next")
         rv.commands.setFrame(int(nxt))
         rv.commands.redraw()
 
     def annotate_prev(self):
         all_notes = self.get_annotated_for_view()
-        previous = self.get_cycle_frame(frame=rv.commands.frame(), frames_in=all_notes, do="prev")
+        previous = self.get_cycle_frame(frame=rv.commands.frame(),
+                                        frames_in=all_notes,
+                                        do="prev")
         rv.commands.setFrame(int(previous))
         rv.commands.redraw()
 
@@ -269,20 +273,25 @@ class ReviewMenu(MinorMode):
     def echo_change_update(self):
         print("CHANGE")
 
-        print(self.current_loaded_viewnode)
+        print("node", self.current_loaded_viewnode)
         node = self.current_loaded_viewnode
-        print(rv.commands.properties(node))
+        if node is None:
+            return
         # representation
+        print("node properties", rv.commands.properties(node))
         prop_representation = node + ".openpype.representation"
         prop_namespace = node + ".openpype.namespace"
         data_prop_namespace = rv.commands.getStringProperty(prop_namespace)[0]
-        data_prop_representation_id = rv.commands.getStringProperty(prop_representation)[0]
+        data_prop_representation_id = rv.commands.getStringProperty(
+            prop_representation
+        )[0]
         print("data_prop_namespace", data_prop_namespace)
         print("data_prop_representation_id", data_prop_representation_id)
-        from openpype.client import get_representations, get_representation_parents
+        from openpype.client import get_representations
         project_name = os.environ["AVALON_PROJECT"]
-        representations = get_representations(project_name,
-                                           representation_ids=[data_prop_representation_id])
+        representations = get_representations(
+            project_name, representation_ids=[data_prop_representation_id]
+        )
         print("REPR")
         for rep in representations:
             print(rep)
