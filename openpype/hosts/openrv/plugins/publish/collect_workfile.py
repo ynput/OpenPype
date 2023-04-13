@@ -2,7 +2,7 @@ import os
 import pyblish.api
 from openpype.hosts.openrv.api.pipeline import get_path_workfile
 from openpype.pipeline import (
-    legacy_io, 
+    legacy_io,
     registered_host
 )
 

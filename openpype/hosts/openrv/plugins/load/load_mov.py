@@ -7,6 +7,7 @@ from openpype.hosts.openrv.api.pipeline import imprint_container
 
 import rv
 
+
 class MovLoader(load.LoaderPlugin):
     """Load mov into OpenRV"""
 
@@ -31,9 +32,6 @@ class MovLoader(load.LoaderPlugin):
         reset_frame_range()
 
         loaded_node = rv.commands.addSourceVerbose([filepath])
-        print("PROPS")
-        for prop in rv.commands.properties(loaded_node):
-            print(prop)
         imprint_container(
             loaded_node,
             name=name,
@@ -41,8 +39,6 @@ class MovLoader(load.LoaderPlugin):
             context=context,
             loader=self.__class__.__name__
         )
-
-
 
     def update(self, container, representation):
         node = container["node"]
@@ -57,9 +53,7 @@ class MovLoader(load.LoaderPlugin):
         rv.commands.setStringProperty(node + ".media.repName", ["repname"], True)
         rv.commands.setStringProperty(node + ".openpype.representation", [str(representation["_id"])], True)
 
-
     def remove(self, container):
+        # todo: implement remove
         node = container["node"]
-        # not implemented
         return
-

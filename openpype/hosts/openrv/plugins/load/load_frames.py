@@ -8,6 +8,7 @@ from openpype.hosts.openrv.api.commands import reset_frame_range
 
 import rv
 
+
 class FramesLoader(load.LoaderPlugin):
     """Load frames into OpenRV"""
 
@@ -40,8 +41,6 @@ class FramesLoader(load.LoaderPlugin):
             loader=self.__class__.__name__
         )
 
-
-
     def update(self, container, representation):
         node = container["node"]
         filepath = get_representation_path(representation)
@@ -50,14 +49,12 @@ class FramesLoader(load.LoaderPlugin):
         reset_frame_range()
         # change path
         rv.commands.setSourceMedia(node, [filepath])
+        # update name
         rv.commands.setStringProperty(node + ".media.name", ["newname"], True)
         rv.commands.setStringProperty(node + ".media.repName", ["repname"], True)
         rv.commands.setStringProperty(node + ".openpype.representation", [str(representation["_id"])], True)
 
-
-
     def remove(self, container):
+        # todo: implement remove
         node = container["node"]
-        # not implemented
         return
-

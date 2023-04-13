@@ -15,7 +15,11 @@ class OpenRVAddon(OpenPypeModule, IHostAddon):
 
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
-        sys.path.insert(0, os.path.join(os.getenv("OPENPYPE_ROOT"), "vendor", "python"))
+        vendor_python = os.path.join(os.getenv("OPENPYPE_ROOT"),
+                                     "vendor",
+                                     "python")
+        sys.path.insert(0, vendor_python)
+
         # Set default environments if are not set via settings
         defaults = {
             "OPENPYPE_LOG_NO_COLORS": "True"

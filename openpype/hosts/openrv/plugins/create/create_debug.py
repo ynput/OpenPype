@@ -3,6 +3,7 @@ from openpype.pipeline.create import (
     LegacyCreator
 )
 
+
 class CreateDebugLogs(LegacyCreator):
     """Creates a quick debuger for avalon asset"""
 
@@ -16,7 +17,6 @@ class CreateDebugLogs(LegacyCreator):
 
         # Remove the active, we are checking the bypass flag of the nodes
         self.data.pop("active", None)
-
 
     def process(self):
         """Creator main entry point.
@@ -37,10 +37,6 @@ class CreateDebugLogs(LegacyCreator):
             print(d, asset_data[d])
 
         print(self.name)
-
-
         print("-----done ")
-
-
 
 

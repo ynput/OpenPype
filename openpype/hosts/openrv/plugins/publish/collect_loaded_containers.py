@@ -6,8 +6,6 @@ from openpype.pipeline import (
 )
 
 
-
-
 class CollectSessionContainers(pyblish.api.ContextPlugin):
     """Collect session containers
     """
@@ -25,7 +23,7 @@ class CollectSessionContainers(pyblish.api.ContextPlugin):
 
         # create instances
         for item in item_collection:
-            print(item)
+            self.log.debug(item)
             item_name = item["namespace"]
             instance = context.create_instance(name=str(item_name))
             subset = 'container' + task.capitalize()

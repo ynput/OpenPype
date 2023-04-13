@@ -1,5 +1,4 @@
 import logging
-import os
 
 import rv
 from openpype.pipeline.context_tools import get_current_project_asset
@@ -35,7 +34,6 @@ def set_session_fps():
     asset_data = asset_doc["data"]
     fps = float(asset_data.get("fps", 25))
     rv.commands.setFPS(fps)
-
 
 
 def create_support_ticket():

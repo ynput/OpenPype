@@ -48,4 +48,3 @@ class PreConfigSetups(PreLaunchHook):
             os.environ["OCIO"] = str(ocio_config_path)
             self.launch_context.env["OCIO"] = str(ocio_config_path)
             print(os.environ["OCIO"])
-

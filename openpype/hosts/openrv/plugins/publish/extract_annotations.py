@@ -1,11 +1,12 @@
 import os
-from pprint import pformat
 import pyblish.api
 
 from openpype.pipeline import publish
-from openpype.hosts.openrv.api.review import get_path_annotated_frame, extract_annotated_frame
+from openpype.hosts.openrv.api.review import (
+    get_path_annotated_frame,
+    extract_annotated_frame
+)
 
-import rv
 
 class ExtractOpenRVAnnotatedFrames(publish.Extractor):
 
@@ -16,18 +17,18 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
 
     def process(self, instance):
 
-        self.log.info("instance.data: `{}`".format(
-            pformat(instance.data)))
-        #self.log.info("workfile", str(instance.data['asset_folder']))
         asset_folder = instance.data['asset_folder_path']
         asset = instance.data['asset']
         annotated_frame = instance.data['annotated_frame']
 
-        annotated_frame_path = get_path_annotated_frame(frame=annotated_frame,
-                                                   asset_folder=asset_folder)
-        print(annotated_frame_path)
-        annotated_frame_folder, file = os.path.split(annotated_frame_path)
+        annotated_frame_path = get_path_annotated_frame(
+            frame=annotated_frame,
+            asset=asset,
+            asset_folder=asset_folder
+        )
+        self.log.info("Annotated frame path: {}".format(annotated_frame_path))
 
+        annotated_frame_folder, file = os.path.split(annotated_frame_path)
         if not os.path.isdir(annotated_frame_folder):
             os.makedirs(annotated_frame_folder)
         #

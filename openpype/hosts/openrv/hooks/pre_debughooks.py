@@ -1,5 +1,3 @@
-import os
-
 from openpype.lib import PreLaunchHook
 
 
