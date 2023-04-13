@@ -1,6 +1,5 @@
-from rv.rvtypes import *
-from rv.commands import *
-from rv.extra_commands import *
+from rv.rvtypes import MinorMode
+from rv.commands import isConsoleVisible, showConsole
 
 from openpype.tools.utils import host_tools
 
