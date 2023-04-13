@@ -241,12 +241,12 @@ class ReviewMenu(MinorMode):
             pass
 
         elif len(frames_in) == 1:
-            for i,findframe in enumerate(frames_in):
+            for i, findframe in enumerate(frames_in):
                 if frame == findframe:
                     return frame
 
         else:
-            for i,findframe in enumerate(frames_in):
+            for i, findframe in enumerate(frames_in):
                 if frame == findframe:
                     frames_in.remove(frame)
                     set_start = i
@@ -256,7 +256,7 @@ class ReviewMenu(MinorMode):
                     try:
                         data = [x for x in frames_in]
                         return data[set_start]
-                    except:
+                    except KeyError:
                         return data[0]
                 else:
                     for y,num in enumerate(frames_in, start=set_start):
