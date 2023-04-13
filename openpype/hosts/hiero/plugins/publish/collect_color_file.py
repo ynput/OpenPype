@@ -403,8 +403,8 @@ class MissingColorFile(QtWidgets.QDialog):
         Driven by connection. Based on the change of file path.
         """
         file_path = self.file_path_input.text()
-        file_extention = file_path.lower().rsplit(".", 1)[-1]
-        if file_extention in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
+        file_extension = file_path.lower().rsplit(".", 1)[-1]
+        if file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
             cdl = parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
@@ -417,9 +417,9 @@ class MissingColorFile(QtWidgets.QDialog):
 
     def set_sops_and_edl(self):
         file_path = self.file_path_input.text()
-        file_extention = file_path.lower().rsplit(".", 1)[-1]
+        file_extension = file_path.lower().rsplit(".", 1)[-1]
 
-        if file_extention == "edl":
+        if file_extension == "edl":
             self.edl_widget.show()
             self.edl_sops_separator.show()
         else:
@@ -430,7 +430,7 @@ class MissingColorFile(QtWidgets.QDialog):
         if self.prev_file_path_input == color_file_path:
             return
 
-        if file_extention == "edl":
+        if file_extension == "edl":
             edl = parse_edl_events(color_file_path)
             self.edl = edl
             self.entry_number.setMinimum(edl["first_entry"])
@@ -439,7 +439,7 @@ class MissingColorFile(QtWidgets.QDialog):
             # Right after parse update edl info
             self.set_edl_info()
 
-        if file_extention in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
+        elif file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
             cdl = parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
@@ -448,7 +448,7 @@ class MissingColorFile(QtWidgets.QDialog):
                 cdl.get("sat")
                 )
 
-        if not (file_extention in ["ccc", "cc", "cdl", "edl"] and os.path.isfile(file_path)):
+        if not (file_extension in ["ccc", "cc", "cdl", "edl"] and os.path.isfile(file_path)):
             self.set_sops_widgets(None, None, None, None)
         else:
             self.prev_file_path_input = color_file_path
@@ -606,7 +606,7 @@ def get_files(package_path, filters):
 
 
 def priority_color_file(color_files, item_name, source_name):
-    """Priority is given to the closest match of source_name then item_name as well as found file type"""
+    """"Priority is given to the closest match of source_name then item_name as well as found file type"""
     source_name = source_name.lower()
     matches = []
     for color_ext in COLOR_FILE_EXTS:
@@ -625,12 +625,8 @@ def priority_color_file(color_files, item_name, source_name):
 
                     if source_name == color_file_name:
                         priority = 0
-                    # elif source_name in color_file_name:
-                    #     priority = 4
                     elif item_name == color_file_name:
                         priority = 8
-                    # elif item_name in color_file_name:
-                    #     priority = 12
 
                     if not priority is None:
                         # Distinguish type priority
@@ -657,12 +653,8 @@ def priority_color_file(color_files, item_name, source_name):
                         loc_name = edl_event["LOC"].lower()
                         if source_name == loc_name:
                             priority = 2
-                        # elif source_name in loc_name:
-                        #     priority = 6
                         elif item_name == loc_name:
                             priority = 10
-                        # elif item_name in loc_name:
-                        #     priority = 14
                         matches.append((priority, cdl, color_file))
 
     if matches:
