@@ -106,6 +106,37 @@ or Deadlines **Draft Tile Assembler**.
 This is useful to fix some specific renderer glitches and advanced hacking of Maya Scene files. `Patch name` is label for patch for easier orientation.
 `Patch regex` is regex used to find line in file, after `Patch line` string is inserted. Note that you need to add line ending.
 
+## Load Plugins
+
+### Reference Loader
+
+#### Namespace and Group Name
+Here you can create your own custom naming for the reference loader.
+
+The custom naming is split into two parts: namespace and group name. If you don't set the namespace or the group name, an error will occur.
+Here's the different variables you can use:
+
+<div class="row markdown">
+<div class="col col--5 markdown">
+
+| Token | Description |
+|---|---|
+|`{asset_name}` | Asset name |
+|`{asset_type}` | Asset type |
+|`{subset}` | Subset name |
+|`{family}` | Subset family |
+
+</div>
+</div>
+
+The namespace field can contain a single group of '#' number tokens to indicate where the namespace's unique index should go. The amount of tokens defines the zero padding of the number, e.g ### turns into 001.
+
+Warning: Note that a namespace will always be prefixed with a _ if it starts with a digit.
+
+Example:
+
+![Namespace and Group Name](assets/maya-admin_custom_namespace.png)
+
 ### Extract GPU Cache
 
 ![Maya GPU Cache](assets/maya-admin_gpu_cache.png)
@@ -169,6 +200,17 @@ Most settings to override in the viewport are self explanatory and can be found 
 These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
 
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
+## Include/exclude handles by task type
+You can include or exclude handles, globally or by task type.
+
+The "Include handles by default" defines whether by default handles are included. Additionally you can add a per task type override whether you want to include or exclude handles.
+
+For example, in this image you can see that handles are included by default in all task types, except for the 'Lighting' task, where the toggle is disabled.
+![Include/exclude handles](assets/maya-admin_exclude_handles.png)
+
+And here you can see that the handles are disabled by default, except in 'Animation' task where it's enabled.
+![Custom menu definition](assets/maya-admin_include_handles.png)
+
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.

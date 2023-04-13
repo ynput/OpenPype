@@ -1048,6 +1048,10 @@
                 125,
                 255
             ]
+        },
+        "reference_loader": {
+            "namespace": "{asset_name}_{subset}_##",
+            "group_name": "_GRP"
         }
     },
     "workfile_build": {
@@ -1140,6 +1144,10 @@
                 ]
             }
         ]
+    },
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
     },
     "templated_workfile_build": {
         "profiles": []
