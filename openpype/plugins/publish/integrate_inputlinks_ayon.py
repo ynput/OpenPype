@@ -6,11 +6,11 @@ from ayon_api import create_link, make_sure_link_type_exists
 from openpype import AYON_SERVER_ENABLED
 
 
-class IntegrateInputLinks(pyblish.api.ContextPlugin):
+class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
     """Connecting version level dependency links"""
 
     order = pyblish.api.IntegratorOrder + 0.2
-    label = "Connect Dependency InputLinks"
+    label = "Connect Dependency InputLinks AYON"
 
     def process(self, context):
         """Connect dependency links for all instances, globally
