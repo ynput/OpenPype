@@ -121,6 +121,7 @@ class FramesLoader(load.LoaderPlugin):
 
         # Fallback for image sequence that does not have frame start and frame
         # end stored in the database.
+        # TODO: Maybe rely on rv.commands.sequenceOfFile instead?
         if "frame" in representation.get("context", {}):
             # Guess the frame range from the files
             files = representation.get("files", [])
