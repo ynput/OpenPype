@@ -7,7 +7,7 @@
   head: "enhancement/*"
 
 # Apply label "bugfix" if head matches one of "bugfix/*" or "hotfix/*"
-'type: bugfix':
+'type: bug':
   head: ["bugfix/*", "hotfix/*"]
 
 # Apply label "release" if base matches "release/*"

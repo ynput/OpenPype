@@ -242,9 +242,15 @@ def launch_zip_file(filepath):
     print(f"Localizing {filepath}")
 
     temp_path = get_local_harmony_path(filepath)
+    scene_name = os.path.basename(temp_path)
+    if os.path.exists(os.path.join(temp_path, scene_name)):
+        # unzipped with duplicated scene_name
+        temp_path = os.path.join(temp_path, scene_name)
+
     scene_path = os.path.join(
-        temp_path, os.path.basename(temp_path) + ".xstage"
+        temp_path, scene_name + ".xstage"
     )
+
     unzip = False
     if os.path.exists(scene_path):
         # Check remote scene is newer than local.
@@ -261,6 +267,10 @@ def launch_zip_file(filepath):
     if unzip:
         with _ZipFile(filepath, "r") as zip_ref:
             zip_ref.extractall(temp_path)
+
+        if os.path.exists(os.path.join(temp_path, scene_name)):
+            # unzipped with duplicated scene_name
+            temp_path = os.path.join(temp_path, scene_name)
 
     # Close existing scene.
     if ProcessContext.pid:
@@ -309,7 +319,7 @@ def launch_zip_file(filepath):
         )
 
     if not os.path.exists(scene_path):
-        print("error: cannot determine scene file")
+        print("error: cannot determine scene file {}".format(scene_path))
         ProcessContext.server.stop()
         return
 
@@ -394,7 +404,7 @@ def get_scene_data():
                 "function": "AvalonHarmony.getSceneData"
             })["result"]
     except json.decoder.JSONDecodeError:
-        # Means no sceen metadata has been made before.
+        # Means no scene metadata has been made before.
         return {}
     except KeyError:
         # Means no existing scene metadata has been made.
@@ -465,7 +475,7 @@ def imprint(node_id, data, remove=False):
     Example:
         >>> from openpype.hosts.harmony.api import lib
         >>> node = "Top/Display"
-        >>> data = {"str": "someting", "int": 1, "float": 0.32, "bool": True}
+        >>> data = {"str": "something", "int": 1, "float": 0.32, "bool": True}
         >>> lib.imprint(layer, data)
     """
     scene_data = get_scene_data()
@@ -550,7 +560,7 @@ def save_scene():
     method prevents this double request and safely saves the scene.
 
     """
-    # Need to turn off the backgound watcher else the communication with
+    # Need to turn off the background watcher else the communication with
     # the server gets spammed with two requests at the same time.
     scene_path = send(
         {"function": "AvalonHarmony.saveScene"})["result"]

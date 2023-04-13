@@ -969,7 +969,7 @@ class ApplicationLaunchContext:
         """Helper to collect application launch hooks from addons.
 
         Module have to have implemented 'get_launch_hook_paths' method which
-        can expect appliction as argument or nothing.
+        can expect application as argument or nothing.
 
         Returns:
             List[str]: Paths to launch hook directories.

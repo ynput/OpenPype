@@ -1,4 +1,4 @@
-name: documentation
+name: 📜 Documentation
 
 on:
   pull_request:

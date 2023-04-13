@@ -329,6 +329,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
+            "active": project['project_status_name'] != "Closed",
         }
     )
 
@@ -379,7 +380,7 @@ def sync_all_projects(
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_open_projects()
+    all_projects = gazu.project.all_projects()
     for project in all_projects:
         if ignore_projects and project["name"] in ignore_projects:
             continue
@@ -404,7 +405,21 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    log.info("Synchronizing {}...".format(project["name"]))
+    # Get all statuses for projects from Kitsu
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project['project_status_id'] == status['id']:
+            project['project_status_name'] = status['name']
+            break
+
+    #  Do not sync closed kitsu project that is not found in openpype
+    if (
+        project['project_status_name'] == "Closed"
+        and not get_project(project['name'])
+    ):
+        return
+
+    log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
@@ -428,6 +443,9 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project_dict:
         log.info("Project created: {}".format(project_name))
     bulk_writes.append(write_project_to_op(project, dbcon))
+
+    if project['project_status_name'] == "Closed":
+        return
 
     # Try to find project document
     if not project_dict:
