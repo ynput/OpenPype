@@ -26,7 +26,7 @@ Usually, an asset needs to be created in multiple *'flavours'*. A character migh
 
 ### Version
 
-A numbered iteration of a given subset. Each version contains at least one [representation][#representation].
+A numbered iteration of a given subset. Each version contains at least one [representation](#representation).
 
 #### Hero version
 
@@ -45,7 +45,7 @@ At this moment names of assets, tasks, subsets or representations can contain on
 
 ### Family
 
-Each published [subset][#subset] can have exactly one family assigned to it. Family determines the type of data that the subset holds. Family doesn't dictate the file type, but can enforce certain technical specifications. For example OpenPype default configuration expects `model` family to only contain geometry without any shaders or joints when it is published.
+Each published [subset](#subset) can have exactly one family assigned to it. Family determines the type of data that the subset holds. Family doesn't dictate the file type, but can enforce certain technical specifications. For example OpenPype default configuration expects `model` family to only contain geometry without any shaders or joints when it is published.
 
 ### Task
 
