@@ -127,8 +127,7 @@ There is a simple support for publishing and loading **BGEO** files in all suppo
 
 ### Creating BGEO instances
 
-Just select your object to be exported as BGEO. If there is `output` node inside, first found will be used as entry
-point:
+Just select your SOP node to be exported as BGEO. If your selection is object level, OpenPype will try to find there is `output` node inside, the one with the lowest index will be used:
 
 ![BGEO output node](assets/houdini_bgeo_output_node.png)
 
