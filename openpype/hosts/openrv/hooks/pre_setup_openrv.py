@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 
 from openpype.lib import PreLaunchHook
@@ -11,7 +12,11 @@ class PreSetupOpenRV(PreLaunchHook):
     def execute(self):
         root = Path(OPENRV_ROOT_DIR)
         startup = root / "startup"
-        packages_dir = startup / "Packages"
+        startup_packages = startup / "Packages"
+        startup_python = startup / "Python"
+
+        # Ensure folder exists
+        startup_python.mkdir(exist_ok=True)
 
         # TODO: Auto deployment should not be this hacky
         # Redeploy the source packages to zips to auto-update
@@ -19,8 +24,8 @@ class PreSetupOpenRV(PreLaunchHook):
         import zipfile
         for package_name in ["comments", "openpype_menus-1.0"]:
             package_src = startup / "pkgs_source" / package_name
-            package_dest = packages_dir / "{}.zip".format(package_name)
-            print(f"Writing: {package_dest}")
+            package_dest = startup_packages / "{}.zip".format(package_name)
+            self.log.info(f"Writing: {package_dest}")
             with zipfile.ZipFile(package_dest, mode="w") as zip:
                 for filepath in package_src.iterdir():
                     if not filepath.is_file():
@@ -28,6 +33,15 @@ class PreSetupOpenRV(PreLaunchHook):
 
                     zip.write(filepath,
                               arcname=filepath.name)
+
+                    if filepath.suffix == ".py":
+                        # Include it in Python subfolder where OpenRV deploys
+                        # the files after first install (and does not update
+                        # after)
+                        self.log.info(
+                            f"Copying {filepath} to folder {startup_python}"
+                        )
+                        shutil.copy(filepath, startup_python)
 
         # TODO: Make sure we don't override a full studios RV_SUPPORT_PATH
         print("Setting RV_SUPPORT_PATH", startup)
