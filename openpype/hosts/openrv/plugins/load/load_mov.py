@@ -1,4 +1,7 @@
-from openpype.hosts.openrv.api.commands import set_session_fps, reset_frame_range
+from openpype.hosts.openrv.api.commands import (
+    set_session_fps,
+    reset_frame_range
+)
 from openpype.pipeline import (
     load,
     get_representation_path
