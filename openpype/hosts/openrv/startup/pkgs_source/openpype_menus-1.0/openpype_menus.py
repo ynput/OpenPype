@@ -3,7 +3,6 @@ import json
 
 import rv.qtutils
 from rv.rvtypes import MinorMode
-from rv.commands import isConsoleVisible, showConsole
 
 from openpype.tools.utils import host_tools
 from openpype.client import get_representations
@@ -44,8 +43,6 @@ class OpenPypeMenus(MinorMode):
                 ])
             ]
         )
-        if not isConsoleVisible():
-            showConsole()
 
     @property
     def _parent(self):
