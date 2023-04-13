@@ -1,7 +1,7 @@
 import pyblish.api
 
 from openpype.pipeline.publish import (
-    ValidateContentsOrder, KnownPublishError
+    ValidateContentsOrder, PublishValidationError
 )
 
 
@@ -17,11 +17,11 @@ class ValidateReview(pyblish.api.InstancePlugin):
 
         # validate required settings
         if len(cameras) == 0:
-            raise KnownPublishError(
+            raise PublishValidationError(
                 "No camera found in review instance: {}".format(instance)
             )
         elif len(cameras) > 2:
-            raise KnownPublishError(
+            raise PublishValidationError(
                 "Only a single camera is allowed for a review instance but "
                 "more than one camera found in review instance: {}. "
                 "Cameras found: {}".format(instance, ", ".join(cameras))
