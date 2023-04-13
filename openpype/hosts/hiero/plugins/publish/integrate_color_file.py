@@ -60,15 +60,15 @@ def parse_edl_events(path, color_edits_only=False):
             entry_count += 1
             loc_value = ""
             tape_value = ""
-            entry = {"clip_name":clip.name}
+            entry = {"clip_name": clip.name}
             if clip.metadata.get("cdl"):
                 cdl = clip.metadata["cdl"]
                 entry.update(
                     {
-                    "slope": tuple(cdl["asc_sop"]["slope"]),
-                    "offset": tuple(cdl["asc_sop"]["offset"]),
-                    "power": tuple(cdl["asc_sop"]["power"]),
-                    "sat": cdl.get("asc_sat") or 1.0,
+                        "slope": tuple(cdl["asc_sop"]["slope"]),
+                        "offset": tuple(cdl["asc_sop"]["offset"]),
+                        "power": tuple(cdl["asc_sop"]["power"]),
+                        "sat": cdl.get("asc_sat") or 1.0,
                     }
                 )
             else:
@@ -133,11 +133,11 @@ def parse_cdl(path):
     sat = float(sat_match.group("sat")) if sat_match else None
 
     cdl = {
-    "slope": slope,
-    "offset": offset,
-    "power": power,
-    "sat": sat,
-    "file":path,
+        "slope": slope,
+        "offset": offset,
+        "power": power,
+        "sat": sat,
+        "file": path,
     }
 
     return cdl
@@ -218,7 +218,7 @@ def ccc_xml(cdls, limit=""):
         if not cdl.get("id"):
             id_ = resolve_id(cdl)
             if id_ in used_ids:
-                id_ += str(event+1)
+                id_ += str(event + 1)
 
             if not id_ in limit and limit:
                 print("EDL cdl {0} -> Skipping because not in limit {1}".format(id_, limit))
@@ -277,11 +277,7 @@ def create_backup_grade(grade):
     current_time = datetime.now()
     base, seperator, extension = os.path.basename(grade).rpartition(".")
     backup_grade = "{0}/{1}_{2}{3}{4}".format(
-        history_path,
-        base,
-        current_time.strftime("%Y%m%d_%H%M%S"),
-        seperator,
-        extension
+        history_path, base, current_time.strftime("%Y%m%d_%H%M%S"), seperator, extension
     )
     backup_grade_result = shutil.move(grade, backup_grade)
 
@@ -293,12 +289,12 @@ def same_grade(color_path, grade_path, color_type, cdl={}):
     if color_type == "edl":
         match_cdl = parse_cdl(grade_path)
         if (
-                cdl.get("slope") == match_cdl.get("slope") and
-                cdl.get("offset") == match_cdl.get("offset") and
-                cdl.get("power") == match_cdl.get("power") and
-                cdl.get("sat") == match_cdl.get("sat") and
-                cdl.get("file") == match_cdl.get("file")
-            ):
+            cdl.get("slope") == match_cdl.get("slope")
+            and cdl.get("offset") == match_cdl.get("offset")
+            and cdl.get("power") == match_cdl.get("power")
+            and cdl.get("sat") == match_cdl.get("sat")
+            and cdl.get("file") == match_cdl.get("file")
+        ):
             return True
         else:
             return False
@@ -306,18 +302,19 @@ def same_grade(color_path, grade_path, color_type, cdl={}):
         with open(color_path, "r") as color_file, open(grade_path, "r") as grade_file:
             return color_file.read() == grade_file.read()
 
+
 def sort_by_descript(item):
     """Sort is done by giving a value to the alpha part of the plate name description and adding an integer for plate number"""
     plate_prefix_order = ("pl", "bg", "e", "fg")
     id_, grade = item
     grade_name = os.path.basename(grade).lower().rsplit(".", 1)[0]
     descriptor = grade_name.split("_")[-1]
-    descript_num_split = re.split("(\d+)",descriptor)
+    descript_num_split = re.split("(\d+)", descriptor)
     if not len(descript_num_split) > 1:
         descript_num_split.append(0)
     alpha = descript_num_split[0]
     num = int(descript_num_split[-2]) if descript_num_split[-2].isdigit() else 0
-    descriptor_value = plate_prefix_order.count(alpha)*10+num
+    descriptor_value = plate_prefix_order.count(alpha) * 10 + num
 
     return descriptor_value
 
@@ -341,6 +338,7 @@ class IngestMeta:
     Built out of multiple filename entries with pertaining meta
     main_grade is needed to be able to determine if there was a custom set grade.ccc link
     """
+
     basename = "color_ingest_meta.json"
     metadata = {}
     historic_main_grade = ""
@@ -391,8 +389,8 @@ class IngestMeta:
         """Main grade is not determined at this point"""
 
         self.metadata[filename] = {
-            "source_path":source_path,
-            "plate":plate,
+            "source_path": source_path,
+            "plate": plate,
         }
 
     def remove_grade(self, filename):
@@ -443,7 +441,7 @@ class IngestMeta:
 
             # If there are grades that are not in the ingest meta json still use those grades as potential main grades?
 
-    # Add conditional for if shot name from shot folder is in grade name and if not then push prio to end of list
+        # Add conditional for if shot name from shot folder is in grade name and if not then push prio to end of list
 
         if set_grade:
             """Determine if Grade file is meant to be main grade or if it is an element grade"""
@@ -505,7 +503,7 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
 
         ocio_directory = "{0}/ocio/grade".format(shot_root)
         grade_path = os.path.join(ocio_directory, os.path.basename(color_path))
-        plate_grades = glob(ocio_directory+"/*")
+        plate_grades = glob(ocio_directory + "/*")
         main_grade_path = os.path.join(ocio_directory, "grade.ccc")
 
         self.log.info("Ensuring shot OCIO dir exists: {0}".format(ocio_directory))
@@ -554,7 +552,11 @@ class IntegrateColorFile(pyblish.api.InstancePlugin):
             os.symlink(main_grade, main_grade_path)
             self.log.info("Creating Grade.ccc symlink to: {}".format(os.path.basename(main_grade)))
         else:
-            self.log.info("Main Grade modified by user and left as is: {}".format(os.path.basename(os.path.realpath(main_grade_path))))
+            self.log.info(
+                "Main Grade modified by user and left as is: {}".format(
+                    os.path.basename(os.path.realpath(main_grade_path))
+                )
+            )
 
         ingest_meta.write_ingest_meta()
         self.log.info("Ingest meta writen out")
