@@ -4,7 +4,7 @@ import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.openrv.api.review import (
     get_path_annotated_frame,
-    extract_annotated_frame
+    # extract_annotated_frame
 )
 
 
@@ -31,6 +31,8 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
         annotated_frame_folder, file = os.path.split(annotated_frame_path)
         if not os.path.isdir(annotated_frame_folder):
             os.makedirs(annotated_frame_folder)
+
+        # TODO: finish this extractor
         #
         # # save the frame
         #
