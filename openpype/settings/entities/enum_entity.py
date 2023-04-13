@@ -169,7 +169,8 @@ class HostsEnumEntity(BaseEnumEntity):
         "unreal",
         "standalonepublisher",
         "traypublisher",
-        "webpublisher"
+        "webpublisher",
+        "openrv"
     ]
 
     def _item_initialization(self):
