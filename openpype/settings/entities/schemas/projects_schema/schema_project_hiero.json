@@ -42,10 +42,19 @@
                                             "nuke-default": "nuke-default"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_1.0.3"
+                                            "aces_1.0.3": "aces_1.0.3 (12)"
                                         },
                                         {
-                                            "aces_1.1": "aces_1.1"
+                                            "aces_1.1": "aces_1.1 (12, 13)"
+                                        },
+                                        {
+                                            "aces_1.2": "aces_1.2 (13, 14)"
+                                        },
+                                        {
+                                            "studio-config-v1.0.0_aces-v1.3_ocio-v2.1": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
+                                        },
+                                        {
+                                            "cg-config-v1.0.0_aces-v1.3_ocio-v2.1": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
                                         },
                                         {
                                             "custom": "custom"
@@ -93,6 +102,11 @@
                                     "type": "text",
                                     "key": "thumbnailLut",
                                     "label": "Thumbnails"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "monitorOutLut",
+                                    "label": "Monitor"
                                 }
                             ]
                         }

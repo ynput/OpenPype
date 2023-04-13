@@ -49,7 +49,8 @@ class ExtractBurnin(publish.Extractor):
         "webpublisher",
         "aftereffects",
         "photoshop",
-        "flame"
+        "flame",
+        "houdini"
         # "resolve"
     ]
 
@@ -78,9 +79,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
@@ -252,6 +254,9 @@ class ExtractBurnin(publish.Extractor):
             # Add context data burnin_data.
             burnin_data["custom"] = custom_data
 
+            # Add data members.
+            burnin_data.update(instance.data.get("burninDataMembers", {}))
+
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
             if camera_name:
@@ -333,8 +338,7 @@ class ExtractBurnin(publish.Extractor):
 
                 # Run burnin script
                 process_kwargs = {
-                    "logger": self.log,
-                    "env": {}
+                    "logger": self.log
                 }
 
                 run_openpype_process(*args, **process_kwargs)
@@ -453,12 +457,6 @@ class ExtractBurnin(publish.Extractor):
             )
             frame_end = 1
         frame_end = int(frame_end)
-
-        handles = instance.data.get("handles")
-        if handles is None:
-            handles = context.data.get("handles")
-            if handles is None:
-                handles = 0
 
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
