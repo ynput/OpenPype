@@ -6,8 +6,12 @@ from rv.rvtypes import MinorMode
 from rv.commands import isConsoleVisible, showConsole
 
 from openpype.tools.utils import host_tools
-
-from openpype.pipeline import install_host
+from openpype.client import get_representations
+from openpype.pipeline import (
+    install_host,
+    discover_loader_plugins,
+    load_container
+)
 from openpype.hosts.openrv.api import OpenRVHost
 
 
@@ -79,9 +83,6 @@ def data_loader():
 
 
 def load_data(dataset=None):
-    from openpype.pipeline.load import discover_loader_plugins
-    from openpype.pipeline import load_container
-    from openpype.client import get_representations
 
     project_name = os.environ["AVALON_PROJECT"]
     available_loaders = discover_loader_plugins(project_name)
