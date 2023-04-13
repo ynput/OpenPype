@@ -1,6 +1,7 @@
 import os
 import traceback
 import json
+from collections import defaultdict
 
 from openpype.client import (
     get_asset_by_name,
@@ -38,12 +39,13 @@ class RVActionReview(BaseAction):
         selection = data.get('selection', [])
         print(selection[0]["entityType"])
         if selection[0]["entityType"] == "list":
-            return {'items': [{
-                        'label': self.label,
-                        'description': self.description,
-                        'actionIdentifier': self.identifier
-                            }]
-                    }
+            return {
+                'items': [{
+                    'label': self.label,
+                    'description': self.description,
+                    'actionIdentifier': self.identifier
+                }]
+            }
 
     def preregister(self):
         return True
@@ -66,12 +68,15 @@ class RVActionReview(BaseAction):
 
                 if item.entity_type.lower() == "assetversion":
                     for component in item["components"]:
-                        if component["file_type"][1:] not in self.allowed_types:
+                        if component["file_type"][
+                           1:] not in self.allowed_types:
                             continue
                         try:
-                            components[item["asset"]["parent"]["name"]].append(component)
+                            components[item["asset"]["parent"]["name"]].append(
+                                component)
                         except KeyError:
-                            components[item["asset"]["parent"]["name"]] = [component]
+                            components[item["asset"]["parent"]["name"]] = [
+                                component]
 
                     items_components.append(components)
 
@@ -126,24 +131,24 @@ class RVActionReview(BaseAction):
                 print("Working on", components)
                 # Sort by version
                 for parent_name, entities in components.items():
-                    version_mapping = {}
+                    version_mapping = defaultdict(list)
                     for entity in entities:
-                        try:
-                            version_mapping[entity["version"]["version"]].append(
-                                entity
-                            )
-                        except KeyError:
-                            version_mapping[entity["version"]["version"]] = [entity]
+                        entity_version = entity["version"]["version"]
+                        version_mapping[entity_version].append(entity)
 
                     # Sort same versions by date.
                     for version, entities in version_mapping.items():
                         version_mapping[version] = sorted(
-                            entities, key=lambda x: x["version"]["date"], reverse=True
+                            entities,
+                            key=lambda x: x["version"]["date"],
+                            reverse=True
                         )
 
                     components[parent_name] = []
                     for version in reversed(sorted(version_mapping.keys())):
-                        components[parent_name].extend(version_mapping[version])
+                        components[parent_name].extend(
+                            version_mapping[version]
+                        )
 
                 # Items to present to user.
 
@@ -155,25 +160,26 @@ class RVActionReview(BaseAction):
                         entity_filetype = entity["file_type"][1:]
                         if entity_filetype in loadables:
                             data.append(
-                                            {
-                                                "label": label.format(
-                                                    entity["version"]["asset"]["name"],
-                                                    str(entity["version"]["version"]).zfill(3),
-                                                    entity["file_type"][1:]
-                                                ),
-                                                "value": entity["id"]
-                                            }
-                                        )
+                                {
+                                    "label": label.format(
+                                        entity["version"]["asset"]["name"],
+                                        str(entity["version"][
+                                                "version"]).zfill(3),
+                                        entity["file_type"][1:]
+                                    ),
+                                    "value": entity["id"]
+                                }
+                            )
 
                     all_item_for_ui.append(
-                                    {
-                                        "label": parent_name,
-                                        "type": "enumerator",
-                                        "name": parent_name,
-                                        "data": data,
-                                        "value": data[0]["value"]
-                                    }
-                                )
+                        {
+                            "label": parent_name,
+                            "type": "enumerator",
+                            "name": parent_name,
+                            "data": data,
+                            "value": data[0]["value"]
+                        }
+                    )
         return all_item_for_ui
 
     def launch(self, session, entities, event):
@@ -203,7 +209,9 @@ class RVActionReview(BaseAction):
         component_representation = []
 
         try:
-            component_representation = self.get_representations(session, event, entities)
+            component_representation = self.get_representations(
+                session, event, entities
+            )
         except Exception:
             self.log.error(traceback.format_exc())
             job["status"] = "failed"
@@ -229,8 +237,9 @@ class RVActionReview(BaseAction):
 
             project_apps_config = avalon_project_doc["config"].get("apps", [])
             avalon_project_apps = [
-                app["name"] for app in project_apps_config
-            ] or False
+                                      app["name"] for app in
+                                      project_apps_config
+                                  ] or False
             event["data"]["avalon_project_apps"] = avalon_project_apps
 
         # set app
