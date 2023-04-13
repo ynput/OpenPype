@@ -1,28 +1,8 @@
 import os
-import sys
 import json
 
-from rv.rvtypes import *
-from rv.commands import *
-from rv.extra_commands import *
-
-
-# openrv strips out the pythonpath and we need to rebuild it here
-# this is also documented at the RV docs page
-print(os.getenv("OPENPYPE_ROOT"))
-
-sys.path.append(os.getenv("OPENPYPE_ROOT"))
-sys.path.append(os.path.join(os.getenv("OPENPYPE_ROOT"), "openpype"))
-sys.path.append(os.path.join(os.getenv("OPENPYPE_ROOT"), ".venv", "Lib", "site-packages"))
-sys.path.append(os.path.join(os.getenv("OPENPYPE_ROOT"), "dependencies"))
-sys.path.append(os.path.join(os.getenv("OPENPYPE_ROOT"), "openpype","vendor", "python", "common"))
-sys.path.append(os.path.join(os.getenv("OPENPYPE_ROOT"), "openpype", "tools"))
-
-for b in sys.path:
-    if os.path.isdir(b):
-        print("=OK=", b)
-    else:
-        print("NOT / ", b)
+from rv.rvtypes import MinorMode
+from rv.commands import isConsoleVisible, showConsole
 
 from openpype.tools.utils import host_tools
 
@@ -39,23 +19,19 @@ class OpenPypeMenus(MinorMode):
 
     def __init__(self):
         MinorMode.__init__(self)
-        self.init("py-openpype", None, None,
-            [
-                # Menu name
-                # NOTE: If it already exists it will merge with existing
-                # and add submenus / menuitems to the existing one
-                ("-= OpenPype =-",
-                    [
-                        # Menuitem name, actionHook (event), key, stateHook
-                        ("Workfiles", self.workfiles, None, None),
-                        ("Create", self.create, None, None),
-                        ("Load", self.load, None, None),
-                        ("Publish", self.publish, None, None),
-                        ("Inventory", self.scene_inventory, None, None),
-                    ]
-                )
-            ]
-        )
+        self.init("py-openpype", None, None, [
+            # Menu name
+            # NOTE: If it already exists it will merge with existing
+            # and add submenus / menuitems to the existing one
+            ("-= OpenPype =-", [
+                # Menuitem name, actionHook (event), key, stateHook
+                ("Workfiles", self.workfiles, None, None),
+                ("Create", self.create, None, None),
+                ("Load", self.load, None, None),
+                ("Publish", self.publish, None, None),
+                ("Inventory", self.scene_inventory, None, None),
+            ])
+        ])
         if not isConsoleVisible():
             showConsole()
 
@@ -93,12 +69,13 @@ def data_loader():
 
 def load_data(dataset=None):
     from openpype.pipeline.load import discover_loader_plugins
-    from openpype.pipeline import  load_container
+    from openpype.pipeline import load_container
     from openpype.client import get_representations
 
     project_name = os.environ["AVALON_PROJECT"]
     available_loaders = discover_loader_plugins(project_name)
-    Loader = next(loader for loader in available_loaders if loader.__name__ == "FramesLoader")
+    Loader = next(loader for loader in available_loaders
+                  if loader.__name__ == "FramesLoader")
 
     representations = get_representations(project_name,
                                           representation_ids=dataset)
