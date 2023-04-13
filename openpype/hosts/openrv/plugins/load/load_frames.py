@@ -23,7 +23,8 @@ class FramesLoader(load.LoaderPlugin):
 
     label = "Load Frames"
     families = ["*"]
-    representations = ["exr"]
+    representations = ["*"]
+    extensions = [ext.lstrip(".") for ext in IMAGE_EXTENSIONS]
     order = 0
 
     icon = "code-fork"
