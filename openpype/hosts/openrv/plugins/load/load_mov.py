@@ -16,7 +16,8 @@ class MovLoader(load.LoaderPlugin):
 
     label = "Load MOV"
     families = ["*"]
-    representations = ["mov"]
+    representations = ["*"]
+    extensions = ["mov", "mp4"]
     order = 0
 
     icon = "code-fork"
