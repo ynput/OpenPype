@@ -9,11 +9,11 @@ from glob import glob
 from datetime import datetime
 import opentimelineio as otio
 
-THREED_LUTS = ["cube", "3dl", "csp", "lut"]
-TWOD_LUTS = ["ccc", "cc", "cdl"]
+LUTS_3D = ["cube", "3dl", "csp", "lut"]
+LUTS_2D = ["ccc", "cc", "cdl"]
 
 # EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
-COLOR_FILE_EXTS = TWOD_LUTS + THREED_LUTS + ["edl"]
+COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
 
 
 def parse_edl_events(path, color_edits_only=False):
