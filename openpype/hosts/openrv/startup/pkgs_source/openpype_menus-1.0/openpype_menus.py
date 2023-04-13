@@ -8,6 +8,7 @@ from rv.commands import isConsoleVisible, showConsole
 from openpype.tools.utils import host_tools
 from openpype.client import get_representations
 from openpype.pipeline import (
+    registered_host,
     install_host,
     discover_loader_plugins,
     load_container
@@ -99,6 +100,11 @@ def load_data(dataset=None):
 
 
 def createMode():
-    install_openpype_to_host()
-    data_loader()
+    # This function triggers for each RV session window being opened, for
+    # example when using File > New Session this will trigger again. As such
+    # we only want to trigger the startup install when the host is not
+    # registered yet.
+    if not registered_host():
+        install_openpype_to_host()
+        data_loader()
     return OpenPypeMenus()
