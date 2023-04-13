@@ -81,7 +81,7 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
             output_id (str): Output version id.
         """
 
-        new_links_by_type[link_type].append(input_id, output_id)
+        new_links_by_type[link_type].append((input_id, output_id))
 
     def create_workfile_links(
         self, workfile_instance, other_instances, new_links_by_type
@@ -147,13 +147,14 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
             )
 
         # Create link themselves
-        for link_type, item in new_links.items():
-            input_id, output_id = item
-            create_link(
-                project_name,
-                link_type,
-                input_id,
-                "version",
-                output_id,
-                "version"
-            )
+        for link_type, items in new_links.items():
+            for item in items:
+                input_id, output_id = item
+                create_link(
+                    project_name,
+                    link_type,
+                    input_id,
+                    "version",
+                    output_id,
+                    "version"
+                )
