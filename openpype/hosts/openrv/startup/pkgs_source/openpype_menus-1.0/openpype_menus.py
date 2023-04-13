@@ -1,5 +1,7 @@
 import os
 import json
+import contextlib
+import sys
 
 import rv.qtutils
 from rv.rvtypes import MinorMode
@@ -13,6 +15,31 @@ from openpype.pipeline import (
     load_container
 )
 from openpype.hosts.openrv.api import OpenRVHost
+
+
+# TODO (Critical) Remove this temporary hack to avoid clash with PyOpenColorIO
+#   that is contained within OpenPype's venv
+@contextlib.contextmanager
+def no_openpype_env():
+    paths = sys.path.copy()
+    venv_part = os.path.normpath("OpenPype/.venv")
+    minified_paths = [p for p in paths if venv_part not in os.path.normpath(p)]
+    try:
+        sys.path[:] = minified_paths
+        yield
+    finally:
+        sys.path[:] = paths
+
+
+with no_openpype_env():
+    # Ensure PyOpenColorIO is loaded from RV instead of from OpenPype lib
+    # Somehow this only works if we completely remove the OpenPype paths
+    # from sys.path. It fails if we just push them to the end of the list
+    # to try and force the search order to prioritize the RV packages
+    # Note: This will only work if PyOpenColorIO is not reloaded elsewhere
+    import importlib
+    import PyOpenColorIO
+    importlib.reload(PyOpenColorIO)
 
 
 def install_openpype_to_host():
