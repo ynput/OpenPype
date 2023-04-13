@@ -1,6 +1,7 @@
 import os
 import json
 
+import rv.qtutils
 from rv.rvtypes import MinorMode
 from rv.commands import isConsoleVisible, showConsole
 
@@ -41,25 +42,27 @@ class OpenPypeMenus(MinorMode):
         if not isConsoleVisible():
             showConsole()
 
+        self._parent = rv.qtutils.sessionWindow()
+
     def create(self, event):
         print("Launching Creator")
-        host_tools.show_creator()
+        host_tools.show_creator(parent=self._parent)
 
     def load(self, event):
         print("Launching Loader")
-        host_tools.show_loader(use_context=True)
+        host_tools.show_loader(parent=self._parent, use_context=True)
 
     def publish(self, event):
         print("Launching Pyblish")
-        host_tools.show_publish()
+        host_tools.show_publish(parent=self._parent)
 
     def workfiles(self, event):
         print("Launching Workfiles")
-        host_tools.show_workfiles()
+        host_tools.show_workfiles(parent=self._parent)
 
     def scene_inventory(self, event):
         print("Launching inventory")
-        host_tools.show_scene_inventory()
+        host_tools.show_scene_inventory(parent=self._parent)
 
 
 def data_loader():
