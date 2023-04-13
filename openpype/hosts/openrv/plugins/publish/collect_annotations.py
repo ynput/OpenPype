@@ -71,15 +71,15 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 #     "ext": "jpg",
                 #     "files": "frames_1001.jpg",
                 #     "stagingDir": "X:\\projects\\Sync\\DaliesPrep\\work\\prepDaily",
-                #     #"thumbnail": True,
-                #     #"comment": "NEW COMMENT FROM UI"
+                #     # "thumbnail": True,
+                #     # "comment": "NEW COMMENT FROM UI"
                 #     "frameStart": noted_frame,
                 #     "frameEnd": noted_frame,
                 #     "fps": "25",
                 # }
 
                 data.update({
-                    #"subset": source_representation_subset + "_review_{}".format(noted_frame),
+                    # "subset": source_representation_subset + "_review_{}".format(noted_frame),
                     "subset": "annotation_{}".format(str(noted_frame)),
                     "tags": ["review", "ftrackreview"],
                     "asset": source_representation_asset,
@@ -88,7 +88,7 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                     "publish": True,
                     "review": True,
                     "family": "annotation",
-                    #"setMembers": [""],
+                    # "setMembers": [""],
                     "asset_folder_path": str(asset_folder),
                     "annotated_frame": str(noted_frame),
                     "comment": "NEW COMMENT FROM UI {}".format(noted_frame),

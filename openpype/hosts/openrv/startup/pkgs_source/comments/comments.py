@@ -26,7 +26,7 @@ class ReviewMenu(MinorMode):
                                                       QtWidgets.QSizePolicy.Minimum)
         self.customDockWidget = QtWidgets.QWidget()
 
-        # data 
+        # data
         self.current_loaded_viewnode = None
         self.review_main_layout = QtWidgets.QVBoxLayout()
         self.rev_head_label = QtWidgets.QLabel("Shot Review")
@@ -132,7 +132,6 @@ class ReviewMenu(MinorMode):
         data_prop_representation_id = rv.commands.getStringProperty(prop_representation)[0]
         print("data_prop_namespace", data_prop_namespace)
         self.current_loaded_shot.setText(data_prop_namespace)
-        #print(self.echo_change_update())
         self.setup_properties()
         self.get_comment()
 
@@ -153,7 +152,7 @@ class ReviewMenu(MinorMode):
         node = self.current_loaded_viewnode
         print(rv.commands.properties(node))
         att_prop = node + ".openpype_review.task_status"
-        
+
         if not rv.commands.propertyExists(att_prop):
             status = "In Review"
             rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
@@ -265,7 +264,7 @@ class ReviewMenu(MinorMode):
 
     def echo_change_update(self):
         print("CHANGE")
-       
+
         print(self.current_loaded_viewnode)
         node = self.current_loaded_viewnode
         #print(node)
