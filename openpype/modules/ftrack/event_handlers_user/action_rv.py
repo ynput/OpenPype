@@ -4,6 +4,7 @@ import subprocess
 import sys
 import traceback
 import json
+from collections import defaultdict
 
 import ftrack_api
 
@@ -35,6 +36,7 @@ class RVActionView(BaseAction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # TODO (Critical) This should not be as hardcoded as it is now
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
 
@@ -173,14 +175,10 @@ class RVActionView(BaseAction):
 
         # Sort by version
         for parent_name, entities in components.items():
-            version_mapping = {}
+            version_mapping = defaultdict(list)
             for entity in entities:
-                try:
-                    version_mapping[entity["version"]["version"]].append(
-                        entity
-                    )
-                except KeyError:
-                    version_mapping[entity["version"]["version"]] = [entity]
+                entity_version = entity["version"]["version"]
+                version_mapping[entity_version].append(entity)
 
             # Sort same versions by date.
             for version, entities in version_mapping.items():
@@ -265,12 +263,15 @@ class RVActionView(BaseAction):
 
         args.extend(paths)
         # CORE EDIT SET UP THE PATHS
+        # TODO (Critical) This should not be as hardcoded as it is now
         self.log.info("setting up env vars")
         os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
         sys.path.append(os.path.join(self.rv_home, "lib"))
         sys.path.append(self.rv_home)
         self.log.info("Running rv: {}".format(args))
-        self.home = os.path.normpath(os.path.join("c:/", "Users", getpass.getuser()))
+        self.home = os.path.normpath(
+            os.path.join("c:/Users", getpass.getuser())
+        )
         os.environ["HOME"] = self.home
         env = os.environ.copy()
         env['PYTHONPATH'] = ''
