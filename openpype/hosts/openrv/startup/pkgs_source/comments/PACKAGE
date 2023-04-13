@@ -1,0 +1,17 @@
+package: comments
+author: Aleks Katunar
+organization: Artisan software Dobro
+version: 1.0
+rv: 3.12
+openrv: 1.0.0
+requires: ''
+optional: true
+
+modes: 
+  - file: comments
+    load: immediate
+
+description: |
+
+  <p> Adds COmments to OpenRV </p>
+
