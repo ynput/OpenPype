@@ -25,22 +25,18 @@ class OpenPypeMenus(MinorMode):
 
     def __init__(self):
         MinorMode.__init__(self)
-        self.init("py-openpype", None, None,
-            [
-                # Menu name
-                # NOTE: If it already exists it will merge with existing
-                # and add submenus / menuitems to the existing one
-                ("-= OpenPype =-",
-                    [
-                        # Menuitem name, actionHook (event), key, stateHook
-                        ("Workfiles", self.workfiles, None, None),
-                        ("Create", self.workfiles, None, None),
-                        ("Load", self.load, None, None),
-                        ("Publish", self.publish, None, None)
-                    ]
-                )
-            ]
-        )
+        self.init("py-openpype", None, None, [
+            # Menu name
+            # NOTE: If it already exists it will merge with existing
+            # and add submenus / menuitems to the existing one
+            ("-= OpenPype =-", [
+                # Menuitem name, actionHook (event), key, stateHook
+                ("Workfiles", self.workfiles, None, None),
+                ("Create", self.create, None, None),
+                ("Load", self.load, None, None),
+                ("Publish", self.publish, None, None)
+            ])
+        ])
         if not isConsoleVisible():
             showConsole()
 
@@ -63,4 +59,4 @@ class OpenPypeMenus(MinorMode):
 
 def createMode():
     install_openpype_to_host()
-    return OpenPypeMenus() 
+    return OpenPypeMenus()

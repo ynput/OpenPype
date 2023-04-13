@@ -1,9 +1,6 @@
 # review code
 import os
-import sys
 from PySide2 import QtWidgets, QtGui
-from PySide2.QtCore import QRect
-from PySide2.QtWidgets import QApplication
 
 from rv.qtutils import *
 from rv.rvtypes import *
@@ -15,15 +12,25 @@ from rv.extra_commands import *
 class ReviewMenu(MinorMode):
     def __init__(self):
         MinorMode.__init__(self)
-        self.init("py-ReviewMenu-mode", None, None, [("-= OpenPype =-", [("Review", self.runme, None, None)])])
+        self.init("py-ReviewMenu-mode", None, None,
+                  [("-= OpenPype =-", [("Review", self.runme, None, None)])])
 
         # spacers
-        self.verticalSpacer = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum,
-                                                    QtWidgets.QSizePolicy.Expanding)
-        self.verticalSpacerMin = QtWidgets.QSpacerItem(2, 2, QtWidgets.QSizePolicy.Minimum,
-                                                       QtWidgets.QSizePolicy.Minimum)
-        self.horizontalSpacer = QtWidgets.QSpacerItem(40, 10, QtWidgets.QSizePolicy.Expanding,
-                                                      QtWidgets.QSizePolicy.Minimum)
+        self.verticalSpacer = QtWidgets.QSpacerItem(
+            20, 40,
+            QtWidgets.QSizePolicy.Minimum,
+            QtWidgets.QSizePolicy.Expanding
+        )
+        self.verticalSpacerMin = QtWidgets.QSpacerItem(
+            2, 2,
+            QtWidgets.QSizePolicy.Minimum,
+            QtWidgets.QSizePolicy.Minimum
+        )
+        self.horizontalSpacer = QtWidgets.QSpacerItem(
+            40, 10,
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum
+        )
         self.customDockWidget = QtWidgets.QWidget()
 
         # data
@@ -34,9 +41,13 @@ class ReviewMenu(MinorMode):
         self.rev_head_name = QtWidgets.QLabel("Shot Name")
         self.current_loaded_shot = QtWidgets.QLabel("")
         self.current_shot_status = QtWidgets.QComboBox()
-        self.current_shot_status.addItems(["In Review", "Ready For Review", "Reviewed", "Approved", "Deliver"])
+        self.current_shot_status.addItems([
+            "In Review", "Ready For Review", "Reviewed", "Approved", "Deliver"
+        ])
         self.current_shot_comment = QtWidgets.QPlainTextEdit()
-        self.current_shot_comment.setStyleSheet("color: white;  background-color: black")
+        self.current_shot_comment.setStyleSheet(
+            "color: white; background-color: black"
+        )
 
         self.review_main_layout_head = QtWidgets.QVBoxLayout()
         self.review_main_layout_head.addWidget(self.rev_head_label)
@@ -48,7 +59,7 @@ class ReviewMenu(MinorMode):
         self.get_view_image = QtWidgets.QPushButton("Get image")
         self.review_main_layout_head.addWidget(self.get_view_image)
 
-        self.remove_cmnt_status_btn = QtWidgets.QPushButton("Remove comment and status")
+        self.remove_cmnt_status_btn = QtWidgets.QPushButton("Remove comment and status")  # noqa
         self.review_main_layout_head.addWidget(self.remove_cmnt_status_btn)
 
         # annotations controls
@@ -67,7 +78,7 @@ class ReviewMenu(MinorMode):
         self.customDockWidget.setLayout(self.review_main_layout)
 
         # signals
-        self.current_shot_status.currentTextChanged.connect(self.setup_combo_status)
+        self.current_shot_status.currentTextChanged.connect(self.setup_combo_status)  # noqa
         self.current_shot_comment.textChanged.connect(self.comment_update)
         self.get_view_image.clicked.connect(self.get_gui_image)
         self.remove_cmnt_status_btn.clicked.connect(self.clean_cmnt_status)
@@ -75,7 +86,6 @@ class ReviewMenu(MinorMode):
         self.btn_note_next.clicked.connect(self.annotate_next)
 
         self.runme()
-
 
     def runme(self, arg1=None, arg2=None):
         self.rvWindow = rv.qtutils.sessionWindow()
@@ -87,8 +97,6 @@ class ReviewMenu(MinorMode):
         # Dock widget to the RV MainWindow
         self.rvWindow.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget)
         self.setup_listeners()
-
-
 
     def set_item_font(self, item, size=14, noweight=False, bold=True):
         font = QtGui.QFont()
@@ -102,26 +110,25 @@ class ReviewMenu(MinorMode):
             font.setWeight(75)
         item.setFont(font)
 
-
     def setup_listeners(self):
-        # new-source, graph-state-change, after-progressive-loading, media-relocated
-        rv.commands.bind("default", "global", "source-media-set", self.graph_change, "Doc string")
-        rv.commands.bind("default", "global", "after-graph-view-change", self.graph_change, "Doc string")
-
+        # Some other supported signals:
+        # new-source
+        # graph-state-change,
+        # after-progressive-loading,
+        # media-relocated
+        rv.commands.bind("default", "global", "source-media-set",
+                         self.graph_change, "Doc string")
+        rv.commands.bind("default", "global", "after-graph-view-change",
+                         self.graph_change, "Doc string")
 
     def graph_change(self, event):
-        print("image structure change")
-        print(event.contents())
-        print(rv.commands.sourcesAtFrame(rv.commands.frame()))
-        print(rv.commands.frame())
         # update the view
         self.get_view_source()
 
-
     def get_view_source(self):
-        self.current_loaded_viewnode = rv.commands.sourcesAtFrame(rv.commands.frame())[0]
+        sources = rv.commands.sourcesAtFrame(rv.commands.frame())
+        self.current_loaded_viewnode = sources[0] if sources else None
         self.update_ui_attribs()
-
 
     def update_ui_attribs(self):
         node = self.current_loaded_viewnode
@@ -135,8 +142,6 @@ class ReviewMenu(MinorMode):
         self.setup_properties()
         self.get_comment()
 
-
-
     def setup_combo_status(self):
         # setup properties
         node = self.current_loaded_viewnode
@@ -145,7 +150,6 @@ class ReviewMenu(MinorMode):
         status = self.current_shot_status.currentText()
         rv.commands.setStringProperty(att_prop, [str(status)], True)
         self.current_shot_status.setCurrentText(status)
-
 
     def setup_properties(self):
         # setup properties
@@ -162,14 +166,12 @@ class ReviewMenu(MinorMode):
             status = rv.commands.getStringProperty(att_prop)[0]
             self.current_shot_status.setCurrentText(status)
 
-
     def comment_update(self):
         node = self.current_loaded_viewnode
         comment = self.current_shot_comment.toPlainText()
         att_prop = node + ".openpype_review.task_comment"
         rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
         rv.commands.setStringProperty(att_prop, [str(comment)], True)
-
 
     def get_comment(self):
         node = self.current_loaded_viewnode
@@ -180,7 +182,6 @@ class ReviewMenu(MinorMode):
         else:
             status = rv.commands.getStringProperty(att_prop)[0]
             self.current_shot_comment.setPlainText(status)
-
 
     def clean_cmnt_status(self):
         attribs = []
@@ -198,13 +199,10 @@ class ReviewMenu(MinorMode):
         self.current_shot_status.setCurrentText("In Review")
         self.current_shot_comment.setPlainText("")
 
-
     def get_gui_image(self, filename=None):
         data = rv.commands.exportCurrentFrame("c:/temp/jpg.jpg")
         print(data)
         print("File saved")
-
-
 
     def annotate_next(self):
         all_notes = self.get_annotated_for_view()
@@ -212,18 +210,15 @@ class ReviewMenu(MinorMode):
         rv.commands.setFrame(int(nxt))
         rv.commands.redraw()
 
-
     def annotate_prev(self):
         all_notes = self.get_annotated_for_view()
         previous = self.get_cycle_frame(frame=rv.commands.frame(), frames_in=all_notes, do="prev")
         rv.commands.setFrame(int(previous))
         rv.commands.redraw()
 
-
     def get_annotated_for_view(self):
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
         return annotated_frames
-
 
     def get_cycle_frame(self, frame=None, frames_in=None, do="next"):
         set_start = -1
@@ -260,14 +255,11 @@ class ReviewMenu(MinorMode):
                     prev_frame = max([i for i in frames_in if frame > i])
                     return prev_frame
 
-
-
     def echo_change_update(self):
         print("CHANGE")
 
         print(self.current_loaded_viewnode)
         node = self.current_loaded_viewnode
-        #print(node)
         print(rv.commands.properties(node))
         # representation
         prop_representation = node + ".openpype.representation"
@@ -286,7 +278,6 @@ class ReviewMenu(MinorMode):
         info = rv.extra_commands.sourceMetaInfoAtFrame(rv.commands.frame())
         print("info", info)
 
-
     def get_task_status(self):
         import ftrack_api
         session = ftrack_api.Session(auto_connect_event_hub=False)
@@ -296,7 +287,6 @@ class ReviewMenu(MinorMode):
             "select project_schema from Project where full_name is \"{}\""
         ).format(project_name)).one()
         project_schema = project_entity["project_schema"]
-
 
 
 def createMode():
