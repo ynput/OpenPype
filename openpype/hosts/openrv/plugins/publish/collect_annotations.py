@@ -25,8 +25,10 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
         source_groups = []
         all_nodes = gather_containers()
         for container in all_nodes:
-            print("container-------- ", container)
-            print(rv.commands.properties(container))
+
+            self.log.debug("Container {} with properties: {}".format(
+                container, rv.commands.properties(container)
+            ))
             prop_namespace = container + ".openpype.namespace"
             prop_representation = container + ".openpype.representation"
             data_prop_namespace = rv.commands.getStringProperty(prop_namespace)[0]
@@ -54,16 +56,15 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
             for marked in marked_frames:
                 print("MARKED ------------ ", container,  marked, source_group)
 
-
             for noted_frame in annotated_frames:
                 print("NOTED ------- ", container, noted_frame, source_group)
                 rv.commands.setFrame(int(noted_frame))
                 rv.commands.redraw()
 
-                print(os.getenv("AVALON_ASSET", None))
                 instance = context.create_instance(name=str(container))
-                item_name = "note_" + str(data_prop_namespace) + "_" + str(noted_frame)
-                data = {}
+                item_name = "note_{}_{}".format(
+                    data_prop_namespace, noted_frame
+                )
 
                 # annotation_representation = {
                 #     "tags": ["review", "ftrackreview"],
@@ -78,7 +79,7 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 #     "fps": "25",
                 # }
 
-                data.update({
+                data = {
                     # "subset": source_representation_subset + "_review_{}".format(noted_frame),
                     "subset": "annotation_{}".format(str(noted_frame)),
                     "tags": ["review", "ftrackreview"],
@@ -92,7 +93,7 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                     "asset_folder_path": str(asset_folder),
                     "annotated_frame": str(noted_frame),
                     "comment": "NEW COMMENT FROM UI {}".format(noted_frame),
-                })
+                }
 
                 instance.data.update(data)
                 #
@@ -103,4 +104,3 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
 
             view_node = rv.commands.viewNode()
             intent = context.data.get("intent")
-
