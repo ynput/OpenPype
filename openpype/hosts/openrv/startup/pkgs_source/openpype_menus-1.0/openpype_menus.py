@@ -2,14 +2,6 @@ from rv.rvtypes import *
 from rv.commands import *
 from rv.extra_commands import *
 
-import sys
-
-# inject OP for now, otherwise it won work
-sys.path.append("PATHTOOPENPYPE/openpype/vendor/python/common")
-sys.path.append("PATHTOOPENPYPE/openpype/openpype/tools")
-sys.path.append("PATHTOOPENPYPE/openpype")
-sys.path.append("PATHTOOPENPYPE/openpype/.venv/Lib/site-packages")
-
 from openpype.tools.utils import host_tools
 
 from openpype.pipeline import install_host
