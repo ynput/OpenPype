@@ -7,6 +7,48 @@ import rv.qtutils
 import rv.commands
 
 
+def get_cycle_frame(frame=None, frames_lookup=None, direction="next"):
+    """Return nearest frame in direction in frames lookup.
+
+    If the nearest frame in that direction does not exist then cycle
+    over to the frames taking the first entry at the other end.
+
+    Note:
+        This function can return None if there are no frames to lookup in.
+
+    Args:
+        frame (int): frame to search from
+        frames_lookup (list): frames to search in.
+        direction (str, optional): search direction, either "next" or "prev"
+            Defaults to "next".
+
+    Returns:
+        int or None: The nearest frame number in that direction or None
+            if no lookup frames were passed.
+
+    """
+    if direction not in {"prev", "next"}:
+        raise ValueError("Direction must be either 'next' or 'prev'. "
+                         "Got: {}".format(direction))
+
+    if not frames_lookup:
+        return
+
+    elif len(frames_lookup) == 1:
+        return frames_lookup[0]
+
+    # TODO: We could skip this sorting if we knew the input list was sorted
+    frames_lookup = list(sorted(frames_lookup))
+    if direction == "next":
+        # Return next nearest number or cycle to the lowest number
+        return next((i for i in frames_lookup if i > frame),
+                    frames_lookup[0])
+    elif direction == "prev":
+        # Return previous nearest number or cycle to the highest number
+        return next((i for i in reversed(frames_lookup) if i < frame),
+                    frames_lookup[-1])
+
+
 class ReviewMenu(MinorMode):
     def __init__(self):
         MinorMode.__init__(self)
@@ -215,61 +257,27 @@ class ReviewMenu(MinorMode):
         print("File saved")
 
     def annotate_next(self):
+        """Set frame to next annotated frame"""
         all_notes = self.get_annotated_for_view()
-        nxt = self.get_cycle_frame(frame=rv.commands.frame(),
-                                   frames_in=all_notes,
-                                   do="next")
+        nxt = get_cycle_frame(frame=rv.commands.frame(),
+                              frames_lookup=all_notes,
+                              direction="next")
         rv.commands.setFrame(int(nxt))
         rv.commands.redraw()
 
     def annotate_prev(self):
+        """Set frame to previous annotated frame"""
         all_notes = self.get_annotated_for_view()
-        previous = self.get_cycle_frame(frame=rv.commands.frame(),
-                                        frames_in=all_notes,
-                                        do="prev")
+        previous = get_cycle_frame(frame=rv.commands.frame(),
+                                   frames_lookup=all_notes,
+                                   direction="prev")
         rv.commands.setFrame(int(previous))
         rv.commands.redraw()
 
     def get_annotated_for_view(self):
+        """Return the frame numbers for all annotated frames"""
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
         return annotated_frames
-
-    def get_cycle_frame(self, frame=None, frames_in=None, do="next"):
-        set_start = -1
-
-        if len(frames_in) == 0:
-            pass
-
-        elif len(frames_in) == 1:
-            # todo: this doesn't really need the loop if it's length of one?
-            for findframe in frames_in:
-                if frame == findframe:
-                    return frame
-
-        else:
-            for i, findframe in enumerate(frames_in):
-                if frame == findframe:
-                    frames_in.remove(frame)
-                    set_start = i
-
-            if set_start != -1:
-                if do == "next":
-                    data = [x for x in frames_in]
-                    try:
-                        return data[set_start]
-                    except KeyError:
-                        return data[0]
-                else:
-                    # todo: there seems to be no reason for the enumerate here
-                    for _, num in enumerate(frames_in, start=set_start):
-                        return num
-            else:
-                if do == "next":
-                    next_frame = min([i for i in frames_in if frame < i])
-                    return next_frame
-                else:
-                    prev_frame = max([i for i in frames_in if frame > i])
-                    return prev_frame
 
     def echo_change_update(self):
         print("CHANGE")
