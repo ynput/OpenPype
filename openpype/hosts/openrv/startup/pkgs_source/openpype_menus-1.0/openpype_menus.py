@@ -88,7 +88,7 @@ def load_data(dataset=None):
                                           representation_ids=dataset)
 
     for representation in representations:
-        container = load_container(Loader, representation)
+        load_container(Loader, representation)
 
 
 def createMode():
