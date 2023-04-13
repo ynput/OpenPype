@@ -205,33 +205,58 @@ def create_instance(creator_name, instance_name, **options):
     )
 
 
-def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
-    """Load casting from shot_name using kitsu api."""
+def download_kitsu_casting(
+        project_name: str, shot_name: str, asset_types: List[str] = None,
+) -> List[dict]:
+    """Download kitsu casting
 
-    modules_manager = ModulesManager()
-    kitsu_module = modules_manager.modules_by_name.get("kitsu")
-    if not kitsu_module or not kitsu_module.enabled:
-        return
+    Args:
+        project_name (str): Current project name from OpenPype Session.
+        shot_name (str): Current shot name from OpenPype Session.
+        asset_types (List[str]): Asset types to include.
+            All supported asset types if none provided. Defaults to None.
+
+    Returns:
+        list: Representations.
+    """
+
+    # Check if kitsu_module is available
+    kitsu_module = ModulesManager().modules_by_name.get("kitsu")
+    assert kitsu_module and kitsu_module.enabled, "Kitsu module is unavailable"
 
     import gazu
 
+    # Connect to gazu
     gazu.client.set_host(os.environ["KITSU_SERVER"])
     gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
 
-    shot_data = get_asset_by_name(project_name, shot_name, fields=["data"])[
-        "data"
-    ]
+    # Get casting
+    casting = gazu.casting.get_shot_casting(
+        gazu.shot.get_shot(
+            get_asset_by_name(project_name, shot_name, fields=["data"])[
+                "data"
+            ]["zou"]["id"]
+        )
+    )
 
-    shot = gazu.shot.get_shot(shot_data["zou"]["id"])
-    casting = gazu.casting.get_shot_casting(shot)
+    # Logout from gazu
+    gazu.log_out()
 
     representations = []
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
-            if actor["asset_type_name"] == "Environment":
+            if (
+                actor["asset_type_name"] == "Character"
+                and (not asset_types or "Character" in asset_types)
+            ):
+                subset_name = "rigMain"
+            elif (
+                actor["asset_type_name"] == "Environment"
+                and (not asset_types or "Environment" in asset_types)
+            ):
                 subset_name = "setdressMain"
             else:
-                subset_name = "rigMain"
+                continue
 
             # Download subset
             representation = download_subset(
@@ -241,6 +266,22 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
                 representations.append(representation)
 
     wait_for_download(project_name, representations)
+
+    return representations
+
+
+def load_casting(project_name: str, shot_name: str) -> Set[OpenpypeContainer]:
+    """Load casting from shot_name using kitsu api.
+
+     Args:
+        project_name (str): Current project name from OpenPype Session.
+        shot_name (str): Current shot name from OpenPype Session.
+
+    Returns:
+        Set[OpenpypeContainer]: Casted assets containers.
+    """
+
+    representations = download_kitsu_casting(project_name, shot_name)
 
     # Load downloaded subsets
     containers = []
@@ -256,8 +297,6 @@ def load_casting(project_name, shot_name) -> Set[OpenpypeContainer]:
             print(
                 f"Cannot load {representation['context']['asset']} {representation['context']['subset']}."
             )
-
-    gazu.log_out()
 
     return containers
 
@@ -595,6 +634,32 @@ def build_anim(project_name, asset_name):
     load_subset(project_name, board_repre, "Background")
 
 
+def build_lipsync(project_name: str, shot_name: str):
+    """Build lipsync workfile.
+
+    Args:
+        project_name (str):  Current project name from OpenPype Session.
+        shot_name (str):  Current shot name from OpenPype Session.
+    """
+
+    representations = download_kitsu_casting(
+        project_name, shot_name, asset_types=["Character"]
+    )
+
+    for representation in representations:
+        if representation:
+            load_subset(
+                project_name,
+                representation,
+                "rigMain",
+                "LinkRigLoader",
+            )
+        else:
+            print(
+                f"Can't load {representation['context']['asset']} {'rigMain'}."
+            )
+
+
 def build_render(project_name, asset_name):
     """Build render workfile.
 
@@ -658,6 +723,9 @@ def build_workfile():
 
     elif task_name in ("anim", "animation"):
         build_anim(project_name, asset_name)
+
+    elif task_name == "lipsync":
+        build_lipsync(project_name, asset_name)
 
     elif task_name in ("lighting", "light", "render", "rendering"):
         build_render(project_name, asset_name)
