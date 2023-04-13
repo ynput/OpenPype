@@ -142,10 +142,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group

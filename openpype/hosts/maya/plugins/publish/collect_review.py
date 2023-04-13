@@ -1,5 +1,4 @@
 from maya import cmds, mel
-import pymel.core as pm
 
 import pyblish.api
 
@@ -83,7 +82,6 @@ class CollectReview(pyblish.api.InstancePlugin):
             data['frameEndHandle'] = instance.data["frameEndHandle"]
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
-            data['handles'] = instance.data.get('handles', None)
             data['step'] = instance.data['step']
             data['fps'] = instance.data['fps']
             data['review_width'] = instance.data['review_width']
@@ -124,43 +122,42 @@ class CollectReview(pyblish.api.InstancePlugin):
 
             # Collect audio
             playback_slider = mel.eval('$tmpVar=$gPlayBackSlider')
-            audio_name = cmds.timeControl(playback_slider, q=True, s=True)
+            audio_name = cmds.timeControl(playback_slider,
+                                          query=True,
+                                          sound=True)
             display_sounds = cmds.timeControl(
-                playback_slider, q=True, displaySound=True
+                playback_slider, query=True, displaySound=True
             )
 
-            audio_nodes = []
+            def get_audio_node_data(node):
+                return {
+                    "offset": cmds.getAttr("{}.offset".format(node)),
+                    "filename": cmds.getAttr("{}.filename".format(node))
+                }
+
+            audio_data = []
 
             if audio_name:
-                audio_nodes.append(pm.PyNode(audio_name))
+                audio_data.append(get_audio_node_data(audio_name))
 
-            if not audio_name and display_sounds:
-                start_frame = int(pm.playbackOptions(q=True, min=True))
-                end_frame = float(pm.playbackOptions(q=True, max=True))
-                frame_range = range(int(start_frame), int(end_frame))
+            elif display_sounds:
+                start_frame = int(cmds.playbackOptions(query=True, min=True))
+                end_frame = int(cmds.playbackOptions(query=True, max=True))
 
-                for node in pm.ls(type="audio"):
+                for node in cmds.ls(type="audio"):
                     # Check if frame range and audio range intersections,
                     # for whether to include this audio node or not.
-                    start_audio = node.offset.get()
-                    end_audio = node.offset.get() + node.duration.get()
-                    audio_range = range(int(start_audio), int(end_audio))
+                    duration = cmds.getAttr("{}.duration".format(node))
+                    start_audio = cmds.getAttr("{}.offset".format(node))
+                    end_audio = start_audio + duration
 
-                    if bool(set(frame_range).intersection(audio_range)):
-                        audio_nodes.append(node)
+                    if start_audio <= end_frame and end_audio > start_frame:
+                        audio_data.append(get_audio_node_data(node))
 
-            instance.data["audio"] = []
-            for node in audio_nodes:
-                instance.data["audio"].append(
-                    {
-                        "offset": node.offset.get(),
-                        "filename": node.filename.get()
-                    }
-                )
+            instance.data["audio"] = audio_data
 
         # Collect focal length.
         attr = camera + ".focalLength"
-        focal_length = None
         if get_attribute_input(attr):
             start = instance.data["frameStart"]
             end = instance.data["frameEnd"] + 1
