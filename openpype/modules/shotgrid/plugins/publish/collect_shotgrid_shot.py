@@ -30,23 +30,11 @@ class CollectShotgridShot(pyblish.api.InstancePlugin):
 def _get_shotgrid_shot(sg, anatomy):
     shot_name = anatomy["asset"]
 
+    # OP project name/code isn't always sg_code. This approach gives a sure fire way to match to a SG project
     filters = [
-        ["project.Project.sg_code", "is", anatomy["project"]["name"]],
+        ["project.Project.sg_code", "in", [anatomy["project"]["name"], anatomy["project"]["code"]]],
         ["code", "is", shot_name],
     ]
     sg_shot = sg.find_one("Shot", filters, ["code"])
-    # OP project name/code isn't always sg_code. This approach gives a sure fire way to match to a SG project
-    if not sg_shot:
-        filters = [
-            ["project.Project.name", "is", anatomy["project"]["name"]],
-            ["code", "is", shot_name],
-        ]
-        sg_shot = sg.find_one("Shot", filters, ["code"])
-    if not sg_shot:
-        filters = [
-            ["project.Project.sg_code", "is", anatomy["project"]["code"]],
-            ["code", "is", shot_name],
-        ]
-        sg_shot = sg.find_one("Shot", filters, ["code"])
 
     return sg_shot
