@@ -378,30 +378,6 @@ class MissingColorFile(QtWidgets.QDialog):
         self.entry_number.valueChanged.connect(self.set_edl_info)
         self.open_file.pressed.connect(self.open_text_file)
 
-    # def set_edl_entry_widgets(self):
-    #     color_file_path = self.file_path_input.text()
-    #     if self.prev_file_path_input == color_file_path:
-    #         return
-    #
-    #     is_edl = False
-    #     if color_file_path.lower().endswith(".edl"):
-    #         is_edl = True
-    #
-    #     if os.path.isfile(color_file_path) and is_edl:
-    #         self.edl_widget.show()
-    #         self.edl_sops_separator.show()
-    #
-    #         edl = parse_edl_events(color_file_path)
-    #         self.edl = edl
-    #         self.entry_number.setMinimum(edl["first_entry"])
-    #         self.entry_number.setMaximum(edl["last_entry"])
-    #
-    #     else:
-    #         self.edl_widget.hide()
-    #         self.edl_sops_separator.hide()
-    #
-    #     self.prev_file_path_input = color_file_path
-
     def set_edl_info(self):
         event_number = self.entry_number.value()
         if self.edl:
