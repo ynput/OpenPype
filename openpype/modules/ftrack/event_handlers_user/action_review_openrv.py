@@ -10,9 +10,8 @@ from openpype.client import (
     get_representation_by_name, get_project
 )
 from openpype.lib import ApplicationManager
-from openpype.pipeline import (
-    AvalonMongoDB,
-)
+from openpype.pipeline import AvalonMongoDB
+
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
@@ -236,10 +235,9 @@ class RVActionReview(BaseAction):
                 return False
 
             project_apps_config = avalon_project_doc["config"].get("apps", [])
-            avalon_project_apps = [
-                                      app["name"] for app in
-                                      project_apps_config
-                                  ] or False
+            avalon_project_apps = (
+                [app["name"] for app in project_apps_config] or False
+            )
             event["data"]["avalon_project_apps"] = avalon_project_apps
 
         # set app
@@ -278,9 +276,7 @@ class RVActionReview(BaseAction):
             else:
                 component_data = event["data"]["values"][parent_name]
 
-            component = session.get(
-                "Component", component_data
-            )
+            component = session.get("Component", component_data)
             subset_name = component["version"]["asset"]["name"]
             version_name = component["version"]["version"]
             representation_name = component["file_type"][1:]
