@@ -3,6 +3,7 @@ import os.path
 import hiero
 import pyblish.api
 from glob import glob
+from pathlib import Path
 from datetime import datetime
 import opentimelineio as otio
 from qtpy import QtWidgets, QtCore, QtGui
@@ -259,10 +260,8 @@ class MissingColorFile(QtWidgets.QDialog):
         sops_widget.setStyleSheet("background-color: rgb(43, 43, 43)")
         sops_layout = QtWidgets.QGridLayout(sops_widget)
 
+        # Slope Layout
         slope_layout = QtWidgets.QHBoxLayout()
-        offset_layout = QtWidgets.QHBoxLayout()
-        power_layout = QtWidgets.QHBoxLayout()
-        sat_layout = QtWidgets.QHBoxLayout()
         self.slope_label = QtWidgets.QLabel("Slope:")
         self.slope_r_input = QtWidgets.QLineEdit("NA")
         self.slope_r_input.setReadOnly(True)
@@ -276,6 +275,14 @@ class MissingColorFile(QtWidgets.QDialog):
         self.slope_b_input.setReadOnly(True)
         self.slope_b_input.setMinimumWidth(50)
         self.slope_b_input.setMaximumWidth(50)
+        slope_layout.addWidget(self.slope_r_input)
+        slope_layout.addWidget(self.slope_g_input)
+        slope_layout.addWidget(self.slope_b_input)
+        sops_layout.addWidget(self.slope_label, 0, 0)
+        sops_layout.addLayout(slope_layout, 0, 1)
+
+        # Offset Layout
+        offset_layout = QtWidgets.QHBoxLayout()
         self.offset_label = QtWidgets.QLabel("Offset:")
         self.offset_r_input = QtWidgets.QLineEdit("NA")
         self.offset_r_input.setReadOnly(True)
@@ -289,6 +296,14 @@ class MissingColorFile(QtWidgets.QDialog):
         self.offset_b_input.setReadOnly(True)
         self.offset_b_input.setMinimumWidth(50)
         self.offset_b_input.setMaximumWidth(50)
+        offset_layout.addWidget(self.offset_r_input)
+        offset_layout.addWidget(self.offset_g_input)
+        offset_layout.addWidget(self.offset_b_input)
+        sops_layout.addWidget(self.offset_label, 1, 0)
+        sops_layout.addLayout(offset_layout, 1, 1)
+
+        # Power Layout
+        power_layout = QtWidgets.QHBoxLayout()
         self.power_label = QtWidgets.QLabel("Power:")
         self.power_r_input = QtWidgets.QLineEdit("NA")
         self.power_r_input.setReadOnly(True)
@@ -302,31 +317,24 @@ class MissingColorFile(QtWidgets.QDialog):
         self.power_b_input.setReadOnly(True)
         self.power_b_input.setMinimumWidth(50)
         self.power_b_input.setMaximumWidth(50)
+        power_layout.addWidget(self.power_r_input)
+        power_layout.addWidget(self.power_g_input)
+        power_layout.addWidget(self.power_b_input)
+        sops_layout.addWidget(self.power_label, 2, 0)
+        sops_layout.addLayout(power_layout, 2, 1)
+
+        # Saturation Layout
+        sat_layout = QtWidgets.QHBoxLayout()
         self.sat_label = QtWidgets.QLabel("Sat:")
         self.sat_input = QtWidgets.QLineEdit("NA")
         self.sat_input.setReadOnly(True)
         self.sat_input.setMinimumWidth(42)
         self.sat_input.setMaximumWidth(42)
-        slope_layout.addWidget(self.slope_r_input)
-        slope_layout.addWidget(self.slope_g_input)
-        slope_layout.addWidget(self.slope_b_input)
-        offset_layout.addWidget(self.offset_r_input)
-        offset_layout.addWidget(self.offset_g_input)
-        offset_layout.addWidget(self.offset_b_input)
-        power_layout.addWidget(self.power_r_input)
-        power_layout.addWidget(self.power_g_input)
-        power_layout.addWidget(self.power_b_input)
         sat_layout.addWidget(self.sat_input)
-
-        sops_layout.addWidget(self.slope_label, 0, 0)
-        sops_layout.addLayout(slope_layout, 0, 1)
-        sops_layout.addWidget(self.offset_label, 1, 0)
-        sops_layout.addLayout(offset_layout, 1, 1)
-        sops_layout.addWidget(self.power_label, 2, 0)
-        sops_layout.addLayout(power_layout, 2, 1)
         sops_layout.addWidget(self.sat_label, 3, 0)
         sops_layout.addLayout(sat_layout, 3, 1)
 
+        # Continue building EDL and SOPS display info layout
         info_h_spacer_item_1 = QtWidgets.QSpacerItem(
             10, 8, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed
         )
@@ -631,19 +639,14 @@ class MissingColorFile(QtWidgets.QDialog):
 
 
 def get_files(package_path, filters):
-    depth = "/*"
-    files = {key: [] for key in filters}
-    more_folders = True
-    while True and more_folders:
-        more_folders = False
-        for item in glob(package_path + depth):
-            if os.path.isdir(item):
-                more_folders = True
-            else:
-                file_ext = item.rsplit(".")[-1].lower()
-                if file_ext in filters:
-                    files[file_ext].append(item)
-        depth += "/*"
+    files = {}
+    for path in Path(package_path).glob("**/*"):
+        # path.suffix has a prefixed . that needs to be matched
+        if path.suffix in [f'.{f}' for f in filters]:
+            files.setdefault(
+                path.suffix.replace(".", ""),
+                [path.resolve().__str__()]).append(path.resolve().__str__()
+           )
 
     return files
 
@@ -657,11 +660,11 @@ def priority_color_file(color_files, item_name, source_name):
         if ext_color_files:
             for color_file in ext_color_files:
                 # Check non edls first. Sometimes edls don't carry ground truth SOPS
-                if not color_ext == "edl":
+                if color_ext != "edl":
                     # Name match priority
                     priority = None
-                    # Remove extension and don't compare case
-                    color_file_name = os.path.basename(color_file).lower().rsplit(".", 1)[0]
+                    # Remove extension and ignore case
+                    color_file_name = os.path.splitext(os.path.basename(color_file))[0].lower()
                     # Incase file name is wack
                     if (
                         color_file_name.endswith("_ccc")
@@ -679,7 +682,7 @@ def priority_color_file(color_files, item_name, source_name):
                     elif item_name == color_file_name:
                         priority = 8
 
-                    if not priority is None:
+                    if priority is not None:
                         # Distinguish type priority
                         if color_ext == "cc":
                             priority += 0
@@ -710,8 +713,8 @@ def priority_color_file(color_files, item_name, source_name):
 
     if matches:
         return sorted(matches, key=lambda x: x[0])[0]
-    else:
-        return None, None, None
+
+    return None, None, None
 
 
 def get_color_file(source_path, item_name, source_name):
@@ -781,12 +784,11 @@ class CollectColorFile(pyblish.api.InstancePlugin):
                 color_ext = color_file.rsplit(".", 1)[-1]
 
                 if color_ext == "edl":
-                    if color_ext == "edl":
-                        color_info["cdl"] = cdl
+                    color_info["cdl"] = cdl
 
-                color_info.update(
-                    {"path": color_file, "type": color_ext, "ignore": False}
-                )
+                color_info["path"] = color_file
+                color_info["type"] = color_ext
+                color_info["ignore"] = False
 
         if not color_file:
             dialog = MissingColorFile(item_name, source_name, main_grade)

@@ -209,7 +209,7 @@ def ccc_xml(cdls, limit=""):
     ccc = root_xml()
     cc = None
 
-    # Can not have an id that was used in the same CCC file
+    # Can not have more than one id in the same CCC file
     used_ids = []
     for event, cdl in enumerate(cdls):
         if not (cdl["slope"] and cdl["offset"] and cdl["power"] and cdl["sat"]):
@@ -303,17 +303,20 @@ def same_grade(color_path, grade_path, color_type, cdl={}):
             return color_file.read() == grade_file.read()
 
 
-def sort_by_descript(item):
+def sort_by_descriptor(item):
     """Sort is done by giving a value to the alpha part of the plate name description and adding an integer for plate number"""
     plate_prefix_order = ("pl", "bg", "e", "fg")
     id_, grade = item
     grade_name = os.path.basename(grade).lower().rsplit(".", 1)[0]
     descriptor = grade_name.split("_")[-1]
+    # This split will result in two parts. the descriptor alpha and the descriptor number
     descript_num_split = re.split("(\d+)", descriptor)
-    if not len(descript_num_split) > 1:
+    if len(descript_num_split) <= 1:
         descript_num_split.append(0)
     alpha = descript_num_split[0]
+    # re.split will always leave an empty string at the end of the match. This is the reason for the -2 index
     num = int(descript_num_split[-2]) if descript_num_split[-2].isdigit() else 0
+    # descriptor_value gives a comparable value to which plate should be the closest match to a main plate descriptor
     descriptor_value = plate_prefix_order.count(alpha) * 10 + num
 
     return descriptor_value
@@ -464,7 +467,7 @@ class IngestMeta:
                 return possible_main[1]
 
             # Use description sorting method
-            main_grade = sorted(original_grades, key=sort_by_descript)[0][1]
+            main_grade = sorted(original_grades, key=sort_by_descriptor)[0][1]
             return main_grade
 
 
