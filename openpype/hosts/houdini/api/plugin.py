@@ -247,21 +247,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         """
         for instance in instances:
             instance_node = hou.node(instance.data.get("instance_node"))
-            node = instance.data.get("instance_node")
-
             if instance_node:
                 instance_node.destroy()
-
-            # for the extra render node from the plugins
-            # such as vray and redshift
-            ipr_node = hou.node("{}{}".format(node,
-                                              "_IPR"))
-            if ipr_node:
-                ipr_node.destroy()
-            re_node = hou.node("{}{}".format(node,
-                                             "_render_element"))
-            if re_node:
-                re_node.destroy()
 
             self._remove_instance_from_context(instance)
 

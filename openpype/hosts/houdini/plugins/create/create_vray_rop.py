@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin to create VRay ROP."""
+import hou
+
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
 from openpype.lib import EnumDef, BoolDef
@@ -17,7 +19,6 @@ class CreateVrayROP(plugin.HoudiniCreator):
     ext = "exr"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou  #
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "vray_renderer"})
@@ -97,6 +98,21 @@ class CreateVrayROP(plugin.HoudiniCreator):
         # lock parameters from AVALON
         to_lock = ["family", "id"]
         self.lock_parameters(instance_node, to_lock)
+
+    def remove_instances(self, instances):
+        for instance in instances:
+            node = instance.data.get("instance_node")
+            # for the extra render node from the plugins
+            # such as vray and redshift
+            ipr_node = hou.node("{}{}".format(node, "_IPR"))
+            if ipr_node:
+                ipr_node.destroy()
+            re_node = hou.node("{}{}".format(node,
+                                             "_render_element"))
+            if re_node:
+                re_node.destroy()
+
+        return super(CreateVrayROP, self).remove_instances(instances)
 
     def get_pre_create_attr_defs(self):
         attrs = super(CreateVrayROP, self).get_pre_create_attr_defs()
