@@ -37,7 +37,10 @@ def get_cycle_frame(frame=None, frames_lookup=None, direction="next"):
     elif len(frames_lookup) == 1:
         return frames_lookup[0]
 
-    # TODO: We could skip this sorting if we knew the input list was sorted
+    # We require the sorting of the lookup frames because we pass e.g. the
+    # result of `rv.extra_commands.findAnnotatedFrames()` as lookup frames
+    # which according to its documentations states:
+    # The array is not sorted and some frames may appear more than once.
     frames_lookup = list(sorted(frames_lookup))
     if direction == "next":
         # Return next nearest number or cycle to the lowest number
