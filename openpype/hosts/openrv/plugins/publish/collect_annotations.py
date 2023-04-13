@@ -34,12 +34,12 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
 
             representations = get_representations(project_name,
                                                   representation_ids=[data_prop_representation_id])
-            list_representation = [x for x in representations]
-
-            source_representation_project = list_representation[0]["context"]["project"]["name"]
-            source_representation_asset = list_representation[0]["context"]["asset"]
-            source_representation_task = list_representation[0]["context"]["task"]["name"]
-            source_representation_subset = list_representation[0]["context"]["subset"]
+            first_repre = next(iter(representations))  # first representation
+            repre_context = first_repre["context"]
+            source_representation_project = repre_context["project"]["name"]
+            source_representation_asset = repre_context["asset"]
+            source_representation_task = repre_context["task"]["name"]
+            source_representation_subset = repre_context["subset"]
             source_group = rv.commands.nodeGroup(container)
             print("SOURCE GROUP ", source_group)
             source_groups.append(source_group)
