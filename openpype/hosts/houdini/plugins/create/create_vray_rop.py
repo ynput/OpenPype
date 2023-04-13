@@ -47,16 +47,8 @@ class CreateVrayROP(plugin.HoudiniCreator):
         ipr_rop.setPosition(instance_node.position() + hou.Vector2(0, -1))
         ipr_rop.parm("rop").set(instance_node.path())
 
-        ext = pre_create_data.get("image_format")
-
-        filepath = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4.{}".format(subset_name, ext)
-        )
-
         parms = {
             "trange": 1,
-            "SettingsOutput_img_file_path": filepath,
             "SettingsEXR_bits_per_channel": "16"   # half precision
         }
 
@@ -71,8 +63,16 @@ class CreateVrayROP(plugin.HoudiniCreator):
             })
 
         # Enable render element
+        ext = pre_create_data.get("image_format")
         has_re = pre_create_data.get("render_element_enabled")
         if has_re:
+            # Vray has its own tag for AOV file output
+            filepath = "{}{}".format(
+                hou.text.expandString("$HIP/pyblish/"),
+                "{}.${}.$F4.{}".format(subset_name,
+                                       "AOV",
+                                       ext)
+            )
             re_rop = instance_node.parent().createNode(
                 "vray_render_channels",
                 node_name=basename + "_render_element"
@@ -84,9 +84,15 @@ class CreateVrayROP(plugin.HoudiniCreator):
                 "use_render_channels": 1,
                 "render_network_render_channels": re_path
             })
+
         else:
+            filepath = "{}{}".format(
+                hou.text.expandString("$HIP/pyblish/"),
+                "{}.$F4.{}".format(subset_name, ext)
+            )
             parms.update({
-                "use_render_channels": 0
+                "use_render_channels": 0,
+                "SettingsOutput_img_file_path": filepath
             })
 
         custom_res = pre_create_data.get("override_resolution")
@@ -137,4 +143,5 @@ class CreateVrayROP(plugin.HoudiniCreator):
                             "if enabled",
                     default=False)
         ]
+
 # ${HIP}/render/${HIPNAME}.${AOV}.$F4.exr
