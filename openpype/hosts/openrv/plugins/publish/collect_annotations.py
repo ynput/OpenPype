@@ -1,15 +1,11 @@
 import os
-import time
 import pyblish.api
 
-from openpype.client import get_representation_parents, get_representations
+from openpype.client import get_representations
 from openpype.hosts.openrv.api.pipeline import gather_containers
 from openpype.pipeline import (
     legacy_io
 )
-
-
-
 
 
 class CollectSessionAnnotations(pyblish.api.ContextPlugin):
@@ -22,8 +18,8 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
     family = "annotation"
 
     def process(self, context):
-        import rv
         """Inject collection of annotated frames"""
+        import rv
 
         project_name = legacy_io.Session["AVALON_PROJECT"]
         source_groups = []
@@ -105,11 +101,6 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 #
                 # instance.data["representations"].append(annotation_representation)
 
-
             view_node = rv.commands.viewNode()
             intent = context.data.get("intent")
-            print("------- intent", intent)
-
-            print("VIEWNODE:", view_node)
-            #print(context.data)
 

@@ -1,19 +1,22 @@
-# review code
+"""review code"""
 import os
-import sys
 
 import rv
+
 
 def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     """Get path for annotations
     """
-    filename = os.path.normpath("{}/pyblish/exports/annotated_frames/annotate_{}_{}.jpg".format(
-                                                                        str(asset_folder),
-                                                                        str(asset),
-                                                                        str(frame)
-                                                                        )
-                                )
+    # TODO: This should be less hardcoded
+    filename = os.path.normpath(
+        "{}/pyblish/exports/annotated_frames/annotate_{}_{}.jpg".format(
+            str(asset_folder),
+            str(asset),
+            str(frame)
+        )
+    )
     return filename
+
 
 def extract_annotated_frame(filepath=None):
     """Export frame to file
@@ -42,4 +45,3 @@ def write_review_attribute(node=None, attribute=None, att_value=None):
 def export_current_view_frame(frame=None, export_path=None):
     rv.commands.setFrame(int(frame))
     rv.commands.exportCurrentFrame(export_path)
-

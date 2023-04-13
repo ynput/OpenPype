@@ -55,17 +55,16 @@ class OpenRVHost(HostBase, IWorkfileHost, ILoadHost):
             return work_dir
 
     def get_current_workfile(self):
-        print("filename", rv.commands.sessionFileName())
         return rv.commands.sessionFileName()
 
     def workfile_has_unsaved_changes(self):
-        # dont ask to save if we are on the startup scene without a name ¬ set to untitled project and return False
+        # dont ask to save if we are on the startup scene without a name
+        # set to untitled project and return False
         print("filename", rv.commands.sessionFileName())
         return False
 
     def get_workfile_extensions(self):
         return [".rv"]
-
 
     def get_containers(self):
         """Get containers.
@@ -95,8 +94,8 @@ def imprint(node, data):
     """
     for attr, value in data.items():
         # Create and set the attribute
-        prop = node + "." + OPENPYPE_ATTR_PREFIX + "." + attr
-        if (not rv.commands.propertyExists(prop)):
+        prop = "{}.{}.{}".format(node, OPENPYPE_ATTR_PREFIX, attr)
+        if not rv.commands.propertyExists(prop):
             rv.commands.newProperty(prop, rv.commands.StringType, 1)
         rv.commands.setStringProperty(prop, [str(value)], True)
 
@@ -170,7 +169,6 @@ def gather_containers():
     for node in all_nodes:
         prop = node + "." + OPENPYPE_ATTR_PREFIX + ".schema"
         if rv.commands.propertyExists(prop):
-            #print("FOUND PROPERTY ON {}".format(node))
             all_files.append(node)
     return set(all_files)
 
@@ -185,7 +183,8 @@ def get_containers():
 
 
 @contextlib.contextmanager
-def openrv_project_file_lock_and_undo_chunk(openrv_project_file, undo_queue_name="Script CMD"):
+def openrv_project_file_lock_and_undo_chunk(openrv_project_file,
+                                            undo_queue_name="Script CMD"):
     """Lock rv session and open an undo chunk during the context"""
     pass
 

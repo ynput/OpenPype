@@ -23,4 +23,3 @@ class PreFtrackData(PreLaunchHook):
             repr_file.flush()
 
             self.launch_context.env["OPENPYPE_LOADER_REPRESENTATIONS"] = str(repr_file.name)
-

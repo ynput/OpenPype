@@ -21,4 +21,3 @@ def group_member_of_type(group_node, member_type):
     for node in rv.commands.nodesInGroup(group_node):
         if rv.commands.nodeType(node) == member_type:
             return node
-
