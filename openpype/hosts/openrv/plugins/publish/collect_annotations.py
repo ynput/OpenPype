@@ -43,10 +43,10 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
             )
             first_repre = next(iter(representations))  # first representation
             repre_context = first_repre["context"]
-            source_representation_project = repre_context["project"]["name"]
+            # source_representation_project = repre_context["project"]["name"]
             source_representation_asset = repre_context["asset"]
             source_representation_task = repre_context["task"]["name"]
-            source_representation_subset = repre_context["subset"]
+            # source_representation_subset = repre_context["subset"]
             source_group = rv.commands.nodeGroup(container)
             print("SOURCE GROUP ", source_group)
             source_groups.append(source_group)
@@ -59,7 +59,7 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
             asset_folder, file = os.path.split(rv.commands.sessionFileName())
 
             for marked in marked_frames:
-                print("MARKED ------------ ", container,  marked, source_group)
+                print("MARKED ------------ ", container, marked, source_group)
 
             for noted_frame in annotated_frames:
                 print("NOTED ------- ", container, noted_frame, source_group)
@@ -108,5 +108,5 @@ class CollectSessionAnnotations(pyblish.api.ContextPlugin):
                 #     annotation_representation
                 # )
 
-            view_node = rv.commands.viewNode()
-            intent = context.data.get("intent")
+            # view_node = rv.commands.viewNode()
+            # intent = context.data.get("intent")
