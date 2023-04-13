@@ -7,11 +7,11 @@ openrv: 1.0.0
 requires: ''
 optional: true
 
-modes: 
+modes:
   - file: comments
     load: immediate
 
 description: |
 
-  <p> Adds COmments to OpenRV </p>
+  <p> Adds Comments to OpenRV </p>
 
