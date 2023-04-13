@@ -241,7 +241,8 @@ class ReviewMenu(MinorMode):
             pass
 
         elif len(frames_in) == 1:
-            for i, findframe in enumerate(frames_in):
+            # todo: this doesn't really need the loop if it's length of one?
+            for findframe in frames_in:
                 if frame == findframe:
                     return frame
 
@@ -253,13 +254,13 @@ class ReviewMenu(MinorMode):
 
             if set_start != -1:
                 if do == "next":
+                    data = [x for x in frames_in]
                     try:
-                        data = [x for x in frames_in]
                         return data[set_start]
                     except KeyError:
                         return data[0]
                 else:
-                    for y,num in enumerate(frames_in, start=set_start):
+                    for y, num in enumerate(frames_in, start=set_start):
                         return num
             else:
                 if do == "next":
