@@ -1,12 +1,10 @@
 # review code
 import os
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtCore, QtWidgets, QtGui
 
-from rv.qtutils import *
-from rv.rvtypes import *
-
-from rv.commands import *
-from rv.extra_commands import *
+from rv.rvtypes import MinorMode
+import rv.qtutils
+import rv.commands
 
 
 class ReviewMenu(MinorMode):
@@ -91,11 +89,13 @@ class ReviewMenu(MinorMode):
         self.rvWindow = rv.qtutils.sessionWindow()
 
         # Create DockWidget and add the Custom Widget to it
-        self.dockWidget = QDockWidget("OpenPype Review", self.rvWindow)
+        self.dockWidget = QtWidgets.QDockWidget("OpenPype Review",
+                                                self.rvWindow)
         self.dockWidget.setWidget(self.customDockWidget)
 
         # Dock widget to the RV MainWindow
-        self.rvWindow.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget)
+        self.rvWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea,
+                                    self.dockWidget)
         self.setup_listeners()
 
     def set_item_font(self, item, size=14, noweight=False, bold=True):
