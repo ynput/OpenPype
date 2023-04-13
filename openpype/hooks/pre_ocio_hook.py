@@ -4,9 +4,9 @@ from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.template_data import get_template_data_with_names
 
 
-class FusionPreLaunchOCIO(PreLaunchHook):
-    """Set OCIO environment variable for Fusion"""
-    app_groups = ["fusion"]
+class PreLaunchOCIO(PreLaunchHook):
+    """Set OCIO environment variable for application"""
+    app_groups = ["fusion", "openrv"]
 
     def execute(self):
         """Hook entry method."""
