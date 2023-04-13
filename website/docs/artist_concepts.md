@@ -14,11 +14,11 @@ OpenPype has a limitation regarding duplicated names. Name of assets must be uni
 
 ### Subset
 
-A published output from an asset results in a subset
+A published output from an asset results in a subset.
 
 The subset type is referred to as [family](#family), for example a rig, pointcache, look.
 A single asset can have many subsets, even of a single family, named [variants](#variant).
-By default a subset is named as a combination of family + variant, sometimes prefixed with the task name (like workfile)
+By default a subset is named as a combination of family + variant, sometimes prefixed with the task name (like workfile).
 
 ### Variant
 
@@ -49,7 +49,7 @@ Each published [subset][#subset] can have exactly one family assigned to it. Fam
 
 ### Task
 
-A task defines a work area for an asset an artist can work in. For example asset *hero* can have tasks *modeling* and *rigging*. Tasks also have types. Multiple tasks of the same type may exist in an asset. A task with type FX could for example appear twice as *fx_fire* and *fx_cloth*.
+A task defines a work area for an asset where an artist can work in. For example asset *characterA* can have tasks named *modeling* and *rigging*. Tasks also have types. Multiple tasks of the same type may exist on an asset. A task with type `fx` could for example appear twice as *fx_fire* and *fx_cloth*.
 
 Without a task you cannot launch a host application.
 
@@ -72,7 +72,7 @@ Process of exporting data from your work scene to versioned, immutable file that
 
 #### (Publish) Instance
 
-A publish instance is a single entry which defines a publish output. Publish instances persist with the workfile. This way we can expect that a publish from a newer workfile will produce similar consistent versioned outputs.
+A publish instance is a single entry which defines a publish output. Publish instances persist within the workfile. This way we can expect that a publish from a newer workfile will produce similar consistent versioned outputs.
 
 ### Load
 
