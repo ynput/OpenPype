@@ -1,2 +1,2 @@
 """Package declaring Python API for Ayon server."""
-__version__ = "0.1.16"
+__version__ = "0.1.17"

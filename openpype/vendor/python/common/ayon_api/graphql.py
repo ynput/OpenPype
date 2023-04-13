@@ -1,6 +1,6 @@
 import copy
 import numbers
-from abc import ABCMeta, abstractproperty, abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import six
 
@@ -232,21 +232,31 @@ class GraphQlQuery:
         self._children.append(field)
         field.set_parent(self)
 
-    def add_field(self, name, has_edges=None):
+    def add_field_with_edges(self, name):
+        """Add field with edges to query.
+
+        Args:
+            name (str): Field name e.g. 'tasks'.
+
+        Returns:
+            GraphQlQueryEdgeField: Created field object.
+        """
+
+        item = GraphQlQueryEdgeField(name, self)
+        self.add_obj_field(item)
+        return item
+
+    def add_field(self, name):
         """Add field to query.
 
         Args:
             name (str): Field name e.g. 'id'.
-            has_edges (bool): Field has edges so it need paging.
 
         Returns:
-            BaseGraphQlQueryField: Created field object.
+            GraphQlQueryField: Created field object.
         """
 
-        if has_edges:
-            item = GraphQlQueryEdgeField(name, self)
-        else:
-            item = GraphQlQueryField(name, self)
+        item = GraphQlQueryField(name, self)
         self.add_obj_field(item)
         return item
 
@@ -376,7 +386,6 @@ class BaseGraphQlQueryField(object):
         name (str): Name of field.
         parent (Union[BaseGraphQlQueryField, GraphQlQuery]): Parent object of a
             field.
-        has_edges (bool): Field has edges and should handle paging.
     """
 
     def __init__(self, name, parent):
@@ -401,6 +410,36 @@ class BaseGraphQlQueryField(object):
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, self.path)
 
+    def add_variable(self, key, value_type, value=None):
+        """Add variable to query.
+
+        Args:
+            key (str): Variable name.
+            value_type (str): Type of expected value in variables. This is
+                graphql type e.g. "[String!]", "Int", "Boolean", etc.
+            value (Any): Default value for variable. Can be changed later.
+
+        Returns:
+            QueryVariable: Created variable object.
+
+        Raises:
+            KeyError: If variable was already added before.
+        """
+
+        return self._parent.add_variable(key, value_type, value)
+
+    def get_variable(self, key):
+        """Variable object.
+
+        Args:
+            key (str): Variable name added to headers.
+
+        Returns:
+            QueryVariable: Variable object used in query string.
+        """
+
+        return self._parent.get_variable(key)
+
     @property
     def need_query(self):
         """Still need query from server.
@@ -414,10 +453,20 @@ class BaseGraphQlQueryField(object):
         if self._need_query:
             return True
 
-        for child in self._children:
+        for child in self._children_iter():
             if child.need_query:
                 return True
         return False
+
+    def _children_iter(self):
+        """Iterate over all children fields of object.
+
+        Returns:
+            Iterator[BaseGraphQlQueryField]: Children fields.
+        """
+
+        for child in self._children:
+            yield child
 
     def sum_edge_fields(self, max_limit=None):
         """Check how many edge fields query has.
@@ -437,7 +486,7 @@ class BaseGraphQlQueryField(object):
         if isinstance(self, GraphQlQueryEdgeField):
             counter = 1
 
-        for child in self._children:
+        for child in self._children_iter():
             counter += child.sum_edge_fields(max_limit)
             if max_limit is not None and counter >= max_limit:
                 break
@@ -451,7 +500,8 @@ class BaseGraphQlQueryField(object):
     def indent(self):
         return self._parent.child_indent + self.offset
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def child_indent(self):
         pass
 
@@ -459,13 +509,14 @@ class BaseGraphQlQueryField(object):
     def query_item(self):
         return self._query_item
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def has_edges(self):
         pass
 
     @property
     def child_has_edges(self):
-        for child in self._children:
+        for child in self._children_iter():
             if child.has_edges or child.child_has_edges:
                 return True
         return False
@@ -487,7 +538,7 @@ class BaseGraphQlQueryField(object):
         return self._path
 
     def reset_cursor(self):
-        for child in self._children:
+        for child in self._children_iter():
             child.reset_cursor()
 
     def get_variable_value(self, *args, **kwargs):
@@ -518,11 +569,13 @@ class BaseGraphQlQueryField(object):
         self._children.append(field)
         field.set_parent(self)
 
-    def add_field(self, name, has_edges=None):
-        if has_edges:
-            item = GraphQlQueryEdgeField(name, self)
-        else:
-            item = GraphQlQueryField(name, self)
+    def add_field_with_edges(self, name):
+        item = GraphQlQueryEdgeField(name, self)
+        self.add_obj_field(item)
+        return item
+
+    def add_field(self, name):
+        item = GraphQlQueryField(name, self)
         self.add_obj_field(item)
         return item
 
@@ -580,7 +633,7 @@ class BaseGraphQlQueryField(object):
     def _fake_children_parse(self):
         """Mark children as they don't need query."""
 
-        for child in self._children:
+        for child in self._children_iter():
             child.parse_result({}, {}, {})
 
     @abstractmethod
@@ -673,11 +726,37 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
     def __init__(self, *args, **kwargs):
         super(GraphQlQueryEdgeField, self).__init__(*args, **kwargs)
         self._cursor = None
+        self._edge_children = []
 
     @property
     def child_indent(self):
         offset = self.offset * 2
         return self.indent + offset
+
+    def _children_iter(self):
+        for child in super(GraphQlQueryEdgeField, self)._children_iter():
+            yield child
+
+        for child in self._edge_children:
+            yield child
+
+    def add_obj_field(self, field):
+        if field in self._edge_children:
+            return
+
+        super(GraphQlQueryEdgeField, self).add_obj_field(field)
+
+    def add_obj_edge_field(self, field):
+        if field in self._edge_children or field in self._children:
+            return
+
+        self._edge_children.append(field)
+        field.set_parent(self)
+
+    def add_edge_field(self, name):
+        item = GraphQlQueryField(name, self)
+        self.add_obj_edge_field(item)
+        return item
 
     def reset_cursor(self):
         # Reset cursor only for edges
@@ -733,6 +812,9 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
                     nodes_by_cursor[edge_cursor] = edge_value
                     node_values.append(edge_value)
 
+            for child in self._edge_children:
+                child.parse_result(edge, edge_value, progress_data)
+
             for child in self._children:
                 child.parse_result(edge["node"], edge_value, progress_data)
 
@@ -740,12 +822,12 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
             return
 
         change_cursor = True
-        for child in self._children:
+        for child in self._children_iter():
             if child.need_query:
                 change_cursor = False
 
         if change_cursor:
-            for child in self._children:
+            for child in self._children_iter():
                 child.reset_cursor()
             self._cursor = new_cursor
 
@@ -761,7 +843,7 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
         return filters
 
     def calculate_query(self):
-        if not self._children:
+        if not self._children and not self._edge_children:
             raise ValueError("Missing child definitions for edges {}".format(
                 self.path
             ))
@@ -779,16 +861,21 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
         edges_offset = offset + self.offset * " "
         node_offset = edges_offset + self.offset * " "
         output.append(edges_offset + "edges {")
-        output.append(node_offset + "node {")
+        for field in self._edge_children:
+            output.append(field.calculate_query())
 
-        for field in self._children:
-            output.append(
-                field.calculate_query()
-            )
+        if self._children:
+            output.append(node_offset + "node {")
 
-        output.append(node_offset + "}")
-        if self.child_has_edges:
-            output.append(node_offset + "cursor")
+            for field in self._children:
+                output.append(
+                    field.calculate_query()
+                )
+
+            output.append(node_offset + "}")
+            if self.child_has_edges:
+                output.append(node_offset + "cursor")
+
         output.append(edges_offset + "}")
 
         # Add page information
