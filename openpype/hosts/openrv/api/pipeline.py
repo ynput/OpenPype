@@ -187,8 +187,3 @@ def openrv_project_file_lock_and_undo_chunk(openrv_project_file,
                                             undo_queue_name="Script CMD"):
     """Lock rv session and open an undo chunk during the context"""
     pass
-
-
-def get_path_workfile():
-    print("filename", rv.commands.sessionFileName())
-    return rv.commands.sessionFileName()

@@ -1,6 +1,5 @@
 import os
 import pyblish.api
-from openpype.hosts.openrv.api.pipeline import get_path_workfile
 from openpype.pipeline import (
     legacy_io,
     registered_host
@@ -17,7 +16,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         """Inject the current working file"""
         host = registered_host()
-        current_file = get_path_workfile()
+        current_file = host.get_current_workfile()
         if not current_file:
             self.log.error("No current filepath detected")
 
