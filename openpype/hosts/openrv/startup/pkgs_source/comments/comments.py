@@ -132,13 +132,15 @@ class ReviewMenu(MinorMode):
 
     def update_ui_attribs(self):
         node = self.current_loaded_viewnode
-        # representation
-        prop_representation = node + ".openpype.representation"
-        prop_namespace = node + ".openpype.namespace"
-        data_prop_namespace = rv.commands.getStringProperty(prop_namespace)[0]
-        data_prop_representation_id = rv.commands.getStringProperty(prop_representation)[0]
-        print("data_prop_namespace", data_prop_namespace)
-        self.current_loaded_shot.setText(data_prop_namespace)
+
+        # Use namespace as loaded shot label
+        namespace = ""
+        if node is not None:
+            namespace = rv.commands.getStringProperty(
+                "{}.openpype.namespace".format(node)
+            )[0]
+        self.current_loaded_shot.setText(namespace)
+
         self.setup_properties()
         self.get_comment()
 
@@ -154,9 +156,11 @@ class ReviewMenu(MinorMode):
     def setup_properties(self):
         # setup properties
         node = self.current_loaded_viewnode
-        print(rv.commands.properties(node))
-        att_prop = node + ".openpype_review.task_status"
+        if node is None:
+            self.current_shot_status.setCurrentIndex(0)
+            return
 
+        att_prop = node + ".openpype_review.task_status"
         if not rv.commands.propertyExists(att_prop):
             status = "In Review"
             rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
@@ -168,6 +172,9 @@ class ReviewMenu(MinorMode):
 
     def comment_update(self):
         node = self.current_loaded_viewnode
+        if node is None:
+            return
+
         comment = self.current_shot_comment.toPlainText()
         att_prop = node + ".openpype_review.task_comment"
         rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
@@ -175,6 +182,10 @@ class ReviewMenu(MinorMode):
 
     def get_comment(self):
         node = self.current_loaded_viewnode
+        if node is None:
+            self.current_shot_comment.setPlainText("")
+            return
+
         att_prop = node + ".openpype_review.task_comment"
         if not rv.commands.propertyExists(att_prop):
             rv.commands.newProperty(att_prop, rv.commands.StringType, 1)
