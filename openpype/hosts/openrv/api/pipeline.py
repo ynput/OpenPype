@@ -180,10 +180,3 @@ def get_containers():
     for rvnode in all_items:
         parsed = parse_container(rvnode)
         yield parsed
-
-
-@contextlib.contextmanager
-def openrv_project_file_lock_and_undo_chunk(openrv_project_file,
-                                            undo_queue_name="Script CMD"):
-    """Lock rv session and open an undo chunk during the context"""
-    pass
