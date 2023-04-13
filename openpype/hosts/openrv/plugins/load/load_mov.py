@@ -49,9 +49,12 @@ class MovLoader(load.LoaderPlugin):
         # change path
         update_node = rv.commands.setSourceMedia(node, [filepath])
         # update name
-        rv.commands.setStringProperty(node + ".media.name", ["newname"], True)
-        rv.commands.setStringProperty(node + ".media.repName", ["repname"], True)
-        rv.commands.setStringProperty(node + ".openpype.representation", [str(representation["_id"])], True)
+        rv.commands.setStringProperty(node + ".media.name",
+                                      ["newname"], True)
+        rv.commands.setStringProperty(node + ".media.repName",
+                                      ["repname"], True)
+        rv.commands.setStringProperty(node + ".openpype.representation",
+                                      [str(representation["_id"])], True)
 
     def remove(self, container):
         # todo: implement remove
