@@ -129,8 +129,6 @@ class ReviewMenu(MinorMode):
         self.btn_note_prev.clicked.connect(self.annotate_prev)
         self.btn_note_next.clicked.connect(self.annotate_next)
 
-        self.runme()
-
     def runme(self, arg1=None, arg2=None):
         self.rvWindow = rv.qtutils.sessionWindow()
         if self.dockWidget is None:
