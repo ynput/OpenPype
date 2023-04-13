@@ -1,5 +1,4 @@
 # review code
-import os
 from PySide2 import QtCore, QtWidgets, QtGui
 
 from rv.rvtypes import MinorMode
