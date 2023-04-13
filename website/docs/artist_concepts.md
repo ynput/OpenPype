@@ -36,7 +36,7 @@ This is an optional feature. The generation of hero versions can be completely d
 
 ### Representation
 
-Each published variant can come out of the software in multiple representations. All of them hold exactly the same data, but in different formats. A model, for example, might be saved as `.OBJ`, Alembic, Maya geometry or as all of them, to be ready for pickup in any other applications supporting these formats.
+Each published subset version can come out of the software in multiple representations. All of them hold exactly the same data, but in different formats. A model, for example, might be saved as `.OBJ`, Alembic, Maya geometry or as all of them, to be ready for pickup in any other applications supporting these formats.
 
 
 #### Naming convention
