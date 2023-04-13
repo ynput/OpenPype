@@ -74,7 +74,6 @@ if "--headless" in sys.argv:
 elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
-
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
 HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
 SILENT_MODE_ENABLED = any(arg in _silent_commands for arg in sys.argv)
@@ -137,6 +136,14 @@ os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
 os.environ["AVALON_LABEL"] = "AYON"
 # Set name of pyblish UI import
 os.environ["PYBLISH_GUI"] = "pyblish_pype"
+# Set builtin OCIO root
+os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
+    AYON_ROOT,
+    "vendor",
+    "bin",
+    "ocioconfig",
+    "OpenColorIOConfigs"
+)
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
