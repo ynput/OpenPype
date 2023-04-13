@@ -26,7 +26,7 @@
             "type": "list",
             "collapsible": true,
             "key": "simple_creators",
-            "label": "Creator plugins",
+            "label": "Simple Create Plugins",
             "use_label_wrap": true,
             "collapsible_key": true,
             "object_type": {
