@@ -26,8 +26,10 @@ def extract_annotated_frame(filepath=None):
 
 
 def review_attributes(node=None):
-    prop_status = node + ".openpype" + ".review_status"
-    prop_comment = node + ".openpype" + ".review_comment"
+    # TODO: Implement
+    # prop_status = node + ".openpype" + ".review_status"
+    # prop_comment = node + ".openpype" + ".review_comment"
+    pass
 
 
 def get_review_attribute(node=None, attribute=None):
