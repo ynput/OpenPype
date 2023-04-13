@@ -50,7 +50,7 @@ class MovLoader(load.LoaderPlugin):
         set_session_fps()
         reset_frame_range()
         # change path
-        _update_node = rv.commands.setSourceMedia(node, [filepath])
+        rv.commands.setSourceMedia(node, [filepath])
         # update name
         rv.commands.setStringProperty(node + ".media.name",
                                       ["newname"], True)
