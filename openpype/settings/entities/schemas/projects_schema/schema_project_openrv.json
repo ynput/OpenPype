@@ -1,0 +1,66 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "openrv",
+    "label": "OpenRV",
+    "is_file": true,
+    "children": [
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "collapsible": true,
+            "children": [
+                {
+                    "key": "workfile",
+                    "type": "dict",
+                    "label": "Workfile",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "form",
+                            "children": [
+                                {
+                                    "type": "enum",
+                                    "key": "OCIO_config",
+                                    "label": "OpenColorIO Config",
+                                    "enum_items": [
+                                        {
+                                            "srgb": "srgb"
+                                        },
+                                        {
+                                            "aces_1.2": "aces_1.2"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "path",
+                                    "key": "customOCIOConfigPath",
+                                    "label": "Custom OCIO config path",
+                                    "multiplatform": true,
+                                    "multipath": true
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_openrv_create"
+        },
+        {
+            "type": "schema",
+            "name": "schema_openrv_publish"
+        },
+        {
+            "type": "schema",
+            "name": "schema_workfile_build"
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
+        }
+    ]
+}

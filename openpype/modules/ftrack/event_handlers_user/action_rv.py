@@ -1,5 +1,7 @@
+import getpass
 import os
 import subprocess
+import sys
 import traceback
 import json
 
@@ -19,10 +21,10 @@ from openpype.pipeline import (
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
-class RVAction(BaseAction):
+class RVActionView(BaseAction):
     """ Launch RV action """
-    identifier = "rv.launch.action"
-    label = "rv"
+    identifier = "openrv.launch.action"
+    label = "Open with RV"
     description = "rv Launcher"
     icon = statics_icon("ftrack", "action_icons", "RV.png")
 
@@ -36,15 +38,20 @@ class RVAction(BaseAction):
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
 
+        rv_path = "PATH_TO_BIN/bin/rv.exe"
+        self.rv_home = "PATH_TO+RV_HOME"
+        os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
+        sys.path.append(os.path.join(self.rv_home, "lib"))
+
         # RV_HOME should be set if properly installed
-        if os.environ.get('RV_HOME'):
-            rv_path = os.path.join(
-                os.environ.get('RV_HOME'),
-                'bin',
-                'rv'
-            )
-            if not os.path.exists(rv_path):
-                rv_path = None
+        # if os.environ.get('RV_HOME'):
+        #     rv_path = os.path.join(
+        #         os.environ.get('RV_HOME'),
+        #         'bin',
+        #         'rv'
+        #     )
+        #     if not os.path.exists(rv_path):
+        #         rv_path = None
 
         if not rv_path:
             self.log.info("RV path was not found.")
@@ -54,7 +61,16 @@ class RVAction(BaseAction):
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
-        return True
+        data = event['data']
+        selection = data.get('selection', [])
+        print(selection[0]["entityType"])
+        if selection[0]["entityType"] != "list":
+            return {'items': [{
+                'label': self.label,
+                'description': self.description,
+                'actionIdentifier': self.identifier
+            }]
+            }
 
     def preregister(self):
         if self.rv_path is None:
@@ -66,7 +82,7 @@ class RVAction(BaseAction):
     def get_components_from_entity(self, session, entity, components):
         """Get components from various entity types.
 
-        The components dictionary is modified in place, so nothing is returned.
+        The components dictionary is modifid in place, so nothing is returned.
 
             Args:
                 entity (Ftrack entity)
@@ -248,10 +264,17 @@ class RVAction(BaseAction):
             args.extend(["-fps", str(fps)])
 
         args.extend(paths)
-
+        # CORE EDIT SET UP THE PATHS
+        self.log.info("setting up env vars")
+        os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
+        sys.path.append(os.path.join(self.rv_home, "lib"))
+        sys.path.append(self.rv_home)
         self.log.info("Running rv: {}".format(args))
-
-        subprocess.Popen(args)
+        self.home = os.path.normpath(os.path.join("c:/", "Users", getpass.getuser()))
+        os.environ["HOME"] = self.home
+        env = os.environ.copy()
+        env['PYTHONPATH'] = ''
+        subprocess.Popen(args, env=env)
 
         return True
 
@@ -328,4 +351,4 @@ class RVAction(BaseAction):
 def register(session):
     """Register hooks."""
 
-    RVAction(session).register()
+    RVActionView(session).register()

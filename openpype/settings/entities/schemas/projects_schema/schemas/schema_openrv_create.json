@@ -1,0 +1,18 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "create",
+    "label": "Creator plugins",
+    "children": [
+      {
+        "type": "schema_template",
+        "name": "template_create_plugin",
+        "template_data": [
+          {
+            "key": "CreateDebugLogs",
+            "label": "Create Asset debug"
+          }
+        ]
+      }
+    ]
+}

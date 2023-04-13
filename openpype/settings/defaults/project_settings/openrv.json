@@ -1,0 +1,39 @@
+{
+    "imageio": {
+        "workfile": {
+            "OCIO_config": "aces_1.2",
+            "customOCIOConfigPath": {
+                "windows": [
+                    "PATHTOOCIO\\ocio\\1.2\\aces_1.2\\config.ocio"
+                ],
+                "darwin": [],
+                "linux": []
+            }
+        }
+    },
+    "create": {
+        "CreateDebugLogs": {
+            "enabled": true,
+            "defaults": []
+        }
+    },
+    "publish": {
+        "ValidateWorkfilePaths": {
+            "enabled": true,
+            "optional": true,
+            "node_types": [],
+            "prohibited_vars": []
+        },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
+    },
+    "workfile_build": {
+        "profiles": []
+    },
+    "templated_workfile_build": {
+        "profiles": []
+    }
+}

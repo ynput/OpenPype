@@ -1579,5 +1579,38 @@
             }
         }
     },
+    "openrv": {
+        "enabled": true,
+        "label": "OpenRV",
+        "icon": "{}/app_icons/openrv.png",
+        "host_name": "openrv",
+        "environment": {
+            "HOME": "C:/_pipeline/apps/openrv/home",
+            "RV_SUPPORT_PATH": "PTH_TO_SUPPORT_FOLDER",
+            "PYTHONPATH": "",
+            "RV_PREFS_OVERRIDE_PATH": "PREFS_OVERRIDE_PATH"
+        },
+        "variants": {
+            "1-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "PATH_TO_OPEN_RV_BIN/bin/rv.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "1-0": "1.0"
+            }
+        }
+    },
     "additional_apps": {}
 }
