@@ -105,6 +105,9 @@ class ReviewMenu(MinorMode):
         self.remove_cmnt_status_btn = QtWidgets.QPushButton("Remove comment and status")  # noqa
         self.review_main_layout_head.addWidget(self.remove_cmnt_status_btn)
 
+        self.rvWindow = None
+        self.dockWidget = None
+
         # annotations controls
         self.notes_layout = QtWidgets.QVBoxLayout()
         self.notes_layout_label = QtWidgets.QLabel("Annotations")
@@ -132,15 +135,20 @@ class ReviewMenu(MinorMode):
     def runme(self, arg1=None, arg2=None):
         self.rvWindow = rv.qtutils.sessionWindow()
 
-        # Create DockWidget and add the Custom Widget to it
-        self.dockWidget = QtWidgets.QDockWidget("OpenPype Review",
-                                                self.rvWindow)
-        self.dockWidget.setWidget(self.customDockWidget)
+        if self.dockWidget is None:
+            # Create DockWidget and add the Custom Widget on first run
+            self.dockWidget = QtWidgets.QDockWidget("OpenPype Review",
+                                                    self.rvWindow)
+            self.dockWidget.setWidget(self.customDockWidget)
 
-        # Dock widget to the RV MainWindow
-        self.rvWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea,
-                                    self.dockWidget)
-        self.setup_listeners()
+            # Dock widget to the RV MainWindow
+            self.rvWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea,
+                                        self.dockWidget)
+
+            self.setup_listeners()
+        else:
+            # Toggle visibility state
+            self.dockWidget.toggleViewAction().trigger()
 
     def set_item_font(self, item, size=14, noweight=False, bold=True):
         font = QtGui.QFont()
