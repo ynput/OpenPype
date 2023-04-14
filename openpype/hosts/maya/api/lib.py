@@ -118,6 +118,18 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
+DISPLAY_LIGHTS_VALUES = [
+    "project_settings", "default", "all", "selected", "flat", "none"
+]
+DISPLAY_LIGHTS_LABELS = [
+    "Use Project Settings",
+    "Default Lighting",
+    "All Lights",
+    "Selected Lights",
+    "Flat Lighting",
+    "No Lights"
+]
+
 
 def get_main_window():
     """Acquire Maya's main window"""

@@ -71,5 +71,6 @@ class CreateReview(plugin.Creator):
         data["isolate"] = preset["Generic"]["isolate_view"]
         data["imagePlane"] = preset["Viewport Options"]["imagePlane"]
         data["panZoom"] = preset["Generic"]["pan_zoom"]
+        data["displayLights"] = lib.DISPLAY_LIGHTS_LABELS
 
         self.data = data

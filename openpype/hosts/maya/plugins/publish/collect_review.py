@@ -4,7 +4,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io, KnownPublishError
-from openpype.hosts.maya.api.lib import get_attribute_input
+from openpype.hosts.maya.api import lib
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -145,12 +145,22 @@ class CollectReview(pyblish.api.InstancePlugin):
 
             instance.data["audio"] = audio_data
 
+        # Convert enum attribute index to string.
+        index = instance.data.get("displayLights", 0)
+        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
+        if display_lights == "project_settings":
+            settings = instance.context.data["project_settings"]
+            settings = settings["maya"]["publish"]["ExtractPlayblast"]
+            settings = settings["capture_preset"]["Viewport Options"]
+            display_lights = settings["displayLights"]
+        instance.data["displayLights"] = display_lights
+
         # Collect focal length.
         if camera is None:
             return
 
         attr = camera + ".focalLength"
-        if get_attribute_input(attr):
+        if lib.get_attribute_input(attr):
             start = instance.data["frameStart"]
             end = instance.data["frameEnd"] + 1
             focal_length = [
