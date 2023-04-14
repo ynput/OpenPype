@@ -33,6 +33,16 @@ class ServerNotReached(ServerError):
     pass
 
 
+class RequestError(Exception):
+    def __init__(self, message, response):
+        self.response = response
+        super(RequestError, self).__init__(message)
+
+
+class HTTPRequestError(RequestError):
+    pass
+
+
 class GraphQlQueryFailed(Exception):
     def __init__(self, errors, query, variables):
         if variables is None:
