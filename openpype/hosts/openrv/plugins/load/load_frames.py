@@ -9,10 +9,6 @@ from openpype.pipeline import (
 from openpype.pipeline.load import get_representation_path_from_context
 
 from openpype.hosts.openrv.api.pipeline import imprint_container
-from openpype.hosts.openrv.api.commands import (
-    set_session_fps,
-    reset_frame_range
-)
 from openpype.lib.transcoding import IMAGE_EXTENSIONS
 
 import rv
@@ -39,10 +35,7 @@ class FramesLoader(load.LoaderPlugin):
         # node_name = "{}_{}".format(namespace, name) if namespace else name
         namespace = namespace if namespace else context["asset"]["name"]
 
-        set_session_fps()
-        reset_frame_range()
         loaded_node = rv.commands.addSourceVerbose([filepath])
-        print("loaded_node", loaded_node)
         imprint_container(
             loaded_node,
             name=name,
@@ -58,8 +51,6 @@ class FramesLoader(load.LoaderPlugin):
         filepath = self._format_path(context)
         filepath = str(filepath)
 
-        set_session_fps()
-        reset_frame_range()
         # change path
         rv.commands.setSourceMedia(node, [filepath])
         # update name
@@ -71,9 +62,9 @@ class FramesLoader(load.LoaderPlugin):
                                       [str(representation["_id"])], True)
 
     def remove(self, container):
-        # todo: implement remove
-        # node = container["node"]
-        return
+        node = container["node"]
+        group = rv.commands.nodeGroup(node)
+        rv.commands.deleteNode(group)
 
     def _get_sequence_range(self, context):
         """Return frame range for image sequences.
