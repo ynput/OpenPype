@@ -152,6 +152,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_openrv"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_traypublisher"
                 },
                 {

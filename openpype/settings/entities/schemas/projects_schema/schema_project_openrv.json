@@ -45,22 +45,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "type": "schema",
-            "name": "schema_openrv_create"
-        },
-        {
-            "type": "schema",
-            "name": "schema_openrv_publish"
-        },
-        {
-            "type": "schema",
-            "name": "schema_workfile_build"
-        },
-        {
-            "type": "schema",
-            "name": "schema_templated_workfile_build"
         }
     ]
 }
