@@ -10,12 +10,6 @@ import pyblish.api
 import xml.etree.ElementTree
 from openpype.hosts.hiero import api as phiero
 
-LUTS_3D = ["cube", "3dl", "csp", "lut"]
-LUTS_2D = ["ccc", "cc", "cdl"]
-
-# EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
-COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
-
 
 def format_xml(root):
     dom = xml.dom.minidom.parseString(xml.etree.ElementTree.tostring(root))
