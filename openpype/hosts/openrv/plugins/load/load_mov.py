@@ -1,7 +1,3 @@
-from openpype.hosts.openrv.api.commands import (
-    set_session_fps,
-    reset_frame_range
-)
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -32,9 +28,6 @@ class MovLoader(load.LoaderPlugin):
         # node_name = "{}_{}".format(namespace, name) if namespace else name
         namespace = namespace if namespace else context["asset"]["name"]
 
-        set_session_fps()
-        reset_frame_range()
-
         loaded_node = rv.commands.addSourceVerbose([filepath])
         imprint_container(
             loaded_node,
@@ -48,8 +41,7 @@ class MovLoader(load.LoaderPlugin):
         node = container["node"]
         filepath = get_representation_path(representation)
         filepath = str(filepath)
-        set_session_fps()
-        reset_frame_range()
+
         # change path
         rv.commands.setSourceMedia(node, [filepath])
         # update name
@@ -61,6 +53,6 @@ class MovLoader(load.LoaderPlugin):
                                       [str(representation["_id"])], True)
 
     def remove(self, container):
-        # todo: implement remove
-        # node = container["node"]
-        return
+        node = container["node"]
+        group = rv.commands.nodeGroup(node)
+        rv.commands.deleteNode(group)
