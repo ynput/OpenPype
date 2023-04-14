@@ -593,12 +593,14 @@ def priority_color_file(color_files, item_name, source_name):
 def get_color_file(source_path, item_name, source_name):
     """Find best guess color file for a given source path"""
     package_path_end = re.split("/incoming/\d+/", source_path)[1]
+    package_name = package_path_end.split("/")[0]
+    dated_incoming = source_path.split(package_name)[0]
     package_path = "{0}{1}".format(
-        source_path.split(package_path_end.split("/")[0])[0],
-        package_path_end.split("/")[0],
+        dated_incoming,
+        package_name,
     )
 
-    incoming_path = os.path.dirname(source_path.split("/" + package_path_end.split("/")[0])[0])
+    incoming_path = os.path.dirname(source_path.split("/" + package_name)[0])
     incoming_packages = [d for d in sorted(glob(incoming_path + "/*")) if os.path.isdir(d)]
 
     # Create Package list
