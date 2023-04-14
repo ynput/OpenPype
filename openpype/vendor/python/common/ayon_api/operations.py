@@ -1,7 +1,7 @@
 import copy
 import collections
 import uuid
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractmethod
 
 import six
 
@@ -301,7 +301,8 @@ class AbstractOperation(object):
     def entity_type(self):
         return self._entity_type
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def operation_name(self):
         """Stringified type of operation."""
 
