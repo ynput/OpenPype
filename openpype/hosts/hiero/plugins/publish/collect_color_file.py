@@ -525,7 +525,22 @@ def get_files(package_path, filters):
 
 
 def priority_color_file(color_files, item_name, source_name):
-    """Priority is given to the closest match of source_name then item_name as well as found file type"""
+    """Returns the closest matching file from a list of color files given an item and a source name.
+
+    Priority is given to the closest match of source_name then item_name as well as found file type.
+    The function searches for non-EDL files first, followed by EDL files.
+
+    Args:
+        color_files (dict): A dictionary containing color files organized by type.
+        item_name (str): The name of the item to match.
+        source_name (str): The name of the source to match.
+
+    Returns:
+        tuple or None: A tuple containing the priority level, CDL information, and path of the matching color file,
+        or None if no matches are found. Priority level is determined based on the match between the item and source names
+        as well as the file type. CDL information is extracted from the matching file if it's not an EDL file.
+    """
+
     source_name = source_name.lower()
     matches = []
     for color_ext in COLOR_FILE_EXTS:
