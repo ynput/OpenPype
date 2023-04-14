@@ -1435,13 +1435,22 @@ def parse_cdl(path):
     sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
 
     slope_match = re.search(slope_pattern, cdl_data)
-    slope = tuple(map(float, slope_match.groups()))
+    if slope_match:
+        slope = tuple(map(float, slope_match.groups()))
+    else:
+        slope = None
 
     offset_match = re.search(offset_pattern, cdl_data)
-    offset = tuple(map(float, offset_match.groups()))
+    if offset_match:
+        offset = tuple(map(float, offset_match.groups()))
+    else:
+        offset = None
 
     power_match = re.search(power_pattern, cdl_data)
-    power = tuple(map(float, power_match.groups()))
+    if power_match:
+        power = tuple(map(float, power_match.groups()))
+    else:
+        power = None
 
     sat_match = re.search(sat_pattern, cdl_data)
     sat = float(sat_match.group("sat")) if sat_match else None
