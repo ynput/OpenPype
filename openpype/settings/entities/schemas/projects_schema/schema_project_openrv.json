@@ -10,39 +10,15 @@
             "type": "dict",
             "label": "Color Management (ImageIO)",
             "collapsible": true,
+            "is_group": true,
             "children": [
                 {
-                    "key": "workfile",
-                    "type": "dict",
-                    "label": "Workfile",
-                    "collapsible": false,
-                    "children": [
-                        {
-                            "type": "form",
-                            "children": [
-                                {
-                                    "type": "enum",
-                                    "key": "OCIO_config",
-                                    "label": "OpenColorIO Config",
-                                    "enum_items": [
-                                        {
-                                            "srgb": "srgb"
-                                        },
-                                        {
-                                            "aces_1.2": "aces_1.2"
-                                        }
-                                    ]
-                                },
-                                {
-                                    "type": "path",
-                                    "key": "customOCIOConfigPath",
-                                    "label": "Custom OCIO config path",
-                                    "multiplatform": true,
-                                    "multipath": true
-                                }
-                            ]
-                        }
-                    ]
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
                 }
             ]
         }

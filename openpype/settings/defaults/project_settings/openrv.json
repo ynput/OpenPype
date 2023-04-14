@@ -1,14 +1,12 @@
 {
     "imageio": {
-        "workfile": {
-            "OCIO_config": "aces_1.2",
-            "customOCIOConfigPath": {
-                "windows": [
-                    "PATHTOOCIO\\ocio\\1.2\\aces_1.2\\config.ocio"
-                ],
-                "darwin": [],
-                "linux": []
-            }
+        "ocio_config": {
+            "enabled": true,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": true,
+            "rules": {}
         }
     }
 }
