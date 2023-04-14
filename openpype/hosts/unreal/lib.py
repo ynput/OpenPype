@@ -189,7 +189,7 @@ def create_unreal_project(project_name: str,
 
     As there is no way I know to create a project via command line, this is
     easiest option. Unreal project file is basically a JSON file. If we find
-    the `OPENPYPE_UNREAL_PLUGIN` environment variable we assume this is the
+    the `AYON_UNREAL_PLUGIN` environment variable we assume this is the
     location of the Integration Plugin and we copy its content to the project
     folder and enable this plugin.
 
@@ -203,8 +203,7 @@ def create_unreal_project(project_name: str,
             sources. This will trigger automatically if `Binaries`
             directory is not found in plugin folders as this indicates
             this is only source distribution of the plugin. Dev mode
-            is also set by preset file `unreal/project_setup.json` in
-            **OPENPYPE_CONFIG**.
+            is also set in Settings.
         env (dict, optional): Environment to use. If not set, `os.environ`.
 
     Throws:
@@ -324,9 +323,11 @@ def get_path_to_uat(engine_path: Path) -> Path:
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmd_project = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
+    cmd_project = Path(os.path.dirname(
+        os.path.abspath(os.getenv("OPENPYPE_ROOT"))))
 
-    # For now, only tested on Windows (For Linux and Mac it has to be implemented)
+    # For now, only tested on Windows (For Linux and Mac
+    # it has to be implemented)
     cmd_project /= f"hosts/unreal/integration/UE_{ue_version}"
 
     return cmd_project / "CommandletProject/CommandletProject.uproject"
@@ -372,7 +373,7 @@ def get_build_id(engine_path: Path, ue_version: str) -> str:
 
 def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
     env = env or os.environ
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if not os.path.isdir(integration_plugin_path):
         raise RuntimeError("Path to the integration plugin is null!")
@@ -393,7 +394,7 @@ def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
 def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
     env = env or os.environ
 
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if not os.path.isdir(integration_plugin_path):
         raise RuntimeError("Path to the integration plugin is null!")
@@ -420,7 +421,7 @@ def _build_and_move_plugin(engine_path: Path,
     uat_path: Path = get_path_to_uat(engine_path)
 
     env = env or os.environ
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if uat_path.is_file():
         temp_dir: Path = integration_plugin_path.parent / "Temp"

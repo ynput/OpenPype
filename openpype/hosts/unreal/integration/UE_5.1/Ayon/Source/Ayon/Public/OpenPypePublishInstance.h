@@ -1,4 +1,6 @@
 // Copyright 2023, Ayon, All rights reserved.
+// Deprecation warning: this is left here just for backwards compatibility
+// and will be removed in next versions of Ayon.
 #pragma once
 
 #include "Engine.h"
@@ -49,7 +51,7 @@ public:
 
 	/**
 	 * Function for returning all the assets in the container combined.
-	 * 
+	 *
 	 * @return Returns all the internal and externally added assets into one set (TSet of UObjects). Careful! They are
 	 * returning raw pointers. Seems like an issue in UE5
 	 *

@@ -5,19 +5,19 @@
 #include "CoreMinimal.h"
 #include "AyonSettings.generated.h"
 
-#define OPENPYPE_SETTINGS_FILEPATH IPluginManager::Get().FindPlugin("Ayon")->GetBaseDir() / TEXT("Config") / TEXT("DefaultAyonSettings.ini")
+#define AYON_SETTINGS_FILEPATH IPluginManager::Get().FindPlugin("Ayon")->GetBaseDir() / TEXT("Config") / TEXT("DefaultAyonSettings.ini")
 
 UCLASS(Config=AyonSettings, DefaultConfig)
 class AYON_API UAyonSettings : public UObject
 {
 	GENERATED_UCLASS_BODY()
-	
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = Settings)
 	FColor GetFolderFColor() const
 	{
 		return FolderColor;
 	}
-	
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = Settings)
 	FLinearColor GetFolderFLinearColor() const
 	{

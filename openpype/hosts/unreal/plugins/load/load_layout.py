@@ -19,7 +19,7 @@ from openpype.pipeline import (
     loaders_from_representation,
     load_container,
     get_representation_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
@@ -37,7 +37,7 @@ class LayoutLoader(plugin.Loader):
     label = "Load Layout"
     icon = "code-fork"
     color = "orange"
-    ASSET_ROOT = "/Game/OpenPype"
+    ASSET_ROOT = "/Game/Ayon"
 
     def _get_asset_containers(self, path):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -634,7 +634,7 @@ class LayoutLoader(plugin.Loader):
         data = get_current_project_settings()
         create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
-        # Create directory for asset and avalon container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
         root = self.ASSET_ROOT
         hierarchy_dir = root
@@ -749,8 +749,8 @@ class LayoutLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -781,7 +781,7 @@ class LayoutLoader(plugin.Loader):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
 
         asset_dir = container.get('namespace')
         context = representation.get("context")
@@ -867,7 +867,7 @@ class LayoutLoader(plugin.Loader):
         data = get_current_project_settings()
         create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         path = Path(container.get("namespace"))
 
         containers = unreal_pipeline.ls()

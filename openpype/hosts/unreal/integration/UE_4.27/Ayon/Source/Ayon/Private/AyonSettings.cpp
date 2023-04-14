@@ -9,8 +9,8 @@
  */
 UAyonSettings::UAyonSettings(const FObjectInitializer& ObjectInitializer)
 {
-	
-	const FString ConfigFilePath = OPENPYPE_SETTINGS_FILEPATH;
+
+	const FString ConfigFilePath = AYON_SETTINGS_FILEPATH;
 
 	// This has to be probably in the future set using the UE Reflection system
 	FColor Color;

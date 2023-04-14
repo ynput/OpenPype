@@ -1,4 +1,6 @@
 // Copyright 2023, Ayon, All rights reserved.
+// Deprecation warning: this is left here just for backwards compatibility
+// and will be removed in next versions of Ayon.
 #pragma once
 
 #include "OpenPypePublishInstance.h"
@@ -43,7 +45,7 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 #ifdef WITH_EDITOR
 	ColorOpenPypeDirs();
 #endif
-	
+
 }
 
 void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)

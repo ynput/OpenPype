@@ -1,30 +1,30 @@
 import unreal
 
-openpype_detected = True
+ayon_detected = True
 try:
     from openpype.pipeline import install_host
     from openpype.hosts.unreal.api import UnrealHost
 
-    openpype_host = UnrealHost()
+    ayon_host = UnrealHost()
 except ImportError as exc:
-    openpype_host = None
-    openpype_detected = False
-    unreal.log_error("OpenPype: cannot load OpenPype [ {} ]".format(exc))
+    ayon_host = None
+    ayon_detected = False
+    unreal.log_error(f"OpenPype: cannot load Ayon [ {exc} ]")
 
-if openpype_detected:
-    install_host(openpype_host)
+if ayon_detected:
+    install_host(ayon_host)
 
 
 @unreal.uclass()
 class AyonIntegration(unreal.AyonPythonBridge):
     @unreal.ufunction(override=True)
     def RunInPython_Popup(self):
-        unreal.log_warning("OpenPype: showing tools popup")
-        if openpype_detected:
-            openpype_host.show_tools_popup()
+        unreal.log_warning("Ayon: showing tools popup")
+        if ayon_detected:
+            ayon_host.show_tools_popup()
 
     @unreal.ufunction(override=True)
     def RunInPython_Dialog(self):
-        unreal.log_warning("OpenPype: showing tools dialog")
-        if openpype_detected:
-            openpype_host.show_tools_dialog()
+        unreal.log_warning("Ayon: showing tools dialog")
+        if ayon_detected:
+            ayon_host.show_tools_dialog()

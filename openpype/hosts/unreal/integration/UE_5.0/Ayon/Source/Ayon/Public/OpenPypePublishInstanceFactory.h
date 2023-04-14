@@ -1,4 +1,6 @@
 // Copyright 2023, Ayon, All rights reserved.
+// Deprecation warning: this is left here just for backwards compatibility
+// and will be removed in next versions of Ayon.
 #pragma once
 
 #include "CoreMinimal.h"
