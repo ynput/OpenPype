@@ -23,6 +23,8 @@ def get_engine_versions(env=None):
     Location can be overridden by `UNREAL_ENGINE_LOCATION` environment
     variable.
 
+    .. deprecated:: 3.15.4
+
     Args:
         env (dict, optional): Environment to use.
 
@@ -103,6 +105,8 @@ def _win_get_engine_versions():
     This file is JSON file listing installed stuff, Unreal engines
     are marked with `"AppName" = "UE_X.XX"`` like `UE_4.24`
 
+    .. deprecated:: 3.15.4
+
     Returns:
         dict: version as a key and path as a value.
 
@@ -121,6 +125,8 @@ def _darwin_get_engine_version() -> dict:
     """Get Unreal Engine versions on MacOS.
 
     It works the same as on Windows, just JSON file location is different.
+
+    .. deprecated:: 3.15.4
 
     Returns:
         dict: version as a key and path as a value.
@@ -143,6 +149,8 @@ def _darwin_get_engine_version() -> dict:
 
 def _parse_launcher_locations(install_json_path: str) -> dict:
     """This will parse locations from json file.
+
+    .. deprecated:: 3.15.4
 
     Args:
         install_json_path (str): Path to `LauncherInstalled.dat`.

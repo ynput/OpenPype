@@ -32,7 +32,12 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_asset,
+    get_current_project_name,
+    get_current_task_name
+)
 
 
 self = sys.modules[__name__]
@@ -292,15 +297,20 @@ def collect_animation_data(fps=False):
     """
 
     # get scene values as defaults
-    start = cmds.playbackOptions(query=True, animationStartTime=True)
-    end = cmds.playbackOptions(query=True, animationEndTime=True)
+    frame_start = cmds.playbackOptions(query=True, minTime=True)
+    frame_end = cmds.playbackOptions(query=True, maxTime=True)
+    handle_start = cmds.playbackOptions(query=True, animationStartTime=True)
+    handle_end = cmds.playbackOptions(query=True, animationEndTime=True)
+
+    handle_start = frame_start - handle_start
+    handle_end = handle_end - frame_end
 
     # build attributes
     data = OrderedDict()
-    data["frameStart"] = start
-    data["frameEnd"] = end
-    data["handleStart"] = 0
-    data["handleEnd"] = 0
+    data["frameStart"] = frame_start
+    data["frameEnd"] = frame_end
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
     data["step"] = 1.0
 
     if fps:
@@ -1367,6 +1377,71 @@ def set_id(node, unique_id, overwrite=False):
         cmds.setAttr(attr, unique_id, type="string")
 
 
+def get_attribute(plug,
+                  asString=False,
+                  expandEnvironmentVariables=False,
+                  **kwargs):
+    """Maya getAttr with some fixes based on `pymel.core.general.getAttr()`.
+
+    Like Pymel getAttr this applies some changes to `maya.cmds.getAttr`
+      - maya pointlessly returned vector results as a tuple wrapped in a list
+        (ex.  '[(1,2,3)]'). This command unpacks the vector for you.
+      - when getting a multi-attr, maya would raise an error, but this will
+        return a list of values for the multi-attr
+      - added support for getting message attributes by returning the
+        connections instead
+
+    Note that the asString + expandEnvironmentVariables argument naming
+    convention matches the `maya.cmds.getAttr` arguments so that it can
+    act as a direct replacement for it.
+
+    Args:
+        plug (str): Node's attribute plug as `node.attribute`
+        asString (bool): Return string value for enum attributes instead
+            of the index. Note that the return value can be dependent on the
+            UI language Maya is running in.
+        expandEnvironmentVariables (bool): Expand any environment variable and
+            (tilde characters on UNIX) found in string attributes which are
+            returned.
+
+    Kwargs:
+        Supports the keyword arguments of `maya.cmds.getAttr`
+
+    Returns:
+        object: The value of the maya attribute.
+
+    """
+    attr_type = cmds.getAttr(plug, type=True)
+    if asString:
+        kwargs["asString"] = True
+    if expandEnvironmentVariables:
+        kwargs["expandEnvironmentVariables"] = True
+    try:
+        res = cmds.getAttr(plug, **kwargs)
+    except RuntimeError:
+        if attr_type == "message":
+            return cmds.listConnections(plug)
+
+        node, attr = plug.split(".", 1)
+        children = cmds.attributeQuery(attr, node=node, listChildren=True)
+        if children:
+            return [
+                get_attribute("{}.{}".format(node, child))
+                for child in children
+            ]
+
+        raise
+
+    # Convert vector result wrapped in tuple
+    if isinstance(res, list) and len(res):
+        if isinstance(res[0], tuple) and len(res):
+            if attr_type in {'pointArray', 'vectorArray'}:
+                return res
+            return res[0]
+
+    return res
+
+
 def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 
@@ -1881,6 +1956,12 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
+def get_node_parent(node):
+    """Return full path name for parent of node"""
+    parents = cmds.listRelatives(node, parent=True, fullPath=True)
+    return parents[0] if parents else None
+
+
 def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
@@ -1904,10 +1985,6 @@ def get_id_from_sibling(node, history_only=True):
 
     """
 
-    def _get_parent(node):
-        """Return full path name for parent of node"""
-        return cmds.listRelatives(node, parent=True, fullPath=True)
-
     node = cmds.ls(node, long=True)[0]
 
     # Find all similar nodes in history
@@ -1919,8 +1996,8 @@ def get_id_from_sibling(node, history_only=True):
     similar_nodes = [x for x in similar_nodes if x != node]
 
     # The node *must be* under the same parent
-    parent = _get_parent(node)
-    similar_nodes = [i for i in similar_nodes if _get_parent(i) == parent]
+    parent = get_node_parent(node)
+    similar_nodes = [i for i in similar_nodes if get_node_parent(i) == parent]
 
     # Check all of the remaining similar nodes and take the first one
     # with an id and assume it's the original.
@@ -2067,29 +2144,43 @@ def get_frame_range():
     """Get the current assets frame range and handles."""
 
     # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    task_name = get_current_task_name()
+    asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
+    settings = get_project_settings(project_name)
+    include_handles_settings = settings["maya"]["include_handles"]
+    current_task = asset.get("data").get("tasks").get(task_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
 
     if frame_start is None or frame_end is None:
         cmds.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
+    handle_start = asset["data"].get("handleStart") or 0
+    handle_end = asset["data"].get("handleEnd") or 0
 
-    handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
+    animation_start = frame_start
+    animation_end = frame_end
+
+    include_handles = include_handles_settings["include_handles_default"]
+    for item in include_handles_settings["per_task_type"]:
+        if current_task["type"] in item["task_type"]:
+            include_handles = item["include_handles"]
+            break
+    if include_handles:
+        animation_start -= int(handle_start)
+        animation_end += int(handle_end)
+
+    cmds.playbackOptions(
+        minTime=frame_start,
+        maxTime=frame_end,
+        animationStartTime=animation_start,
+        animationEndTime=animation_end
+    )
+    cmds.currentTime(frame_start)
 
     return {
         "frameStart": frame_start,
@@ -2109,7 +2200,6 @@ def reset_frame_range(playback=True, render=True, fps=True):
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
-
     if fps:
         fps = convert_to_maya_fps(
             float(legacy_io.Session.get("AVALON_FPS", 25))
@@ -3176,38 +3266,78 @@ def set_colorspace():
 def parent_nodes(nodes, parent=None):
     # type: (list, str) -> list
     """Context manager to un-parent provided nodes and return them back."""
-    import pymel.core as pm  # noqa
 
-    parent_node = None
+    def _as_mdagpath(node):
+        """Return MDagPath for node path."""
+        if not node:
+            return
+        sel = OpenMaya.MSelectionList()
+        sel.add(node)
+        return sel.getDagPath(0)
+
+    # We can only parent dag nodes so we ensure input contains only dag nodes
+    nodes = cmds.ls(nodes, type="dagNode", long=True)
+    if not nodes:
+        # opt-out early
+        yield
+        return
+
+    parent_node_path = None
     delete_parent = False
-
     if parent:
         if not cmds.objExists(parent):
-            parent_node = pm.createNode("transform", n=parent, ss=False)
+            parent_node = cmds.createNode("transform",
+                                          name=parent,
+                                          skipSelect=False)
             delete_parent = True
         else:
-            parent_node = pm.PyNode(parent)
+            parent_node = parent
+        parent_node_path = cmds.ls(parent_node, long=True)[0]
+
+    # Store original parents
     node_parents = []
     for node in nodes:
-        n = pm.PyNode(node)
-        try:
-            root = pm.listRelatives(n, parent=1)[0]
-        except IndexError:
-            root = None
-        node_parents.append((n, root))
+        node_parent = get_node_parent(node)
+        node_parents.append((_as_mdagpath(node), _as_mdagpath(node_parent)))
+
     try:
-        for node in node_parents:
-            if not parent:
-                node[0].setParent(world=True)
+        for node, node_parent in node_parents:
+            node_parent_path = node_parent.fullPathName() if node_parent else None  # noqa
+            if node_parent_path == parent_node_path:
+                # Already a child
+                continue
+
+            if parent_node_path:
+                cmds.parent(node.fullPathName(), parent_node_path)
             else:
-                node[0].setParent(parent_node)
+                cmds.parent(node.fullPathName(), world=True)
+
         yield
     finally:
-        for node in node_parents:
-            if node[1]:
-                node[0].setParent(node[1])
+        # Reparent to original parents
+        for node, original_parent in node_parents:
+            node_path = node.fullPathName()
+            if not node_path:
+                # Node must have been deleted
+                continue
+
+            node_parent_path = get_node_parent(node_path)
+
+            original_parent_path = None
+            if original_parent:
+                original_parent_path = original_parent.fullPathName()
+                if not original_parent_path:
+                    # Original parent node must have been deleted
+                    continue
+
+            if node_parent_path != original_parent_path:
+                if not original_parent_path:
+                    cmds.parent(node_path, world=True)
+                else:
+                    cmds.parent(node_path, original_parent_path)
+
         if delete_parent:
-            pm.delete(parent_node)
+            cmds.delete(parent_node_path)
 
 
 @contextlib.contextmanager
@@ -3558,7 +3688,17 @@ def get_color_management_preferences():
     # Split view and display from view_transform. view_transform comes in
     # format of "{view} ({display})".
     regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    if int(cmds.about(version=True)) <= 2020:
+        # view_transform comes in format of "{view} {display}" in 2020.
+        regex = re.compile(r"^(?P<view>.+) (?P<display>.+)$")
+
     match = regex.match(data["view_transform"])
+    if not match:
+        raise ValueError(
+            "Unable to parse view and display from Maya view transform: '{}' "
+            "using regex '{}'".format(data["view_transform"], regex.pattern)
+        )
+
     data.update({
         "display": match.group("display"),
         "view": match.group("view")

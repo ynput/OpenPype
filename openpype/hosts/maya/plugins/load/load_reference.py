@@ -12,7 +12,8 @@ from openpype.pipeline.create import (
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
-    get_container_members
+    get_container_members,
+    parent_nodes
 )
 
 
@@ -118,21 +119,21 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
-        import pymel.core as pm
 
         try:
             family = context["representation"]["context"]["family"]
         except ValueError:
             family = "model"
 
-        group_name = "{}:_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             file_url = self.prepare_root_value(self.fname,
                                                context["project"]["name"])
+
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -148,7 +149,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             # if there are cameras, try to lock their transforms
             self._lock_camera_transforms(new_nodes)
 
-            current_namespace = pm.namespaceInfo(currentNamespace=True)
+            current_namespace = cmds.namespaceInfo(currentNamespace=True)
 
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
@@ -158,37 +159,29 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             self[:] = new_nodes
 
             if attach_to_root:
-                group_node = pm.PyNode(group_name)
-                roots = set()
+                roots = cmds.listRelatives(group_name,
+                                           children=True,
+                                           fullPath=True) or []
 
-                for node in new_nodes:
-                    try:
-                        roots.add(pm.PyNode(node).getAllParents()[-2])
-                    except:  # noqa: E722
-                        pass
+                if family not in {"layout", "setdress",
+                                  "mayaAscii", "mayaScene"}:
+                    # QUESTION Why do we need to exclude these families?
+                    with parent_nodes(roots, parent=None):
+                        cmds.xform(group_name, zeroTransformPivots=True)
 
-                if family not in ["layout", "setdress",
-                                  "mayaAscii", "mayaScene"]:
-                    for root in roots:
-                        root.setParent(world=True)
-
-                group_node.zeroTransformPivots()
-                for root in roots:
-                    root.setParent(group_node)
-
-                cmds.setAttr(group_name + ".displayHandle", 1)
+                cmds.setAttr("{}.displayHandle".format(group_name), 1)
 
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
-                    group_node.useOutlinerColor.set(1)
-                    group_node.outlinerColor.set(
-                        (float(c[0]) / 255),
-                        (float(c[1]) / 255),
-                        (float(c[2]) / 255))
+                    cmds.setAttr("{}.useOutlinerColor".format(group_name), 1)
+                    cmds.setAttr("{}.outlinerColor".format(group_name),
+                                 (float(c[0]) / 255),
+                                 (float(c[1]) / 255),
+                                 (float(c[2]) / 255))
 
-                cmds.setAttr(group_name + ".displayHandle", 1)
+                cmds.setAttr("{}.displayHandle".format(group_name), 1)
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -202,15 +195,16 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 cy = cy + pivot[1]
                 cz = cz + pivot[2]
                 # set selection handle offset to center of bounding box
-                cmds.setAttr(group_name + ".selectHandleX", cx)
-                cmds.setAttr(group_name + ".selectHandleY", cy)
-                cmds.setAttr(group_name + ".selectHandleZ", cz)
+                cmds.setAttr("{}.selectHandleX".format(group_name), cx)
+                cmds.setAttr("{}.selectHandleY".format(group_name), cy)
+                cmds.setAttr("{}.selectHandleZ".format(group_name), cz)
 
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
             else:
                 if "translate" in options:
-                    cmds.setAttr(group_name + ".t", *options["translate"])
+                    cmds.setAttr("{}.translate".format(group_name),
+                                 *options["translate"])
             return new_nodes
 
     def switch(self, container, representation):
