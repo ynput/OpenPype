@@ -1,5 +1,8 @@
+# Environments where server url and api key are stored for global connection
 SERVER_URL_ENV_KEY = "AYON_SERVER_URL"
-SERVER_TOKEN_ENV_KEY = "AYON_TOKEN"
+SERVER_API_ENV_KEY = "AYON_API_KEY"
+# Backwards compatibility
+SERVER_TOKEN_ENV_KEY = SERVER_API_ENV_KEY
 
 # --- Project ---
 DEFAULT_PROJECT_FIELDS = {

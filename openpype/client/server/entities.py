@@ -216,8 +216,21 @@ def get_assets(
         yield convert_v4_folder_to_v3(folder, project_name)
 
 
-def get_archived_assets(*args, **kwargs):
-    raise NotImplementedError("'get_archived_assets' not implemented")
+def get_archived_assets(
+    project_name,
+    asset_ids=None,
+    asset_names=None,
+    parent_ids=None,
+    fields=None
+):
+    return get_assets(
+        project_name,
+        asset_ids,
+        asset_names,
+        parent_ids,
+        True,
+        fields
+    )
 
 
 def get_asset_ids_with_subsets(project_name, asset_ids=None):

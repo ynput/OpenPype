@@ -56,6 +56,7 @@ from ._api import (
     query_graphql,
 
     get_addons_info,
+    get_addon_url,
     download_addon_private_file,
 
     get_dependencies_info,
@@ -121,11 +122,35 @@ from ._api import (
     get_representation_parents,
     get_repre_ids_by_context_filters,
 
-    create_thumbnail,
     get_thumbnail,
     get_folder_thumbnail,
     get_version_thumbnail,
     get_workfile_thumbnail,
+    create_thumbnail,
+    update_thumbnail,
+
+    get_full_link_type_name,
+    get_link_types,
+    get_link_type,
+    create_link_type,
+    delete_link_type,
+    make_sure_link_type_exists,
+
+    create_link,
+    delete_link,
+    get_entities_links,
+    get_folder_links,
+    get_folders_links,
+    get_task_links,
+    get_tasks_links,
+    get_subset_links,
+    get_subsets_links,
+    get_version_links,
+    get_versions_links,
+    get_representations_links,
+    get_representation_links,
+
+    send_batch_operations,
 )
 
 
@@ -184,6 +209,7 @@ __all__ = (
     "query_graphql",
 
     "get_addons_info",
+    "get_addon_url",
     "download_addon_private_file",
 
     "get_dependencies_info",
@@ -248,9 +274,33 @@ __all__ = (
     "get_representation_parents",
     "get_repre_ids_by_context_filters",
 
-    "create_thumbnail",
     "get_thumbnail",
     "get_folder_thumbnail",
     "get_version_thumbnail",
     "get_workfile_thumbnail",
+    "create_thumbnail",
+    "update_thumbnail",
+
+    "get_full_link_type_name",
+    "get_link_types",
+    "get_link_type",
+    "create_link_type",
+    "delete_link_type",
+    "make_sure_link_type_exists",
+
+    "create_link",
+    "delete_link",
+    "get_entities_links",
+    "get_folder_links",
+    "get_folders_links",
+    "get_task_links",
+    "get_tasks_links",
+    "get_subset_links",
+    "get_subsets_links",
+    "get_version_links",
+    "get_versions_links",
+    "get_representations_links",
+    "get_representation_links",
+
+    "send_batch_operations",
 )
