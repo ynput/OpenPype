@@ -3871,7 +3871,7 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
         project_settings (dict): Project settings.
         log (object): Logging object.
     """
-    capture_preset = {}
+    capture_preset = None
     filtering_criteria = {
         "hosts": "maya",
         "families": "review",
@@ -3900,4 +3900,4 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
         )
         capture_preset = plugin_settings["capture_preset"]
 
-    return capture_preset
+    return capture_preset or {}
