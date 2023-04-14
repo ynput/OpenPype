@@ -10,30 +10,5 @@
                 "linux": []
             }
         }
-    },
-    "create": {
-        "CreateDebugLogs": {
-            "enabled": true,
-            "defaults": []
-        }
-    },
-    "publish": {
-        "ValidateWorkfilePaths": {
-            "enabled": true,
-            "optional": true,
-            "node_types": [],
-            "prohibited_vars": []
-        },
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        }
-    },
-    "workfile_build": {
-        "profiles": []
-    },
-    "templated_workfile_build": {
-        "profiles": []
     }
 }
