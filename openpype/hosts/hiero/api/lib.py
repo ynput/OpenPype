@@ -1417,7 +1417,15 @@ def parse_edl_events(path, color_edits_only=False):
 
 
 def parse_cdl(path):
-    """Using regex find Slope, Offset, Power, and Saturation from cdl formatting xml"""
+    """Parses cdl formatted xml using regex to find Slope, Offset, Power, and Saturation.
+
+    Args:
+        path (str): The path to a grade file that follows ASC xml formatting.
+
+    Returns:
+        dict: A dictionary containing the parsed slope, offset, power, and saturation values, as well as the path to the file.
+    """
+
     with open(path, "r") as f:
         cdl_data = f.read().lower()
 
