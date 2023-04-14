@@ -3871,6 +3871,8 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
         project_settings (dict): Project settings.
         log (object): Logging object.
     """
+    capture_preset = {}
+    
     filtering_criteria = {
         "hosts": "maya",
         "families": "review",
