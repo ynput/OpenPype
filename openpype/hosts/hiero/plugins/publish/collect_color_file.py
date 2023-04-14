@@ -17,8 +17,35 @@ COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
 
 
 class MissingColorFile(QtWidgets.QDialog):
-    """
-    What happens if CCC is found and has more than one ID. Need the ability to select the ID
+    """Constructs a dialog that allows user to locate a grade file on disk using any of the valid extensions in the
+    global variable COLOR_FILE_EXTS. If the path leads to an edl file the user can select which event in the edl they
+    would like to target.
+
+    Caveat: No ability to select CDL ID from CCC file. What happens if CCC is found and has more than one ID.
+
+    Parameters:
+        - shot_name (str): The name of the shot to locate the color file for.
+        - source_name (str): The name of the source to locate the color file for.
+        - main_grade (dict): A dictionary containing the SOPS values for the main grade.
+
+    Attributes:
+        - data (dict): Is utilized to store information gathered from UI.
+            - "cdl" (dict): CDL information (if applicable)
+                - "slope" (tuple): CDL Slope.
+                - "offset (tuple): CDL Offset.
+                - "power" (tuple): CDL Power.
+                - "sat" (float): CDL Saturation.
+            - "path" (str): Path to file that user selected.
+            - "ignore" (bool): Stores whether the grade will be ignored during color file integration.
+            - "type" (str): File type that was selected by user.
+        - default_browser_path (str): The default path for the file browser.
+        - prev_file_path_input (str): The previous file path input.
+        - prev_edl_entries_path (str): The previous EDL entries path.
+        - edl (dict): A dictionary containing EDL data.
+        - ignore_grade (bool): A flag indicating whether to ignore the grade.
+
+    returns:
+        QT signal for close or accept dialog
     """
 
     data = {}
@@ -584,7 +611,7 @@ def priority_color_file(color_files, item_name, source_name):
                         matches.append((priority, cdl, color_file))
                 else:
                     edits = phiero.parse_edl_events(color_file, color_edits_only=True)
-                    for edit in edits["events"]:
+                    for edit, edl_event in edits["events"].items():
                         edl_event = edits["events"][edit]
                         cdl = {
                             "slope": edl_event["slope"],
