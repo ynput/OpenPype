@@ -55,7 +55,10 @@ class ReviewMenu(MinorMode):
     def __init__(self):
         MinorMode.__init__(self)
         self.init("py-ReviewMenu-mode", None, None,
-                  [("OpenPype", [("Review", self.runme, None, None)])])
+                  [("OpenPype", [("Review", self.runme, None, None)])],
+                  # initialization order
+                  sortKey="source_setup",
+                  ordering=20)
 
         # spacers
         self.verticalSpacer = QtWidgets.QSpacerItem(
