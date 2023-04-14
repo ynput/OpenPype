@@ -1369,8 +1369,6 @@ def get_app_environments_for_context(
     Returns:
         dict: Environments for passed context and application.
     """
-    import rpdb
-    rpdb.set_trace()
     from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
     from openpype.lib.openpype_version import is_running_staging
