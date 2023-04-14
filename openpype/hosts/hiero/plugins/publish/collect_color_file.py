@@ -1,146 +1,19 @@
 import re
 import os.path
-import hiero
-import pyblish.api
 from glob import glob
 from pathlib import Path
 from datetime import datetime
-import opentimelineio as otio
-from qtpy import QtWidgets, QtCore, QtGui
 
+import hiero
+import pyblish.api
+from qtpy import QtWidgets, QtCore, QtGui
+from openpype.hosts.hiero import api as phiero
 
 LUTS_3D = ["cube", "3dl", "csp", "lut"]
 LUTS_2D = ["ccc", "cc", "cdl"]
 
 # EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
 COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
-
-
-def parse_edl_events(path, color_edits_only=False):
-    """
-    EDL is parsed using OTIO and then placed into a data struture for output "edl"
-    Data is stored under the understanding that it will be used for identifying plate names which are linked to CDLs
-
-    EDL LOC metadata is parsed with OTIO under markers and then regexed to find the main bit of information which
-    will link it to a plate name further down the line
-
-    Underscores are not counted ({0,}) but are left greedy incase naming doesn't follow normal shot convention
-    but instead follows plate pull naming convention.
-    Example: abc_101_010_010_element
-    Example: abc_101_010_010_element_fire
-
-    Examples of targeted matches:
-    abc_101_010_010_element
-    abc_101_010_010
-    abc_101_010
-    101_010_010
-
-    Examples of what does not match:
-    abc_101
-    101_001
-    _abc_101_010
-    abc_101_010_
-    """
-    shot_pattern = r"(?<!_)(?P<LOC>[a-zA-Z0-9]{3,4}_((?<=_)[a-zA-Z0-9]{3,4}_){1,2}[a-zA-Z0-9]{3,4}(?<!_)(_[a-zA-Z0-9]{1,}){0,})\b"
-
-    # ignore_timecode_mismatch is set to True to ensure that OTIO doesn't get confused by
-    # TO CLIP NAME and FROM CLIP NAME timecode ranges
-    timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
-
-    if len(timeline.tracks) > 1:
-        raise Exception("EDL can not contain more than one track. Something went wrong")
-
-    edl = {"events": {}}
-
-    # There is a possibility that the entry count doesn't start at 1.
-    # However it's extremely rare and it's purpose is to keep track of order
-    entry_count = 0
-    for clip in timeline.tracks[0].each_child():
-        if isinstance(clip, otio.schema.Clip):
-            entry_count += 1
-            loc_value = ""
-            tape_value = ""
-            entry = {"clip_name": clip.name}
-            if clip.metadata.get("cdl"):
-                cdl = clip.metadata["cdl"]
-                entry.update(
-                    {
-                        "slope": tuple(cdl["asc_sop"]["slope"]),
-                        "offset": tuple(cdl["asc_sop"]["offset"]),
-                        "power": tuple(cdl["asc_sop"]["power"]),
-                        "sat": cdl.get("asc_sat") or 1.0,
-                    }
-                )
-            else:
-                if color_edits_only:
-                    continue
-
-            if clip.markers:
-                # Join markers (*LOC). The data is strictly being stored to parse shot name
-                # Space is added to make parsing much easier and predictable
-                full_clip_loc = " ".join([" "] + [m.name for m in clip.markers])
-                loc_match = re.search(shot_pattern, full_clip_loc)
-                loc_value = loc_match.group("LOC") if loc_match else ""
-
-            # Capture tape and source name
-            if clip.metadata.get("cmx_3600"):
-                if clip.metadata["cmx_3600"].get("reel"):
-                    tape_value = clip.metadata["cmx_3600"].get("reel")
-                # No need for source name? If matches clip name and clip name is more intentional?
-                # if clip.metadata("cmx_3600").get("comments"):
-                #     for comment in clip.metadata("cmx_3600").get("comments"):
-                #         if "source file" in comment.lower():
-                #             source_file_value = comment.split(":", 1)[-1].strip()
-                #             break
-
-            entry.update(
-                {
-                    "tape": tape_value,
-                    "LOC": loc_value,
-                }
-            )
-            edl["events"][str(entry_count)] = entry
-
-    # Finish EDL info
-    edl["first_entry"] = 1
-    edl["last_entry"] = entry_count
-
-    return edl
-
-
-def parse_cdl(path):
-    with open(path, "r") as f:
-        cdl_data = f.read().lower()
-
-    slope_pattern = r"<slope>(?P<sR>[-,\d,.]*)[ ]{1}(?P<sG>[-,\d,.]+)[ ]{1}(?P<sB>[-,\d,.]*)</slope>"
-    offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
-    power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
-    sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
-
-    slope_match = re.search(slope_pattern, cdl_data)
-    slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) \
-        if slope_match else None
-
-    offset_match = re.search(offset_pattern, cdl_data)
-    offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB"))))) \
-        if offset_match else None
-
-    power_match = re.search(power_pattern, cdl_data)
-    power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB"))))) \
-        if power_match else None
-
-    sat_match = re.search(sat_pattern, cdl_data)
-    sat = float(sat_match.group("sat")) if sat_match else None
-
-    cdl = {
-        "slope": slope,
-        "offset": offset,
-        "power": power,
-        "sat": sat,
-        "file": path,
-    }
-
-    return cdl
 
 
 class MissingColorFile(QtWidgets.QDialog):
@@ -398,7 +271,7 @@ class MissingColorFile(QtWidgets.QDialog):
     def set_edl_info(self):
         event_number = self.entry_number.value()
         if self.edl:
-            event_info = self.edl["events"][str(event_number)]
+            event_info = self.edl["events"][event_number]
             self.tape_name.setText(event_info["tape"])
             self.clip_name.setText(event_info["clip_name"])
             self.loc_name.setText(event_info["LOC"])
@@ -422,7 +295,7 @@ class MissingColorFile(QtWidgets.QDialog):
         file_path = self.file_path_input.text()
         file_extension = file_path.lower().rsplit(".", 1)[-1]
         if file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
-            cdl = parse_cdl(file_path)
+            cdl = phiero.parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
                 cdl.get("offset"),
@@ -448,7 +321,7 @@ class MissingColorFile(QtWidgets.QDialog):
             return
 
         if file_extension == "edl":
-            edl = parse_edl_events(color_file_path)
+            edl = phiero.parse_edl_events(color_file_path)
             self.edl = edl
             self.entry_number.setMinimum(edl["first_entry"])
             self.entry_number.setMaximum(edl["last_entry"])
@@ -457,7 +330,7 @@ class MissingColorFile(QtWidgets.QDialog):
             self.set_edl_info()
 
         elif file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
-            cdl = parse_cdl(file_path)
+            cdl = phiero.parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
                 cdl.get("offset"),
@@ -646,7 +519,7 @@ def get_files(package_path, filters):
             files.setdefault(
                 path.suffix.replace(".", ""),
                 [path.resolve().__str__()]).append(path.resolve().__str__()
-           )
+            )
 
     return files
 
@@ -692,10 +565,10 @@ def priority_color_file(color_files, item_name, source_name):
                         elif color_ext == "cdl":
                             priority += 3
 
-                        cdl = parse_cdl(color_file)
+                        cdl = phiero.parse_cdl(color_file)
                         matches.append((priority, cdl, color_file))
                 else:
-                    edits = parse_edl_events(color_file, color_edits_only=True)
+                    edits = phiero.parse_edl_events(color_file, color_edits_only=True)
                     for edit in edits["events"]:
                         edl_event = edits["events"][edit]
                         cdl = {

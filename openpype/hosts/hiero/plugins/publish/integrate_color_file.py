@@ -1,146 +1,20 @@
 import re
-import os.path
 import copy
 import json
 import shutil
-import pyblish.api
-import xml.etree.ElementTree
+import os.path
 from glob import glob
 from datetime import datetime
-import opentimelineio as otio
+
+import pyblish.api
+import xml.etree.ElementTree
+from openpype.hosts.hiero import api as phiero
 
 LUTS_3D = ["cube", "3dl", "csp", "lut"]
 LUTS_2D = ["ccc", "cc", "cdl"]
 
 # EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
 COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
-
-
-def parse_edl_events(path, color_edits_only=False):
-    """
-    EDL is parsed using OTIO and then placed into a data struture for output "edl"
-    Data is stored under the understanding that it will be used for identifying plate names which are linked to CDLs
-
-    EDL LOC metadata is parsed with OTIO under markers and then regexed to find the main bit of information which
-    will link it to a plate name further down the line
-
-    Underscores are not counted ({0,}) but are left greedy incase naming doesn't follow normal shot convention
-    but instead follows plate pull naming convention.
-    Example: abc_101_010_010_element
-    Example: abc_101_010_010_element_fire
-
-    Examples of targeted matches:
-    abc_101_010_010_element
-    abc_101_010_010
-    abc_101_010
-    101_010_010
-
-    Examples of what does not match:
-    abc_101
-    101_001
-    _abc_101_010
-    abc_101_010_
-    """
-    shot_pattern = r"(?<!_)(?P<LOC>[a-zA-Z0-9]{3,4}_((?<=_)[a-zA-Z0-9]{3,4}_){1,2}[a-zA-Z0-9]{3,4}(?<!_)(_[a-zA-Z0-9]{1,}){0,})\b"
-
-    # ignore_timecode_mismatch is set to True to ensure that OTIO doesn't get confused by
-    # TO CLIP NAME and FROM CLIP NAME timecode ranges
-    timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
-
-    if len(timeline.tracks) > 1:
-        raise Exception("EDL can not contain more than one track. Something went wrong")
-
-    edl = {"events": {}}
-
-    # There is a possibility that the entry count doesn't start at 1.
-    # However it's extremely rare and it's purpose is to keep track of order
-    entry_count = 0
-    for clip in timeline.tracks[0].each_child():
-        if isinstance(clip, otio.schema.Clip):
-            entry_count += 1
-            loc_value = ""
-            tape_value = ""
-            entry = {"clip_name": clip.name}
-            if clip.metadata.get("cdl"):
-                cdl = clip.metadata["cdl"]
-                entry.update(
-                    {
-                        "slope": tuple(cdl["asc_sop"]["slope"]),
-                        "offset": tuple(cdl["asc_sop"]["offset"]),
-                        "power": tuple(cdl["asc_sop"]["power"]),
-                        "sat": cdl.get("asc_sat") or 1.0,
-                    }
-                )
-            else:
-                if color_edits_only:
-                    continue
-
-            if clip.markers:
-                # Join markers (*LOC). The data is strictly being stored to parse shot name
-                # Space is added to make parsing much easier and predictable
-                full_clip_loc = " ".join([" "] + [m.name for m in clip.markers])
-                loc_match = re.search(shot_pattern, full_clip_loc)
-                loc_value = loc_match.group("LOC") if loc_match else ""
-
-            # Capture tape and source name
-            if clip.metadata.get("cmx_3600"):
-                if clip.metadata["cmx_3600"].get("reel"):
-                    tape_value = clip.metadata["cmx_3600"].get("reel")
-                # No need for source name? If matches clip name and clip name is more intentional?
-                # if clip.metadata("cmx_3600").get("comments"):
-                #     for comment in clip.metadata("cmx_3600").get("comments"):
-                #         if "source file" in comment.lower():
-                #             source_file_value = comment.split(":", 1)[-1].strip()
-                #             break
-
-            entry.update(
-                {
-                    "tape": tape_value,
-                    "LOC": loc_value,
-                }
-            )
-            edl["events"][str(entry_count)] = entry
-
-    # Finish EDL info
-    edl["first_entry"] = 1
-    edl["last_entry"] = entry_count
-
-    return edl
-
-
-def parse_cdl(path):
-    with open(path, "r") as f:
-        cdl_data = f.read().lower()
-
-    slope_pattern = r"<slope>(?P<sR>[-,\d,.]*)[ ]{1}(?P<sG>[-,\d,.]+)[ ]{1}(?P<sB>[-,\d,.]*)</slope>"
-    offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
-    power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
-    sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
-
-    slope_match = re.search(slope_pattern, cdl_data)
-    slope = (tuple(map(float, (slope_match.group("sR"), slope_match.group("sG"), slope_match.group("sB"))))) \
-        if slope_match else None
-
-    offset_match = re.search(offset_pattern, cdl_data)
-    offset = (tuple(map(float, (offset_match.group("oR"), offset_match.group("oG"), offset_match.group("oB"))))) \
-        if offset_match else None
-
-    power_match = re.search(power_pattern, cdl_data)
-    power = (tuple(map(float, (power_match.group("pR"), power_match.group("pG"), power_match.group("pB"))))) \
-        if power_match else None
-
-    sat_match = re.search(sat_pattern, cdl_data)
-    sat = float(sat_match.group("sat")) if sat_match else None
-
-    cdl = {
-        "slope": slope,
-        "offset": offset,
-        "power": power,
-        "sat": sat,
-        "file": path,
-    }
-
-    return cdl
 
 
 def format_xml(root):
@@ -287,7 +161,7 @@ def create_backup_grade(grade):
 def same_grade(color_path, grade_path, color_type, cdl={}):
     """Test whether two color files have the same values"""
     if color_type == "edl":
-        match_cdl = parse_cdl(grade_path)
+        match_cdl = phiero.parse_cdl(grade_path)
         if (
             cdl.get("slope") == match_cdl.get("slope")
             and cdl.get("offset") == match_cdl.get("offset")
@@ -304,11 +178,47 @@ def same_grade(color_path, grade_path, color_type, cdl={}):
 
 
 def sort_by_descriptor(item):
-    """Sort is done by giving a value to the alpha part of the plate name description and adding an integer for plate number"""
+    """The function extracts the descriptor part from the filename and converts it into a comparable value by assigning a
+    value to the alpha part of the descriptor and adding an integer for the grade number. The alpha part of the descriptor
+    is matched against a pre-defined order and multiplied by order index giving it a higher priority. The grade number
+    and grade version is added to the alpha part to break ties between filenames with the same alpha part.
+
+    Args:
+        item (tuple): A tuple containing the file name and the file path.
+
+    Returns:
+        int: A comparable value to which plate should be the closest match to a main plate descriptor.
+
+    Examples:
+        >>> sort_by_descriptor(('cwai_107_AA7_040_E01_v001', '/path/to/file/cwai_107_AA7_040_E01_v001.ext'))
+        32
+
+        >>> sort_by_descriptor(('cwai_107_AA7_040_E01_v002', '/path/to/file/cwai_107_AA7_040_E01_v001.ext'))
+        33
+
+        >>> sort_by_descriptor(('cwai_107_AA7_040_BG01_v001', '/path/to/file/cwai_107_AA7_040_BG01_v001.ext'))
+        22
+
+        >>> sort_by_descriptor(('cwai_107_AA7_040_BG03_v001', '/path/to/file/cwai_107_AA7_040_BG03_v001.ext'))
+        24
+    """
     plate_prefix_order = ("pl", "bg", "e", "fg")
     id_, grade = item
     grade_name = os.path.basename(grade).lower().rsplit(".", 1)[0]
-    descriptor = grade_name.split("_")[-1]
+    grade_name_end = grade_name.split("_")[-1]
+    # Take into consideration the version of the grade if exists
+    if grade_name_end.lower().startswith("v"):
+        version = grade_name_end.lower().replace("v", "")
+        if version.isdigit():
+            version = int(version)
+        else:
+            version = 0
+        # If version on grade then descript will be one index further from the end of grade name
+        descriptor = grade_name.split("_")[-2]
+    else:
+        version = 0
+        descriptor = grade_name.split("_")[-1]
+
     # This split will result in two parts. the descriptor alpha and the descriptor number
     descript_num_split = re.split("(\d+)", descriptor)
     if len(descript_num_split) <= 1:
@@ -317,7 +227,7 @@ def sort_by_descriptor(item):
     # re.split will always leave an empty string at the end of the match. This is the reason for the -2 index
     num = int(descript_num_split[-2]) if descript_num_split[-2].isdigit() else 0
     # descriptor_value gives a comparable value to which plate should be the closest match to a main plate descriptor
-    descriptor_value = plate_prefix_order.count(alpha) * 10 + num
+    descriptor_value = plate_prefix_order.count(alpha) * 10 + num + version
 
     return descriptor_value
 
