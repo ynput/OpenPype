@@ -427,7 +427,6 @@ def get_output_link_versions(project_name, version_id, fields=None):
     if not version_id:
         return []
 
-    from openpype.vendor.python.common.ayon_api import get_server_api_connection
     con = get_server_api_connection()
     version_links = con.get_version_links(
         project_name, version_id, link_direction="out")
