@@ -61,7 +61,10 @@ class OpenPypeMenus(MinorMode):
                     # TODO: add separator if possible
                     ("Work Files...", self.workfiles, None, None),
                 ])
-            ]
+            ],
+            # initialization order
+            sortKey="source_setup",
+            ordering=15
         )
 
     @property
