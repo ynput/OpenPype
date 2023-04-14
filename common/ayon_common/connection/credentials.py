@@ -17,6 +17,7 @@ from typing import Optional, Union, Any
 
 import ayon_api
 
+from ayon_api.constants import SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY
 from ayon_api.exceptions import UrlError
 from ayon_api.utils import (
     validate_url,
@@ -383,7 +384,7 @@ def load_environments():
     """Load environments on startup.
 
     Handle environments needed for connection with server. Environments are
-    'AYON_SERVER_URL' and 'AYON_TOKEN'.
+    'AYON_SERVER_URL' and 'AYON_API_KEY'.
 
     Server is looked up from environment. Already set environent is not
     changed. If environemnt is not filled then last server stored in appdirs
@@ -394,16 +395,16 @@ def load_environments():
     based on server url.
     """
 
-    server_url = os.environ.get("AYON_SERVER_URL")
+    server_url = os.environ.get(SERVER_URL_ENV_KEY)
     if not server_url:
         server_url = get_last_server()
         if not server_url:
             return
-        os.environ["AYON_SERVER_URL"] = server_url
+        os.environ[SERVER_URL_ENV_KEY] = server_url
 
-    if not os.environ.get("AYON_TOKEN"):
+    if not os.environ.get(SERVER_API_ENV_KEY):
         if token := load_token(server_url):
-            os.environ["AYON_TOKEN"] = token
+            os.environ[SERVER_API_ENV_KEY] = token
 
 
 def set_environments(url: str, token: str):
@@ -441,7 +442,7 @@ def need_server_or_login() -> bool:
         bool: 'True' if server and token are available. Otherwise 'False'.
     """
 
-    server_url = os.environ.get("AYON_SERVER_URL")
+    server_url = os.environ.get(SERVER_URL_ENV_KEY)
     if not server_url:
         return True
 
@@ -450,12 +451,14 @@ def need_server_or_login() -> bool:
     except UrlError:
         return True
 
-    token = os.environ.get("AYON_TOKEN")
+    token = os.environ.get(SERVER_API_ENV_KEY)
     if token:
         return not is_token_valid(server_url, token)
 
     token = load_token(server_url)
-    return not is_token_valid(server_url, token)
+    if token:
+        return not is_token_valid(server_url, token)
+    return True
 
 
 def confirm_server_login(url, token, username):

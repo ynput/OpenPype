@@ -16,7 +16,7 @@ def folders_tasks_graphql_query(fields):
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
 
-    folders_field = project_field.add_field("folders", has_edges=True)
+    folders_field = project_field.add_field_with_edges("folders")
     folders_field.set_filter("ids", folder_ids_var)
     folders_field.set_filter("parentIds", parent_folder_ids_var)
     folders_field.set_filter("names", folder_names_var)
@@ -25,7 +25,7 @@ def folders_tasks_graphql_query(fields):
 
     fields = set(fields)
     fields.discard("tasks")
-    tasks_field = folders_field.add_field("tasks", has_edges=True)
+    tasks_field = folders_field.add_field_with_edges("tasks")
     tasks_field.add_field("name")
     tasks_field.add_field("taskType")
 
