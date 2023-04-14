@@ -49,7 +49,9 @@ from .lib import (
     apply_colorspace_project,
     apply_colorspace_clips,
     is_overlapping,
-    get_sequence_pattern_and_padding
+    get_sequence_pattern_and_padding,
+    parse_edl_events,
+    parse_cdl,
 )
 
 from .plugin import (
@@ -108,6 +110,8 @@ __all__ = [
     "apply_colorspace_project",
     "apply_colorspace_clips",
     "get_sequence_pattern_and_padding",
+    "parse_edl_events",
+    "parse_cdl",
     # deprecated
     "get_track_item_pype_tag",
     "set_track_item_pype_tag",
