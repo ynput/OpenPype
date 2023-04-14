@@ -11,7 +11,7 @@ import socket
 
 from .constants import (
     SERVER_URL_ENV_KEY,
-    SERVER_TOKEN_ENV_KEY,
+    SERVER_API_ENV_KEY,
 )
 from .server_api import ServerAPI
 from .exceptions import FailedServiceInit
@@ -21,7 +21,7 @@ class GlobalServerAPI(ServerAPI):
     """Extended server api which also handles storing tokens and url.
 
     Created object expect to have set environment variables
-    'AYON_SERVER_URL'. Also is expecting filled 'AYON_TOKEN'
+    'AYON_SERVER_URL'. Also is expecting filled 'AYON_API_KEY'
     but that can be filled afterwards with calling 'login' method.
     """
 
@@ -44,7 +44,7 @@ class GlobalServerAPI(ServerAPI):
         previous_token = self._access_token
         super(GlobalServerAPI, self).login(username, password)
         if self.has_valid_token and previous_token != self._access_token:
-            os.environ[SERVER_TOKEN_ENV_KEY] = self._access_token
+            os.environ[SERVER_API_ENV_KEY] = self._access_token
 
     @staticmethod
     def get_url():
@@ -52,7 +52,7 @@ class GlobalServerAPI(ServerAPI):
 
     @staticmethod
     def get_token():
-        return os.environ.get(SERVER_TOKEN_ENV_KEY)
+        return os.environ.get(SERVER_API_ENV_KEY)
 
     @staticmethod
     def set_environments(url, token):
@@ -64,7 +64,7 @@ class GlobalServerAPI(ServerAPI):
         """
 
         os.environ[SERVER_URL_ENV_KEY] = url or ""
-        os.environ[SERVER_TOKEN_ENV_KEY] = token or ""
+        os.environ[SERVER_API_ENV_KEY] = token or ""
 
 
 class GlobalContext:
@@ -151,7 +151,7 @@ class ServiceContext:
         connect=True
     ):
         token = cls.get_value_from_envs(
-            ("AY_API_KEY", "AYON_TOKEN"),
+            ("AY_API_KEY", "AYON_API_KEY"),
             token
         )
         server_url = cls.get_value_from_envs(
@@ -322,7 +322,7 @@ def get_server_api_connection():
     """Access to global scope object of GlobalServerAPI.
 
     This access expect to have set environment variables 'AYON_SERVER_URL'
-    and 'AYON_TOKEN'.
+    and 'AYON_API_KEY'.
 
     Returns:
         GlobalServerAPI: Object of connection to server.
@@ -519,6 +519,11 @@ def get_attributes_for_type(*args, **kwargs):
 def get_addons_info(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_addons_info(*args, **kwargs)
+
+
+def get_addon_url(addon_name, addon_version, *subpaths):
+    con = get_server_api_connection()
+    return con.get_addon_url(addon_name, addon_version, *subpaths)
 
 
 def download_addon_private_file(*args, **kwargs):
@@ -776,11 +781,6 @@ def delete_project(project_name):
     return con.delete_project(project_name)
 
 
-def create_thumbnail(project_name, src_filepath):
-    con = get_server_api_connection()
-    return con.create_thumbnail(project_name, src_filepath)
-
-
 def get_thumbnail(project_name, entity_type, entity_id, thumbnail_id=None):
     con = get_server_api_connection()
     con.get_thumbnail(project_name, entity_type, entity_id, thumbnail_id)
@@ -801,11 +801,259 @@ def get_workfile_thumbnail(project_name, workfile_id, thumbnail_id=None):
     return con.get_workfile_thumbnail(project_name, workfile_id, thumbnail_id)
 
 
-def create_thumbnail(project_name, src_filepath):
+def create_thumbnail(project_name, src_filepath, thumbnail_id=None):
     con = get_server_api_connection()
-    return con.create_thumbnail(project_name, src_filepath)
+    return con.create_thumbnail(project_name, src_filepath, thumbnail_id)
+
+
+def update_thumbnail(project_name, thumbnail_id, src_filepath):
+    con = get_server_api_connection()
+    return con.update_thumbnail(project_name, thumbnail_id, src_filepath)
 
 
 def get_default_fields_for_type(entity_type):
     con = get_server_api_connection()
     return con.get_default_fields_for_type(entity_type)
+
+
+def get_full_link_type_name(link_type_name, input_type, output_type):
+    con = get_server_api_connection()
+    return con.get_full_link_type_name(
+        link_type_name, input_type, output_type)
+
+
+def get_link_types(project_name):
+    con = get_server_api_connection()
+    return con.get_link_types(project_name)
+
+
+def get_link_type(project_name, link_type_name, input_type, output_type):
+    con = get_server_api_connection()
+    return con.get_link_type(
+        project_name, link_type_name, input_type, output_type)
+
+
+def create_link_type(
+    project_name, link_type_name, input_type, output_type, data=None):
+    con = get_server_api_connection()
+    return con.create_link_type(
+        project_name, link_type_name, input_type, output_type, data=data)
+
+
+def delete_link_type(project_name, link_type_name, input_type, output_type):
+    con = get_server_api_connection()
+    return con.delete_link_type(
+        project_name, link_type_name, input_type, output_type)
+
+
+def make_sure_link_type_exists(
+    project_name, link_type_name, input_type, output_type, data=None
+):
+    con = get_server_api_connection()
+    return con.make_sure_link_type_exists(
+        project_name, link_type_name, input_type, output_type, data=data
+    )
+
+
+def create_link(
+    project_name,
+    link_type_name,
+    input_id,
+    input_type,
+    output_id,
+    output_type
+):
+    con = get_server_api_connection()
+    return con.create_link(
+        project_name,
+        link_type_name,
+        input_id, input_type,
+        output_id, output_type
+    )
+
+
+def delete_link(project_name, link_id):
+    con = get_server_api_connection()
+    return con.delete_link(project_name, link_id)
+
+
+def get_entities_links(
+    project_name,
+    entity_type,
+    entity_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_entities_links(
+        project_name,
+        entity_type,
+        entity_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_folders_links(
+    project_name,
+    folder_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_folders_links(
+        project_name,
+        folder_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_folder_links(
+    project_name,
+    folder_id,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_folder_links(
+        project_name,
+        folder_id,
+        link_types,
+        link_direction
+    )
+
+
+def get_tasks_links(
+    project_name,
+    task_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_tasks_links(
+        project_name,
+        task_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_task_links(
+    project_name,
+    task_id,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_task_links(
+        project_name,
+        task_id,
+        link_types,
+        link_direction
+    )
+
+
+def get_subsets_links(
+    project_name,
+    subset_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_subsets_links(
+        project_name,
+        subset_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_subset_links(
+    project_name,
+    subset_id,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_subset_links(
+        project_name,
+        subset_id,
+        link_types,
+        link_direction
+    )
+
+
+def get_versions_links(
+    project_name,
+    version_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_versions_links(
+        project_name,
+        version_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_version_links(
+    project_name,
+    version_id,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_version_links(
+        project_name,
+        version_id,
+        link_types,
+        link_direction
+    )
+
+
+def get_representations_links(
+    project_name,
+    representation_ids=None,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_representations_links(
+        project_name,
+        representation_ids,
+        link_types,
+        link_direction
+    )
+
+
+def get_representation_links(
+    project_name,
+    representation_id,
+    link_types=None,
+    link_direction=None
+):
+    con = get_server_api_connection()
+    return con.get_representation_links(
+        project_name,
+        representation_id,
+        link_types,
+        link_direction
+    )
+
+
+def send_batch_operations(
+    project_name,
+    operations,
+    can_fail=False,
+    raise_on_fail=True
+):
+    con = get_server_api_connection()
+    return con.send_batch_operations(
+        project_name,
+        operations,
+        can_fail=can_fail,
+        raise_on_fail=raise_on_fail
+    )

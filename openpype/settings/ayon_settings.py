@@ -253,19 +253,6 @@ def _convert_royalrender_system_settings(ayon_settings, output):
 def _convert_modules_system(
     ayon_settings, output, addon_versions, default_settings
 ):
-    # TODO remove when not needed
-    # - these modules are not and won't be in AYON avaialble
-    for module_name in (
-        "addon_paths",
-        "avalon",
-        "job_queue",
-        "log_viewer",
-        "project_manager",
-    ):
-        output["modules"][module_name] = (
-            default_settings["modules"][module_name]
-        )
-
     # TODO add all modules
     # TODO add 'enabled' values
     for key, func in (
@@ -282,6 +269,11 @@ def _convert_modules_system(
             func(ayon_settings, output)
 
     output_modules = output["modules"]
+    # TODO remove when not needed
+    for module_name, value in default_settings["modules"].items():
+        if module_name not in output_modules:
+            output_modules[module_name] = value
+
     for module_name, value in default_settings["modules"].items():
         if "enabled" not in value or module_name not in output_modules:
             continue

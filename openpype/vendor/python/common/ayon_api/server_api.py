@@ -46,6 +46,7 @@ from .exceptions import (
     AuthenticationError,
     ServerNotReached,
     ServerError,
+    HTTPRequestError,
 )
 from .utils import (
     RepresentationParents,
@@ -134,7 +135,10 @@ class RestApiResponse(object):
         return self.status
 
     def raise_for_status(self):
-        self._response.raise_for_status()
+        try:
+            self._response.raise_for_status()
+        except requests.exceptions.HTTPError as exc:
+            raise HTTPRequestError(str(exc), exc.response)
 
     def __enter__(self, *args, **kwargs):
         return self._response.__enter__(*args, **kwargs)
@@ -143,9 +147,7 @@ class RestApiResponse(object):
         return key in self.data
 
     def __repr__(self):
-        return "<{}: {} ({})>".format(
-            self.__class__.__name__, self.status, self.detail
-        )
+        return "<{} [{}]>".format(self.__class__.__name__, self.status)
 
     def __len__(self):
         return 200 <= self.status < 400
@@ -296,6 +298,14 @@ class ServerAPI(object):
             default if a method for settings won't get any (by default is
             'production').
     """
+
+    _entity_types_link_mapping = {
+        "folder": ("folderIds", "folders"),
+        "task": ("taskIds", "tasks"),
+        "subset": ("subsetIds", "subsets"),
+        "version": ("versionIds", "versions"),
+        "representation": ("representationIds", "representations"),
+    }
 
     def __init__(
         self,
@@ -1465,6 +1475,35 @@ class ServerAPI(object):
         response.raise_for_status()
         return response.data
 
+    def get_addon_url(self, addon_name, addon_version, *subpaths):
+        """Calculate url to addon route.
+
+        Example:
+            >>> api = ServerAPI("https://your.url.com")
+            >>> api.get_addon_url(
+            ...     "example", "1.0.0", "private", "my.zip")
+            'https://your.url.com/addons/example/1.0.0/private/my.zip'
+
+        Args:
+            addon_name (str): Name of addon.
+            addon_version (str): Version of addon.
+            subpaths (tuple[str]): Any amount of subpaths that are added to
+                addon url.
+
+        Returns:
+            str: Final url.
+        """
+
+        ending = ""
+        if subpaths:
+            ending = "/{}".format("/".join(subpaths))
+        return "{}/addons/{}/{}{}".format(
+            self._base_url,
+            addon_name,
+            addon_version,
+            ending
+        )
+
     def download_addon_private_file(
         self,
         addon_name,
@@ -1503,10 +1542,10 @@ class ServerAPI(object):
         if not os.path.exists(dst_dirpath):
             os.makedirs(dst_dirpath)
 
-        url = "{}/addons/{}/{}/private/{}".format(
-            self._base_url,
+        url = self.get_addon_url(
             addon_name,
             addon_version,
+            "private",
             filename
         )
         self.download_file(
@@ -1779,9 +1818,13 @@ class ServerAPI(object):
             dict[str, Any]: Schema of studio/project settings.
         """
 
-        endpoint = "addons/{}/{}/schema".format(addon_name, addon_version)
+        args = tuple()
         if project_name:
-            endpoint += "/{}".format(project_name)
+            args = (project_name, )
+
+        endpoint = self.get_addon_url(
+            addon_name, addon_version, "schema", *args
+        )
         result = self.get(endpoint)
         result.raise_for_status()
         return result.data
@@ -2407,6 +2450,146 @@ class ServerAPI(object):
                     fill_own_attribs(folder)
                 yield folder
 
+    def get_folder_by_id(
+        self,
+        project_name,
+        folder_id,
+        fields=None,
+        own_attributes=False
+    ):
+        """Query folder entity by id.
+
+        Args:
+            project_name (str): Name of project where to look for queried
+                entities.
+            folder_id (str): Folder id.
+            fields (Union[Iterable[str], None]): Fields that should be returned.
+                All fields are returned if 'None' is passed.
+            own_attributes (bool): Attribute values that are not explicitly set
+                on entity will have 'None' value.
+
+        Returns:
+            Union[dict, None]: Folder entity data or None if was not found.
+        """
+
+        folders = self.get_folders(
+            project_name,
+            folder_ids=[folder_id],
+            active=None,
+            fields=fields,
+            own_attributes=own_attributes
+        )
+        for folder in folders:
+            return folder
+        return None
+
+    def get_folder_by_path(
+        self,
+        project_name,
+        folder_path,
+        fields=None,
+        own_attributes=False
+    ):
+        """Query folder entity by path.
+
+        Folder path is a path to folder with all parent names joined by slash.
+
+        Args:
+            project_name (str): Name of project where to look for queried
+                entities.
+            folder_path (str): Folder path.
+            fields (Union[Iterable[str], None]): Fields that should be returned.
+                All fields are returned if 'None' is passed.
+            own_attributes (bool): Attribute values that are not explicitly set
+                on entity will have 'None' value.
+
+        Returns:
+            Union[dict, None]: Folder entity data or None if was not found.
+        """
+
+        folders = self.get_folders(
+            project_name,
+            folder_paths=[folder_path],
+            active=None,
+            fields=fields,
+            own_attributes=own_attributes
+        )
+        for folder in folders:
+            return folder
+        return None
+
+    def get_folder_by_name(
+        self,
+        project_name,
+        folder_name,
+        fields=None,
+        own_attributes=False
+    ):
+        """Query folder entity by path.
+
+        Warnings:
+            Folder name is not a unique identifier of a folder. Function is
+                kept for OpenPype 3 compatibility.
+
+        Args:
+            project_name (str): Name of project where to look for queried
+                entities.
+            folder_name (str): Folder name.
+            fields (Union[Iterable[str], None]): Fields that should be returned.
+                All fields are returned if 'None' is passed.
+            own_attributes (bool): Attribute values that are not explicitly set
+                on entity will have 'None' value.
+
+        Returns:
+            Union[dict, None]: Folder entity data or None if was not found.
+        """
+
+        folders = self.get_folders(
+            project_name,
+            folder_names=[folder_name],
+            active=None,
+            fields=fields,
+            own_attributes=own_attributes
+        )
+        for folder in folders:
+            return folder
+        return None
+
+    def get_folder_ids_with_subsets(self, project_name, folder_ids=None):
+        """Find folders which have at least one subset.
+
+        Folders that have at least one subset should be immutable, so they
+        should not change path -> change of name or name of any parent
+        is not possible.
+
+        Args:
+            project_name (str): Name of project.
+            folder_ids (Union[Iterable[str], None]): Limit folder ids filtering
+                to a set of folders. If set to None all folders on project are
+                checked.
+
+        Returns:
+            set[str]: Folder ids that have at least one subset.
+        """
+
+        if folder_ids is not None:
+            folder_ids = set(folder_ids)
+            if not folder_ids:
+                return set()
+
+        query = folders_graphql_query({"id"})
+        query.set_variable_value("projectName", project_name)
+        query.set_variable_value("folderHasSubsets", True)
+        if folder_ids:
+            query.set_variable_value("folderIds", list(folder_ids))
+
+        parsed_data = query.query(self)
+        folders = parsed_data["project"]["folders"]
+        return {
+            folder["id"]
+            for folder in folders
+        }
+
     def get_tasks(
         self,
         project_name,
@@ -2568,147 +2751,6 @@ class ServerAPI(object):
         ):
             return task
         return None
-
-
-    def get_folder_by_id(
-        self,
-        project_name,
-        folder_id,
-        fields=None,
-        own_attributes=False
-    ):
-        """Query folder entity by id.
-
-        Args:
-            project_name (str): Name of project where to look for queried
-                entities.
-            folder_id (str): Folder id.
-            fields (Union[Iterable[str], None]): Fields that should be returned.
-                All fields are returned if 'None' is passed.
-            own_attributes (bool): Attribute values that are not explicitly set
-                on entity will have 'None' value.
-
-        Returns:
-            Union[dict, None]: Folder entity data or None if was not found.
-        """
-
-        folders = self.get_folders(
-            project_name,
-            folder_ids=[folder_id],
-            active=None,
-            fields=fields,
-            own_attributes=own_attributes
-        )
-        for folder in folders:
-            return folder
-        return None
-
-    def get_folder_by_path(
-        self,
-        project_name,
-        folder_path,
-        fields=None,
-        own_attributes=False
-    ):
-        """Query folder entity by path.
-
-        Folder path is a path to folder with all parent names joined by slash.
-
-        Args:
-            project_name (str): Name of project where to look for queried
-                entities.
-            folder_path (str): Folder path.
-            fields (Union[Iterable[str], None]): Fields that should be returned.
-                All fields are returned if 'None' is passed.
-            own_attributes (bool): Attribute values that are not explicitly set
-                on entity will have 'None' value.
-
-        Returns:
-            Union[dict, None]: Folder entity data or None if was not found.
-        """
-
-        folders = self.get_folders(
-            project_name,
-            folder_paths=[folder_path],
-            active=None,
-            fields=fields,
-            own_attributes=own_attributes
-        )
-        for folder in folders:
-            return folder
-        return None
-
-    def get_folder_by_name(
-        self,
-        project_name,
-        folder_name,
-        fields=None,
-        own_attributes=False
-    ):
-        """Query folder entity by path.
-
-        Warnings:
-            Folder name is not a unique identifier of a folder. Function is
-                kept for OpenPype 3 compatibility.
-
-        Args:
-            project_name (str): Name of project where to look for queried
-                entities.
-            folder_name (str): Folder name.
-            fields (Union[Iterable[str], None]): Fields that should be returned.
-                All fields are returned if 'None' is passed.
-            own_attributes (bool): Attribute values that are not explicitly set
-                on entity will have 'None' value.
-
-        Returns:
-            Union[dict, None]: Folder entity data or None if was not found.
-        """
-
-        folders = self.get_folders(
-            project_name,
-            folder_names=[folder_name],
-            active=None,
-            fields=fields,
-            own_attributes=own_attributes
-        )
-        for folder in folders:
-            return folder
-        return None
-
-    def get_folder_ids_with_subsets(self, project_name, folder_ids=None):
-        """Find folders which have at least one subset.
-
-        Folders that have at least one subset should be immutable, so they
-        should not change path -> change of name or name of any parent
-        is not possible.
-
-        Args:
-            project_name (str): Name of project.
-            folder_ids (Union[Iterable[str], None]): Limit folder ids filtering
-                to a set of folders. If set to None all folders on project are
-                checked.
-
-        Returns:
-            set[str]: Folder ids that have at least one subset.
-        """
-
-        if folder_ids is not None:
-            folder_ids = set(folder_ids)
-            if not folder_ids:
-                return set()
-
-        query = folders_graphql_query({"id"})
-        query.set_variable_value("projectName", project_name)
-        query.set_variable_value("folderHasSubsets", True)
-        if folder_ids:
-            query.set_variable_value("folderIds", list(folder_ids))
-
-        parsed_data = query.query(self)
-        folders = parsed_data["project"]["folders"]
-        return {
-            folder["id"]
-            for folder in folders
-        }
 
     def _filter_subset(
         self, project_name, subset, active, own_attributes, use_rest
@@ -4021,6 +4063,97 @@ class ServerAPI(object):
             project_name, "workfile", workfile_id, thumbnail_id
         )
 
+    def _get_thumbnail_mime_type(self, thumbnail_path):
+        """Get thumbnail mime type on thumbnail creation based on source path.
+
+        Args:
+            thumbnail_path (str): Path to thumbnail source fie.
+
+        Returns:
+            str: Mime type used for thumbnail creation.
+
+        Raises:
+            ValueError: Mime type cannot be determined.
+        """
+
+        ext = os.path.splitext(thumbnail_path)[-1].lower()
+        if ext == ".png":
+            return "image/png"
+
+        elif ext in (".jpeg", ".jpg"):
+            return "image/jpeg"
+
+        raise ValueError(
+            "Thumbnail source file has unknown extensions {}".format(ext))
+
+    def create_thumbnail(self, project_name, src_filepath, thumbnail_id=None):
+        """Create new thumbnail on server from passed path.
+
+        Args:
+            project_name (str): Project where the thumbnail will be created
+                and can be used.
+            src_filepath (str): Filepath to thumbnail which should be uploaded.
+            thumbnail_id (str): Prepared if of thumbnail.
+
+        Returns:
+            str: Created thumbnail id.
+
+        Raises:
+            ValueError: When thumbnail source cannot be processed.
+        """
+
+        if not os.path.exists(src_filepath):
+            raise ValueError("Entered filepath does not exist.")
+
+        if thumbnail_id:
+            self.update_thumbnail(
+                project_name,
+                thumbnail_id,
+                src_filepath
+            )
+            return thumbnail_id
+
+        mime_type = self._get_thumbnail_mime_type(src_filepath)
+        with open(src_filepath, "rb") as stream:
+            content = stream.read()
+
+        response = self.raw_post(
+            "projects/{}/thumbnails".format(project_name),
+            headers={"Content-Type": mime_type},
+            data=content
+        )
+        response.raise_for_status()
+        return response.data["id"]
+
+    def update_thumbnail(self, project_name, thumbnail_id, src_filepath):
+        """Change thumbnail content by id.
+
+        Update can be also used to create new thumbnail.
+
+        Args:
+            project_name (str): Project where the thumbnail will be created
+                and can be used.
+            thumbnail_id (str): Thumbnail id to update.
+            src_filepath (str): Filepath to thumbnail which should be uploaded.
+
+        Raises:
+            ValueError: When thumbnail source cannot be processed.
+        """
+
+        if not os.path.exists(src_filepath):
+            raise ValueError("Entered filepath does not exist.")
+
+        mime_type = self._get_thumbnail_mime_type(src_filepath)
+        with open(src_filepath, "rb") as stream:
+            content = stream.read()
+
+        response = self.raw_put(
+            "projects/{}/thumbnails/{}".format(project_name, thumbnail_id),
+            headers={"Content-Type": mime_type},
+            data=content
+        )
+        response.raise_for_status()
+
     def create_project(
         self,
         project_name,
@@ -4046,7 +4179,6 @@ class ServerAPI(object):
             library_project (bool): Project is library project.
             preset_name (str): Name of anatomy preset. Default is used if not
                 passed.
-            con (ServerAPI): Connection to server with logged user.
 
         Raises:
             ValueError: When project name already exists.
@@ -4107,55 +4239,562 @@ class ServerAPI(object):
                 )
             )
 
-    def create_thumbnail(self, project_name, src_filepath):
-        """Create new thumbnail on server from passed path.
+    # --- Links ---
+    def get_full_link_type_name(self, link_type_name, input_type, output_type):
+        """Calculate full link type name used for query from server.
 
         Args:
-            project_name (str): Project where the thumbnail will be created
-                and can be used.
-            src_filepath (str): Filepath to thumbnail which should be uploaded.
+            link_type_name (str): Type of link.
+            input_type (str): Input entity type of link.
+            output_type (str): Output entity type of link.
 
         Returns:
-            str: Created thumbnail id.
-
-        Todos:
-            Define more specific exceptions for thumbnail creation.
-
-        Raises:
-            ValueError: When thumbnail creation fails (due to many reasons).
+            str: Full name of link type used for query from server.
         """
 
-        if not os.path.exists(src_filepath):
-            raise ValueError("Entered filepath does not exist.")
+        return "|".join([link_type_name, input_type, output_type])
 
-        ext = os.path.splitext(src_filepath)[-1].lower()
-        if ext == ".png":
-            mime_type = "image/png"
+    def get_link_types(self, project_name):
+        """All link types available on a project.
 
-        elif ext in (".jpeg", ".jpg"):
-            mime_type = "image/jpeg"
+        Example output:
+            [
+                {
+                    "name": "reference|folder|folder",
+                    "link_type": "reference",
+                    "input_type": "folder",
+                    "output_type": "folder",
+                    "data": {}
+                }
+            ]
 
-        else:
-            raise ValueError(
-                "Thumbnail source file has unknown extensions {}".format(ext))
+        Args:
+            project_name (str): Name of project where to look for link types.
 
-        with open(src_filepath, "rb") as stream:
-            content = stream.read()
+        Returns:
+            list[dict[str, Any]]: Link types available on project.
+        """
 
-        response = self.raw_post(
-            "projects/{}/thumbnails".format(project_name),
-            headers={"Content-Type": mime_type},
-            data=content
+        response = self.get("projects/{}/links/types".format(project_name))
+        response.raise_for_status()
+        return response.data["types"]
+
+    def get_link_type(
+        self, project_name, link_type_name, input_type, output_type
+    ):
+        """Get link type data.
+
+        There is not dedicated REST endpoint to get single link type,
+        so method 'get_link_types' is used.
+
+        Example output:
+            {
+                "name": "reference|folder|folder",
+                "link_type": "reference",
+                "input_type": "folder",
+                "output_type": "folder",
+                "data": {}
+            }
+
+        Args:
+            project_name (str): Project where link type is available.
+            link_type_name (str): Name of link type.
+            input_type (str): Input entity type of link.
+            output_type (str): Output entity type of link.
+
+        Returns:
+            Union[None, dict[str, Any]]: Link type information.
+        """
+
+        full_type_name = self.get_full_link_type_name(
+            link_type_name, input_type, output_type
         )
-        if response.status_code != 200:
-            _detail = response.data.get("detail")
-            details = ""
-            if _detail:
-                details = " {}".format(_detail)
-            raise ValueError(
-                "Failed to create thumbnail.{}".format(details))
-        return response.data["id"]
+        for link_type in self.get_link_types(project_name):
+            if link_type["name"] == full_type_name:
+                return link_type
+        return None
 
+    def create_link_type(
+        self, project_name, link_type_name, input_type, output_type, data=None
+    ):
+        """Create or update link type on server.
+
+        Warning:
+            Because PUT is used for creation it is also used for update.
+
+        Args:
+            project_name (str): Project where link type is created.
+            link_type_name (str): Name of link type.
+            input_type (str): Input entity type of link.
+            output_type (str): Output entity type of link.
+            data (Optional[dict[str, Any]]): Additional data related to link.
+
+        Raises:
+            HTTPRequestError: Server error happened.
+        """
+
+        if data is None:
+            data = {}
+        full_type_name = self.get_full_link_type_name(
+            link_type_name, input_type, output_type
+        )
+        response = self.put(
+            "projects/{}/links/types/{}".format(project_name, full_type_name),
+            **data
+        )
+        response.raise_for_status()
+
+    def delete_link_type(
+        self, project_name, link_type_name, input_type, output_type
+    ):
+        """Remove link type from project.
+
+        Args:
+            project_name (str): Project where link type is created.
+            link_type_name (str): Name of link type.
+            input_type (str): Input entity type of link.
+            output_type (str): Output entity type of link.
+
+        Raises:
+            HTTPRequestError: Server error happened.
+        """
+
+        full_type_name = self.get_full_link_type_name(
+            link_type_name, input_type, output_type
+        )
+        response = self.delete(
+            "projects/{}/links/types/{}".format(project_name, full_type_name))
+        response.raise_for_status()
+
+    def make_sure_link_type_exists(
+        self, project_name, link_type_name, input_type, output_type, data=None
+    ):
+        """Make sure link type exists on a project.
+
+        Args:
+            project_name (str): Name of project.
+            link_type_name (str): Name of link type.
+            input_type (str): Input entity type of link.
+            output_type (str): Output entity type of link.
+            data (Optional[dict[str, Any]]): Link type related data.
+        """
+
+        link_type = self.get_link_type(
+            project_name, link_type_name, input_type, output_type)
+        if (
+            link_type
+            and (data is None or data == link_type["data"])
+        ):
+            return
+        self.create_link_type(
+            project_name, link_type_name, input_type, output_type, data
+        )
+
+    def create_link(
+        self,
+        project_name,
+        link_type_name,
+        input_id,
+        input_type,
+        output_id,
+        output_type
+    ):
+        """Create link between 2 entities.
+
+        Link has a type which must already exists on a project.
+
+        Example output:
+            {
+                "id": "59a212c0d2e211eda0e20242ac120002"
+            }
+
+        Args:
+            project_name (str): Project where the link is created.
+            link_type_name (str): Type of link.
+            input_id (str): Id of input entity.
+            input_type (str): Entity type of input entity.
+            output_id (str): Id of output entity.
+            output_type (str): Entity type of output entity.
+
+        Returns:
+            dict[str, str]: Information about link.
+
+        Raises:
+            HTTPRequestError: Server error happened.
+        """
+
+        full_link_type_name = self.get_full_link_type_name(
+            link_type_name, input_type, output_type)
+        response = self.post(
+            "projects/{}/links".format(project_name),
+            link=full_link_type_name,
+            input=input_id,
+            output=output_id
+        )
+        response.raise_for_status()
+        return response.data
+
+    def delete_link(self, project_name, link_id):
+        """Remove link by id.
+
+        Args:
+            project_name (str): Project where link exists.
+            link_id (str): Id of link.
+
+        Raises:
+            HTTPRequestError: Server error happened.
+        """
+
+        response = self.delete(
+            "projects/{}/links/{}".format(project_name, link_id)
+        )
+        response.raise_for_status()
+
+    def _prepare_link_filters(self, filters, link_types, link_direction):
+        """Add links filters for GraphQl queries.
+
+        Args:
+            filters (dict[str, Any]): Object where filters will be added.
+            link_types (Union[Iterable[str], None]): Link types filters.
+            link_direction (Union[Literal["in", "out"], None]): Direction of
+                link "in", "out" or 'None' for both.
+
+        Returns:
+            bool: Links are valid, and query from server can happen.
+        """
+
+        if link_types is not None:
+            link_types = set(link_types)
+            if not link_types:
+                return False
+            filters["linkTypes"] = list(link_types)
+
+        if link_direction is not None:
+            if link_direction not in ("in", "out"):
+                return False
+            filters["linkDirection"] = link_direction
+        return True
+
+    def get_entities_links(
+        self,
+        project_name,
+        entity_type,
+        entity_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Helper method to get links from server for entity types.
+
+        Example output:
+            [
+                {
+                    "id": "59a212c0d2e211eda0e20242ac120002",
+                    "linkType": "reference",
+                    "description": "reference link between folders",
+                    "projectName": "my_project",
+                    "author": "frantadmin",
+                    "entityId": "b1df109676db11ed8e8c6c9466b19aa8",
+                    "entityType": "folder",
+                    "direction": "out"
+                },
+                ...
+            ]
+
+        Args:
+            project_name (str): Project where links are.
+            entity_type (Literal["folder", "task", "subset",
+                "version", "representations"]): Entity type.
+            entity_ids (Union[Iterable[str], None]): Ids of entities for which
+                links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by entity ids.
+        """
+
+        mapped_type = self._entity_types_link_mapping.get(entity_type)
+        if not mapped_type:
+            raise ValueError("Unknown type \"{}\". Expected {}".format(
+                entity_type, ", ".join(self._entity_types_link_mapping.keys())
+            ))
+
+        id_filter_key, project_sub_key = mapped_type
+        output = collections.defaultdict(list)
+        filters = {
+            "projectName": project_name
+        }
+        if entity_ids is not None:
+            entity_ids = set(entity_ids)
+            if not entity_ids:
+                return output
+            filters[id_filter_key] = list(entity_ids)
+
+        if not self._prepare_link_filters(filters, link_types, link_direction):
+            return output
+
+        query = folders_graphql_query({"id", "links"})
+        for attr, filter_value in filters.items():
+            query.set_variable_value(attr, filter_value)
+
+        for parsed_data in query.continuous_query(self):
+            for entity in parsed_data["project"][project_sub_key]:
+                entity_id = entity["id"]
+                output[entity_id].extend(entity["links"])
+        return output
+
+    def get_folders_links(
+        self,
+        project_name,
+        folder_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query folders links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            folder_ids (Union[Iterable[str], None]): Ids of folders for which
+                links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by folder ids.
+        """
+
+        return self.get_entities_links(
+            project_name, "folder", folder_ids, link_types, link_direction
+        )
+
+    def get_folder_links(
+        self,
+        project_name,
+        folder_id,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query folder links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            folder_id (str): Id of folder for which links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            list[dict[str, Any]]: Link info of folder.
+        """
+
+        return self.get_folders_links(
+            project_name, [folder_id], link_types, link_direction
+        )[folder_id]
+
+    def get_tasks_links(
+        self,
+        project_name,
+        task_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query tasks links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            task_ids (Union[Iterable[str], None]): Ids of tasks for which
+                links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by task ids.
+        """
+
+        return self.get_entities_links(
+            project_name, "task", task_ids, link_types, link_direction
+        )
+
+    def get_task_links(
+        self,
+        project_name,
+        task_id,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query task links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            task_id (str): Id of task for which links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            list[dict[str, Any]]: Link info of task.
+        """
+
+        return self.get_tasks_links(
+            project_name, [task_id], link_types, link_direction
+        )[task_id]
+
+    def get_subsets_links(
+        self,
+        project_name,
+        subset_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query subsets links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            subset_ids (Union[Iterable[str], None]): Ids of subsets for which
+                links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by subset ids.
+        """
+
+        return self.get_entities_links(
+            project_name, "subset", subset_ids, link_types, link_direction
+        )
+
+    def get_subset_links(
+        self,
+        project_name,
+        subset_id,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query subset links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            subset_id (str): Id of subset for which links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            list[dict[str, Any]]: Link info of subset.
+        """
+
+        return self.get_subsets_links(
+            project_name, [subset_id], link_types, link_direction
+        )[subset_id]
+
+    def get_versions_links(
+        self,
+        project_name,
+        version_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query versions links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            version_ids (Union[Iterable[str], None]): Ids of versions for which
+                links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by version ids.
+        """
+
+        return self.get_entities_links(
+            project_name, "version", version_ids, link_types, link_direction
+        )
+
+    def get_version_links(
+        self,
+        project_name,
+        version_id,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query version links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            version_id (str): Id of version for which links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            list[dict[str, Any]]: Link info of version.
+        """
+
+        return self.get_versions_links(
+            project_name, [version_id], link_types, link_direction
+        )[version_id]
+
+    def get_representations_links(
+        self,
+        project_name,
+        representation_ids=None,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query representations links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            representation_ids (Union[Iterable[str], None]): Ids of
+                representations for which links should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            dict[str, list[dict[str, Any]]]: Link info by representation ids.
+        """
+
+        return self.get_entities_links(
+            project_name,
+            "representation",
+            representation_ids,
+            link_types,
+            link_direction
+        )
+
+    def get_representation_links(
+        self,
+        project_name,
+        representation_id,
+        link_types=None,
+        link_direction=None
+    ):
+        """Query representation links from server.
+
+        Args:
+            project_name (str): Project where links are.
+            representation_id (str): Id of representation for which links
+                should be received.
+            link_types (Union[Iterable[str], None]): Link type filters.
+            link_direction (Union[Literal["in", "out"], None]): Link direction
+                filter.
+
+        Returns:
+            list[dict[str, Any]]: Link info of representation.
+        """
+
+        return self.get_representations_links(
+            project_name, [representation_id], link_types, link_direction
+        )[representation_id]
+
+    # --- Batch operations processing ---
     def send_batch_operations(
         self,
         project_name,

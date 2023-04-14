@@ -857,7 +857,7 @@ def delete_project(project_name, con=None):
     return con.delete_project(project_name)
 
 
-def create_thumbnail(project_name, src_filepath, con=None):
+def create_thumbnail(project_name, src_filepath, thumbnail_id=None, con=None):
     if con is None:
         con = get_server_api_connection()
-    return con.create_thumbnail(project_name, src_filepath)
+    return con.create_thumbnail(project_name, src_filepath, thumbnail_id)
