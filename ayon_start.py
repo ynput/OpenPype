@@ -74,7 +74,6 @@ if "--headless" in sys.argv:
 elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
-
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
 HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
 SILENT_MODE_ENABLED = any(arg in _silent_commands for arg in sys.argv)
@@ -137,6 +136,14 @@ os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
 os.environ["AVALON_LABEL"] = "AYON"
 # Set name of pyblish UI import
 os.environ["PYBLISH_GUI"] = "pyblish_pype"
+# Set builtin OCIO root
+os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
+    AYON_ROOT,
+    "vendor",
+    "bin",
+    "ocioconfig",
+    "OpenColorIOConfigs"
+)
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
@@ -183,6 +190,7 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
+from ayon_api.constants import SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
@@ -252,12 +260,12 @@ def _connect_to_ayon_server():
     if HEADLESS_MODE_ENABLED:
         _print("!!! Cannot open v4 Login dialog in headless mode.")
         _print((
-            "!!! Please use `AYON_SERVER_URL` to specify server address"
-            " and 'AYON_TOKEN' to specify user's token."
-        ))
+            "!!! Please use `{}` to specify server address"
+            " and '{}' to specify user's token."
+        ).format(SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY))
         sys.exit(1)
 
-    current_url = os.environ.get("AYON_SERVER_URL")
+    current_url = os.environ.get(SERVER_URL_ENV_KEY)
     url, token, username = ask_to_login_ui(current_url, always_on_top=True)
     if url is not None and token is not None:
         confirm_server_login(url, token, username)
@@ -345,10 +353,10 @@ def boot():
             t.echo(i)
 
     try:
-        cli.main(obj={}, prog_name="openpype")
+        cli.main(obj={}, prog_name="ayon")
     except Exception:  # noqa
         exc_info = sys.exc_info()
-        _print("!!! OpenPype crashed:")
+        _print("!!! AYON crashed:")
         traceback.print_exception(*exc_info)
         sys.exit(1)
 
