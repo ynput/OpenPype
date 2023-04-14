@@ -47,5 +47,6 @@ class CreateReview(plugin.Creator):
         data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
         data["panZoom"] = self.panZoom
+        data["displayLights"] = lib.DISPLAY_LIGHTS_LABELS
 
         self.data = data
