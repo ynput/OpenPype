@@ -1481,8 +1481,6 @@ def prepare_app_environments(
         data (EnvironmentPrepData): Dictionary where result and intermediate
             result will be stored.
     """
-    import rpdb
-    rpdb.set_trace()
     import acre
 
     app = data["app"]
