@@ -115,6 +115,10 @@ class ExtractPlayblast(publish.Extractor):
         cmds.currentTime(refreshFrameInt - 1, edit=True)
         cmds.currentTime(refreshFrameInt, edit=True)
 
+        # Use displayLights setting from instance
+        key = "displayLights"
+        preset["viewport_options"][key] = instance.data[key]
+
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
         if transparency != 0:

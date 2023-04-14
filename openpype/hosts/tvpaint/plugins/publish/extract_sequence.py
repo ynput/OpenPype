@@ -144,7 +144,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags and new families from project settings
         tags = []
-        if family_lowered == "review":
+        if "review" in instance.data["families"]:
             tags.append("review")
 
         # Sequence of one frame
