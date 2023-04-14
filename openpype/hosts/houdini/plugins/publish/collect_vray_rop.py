@@ -78,15 +78,21 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             instance.data["chunkSize"] = chunk_size
             self.log.debug("Chunk Size: %s" % chunk_size)
 
-        beauty_product = evalParmNoFrame(rop, "SettingsOutput_img_file_path")
+        default_prefix = evalParmNoFrame(rop, "SettingsOutput_img_file_path")
         render_products = []
-        # Default beauty AOV
+        # TODO: add render elements if render element
+
+        beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
-            "RGB Color":  self.generate_expected_files(instance,
-                                                       beauty_product)
-        }
-        # TODO: add render elements if render element
+                "RGB Color": self.generate_expected_files(instance,
+                                                          beauty_product)
+            }
+        render_element, aov = self.get_render_element_name(rop, default_prefix)
+        if render_element is not None:
+            render_products.append(render_element)
+            files_by_aov[aov] = self.generate_expected_files(instance,
+                                                             render_element)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -103,25 +109,31 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["expectedFiles"].append(files_by_aov)
         self.log.debug("expectedFiles:{}".format(files_by_aov))
 
-    def get_render_element_name(self, prefix, suffix="AOV"):
+    def get_beauty_render_product(self, prefix, suffix="<reName>"):
+        """Return the beauty output filename if render element enabled
+        """
+        aov_parm = ".{}".format(suffix)
+        beauty_product = None
+        if aov_parm in prefix:
+            beauty_product = prefix.replace(aov_parm, "")
+        else:
+            beauty_product = prefix
+
+        return beauty_product
+
+    def get_render_element_name(self, node, prefix, suffix="<reName>"):
         """Return the output filename using the AOV prefix and suffix
         """
         # need a rewrite
-        basename = os.path.basename(prefix)
-        filename, ext = os.path.splitext(basename)
-        aov_parm = "${%s}" % suffix
-        # prefix = ${HIP}/render/${HIPNAME}.${AOV}.$F4.exr
-        prefix = prefix.replace(filename.split("."),
-                                filename.split(".") +
-                                aov_parm)
-        # find the render element names
-        """
-        children = hou.node("renderelement node").children()
-        for c in children:
-            print c # all the aov names
-            add into aov_list except "channelsContainer"
-            if c only has channelsContainer please dont do anything
-        """
+        re_path = node.evalParm("render_network_render_channels")
+        node_children = hou.node(re_path).children()
+        for element in node_children:
+            if element != "channelsContainer":
+                render_product = prefix.replace(suffix, str(element))
+            else:
+                self.log.debug("skipping non render element output..")
+                continue
+            return render_product, str(element)
 
     def generate_expected_files(self, instance, path):
         """Create expected files in instance data"""

@@ -64,8 +64,8 @@ class CreateVrayROP(plugin.HoudiniCreator):
 
         # Enable render element
         ext = pre_create_data.get("image_format")
-        has_re = pre_create_data.get("render_element_enabled")
-        if has_re:
+        instance_data["RenderElement"] = pre_create_data.get("render_element_enabled")         # noqa
+        if pre_create_data.get("render_element_enabled", True):
             # Vray has its own tag for AOV file output
             filepath = "{}{}".format(
                 hou.text.expandString("$HIP/pyblish/"),
@@ -82,6 +82,7 @@ class CreateVrayROP(plugin.HoudiniCreator):
             re_path = re_rop.path()
             parms.update({
                 "use_render_channels": 1,
+                "SettingsOutput_img_file_path": filepath,
                 "render_network_render_channels": re_path
             })
 
