@@ -1,0 +1,16 @@
+package: openpype_scripteditor
+author: Roy Nieterau
+organization: Artisan software Dobro
+version: 1.0
+rv: 3.12
+openrv: 1.0.0
+requires: ''
+optional: false
+
+modes:
+  - file: openpype_scripteditor
+    load: immediate
+
+description: |
+
+  <p> Adds OpenPype Script Editor to OpenRV </p>

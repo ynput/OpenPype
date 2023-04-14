@@ -22,7 +22,9 @@ class PreSetupOpenRV(PreLaunchHook):
         # Redeploy the source packages to zips to auto-update
         # during development of OpenRV
         import zipfile
-        for package_name in ["comments", "openpype_menus-1.0"]:
+        for package_name in ["comments",
+                             "openpype_menus-1.0",
+                             "openpype_scripteditor"]:
             package_src = startup / "pkgs_source" / package_name
             package_dest = startup_packages / "{}.zip".format(package_name)
             self.log.info(f"Writing: {package_dest}")
