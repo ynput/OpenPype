@@ -29,22 +29,9 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, long=True,
-                          dag=True, cameras=True)
         self.log.debug('members: {}'.format(members))
-
-        # validate required settings
-        if len(cameras) == 0:
-            raise KnownPublishError("No camera found in review "
-                                    "instance: {}".format(instance))
-        elif len(cameras) > 2:
-            raise KnownPublishError(
-                "Only a single camera is allowed for a review instance but "
-                "more than one camera found in review instance: {}. "
-                "Cameras found: {}".format(instance, ", ".join(cameras)))
-
-        camera = cameras[0]
-        self.log.debug('camera: {}'.format(camera))
+        cameras = cmds.ls(members, long=True, dag=True, cameras=True)
+        camera = cameras[0] if cameras else None
 
         context = instance.context
         objectset = context.data['objectsets']
@@ -75,6 +62,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             else:
                 data['families'] = ['review']
 
+            data["cameras"] = cameras
             data['review_camera'] = camera
             data['frameStartFtrack'] = instance.data["frameStartHandle"]
             data['frameEndFtrack'] = instance.data["frameEndHandle"]
@@ -109,6 +97,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 self.log.debug("Existing subsets found, keep legacy name.")
                 instance.data['subset'] = legacy_subset_name
 
+            instance.data["cameras"] = cameras
             instance.data['review_camera'] = camera
             instance.data['frameStartFtrack'] = \
                 instance.data["frameStartHandle"]
@@ -167,6 +156,9 @@ class CollectReview(pyblish.api.InstancePlugin):
         instance.data["displayLights"] = display_lights
 
         # Collect focal length.
+        if camera is None:
+            return
+
         attr = camera + ".focalLength"
         if lib.get_attribute_input(attr):
             start = instance.data["frameStart"]

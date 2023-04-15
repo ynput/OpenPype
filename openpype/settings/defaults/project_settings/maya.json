@@ -1320,7 +1320,8 @@
                     "displayFilmOrigin": false,
                     "overscan": 1.0
                 }
-            }
+            },
+            "profiles": []
         },
         "ExtractMayaSceneRaw": {
             "enabled": true,
