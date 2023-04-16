@@ -15,11 +15,11 @@ jobs:
         with:
           ref: ${{ github.event.release.target_commitish }}
       - name: Update version
-        uses: ShaMan123/gha-populate-form-version@v2.0.2
+        uses: ynput/gha-populate-form-version@main
         with:
           github_token: ${{ secrets.YNPUT_BOT_TOKEN }}
           registry: github
           dropdown: _version
-          limit_to: 25
+          limit_to: 100
           form: .github/ISSUE_TEMPLATE/bug_report.yml
           commit_message: 'chore(): update bug report / version'
