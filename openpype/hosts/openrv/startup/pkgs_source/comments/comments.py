@@ -55,12 +55,10 @@ class ReviewMenu(MinorMode):
     def __init__(self):
         MinorMode.__init__(self)
         self.init("py-ReviewMenu-mode", None, None,
-                  [("OpenPype", [(
-                      "Review",
-                      self.runme,
-                      None,
-                      self._is_active)]
-                    )],
+                  [("OpenPype", [
+                      ("_", None),  # separator
+                      ("Review", self.runme, None, self._is_active)
+                  ])],
                   # initialization order
                   sortKey="source_setup",
                   ordering=20)
