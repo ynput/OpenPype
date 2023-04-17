@@ -93,8 +93,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             if render_element:
                 for aov, renderpass in render_element.items():
                     render_products.append(renderpass)
-                    files_by_aov[aov] = self.generate_expected_files(instance,
-                                                                     renderpass)
+                    files_by_aov[aov] = self.generate_expected_files(instance, renderpass)          # noqa
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
