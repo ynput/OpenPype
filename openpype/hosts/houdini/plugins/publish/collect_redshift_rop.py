@@ -89,7 +89,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         render_products.append(beauty_product)
         files_by_aov = {
             "_": self.generate_expected_files(instance,
-                                                   beauty_product)}
+                                              beauty_product)}
 
         num_aovs = rop.evalParm("RS_aov")
         for index in range(num_aovs):

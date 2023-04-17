@@ -85,14 +85,16 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
-                "RGB Color": self.generate_expected_files(instance,
-                                                          beauty_product)
-            }
-        render_element, aov = self.get_render_element_name(rop, default_prefix)
-        if render_element is not None:
-            render_products.append(render_element)
-            files_by_aov[aov] = self.generate_expected_files(instance,
-                                                             render_element)
+            "RGB Color": self.generate_expected_files(instance,
+                                                      beauty_product)}
+
+        if instance.data.get("RenderElement", True):
+            render_element = self.get_render_element_name(rop, default_prefix)
+            if render_element:
+                for aov, renderpass in render_element.items():
+                    render_products.append(renderpass)
+                    files_by_aov[aov] = self.generate_expected_files(instance,
+                                                                     renderpass)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -124,16 +126,17 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     def get_render_element_name(self, node, prefix, suffix="<reName>"):
         """Return the output filename using the AOV prefix and suffix
         """
+        render_element_dict = {}
         # need a rewrite
         re_path = node.evalParm("render_network_render_channels")
-        node_children = hou.node(re_path).children()
-        for element in node_children:
-            if element != "channelsContainer":
-                render_product = prefix.replace(suffix, str(element))
-            else:
-                self.log.debug("skipping non render element output..")
-                continue
-            return render_product, str(element)
+        if re_path:
+            node_children = hou.node(re_path).children()
+            for element in node_children:
+                if element.shaderName() != "vray:SettingsRenderChannels":
+                    aov = str(element)
+                    render_product = prefix.replace(suffix, aov)
+                    render_element_dict[aov] = render_product
+        return render_element_dict
 
     def generate_expected_files(self, instance, path):
         """Create expected files in instance data"""
