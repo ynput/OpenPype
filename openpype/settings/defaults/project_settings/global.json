@@ -250,7 +250,7 @@
                     }
                 },
                 {
-                    "families": [],
+                    "families": ["review"],
                     "hosts": [
                         "maya",
                         "houdini"
