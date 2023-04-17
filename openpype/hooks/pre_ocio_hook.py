@@ -1,6 +1,9 @@
 from openpype.lib import PreLaunchHook
 
-from openpype.pipeline.colorspace import get_imageio_config
+from openpype.pipeline.colorspace import (
+    get_imageio_config,
+    is_host_use_ocio_config_activated
+)
 from openpype.pipeline.template_data import get_template_data_with_names
 
 
@@ -14,7 +17,12 @@ class OCIOEnvHook(PreLaunchHook):
         "aftereffects",
         "3dsmax",
         "houdini",
-        "maya"
+        "maya",
+        "nuke",
+        "nukex",
+        "nukeassist",
+        "nukestudio",
+        "hiero"
     ]
 
     def execute(self):
@@ -37,6 +45,15 @@ class OCIOEnvHook(PreLaunchHook):
         )
 
         if config_data:
+            use_config_path = is_host_use_ocio_config_activated(
+                project_name=self.data["project_name"],
+                host_name=self.host_name,
+                host_name=self.data["project_settings"]
+            )
+            if not use_config_path:
+                self.log.info("Using of OCIO config path was not activated...")
+                return
+
             ocio_path = config_data["path"]
 
             self.log.info(f"Setting OCIO config path: {ocio_path}")

@@ -18,6 +18,11 @@
                     "label": "Enable Color Management in host"
                 },
                 {
+                    "type": "boolean",
+                    "key": "use_ocio_config",
+                    "label": "Use OCIO config file in host"
+                },
+                {
                     "type": "schema",
                     "name": "schema_imageio_config"
                 },

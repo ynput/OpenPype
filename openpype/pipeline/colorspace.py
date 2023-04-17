@@ -392,6 +392,29 @@ def get_imageio_config(
     return config_data
 
 
+def is_host_use_ocio_config_activated(
+        project_name, host_name, project_settings=None
+):
+    """Check if host OCIO config path is activated
+
+    Args:
+        project_name (str): project name
+        host_name (str): host name
+
+    Returns:
+        bool: True if activated
+    """
+    project_settings = project_settings or get_project_settings(project_name)
+
+    # get colorspace settings
+    _, imageio_host = _get_imageio_settings(
+        project_settings, host_name)
+
+    # check if host settings is having use_ocio_config
+    if imageio_host.get("use_ocio_config", False):
+        return True
+
+
 def _get_config_data(path_list, anatomy_data):
     """Return first existing path in path list.
 
