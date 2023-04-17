@@ -4,7 +4,7 @@ from rv.rvtypes import MinorMode
 from qtpy import QtCore
 
 # On OpenPype installation it moves `openpype.modules` entries into
-# `openype_modules`. However, if OpenPype installation has not triggered yet.
+# `openpype_modules`. However, if OpenPype installation has not triggered yet.
 # For example when the openpype_menus RV package hasn't loaded then the move
 # of that package hasn't happened. So we'll allow both ways to import to ensure
 # it is found
