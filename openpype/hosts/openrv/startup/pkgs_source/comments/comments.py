@@ -55,7 +55,12 @@ class ReviewMenu(MinorMode):
     def __init__(self):
         MinorMode.__init__(self)
         self.init("py-ReviewMenu-mode", None, None,
-                  [("OpenPype", [("Review", self.runme, None, None)])],
+                  [("OpenPype", [(
+                      "Review",
+                      self.runme,
+                      None,
+                      self._is_active)]
+                    )],
                   # initialization order
                   sortKey="source_setup",
                   ordering=20)
@@ -148,6 +153,15 @@ class ReviewMenu(MinorMode):
         else:
             # Toggle visibility state
             self.dockWidget.toggleViewAction().trigger()
+
+    def _is_active(self):
+        if self.dockWidget is None:
+            return rv.commands.UncheckedMenuState
+
+        if self.dockWidget is not None and self.dockWidget.isVisible():
+            return rv.commands.CheckedMenuState
+        else:
+            return rv.commands.UncheckedMenuState
 
     def set_item_font(self, item, size=14, noweight=False, bold=True):
         font = QtGui.QFont()
