@@ -153,9 +153,6 @@ class ReviewMenu(MinorMode):
             self.dockWidget.toggleViewAction().trigger()
 
     def _is_active(self):
-        if self.dockWidget is None:
-            return rv.commands.UncheckedMenuState
-
         if self.dockWidget is not None and self.dockWidget.isVisible():
             return rv.commands.CheckedMenuState
         else:
