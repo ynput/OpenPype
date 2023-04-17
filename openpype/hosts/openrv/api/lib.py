@@ -13,6 +13,17 @@ def command_batch(name):
     return
 
 
+@contextlib.contextmanager
+def active_view(node):
+    """Set active view during contet"""
+    original = rv.commands.viewNode()
+    try:
+        rv.commands.setViewNode(node)
+        yield
+    finally:
+        rv.commands.setViewNode(original)
+
+
 def group_member_of_type(group_node, member_type):
     """Return first member of group that is of the given node type.
 

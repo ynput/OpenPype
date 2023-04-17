@@ -7,9 +7,13 @@ from openpype.pipeline import (
     get_representation_context
 )
 from openpype.pipeline.load import get_representation_path_from_context
+from openpype.lib.transcoding import IMAGE_EXTENSIONS
 
 from openpype.hosts.openrv.api.pipeline import imprint_container
-from openpype.lib.transcoding import IMAGE_EXTENSIONS
+from openpype.hosts.openrv.api.ocio import (
+    set_group_ocio_active_state,
+    set_group_ocio_colorspace
+)
 
 import rv
 
@@ -36,6 +40,11 @@ class FramesLoader(load.LoaderPlugin):
         namespace = namespace if namespace else context["asset"]["name"]
 
         loaded_node = rv.commands.addSourceVerbose([filepath])
+
+        # update colorspace
+        self.set_representation_colorspace(loaded_node,
+                                           context["representation"])
+
         imprint_container(
             loaded_node,
             name=name,
@@ -53,6 +62,10 @@ class FramesLoader(load.LoaderPlugin):
 
         # change path
         rv.commands.setSourceMedia(node, [filepath])
+
+        # update colorspace
+        self.set_representation_colorspace(node, context["representation"])
+
         # update name
         rv.commands.setStringProperty(node + ".media.name",
                                       ["newname"], True)
@@ -176,3 +189,17 @@ class FramesLoader(load.LoaderPlugin):
                     path = path.replace(_placeholder(key), token)
 
         return path
+
+    def set_representation_colorspace(self, node, representation):
+        colorspace_data = representation.get("data", {}).get("colorspaceData")
+        if colorspace_data:
+            colorspace = colorspace_data["colorspace"]
+            # TODO: Confirm colorspace is valid in current OCIO config
+            #   otherwise errors will be spammed from OpenRV for invalid space
+
+            self.log.info(f"Setting colorspace: {colorspace}")
+            group = rv.commands.nodeGroup(node)
+
+            # Enable OCIO for the node and set the colorspace
+            set_group_ocio_active_state(group, state=True)
+            set_group_ocio_colorspace(group, colorspace)
