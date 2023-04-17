@@ -219,14 +219,17 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         # fix the problem of z_order for backdrops
         self._fix_z_order(placeholder)
-        self._imprint_siblings(placeholder)
+
+        if placeholder.data.get("keep_placeholder"):
+            self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
             # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of loaded nodes
+            if placeholder.data.get("keep_placeholder"):
+                self._imprint_inits()
+                self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
 
-            self._imprint_inits()
-            self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
             self._set_loaded_connections(placeholder)
 
         elif placeholder.data["siblings"]:
@@ -629,14 +632,18 @@ class NukePlaceholderCreatePlugin(
 
         # fix the problem of z_order for backdrops
         self._fix_z_order(placeholder)
-        self._imprint_siblings(placeholder)
+
+        if placeholder.data.get("keep_placeholder"):
+            self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
             # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of created nodes
 
-            self._imprint_inits()
-            self._update_nodes(placeholder, nuke.allNodes(), nodes_created)
+            if placeholder.data.get("keep_placeholder"):
+                self._imprint_inits()
+                self._update_nodes(placeholder, nuke.allNodes(), nodes_created)
+
             self._set_created_connections(placeholder)
 
         elif placeholder.data["siblings"]:

@@ -256,17 +256,18 @@ class TemplatesDict(object):
         elif isinstance(templates, dict):
             self._raw_templates = copy.deepcopy(templates)
             self._templates = templates
-            self._objected_templates = self.create_ojected_templates(templates)
+            self._objected_templates = self.create_objected_templates(
+                templates)
         else:
             raise TypeError("<{}> argument must be a dict, not {}.".format(
                 self.__class__.__name__, str(type(templates))
             ))
 
     def __getitem__(self, key):
-        return self.templates[key]
+        return self.objected_templates[key]
 
     def get(self, key, *args, **kwargs):
-        return self.templates.get(key, *args, **kwargs)
+        return self.objected_templates.get(key, *args, **kwargs)
 
     @property
     def raw_templates(self):
@@ -280,8 +281,21 @@ class TemplatesDict(object):
     def objected_templates(self):
         return self._objected_templates
 
-    @classmethod
-    def create_ojected_templates(cls, templates):
+    def _create_template_object(self, template):
+        """Create template object from a template string.
+
+        Separated into method to give option change class of templates.
+
+        Args:
+            template (str): Template string.
+
+        Returns:
+            StringTemplate: Object of template.
+        """
+
+        return StringTemplate(template)
+
+    def create_objected_templates(self, templates):
         if not isinstance(templates, dict):
             raise TypeError("Expected dict object, got {}".format(
                 str(type(templates))
@@ -297,7 +311,7 @@ class TemplatesDict(object):
             for key in tuple(item.keys()):
                 value = item[key]
                 if isinstance(value, six.string_types):
-                    item[key] = StringTemplate(value)
+                    item[key] = self._create_template_object(value)
                 elif isinstance(value, dict):
                     inner_queue.append(value)
         return objected_templates

@@ -47,6 +47,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nuke",
         "maya",
         "blender",
+        "houdini",
         "shell",
         "hiero",
         "premiere",
