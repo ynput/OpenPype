@@ -48,7 +48,7 @@ class OCIOEnvHook(PreLaunchHook):
             use_config_path = is_host_use_ocio_config_activated(
                 project_name=self.data["project_name"],
                 host_name=self.host_name,
-                host_name=self.data["project_settings"]
+                project_settings=self.data["project_settings"]
             )
             if not use_config_path:
                 self.log.info("Using of OCIO config path was not activated...")
