@@ -13,6 +13,7 @@ from openpype.pipeline import (
 from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
+from . import arnold_standin
 
 log = logging.getLogger(__name__)
 
@@ -44,33 +45,11 @@ def get_namespace_from_node(node):
     return parts[0] if len(parts) > 1 else u":"
 
 
-def list_descendents(nodes):
-    """Include full descendant hierarchy of given nodes.
-
-    This is a workaround to cmds.listRelatives(allDescendents=True) because
-    this way correctly keeps children instance paths (see Maya documentation)
-
-    This fixes LKD-26: assignments not working as expected on instanced shapes.
-
-    Return:
-        list: List of children descendents of nodes
-
-    """
-    result = []
-    while True:
-        nodes = cmds.listRelatives(nodes,
-                                   fullPath=True)
-        if nodes:
-            result.extend(nodes)
-        else:
-            return result
-
-
 def get_selected_nodes():
     """Get information from current selection"""
 
     selection = cmds.ls(selection=True, long=True)
-    hierarchy = list_descendents(selection)
+    hierarchy = lib.get_all_children(selection)
     return list(set(selection + hierarchy))
 
 
@@ -105,10 +84,12 @@ def create_asset_id_hash(nodes):
             path = cmds.getAttr("{}.fileName".format(node))
             ids = get_alembic_ids_cache(path)
             for k, _ in ids.items():
-                pid = k.split(":")[0]
-                if node not in node_id_hash[pid]:
-                    node_id_hash[pid].append(node)
-
+                id = k.split(":")[0]
+                node_id_hash[id].append(node)
+        elif cmds.nodeType(node) == "aiStandIn":
+            for id, _ in arnold_standin.get_nodes_by_id(node).items():
+                id = id.split(":")[0]
+                node_id_hash[id].append(node)
         else:
             value = lib.get_id(node)
             if value is None:

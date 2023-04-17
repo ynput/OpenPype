@@ -1,4 +1,4 @@
-name: Milestone - assign to PRs
+name: 👉🏻 Milestone - assign to PRs
 
 on:
   pull_request_target:

@@ -1,4 +1,4 @@
-name: Milestone - create default
+name: ➕ Milestone - create default
 
 on:
   milestone:
