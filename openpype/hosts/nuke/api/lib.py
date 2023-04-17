@@ -2013,18 +2013,6 @@ class WorkfileSettings(object):
         '''
         workfile_settings = imageio_host["workfile"]
 
-        # get config data if imageio is enabled
-        config_data = None
-        if imageio_host.get("enabled"):
-            # switch ocio config to custom config
-            workfile_settings["OCIO_config"] = "custom"
-            workfile_settings["colorManagement"] = "OCIO"
-
-            # get resolved ocio config path
-            config_data = get_imageio_config(
-                legacy_io.active_project(), "nuke"
-            )
-
         # first set OCIO
         if self._root_node["colorManagement"].value() \
                 not in str(workfile_settings["colorManagement"]):
@@ -2034,6 +2022,7 @@ class WorkfileSettings(object):
             # we dont need the key anymore
             workfile_settings.pop("colorManagement")
 
+
         # second set ocio version
         if self._root_node["OCIO_config"].value() \
                 not in str(workfile_settings["OCIO_config"]):
@@ -2042,14 +2031,6 @@ class WorkfileSettings(object):
 
             # we dont need the key anymore
             workfile_settings.pop("OCIO_config")
-
-        # third set ocio custom path
-        if config_data:
-            self._root_node["customOCIOConfigPath"].setValue(
-                str(config_data["path"]).replace("\\", "/")
-            )
-            # backward compatibility, remove in case it exists
-            workfile_settings.pop("customOCIOConfigPath")
 
         # then set the rest
         for knob, value in workfile_settings.items():
