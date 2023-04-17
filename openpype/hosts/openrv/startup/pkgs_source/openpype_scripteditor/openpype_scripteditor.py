@@ -2,7 +2,16 @@ import rv.qtutils
 from rv.rvtypes import MinorMode
 
 from qtpy import QtCore
-from openpype_modules.python_console_interpreter.window import PythonInterpreterWidget  # noqa
+
+# On OpenPype installation it moves `openpype.modules` entries into
+# `openype_modules`. However, if OpenPype installation has not triggered yet.
+# For example when the openpype_menus RV package hasn't loaded then the move
+# of that package hasn't happened. So we'll allow both ways to import to ensure
+# it is found
+try:
+    from openpype_modules.python_console_interpreter.window import PythonInterpreterWidget  # noqa
+except ModuleNotFoundError:
+    from openpype.modules.python_console_interpreter.window import PythonInterpreterWidget  # noqa
 
 
 class OpenPypeMenus(MinorMode):
