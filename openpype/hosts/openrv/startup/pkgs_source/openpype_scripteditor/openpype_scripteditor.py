@@ -1,3 +1,4 @@
+import rv.commands
 import rv.qtutils
 from rv.rvtypes import MinorMode
 
@@ -28,7 +29,12 @@ class OpenPypeMenus(MinorMode):
                 # and add submenus / menuitems to the existing one
                 ("Tools", [
                     # Menuitem name, actionHook (event), key, stateHook
-                    ("Script Editor", self.show_scripteditor, None, None),
+                    (
+                        "Script Editor",
+                        self.show_scripteditor,
+                        None,
+                        self.is_active
+                     ),
                 ])
             ],
             # initialization order
@@ -45,9 +51,15 @@ class OpenPypeMenus(MinorMode):
     def show_scripteditor(self, event):
         """Show the console - create if not exists"""
         if self._widget is not None:
-            self._widget.show()
-            self._widget.raise_()
-            return
+            if self._widget.isVisible():
+                # Closing also saves the scripts directly.
+                # Thus we prefer to close instead of hide here
+                self._widget.close()
+                return
+            else:
+                self._widget.show()
+                self._widget.raise_()
+                return
 
         widget = PythonInterpreterWidget(parent=self._parent)
         widget.setWindowTitle("Python Script Editor - OpenRV")
@@ -58,6 +70,12 @@ class OpenPypeMenus(MinorMode):
         widget.raise_()
 
         self._widget = widget
+
+    def is_active(self):
+        if self._widget is not None and self._widget.isVisible():
+            return rv.commands.CheckedMenuState
+        else:
+            return rv.commands.UncheckedMenuState
 
 
 def createMode():
