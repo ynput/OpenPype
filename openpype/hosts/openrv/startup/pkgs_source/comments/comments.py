@@ -199,9 +199,10 @@ class ReviewMenu(MinorMode):
         # Use namespace as loaded shot label
         namespace = ""
         if node is not None:
-            namespace = rv.commands.getStringProperty(
-                "{}.openpype.namespace".format(node)
-            )[0]
+            property_name = "{}.openpype.namespace".format(node)
+            if rv.commands.propertyExists(property_name):
+                namespace = rv.commands.getStringProperty(property_name)[0]
+
         self.current_loaded_shot.setText(namespace)
 
         self.setup_properties()
@@ -210,7 +211,6 @@ class ReviewMenu(MinorMode):
     def setup_combo_status(self):
         # setup properties
         node = self.current_loaded_viewnode
-        print(rv.commands.properties(node))
         att_prop = node + ".openpype_review.task_status"
         status = self.current_shot_status.currentText()
         rv.commands.setStringProperty(att_prop, [str(status)], True)
