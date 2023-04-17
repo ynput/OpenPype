@@ -157,7 +157,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         project_doc = self.data["project_doc"]
 
-        project_settings = get_project_settings(project_name)
+        project_settings = self.data["project_settings"]
         template_key = get_workfile_template_key(
             task_name, host_name, project_name, project_settings
         )
