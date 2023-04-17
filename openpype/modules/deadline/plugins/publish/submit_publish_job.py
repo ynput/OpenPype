@@ -944,16 +944,27 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
 
-            config = instance.data["colorspaceConfig"]
             additional_data = {
                 "renderProducts": instance.data["renderProducts"],
                 "colorspaceConfig": instance.data["colorspaceConfig"],
                 "display": instance.data["colorspaceDisplay"],
-                "view": instance.data["colorspaceView"],
-                "colorspaceTemplate": config.replace(
-                    str(context.data["anatomy"].roots["work"]), "{root[work]}"
-                )
+                "view": instance.data["colorspaceView"]
             }
+
+            # Get templated path from absolute config path.
+            anatomy = instance.context.data["anatomy"]
+            colorspaceTemplate = instance.data["colorspaceConfig"]
+            success, rootless_staging_dir = (
+                anatomy.find_root_template_from_path(colorspaceTemplate)
+            )
+            if success:
+                colorspaceTemplate = rootless_staging_dir
+            else:
+                self.log.warning((
+                    "Could not find root path for remapping \"{}\"."
+                    " This may cause issues on farm."
+                ).format(colorspaceTemplate))
+            additional_data["colorspaceTemplate"] = colorspaceTemplate
 
             if len(data.get("attachTo")) > 0:
                 assert len(data.get("expectedFiles")[0].keys()) == 1, (
@@ -1191,10 +1202,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         template_data["family"] = "render"
         template_data["version"] = version
 
-        anatomy_filled = anatomy.format(template_data)
-
-        if "folder" in anatomy.templates["render"]:
-            publish_folder = anatomy_filled["render"]["folder"]
+        render_templates = anatomy.templates_obj["render"]
+        if "folder" in render_templates:
+            publish_folder = render_templates["folder"].format_strict(
+                template_data
+            )
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
@@ -1204,8 +1216,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["render"]["path"]
-            # Directory
+            file_path = render_templates["path"].format_strict(template_data)
             publish_folder = os.path.dirname(file_path)
 
         return publish_folder

@@ -50,7 +50,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
-        self.fill_instance_data_from_asset(context)
         self.fill_latest_versions(context, project_name)
         self.fill_anatomy_data(context)
 
@@ -114,23 +113,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             self.log.warning((
                 "Not found asset documents with names \"{}\"."
             ).format(joined_asset_names))
-
-    def fill_instance_data_from_asset(self, context):
-        for instance in context:
-            asset_doc = instance.data.get("assetEntity")
-            if not asset_doc:
-                continue
-
-            asset_data = asset_doc["data"]
-            for key in (
-                "fps",
-                "frameStart",
-                "frameEnd",
-                "handleStart",
-                "handleEnd",
-            ):
-                if key not in instance.data and key in asset_data:
-                    instance.data[key] = asset_data[key]
 
     def fill_latest_versions(self, context, project_name):
         """Try to find latest version for each instance's subset.
