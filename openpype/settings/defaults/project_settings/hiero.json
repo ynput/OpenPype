@@ -12,11 +12,6 @@
         },
         "workfile": {
             "ocioConfigName": "nuke-default",
-            "ocioconfigpath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "workingSpace": "linear",
             "sixteenBitLut": "sRGB",
             "eightBitLut": "sRGB",

@@ -48,17 +48,6 @@
                             "label": "Use Color Management Preference v2"
                         },
                         {
-                            "type": "label",
-                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                        },
-                        {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
-                        },
-                        {
                             "type": "text",
                             "key": "renderSpace",
                             "label": "Rendering Space"
@@ -81,17 +70,6 @@
                     "label": "Color Management Preference (legacy)",
                     "collapsible": true,
                     "children": [
-                        {
-                            "type": "label",
-                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                        },
-                        {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
-                        },
                         {
                             "type": "text",
                             "key": "renderSpace",

@@ -29,31 +29,6 @@
                 {
                     "type": "schema",
                     "name": "schema_imageio_file_rules"
-                },
-                {
-                    "key": "ocio",
-                    "type": "dict",
-                    "label": "OpenColorIO (OCIO)",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Set OCIO variable for Fusion"
-                        },
-                        {
-                            "type": "label",
-                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                        },
-                        {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
-                        }
-                    ]
                 }
             ]
         },

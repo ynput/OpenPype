@@ -37,10 +37,6 @@
                     "collapsible": false,
                     "children": [
                         {
-                            "type": "label",
-                            "label": "<b style='color:red'>'ocioconfigpath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                        },
-                        {
                             "type": "form",
                             "children": [
                                 {
@@ -65,18 +61,8 @@
                                         },
                                         {
                                             "cg-config-v1.0.0_aces-v1.3_ocio-v2.1": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
-                                        },
-                                        {
-                                            "custom": "custom"
                                         }
                                     ]
-                                },
-                                {
-                                    "type": "path",
-                                    "key": "ocioconfigpath",
-                                    "label": "Custom OCIO path",
-                                    "multiplatform": true,
-                                    "multipath": true
                                 },
                                 {
                                     "type": "text",
