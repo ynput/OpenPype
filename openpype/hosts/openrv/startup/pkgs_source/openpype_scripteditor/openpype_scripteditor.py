@@ -34,7 +34,7 @@ class OpenPypeMenus(MinorMode):
                         self.show_scripteditor,
                         None,
                         self.is_active
-                     ),
+                    ),
                 ])
             ],
             # initialization order
