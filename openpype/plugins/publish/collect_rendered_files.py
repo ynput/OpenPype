@@ -13,9 +13,7 @@ import json
 import pyblish.api
 
 from openpype.pipeline import legacy_io, KnownPublishError
-from openpype.lib.file_transaction import (
-    fill_cleanupFullPaths_for_representation
-)
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
     """
@@ -111,7 +109,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
-                fill_cleanupFullPaths_for_representation(instance, repre_data)
+                add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 

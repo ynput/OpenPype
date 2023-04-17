@@ -24,9 +24,7 @@ from openpype.lib import (
     run_subprocess,
 )
 
-from openpype.lib.file_transaction import (
-    fill_cleanupFullPaths_for_representation
-)
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
@@ -77,7 +75,6 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             "Adding thumbnail representation: {}".format(new_repre)
         )
         instance.data["representations"].append(new_repre)
-        fill_cleanupFullPaths_for_representation(instance, new_repre)
         instance.data["thumbnailPath"] = dst_filepath
 
     def _create_thumbnail(self, context, thumbnail_source):

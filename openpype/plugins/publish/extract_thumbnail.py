@@ -11,10 +11,6 @@ from openpype.lib import (
     path_to_subprocess_arg,
 )
 
-from openpype.lib.file_transaction import (
-    fill_cleanupFullPaths_for_representation
-)
-
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
@@ -137,7 +133,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 "Adding thumbnail representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
-            fill_cleanupFullPaths_for_representation(instance, new_repre)
             # There is no need to create more then one thumbnail
             break
 
