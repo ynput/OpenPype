@@ -49,7 +49,8 @@ class ExtractBurnin(publish.Extractor):
         "webpublisher",
         "aftereffects",
         "photoshop",
-        "flame"
+        "flame",
+        "houdini"
         # "resolve"
     ]
 
@@ -78,9 +79,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
