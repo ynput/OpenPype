@@ -5,7 +5,11 @@ import pyblish.api
 from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
 from openpype.lib import prepare_template_data
-from openpype.pipeline import legacy_io
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_name,
+    get_current_task_name
+)
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -14,9 +18,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
     Collects publishable instances from file metadata or enhance
     already collected by creator (family == "image").
 
+    Remote publish: (via Webpublisher)
     If no image instances are explicitly created, it looks if there is value
-    in `flatten_subset_template` (configurable in Settings), in that case it
-    produces flatten image with all visible layers.
+    in `flatten_subset_template` for AutoImageCreator (configurable in
+    Settings), in that case it produces flatten image with all visible layers.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -28,8 +33,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": []
     }
-    # configurable in Settings
-    flatten_subset_template = ""
 
     def process(self, context):
         instance_by_layer_id = {}
@@ -84,16 +87,24 @@ class CollectInstances(pyblish.api.ContextPlugin):
             self.log.warning("Duplicate instances found. " +
                              "Remove unwanted via Publisher")
 
-        if len(instance_names) == 0 and self.flatten_subset_template:
-            project_name = context.data["projectEntity"]["name"]
-            variants = get_project_settings(project_name).get(
+        project_name = get_current_project_name()
+        proj_settings = get_project_settings(project_name)
+        flatten_subset_template = None
+        auto_creator = proj_settings.get(
+            "photoshop", {}).get(
+            "create", {}).get(
+            "AutoImageCreator", {})
+        if auto_creator and auto_creator["enabled"]:
+            flatten_subset_template = auto_creator["flatten_subset_template"]
+        if len(instance_names) == 0 and flatten_subset_template:
+            variants = proj_settings.get(
                 "photoshop", {}).get(
                 "create", {}).get(
                 "CreateImage", {}).get(
-                "defaults", [''])
+                "default_variants", [''])
             family = "image"
-            task_name = legacy_io.Session["AVALON_TASK"]
-            asset_name = context.data["assetEntity"]["name"]
+            task_name = get_current_task_name()
+            asset_name = get_current_asset_name()
 
             variant = context.data.get("variant") or variants[0]
             fill_pairs = {
@@ -102,7 +113,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "task": task_name
             }
 
-            subset = self.flatten_subset_template.format(
+            subset = flatten_subset_template.format(
                 **prepare_template_data(fill_pairs))
 
             instance = context.create_instance(subset)
@@ -112,5 +123,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["ids"] = all_layer_ids
             instance.data["families"] = self.families_mapping[family]
             instance.data["publish"] = True
+
+            if auto_creator["mark_for_review"]:
+                instance.data["families"].append("review")
 
             self.log.info("flatten instance: {} ".format(instance.data))
