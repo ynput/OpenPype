@@ -10,23 +10,32 @@
         }
     },
     "create": {
-        "CreateImage": {
-            "defaults": [
+        "ImageCreator": {
+            "default_variants": [
                 "Main"
             ]
+        },
+        "AutoImageCreator": {
+            "enabled": false,
+            "flatten_subset_template": "",
+            "mark_for_review": false
+        },
+        "ReviewCreator": {
+            "enabled": true
+        },
+        "WorkfileCreator": {
+            "enabled": true
         }
     },
     "publish": {
         "CollectColorCodedInstances": {
+            "enabled": true,
             "create_flatten_image": "no",
             "flatten_subset_template": "",
             "color_code_mapping": []
         },
-        "CollectInstances": {
-            "flatten_subset_template": ""
-        },
         "CollectReview": {
-            "publish": true
+            "enabled": true
         },
         "CollectVersion": {
             "enabled": false

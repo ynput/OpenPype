@@ -134,11 +134,6 @@ class ImageCreator(Creator):
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
-    def get_default_variants(self):
-        return [
-            "Main"
-        ]
-
     def get_pre_create_attr_defs(self):
         output = [
             BoolDef("use_selection", default=True,

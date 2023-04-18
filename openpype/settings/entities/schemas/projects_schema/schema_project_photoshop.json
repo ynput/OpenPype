@@ -31,14 +31,80 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CreateImage",
+                    "key": "ImageCreator",
                     "label": "Create Image",
                     "children": [
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Default Subsets",
+                            "key": "default_variants",
+                            "label": "Default Variants",
                             "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "AutoImageCreator",
+                    "label": "Create Flatten Image",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create image for all visible layers"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "flatten_subset_template",
+                            "label": "Subset template for flatten image"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "mark_for_review",
+                            "label": "Review",
+                            "default": false
+                         }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ReviewCreator",
+                    "label": "Create Review",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create review instance"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "WorkfileCreator",
+                    "label": "Create Workfile",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create workfile instance"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
                         }
                     ]
                 }
@@ -56,10 +122,17 @@
                     "is_group": true,
                     "key": "CollectColorCodedInstances",
                     "label": "Collect Color Coded Instances",
+                    "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "label",
                             "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
                         },
                         {
                             "key": "create_flatten_image",
@@ -134,37 +207,23 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CollectInstances",
-                    "label": "Collect Instances",
-                    "children": [
-                        {
-                            "type": "label",
-                            "label": "Name for flatten image created if no image instance present"
-                        },
-                        {
-                            "type": "text",
-                            "key": "flatten_subset_template",
-                            "label": "Subset template for flatten image"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "CollectReview",
                     "label": "Collect Review",
+                    "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "boolean",
-                            "key": "publish",
-                            "label": "Active"
-                         }
-                     ]
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        }
+                    ]
                  },
                  {
                     "type": "dict",
                     "key": "CollectVersion",
                     "label": "Collect Version",
+                     "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "label",
