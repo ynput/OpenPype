@@ -62,6 +62,8 @@ class AnnotationCreator(AutoCreator):
         # View this particular group to get its marked and annotated frames
         # TODO: This will only find annotations on the actual source group
         #   and not for e.g. the source in the `defaultSequence`.
+        # For now it's easiest to enable 'Annotation > Configure > Draw On
+        # Source If Possible' so that most annotations end up on source
         source_group = rv.commands.nodeGroup(node)
         rv.commands.setViewNode(source_group)
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
