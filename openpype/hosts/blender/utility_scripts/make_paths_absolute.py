@@ -32,3 +32,4 @@ if __name__ == "__main__":
 
     if bpy.data.filepath:
         bpy.ops.wm.save_mainfile()
+        bpy.ops.wm.revert_mainfile()
