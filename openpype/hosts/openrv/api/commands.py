@@ -10,21 +10,19 @@ def reset_frame_range():
     """ Set timeline frame range.
     """
     asset_doc = get_current_project_asset()
+    asset_name = asset_doc["name"]
     asset_data = asset_doc["data"]
 
-    frame_start = int(asset_data.get(
-        "frameStart",
-        asset_data.get("edit_in")))
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
 
-    frame_end = int(asset_data.get(
-        "frameEnd",
-        asset_data.get("edit_out")))
+    if frame_start is None or frame_end is None:
+        log.warning("No edit information found for {}".format(asset_name))
+        return
 
     rv.commands.setFrameStart(frame_start)
     rv.commands.setFrameEnd(frame_end)
     rv.commands.setFrame(frame_start)
-
-    log.info("Project frame range set")
 
 
 def set_session_fps():
