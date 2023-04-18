@@ -53,6 +53,8 @@ class AnnotationCreator(AutoCreator):
         self.log.debug(f"Processing container node: {node}")
 
         # View this particular group to get its marked and annotated frames
+        # TODO: This will only find annotations on the actual source group
+        #   and not for e.g. the source in the `defaultSequence`.
         source_group = rv.commands.nodeGroup(node)
         rv.commands.setViewNode(source_group)
         annotated_frames = rv.extra_commands.findAnnotatedFrames()
