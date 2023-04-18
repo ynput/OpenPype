@@ -24,8 +24,6 @@ from openpype.lib import (
     run_subprocess,
 )
 
-from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
-
 
 class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
     """Create jpg thumbnail for instance based on 'thumbnailSource'.
