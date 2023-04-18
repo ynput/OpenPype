@@ -2277,7 +2277,7 @@ def reset_frame_range(playback=True, render=True, fps=True):
     # Update animation instances attributes if enabled in settings
     project_name = get_current_project_name()
     settings = get_project_settings(project_name)
-    if settings["maya"]["update_instances"]["enabled"]:
+    if settings["maya"]["update_publishable_frame_range"]["enabled"]:
         instances = cmds.ls(
             "*.id",
             long=True,

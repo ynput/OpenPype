@@ -189,13 +189,13 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "update_instances",
-            "label": "Update animation instances on Reset Frame Range",
+            "key": "update_publishable_frame_range",
+            "label": "Update publishable instances on Reset Frame Range",
             "checkbox_key": "enabled",
             "children": [
                 {
                     "type": "label",
-                    "label": "If enabled, the frame range and the handles of all the animation instances will be updated when using the 'Reset Frange Range' functionality"
+                    "label": "If enabled, the frame range and the handles of all the publishable instances will be updated when using the 'Reset Frame Range' functionality"
                 },
                 {
                     "type": "boolean",
