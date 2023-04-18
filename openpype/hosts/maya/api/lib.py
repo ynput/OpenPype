@@ -2233,6 +2233,10 @@ def reset_frame_range(playback=True, render=True, fps=True):
         set_scene_fps(fps)
 
     frame_range = get_frame_range(include_animation_range=True)
+    if not frame_range:
+        # No frame range data found for asset
+        return
+
     frame_start = frame_range["frameStart"]
     frame_end = frame_range["frameEnd"]
     animation_start = frame_range["animationStart"]
