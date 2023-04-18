@@ -41,30 +41,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
-        # Create instance from outliner datablocks
-        # TODO is it only conformation code and must be removed?
-        for c in [
-            collection
-            for collection in self.get_collections()
-            if collection.name
-            and not bpy.context.scene.openpype_instances.get(collection.name)
-        ]:
-            op_instance = bpy.context.scene.openpype_instances.add()
-            op_instance.name = c.name
-            instance_metadata = c.get(AVALON_PROPERTY, {})
-            op_instance[AVALON_PROPERTY] = instance_metadata
-
-            # Get creator name
-            for creator_name, creator_attrs in bpy.context.scene[
-                "openpype_creators"
-            ].items():
-                if creator_attrs["family"] == instance_metadata.get("family"):
-                    op_instance["creator_name"] = creator_name
-                    break
-
-            # Reference collection datablock
-            d_ref = op_instance.datablock_refs.add()
-            d_ref.datablock = c
 
         # Create pyblish instances for scene instances
         for op_instance in bpy.context.scene.openpype_instances:
