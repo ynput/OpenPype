@@ -534,8 +534,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         template_data["comment"] = None
 
         anatomy = instance.context.data['anatomy']
-        anatomy_filled = anatomy.format(template_data)
-        template_filled = anatomy_filled["publish"]["path"]
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        template_filled = template_obj.format_strict(template_data)
         file_path = os.path.normpath(template_filled)
 
         self.log.info("Using published scene for render {}".format(file_path))
