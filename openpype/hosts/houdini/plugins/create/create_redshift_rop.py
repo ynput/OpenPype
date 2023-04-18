@@ -19,6 +19,8 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         instance_data.update({"node_type": "Redshift_ROP"})
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
+        # Submit for job publishing
+        instance_data["farm"] = True
 
         # Clear the family prefix from the subset
         subset = subset_name

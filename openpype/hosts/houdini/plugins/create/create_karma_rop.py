@@ -20,6 +20,8 @@ class CreateKarmaROP(plugin.HoudiniCreator):
         instance_data.update({"node_type": "karma"})
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
+        # Submit for job publishing
+        instance_data["farm"] = True
 
         instance = super(CreateKarmaROP, self).create(
             subset_name,

@@ -23,6 +23,8 @@ class CreateArnoldRop(plugin.HoudiniCreator):
 
         # Add chunk size attribute
         instance_data["chunkSize"] = 1
+        # Submit for job publishing
+        instance_data["farm"] = True
 
         instance = super(CreateArnoldRop, self).create(
             subset_name,

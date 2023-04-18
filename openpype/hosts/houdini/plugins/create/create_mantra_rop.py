@@ -20,6 +20,8 @@ class CreateMantraROP(plugin.HoudiniCreator):
         instance_data.update({"node_type": "ifd"})
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
+        # Submit for job publishing
+        instance_data["farm"] = True
 
         instance = super(CreateMantraROP, self).create(
             subset_name,

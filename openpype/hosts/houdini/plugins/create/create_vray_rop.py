@@ -24,6 +24,8 @@ class CreateVrayROP(plugin.HoudiniCreator):
         instance_data.update({"node_type": "vray_renderer"})
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
+        # Submit for job publishing
+        instance_data["farm"] = True
 
         instance = super(CreateVrayROP, self).create(
             subset_name,
