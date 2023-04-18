@@ -2283,35 +2283,40 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
-    # Update animation instances attributes if enabled in settings
-    project_name = get_current_project_name()
-    settings = get_project_settings(project_name)
-    if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-        instances = cmds.ls(
-            "*.id",
-            long=True,
-            type="objectSet",
-            recursive=True,
-            objectsOnly=True
-        )
-        frames_attributes = {
-            'frameStart': frame_start,
-            'frameEnd': frame_end,
-            'handleStart': frame_range["handleStart"],
-            'handleEnd': frame_range["handleEnd"]
-        }
+    if instances:
+        # Update animation instances attributes if enabled in settings
+        project_name = get_current_project_name()
+        settings = get_project_settings(project_name)
+        if settings["maya"]["update_publishable_frame_range"]["enabled"]:
+            collected_instances = cmds.ls(
+                "*.id",
+                long=True,
+                type="objectSet",
+                recursive=True,
+                objectsOnly=True
+            )
+            frames_attributes = {
+                'frameStart': frame_start,
+                'frameEnd': frame_end,
+                'handleStart': frame_range["handleStart"],
+                'handleEnd': frame_range["handleEnd"]
+            }
 
-        for instance in instances:
-            id_attr = "{}.id".format(instance)
-            if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-                continue
+            for instance in collected_instances:
+                family_attr = "{}.family".format(instance)
+                if family_attr == "render":
+                    continue
 
-            for key, value in frames_attributes.items():
-                if cmds.attributeQuery(key, node=instance, exists=True):
-                    cmds.setAttr(
-                        "{}.{}".format(instance, key),
-                        value
-                    )
+                id_attr = "{}.id".format(instance)
+                if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+                    continue
+
+                for key, value in frames_attributes.items():
+                    if cmds.attributeQuery(key, node=instance, exists=True):
+                        cmds.setAttr(
+                            "{}.{}".format(instance, key),
+                            value
+                        )
 
 
 def reset_scene_resolution():
