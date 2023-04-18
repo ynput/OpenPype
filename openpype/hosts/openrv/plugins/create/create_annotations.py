@@ -1,7 +1,7 @@
 import qtawesome
 import rv
 
-from openpype.client import get_representations
+from openpype.client import get_representations, get_asset_by_name
 from openpype.hosts.openrv.api.pipeline import get_containers
 from openpype.hosts.openrv.api import lib
 from openpype.pipeline import get_current_project_name
@@ -45,9 +45,14 @@ class AnnotationCreator(AutoCreator):
 
         with lib.maintained_view():
             for container in containers:
-                self._collect_container(container, representations_by_id)
+                self._collect_container(container,
+                                        project_name,
+                                        representations_by_id)
 
-    def _collect_container(self, container, representations_by_id):
+    def _collect_container(self,
+                           container,
+                           project_name,
+                           representations_by_id):
 
         node = container["node"]
         self.log.debug(f"Processing container node: {node}")
@@ -79,10 +84,21 @@ class AnnotationCreator(AutoCreator):
         # for marked in marked_frames:
         #     print("MARKED ------------ ", container, marked, source_group)
 
+        source_representation_asset_doc = get_asset_by_name(
+            project_name=project_name,
+            asset_name=source_representation_asset
+        )
+
         for noted_frame in annotated_frames:
             print(f"Found annotation for {source_group} frame {noted_frame}")
 
-            subset_name = f"note_{namespace}_{noted_frame}"
+            variant = f"{namespace}_{noted_frame}"
+            subset_name = self.get_subset_name(
+                variant=variant,
+                task_name=source_representation_task,
+                asset_doc=source_representation_asset_doc,
+                project_name=project_name,
+            )
             data = {
                 "tags": ["review", "ftrackreview"],
                 "task": source_representation_task,
