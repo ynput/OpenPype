@@ -55,8 +55,6 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
 
         rt.callbacks.addScript(rt.Name('systemPostNew'),
                                context_setting)
-        rt.callbacks.addScript(rt.Name('filePreSave'),
-                               context_setting)
 
     def has_unsaved_changes(self):
         # TODO: how to get it from 3dsmax?
