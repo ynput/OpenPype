@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint
+from .lib import read, imprint, get_reference_node
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -258,8 +258,16 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             return
 
         roots = cmds.sets(container, q=True)
+        ref_node = get_reference_node(roots)
         nodes_to_parent = []
         for root in roots:
+            if ref_node:
+                ref_root = cmds.referenceQuery(root, n=True)[0]
+                ref_root = (
+                    cmds.listRelatives(ref_root, parent=True) or [ref_root]
+                )
+                nodes_to_parent.extend(ref_root)
+                continue
             if root.endswith("_RN"):
                 refRoot = cmds.referenceQuery(root, n=True)[0]
                 refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
@@ -277,10 +285,17 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             matrix=True,
             worldSpace=True
         )
+        scene_parent = cmds.listRelatives(
+            placeholder.scene_identifier, parent=True
+        )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
             cmds.reorder(node, relative=placeholder.data["index"])
             cmds.xform(node, matrix=placeholder_form, ws=True)
+            if scene_parent:
+                cmds.parent(node, scene_parent)
+            else:
+                cmds.parent(node, world=True)
 
         holding_sets = cmds.listSets(object=placeholder.scene_identifier)
         if not holding_sets:
