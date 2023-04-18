@@ -510,6 +510,84 @@ def get_custom_workfile_template_from_session(
     )
 
 
+def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
+    """Returns an environment dictionary based on the visual hierarchy of an asset in a project.
+
+    The environment dictionary contains keys representing the different levels of the
+    visual hierarchy (e.g. "SHOW", "SEASON", "EPISODE", etc.) and their corresponding
+    values, if available.
+
+    Args:
+        project_doc (dict): A dictionary containing metadata about the project.
+        asset_doc (dict): A dictionary containing metadata about the asset.
+        skip_empty (bool): Whether to skip env entries that we don't have a value for.
+
+    Returns:
+        dict: An environment dictionary with keys "SHOW", "SEASON", "EPISODE", "SEQUENCE",
+            "SHOT", and "ASSET_TYPE". The values of the keys are the names of the
+            corresponding entities in the hierarchy. If an entity is not present in the
+            hierarchy, its corresponding key will not be present or have a value of None
+            if 'skip_empty' is set to False.
+
+    """
+    visual_hierarchy = [asset_doc]
+    current_doc = asset_doc
+    project_name = project_doc["name"]
+    while True:
+        visual_parent_id = current_doc["data"]["visualParent"]
+        visual_parent = None
+        if visual_parent_id:
+            visual_parent = get_asset_by_id(project_name, visual_parent_id)
+
+        if not visual_parent:
+            visual_hierarchy.append(project_doc)
+            break
+        visual_hierarchy.append(visual_parent)
+        current_doc = visual_parent
+
+    # Reverse hierarchy so project is the first one on the list
+    visual_hierarchy = list(reversed(visual_hierarchy))
+
+    # Create hierarchy dictionary with the values for each hierarchy
+    index = 0
+    env = {
+        "SHOW": visual_hierarchy[index]["data"]["code"],
+        "SEASON": None,
+        "EPISODE": None,
+        "SEQUENCE": None,
+        "SHOT": None,
+        "ASSET_TYPE": None,
+    }
+    index += 1
+    folder_type = visual_hierarchy[index]["name"]
+
+    # If hierarchy contains more than 5 entities, it must mean that
+    # this project contains season and episode.
+    if len(visual_hierarchy) > 5:
+        index += 1
+        env["SEASON"] = visual_hierarchy[index]["name"]
+        index += 1
+        env["EPISODE"] = visual_hierarchy[index]["name"]
+
+    # If the type is shots, we fill sequence and shot
+    if folder_type == "shots":
+        index += 1
+        env["SEQUENCE"] = visual_hierarchy[index]["name"]
+        index += 1
+        if len(visual_hierarchy) > index:
+            env["SHOT"] = visual_hierarchy[index]["name"]
+
+    # Otherwise if it's an asset, we simply fill the type of the asset
+    elif folder_type == "assets":
+        index += 1
+        env["ASSET_TYPE"] = visual_hierarchy[index]["name"]
+
+    if skip_empty:
+        env = {key: value for key, value in env.items() if value is not None}
+
+    return env
+
+
 def compute_session_changes(
     session, asset_doc, task_name, template_key=None
 ):
@@ -597,6 +675,17 @@ def change_current_context(asset_doc, task_name, template_key=None):
             os.environ.pop(key, None)
         else:
             os.environ[key] = value
+
+    ### Starts Alkemy-X Override ###
+    # Calculate the hierarchy environment and update
+    project_doc = get_project(legacy_io.Session["AVALON_PROJECT"])
+    hierarchy_env = get_hierarchy_env(project_doc, asset_doc, skip_empty=False)
+    for key, value in hierarchy_env.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+    ### Ends Alkemy-X Override ###
 
     data = changes.copy()
     # Convert env keys to human readable keys
