@@ -4,24 +4,21 @@ import rv
 
 
 @contextlib.contextmanager
-def maintained_selection():
-    return
-
-
-@contextlib.contextmanager
-def command_batch(name):
-    return
+def maintained_view():
+    """Reset to original view node after context"""
+    original = rv.commands.viewNode()
+    try:
+        yield
+    finally:
+        rv.commands.setViewNode(original)
 
 
 @contextlib.contextmanager
 def active_view(node):
-    """Set active view during contet"""
-    original = rv.commands.viewNode()
-    try:
+    """Set active view during context"""
+    with maintained_view():
         rv.commands.setViewNode(node)
         yield
-    finally:
-        rv.commands.setViewNode(original)
 
 
 def group_member_of_type(group_node, member_type):
