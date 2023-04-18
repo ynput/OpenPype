@@ -330,7 +330,7 @@ def make_paths_absolute(source_filepath: Path = None):
         return
 
     # Resolve path from source filepath with the relative filepath
-    for datablock in itertools.chain(bpy.data.libraries, bpy.data.images):
+    for datablock in list(bpy.data.libraries) + list(bpy.data.images):
         try:
             if datablock and datablock.filepath.startswith("//"):
                 datablock.filepath = str(
