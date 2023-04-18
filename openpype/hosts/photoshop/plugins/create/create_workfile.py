@@ -7,7 +7,7 @@ from openpype.pipeline import (
 from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
 
 
-class PSWorkfileCreator(AutoCreator):
+class WorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
 
