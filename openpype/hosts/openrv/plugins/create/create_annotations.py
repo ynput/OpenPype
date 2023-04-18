@@ -13,9 +13,11 @@ from openpype.pipeline import (
 
 
 class AnnotationCreator(AutoCreator):
+    """Collect each drawn annotation over a loaded container as an annotation.
+    """
     identifier = "annotation"
     family = "annotation"
-    label = "annotation"
+    label = "Annotation"
 
     default_variant = "Main"
 
