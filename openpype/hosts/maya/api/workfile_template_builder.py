@@ -270,17 +270,30 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             elif not cmds.sets(root, q=True):
                 return
 
-        # Move loaded nodes to correct index in outliner hierarchy
-        placeholder_form = cmds.xform(
-            placeholder.scene_identifier,
-            q=True,
-            matrix=True,
-            worldSpace=True
-        )
-        for node in set(nodes_to_parent):
-            cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=placeholder.data["index"])
-            cmds.xform(node, matrix=placeholder_form, ws=True)
+        for node in nodes_to_parent:
+            referenced_nodes = cmds.referenceQuery(node, nodes=True)
+            new_node = cmds.listRelatives(
+                referenced_nodes[0],
+                parent=True,
+                fullPath=True
+            )
+
+            if placeholder.data["parent"]:
+                parented_node = cmds.parent(
+                    new_node,
+                    placeholder.data["parent"]
+                )
+            # Move loaded nodes to correct index in outliner hierarchy
+            placeholder_form = cmds.xform(
+                placeholder.scene_identifier,
+                q=True,
+                matrix=True,
+                worldSpace=True
+            )
+
+            cmds.reorder(parented_node, front=True)
+            cmds.reorder(parented_node, relative=placeholder.data["index"])
+            cmds.xform(parented_node, matrix=placeholder_form, ws=True)
 
         holding_sets = cmds.listSets(object=placeholder.scene_identifier)
         if not holding_sets:
