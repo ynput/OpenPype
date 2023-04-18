@@ -125,7 +125,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
                 "arnold_rop", "mantra_rop",
-                "karma_rop"]
+                "karma_rop", "vray_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE

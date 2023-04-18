@@ -41,7 +41,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 "redshift_rop",
                 "arnold_rop",
                 "mantra_rop",
-                "karma_rop"]
+                "karma_rop",
+                "vray_rop"]
     targets = ["local"]
     use_published = True
 
