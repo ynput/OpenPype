@@ -92,6 +92,8 @@ class CollectReview(pyblish.api.InstancePlugin):
             data['frameEndFtrack'] = instance.data["frameEndHandle"]
             data['frameStartHandle'] = instance.data["frameStartHandle"]
             data['frameEndHandle'] = instance.data["frameEndHandle"]
+            data['handleStart'] = instance.data["handleStart"]
+            data['handleEnd'] = instance.data["handleEnd"]
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
             data['step'] = instance.data['step']
