@@ -262,7 +262,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         nodes_to_parent = []
         for root in roots:
             if ref_node:
-                ref_root = cmds.referenceQuery(root, n=True)[0]
+                ref_root = cmds.referenceQuery(root, nodes=True)[0]
                 ref_root = (
                     cmds.listRelatives(ref_root, parent=True) or [ref_root]
                 )
