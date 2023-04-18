@@ -72,23 +72,20 @@ class OpenPypeMenus(MinorMode):
         return rv.qtutils.sessionWindow()
 
     def create(self, event):
-        print("Launching Creator")
-        host_tools.show_creator(parent=self._parent)
+        host_tools.show_publisher(parent=self._parent,
+                                  tab="create")
 
     def load(self, event):
-        print("Launching Loader")
         host_tools.show_loader(parent=self._parent, use_context=True)
 
     def publish(self, event):
-        print("Launching Pyblish")
-        host_tools.show_publish(parent=self._parent)
+        host_tools.show_publisher(parent=self._parent,
+                                  tab="publish")
 
     def workfiles(self, event):
-        print("Launching Workfiles")
         host_tools.show_workfiles(parent=self._parent)
 
     def scene_inventory(self, event):
-        print("Launching inventory")
         host_tools.show_scene_inventory(parent=self._parent)
 
 
