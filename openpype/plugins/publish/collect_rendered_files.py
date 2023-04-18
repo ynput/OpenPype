@@ -15,6 +15,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io, KnownPublishError
 from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
+
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
     """
     This collector will try to find json files in provided
@@ -95,7 +96,6 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            instance.context.data.setdefault("cleanupFullPaths", [])
             self.log.info("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
