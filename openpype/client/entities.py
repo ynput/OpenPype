@@ -1216,7 +1216,7 @@ def get_representations(
         version_ids=version_ids,
         context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
-        standard=True,
+        standard=standard,
         archived=archived,
         fields=fields
     )
