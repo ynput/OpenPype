@@ -14,10 +14,10 @@ from openpype.pipeline.create import get_subset_name
 
 
 class CollectReview(pyblish.api.ContextPlugin):
-    """Gather the active document as review instance.
+    """Collect or create review instance.
 
-    Triggers once even if no 'image' is published as by defaults it creates
-    flatten image from a workfile.
+    Review instance might be autocreated or needs to be created if non artist
+    based workflow is used (eg. Webpublisher)
     """
 
     label = "Collect Review"
@@ -29,6 +29,11 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "review"
+        for instance in context:
+            if instance.data["family"] == family:
+                self.log.debug("Review instance found, won't create new")
+                return
+
         subset = get_subset_name(
             family,
             context.data.get("variant", ''),
