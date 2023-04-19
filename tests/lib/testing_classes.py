@@ -14,8 +14,15 @@ import re
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
-from openpype.settings import get_project_settings
-
+from openpype.pipeline import Anatomy
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings
+)
+from openpype.client import (
+    get_project,
+    get_asset_by_name
+)
 
 class BaseTest:
     """Empty base test class"""
@@ -66,6 +73,22 @@ class ModuleUnitTest(BaseTest):
         yield get_project_settings(
             self.PROJECT
         )
+
+    @pytest.fixture(scope='module')
+    def system_settings(self):
+        yield get_system_settings()
+
+    @pytest.fixture(scope='module')
+    def project_anatomy(self, dbcon):
+        yield Anatomy(self.PROJECT)
+
+    @pytest.fixture(scope='module')
+    def project_doc(self, dbcon):
+        yield get_project(self.PROJECT)
+
+    @pytest.fixture(scope='module')
+    def asset_doc(self, dbcon):
+        yield get_asset_by_name(self.PROJECT, self.ASSET)
 
     @pytest.fixture(scope="module")
     def download_test_data(self, test_data_folder, persist, request):
@@ -210,7 +233,7 @@ class ModuleUnitTest(BaseTest):
             return True
 
 
-class PublishTest(ModuleUnitTest):
+class AppLaunchTest(ModuleUnitTest):
     """Test class for publishing in hosts.
 
         Implemented fixtures:
@@ -320,6 +343,42 @@ class PublishTest(ModuleUnitTest):
 
         app_process = application_manager.launch(app_name, **data)
         yield app_process
+
+
+class PublishTest(AppLaunchTest):
+    """Test class for publishing in hosts.
+
+        Implemented fixtures:
+            launched_app - launches APP with last_workfile_path
+            publish_finished - waits until publish is finished, host must
+                kill its process when finished publishing. Includes timeout
+                which raises ValueError
+
+        Not implemented:
+            last_workfile_path - returns path to testing workfile
+            startup_scripts - provide script for setup in host
+
+        Implemented tests:
+            test_folder_structure_same - compares published and expected
+                subfolders if they contain same files. Compares only on file
+                presence
+
+            TODO: implement test on file size, file content
+    """
+
+    APP_GROUP = ""
+
+    TIMEOUT = 120  # publish timeout
+
+    # could be overwritten by command line arguments
+    # command line value takes precedence
+
+    # keep empty to locate latest installed variant or explicit
+    APP_VARIANT = ""
+    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
+    TEST_DATA_FOLDER = None  # use specific folder of unzipped test file
+
+    SETUP_ONLY = False
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,

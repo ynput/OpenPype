@@ -2,14 +2,24 @@ import os
 import pytest
 import re
 
+from tests.lib.testing_classes import ModuleUnitTest
 from tests.lib.testing_classes import (
     HostFixtures,
     PublishTest,
+    AppLaunchTest,
     DeadlinePublishTest
 )
+from openpype.lib.local_settings import get_openpype_username
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    get_last_workfile,
+    get_workdir_with_workdir_data
+)
+from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+from openpype.pipeline.template_data import get_template_data
 
 
-class NukeHostFixtures(HostFixtures):
+class NukeStaticTestHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
@@ -60,9 +70,65 @@ class NukeHostFixtures(HostFixtures):
     def skip_compare_folders(self):
         yield []
 
-class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
+
+class NukeSyntheticHostFixtures(NukeStaticTestHostFixtures, ModuleUnitTest):
+
+    @pytest.fixture(scope="module")
+    def last_workfile_path(
+        self, project_settings, project_anatomy,
+        system_settings, project_doc, asset_doc
+    ):
+        """Get last_workfile_path from source data.
+
+        """
+        host_name = "nuke"
+        extensions = HOST_WORKFILE_EXTENSIONS.get(host_name)
+        anatomy = project_anatomy
+
+        workdir_data = get_template_data(
+            project_doc, asset_doc, self.TASK, host_name, system_settings
+        )
+
+        workdir = get_workdir_with_workdir_data(
+            workdir_data,
+            anatomy.project_name,
+            anatomy,
+            project_settings=project_settings
+        )
+
+        project_settings = project_settings
+        task_type = workdir_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            self.PROJECT,
+            project_settings=project_settings
+        )
+        # Find last workfile
+        file_template = str(anatomy.templates[template_key]["file"])
+
+        workdir_data.update({
+            "version": 1,
+            "user": get_openpype_username(),
+            "ext": extensions[0]
+        })
+
+        last_workfile_path = get_last_workfile(
+            workdir, file_template, workdir_data, extensions, True
+        )
+
+        yield last_workfile_path
+
+
+class NukeLocalSyntheticTestClass(NukeSyntheticHostFixtures, AppLaunchTest):
     """Testing class for local publishes."""
 
 
-class NukeDeadlinePublishTestClass(NukeHostFixtures, DeadlinePublishTest):
+class NukeLocalPublishTestClass(NukeStaticTestHostFixtures, PublishTest):
+    """Testing class for local publishes."""
+
+
+class NukeDeadlinePublishTestClass(
+    NukeStaticTestHostFixtures, DeadlinePublishTest
+):
     """Testing class for Deadline publishes."""
