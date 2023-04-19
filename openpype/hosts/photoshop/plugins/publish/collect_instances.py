@@ -74,6 +74,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["families"] = self.families_mapping[
                 layer_meta_data["family"]
             ]
+
+            creator_attributes = instance.data["creator_attributes"]
+            if creator_attributes["mark_for_review"]:
+                instance.data["families"].append("review")
+
             instance.data["publish"] = layer_item.visible
             instance_names.append(layer_meta_data["subset"])
 

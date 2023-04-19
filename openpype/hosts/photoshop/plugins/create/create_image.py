@@ -94,6 +94,10 @@ class ImageCreator(Creator):
             data.update({"layer_name": layer_name})
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
+            creator_attributes = {"mark_for_review":
+                                      pre_create_data["mark_for_review"]}
+            data.update({"creator_attributes": creator_attributes})
+
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
 
@@ -143,7 +147,12 @@ class ImageCreator(Creator):
                     label="Create separate instance for each selected"),
             BoolDef("use_layer_name",
                     default=False,
-                    label="Use layer name in subset")
+                    label="Use layer name in subset"),
+            BoolDef(
+                "mark_for_review",
+                label="Create separate review",
+                default=False
+            )
         ]
         return output
 
@@ -175,6 +184,11 @@ class ImageCreator(Creator):
         but layer name should be used (set explicitly in UI or implicitly if
         multiple images should be created), it is added in capitalized form
         as a suffix to subset name.
+        
+        Each image could have its separate review created if necessary via
+        `Review` toggle. 
+        But more use case is to use separate `review` instance to create review
+        from all published items.
         """
 
     def _handle_legacy(self, instance_data):
