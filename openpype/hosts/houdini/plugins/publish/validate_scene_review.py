@@ -16,13 +16,17 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
     label = "Scene Setting for review"
 
     def process(self, instance):
-        invalid = self.get_invalid_scene_path(instance)
 
         report = []
+        instance_node = hou.node(instance.data.get("instance_node"))
+
+        invalid = self.get_invalid_scene_path(instance_node)
         if invalid:
-            report.append(
-                "Scene path does not exist: '%s'" % invalid[0],
-            )
+            report.append(invalid)
+
+        invalid = self.get_invalid_camera_path(instance_node)
+        if invalid:
+            report.append(invalid)
 
         invalid = self.get_invalid_resolution(instance)
         if invalid:
@@ -33,13 +37,24 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
                 "\n\n".join(report),
                 title=self.label)
 
-    def get_invalid_scene_path(self, instance):
-
-        node = hou.node(instance.data.get("instance_node"))
-        scene_path_parm = node.parm("scenepath")
+    def get_invalid_scene_path(self, rop_node):
+        scene_path_parm = rop_node.parm("scenepath")
         scene_path_node = scene_path_parm.evalAsNode()
         if not scene_path_node:
-            return [scene_path_parm.evalAsString()]
+            path = scene_path_parm.evalAsString()
+            return "Scene path does not exist: '{}'".format(path)
+
+    def get_invalid_camera_path(self, rop_node):
+        camera_path_parm = rop_node.parm("camera")
+        camera_node = camera_path_parm.evalAsNode()
+        path = camera_path_parm.evalAsString()
+        if not camera_node:
+            return "Camera path does not exist: '{}'".format(path)
+        type_name = camera_node.type().name()
+        if type_name != "cam":
+            return "Camera path is not a camera: '{}' (type: {})".format(
+                path, type_name
+            )
 
     def get_invalid_resolution(self, instance):
         node = hou.node(instance.data.get("instance_node"))
