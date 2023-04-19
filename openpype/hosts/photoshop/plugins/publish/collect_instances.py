@@ -75,10 +75,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 layer_meta_data["family"]
             ]
 
-            creator_attributes = instance.data["creator_attributes"]
-            if creator_attributes["mark_for_review"]:
-                instance.data["families"].append("review")
-
             instance.data["publish"] = layer_item.visible
             instance_names.append(layer_meta_data["subset"])
 
@@ -91,6 +87,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
         if len(instance_names) != len(set(instance_names)):
             self.log.warning("Duplicate instances found. " +
                              "Remove unwanted via Publisher")
+
+        # additional logic only for remote publishing from Webpublisher
+        if "remotepublish" not in pyblish.api.registered_targets():
+            return
 
         project_name = get_current_project_name()
         proj_settings = get_project_settings(project_name)
