@@ -67,13 +67,18 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid_nodes, message = self.get_invalid_with_message(instance)
         if invalid_nodes:
+
+            # instance_node is str, but output_node is hou.Node so we convert
+            output = instance.data.get("output_node")
+            output_path = output.path() if output else None
+
             raise PublishXmlValidationError(
                 self,
                 "Node connected to the output node is not of type VDB.",
                 formatting_data={
                     "message": message,
                     "rop_path": instance.data.get("instance_node"),
-                    "sop_path": instance.data.get("output_node")
+                    "sop_path": output_path
                 }
             )
 
