@@ -29,10 +29,23 @@ class CollectReview(pyblish.api.ContextPlugin):
 
     def process(self, context):
         family = "review"
+        has_review = False
         for instance in context:
             if instance.data["family"] == family:
-                self.log.debug("Review instance found, won't create new")
-                return
+                has_review = True
+
+            creator_attributes = instance.data["creator_attributes"]
+            if (creator_attributes.get("mark_for_review") and
+                    "review" not in instance.data["families"]):
+                instance.data["families"].append("review")
+
+        # additional logic only for remote publishing from Webpublisher
+        if "remotepublish" not in pyblish.api.registered_targets():
+            return
+
+        if has_review:
+            self.log.debug("Review instance found, won't create new")
+            return
 
         subset = get_subset_name(
             family,
