@@ -109,11 +109,11 @@ class AutoImageCreator(PSAutoCreator):
 
     def get_detail_description(self):
         return """Creator for flatten image.
-        
-        Studio might configure simple publishing workflow. In that case 
+
+        Studio might configure simple publishing workflow. In that case
         `image` instance is automatically created which will publish flat
         image from all visible layers.
-        
+
         Artist might disable this instance from publishing or from creating
         review for it though.
         """
