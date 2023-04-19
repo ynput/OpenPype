@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
 <error id="main">
-<title>Scene setting</title>
+<title>Invalid VDB</title>
 <description>
-## Invalid input node
+## Invalid VDB output
 
-VDB input must have the same number of VDBs, points, primitives and vertices as output.
+All primitives of the output geometry must be VDBs, no other primitive
+types are allowed. That means that regardless of the amount of VDBs in the
+geometry it will have an equal amount of VDBs, points, primitives and
+vertices since each VDB primitive is one point, one vertex and one VDB.
+
+This validation only checks the geometry on the first frame of the export
+frame range.
+
+
 
 </description>
 <detail>
-### __Detailed Info__ (optional)
+### Detailed Info
 
-A VDB is an inherited type of Prim, holds the following data:
-    - Primitives: 1
-    - Points: 1
-    - Vertices: 1
-    - VDBs: 1
+ROP node `{rop_path}` is set to export SOP path `{sop_path}`.
+
+{message}
+
 </detail>
 </error>
 </root>
