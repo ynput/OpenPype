@@ -12,8 +12,8 @@ class RecreateRigAnimationInstance(InventoryAction):
     """Recreate animation publish instance for loaded rigs"""
 
     label = "Recreate rig animation instance"
-    icon = "industry"
-    color = "#55DDAA"
+    icon = "wrench"
+    color = "#888888"
 
     @staticmethod
     def is_compatible(container):
