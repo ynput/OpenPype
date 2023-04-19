@@ -49,21 +49,19 @@ class ExtractReview(publish.Extractor):
 
         repre_name = "jpg"
         output_name = repre_name
-        output_def = "jpg"
         if instance.data["family"] != "review":
             # enable creation of review, without this jpg review would clash
             # with jpg of the image family
-            name =  "{}_{}".format(output_name, output_def)
+            repre_name =  "{}_{}".format(repre_name, output_name)
 
         if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
             instance.data["representations"].append({
-                "name": name,
+                "name": repre_name,
                 "ext": "jpg",
                 "outputName": output_name,
-                "outputDef": output_def,
                 "files": img_list,
                 "frameStart": 0,
                 "frameEnd": len(img_list),
@@ -77,10 +75,9 @@ class ExtractReview(publish.Extractor):
             img_list = self._save_flatten_image(staging_dir, layers)
 
             instance.data["representations"].append({
-                "name": name,
+                "name": repre_name,
                 "ext": "jpg",
                 "outputName": output_name,
-                "outputDef": output_def,
                 "files": img_list,  # cannot be [] for single frame
                 "stagingDir": staging_dir,
                 "tags": self.jpg_options['tags']
