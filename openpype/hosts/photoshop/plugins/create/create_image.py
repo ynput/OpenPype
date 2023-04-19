@@ -95,7 +95,7 @@ class ImageCreator(Creator):
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
             creator_attributes = {"mark_for_review":
-                                      pre_create_data["mark_for_review"]}
+                                  pre_create_data["mark_for_review"]}
             data.update({"creator_attributes": creator_attributes})
 
             new_instance = CreatedInstance(self.family, subset_name, data,
@@ -194,7 +194,7 @@ class ImageCreator(Creator):
         as a suffix to subset name.
 
         Each image could have its separate review created if necessary via
-        `Create separate review` toggle. 
+        `Create separate review` toggle.
         But more use case is to use separate `review` instance to create review
         from all published items.
         """

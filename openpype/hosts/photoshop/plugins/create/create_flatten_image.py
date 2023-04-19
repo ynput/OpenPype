@@ -72,7 +72,6 @@ class AutoImageCreator(PSAutoCreator):
             api.stub().imprint(existing_instance.get("instance_id"),
                                existing_instance.data_to_store())
 
-
     def _get_subset_name(self, asset_name, task_name):
         """Use configured template to create subset name"""
         if not self.flatten_subset_template:
