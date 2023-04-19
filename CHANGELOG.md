@@ -1,9 +1,967 @@
 # Changelog
 
 
+## [3.15.4](https://github.com/ynput/OpenPype/tree/3.15.4)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.3...3.15.4)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Maya: Cant assign shaders to the ass file - OP-4859  <a href="https://github.com/ynput/OpenPype/pull/4460">#4460</a></summary>
+
+<strong>Support AiStandIn nodes for look assignment.
+
+</strong>Using operators we assign shaders and attribute/parameters to nodes within standins. Initially there is only support for a limited mount of attributes but we can add support as needed;
+```
+primaryVisibility
+castsShadows
+receiveShadows
+aiSelfShadows
+aiOpaque
+aiMatte
+aiVisibleInDiffuseTransmission
+aiVisibleInSpecularTransmission
+aiVisibleInVolume
+aiVisibleInDiffuseReflection
+aiVisibleInSpecularReflection
+aiSubdivUvSmoothing
+aiDispHeight
+aiDispPadding
+aiDispZeroValue
+aiStepSize
+aiVolumePadding
+aiSubdivType
+aiSubdivIterations
+```
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: GPU cache representation <a href="https://github.com/ynput/OpenPype/pull/4649">#4649</a></summary>
+
+Implement GPU cache for model, animation and pointcache.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Implement review family with opengl node <a href="https://github.com/ynput/OpenPype/pull/3839">#3839</a></summary>
+
+<strong>Implements a first pass for Reviews publishing in Houdini. Resolves #2720
+
+</strong>Uses the `opengl` ROP node to produce PNG images.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Camera focal length visible in review - OP-3278 <a href="https://github.com/ynput/OpenPype/pull/4531">#4531</a></summary>
+
+<strong>Camera focal length visible in review.
+
+</strong>Support camera focal length in review; static and dynamic.Resolves #3220
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Defining plugins to load on Maya start - OP-4994 <a href="https://github.com/ynput/OpenPype/pull/4714">#4714</a></summary>
+
+Feature to define plugins to load on Maya launch.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke, DL: Returning Suspended Publishing attribute <a href="https://github.com/ynput/OpenPype/pull/4715">#4715</a></summary>
+
+Old Nuke Publisher's feature for suspended publishing job on render farm was added back to the current Publisher.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings UI: Allow setting a size hint for text fields <a href="https://github.com/ynput/OpenPype/pull/4821">#4821</a></summary>
+
+Text entity have `minimum_lines_count` which allows to change minimum size hint of UI input.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Move 'BatchMovieCreator' settings to 'create' subcategory <a href="https://github.com/ynput/OpenPype/pull/4827">#4827</a></summary>
+
+Moved settings for `BatchMoviewCreator` into subcategory `create` in settings. Changes are made to match other hosts settings chema and structure.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya looks: support for native Redshift texture format <a href="https://github.com/ynput/OpenPype/pull/2971">#2971</a></summary>
+
+<strong>Add support for native Redshift textures handling. Closes #2599
+
+</strong>Uses Redshift's Texture Processor executable to convert textures being used in renders to the Redshift ".rstexbin" format.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: custom namespace for references <a href="https://github.com/ynput/OpenPype/pull/4511">#4511</a></summary>
+
+<strong>Adding an option in Project Settings > Maya > Loader plugins to set custom namespace. If no namespace is set, the default one is used.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Set correct framerange with handles on file opening <a href="https://github.com/ynput/OpenPype/pull/4664">#4664</a></summary>
+
+Set the range of playback from the asset data, counting handles, to get the correct data when calling the "collect_animation_data" function.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix camera update <a href="https://github.com/ynput/OpenPype/pull/4751">#4751</a></summary>
+
+Fix resetting any modelPanel to a different camera when loading a camera and updating.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Remove single assembly validation for animation instances <a href="https://github.com/ynput/OpenPype/pull/4840">#4840</a></summary>
+
+Rig groups may now be parented to others groups when `includeParentHierarchy` attribute on the instance is "off".
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Optional control of display lights on playblast. <a href="https://github.com/ynput/OpenPype/pull/4145">#4145</a></summary>
+
+<strong>Optional control of display lights on playblast.
+
+</strong>Giving control to what display lights are on the playblasts.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: note family requirements <a href="https://github.com/ynput/OpenPype/pull/4551">#4551</a></summary>
+
+<strong>Allowing to add family requirements to `IntegrateKitsuNote` task status change.
+
+</strong>Adds a `Family requirements` setting to `Integrate Kitsu Note`, so you can add requirements to determine if kitsu task status should be changed based on which families are published or not. For instance you could have the status change only if another subset than workfile is published (but workfile can still be included) by adding an item set to `Not equal` and `workfile`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deactivate closed Kitsu projects on OP <a href="https://github.com/ynput/OpenPype/pull/4619">#4619</a></summary>
+
+Deactivate project on OP when the project is closed on Kitsu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Suggestion to change capture labels. <a href="https://github.com/ynput/OpenPype/pull/4691">#4691</a></summary>
+
+Change capture labels.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Change node type for OpenPypeContext `null` -> `subnet` <a href="https://github.com/ynput/OpenPype/pull/4745">#4745</a></summary>
+
+Change the node type for OpenPype's hidden context node in Houdini from `null` to `subnet`. This fixes #4734
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Extract burnin hosts filters <a href="https://github.com/ynput/OpenPype/pull/4749">#4749</a></summary>
+
+Removed hosts filter from ExtractBurnin plugin. Instance without representations won't cause crash but just skip the instance. We've discovered because Blender already has review but did not create burnins.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: Improve speed of Collect Custom Staging Directory <a href="https://github.com/ynput/OpenPype/pull/4768">#4768</a></summary>
+
+Improve speed of Collect Custom Staging Directory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Anatomy templates formatting <a href="https://github.com/ynput/OpenPype/pull/4773">#4773</a></summary>
+
+Added option to format only single template from anatomy instead of formatting all of them all the time. Formatting of all templates is causing slowdowns e.g. during publishing of hundreds of instances.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Harmony: Handle zip files with deeper structure <a href="https://github.com/ynput/OpenPype/pull/4782">#4782</a></summary>
+
+External Harmony zip files might contain one additional level with scene name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Use common logic to configure executable <a href="https://github.com/ynput/OpenPype/pull/4788">#4788</a></summary>
+
+Unreal Editor location and version was autodetected. This easied configuration in some cases but was not flexible enought. This PR is changing the way Unreal Editor location is set, unifying it with the logic other hosts are using.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Github: Grammar tweaks + uppercase issue title <a href="https://github.com/ynput/OpenPype/pull/4813">#4813</a></summary>
+
+Tweak some of the grammar in the issue form templates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Allow creation of publish instances via Houdini TAB menu <a href="https://github.com/ynput/OpenPype/pull/4831">#4831</a></summary>
+
+Register the available Creator's as houdini tools so an artist can add publish instances via the Houdini TAB node search menu from within the network editor.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Fix Collect Render for V-Ray, Redshift and Renderman for missing colorspace <a href="https://github.com/ynput/OpenPype/pull/4650">#4650</a></summary>
+
+Fix Collect Render not working for Redshift, V-Ray and Renderman due to missing `colorspace` argument to `RenderProduct` dataclass.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Xgen fixes <a href="https://github.com/ynput/OpenPype/pull/4707">#4707</a></summary>
+
+Fix for Xgen extraction of world parented nodes and validation for required namespace.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix extract review and thumbnail for Maya 2020 <a href="https://github.com/ynput/OpenPype/pull/4744">#4744</a></summary>
+
+Fix playblasting in Maya 2020 with override viewport options enabled. Fixes #4730.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: local variable 'arnold_standins' referenced before assignment - OP-5542 <a href="https://github.com/ynput/OpenPype/pull/4778">#4778</a></summary>
+
+MayaLookAssigner erroring when MTOA is not loaded:
+```
+# Traceback (most recent call last):
+#   File "\openpype\hosts\maya\tools\mayalookassigner\app.py", line 272, in on_process_selected
+#     nodes = list(set(item["nodes"]).difference(arnold_standins))
+# UnboundLocalError: local variable 'arnold_standins' referenced before assignment
+```
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix getting view and display in Maya 2020 - OP-5035 <a href="https://github.com/ynput/OpenPype/pull/4795">#4795</a></summary>
+
+The `view_transform` returns a different format in Maya 2020. Fixes #4540 (hopefully).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix Look Maya 2020 Py2 support for Extract Look <a href="https://github.com/ynput/OpenPype/pull/4808">#4808</a></summary>
+
+Fix Extract Look supporting python 2.7 for Maya 2020.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix Validate Mesh Overlapping UVs plugin <a href="https://github.com/ynput/OpenPype/pull/4816">#4816</a></summary>
+
+Fix typo in the code where a maya command returns a `list` instead of `str`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix tile rendering with Vray - OP-5566 <a href="https://github.com/ynput/OpenPype/pull/4832">#4832</a></summary>
+
+Fixes tile rendering with Vray.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: checking existing frames fails when there is number in file name <a href="https://github.com/ynput/OpenPype/pull/4698">#4698</a></summary>
+
+Previous implementation of validator failed on files with any other number in rendered file names.Used regular expression pattern now handles numbers in the file names  (eg "Main_beauty.v001.1001.exr", "Main_beauty_v001.1001.exr", "Main_beauty.1001.1001.exr") but not numbers behind frames (eg. "Main_beauty.1001.v001.exr")
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Validate Render Settings. <a href="https://github.com/ynput/OpenPype/pull/4735">#4735</a></summary>
+
+Fixes error message when using attribute validation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Hero version sites recalculation <a href="https://github.com/ynput/OpenPype/pull/4737">#4737</a></summary>
+
+Sites recalculation in integrate hero version did expect that it is integrated exactly same amount of files as in previous integration. This is not the case in many cases, so the sites recalculation happens in a different way, first are prepared all sites from previous representation files, and all of them are added to each file in new representation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Fix collect current file <a href="https://github.com/ynput/OpenPype/pull/4739">#4739</a></summary>
+
+Fixes the Workfile publishing getting added into every instance being published from Houdini
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: Fix Extract Burnin + Colorspace functions for conflicting python environments with PYTHONHOME <a href="https://github.com/ynput/OpenPype/pull/4740">#4740</a></summary>
+
+This fixes the running of openpype processes from e.g. a host with conflicting python versions that had `PYTHONHOME` said additionally to `PYTHONPATH`, like e.g. Houdini Py3.7 together with OpenPype Py3.9 when using Extract Burnin for a review in #3839This fix applies to Extract Burnin and some of the colorspace functions that use `run_openpype_process`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Harmony: render what is in timeline in Harmony locally <a href="https://github.com/ynput/OpenPype/pull/4741">#4741</a></summary>
+
+Previously it wasn't possible to render according to what was set in Timeline in scene start/end, just by what it was set in whole timeline.This allows artist to override what is in DB with what they require (with disabled `Validate Scene Settings`). Now artist can extend scene by additional frames, that shouldn't be rendered, but which might be desired.Removed explicit set scene settings (eg. applying frames and resolution directly to the scene after launch), added separate menu item to allow artist to do it themselves.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Extract Review settings add Use Background Gradient <a href="https://github.com/ynput/OpenPype/pull/4747">#4747</a></summary>
+
+Add Display Gradient Background toggle in settings to fix support for setting flat background color for reviews.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: publisher is offering review on write families on demand <a href="https://github.com/ynput/OpenPype/pull/4755">#4755</a></summary>
+
+Original idea where reviewable toggle will be offered in publisher on demand is fixed and now `review` attribute can be disabled in settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Workfiles: keep Browse always enabled <a href="https://github.com/ynput/OpenPype/pull/4766">#4766</a></summary>
+
+Browse might make sense even if there are no workfiles present, actually in that case it makes the most sense (eg. I want to locate workfile from outside - from Desktop for example).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: label key in instance data is optional <a href="https://github.com/ynput/OpenPype/pull/4779">#4779</a></summary>
+
+Collect OTIO review plugin is not crashing if `label` key is missing in instance data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Loader: Fix missing variable <a href="https://github.com/ynput/OpenPype/pull/4781">#4781</a></summary>
+
+There is missing variable `handles` in loader tool after https://github.com/ynput/OpenPype/pull/4746. The variable was renamed to `handles_label` and is initialized to `None` if handles are not available.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Workfile Template builder fixes <a href="https://github.com/ynput/OpenPype/pull/4783">#4783</a></summary>
+
+Popup window after Nuke start is not showing. Knobs with X/Y coordination on nodes where were converted from placeholders are not added if `keepPlaceholders` is witched off.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Add family filter 'review' to burnin profile with focal length <a href="https://github.com/ynput/OpenPype/pull/4791">#4791</a></summary>
+
+Avoid profile burnin with `focalLength` key for renders, but use only for playblast reviews.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>add farm instance to the render collector in 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4794">#4794</a></summary>
+
+bug fix for the failure of submitting publish job in 3dsmax
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Plugin active attribute is respected <a href="https://github.com/ynput/OpenPype/pull/4798">#4798</a></summary>
+
+Publisher consider plugin's `active` attribute, so the plugin is not processed when `active` is set to `False`. But we use the attribute in `OptionalPyblishPluginMixin` for different purposes, so I've added hack bypass of the active state validation when plugin inherit from the mixin. This is temporary solution which cannot be changed until all hosts use Publisher otherwise global plugins would be broken. Also plugins which have `enabled` set to `False` are filtered out -> this happened only when automated settings were applied and the settings contained `"enabled"` key se to `False`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: settings and optional attribute in publisher for some validators <a href="https://github.com/ynput/OpenPype/pull/4811">#4811</a></summary>
+
+New publisher is supporting optional switch for plugins which is offered in Publisher in Right panel. Some plugins were missing this switch and also settings which would offer the optionality.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings: Version settings popup fix <a href="https://github.com/ynput/OpenPype/pull/4822">#4822</a></summary>
+
+Version completer popup have issues on some platforms, this should fix those edge cases. Also fixed issue when completer stayed shown fater reset (save).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero/Nuke: adding monitorOut key to settings <a href="https://github.com/ynput/OpenPype/pull/4826">#4826</a></summary>
+
+New versions of Hiero were introduced with new colorspace property for Monitor Out. It have been added into project settings. Also added new config names into settings enumerator option.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: removed default workfile template builder preset <a href="https://github.com/ynput/OpenPype/pull/4835">#4835</a></summary>
+
+Default for workfile template builder should have been empty.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Review can be made from any instance <a href="https://github.com/ynput/OpenPype/pull/4843">#4843</a></summary>
+
+Add `"review"` tag to output of extract sequence if instance is marked for review. At this moment only instances with family `"review"` were able to define input for `ExtractReview` plugin which is not right.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Deadline: Remove unused FramesPerTask job info submission <a href="https://github.com/ynput/OpenPype/pull/4657">#4657</a></summary>
+
+Remove unused `FramesPerTask` job info submission to Deadline.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Remove pymel dependency <a href="https://github.com/ynput/OpenPype/pull/4724">#4724</a></summary>
+
+Refactors code written using `pymel` to use standard maya python libraries instead like `maya.cmds` or `maya.api.OpenMaya`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Remove "preview" data from representation <a href="https://github.com/ynput/OpenPype/pull/4759">#4759</a></summary>
+
+Remove "preview" data from representation
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Collect Review cleanup code for attached subsets <a href="https://github.com/ynput/OpenPype/pull/4720">#4720</a></summary>
+
+Refactor some code for Maya: Collect Review for attached subsets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Refactor: Remove `handles`, `edit_in` and `edit_out` backwards compatibility <a href="https://github.com/ynput/OpenPype/pull/4746">#4746</a></summary>
+
+Removes backward compatibiliy fallback for data called `handles`, `edit_in` and `edit_out`.
+
+
+___
+
+</details>
+
+### **📃 Documentation**
+
+
+<details>
+<summary>Bump webpack from 5.69.1 to 5.76.1 in /website <a href="https://github.com/ynput/OpenPype/pull/4624">#4624</a></summary>
+
+Bumps [webpack](https://github.com/webpack/webpack) from 5.69.1 to 5.76.1.
+<details>
+<summary>Release notes</summary>
+<p><em>Sourced from <a href="https://github.com/webpack/webpack/releases">webpack's releases</a>.</em></p>
+<blockquote>
+<h2>v5.76.1</h2>
+<h2>Fixed</h2>
+<ul>
+<li>Added <code>assert/strict</code> built-in to <code>NodeTargetPlugin</code></li>
+</ul>
+<h2>Revert</h2>
+<ul>
+<li>Improve performance of <code>hashRegExp</code> lookup by <a href="https://github.com/ryanwilsonperkin"><code>@​ryanwilsonperkin</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16759">webpack/webpack#16759</a></li>
+</ul>
+<h2>v5.76.0</h2>
+<h2>Bugfixes</h2>
+<ul>
+<li>Avoid cross-realm object access by <a href="https://github.com/Jack-Works"><code>@​Jack-Works</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16500">webpack/webpack#16500</a></li>
+<li>Improve hash performance via conditional initialization by <a href="https://github.com/lvivski"><code>@​lvivski</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16491">webpack/webpack#16491</a></li>
+<li>Serialize <code>generatedCode</code> info to fix bug in asset module cache restoration by <a href="https://github.com/ryanwilsonperkin"><code>@​ryanwilsonperkin</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16703">webpack/webpack#16703</a></li>
+<li>Improve performance of <code>hashRegExp</code> lookup by <a href="https://github.com/ryanwilsonperkin"><code>@​ryanwilsonperkin</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16759">webpack/webpack#16759</a></li>
+</ul>
+<h2>Features</h2>
+<ul>
+<li>add <code>target</code> to <code>LoaderContext</code> type by <a href="https://github.com/askoufis"><code>@​askoufis</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16781">webpack/webpack#16781</a></li>
+</ul>
+<h2>Security</h2>
+<ul>
+<li><a href="https://github.com/advisories/GHSA-3rfm-jhwj-7488">CVE-2022-37603</a> fixed by <a href="https://github.com/akhilgkrishnan"><code>@​akhilgkrishnan</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16446">webpack/webpack#16446</a></li>
+</ul>
+<h2>Repo Changes</h2>
+<ul>
+<li>Fix HTML5 logo in README by <a href="https://github.com/jakebailey"><code>@​jakebailey</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16614">webpack/webpack#16614</a></li>
+<li>Replace TypeScript logo in README by <a href="https://github.com/jakebailey"><code>@​jakebailey</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16613">webpack/webpack#16613</a></li>
+<li>Update actions/cache dependencies by <a href="https://github.com/piwysocki"><code>@​piwysocki</code></a> in <a href="https://redirect.github.com/webpack/webpack/pull/16493">webpack/webpack#16493</a></li>
+</ul>
+<h2>New Contributors</h2>
+<ul>
+<li><a href="https://github.com/Jack-Works"><code>@​Jack-Works</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16500">webpack/webpack#16500</a></li>
+<li><a href="https://github.com/lvivski"><code>@​lvivski</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16491">webpack/webpack#16491</a></li>
+<li><a href="https://github.com/jakebailey"><code>@​jakebailey</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16614">webpack/webpack#16614</a></li>
+<li><a href="https://github.com/akhilgkrishnan"><code>@​akhilgkrishnan</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16446">webpack/webpack#16446</a></li>
+<li><a href="https://github.com/ryanwilsonperkin"><code>@​ryanwilsonperkin</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16703">webpack/webpack#16703</a></li>
+<li><a href="https://github.com/piwysocki"><code>@​piwysocki</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16493">webpack/webpack#16493</a></li>
+<li><a href="https://github.com/askoufis"><code>@​askoufis</code></a> made their first contribution in <a href="https://redirect.github.com/webpack/webpack/pull/16781">webpack/webpack#16781</a></li>
+</ul>
+<p><strong>Full Changelog</strong>: <a href="https://github.com/webpack/webpack/compare/v5.75.0...v5.76.0">https://github.com/webpack/webpack/compare/v5.75.0...v5.76.0</a></p>
+<h2>v5.75.0</h2>
+<h1>Bugfixes</h1>
+<ul>
+<li><code>experiments.*</code> normalize to <code>false</code> when opt-out</li>
+<li>avoid <code>NaN%</code></li>
+<li>show the correct error when using a conflicting chunk name in code</li>
+<li>HMR code tests existance of <code>window</code> before trying to access it</li>
+<li>fix <code>eval-nosources-*</code> actually exclude sources</li>
+<li>fix race condition where no module is returned from processing module</li>
+<li>fix position of standalong semicolon in runtime code</li>
+</ul>
+<h1>Features</h1>
+<ul>
+<li>add support for <code>@import</code> to extenal CSS when using experimental CSS in node</li>
+</ul>
+<!-- raw HTML omitted -->
+</blockquote>
+<p>... (truncated)</p>
+</details>
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/webpack/webpack/commit/21be52b681c477f8ebc41c1b0e7a7a8ac4fa7008"><code>21be52b</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16804">#16804</a> from webpack/chore-patch-release</li>
+<li><a href="https://github.com/webpack/webpack/commit/1cce945dd6c3576d37d3940a0233fd087ce3f6ff"><code>1cce945</code></a> chore(release): 5.76.1</li>
+<li><a href="https://github.com/webpack/webpack/commit/e76ad9e724410f10209caa2ba86875ca8cf5ed61"><code>e76ad9e</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16803">#16803</a> from ryanwilsonperkin/revert-16759-real-content-has...</li>
+<li><a href="https://github.com/webpack/webpack/commit/52b1b0e4ada7c11e7f1b4f3d69b50684938c684e"><code>52b1b0e</code></a> Revert &quot;Improve performance of hashRegExp lookup&quot;</li>
+<li><a href="https://github.com/webpack/webpack/commit/c989143379d344543e4161fec60f3a21beb9e3ce"><code>c989143</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16766">#16766</a> from piranna/patch-1</li>
+<li><a href="https://github.com/webpack/webpack/commit/710eaf4ddaea505e040a24beeb45a769f9e3761b"><code>710eaf4</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16789">#16789</a> from dmichon-msft/contenthash-hashsalt</li>
+<li><a href="https://github.com/webpack/webpack/commit/5d6446822aff579a5d3d9503ec2a16437d2f71d1"><code>5d64468</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16792">#16792</a> from webpack/update-version</li>
+<li><a href="https://github.com/webpack/webpack/commit/67af5ec1f05fb7cf06be6acf27353aef105ddcbc"><code>67af5ec</code></a> chore(release): 5.76.0</li>
+<li><a href="https://github.com/webpack/webpack/commit/97b1718720c33f1b17302a74c5284b01e02ec001"><code>97b1718</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16781">#16781</a> from askoufis/loader-context-target-type</li>
+<li><a href="https://github.com/webpack/webpack/commit/b84efe6224b276bf72e4c5e2f4e76acddfaeef07"><code>b84efe6</code></a> Merge pull request <a href="https://redirect.github.com/webpack/webpack/issues/16759">#16759</a> from ryanwilsonperkin/real-content-hash-regex-perf</li>
+<li>Additional commits viewable in <a href="https://github.com/webpack/webpack/compare/v5.69.1...v5.76.1">compare view</a></li>
+</ul>
+</details>
+<details>
+<summary>Maintainer changes</summary>
+<p>This version was pushed to npm by <a href="https://www.npmjs.com/~evilebottnawi">evilebottnawi</a>, a new releaser for webpack since your current version.</p>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=webpack&package-manager=npm_and_yarn&previous-version=5.69.1&new-version=5.76.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot merge` will merge this PR after your CI passes on it
+- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it
+- `@dependabot cancel merge` will cancel a previously requested merge and block automerging
+- `@dependabot reopen` will reopen this PR if it is closed
+- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot use these labels` will set the current labels as the default for future PRs for this repo and language
+- `@dependabot use these reviewers` will set the current reviewers as the default for future PRs for this repo and language
+- `@dependabot use these assignees` will set the current assignees as the default for future PRs for this repo and language
+- `@dependabot use this milestone` will set the current milestone as the default for future PRs for this repo and language
+
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/ynput/OpenPype/network/alerts).
+
+</details>
+___
+
+</details>
+
+
+<details>
+<summary>Documentation: Add Extract Burnin documentation <a href="https://github.com/ynput/OpenPype/pull/4765">#4765</a></summary>
+
+Add documentation for Extract Burnin global plugin settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Documentation: Move publisher related tips to publisher area <a href="https://github.com/ynput/OpenPype/pull/4772">#4772</a></summary>
+
+Move publisher related tips for After Effects artist documentation to the correct position.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Documentation: Add extra terminology to the key concepts glossary <a href="https://github.com/ynput/OpenPype/pull/4838">#4838</a></summary>
+
+Tweak some of the key concepts in the documentation.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya: Refactor Extract Look with dedicated processors for maketx <a href="https://github.com/ynput/OpenPype/pull/4711">#4711</a></summary>
+
+Refactor Maya extract look to fix some issues:
+- [x] Allow Extraction with maketx with OCIO Color Management enabled in Maya.
+- [x] Fix file hashing so it includes arguments to maketx, so that when arguments change it correctly generates a new hash
+- [x] Fix maketx destination colorspace when OCIO is enabled
+- [x] Use pre-collected colorspaces of the resources instead of trying to retrieve again in Extract Look
+- [x] Fix colorspace attributes being reinterpreted by maya on export (fix remapping) - goal is to resolve #2337
+- [x] Fix support for checking config path of maya default OCIO config (due to using `lib.get_color_management_preferences` which remaps that path)
+- [x] Merged in #2971 to refactor MakeTX into TextureProcessor and also support generating Redshift `.rstexbin` files. - goal is to resolve #2599
+- [x] Allow custom arguments to `maketx` from OpenPype Settings like mentioned here by @fabiaserra for arguments like: `--monochrome-detect`, `--opaque-detect`, `--checknan`.
+- [x] Actually fix the code and make it work. :) (I'll try to keep below checkboxes in sync with my code changes)
+- [x] Publishing without texture processor should work (no maketx + no rstexbin)
+- [x] Publishing with maketx should work
+- [x] Publishing with  rstexbin should work
+- [x] Test it. (This is just me doing some test-runs, please still test the PR!)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya template builder load all assets linked to the shot <a href="https://github.com/ynput/OpenPype/pull/4761">#4761</a></summary>
+
+Problem
+All the assets of the ftrack project are loaded and not those linked to the shot
+
+How get error
+Open maya in the context of shot, then build a new scene with the "Build Workfile from template" button in "OpenPype" menu.
+![image](https://user-images.githubusercontent.com/7068597/229124652-573a23d7-a2b2-4d50-81bf-7592c00d24dc.png)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: Do not force instance data with frame ranges of the asset <a href="https://github.com/ynput/OpenPype/pull/4383">#4383</a></summary>
+
+<strong>This aims to resolve #4317
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Cosmetics: Fix some grammar in docstrings and messages (and some code) <a href="https://github.com/ynput/OpenPype/pull/4752">#4752</a></summary>
+
+Tweak some grammar in codebase
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: Submit publish job fails due root work hardcode - OP-5528 <a href="https://github.com/ynput/OpenPype/pull/4775">#4775</a></summary>
+
+Generating config templates was hardcoded to `root[work]`. This PR fixes that.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>CreateContext: Added option to remove Unknown attributes <a href="https://github.com/ynput/OpenPype/pull/4776">#4776</a></summary>
+
+Added option to remove attributes with UnkownAttrDef on instances. Pop of key will also remove the attribute definition from attribute values, so they're not recreated again.
+
+
+___
+
+</details>
+
+
+
+## [3.15.3](https://github.com/ynput/OpenPype/tree/3.15.3)
+
+
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.2...3.15.3)
 
 ### **🆕 New features**
+
+
+<details>
+<summary>Blender: Extract Review <a href="https://github.com/ynput/OpenPype/pull/3616">#3616</a></summary>
+
+<strong>Added Review to Blender.
+
+</strong>This implementation is based on #3508 but made compatible for the current implementation of OpenPype for Blender.
+
+
+___
+
+</details>
 
 
 <details>
@@ -24,35 +982,33 @@ ___
 
 
 <details>
-<summary>MaxScene Family  <a href="https://github.com/ynput/OpenPype/pull/4615">#4615</a></summary>
-
-Introduction of the Max Scene Family
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Blender: Extract Review <a href="https://github.com/ynput/OpenPype/pull/3616">#3616</a></summary>
-
-<strong>Added Review to Blender.
-
-</strong>This implementation is based on #3508 but made compatible for the current implementation of OpenPype for Blender.
-
-
-___
-
-</details>
-
-
-<details>
 <summary>Global: persistent staging directory for renders <a href="https://github.com/ynput/OpenPype/pull/4583">#4583</a></summary>
 
 <strong>Allows configure if staging directory (`stagingDir`) should be persistent with use of profiles.
 
 </strong>With this feature, users can specify a transient data folder path based on presets, which can be used during the creation and publishing stages. In some cases, these DCCs automatically add a rendering path during the creation stage, which is then used in publishing.One of the key advantages of this feature is that it allows users to take advantage of faster storages for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their rendered data persistent, and use their own infrastructure for regular cleaning.However, it should be noted that some productions may want to use this feature without persistency. Furthermore, there may be a need for retargeting the rendering folder to faster storages, which is also not supported at the moment.It is studio responsibility to clean up obsolete folders with data.Location of the folder is configured in `project_anatomy/templates/others`. ('transient' key is expected, with 'folder' key, could be more templates)Which family/task type/subset is applicable is configured in:`project_settings/global/tools/publish/transient_dir_profiles`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu custom comment template <a href="https://github.com/ynput/OpenPype/pull/4599">#4599</a></summary>
+
+Kitsu allows to write markdown in its comment field. This can be something very powerful to deliver dynamic comments with the help the data from the instance.This feature is defaults to off so the admin have to manually set up the comment field the way they want.I have added a basic example on how the comment can look like as the comment-fields default value.To this I want to add some documentation also but that's on its way when the code itself looks good for the reviewers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>MaxScene Family  <a href="https://github.com/ynput/OpenPype/pull/4615">#4615</a></summary>
+
+Introduction of the Max Scene Family
 
 
 ___
@@ -85,9 +1041,47 @@ ___
 
 
 <details>
+<summary>Copy existing or generate new Fusion profile on prelaunch <a href="https://github.com/ynput/OpenPype/pull/4572">#4572</a></summary>
+
+<strong>Fusion preferences will be copied to the predefined `~/.openpype/hosts/fusion/prefs` folder (or any other folder set in system settings) on launch.
+
+</strong>The idea is to create a copy of existing Fusion profile, adding an OpenPype menu to the Fusion instance.By default the copy setting is turned off, so no file copying is performed. Instead the clean Fusion profile is created by Fusion in the predefined folder. The default locaion is set to `~/.openpype/hosts/fusion/prefs`, to better comply with the other os platforms. After creating the default profile, some modifications are applied:
+- forced Python3
+- forced English interface
+- setup Openpype specific path maps.If the `copy_prefs` checkbox is toggled, a copy of existing Fusion profile folder will be placed in the mentioned location. Then they are altered the same way as described above. The operation is run only once, on the first launch, unless the `force_sync [Resync profile on each launch]` is toggled.English interface is forced because the `FUSION16_PROFILE_DIR` environment variable is not read otherwise (seems to be a Fusion bug).
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Houdini: Create button open new publisher's "create" tab <a href="https://github.com/ynput/OpenPype/pull/4601">#4601</a></summary>
 
 During a talk with @maxpareschi he mentioned that the new publisher in Houdini felt super confusing due to "Create" going to the older creator but now being completely empty and the publish button directly went to the publish tab.This resolves that by fixing the Create button to now open the new publisher but on the Create tab.Also made publish button enforce going to the "publish" tab for consistency in usage.@antirotor I think changing the Create button's callback was just missed in this commit or was there a specific reason to not change that around yet?
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Clockify: refresh and fix the integration <a href="https://github.com/ynput/OpenPype/pull/4607">#4607</a></summary>
+
+Due to recent API changes, Clockify requires `user_id` to operate with the timers. I updated this part and currently it is a WIP for making it fully functional. Most functions, such as start and stop timer, and projects sync are currently working. For the rate limiting task new dependency is added: https://pypi.org/project/ratelimiter/
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion publish existing frames <a href="https://github.com/ynput/OpenPype/pull/4611">#4611</a></summary>
+
+This PR adds the function to publish existing frames instead of having to re-render all of them for each new publish.I have split the render_locally plugin so the review-part is its own plugin now.I also change the saver-creator-plugin's label from Saver to Render (saver) as I intend to add a Prerender creator like in Nuke.
 
 
 ___
@@ -108,58 +1102,20 @@ ___
 
 
 <details>
+<summary>3dsmax: render instance settings in Publish tab <a href="https://github.com/ynput/OpenPype/pull/4658">#4658</a></summary>
+
+Allows user preset the pools, group and use_published settings in Render Creator in the Max Hosts.User can set the settings before or after creating instance in the new publisher
+
+
+___
+
+</details>
+
+
+<details>
 <summary>scene length setting referenced from DB record for 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4665">#4665</a></summary>
 
 Setting the timeline length based on DB record in 3dsMax Hosts
-
-
-___
-
-</details>
-
-
-<details>
-<summary>increment workfile version 3dsmax <a href="https://github.com/ynput/OpenPype/pull/4685">#4685</a></summary>
-
-increment workfile version in 3dsmax as if in blender and maya hosts.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Copy existing or generate new Fusion profile on prelaunch <a href="https://github.com/ynput/OpenPype/pull/4572">#4572</a></summary>
-
-<strong>Fusion preferences will be copied to the predefined `~/.openpype/hosts/fusion/prefs` folder (or any other folder set in system settings) on launch.
-
-</strong>The idea is to create a copy of existing Fusion profile, adding an OpenPype menu to the Fusion instance.By default the copy setting is turned off, so no file copying is performed. Instead the clean Fusion profile is created by Fusion in the predefined folder. The default locaion is set to `~/.openpype/hosts/fusion/prefs`, to better comply with the other os platforms. After creating the default profile, some modifications are applied:
-- forced Python3
-- forced English interface
-- setup Openpype specific path maps.If the `copy_prefs` checkbox is toggled, a copy of existing Fusion profile folder will be placed in the mentioned location. Then they are altered the same way as described above. The operation is run only once, on the first launch, unless the `force_sync [Resync profile on each launch]` is toggled.English interface is forced because the `FUSION16_PROFILE_DIR` environment variable is not read otherwise (seems to be a Fusion bug).
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Fusion publish existing frames <a href="https://github.com/ynput/OpenPype/pull/4611">#4611</a></summary>
-
-This PR adds the function to publish existing frames instead of having to re-render all of them for each new publish.I have split the render_locally plugin so the review-part is its own plugin now.I also change the saver-creator-plugin's label from Saver to Render (saver) as I intend to add a Prerender creator like in Nuke.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Clockify: refresh and fix the integration <a href="https://github.com/ynput/OpenPype/pull/4607">#4607</a></summary>
-
-Due to recent API changes, Clockify requires `user_id` to operate with the timers. I updated this part and currently it is a WIP for making it fully functional. Most functions, such as start and stop timer, and projects sync are currently working. For the rate limiting task new dependency is added: https://pypi.org/project/ratelimiter/
 
 
 ___
@@ -179,6 +1135,17 @@ ___
 
 
 <details>
+<summary>Publisher: Explicit save <a href="https://github.com/ynput/OpenPype/pull/4676">#4676</a></summary>
+
+Publisher have explicit button to save changes, so reset can happen without saving any changes. Save still happens automatically when publishing is started or on publisher window close. But a popup is shown if context of host has changed. Important context was enhanced by workfile path (if host integration supports it) so workfile changes are captured too. In that case a dialog with confirmation is shown to user. All callbacks that may require save of context were moved to main window to be able handle dialog show at one place. Save changes now returns success so the rest of logic is skipped -> publishing won't start, when save of instances fails.Save and reset buttons have shortcuts (Ctrl + s and Ctrls + r).
+
+
+___
+
+</details>
+
+
+<details>
 <summary>CelAction: conditional workfile parameters from settings <a href="https://github.com/ynput/OpenPype/pull/4677">#4677</a></summary>
 
 Since some productions were requesting excluding some workfile parameters from publishing submission, we needed to move them to settings so those could be altered per project.
@@ -190,9 +1157,42 @@ ___
 
 
 <details>
+<summary>Improve logging of used app + tool envs on application launch <a href="https://github.com/ynput/OpenPype/pull/4682">#4682</a></summary>
+
+Improve logging of what apps + tool environments got loaded for an application launch.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Fix name and docstring for Create Workdir Extra Folders prelaunch hook <a href="https://github.com/ynput/OpenPype/pull/4683">#4683</a></summary>
 
 Fix class name and docstring for Create Workdir Extra Folders prelaunch hookThe class name and docstring were originally copied from another plug-in and didn't match the plug-in logic.This also fixes potentially seeing this twice in your logs. Before:After:Where it was actually running both this prelaunch hook and the actual `AddLastWorkfileToLaunchArgs` plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Application launch context: Include app group name in logger <a href="https://github.com/ynput/OpenPype/pull/4684">#4684</a></summary>
+
+Clarify in logs better what app group the ApplicationLaunchContext belongs to and what application is being launched.Before:After:
+
+
+___
+
+</details>
+
+
+<details>
+<summary>increment workfile version 3dsmax <a href="https://github.com/ynput/OpenPype/pull/4685">#4685</a></summary>
+
+increment workfile version in 3dsmax as if in blender and maya hosts.
 
 
 ___
@@ -301,9 +1301,64 @@ ___
 
 
 <details>
-<summary>Fixed a bug where a QThread in the splash screen could be destroyed before finishing execution <a href="https://github.com/ynput/OpenPype/pull/4647">#4647</a></summary>
+<summary>Maya: tile assembly fail in draft - OP-4820 <a href="https://github.com/ynput/OpenPype/pull/4416">#4416</a></summary>
 
-This should fix the occasional behavior of the QThread being destroyed before even its worker returns from the `run()` function.After quiting, it should wait for the QThread object to properly close itself.
+<strong>Tile assembly in Deadline was broken.
+
+</strong>Initial bug report revealed other areas of the tile assembly that needed fixing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Yeti Validate Rig Input - OP-3454 <a href="https://github.com/ynput/OpenPype/pull/4554">#4554</a></summary>
+
+<strong>Fix Yeti Validate Rig Input
+
+</strong>Existing workflow was broken due to this #3297.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Scene inventory: Fix code errors when "not found" entries are found <a href="https://github.com/ynput/OpenPype/pull/4594">#4594</a></summary>
+
+Whenever a "NOT FOUND" entry is present a lot of errors happened in the Scene Inventory:
+- It started spamming a lot of errors for the VersionDelegate since it had no numeric version (no version at all).Error reported on Discord:
+```python
+Traceback (most recent call last):
+  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 65, in paint
+    text = self.displayText(
+  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 33, in displayText
+    assert isinstance(value, numbers.Integral), (
+AssertionError: Version is not integer. "None" <class 'NoneType'>
+```
+- Right click menu would error on NOT FOUND entries, and thus not show. With this PR it will now _disregard_ not found items for "Set version" and "Remove" but still allow actions.This PR resolves those.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Sync OP with zou, make sure value-data is int or float <a href="https://github.com/ynput/OpenPype/pull/4596">#4596</a></summary>
+
+Currently the data zou pulls is a string and not a value causing some bugs in the pipe where a value is expected (like `Set frame range` in Fusion).
+
+
+
+This PR makes sure each value is set with int() or float() so these bugs can't happen later on.
+
+
+
+_(A request to cgwire has also bin sent to allow force values only for some metadata columns, but currently the user can enter what ever they want in there)_
 
 
 ___
@@ -323,9 +1378,53 @@ ___
 
 
 <details>
+<summary>Global | Nuke: fixing farm publishing workflow <a href="https://github.com/ynput/OpenPype/pull/4623">#4623</a></summary>
+
+After Nuke had adopted new publisher with new creators new issues were introduced. Those issues were addressed with this PR. Those are for example broken reviewable video files publishing if published via farm. Also fixed local publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Ftrack additional families filtering <a href="https://github.com/ynput/OpenPype/pull/4633">#4633</a></summary>
+
+Ftrack family collector makes sure the subset family is also in instance families for additional families filtering.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Hierarchical <> Non-Hierarchical attributes sync fix <a href="https://github.com/ynput/OpenPype/pull/4635">#4635</a></summary>
+
+Sync between hierarchical and non-hierarchical attributes should be fixed and work as expected. Action should sync the values as expected and event handler should do it too and only on newly created entities.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>bugfix for 3dsmax publishing error <a href="https://github.com/ynput/OpenPype/pull/4637">#4637</a></summary>
 
 fix the bug of failing publishing job in 3dsMax
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Use right validation for ffmpeg executable <a href="https://github.com/ynput/OpenPype/pull/4640">#4640</a></summary>
+
+Use ffmpeg exec validation for ffmpeg executables instead of oiio exec validation. The validation is used as last possible source of ffmpeg from `PATH` environment variables, which is an edge case but can cause issues.
 
 
 ___
@@ -345,9 +1444,53 @@ ___
 
 
 <details>
-<summary>Global | Nuke: fixing farm publishing workflow <a href="https://github.com/ynput/OpenPype/pull/4623">#4623</a></summary>
+<summary>Fixed a bug where a QThread in the splash screen could be destroyed before finishing execution <a href="https://github.com/ynput/OpenPype/pull/4647">#4647</a></summary>
 
-After Nuke had adopted new publisher with new creators new issues were introduced. Those issues were addressed with this PR. Those are for example broken reviewable video files publishing if published via farm. Also fixed local publishing.
+This should fix the occasional behavior of the QThread being destroyed before even its worker returns from the `run()` function.After quiting, it should wait for the QThread object to properly close itself.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Use right plugin class for Collect Comment <a href="https://github.com/ynput/OpenPype/pull/4653">#4653</a></summary>
+
+Collect Comment plugin is instance plugin so should inherit from `InstancePlugin` instead of `ContextPlugin`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: add tags field to thumbnail representation <a href="https://github.com/ynput/OpenPype/pull/4660">#4660</a></summary>
+
+Thumbnail representation might be missing tags field.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Integrator: Enforce unique destination transfers, disallow overwrites in queued transfers <a href="https://github.com/ynput/OpenPype/pull/4662">#4662</a></summary>
+
+Fix #4656 by enforcing unique destination transfers in the Integrator. It's now disallowed to a destination in the file transaction queue with a new source path during the publish.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Creator with correct workfile numeric padding input <a href="https://github.com/ynput/OpenPype/pull/4666">#4666</a></summary>
+
+Creator was showing 99 in workfile input for long time, even if users set default value to 1001 in studio settings. This has been fixed now.
 
 
 ___
@@ -378,95 +1521,6 @@ ___
 
 
 <details>
-<summary>Hiero: Creator with correct workfile numeric padding input <a href="https://github.com/ynput/OpenPype/pull/4666">#4666</a></summary>
-
-Creator was showing 99 in workfile input for long time, even if users set default value to 1001 in studio settings. This has been fixed now.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Hiero: correct container colors if UpToDate <a href="https://github.com/ynput/OpenPype/pull/4708">#4708</a></summary>
-
-Colors on loaded containers are now correctly identifying real state of version. `Red` for out of date and `green` for up to date.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Maya: tile assembly fail in draft - OP-4820 <a href="https://github.com/ynput/OpenPype/pull/4416">#4416</a></summary>
-
-<strong>Tile assembly in Deadline was broken.
-
-</strong>Initial bug report revealed other areas of the tile assembly that needed fixing.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Scene inventory: Fix code errors when "not found" entries are found <a href="https://github.com/ynput/OpenPype/pull/4594">#4594</a></summary>
-
-Whenever a "NOT FOUND" entry is present a lot of errors happened in the Scene Inventory:
-- It started spamming a lot of errors for the VersionDelegate since it had no numeric version (no version at all).Error reported on Discord:
-```python
-Traceback (most recent call last):
-  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 65, in paint
-    text = self.displayText(
-  File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\utils\delegates.py", line 33, in displayText
-    assert isinstance(value, numbers.Integral), (
-AssertionError: Version is not integer. "None" <class 'NoneType'>
-```
-- Right click menu would error on NOT FOUND entries, and thus not show. With this PR it will now _disregard_ not found items for "Set version" and "Remove" but still allow actions.This PR resolves those.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Ftrack: Ftrack additional families filtering <a href="https://github.com/ynput/OpenPype/pull/4633">#4633</a></summary>
-
-Ftrack family collector makes sure the subset family is also in instance families for additional families filtering.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>General: Use right validation for ffmpeg executable <a href="https://github.com/ynput/OpenPype/pull/4640">#4640</a></summary>
-
-Use ffmpeg exec validation for ffmpeg executables instead of oiio exec validation. The validation is used as last possible source of ffmpeg from `PATH` environment variables, which is an edge case but can cause issues.
-
-
-___
-
-</details>
-
-
-<details>
-<summary>Global: add tags field to thumbnail representation <a href="https://github.com/ynput/OpenPype/pull/4660">#4660</a></summary>
-
-Thumbnail representation might be missing tags field.
-
-
-___
-
-</details>
-
-
-<details>
 <summary>Kitsu: Slightly less strict with instance data <a href="https://github.com/ynput/OpenPype/pull/4678">#4678</a></summary>
 
 - Allow to take task name from context if asset doesn't have any. Fixes an issue with Photoshop's review instance not having `task` in data.
@@ -480,9 +1534,31 @@ ___
 
 
 <details>
+<summary>Publisher: Fix reset shortcut sequence <a href="https://github.com/ynput/OpenPype/pull/4694">#4694</a></summary>
+
+Fix bug created in https://github.com/ynput/OpenPype/pull/4676 where key sequence is checked using unsupported method. The check was changed to convert event into `QKeySequence` object which can be compared to prepared sequence.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Refactor _capture <a href="https://github.com/ynput/OpenPype/pull/4702">#4702</a></summary>
 
 Paragraphs contain detailed information on the changes made to the product or service, providing an in-depth description of the updates and enhancements. They can be used to explain the reasoning behind the changes, or to highlight the importance of the new features. Paragraphs can often include links to further information or support documentation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: correct container colors if UpToDate <a href="https://github.com/ynput/OpenPype/pull/4708">#4708</a></summary>
+
+Colors on loaded containers are now correctly identifying real state of version. `Red` for out of date and `green` for up to date.
 
 
 ___
@@ -530,9 +1606,31 @@ ___
 
 
 <details>
+<summary>Maya: Replace last usages of Qt module <a href="https://github.com/ynput/OpenPype/pull/4610">#4610</a></summary>
+
+Replace last usage of `Qt` module with `qtpy`. This change is needed for `PySide6` support. All changes happened in Maya loader plugins.
+
+
+___
+
+</details>
+
+
+<details>
 <summary>Update tests and documentation for  `ColormanagedPyblishPluginMixin` <a href="https://github.com/ynput/OpenPype/pull/4612">#4612</a></summary>
 
 Refactor `ExtractorColormanaged` to `ColormanagedPyblishPluginMixin` in tests and documentation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Improve logging of used app + tool envs on application launch (minor tweak) <a href="https://github.com/ynput/OpenPype/pull/4686">#4686</a></summary>
+
+Use `app.full_name` for change done in #4682
 
 
 ___
@@ -548,6 +1646,17 @@ ___
 <strong>Add `ARCHITECTURE.md` document.
 
 </strong>his document attemps to give a quick overview of the project to help onboarding, it's not an extensive documentation but more of a elevator pitch one-line descriptions of files/directories and what the attempt to do.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Documentation: Tweak grammar and fix some typos <a href="https://github.com/ynput/OpenPype/pull/4613">#4613</a></summary>
+
+This resolves some grammar and typos in the documentation.Also fixes the extension of some images in after effects docs which used uppercase extension even though files were lowercase extension.
 
 
 ___
@@ -613,9 +1722,11 @@ ___
 
 
 <details>
-<summary>3dsmax: make sure that startup script executes <a href="https://github.com/ynput/OpenPype/pull/4695">#4695</a></summary>
+<summary>Resolve missing OPENPYPE_MONGO in deadline global job preload  <a href="https://github.com/ynput/OpenPype/pull/4484">#4484</a></summary>
 
-Fixing reliability of OpenPype startup in 3dsmax.
+<strong>In the GlobalJobPreLoad plugin, we propose to replace the SpawnProcess by a sub-process and to pass the environment variables in the parameters, since the SpawnProcess under Centos Linux does not pass the environment variables.
+
+</strong>In the GlobalJobPreLoad plugin, the Deadline SpawnProcess is used to start the OpenPype process. The problem is that the SpawnProcess does not pass environment variables, including OPENPYPE_MONGO, to the process when it is under Centos7 linux, and the process gets stuck. We propose to replace it by a subprocess and to pass the variable in the parameters.
 
 
 ___
@@ -624,11 +1735,9 @@ ___
 
 
 <details>
-<summary>Resolve missing OPENPYPE_MONGO in deadline global job preload  <a href="https://github.com/ynput/OpenPype/pull/4484">#4484</a></summary>
+<summary>Tests: Added setup_only to tests <a href="https://github.com/ynput/OpenPype/pull/4591">#4591</a></summary>
 
-<strong>In the GlobalJobPreLoad plugin, we propose to replace the SpawnProcess by a sub-process and to pass the environment variables in the parameters, since the SpawnProcess under Centos Linux does not pass the environment variables.
-
-</strong>In the GlobalJobPreLoad plugin, the Deadline SpawnProcess is used to start the OpenPype process. The problem is that the SpawnProcess does not pass environment variables, including OPENPYPE_MONGO, to the process when it is under Centos7 linux, and the process gets stuck. We propose to replace it by a subprocess and to pass the variable in the parameters.
+Allows to download test zip, unzip and restore DB in preparation for new test.
 
 
 ___
@@ -648,9 +1757,78 @@ ___
 
 
 <details>
+<summary>Bump @sideway/formula from 3.0.0 to 3.0.1 in /website <a href="https://github.com/ynput/OpenPype/pull/4609">#4609</a></summary>
+
+Bumps [@sideway/formula](https://github.com/sideway/formula) from 3.0.0 to 3.0.1.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/hapijs/formula/commit/5b44c1bffc38135616fb91d5ad46eaf64f03d23b"><code>5b44c1b</code></a> 3.0.1</li>
+<li><a href="https://github.com/hapijs/formula/commit/9fbc20a02d75ae809c37a610a57802cd1b41b3fe"><code>9fbc20a</code></a> chore: better number regex</li>
+<li><a href="https://github.com/hapijs/formula/commit/41ae98e0421913b100886adb0107a25d552d9e1a"><code>41ae98e</code></a> Cleanup</li>
+<li><a href="https://github.com/hapijs/formula/commit/c59f35ec401e18cead10e0cedfb44291517610b1"><code>c59f35e</code></a> Move to Sideway</li>
+<li>See full diff in <a href="https://github.com/sideway/formula/compare/v3.0.0...v3.0.1">compare view</a></li>
+</ul>
+</details>
+<details>
+<summary>Maintainer changes</summary>
+<p>This version was pushed to npm by <a href="https://www.npmjs.com/~marsup">marsup</a>, a new releaser for <code>@​sideway/formula</code> since your current version.</p>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=@sideway/formula&package-manager=npm_and_yarn&previous-version=3.0.0&new-version=3.0.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+Dependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot merge` will merge this PR after your CI passes on it
+- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it
+- `@dependabot cancel merge` will cancel a previously requested merge and block automerging
+- `@dependabot reopen` will reopen this PR if it is closed
+- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot use these labels` will set the current labels as the default for future PRs for this repo and language
+- `@dependabot use these reviewers` will set the current reviewers as the default for future PRs for this repo and language
+- `@dependabot use these assignees` will set the current assignees as the default for future PRs for this repo and language
+- `@dependabot use this milestone` will set the current milestone as the default for future PRs for this repo and language
+
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/ynput/OpenPype/network/alerts).
+
+</details>
+___
+
+</details>
+
+
+<details>
 <summary>Update artist_hosts_maya_arnold.md <a href="https://github.com/ynput/OpenPype/pull/4626">#4626</a></summary>
 
 Correct Arnold docs.
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Add "Include Parent Hierarchy" option in animation creator plugin <a href="https://github.com/ynput/OpenPype/pull/4645">#4645</a></summary>
+
+Add an option in Project Settings > Maya > Creator Plugins > Create Animation to include (or not) parent hierarchy. This is to avoid artists to check manually the option for all create animation.
+
+
 ___
 
 </details>
@@ -667,7 +1845,30 @@ ___
 </details>
 
 
+<details>
+<summary>3dsmax: make sure that startup script executes <a href="https://github.com/ynput/OpenPype/pull/4695">#4695</a></summary>
 
+Fixing reliability of OpenPype startup in 3dsmax.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Project Manager: Change minimum frame start/end to '0' <a href="https://github.com/ynput/OpenPype/pull/4719">#4719</a></summary>
+
+Project manager can have frame start/end set to `0`.
+
+
+___
+
+</details>
+
+
+
+## [3.15.2](https://github.com/ynput/OpenPype/tree/3.15.2)
 
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.1...3.15.2)
 

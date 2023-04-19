@@ -360,14 +360,16 @@ class TextWidget(InputWidget):
     def _add_inputs_to_layout(self):
         multiline = self.entity.multiline
         if multiline:
-            self.input_field = SettingsPlainTextEdit(self.content_widget)
+            input_field = SettingsPlainTextEdit(self.content_widget)
+            if self.entity.minimum_lines_count:
+                input_field.set_minimum_lines(self.entity.minimum_lines_count)
         else:
-            self.input_field = SettingsLineEdit(self.content_widget)
-
+            input_field = SettingsLineEdit(self.content_widget)
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
-            self.input_field.setPlaceholderText(placeholder_text)
+            input_field.setPlaceholderText(placeholder_text)
 
+        self.input_field = input_field
         self.setFocusProxy(self.input_field)
 
         layout_kwargs = {}
