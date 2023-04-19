@@ -62,8 +62,7 @@ class AutoImageCreator(PSAutoCreator):
         """Use configured template to create subset name"""
         if not self.flatten_subset_template:
             raise CreatorError((
-                "You cannot create a Render Pass without a Render Layer."
-                " Please select one first"
+                "You need to provide template for subset name in Settings."
             ))
 
         fill_pairs = {
