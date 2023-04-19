@@ -105,6 +105,7 @@ class AutoImageCreator(PSAutoCreator):
         self.flatten_subset_template = \
             plugin_settings["flatten_subset_template"]
         self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings["enabled"]
 
     def get_detail_description(self):
         return """Creator for flatten image.
