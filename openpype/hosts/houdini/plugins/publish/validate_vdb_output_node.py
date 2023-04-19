@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import contextlib
+
 import pyblish.api
 import hou
 
@@ -37,6 +39,23 @@ def group_consecutive_numbers(nums):
             end = num
     if start is not None:
         yield _result(start, end)
+
+
+@contextlib.contextmanager
+def update_mode_context(mode):
+    original = hou.updateModeSetting()
+    try:
+        hou.setUpdateMode(mode)
+        yield
+    finally:
+        hou.setUpdateMode(original)
+
+
+def get_geometry_at_frame(sop_node, frame, force=True):
+    """Return geometry at frame but force a cooked value."""
+    with update_mode_context(hou.updateMode.AutoUpdate):
+        sop_node.cook(force=force, frame_range=(frame, frame))
+        return sop_node.geometryAtFrame(frame)
 
 
 class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
@@ -95,8 +114,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             return [instance_node, error]
 
         frame = instance.data.get("frameStart", 0)
-        node.cook(force=True, frame_range=(frame, frame))
-        geometry = node.geometryAtFrame(frame)
+        geometry = get_geometry_at_frame(node, frame)
         if geometry is None:
             # No geometry data on this node, maybe the node hasn't cooked?
             error = (
