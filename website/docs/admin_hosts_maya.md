@@ -274,3 +274,14 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
+
+## Explicit Plugins Loading
+You can define which plugins to load on launch of Maya here; `project_settings/maya/explicit_plugins_loading`. This can help improve Maya's launch speed, if you know which plugins are needed.
+
+By default only the required plugins are enabled. You can also add any plugin to the list to enable on launch.
+
+:::note technical
+When enabling this feature, the workfile will be launched post initialization no matter the setting on `project_settings/maya/open_workfile_post_initialization`. This is to avoid any issues with references needing plugins.
+
+Renderfarm integration is not supported for this feature.
+:::
