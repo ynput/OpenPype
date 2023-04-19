@@ -33,5 +33,3 @@ class RecreateRigAnimationInstance(InventoryAction):
             nodes = get_container_members(container)
 
             create_rig_animation_instance(nodes, context, namespace)
-
-

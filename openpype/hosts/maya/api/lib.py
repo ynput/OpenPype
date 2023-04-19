@@ -3944,8 +3944,10 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
     assert controls, "No controls_SET in rig, this is a bug."
 
     # Find the roots amongst the loaded nodes
-    roots = cmds.ls(nodes, assemblies=True, long=True) or \
-            get_highest_in_hierarchy(nodes)
+    roots = (
+        cmds.ls(nodes, assemblies=True, long=True) or
+        get_highest_in_hierarchy(nodes)
+    )
     assert roots, "No root nodes in rig, this is a bug."
 
     asset = legacy_io.Session["AVALON_ASSET"]
