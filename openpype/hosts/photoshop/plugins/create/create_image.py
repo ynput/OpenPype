@@ -156,6 +156,14 @@ class ImageCreator(Creator):
         ]
         return output
 
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef(
+                "mark_for_review",
+                label="Review"
+            )
+        ]
+
     def get_detail_description(self):
         return """Creator for Image instances
 
@@ -184,7 +192,7 @@ class ImageCreator(Creator):
         but layer name should be used (set explicitly in UI or implicitly if
         multiple images should be created), it is added in capitalized form
         as a suffix to subset name.
-        
+
         Each image could have its separate review created if necessary via
         `Create separate review` toggle. 
         But more use case is to use separate `review` instance to create review
