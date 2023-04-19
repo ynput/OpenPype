@@ -24,6 +24,7 @@ from openpype.client import (
     get_asset_by_name
 )
 
+
 class BaseTest:
     """Empty base test class"""
 
@@ -37,6 +38,10 @@ class ModuleUnitTest(BaseTest):
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
             project_settings - fixture for project settings with session scope
+            system_settings - fixture for system settings with session scope
+            project_anatomy - fixture for project anatomy with session scope
+            project_doc - fixture for project document with session scope
+            asset_doc - fixture for asset document with session scope
             download_test_data - tmp folder with extracted data from GDrive
             env_var - sets env vars from input file
             db_setup - prepares avalon AND openpype DBs for testing from
@@ -57,6 +62,7 @@ class ModuleUnitTest(BaseTest):
     PROJECT = "test_project"
     ASSET = "test_asset"
     TASK = "test_task"
+    TASK_TYPE = "Generic"
 
     TEST_DATA_FOLDER = None
 

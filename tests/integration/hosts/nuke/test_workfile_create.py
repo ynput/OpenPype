@@ -1,5 +1,5 @@
+import os
 import logging
-
 from tests.integration.hosts.nuke.lib import NukeLocalSyntheticTestClass
 
 log = logging.getLogger("test_workfile_create")
@@ -48,13 +48,23 @@ class TestWorkfileCreate(NukeLocalSyntheticTestClass):
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
     TEST_DATA_FOLDER = r"C:\CODE\__PYPE\__unit_testing_data\test_nuke_workfile"
 
-    def test_workfile_created(self, last_workfile_path):
+    def test_workfile_created(
+            self, last_workfile_path,
+            disable_workfile_tool_start, open_last_workfile,
+            launched_app
+    ):
+        """Testing whether workfile was created with hosts workio."""
+        print("test_workfile_created")
+        expected_dir, _ = os.path.split(last_workfile_path)
 
-        """Host and input data dependent expected results in DB."""
-        print("Test last workfile path: {}".format(last_workfile_path))
-        failures = []
+        # check if workfile directory was created
+        assert os.path.exists(expected_dir)
 
-        assert not any(failures)
+        # check if workfile was created
+        assert os.path.exists(last_workfile_path)
+
+        # check if workfile is not empty
+        assert os.path.getsize(last_workfile_path) > 0
 
 
 if __name__ == "__main__":

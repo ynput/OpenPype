@@ -78,9 +78,10 @@ class NukeSyntheticHostFixtures(NukeStaticTestHostFixtures, ModuleUnitTest):
         self, project_settings, project_anatomy,
         system_settings, project_doc, asset_doc
     ):
-        """Get last_workfile_path from source data.
-
+        """Get last_workfile_path from template.
         """
+        print("Using last workfile path from template")
+
         host_name = "nuke"
         extensions = HOST_WORKFILE_EXTENSIONS.get(host_name)
         anatomy = project_anatomy
@@ -118,6 +119,12 @@ class NukeSyntheticHostFixtures(NukeStaticTestHostFixtures, ModuleUnitTest):
         )
 
         yield last_workfile_path
+
+    @pytest.fixture(scope="module")
+    def disable_workfile_tool_start(self, monkeypatch_session):
+        """Disable workfile tool start."""
+        print("Disabling workfile tool on start")
+        monkeypatch_session.setenv("OPENPYPE_WORKFILE_TOOL_ON_START", "0")
 
 
 class NukeLocalSyntheticTestClass(NukeSyntheticHostFixtures, AppLaunchTest):
