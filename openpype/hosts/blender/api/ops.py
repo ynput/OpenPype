@@ -1043,6 +1043,8 @@ class BuildWorkFile(bpy.types.Operator):
             # clear all libraries
             for library in list(bpy.data.libraries):
                 bpy.data.libraries.remove(library)
+            # clear all openpype instances
+            bpy.context.scene.openpype_instances.clear()
 
         print("Build Workfile")
         build_workfile()
