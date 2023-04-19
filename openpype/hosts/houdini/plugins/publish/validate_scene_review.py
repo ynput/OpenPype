@@ -28,7 +28,7 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
         if invalid:
             report.append(invalid)
 
-        invalid = self.get_invalid_resolution(instance)
+        invalid = self.get_invalid_resolution(instance_node)
         if invalid:
             report.extend(invalid)
 
@@ -56,18 +56,17 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
                 path, type_name
             )
 
-    def get_invalid_resolution(self, instance):
-        node = hou.node(instance.data.get("instance_node"))
+    def get_invalid_resolution(self, rop_node):
 
         # The resolution setting is only used when Override Camera Resolution
         # is enabled. So we skip validation if it is disabled.
-        override = node.parm("tres").eval()
+        override = rop_node.parm("tres").eval()
         if not override:
             return
 
         invalid = []
-        res_width = node.parm("res1").eval()
-        res_height = node.parm("res2").eval()
+        res_width = rop_node.parm("res1").eval()
+        res_height = rop_node.parm("res2").eval()
         if res_width == 0:
             invalid.append("Override Resolution width is set to zero.")
         if res_height == 0:
