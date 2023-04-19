@@ -38,8 +38,16 @@ class AutoImageCreator(PSAutoCreator):
         if existing_instance is None:
             subset_name = self._get_subset_name(asset_name, task_name)
 
+            asset_name = context.get_current_asset_name()
+            task_name = context.get_current_task_name()
+
+            data = {
+                "asset": asset_name,
+                "task": task_name,
+            }
+
             creator_attributes = {"mark_for_review": self.mark_for_review}
-            data = {"creator_attributes": creator_attributes}
+            data.update({"creator_attributes": creator_attributes})
 
             new_instance = CreatedInstance(
                 self.family, subset_name, data, self
