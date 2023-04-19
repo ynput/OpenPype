@@ -100,7 +100,7 @@ class AutoImageCreator(PSAutoCreator):
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
-            project_settings["photoshop"]["create"]["create_flatten_image"]
+            project_settings["photoshop"]["create"]["AutoImageCreator"]
         )
 
         self.flatten_subset_template = \
