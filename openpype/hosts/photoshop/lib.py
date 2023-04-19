@@ -14,17 +14,20 @@ class PSAutoCreator(AutoCreator):
 
     def collect_instances(self):
         for instance_data in cache_and_get_instances(self):
+            self.log.debug("instance_data:: {}".format(instance_data))
             creator_id = instance_data.get("creator_identifier")
+
             if creator_id == self.identifier:
-                subset_name = instance_data["subset"]
-                instance = CreatedInstance(
-                    self.family, subset_name, instance_data, self
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
                 )
                 self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
-        # nothing to change on workfiles
-        pass
+        self.log.debug("update_list:: {}".format(update_list))
+        for created_inst, _changes in update_list:
+            api.stub().imprint(created_inst.get("instance_id"),
+                               created_inst.data_to_store())
 
     def create(self, options=None):
         existing_instance = None
