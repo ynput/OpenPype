@@ -239,27 +239,12 @@
                         {
                             "type": "number",
                             "key": "chunk_size",
-                            "label": "Chunk Size"
+                            "label": "Frame per Task"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool",
-                            "label": "Deadline pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool_secondary",
-                            "label": "Deadline pool (secondary)"
-                        },
-                        {
-                            "type": "number",
-                            "key": "framePerTask",
-                            "label": "Frame Per Task"
                         }
                     ]
                 },

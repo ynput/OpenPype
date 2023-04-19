@@ -61,9 +61,9 @@ class LoadClip(opfapi.ClipLoader):
             self.layer_rename_template = self.layer_rename_template.replace(
                 "output", "representation")
 
-        formating_data = deepcopy(context["representation"]["context"])
+        formatting_data = deepcopy(context["representation"]["context"])
         clip_name = StringTemplate(self.clip_name_template).format(
-            formating_data)
+            formatting_data)
 
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
@@ -88,7 +88,7 @@ class LoadClip(opfapi.ClipLoader):
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,
             "layer_rename_patterns": self.layer_rename_patterns,
-            "context_data": formating_data
+            "context_data": formatting_data
         }
         self.log.debug(pformat(
             loading_context
