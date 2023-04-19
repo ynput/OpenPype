@@ -41,9 +41,12 @@ class AutoImageCreator(PSAutoCreator):
             asset_name = context.get_current_asset_name()
             task_name = context.get_current_task_name()
 
+            publishable_ids = [layer.id for layer in api.stub().get_layers()
+                               if layer.visible]
             data = {
                 "asset": asset_name,
                 "task": task_name,
+                "members": publishable_ids
             }
 
             creator_attributes = {"mark_for_review": self.mark_for_review}
@@ -65,6 +68,10 @@ class AutoImageCreator(PSAutoCreator):
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
+
+            api.stub().imprint(existing_instance.get("instance_id"),
+                               existing_instance.data_to_store())
+
 
     def _get_subset_name(self, asset_name, task_name):
         """Use configured template to create subset name"""
@@ -100,8 +107,7 @@ class AutoImageCreator(PSAutoCreator):
         return [
             BoolDef(
                 "mark_for_review",
-                label="Review",
-                default=self.mark_for_review
+                label="Review"
             )
         ]
 
