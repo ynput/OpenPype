@@ -109,17 +109,17 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             instance_node = instance.data.get("instance_node")
             error = (
                 "SOP path is not correctly set on "
-                "ROP node `%s`." % instance_node
+                "ROP node `{}`.".format(instance_node)
             )
-            return [instance_node, error]
+            return [hou.node(instance_node), error]
 
         frame = instance.data.get("frameStart", 0)
         geometry = get_geometry_at_frame(node, frame)
         if geometry is None:
             # No geometry data on this node, maybe the node hasn't cooked?
             error = (
-                "SOP node has no geometry data. "
-                "Is it cooked? %s" % node.path()
+                "SOP node `{}` has no geometry data. "
+                "Was it unable to cook?".format(node.path())
             )
             return [node, error]
 
