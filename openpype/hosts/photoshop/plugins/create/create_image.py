@@ -186,7 +186,7 @@ class ImageCreator(Creator):
         as a suffix to subset name.
         
         Each image could have its separate review created if necessary via
-        `Review` toggle. 
+        `Create separate review` toggle. 
         But more use case is to use separate `review` instance to create review
         from all published items.
         """
