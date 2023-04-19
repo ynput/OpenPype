@@ -2185,7 +2185,7 @@ def get_frame_range(include_animation_range=False):
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "handleStart": handle_start,
-        "handleEnd": handle_end,
+        "handleEnd": handle_end
     }
     if include_animation_range:
         # The animation range values are only included to define whether
