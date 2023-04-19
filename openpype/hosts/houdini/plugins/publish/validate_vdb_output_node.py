@@ -93,7 +93,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
 
             raise PublishXmlValidationError(
                 self,
-                "Node connected to the output node is not of type VDB.",
+                "Invalid VDB content: {}".format(message),
                 formatting_data={
                     "message": message,
                     "rop_path": instance.data.get("instance_node"),
