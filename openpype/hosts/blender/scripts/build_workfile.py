@@ -170,7 +170,7 @@ def load_subset(
 
     all_loaders = discover_loader_plugins(project_name=project_name)
     loaders = loaders_from_representation(all_loaders, representation)
-    for loader in loaders:
+    for loader in reversed(loaders):
         if loader_type in loader.__name__:
             return load_container(loader, representation)
 
@@ -285,20 +285,22 @@ def load_casting(project_name: str, shot_name: str) -> Set[OpenpypeContainer]:
 
     # Load downloaded subsets
     containers = []
+    all_datablocks = set()
     for representation in representations:
         try:
-            container, _datablocks = load_subset(
+            container, datablocks = load_subset(
                 project_name,
                 representation,
-                f"Link{representation['context']['family'].capitalize()}Loader",
+                f"Link",
             )
             containers.append(container)
+            all_datablocks.update(datablocks)
         except TypeError:
             print(
                 f"Cannot load {representation['context']['asset']} {representation['context']['subset']}."
             )
 
-    return containers
+    return containers, all_datablocks
 
 
 def build_model(project_name, asset_name):
@@ -380,16 +382,15 @@ def build_layout(project_name, asset_name):
     audio_repre = download_subset(
         project_name, asset_name, "AudioReference", "wav"
     )
-    concept_repre = download_subset(
-        project_name, asset_name, "ConceptReference", "jpg"
-    )
 
     # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
 
     # Load casting from kitsu breakdown.
     try:
-        load_casting(project_name, asset_name)
+        _casting_containers, casting_datablocks = load_casting(
+            project_name, asset_name
+        )
         # NOTE load_casting runs wait_for_download
 
         # NOTE cannot rely on containers from load_casting, memory is shuffled
@@ -410,13 +411,13 @@ def build_layout(project_name, asset_name):
         containers = {}
 
         # Wait for download
-        wait_for_download(
-            project_name, [board_repre, audio_repre, concept_repre]
-        )
+        wait_for_download(project_name, [board_repre, audio_repre])
 
-    # Try to load camera from environment's setdress
+    # Try to load datablocks from environment's setdress
     camera_collection = None
     env_asset_name = None
+    setdress_world = None
+    concept_repre = None
     try:
         # Get env asset name
         env_asset_name = next(
@@ -428,11 +429,25 @@ def build_layout(project_name, asset_name):
             None,
         )
         if env_asset_name:
-            # Load camera published at environment task
-            cam_container, _cam_datablocks = download_and_load_subset(
+            # Download concept reference
+            concept_repre = download_subset(
+                project_name, env_asset_name, "ConceptReference", "jpg"
+            )
+
+            # Download camera published at environment task
+            cam_repre = download_subset(
                 project_name,
                 env_asset_name,
                 "cameraMain",
+            )
+
+            # Wait for download
+            wait_for_download(project_name, [concept_repre, cam_repre])
+
+            # Load camera
+            cam_container, _cam_datablocks = load_subset(
+                project_name,
+                cam_repre,
                 "AppendCameraLoader",
             )
 
@@ -447,6 +462,16 @@ def build_layout(project_name, asset_name):
                 bpy.context.scene.openpype_instances[-1]
                 .datablock_refs[0]
                 .datablock
+            )
+
+            # Get world from setdress
+            setdress_world = next(
+                (
+                    datablock
+                    for datablock in casting_datablocks
+                    if isinstance(datablock, bpy.types.World)
+                ),
+                None,
             )
     except RuntimeError:
         camera_collection = None
@@ -474,6 +499,9 @@ def build_layout(project_name, asset_name):
         datablock_name=camera_collection.name,
     )
 
+    # Assign setdress or last loaded world
+    bpy.context.scene.world = setdress_world or bpy.data.worlds[-1]
+
     # load the board mov as image background linked into the camera
     load_subset(project_name, board_repre, "Background")
 
@@ -487,7 +515,7 @@ def build_layout(project_name, asset_name):
     load_subset(project_name, audio_repre, "Audio")
 
     # load the concept reference of the environment as image background.
-    if env_asset_name:
+    if env_asset_name and concept_repre:
         load_subset(
             project_name,
             concept_repre,
