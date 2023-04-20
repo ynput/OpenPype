@@ -217,4 +217,7 @@ class RenderCreator(Creator):
             instance_data["creator_attributes"] = {"farm": is_old_farm}
             instance_data["family"] = self.family
 
+        if instance_data["creator_attributes"].get("mark_for_review") is None:
+            instance_data["creator_attributes"]["mark_for_review"] = True
+
         return instance_data
