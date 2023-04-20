@@ -172,16 +172,19 @@ def install():
     log.debug("Writing OpenPype Creator nodes to shelf: {}".format(filepath))
     tools = []
 
-    default_network_categories = [hou.ropNodeTypeCategory()]
     with shelves_change_block():
         for identifier, creator in create_context.manual_creators.items():
 
             # Allow the creator plug-in itself to override the categories
             # for where they are shown with `Creator.get_network_categories()`
-            if hasattr(creator, "get_network_categories"):
-                network_categories = creator.get_network_categories()
-            else:
-                network_categories = default_network_categories
+            if not hasattr(creator, "get_network_categories"):
+                log.debug("Creator {} has no `get_network_categories` method "
+                          "and will not be added to TAB search.")
+                continue
+
+            network_categories = creator.get_network_categories()
+            if not network_categories:
+                continue
 
             key = "openpype_create.{}".format(identifier)
             log.debug(f"Registering {key}")
