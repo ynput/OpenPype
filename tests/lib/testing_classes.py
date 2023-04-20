@@ -10,7 +10,10 @@ import glob
 import platform
 import requests
 import re
+import time
 
+# set schema - for integrate_new
+from openpype import PACKAGE_DIR
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
@@ -324,8 +327,7 @@ class AppLaunchTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield
             return
-        # set schema - for integrate_new
-        from openpype import PACKAGE_DIR
+
         # Path to OpenPype's schema
         schema_path = os.path.join(
             os.path.dirname(PACKAGE_DIR),
@@ -349,6 +351,27 @@ class AppLaunchTest(ModuleUnitTest):
 
         app_process = application_manager.launch(app_name, **data)
         yield app_process
+
+    @pytest.fixture(scope="module")
+    def testing_in_host_finished(self, launched_app, setup_only):
+        """Run application and wait until it finishes."""
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            yield False
+            return
+
+        time_start = time.time()
+        timeout = self.TIMEOUT
+        timeout = float(timeout)
+        while launched_app.poll() is None:
+            time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                raise ValueError("Timeout reached")
+
+        # some clean exit test possible?
+        print("App finished")
+        yield True
 
 
 class PublishTest(AppLaunchTest):

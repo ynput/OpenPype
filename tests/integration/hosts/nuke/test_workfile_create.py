@@ -50,11 +50,12 @@ class TestWorkfileCreate(NukeLocalSyntheticTestClass):
 
     def test_workfile_created(
             self, last_workfile_path,
-            disable_workfile_tool_start, open_last_workfile,
-            launched_app
+            disable_workfile_tool_start,
+            testing_in_host_finished
     ):
         """Testing whether workfile was created with hosts workio."""
         print("test_workfile_created")
+
         expected_dir, _ = os.path.split(last_workfile_path)
 
         # check if workfile directory was created
