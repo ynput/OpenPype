@@ -510,6 +510,7 @@ def get_custom_workfile_template_from_session(
     )
 
 
+### Starts Alkemy-X Override ###
 def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
     """Returns an environment dictionary based on the visual hierarchy of an asset in a project.
 
@@ -540,52 +541,42 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
             visual_parent = get_asset_by_id(project_name, visual_parent_id)
 
         if not visual_parent:
-            visual_hierarchy.append(project_doc)
             break
+
         visual_hierarchy.append(visual_parent)
         current_doc = visual_parent
 
-    # Reverse hierarchy so project is the first one on the list
-    visual_hierarchy = list(reversed(visual_hierarchy))
+    # Dictionary that maps the SG entity names from leecher to their corresponding
+    # environment variables
+    sg_to_env_map = {
+        "Project": "SHOW",
+        "Season": "SEASON",
+        "Episode": "EPISODE",
+        "Sequence": "SEQUENCE",
+        "Shot": "SHOT",
+    }
 
-    # Create hierarchy dictionary with the values for each hierarchy
-    index = 0
+    # We create a default env with None values so when we switch context, we can remove
+    # the environment variables that aren't defined
     env = {
-        "SHOW": visual_hierarchy[index]["data"]["code"],
+        "SHOW": project_doc["data"]["code"],
         "SEASON": None,
         "EPISODE": None,
         "SEQUENCE": None,
         "SHOT": None,
         "ASSET_TYPE": None,
     }
-    index += 1
-    folder_type = visual_hierarchy[index]["name"]
 
-    # If hierarchy contains more than 5 entities, it must mean that
-    # this project contains season and episode.
-    if len(visual_hierarchy) > 5:
-        index += 1
-        env["SEASON"] = visual_hierarchy[index]["name"]
-        index += 1
-        env["EPISODE"] = visual_hierarchy[index]["name"]
+    for parent in visual_hierarchy:
+        sg_entity_type = parent["data"]["sgEntityType"]
+        env[sg_to_env_map.get(sg_entity_type)] = parent["name"]
 
-    # If the type is shots, we fill sequence and shot
-    if folder_type == "shots":
-        index += 1
-        env["SEQUENCE"] = visual_hierarchy[index]["name"]
-        index += 1
-        if len(visual_hierarchy) > index:
-            env["SHOT"] = visual_hierarchy[index]["name"]
-
-    # Otherwise if it's an asset, we simply fill the type of the asset
-    elif folder_type == "assets":
-        index += 1
-        env["ASSET_TYPE"] = visual_hierarchy[index]["name"]
 
     if skip_empty:
         env = {key: value for key, value in env.items() if value is not None}
 
     return env
+### Ends Alkemy-X Override ###
 
 
 def compute_session_changes(
