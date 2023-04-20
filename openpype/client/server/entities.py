@@ -423,8 +423,23 @@ def get_last_version_by_subset_name(
     )
 
 
-def get_output_link_versions(*args, **kwargs):
-    raise NotImplementedError("'get_output_link_versions' not implemented")
+def get_output_link_versions(project_name, version_id, fields=None):
+    if not version_id:
+        return []
+
+    con = get_server_api_connection()
+    version_links = con.get_version_links(
+        project_name, version_id, link_direction="out")
+
+    version_ids = {
+        link["entityId"]
+        for link in version_links
+        if link["entityType"] == "version"
+    }
+    if not version_ids:
+        return []
+
+    return get_versions(project_name, version_ids=version_ids, fields=fields)
 
 
 def version_is_latest(project_name, version_id):
