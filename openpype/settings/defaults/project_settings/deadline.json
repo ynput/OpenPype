@@ -103,9 +103,6 @@
                 "maya": [
                     ".*([Bb]eauty).*"
                 ],
-                "aftereffects": [
-                    ".*"
-                ],
                 "celaction": [
                     ".*"
                 ],
