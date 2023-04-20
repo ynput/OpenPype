@@ -286,7 +286,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             worldSpace=True
         )
         scene_parent = cmds.listRelatives(
-            placeholder.scene_identifier, parent=True
+            placeholder.scene_identifier, parent=True, fullPath=True
         )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
