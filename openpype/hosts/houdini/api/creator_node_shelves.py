@@ -26,6 +26,13 @@ import cop2toolutils
 
 log = logging.getLogger(__name__)
 
+CATEGORY_GENERIC_TOOL = {
+    hou.sopNodeTypeCategory(): soptoolutils.genericTool,
+    hou.cop2NodeTypeCategory(): cop2toolutils.genericTool,
+    hou.lopNodeTypeCategory(): loptoolutils.genericTool
+}
+
+
 CREATE_SCRIPT = """
 from openpype.hosts.houdini.api.creator_node_shelves import create_interactive
 create_interactive("{identifier}", **kwargs)
@@ -87,12 +94,7 @@ def create_interactive(creator_identifier, **kwargs):
             host_name=context.host_name
         )
 
-        tool_fn = {
-            hou.sopNodeTypeCategory(): soptoolutils.genericTool,
-            hou.cop2NodeTypeCategory(): cop2toolutils.genericTool,
-            hou.lopNodeTypeCategory(): loptoolutils.genericTool
-        }.get(pwd.childTypeCategory())
-
+        tool_fn = CATEGORY_GENERIC_TOOL.get(pwd.childTypeCategory())
         if tool_fn is not None:
             out_null = tool_fn(kwargs, "null")
             out_null.setName("OUT_{}".format(subset_name), unique_name=True)
