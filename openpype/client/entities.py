@@ -69,6 +69,19 @@ def convert_ids(in_ids):
 
 
 def get_projects(active=True, inactive=False, fields=None):
+    """Yield all project entity documents.
+
+    Args:
+        active (Optional[bool]): Include active projects. Defaults to True.
+        inactive (Optional[bool]): Include inactive projects.
+            Defaults to False.
+        fields (Iterable[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Yields:
+        dict: Project entity data which can be reduced to specified 'fields'.
+        None is returned if project with specified filters was not found.
+    """
     mongodb = get_project_database()
     for project_name in mongodb.collection_names():
         if project_name in ("system.indexes",):
@@ -81,6 +94,19 @@ def get_projects(active=True, inactive=False, fields=None):
 
 
 def get_project(project_name, active=True, inactive=True, fields=None):
+    """Return project entity document by project name.
+
+    Args:
+        active (Optional[bool]): Allow active project. Defaults to True.
+        inactive (Optional[bool]): Allow inactive project. Defaults to True.
+        fields (Iterable[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        Union[Dict, None]: Project entity data which can be reduced to
+        specified 'fields'. None is returned if project with specified
+        filters was not found.
+    """
     # Skip if both are disabled
     if not active and not inactive:
         return None
@@ -133,8 +159,9 @@ def get_asset_by_id(project_name, asset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        dict: Asset entity data.
-        None: Asset was not found by id.
+        Union[Dict, None]: Asset entity data which can be reduced to
+        specified 'fields'. None is returned if asset with specified
+        filters was not found.
     """
 
     asset_id = convert_id(asset_id)
@@ -156,8 +183,9 @@ def get_asset_by_name(project_name, asset_name, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        dict: Asset entity data.
-        None: Asset was not found by name.
+        Union[Dict, None]: Asset entity data which can be reduced to
+        specified 'fields'. None is returned if asset with specified
+        filters was not found.
     """
 
     if not asset_name:
@@ -365,8 +393,9 @@ def get_subset_by_id(project_name, subset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If subset with specified filters was not found.
-        Dict: Subset document which can be reduced to specified 'fields'.
+        Union[Dict, None]: Subset entity data which can be reduced to
+        specified 'fields'. None is returned if subset with specified
+        filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -389,10 +418,9 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        Union[None, Dict[str, Any]]: None if subset with specified filters was
-            not found or dict subset document which can be reduced to
-            specified 'fields'.
-
+        Union[Dict, None]: Subset entity data which can be reduced to
+        specified 'fields'. None is returned if subset with specified
+        filters was not found.
     """
     if not subset_name:
         return None
@@ -529,8 +557,9 @@ def get_version_by_id(project_name, version_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If version with specified filters was not found.
-        Dict: Version document which can be reduced to specified 'fields'.
+        Union[Dict, None]: Version entity data which can be reduced to
+        specified 'fields'. None is returned if version with specified
+        filters was not found.
     """
 
     version_id = convert_id(version_id)
@@ -556,8 +585,9 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If version with specified filters was not found.
-        Dict: Version document which can be reduced to specified 'fields'.
+        Union[Dict, None]: Version entity data which can be reduced to
+        specified 'fields'. None is returned if version with specified
+        filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -709,8 +739,9 @@ def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If hero version for passed subset id does not exists.
-        Dict: Hero version entity data.
+        Union[Dict, None]: Hero version entity data which can be reduced to
+        specified 'fields'. None is returned if hero version with specified
+        filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -739,8 +770,9 @@ def get_hero_version_by_id(project_name, version_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If hero version with passed id was not found.
-        Dict: Hero version entity data.
+        Union[Dict, None]: Hero version entity data which can be reduced to
+        specified 'fields'. None is returned if hero version with specified
+        filters was not found.
     """
 
     version_id = convert_id(version_id)
@@ -917,8 +949,9 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If version with specified filters was not found.
-        Dict: Version document which can be reduced to specified 'fields'.
+        Union[Dict, None]: Version entity data which can be reduced to
+        specified 'fields'. None is returned if version with specified
+        filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -949,8 +982,9 @@ def get_last_version_by_subset_name(
             returned if 'None' is passed.
 
     Returns:
-        None: If version with specified filters was not found.
-        Dict: Version document which can be reduced to specified 'fields'.
+        Union[Dict, None]: Version entity data which can be reduced to
+        specified 'fields'. None is returned if version with specified
+        filters was not found.
     """
 
     if not asset_id and not asset_name:
@@ -981,9 +1015,9 @@ def get_representation_by_id(project_name, representation_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If representation with specified filters was not found.
-        Dict: Representation entity data which can be reduced
-            to specified 'fields'.
+        Union[Dict, None]: Representation entity data which can be reduced to
+        specified 'fields'. None is returned if representation with specified
+        filters was not found.
     """
 
     if not representation_id:
@@ -1004,7 +1038,7 @@ def get_representation_by_id(project_name, representation_id, fields=None):
 def get_representation_by_name(
     project_name, representation_name, version_id, fields=None
 ):
-    """Representation entity data by it's name and it's version id.
+    """Representation entity data by its name and its version id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -1014,9 +1048,10 @@ def get_representation_by_name(
             returned if 'None' is passed.
 
     Returns:
-        None: If representation with specified filters was not found.
-        Dict: Representation entity data which can be reduced
-            to specified 'fields'.
+        Union[dict[str, Any], None]:
+            Representation entity data which can be reduced to specified
+            'fields'. None is returned if representation with specified filters
+            was not found.
     """
 
     version_id = convert_id(version_id)
@@ -1377,8 +1412,8 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
         src_id (Union[str, ObjectId]): Id of source entity.
 
     Returns:
-        ObjectId: Thumbnail id assigned to entity.
-        None: If Source entity does not have any thumbnail id assigned.
+        Union[ObjectId, None]: Thumbnail id assigned to entity. If Source
+            entity does not have any thumbnail id assigned.
     """
 
     if not src_type or not src_id:
@@ -1433,8 +1468,9 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If thumbnail with specified id was not found.
-        Dict: Thumbnail entity data which can be reduced to specified 'fields'.
+        Union[Dict, None]:
+            Thumbnail entity data which can be reduced to specified 'fields'.
+            None is returned if thumbnail with specified filters was not found.
     """
 
     if not thumbnail_id:
@@ -1443,6 +1479,7 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
+from typing import Union
 
 def get_workfile_info(
     project_name, asset_id, task_name, filename, fields=None
@@ -1460,6 +1497,12 @@ def get_workfile_info(
         task_name (str): Task name on asset.
         fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
+
+    Returns:
+        Union[Dict, None]:
+            Workfile entity data which can be reduced to specified 'fields'.
+            None is returned if workfile with specified filters was not found.
+
     """
 
     if not asset_id or not task_name or not filename:
