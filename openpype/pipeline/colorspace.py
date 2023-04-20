@@ -363,7 +363,7 @@ def get_imageio_config(
             "Colorspace management for host '{}' is disabled.".format(
                 host_name)
         )
-        return False
+        return {}
 
     config_host = imageio_host.get("ocio_config", {})
 
