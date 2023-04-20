@@ -243,7 +243,7 @@ help OpenPype validators and extractors to check and publish it.
 ### Preparing rig for publish
 
 When creating rigs, it is recommended (and it is in fact enforced by validators)
-to separate bone or driven objects, their controllers and geometry so they are
+to separate bones or driven objects, their controllers and geometry so they are
 easily managed. Currently OpenPype doesn't allow to publish model at the same time as
 its rig so for demonstration purposes, I'll first create simple model for robotic
 arm, just made out of simple boxes and I'll publish it.
@@ -257,11 +257,11 @@ click on it and select **Reference (abc)**.
 
 I've created a few bones in `rig_GRP`, their controllers in `controls_GRP` and
 placed the rig's output geometry in `geometry_GRP`. Naming of the groups is not important - just adhere to
-your naming conventions. Then I parented everything into a single top group named `arm_rig`. 
+your naming conventions. Then I parented everything into a single top group named `arm_rig`.
 
 With the prepared hierarchy it is time to create a *Rig instance* in OpenPype.
 Select the top group of your rig and go to **OpenPype → Create...**. Select **Rig**.
-A publish set for your rig is created in your scene to mark rig parts for export. 
+A publish set for your rig is created in your scene to mark rig parts for export.
 Notice that it has two subsets - `controls_SET` and `out_SET`. Put your controls into `controls_SET`
 and geometry to `out_SET`. You should end up with something like this:
 
@@ -269,19 +269,19 @@ and geometry to `out_SET`. You should end up with something like this:
 
 :::note controls_SET and out_SET contents
 It is totally allowed to put the `geometry_GRP` in the `out_SET` as opposed to
-the individual meshes - it's even **recommended**. However, the `controls_SET` 
+the individual meshes - it's even **recommended**. However, the `controls_SET`
 requires the individual controls in it that the artist is supposed to animate
-and manipulate so the publish validators can accurately check the rig's 
+and manipulate so the publish validators can accurately check the rig's
 controls.
 :::
 
 ### Publishing rigs
 
 Publishing rigs is done in a same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. When you run validation you'll most likely run into 
-a few issues at first. Although a number of them will seem to be intimidating you 
+and go **OpenPype → Publish**. When you run validation you'll most likely run into
+a few issues at first. Although a number of them will seem to be intimidating you
 will find out they are mostly minor things, easily fixed and are there to optimize
-your rig for consistency and safe usage by the artist. 
+your rig for consistency and safe usage by the artist.
 
 - **Non Duplicate Instance Members (ID)** - This will most likely fail because when
 creating rigs, we usually duplicate few parts of it to reuse them. But duplication
@@ -312,8 +312,8 @@ instance yourself to publish the geometry. This is all cleanly prepared for you
 when loading a published rig.
 
 :::tip Missing animation instance for your loaded rig?
-Did you accidentally delete the animation instance for a loaded rig? You can 
-recreate it using the [**Recreate rig animation instance**](artist_hosts_maya.md#recreate-rig-animation-instance) 
+Did you accidentally delete the animation instance for a loaded rig? You can
+recreate it using the [**Recreate rig animation instance**](artist_hosts_maya.md#recreate-rig-animation-instance)
 inventory action.
 :::
 
