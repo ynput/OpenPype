@@ -668,7 +668,7 @@ class PublishClip:
     tag_data = dict()
     types = {
         "shot": "shot",
-        "path":"path",
+        "path": "path",
         "folder": "folder",
         "episode": "episode",
         "sequence": "sequence",
