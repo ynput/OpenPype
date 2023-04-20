@@ -310,10 +310,31 @@ class SettingsLineEdit(PlaceholderLineEdit):
 
 class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
     focused_in = QtCore.Signal()
+    _min_lines = 0
 
     def focusInEvent(self, event):
         super(SettingsPlainTextEdit, self).focusInEvent(event)
         self.focused_in.emit()
+
+    def set_minimum_lines(self, lines):
+        self._min_lines = lines
+        self.update()
+
+    def minimumSizeHint(self):
+        result = super(SettingsPlainTextEdit, self).minimumSizeHint()
+        if self._min_lines < 1:
+            return result
+        document = self.document()
+        margins = self.contentsMargins()
+        d_margin = (
+            ((document.documentMargin() + self.frameWidth()) * 2)
+            + margins.top() + margins.bottom()
+        )
+        font = document.defaultFont()
+        font_metrics = QtGui.QFontMetrics(font)
+        result.setHeight(
+            d_margin + (font_metrics.lineSpacing() * self._min_lines))
+        return result
 
 
 class SettingsToolBtn(ImageButton):

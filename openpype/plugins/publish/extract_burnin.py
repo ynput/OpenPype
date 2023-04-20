@@ -34,6 +34,25 @@ class ExtractBurnin(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.03
 
     families = ["review", "burnin"]
+    hosts = [
+        "nuke",
+        "maya",
+        "shell",
+        "hiero",
+        "premiere",
+        "traypublisher",
+        "standalonepublisher",
+        "harmony",
+        "fusion",
+        "aftereffects",
+        "tvpaint",
+        "webpublisher",
+        "aftereffects",
+        "photoshop",
+        "flame",
+        "houdini"
+        # "resolve"
+    ]
 
     optional = True
 

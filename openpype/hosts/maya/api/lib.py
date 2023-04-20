@@ -32,7 +32,13 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_asset,
+    get_current_project_name,
+    get_current_task_name
+)
+from openpype.lib.profiles_filtering import filter_profiles
 
 
 self = sys.modules[__name__]
@@ -111,6 +117,18 @@ INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
+
+DISPLAY_LIGHTS_VALUES = [
+    "project_settings", "default", "all", "selected", "flat", "none"
+]
+DISPLAY_LIGHTS_LABELS = [
+    "Use Project Settings",
+    "Default Lighting",
+    "All Lights",
+    "Selected Lights",
+    "Flat Lighting",
+    "No Lights"
+]
 
 
 def get_main_window():
@@ -292,15 +310,20 @@ def collect_animation_data(fps=False):
     """
 
     # get scene values as defaults
-    start = cmds.playbackOptions(query=True, animationStartTime=True)
-    end = cmds.playbackOptions(query=True, animationEndTime=True)
+    frame_start = cmds.playbackOptions(query=True, minTime=True)
+    frame_end = cmds.playbackOptions(query=True, maxTime=True)
+    handle_start = cmds.playbackOptions(query=True, animationStartTime=True)
+    handle_end = cmds.playbackOptions(query=True, animationEndTime=True)
+
+    handle_start = frame_start - handle_start
+    handle_end = handle_end - frame_end
 
     # build attributes
     data = OrderedDict()
-    data["frameStart"] = start
-    data["frameEnd"] = end
-    data["handleStart"] = 0
-    data["handleEnd"] = 0
+    data["frameStart"] = frame_start
+    data["frameEnd"] = frame_end
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
     data["step"] = 1.0
 
     if fps:
@@ -2130,12 +2153,22 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def get_frame_range():
-    """Get the current assets frame range and handles."""
+def get_frame_range(include_animation_range=False):
+    """Get the current assets frame range and handles.
+
+    Args:
+        include_animation_range (bool, optional): Whether to include
+            `animationStart` and `animationEnd` keys to define the outer
+            range of the timeline. It is excluded by default.
+
+    Returns:
+        dict: Asset's expected frame range values.
+
+    """
 
     # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
 
     frame_start = asset["data"].get("frameStart")
@@ -2148,12 +2181,39 @@ def get_frame_range():
     handle_start = asset["data"].get("handleStart") or 0
     handle_end = asset["data"].get("handleEnd") or 0
 
-    return {
+    frame_range = {
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "handleStart": handle_start,
         "handleEnd": handle_end
     }
+    if include_animation_range:
+        # The animation range values are only included to define whether
+        # the Maya time slider should include the handles or not.
+        # Some usages of this function use the full dictionary to define
+        # instance attributes for which we want to exclude the animation
+        # keys. That is why these are excluded by default.
+        task_name = get_current_task_name()
+        settings = get_project_settings(project_name)
+        include_handles_settings = settings["maya"]["include_handles"]
+        current_task = asset.get("data").get("tasks").get(task_name)
+
+        animation_start = frame_start
+        animation_end = frame_end
+
+        include_handles = include_handles_settings["include_handles_default"]
+        for item in include_handles_settings["per_task_type"]:
+            if current_task["type"] in item["task_type"]:
+                include_handles = item["include_handles"]
+                break
+        if include_handles:
+            animation_start -= int(handle_start)
+            animation_end += int(handle_end)
+
+        frame_range["animationStart"] = animation_start
+        frame_range["animationEnd"] = animation_end
+
+    return frame_range
 
 
 def reset_frame_range(playback=True, render=True, fps=True):
@@ -2166,25 +2226,29 @@ def reset_frame_range(playback=True, render=True, fps=True):
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
-
     if fps:
         fps = convert_to_maya_fps(
             float(legacy_io.Session.get("AVALON_FPS", 25))
         )
         set_scene_fps(fps)
 
-    frame_range = get_frame_range()
+    frame_range = get_frame_range(include_animation_range=True)
+    if not frame_range:
+        # No frame range data found for asset
+        return
 
-    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
-    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frame_start = frame_range["frameStart"]
+    frame_end = frame_range["frameEnd"]
+    animation_start = frame_range["animationStart"]
+    animation_end = frame_range["animationEnd"]
 
     if playback:
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
-        cmds.playbackOptions(animationStartTime=frame_start)
-        cmds.playbackOptions(animationEndTime=frame_end)
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
+        cmds.playbackOptions(
+            minTime=frame_start,
+            maxTime=frame_end,
+            animationStartTime=animation_start,
+            animationEndTime=animation_end
+        )
         cmds.currentTime(frame_start)
 
     if render:
@@ -3655,7 +3719,17 @@ def get_color_management_preferences():
     # Split view and display from view_transform. view_transform comes in
     # format of "{view} ({display})".
     regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    if int(cmds.about(version=True)) <= 2020:
+        # view_transform comes in format of "{view} {display}" in 2020.
+        regex = re.compile(r"^(?P<view>.+) (?P<display>.+)$")
+
     match = regex.match(data["view_transform"])
+    if not match:
+        raise ValueError(
+            "Unable to parse view and display from Maya view transform: '{}' "
+            "using regex '{}'".format(data["view_transform"], regex.pattern)
+        )
+
     data.update({
         "display": match.group("display"),
         "view": match.group("view")
@@ -3812,3 +3886,48 @@ def get_all_children(nodes):
             iterator.next()  # noqa: B305
 
     return list(traversed)
+
+
+def get_capture_preset(task_name, task_type, subset, project_settings, log):
+    """Get capture preset for playblasting.
+
+    Logic for transitioning from old style capture preset to new capture preset
+    profiles.
+
+    Args:
+        task_name (str): Task name.
+        take_type (str): Task type.
+        subset (str): Subset name.
+        project_settings (dict): Project settings.
+        log (object): Logging object.
+    """
+    capture_preset = None
+    filtering_criteria = {
+        "hosts": "maya",
+        "families": "review",
+        "task_names": task_name,
+        "task_types": task_type,
+        "subset": subset
+    }
+
+    plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
+    if plugin_settings["profiles"]:
+        profile = filter_profiles(
+            plugin_settings["profiles"],
+            filtering_criteria,
+            logger=log
+        )
+        capture_preset = profile.get("capture_preset")
+    else:
+        log.warning("No profiles present for Extract Playblast")
+
+    # Backward compatibility for deprecated Extract Playblast settings
+    # without profiles.
+    if capture_preset is None:
+        log.debug(
+            "Falling back to deprecated Extract Playblast capture preset "
+            "because no new style playblast profiles are defined."
+        )
+        capture_preset = plugin_settings["capture_preset"]
+
+    return capture_preset or {}
