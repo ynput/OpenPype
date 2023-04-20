@@ -770,6 +770,7 @@ class PublishClip:
 
         return self.track_item
 
+    ### Starts Alkemy-X Override ###
     def add_path_token_value(self):
         """Add path token values to ui_inputs. Path token resolves to Avalon entity parents.
         Which is the equivalent to how OP builds hierarchy from SG Leecher
@@ -793,6 +794,7 @@ class PublishClip:
             "value": hierarchy,
             "Tag":True,
         }
+    ### Ends Alkemy-X Override ###
 
     def _populate_track_item_default_data(self):
         """ Populate default formatting data from track item. """
