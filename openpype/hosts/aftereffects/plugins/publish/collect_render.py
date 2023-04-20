@@ -139,6 +139,10 @@ class CollectAERender(publish.AbstractCollectRender):
                 instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
+                if "review" in instance.families:
+                    # to skip ExtractReview locally
+                    instance.review = False
+                    instance.families.remove("review")
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -218,15 +222,7 @@ class CollectAERender(publish.AbstractCollectRender):
         if fam not in instance.families:
             instance.families.append(fam)
 
-        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        reviewable_subset_filter = (settings["deadline"]
-                                    ["publish"]
-                                    ["ProcessSubmittedJobOnFarm"]
-                                    ["aov_filter"].get(self.hosts[0]))
-        for aov_pattern in reviewable_subset_filter:
-            if re.match(aov_pattern, instance.subset):
-                instance.families.append("review")
-                instance.review = True
-                break
+        if "review" in instance.families:
+            instance.review = True
 
         return instance
