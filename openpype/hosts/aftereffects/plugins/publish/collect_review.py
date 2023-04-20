@@ -5,12 +5,7 @@ Requires:
 Provides:
     instance     -> family ("review")
 """
-
-import os
-
 import pyblish.api
-
-from openpype.pipeline.create import get_subset_name
 
 
 class CollectReview(pyblish.api.InstancePlugin):
