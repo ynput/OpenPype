@@ -52,7 +52,7 @@ class ExtractReview(publish.Extractor):
         if instance.data["family"] != "review":
             # enable creation of review, without this jpg review would clash
             # with jpg of the image family
-            repre_name =  "{}_{}".format(repre_name, output_name)
+            repre_name = "{}_{}".format(repre_name, output_name)
 
         if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
