@@ -341,7 +341,9 @@ class AppLaunchTest(ModuleUnitTest):
         application_manager = ApplicationManager()
         data = {
             "last_workfile_path": last_workfile_path,
-            "start_last_workfile": True,
+            "start_last_workfile": os.getenv(
+                "OPENPYPE_START_LAST_WORKFILE", True
+            ),
             "project_name": self.PROJECT,
             "asset_name": self.ASSET,
             "task_name": self.TASK

@@ -1770,10 +1770,13 @@ def _prepare_last_workfile(data, workdir, modules_manager):
     task_type = data["task_type"]
 
     start_last_workfile = data.get("start_last_workfile")
+
     if start_last_workfile is None:
         start_last_workfile = should_start_last_workfile(
             project_name, app.host_name, task_name, task_type
         )
+    elif start_last_workfile is True:
+        log.info("Opening of last workfile was forced by user")
     else:
         log.info("Opening of last workfile was disabled by user")
 
