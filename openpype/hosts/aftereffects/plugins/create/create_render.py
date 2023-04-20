@@ -26,12 +26,9 @@ class RenderCreator(Creator):
 
     create_allow_context_change = True
 
-    def __init__(self, project_settings, *args, **kwargs):
-        super(RenderCreator, self).__init__(project_settings, *args, **kwargs)
-        self._default_variants = (project_settings["aftereffects"]
-                                                  ["create"]
-                                                  ["RenderCreator"]
-                                                  ["defaults"])
+    # Settings
+    default_variants = []
+    mark_for_review = True
 
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
@@ -82,17 +79,24 @@ class RenderCreator(Creator):
                 use_farm = pre_create_data["farm"]
                 new_instance.creator_attributes["farm"] = use_farm
 
+            review = pre_create_data["mark_for_review"]
+            new_instance.creator_attributes["mark_for_review"] = review
+
             api.get_stub().imprint(new_instance.id,
                                    new_instance.data_to_store())
             self._add_instance_to_context(new_instance)
 
             stub.rename_item(comp.id, subset_name)
 
-    def get_default_variants(self):
-        return self._default_variants
-
     def get_instance_attr_defs(self):
-        return [BoolDef("farm", label="Render on farm")]
+        return [
+            BoolDef("farm", label="Render on farm"),
+            BoolDef(
+                "mark_for_review",
+                label="Create separate review",
+                default=False
+            )
+        ]
 
     def get_pre_create_attr_defs(self):
         output = [
@@ -100,7 +104,12 @@ class RenderCreator(Creator):
             BoolDef("use_composition_name",
                     label="Use composition name in subset"),
             UISeparatorDef(),
-            BoolDef("farm", label="Render on farm")
+            BoolDef("farm", label="Render on farm"),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
+            )
         ]
         return output
 
@@ -142,6 +151,13 @@ class RenderCreator(Creator):
                     new_comp_name = "dummyCompName"
                 api.get_stub().rename_item(comp_id,
                                            new_comp_name)
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["photoshop"]["create"]["RenderCreator"]
+        )
+
+        self.mark_for_review = plugin_settings["mark_for_review"]
 
     def get_detail_description(self):
         return """Creator for Render instances
