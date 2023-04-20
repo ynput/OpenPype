@@ -546,7 +546,7 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
         visual_hierarchy.append(visual_parent)
         current_doc = visual_parent
 
-    # Dictionary that maps the SG entity names from leecher to their corresponding
+    # Dictionary that maps the SG entity names from SG-leecher to their corresponding
     # environment variables
     sg_to_env_map = {
         "Project": "SHOW",
@@ -567,11 +567,12 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
         "ASSET_TYPE": None,
     }
 
+    # For each entity on the hierarchy, we set its environment variable
     for parent in visual_hierarchy:
         sg_entity_type = parent["data"]["sgEntityType"]
         env[sg_to_env_map.get(sg_entity_type)] = parent["name"]
 
-
+    # Remove empty values from env if 'skip_empty' is set to True
     if skip_empty:
         env = {key: value for key, value in env.items() if value is not None}
 
