@@ -88,16 +88,6 @@ class RenderCreator(Creator):
 
             stub.rename_item(comp.id, subset_name)
 
-    def get_instance_attr_defs(self):
-        return [
-            BoolDef("farm", label="Render on farm"),
-            BoolDef(
-                "mark_for_review",
-                label="Create separate review",
-                default=False
-            )
-        ]
-
     def get_pre_create_attr_defs(self):
         output = [
             BoolDef("use_selection", default=True, label="Use selection"),
@@ -112,6 +102,16 @@ class RenderCreator(Creator):
             )
         ]
         return output
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef("farm", label="Render on farm"),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=False
+            )
+        ]
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
