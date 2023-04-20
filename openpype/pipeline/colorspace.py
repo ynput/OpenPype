@@ -350,7 +350,7 @@ def get_imageio_config(
         project_settings, host_name)
 
     # check if host settings group is having activate_host_color_management
-    # it it does not have activation key then use global settings
+    # it it does not have activation key then default it to True so it uses global settings
     # this is for backward compatibility
     # TODO: in future rewrite this to be more explicit
     activate_host_color_management = imageio_host.get(
