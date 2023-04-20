@@ -264,6 +264,11 @@ class AssetsDialog(QtWidgets.QDialog):
 
         self._model.reset()
 
+    def hideEvent(self, event):
+        # Make sure to reset when we close and reopen
+        self._soft_reset_enabled = True
+        super(AssetsDialog, self).hideEvent(event)
+
     def name_is_valid(self, name):
         """Is asset name valid.
 
