@@ -411,7 +411,7 @@ def is_host_use_ocio_config_activated(
         project_settings, host_name)
 
     # check if host settings is having use_ocio_config
-    if imageio_host.get("use_ocio_config", False):
+    return imageio_host.get("use_ocio_config", False)
         return True
 
 
