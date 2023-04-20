@@ -154,7 +154,7 @@ class RenderCreator(Creator):
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
-            project_settings["photoshop"]["create"]["RenderCreator"]
+            project_settings["aftereffects"]["create"]["RenderCreator"]
         )
 
         self.mark_for_review = plugin_settings["mark_for_review"]
