@@ -160,8 +160,8 @@ def get_asset_by_id(project_name, asset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Asset entity data which can be reduced to
-        specified 'fields'. None is returned if asset with specified
-        filters was not found.
+            specified 'fields'. None is returned if asset with specified
+            filters was not found.
     """
 
     asset_id = convert_id(asset_id)
@@ -184,8 +184,8 @@ def get_asset_by_name(project_name, asset_name, fields=None):
 
     Returns:
         Union[Dict, None]: Asset entity data which can be reduced to
-        specified 'fields'. None is returned if asset with specified
-        filters was not found.
+            specified 'fields'. None is returned if asset with specified
+            filters was not found.
     """
 
     if not asset_name:
@@ -394,8 +394,8 @@ def get_subset_by_id(project_name, subset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Subset entity data which can be reduced to
-        specified 'fields'. None is returned if subset with specified
-        filters was not found.
+            specified 'fields'. None is returned if subset with specified
+            filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -419,8 +419,8 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Subset entity data which can be reduced to
-        specified 'fields'. None is returned if subset with specified
-        filters was not found.
+            specified 'fields'. None is returned if subset with specified
+            filters was not found.
     """
     if not subset_name:
         return None
@@ -558,8 +558,8 @@ def get_version_by_id(project_name, version_id, fields=None):
 
     Returns:
         Union[Dict, None]: Version entity data which can be reduced to
-        specified 'fields'. None is returned if version with specified
-        filters was not found.
+            specified 'fields'. None is returned if version with specified
+            filters was not found.
     """
 
     version_id = convert_id(version_id)
@@ -586,8 +586,8 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Version entity data which can be reduced to
-        specified 'fields'. None is returned if version with specified
-        filters was not found.
+            specified 'fields'. None is returned if version with specified
+            filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -740,8 +740,8 @@ def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Hero version entity data which can be reduced to
-        specified 'fields'. None is returned if hero version with specified
-        filters was not found.
+            specified 'fields'. None is returned if hero version with specified
+            filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -771,8 +771,8 @@ def get_hero_version_by_id(project_name, version_id, fields=None):
 
     Returns:
         Union[Dict, None]: Hero version entity data which can be reduced to
-        specified 'fields'. None is returned if hero version with specified
-        filters was not found.
+            specified 'fields'. None is returned if hero version with specified
+            filters was not found.
     """
 
     version_id = convert_id(version_id)
@@ -950,8 +950,8 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
 
     Returns:
         Union[Dict, None]: Version entity data which can be reduced to
-        specified 'fields'. None is returned if version with specified
-        filters was not found.
+            specified 'fields'. None is returned if version with specified
+            filters was not found.
     """
 
     subset_id = convert_id(subset_id)
@@ -983,8 +983,8 @@ def get_last_version_by_subset_name(
 
     Returns:
         Union[Dict, None]: Version entity data which can be reduced to
-        specified 'fields'. None is returned if version with specified
-        filters was not found.
+            specified 'fields'. None is returned if version with specified
+            filters was not found.
     """
 
     if not asset_id and not asset_name:
@@ -1016,8 +1016,8 @@ def get_representation_by_id(project_name, representation_id, fields=None):
 
     Returns:
         Union[Dict, None]: Representation entity data which can be reduced to
-        specified 'fields'. None is returned if representation with specified
-        filters was not found.
+            specified 'fields'. None is returned if representation with
+            specified filters was not found.
     """
 
     if not representation_id:
@@ -1048,10 +1048,9 @@ def get_representation_by_name(
             returned if 'None' is passed.
 
     Returns:
-        Union[dict[str, Any], None]:
-            Representation entity data which can be reduced to specified
-            'fields'. None is returned if representation with specified filters
-            was not found.
+        Union[dict[str, Any], None]: Representation entity data which can be
+            reduced to specified 'fields'. None is returned if representation
+            with specified filters was not found.
     """
 
     version_id = convert_id(version_id)
@@ -1468,9 +1467,9 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        Union[Dict, None]:
-            Thumbnail entity data which can be reduced to specified 'fields'.
-            None is returned if thumbnail with specified filters was not found.
+        Union[Dict, None]: Thumbnail entity data which can be reduced to
+            specified 'fields'.None is returned if thumbnail with specified
+            filters was not found.
     """
 
     if not thumbnail_id:
@@ -1498,9 +1497,9 @@ def get_workfile_info(
             returned if 'None' is passed.
 
     Returns:
-        Union[Dict, None]:
-            Workfile entity data which can be reduced to specified 'fields'.
-            None is returned if workfile with specified filters was not found.
+        Union[Dict, None]: Workfile entity data which can be reduced to
+            specified 'fields'.None is returned if workfile with specified
+            filters was not found.
     """
 
     if not asset_id or not task_name or not filename:
