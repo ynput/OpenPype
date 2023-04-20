@@ -80,6 +80,10 @@ def create_interactive(creator_identifier, **kwargs):
         raise RuntimeError("Invalid creator identifier: "
                            "{}".format(creator_identifier))
 
+    # TODO: Once more elaborate unique create behavior should exist per Creator
+    #   instead of per network editor area then we should move this from here
+    #   to a method on the Creators for which this could be the default
+    #   implementation.
     pane = stateutils.activePane(kwargs)
     if isinstance(pane, hou.NetworkEditor):
         pwd = pane.pwd()
