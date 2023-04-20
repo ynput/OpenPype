@@ -150,7 +150,7 @@ def get_whole_project(project_name):
 
 
 def get_asset_by_id(project_name, asset_id, fields=None):
-    """Receive asset data by it's id.
+    """Receive asset data by its id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -174,7 +174,7 @@ def get_asset_by_id(project_name, asset_id, fields=None):
 
 
 def get_asset_by_name(project_name, asset_name, fields=None):
-    """Receive asset data by it's name.
+    """Receive asset data by its name.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -384,7 +384,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
 
 
 def get_subset_by_id(project_name, subset_id, fields=None):
-    """Single subset entity data by it's id.
+    """Single subset entity data by its id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -408,7 +408,7 @@ def get_subset_by_id(project_name, subset_id, fields=None):
 
 
 def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
-    """Single subset entity data by it's name and it's version id.
+    """Single subset entity data by its name and its version id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -548,7 +548,7 @@ def get_subset_families(project_name, subset_ids=None):
 
 
 def get_version_by_id(project_name, version_id, fields=None):
-    """Single version entity data by it's id.
+    """Single version entity data by its id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -575,11 +575,11 @@ def get_version_by_id(project_name, version_id, fields=None):
 
 
 def get_version_by_name(project_name, version, subset_id, fields=None):
-    """Single version entity data by it's name and subset id.
+    """Single version entity data by its name and subset id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        version (int): name of version entity (it's version).
+        version (int): name of version entity (its version).
         subset_id (Union[str, ObjectId]): Id of version which should be found.
         fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
@@ -604,7 +604,7 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
 
 
 def version_is_latest(project_name, version_id):
-    """Is version the latest from it's subset.
+    """Is version the latest from its subset.
 
     Note:
         Hero versions are considered as latest.
@@ -761,7 +761,7 @@ def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
 
 
 def get_hero_version_by_id(project_name, version_id, fields=None):
-    """Hero version by it's id.
+    """Hero version by its id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -1006,7 +1006,7 @@ def get_last_version_by_subset_name(
 
 
 def get_representation_by_id(project_name, representation_id, fields=None):
-    """Representation entity data by it's id.
+    """Representation entity data by its id.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
@@ -1431,7 +1431,7 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
     """Receive thumbnails entity data.
 
     Thumbnail entity can be used to receive binary content of thumbnail based
-    on it's content and ThumbnailResolvers.
+    on its content and ThumbnailResolvers.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
