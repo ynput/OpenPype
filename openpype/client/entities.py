@@ -80,7 +80,7 @@ def get_projects(active=True, inactive=False, fields=None):
 
     Yields:
         dict: Project entity data which can be reduced to specified 'fields'.
-        None is returned if project with specified filters was not found.
+            None is returned if project with specified filters was not found.
     """
     mongodb = get_project_database()
     for project_name in mongodb.collection_names():
@@ -104,8 +104,8 @@ def get_project(project_name, active=True, inactive=True, fields=None):
 
     Returns:
         Union[Dict, None]: Project entity data which can be reduced to
-        specified 'fields'. None is returned if project with specified
-        filters was not found.
+            specified 'fields'. None is returned if project with specified
+            filters was not found.
     """
     # Skip if both are disabled
     if not active and not inactive:
