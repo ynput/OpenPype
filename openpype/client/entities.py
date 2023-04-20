@@ -1479,7 +1479,6 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
     conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
-from typing import Union
 
 def get_workfile_info(
     project_name, asset_id, task_name, filename, fields=None
@@ -1502,7 +1501,6 @@ def get_workfile_info(
         Union[Dict, None]:
             Workfile entity data which can be reduced to specified 'fields'.
             None is returned if workfile with specified filters was not found.
-
     """
 
     if not asset_id or not task_name or not filename:
