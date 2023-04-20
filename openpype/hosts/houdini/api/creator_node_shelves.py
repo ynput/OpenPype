@@ -20,6 +20,7 @@ from openpype.resources import get_openpype_icon_filepath
 import hou
 import stateutils
 import soptoolutils
+import loptoolutils
 import cop2toolutils
 
 
@@ -88,7 +89,8 @@ def create_interactive(creator_identifier, **kwargs):
 
         tool_fn = {
             hou.sopNodeTypeCategory(): soptoolutils.genericTool,
-            hou.cop2NodeTypeCategory(): cop2toolutils.genericTool
+            hou.cop2NodeTypeCategory(): cop2toolutils.genericTool,
+            hou.lopNodeTypeCategory(): loptoolutils.genericTool
         }.get(pwd.childTypeCategory())
 
         if tool_fn is not None:
