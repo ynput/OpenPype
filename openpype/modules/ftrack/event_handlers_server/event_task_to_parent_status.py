@@ -291,7 +291,7 @@ class TaskStatusToParent(BaseEvent):
             except Exception:
                 session.rollback()
                 self.log.warning(
-                    "\"{}\" status couldnt be set to \"{}\"".format(
+                    "\"{}\" status couldn't be set to \"{}\"".format(
                         ent_path, new_status["name"]
                     ),
                     exc_info=True
@@ -399,7 +399,7 @@ class TaskStatusToParent(BaseEvent):
 
             # For cases there are multiple tasks in changes
             # - task status which match any new status item by order in the
-            #   list `single_match` is preffered
+            #   list `single_match` is preferred
             best_order = len(single_match)
             best_order_status = None
             for task_entity in task_entities:

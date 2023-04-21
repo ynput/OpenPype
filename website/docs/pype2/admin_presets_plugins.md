@@ -36,7 +36,7 @@ All context filters are lists which may contain strings or Regular expressions (
 - **families** - Main family of processed instance. `["plate", "model"]`
 
 :::important Filtering
-Filters are optional and may not be set. In case when multiple profiles match current context, profile with filters has higher priority that profile without filters.
+Filters are optional and may not be set. In case when multiple profiles match current context, profile with filters has higher priority than profile without filters.
 :::
 
 #### Profile outputs
@@ -293,6 +293,7 @@ If source representation has suffix **"h264"** and burnin suffix is **"client"**
 - It is allowed to use [Anatomy templates](admin_config#anatomy) themselves in burnins if they can be filled with available data.
 
 - Additional keys in burnins:
+
   | Burnin key | Description |
   | --- | --- |
   | frame_start | First frame number. |
@@ -303,6 +304,7 @@ If source representation has suffix **"h264"** and burnin suffix is **"client"**
   | resolution_height | Resolution height. |
   | fps | Fps of an output. |
   | timecode | Timecode by frame start and fps. |
+  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
 
 :::warning
 `timecode` is specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
