@@ -11,7 +11,7 @@ class OCIOEnvHook(PreLaunchHook):
     """Set OCIO environment variable for hosts that use OpenColorIO."""
 
     order = 0
-    app_groups = [
+    hosts = [
         "fusion",
         "blender",
         "aftereffects",
@@ -19,9 +19,6 @@ class OCIOEnvHook(PreLaunchHook):
         "houdini",
         "maya",
         "nuke",
-        "nukex",
-        "nukeassist",
-        "nukestudio",
         "hiero"
     ]
 
