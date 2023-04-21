@@ -45,7 +45,7 @@ class ShotgridModule(OpenPypeModule, ITrayModule, IPluginPaths):
         self.tray_wrapper = ShotgridTrayWrapper(self)
 
     def tray_start(self):
-        pass
+        return self.tray_wrapper.validate()
 
     def tray_exit(self, *args, **kwargs):
         return self.tray_wrapper
