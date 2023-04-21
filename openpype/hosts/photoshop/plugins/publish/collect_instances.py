@@ -30,9 +30,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
-    families_mapping = {
-        "image": []
-    }
 
     def process(self, context):
         instance_by_layer_id = {}
@@ -71,9 +68,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance.data["layer"] = layer_item
             instance.data.update(layer_meta_data)
-            instance.data["families"] = self.families_mapping[
-                layer_meta_data["family"]
-            ]
 
             instance.data["publish"] = layer_item.visible
             instance_names.append(layer_meta_data["subset"])
