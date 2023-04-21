@@ -97,6 +97,7 @@ def get_project(project_name, active=True, inactive=True, fields=None):
     """Return project entity document by project name.
 
     Args:
+        project_name (str): Name of project.
         active (Optional[bool]): Allow active project. Defaults to True.
         inactive (Optional[bool]): Allow inactive project. Defaults to True.
         fields (Optional[Iterable[str]]): Fields that should be returned. All
