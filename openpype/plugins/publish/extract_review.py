@@ -44,6 +44,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nuke",
         "maya",
         "blender",
+        "houdini",
         "shell",
         "hiero",
         "premiere",
@@ -414,7 +415,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             })
 
             # Force to pop these key if are in new repre
-            new_repre.pop("preview", None)
             new_repre.pop("thumbnail", None)
             if "clean_name" in new_repre.get("tags", []):
                 new_repre.pop("outputName")
@@ -1700,9 +1700,9 @@ class PercentValueRelativeSource(_OverscanValue):
 class OverscanCrop:
     """Helper class to read overscan string and calculate output resolution.
 
-    It is possible to enter single value for both width and heigh or two values
-    for width and height. Overscan string may have a few variants. Each variant
-    define output size for input size.
+    It is possible to enter single value for both width and height, or
+    two values for width and height. Overscan string may have a few variants.
+    Each variant define output size for input size.
 
     ### Example
     For input size: 2200px

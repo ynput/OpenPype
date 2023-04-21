@@ -327,7 +327,8 @@ def get_usd_master_path(asset, subset, representation):
     else:
         asset_doc = get_asset_by_name(project_name, asset, fields=["name"])
 
-    formatted_result = anatomy.format(
+    template_obj = anatomy.templates_obj["publish"]["path"]
+    path = template_obj.format_strict(
         {
             "project": {
                 "name": project_name,
@@ -340,7 +341,6 @@ def get_usd_master_path(asset, subset, representation):
         }
     )
 
-    path = formatted_result["publish"]["path"]
     # Remove the version folder
     subset_folder = os.path.dirname(os.path.dirname(path))
     master_folder = os.path.join(subset_folder, "master")
