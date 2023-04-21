@@ -92,9 +92,9 @@ class FusionPlaceholderPlugin(PlaceholderPlugin):
             else:
                 raise KeyError(f"Control {name} does not exist on the node")
 
-        # placeholder_data = node.GetData("placeholder_data")
-        # placeholder_data.update(new_placeholder_data)
-        # node.SetData("placeholder_data", placeholder_data)
+        placeholder_data = node.GetData("placeholder_data")
+        placeholder_data.update(new_placeholder_data)
+        node.SetData("placeholder_data", placeholder_data)
 
     def _is_float(self, element):
         try:
