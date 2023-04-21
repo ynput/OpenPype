@@ -283,6 +283,9 @@ class CreateWidget(QtWidgets.QWidget):
         thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
         controller.event_system.add_callback(
+            "main.window.closed", self._on_main_window_close
+        )
+        controller.event_system.add_callback(
             "plugins.refresh.finished", self._on_plugins_refresh
         )
 
@@ -318,6 +321,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._last_current_context_asset = None
         self._last_current_context_task = None
+        self._use_current_context = True
 
     @property
     def current_asset_name(self):
@@ -359,6 +363,12 @@ class CreateWidget(QtWidgets.QWidget):
         if check_prereq:
             self._invalidate_prereq()
 
+    def _on_main_window_close(self):
+        """Publisher window was closed."""
+
+        # Use current context on next refresh
+        self._use_current_context = True
+
     def refresh(self):
         current_asset_name = self._controller.current_asset_name
         current_task_name = self._controller.current_task_name
@@ -367,20 +377,24 @@ class CreateWidget(QtWidgets.QWidget):
         #   task widgets
         asset_name = self._get_asset_name()
         task_name = self._get_task_name()
+
         # Replace by current context if last loaded context was
         #   'current context' before reset
         if (
-            self._last_current_context_asset
-            and (
-                asset_name == self._last_current_context_asset
+            self._use_current_context
+            or (
+                self._last_current_context_asset
+                and asset_name == self._last_current_context_asset
                 and task_name == self._last_current_context_task
             )
         ):
             asset_name = current_asset_name
             task_name = current_task_name
 
+        # Store values for future refresh
         self._last_current_context_asset = current_asset_name
         self._last_current_context_task = current_task_name
+        self._use_current_context = False
 
         self._prereq_available = False
 
