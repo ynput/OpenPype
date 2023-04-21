@@ -285,6 +285,9 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
+            "publish.finished.changed", self._on_publish_finished_change
+        )
+        controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
@@ -400,6 +403,7 @@ class PublisherWindow(QtWidgets.QDialog):
         # TODO capture changes and ask user if wants to save changes on close
         # if not self._controller.host_context_has_changed:
         #     self._save_changes(False)
+        self._comment_input.setText("")  # clear comment
         self._reset_on_show = True
         self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
@@ -776,6 +780,11 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_publish_validated_change(self, event):
         if event["value"]:
             self._validate_btn.setEnabled(False)
+
+    def _on_publish_finished_change(self, event):
+        if event["value"]:
+            # Successful publish, remove comment from UI
+            self._comment_input.setText("")
 
     def _on_publish_stop(self):
         self._set_publish_overlay_visibility(False)
