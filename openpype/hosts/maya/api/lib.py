@@ -32,6 +32,10 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.pipeline.create import (
+    legacy_create,
+    get_legacy_creator_by_name,
+)
 from openpype.pipeline.context_tools import (
     get_current_asset_name,
     get_current_project_asset,
@@ -3931,3 +3935,53 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
         capture_preset = plugin_settings["capture_preset"]
 
     return capture_preset or {}
+
+
+def create_rig_animation_instance(nodes, context, namespace, log=None):
+    """Create an animation publish instance for loaded rigs.
+
+    See the RecreateRigAnimationInstance inventory action on how to use this
+    for loaded rig containers.
+
+    Arguments:
+        nodes (list): Member nodes of the rig instance.
+        context (dict): Representation context of the rig container
+        namespace (str): Namespace of the rig container
+        log (logging.Logger, optional): Logger to log to if provided
+
+    Returns:
+        None
+
+    """
+    output = next((node for node in nodes if
+                   node.endswith("out_SET")), None)
+    controls = next((node for node in nodes if
+                     node.endswith("controls_SET")), None)
+
+    assert output, "No out_SET in rig, this is a bug."
+    assert controls, "No controls_SET in rig, this is a bug."
+
+    # Find the roots amongst the loaded nodes
+    roots = (
+        cmds.ls(nodes, assemblies=True, long=True) or
+        get_highest_in_hierarchy(nodes)
+    )
+    assert roots, "No root nodes in rig, this is a bug."
+
+    asset = legacy_io.Session["AVALON_ASSET"]
+    dependency = str(context["representation"]["_id"])
+
+    if log:
+        log.info("Creating subset: {}".format(namespace))
+
+    # Create the animation instance
+    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+    with maintained_selection():
+        cmds.select([output, controls] + roots, noExpand=True)
+        legacy_create(
+            creator_plugin,
+            name=namespace,
+            asset=asset,
+            options={"useSelection": True},
+            data={"dependencies": dependency}
+        )
