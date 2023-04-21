@@ -2,7 +2,8 @@ from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.nuke.api.lib import (
     INSTANCE_DATA_KNOB,
     get_node_data,
-    get_avalon_knob_data
+    get_avalon_knob_data,
+    AVALON_TAB,
 )
 from openpype.hosts.nuke.api.plugin import convert_to_valid_instaces
 
@@ -17,11 +18,13 @@ class LegacyConverted(SubsetConvertorPlugin):
         legacy_found = False
         # search for first available legacy item
         for node in nuke.allNodes(recurseGroups=True):
-
             if node.Class() in ["Viewer", "Dot"]:
                 continue
 
             if get_node_data(node, INSTANCE_DATA_KNOB):
+                continue
+
+            if AVALON_TAB not in node.knobs():
                 continue
 
             # get data from avalon knob
@@ -39,7 +42,7 @@ class LegacyConverted(SubsetConvertorPlugin):
             break
 
         if legacy_found:
-            # if not item do not add legacy instance convertor
+            # if not item do not add legacy instance converter
             self.add_convertor_item("Convert legacy instances")
 
     def convert(self):

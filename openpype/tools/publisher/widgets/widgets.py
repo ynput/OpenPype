@@ -34,7 +34,8 @@ from .icons import (
 )
 
 from ..constants import (
-    VARIANT_TOOLTIP
+    VARIANT_TOOLTIP,
+    ResetKeySequence,
 )
 
 
@@ -198,12 +199,26 @@ class CreateBtn(PublishIconBtn):
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
+class SaveBtn(PublishIconBtn):
+    """Save context and instances information."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("save")
+        super(SaveBtn, self).__init__(icon_path, parent)
+        self.setToolTip(
+            "Save changes ({})".format(
+                QtGui.QKeySequence(QtGui.QKeySequence.Save).toString()
+            )
+        )
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Refresh publishing")
+        self.setToolTip(
+            "Reset & discard changes ({})".format(ResetKeySequence.toString())
+        )
 
 
 class StopBtn(PublishIconBtn):
@@ -346,6 +361,19 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         raise NotImplementedError((
             "{} Method 'set_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_active_toggle_enabled(self, enabled):
+        """Instances are disabled for changing enabled state.
+
+        Active state should stay the same until is "unset".
+
+        Args:
+            enabled (bool): Instance state can be changed.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_active_toggle_enabled' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -1533,7 +1561,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     │   attributes    │  Thumbnail  │  TOP
     │                 │             │
     ├─────────────┬───┴─────────────┤
-    │  Family     │   Publish       │
+    │  Creator    │   Publish       │
     │  attributes │   plugin        │  BOTTOM
     │             │   attributes    │
     └───────────────────────────────┘

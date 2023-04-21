@@ -6,6 +6,11 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_current_project
+)
+
 
 JSON_PREFIX = "JSON::"
 
@@ -155,6 +160,105 @@ def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
+
+def set_scene_resolution(width: int, height: int):
+    """Set the render resolution
+
+    Args:
+        width(int): value of the width
+        height(int): value of the height
+
+    Returns:
+        None
+
+    """
+    rt.renderWidth = width
+    rt.renderHeight = height
+
+
+def reset_scene_resolution():
+    """Apply the scene resolution from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+    Returns:
+        None
+    """
+    data = ["data.resolutionWidth", "data.resolutionHeight"]
+    project_resolution = get_current_project(fields=data)
+    project_resolution_data = project_resolution["data"]
+    asset_resolution = get_current_project_asset(fields=data)
+    asset_resolution_data = asset_resolution["data"]
+    # Set project resolution
+    project_width = int(project_resolution_data.get("resolutionWidth", 1920))
+    project_height = int(project_resolution_data.get("resolutionHeight", 1080))
+    width = int(asset_resolution_data.get("resolutionWidth", project_width))
+    height = int(asset_resolution_data.get("resolutionHeight", project_height))
+
+    set_scene_resolution(width, height)
+
+
+def get_frame_range() -> dict:
+    """Get the current assets frame range and handles.
+
+    Returns:
+        dict: with frame start, frame end, handle start, handle end.
+    """
+    # Set frame start/end
+    asset = get_current_project_asset()
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+
+    if frame_start is None or frame_end is None:
+        return
+
+    handle_start = asset["data"].get("handleStart", 0)
+    handle_end = asset["data"].get("handleEnd", 0)
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range(fps: bool = True):
+    """Set frame range to current asset.
+    This is part of 3dsmax documentation:
+
+    animationRange: A System Global variable which lets you get and
+        set an Interval value that defines the start and end frames
+        of the Active Time Segment.
+    frameRate: A System Global variable which lets you get
+            and set an Integer value that defines the current
+            scene frame rate in frames-per-second.
+    """
+    if fps:
+        data_fps = get_current_project(fields=["data.fps"])
+        fps_number = float(data_fps["data"]["fps"])
+        rt.frameRate = fps_number
+    frame_range = get_frame_range()
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
+    rt.execute(frange_cmd)
+
+
+def set_context_setting():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        frame range
+        resolution
+
+    Returns:
+        None
+    """
+    reset_scene_resolution()
 
 
 def get_max_version():
