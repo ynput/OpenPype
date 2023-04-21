@@ -21,35 +21,10 @@ from openpype.pipeline import (
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
-
-
-def get_resources(project_name, version, extension=None):
-    """Get the files from the specific version."""
-
-    # TODO this functions seems to be weird
-    #   - it's looking for representation with one extension or first (any)
-    #       representation from a version?
-    #  - not sure how this should work, maybe it does for specific use cases
-    #       but probably can't be used for all resources from 2D workflows
-    extensions = None
-    if extension:
-        extensions = [extension]
-    repre_docs = list(get_representations(
-        project_name, version_ids=[version["_id"]], extensions=extensions
-    ))
-    assert repre_docs, "This is a bug"
-
-    representation = repre_docs[0]
-    directory = get_representation_path(representation)
-    print("Source: ", directory)
-    resources = sorted(
-        [
-            os.path.normpath(os.path.join(directory, fname))
-            for fname in os.listdir(directory)
-        ]
-    )
-
-    return resources
+from openpype.pipeline.farm.pyblish import (
+    create_skeleton_instance,
+    create_instances_for_aov
+)
 
 
 def get_resource_files(resources, frame_range=None):
@@ -356,241 +331,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         return deadline_publish_job_id
 
-    def _copy_extend_frames(self, instance, representation):
-        """Copy existing frames from latest version.
-
-        This will copy all existing frames from subset's latest version back
-        to render directory and rename them to what renderer is expecting.
-
-        Arguments:
-            instance (pyblish.plugin.Instance): instance to get required
-                data from
-            representation (dict): presentation to operate on
-
-        """
-        import speedcopy
-
-        self.log.info("Preparing to copy ...")
-        start = instance.data.get("frameStart")
-        end = instance.data.get("frameEnd")
-        project_name = legacy_io.active_project()
-
-        # get latest version of subset
-        # this will stop if subset wasn't published yet
-        project_name = legacy_io.active_project()
-        version = get_last_version_by_subset_name(
-            project_name,
-            instance.data.get("subset"),
-            asset_name=instance.data.get("asset")
-        )
-
-        # get its files based on extension
-        subset_resources = get_resources(
-            project_name, version, representation.get("ext")
-        )
-        r_col, _ = clique.assemble(subset_resources)
-
-        # if override remove all frames we are expecting to be rendered
-        # so we'll copy only those missing from current render
-        if instance.data.get("overrideExistingFrame"):
-            for frame in range(start, end + 1):
-                if frame not in r_col.indexes:
-                    continue
-                r_col.indexes.remove(frame)
-
-        # now we need to translate published names from representation
-        # back. This is tricky, right now we'll just use same naming
-        # and only switch frame numbers
-        resource_files = []
-        r_filename = os.path.basename(
-            representation.get("files")[0])  # first file
-        op = re.search(self.R_FRAME_NUMBER, r_filename)
-        pre = r_filename[:op.start("frame")]
-        post = r_filename[op.end("frame"):]
-        assert op is not None, "padding string wasn't found"
-        for frame in list(r_col):
-            fn = re.search(self.R_FRAME_NUMBER, frame)
-            # silencing linter as we need to compare to True, not to
-            # type
-            assert fn is not None, "padding string wasn't found"
-            # list of tuples (source, destination)
-            staging = representation.get("stagingDir")
-            staging = self.anatomy.fill_root(staging)
-            resource_files.append(
-                (frame,
-                 os.path.join(staging,
-                              "{}{}{}".format(pre,
-                                              fn.group("frame"),
-                                              post)))
-            )
-
-        # test if destination dir exists and create it if not
-        output_dir = os.path.dirname(representation.get("files")[0])
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
-
-        # copy files
-        for source in resource_files:
-            speedcopy.copy(source[0], source[1])
-            self.log.info("  > {}".format(source[1]))
-
-        self.log.info(
-            "Finished copying %i files" % len(resource_files))
-
-    def _create_instances_for_aov(
-        self, instance_data, exp_files, additional_data
-    ):
-        """Create instance for each AOV found.
-
-        This will create new instance for every aov it can detect in expected
-        files list.
-
-        Arguments:
-            instance_data (pyblish.plugin.Instance): skeleton data for instance
-                (those needed) later by collector
-            exp_files (list): list of expected files divided by aovs
-
-        Returns:
-            list of instances
-
-        """
-        task = os.environ["AVALON_TASK"]
-        subset = instance_data["subset"]
-        cameras = instance_data.get("cameras", [])
-        instances = []
-        # go through aovs in expected files
-        for aov, files in exp_files[0].items():
-            cols, rem = clique.assemble(files)
-            # we shouldn't have any reminders. And if we do, it should
-            # be just one item for single frame renders.
-            if not cols and rem:
-                assert len(rem) == 1, ("Found multiple non related files "
-                                       "to render, don't know what to do "
-                                       "with them.")
-                col = rem[0]
-                ext = os.path.splitext(col)[1].lstrip(".")
-            else:
-                # but we really expect only one collection.
-                # Nothing else make sense.
-                assert len(cols) == 1, "only one image sequence type is expected"  # noqa: E501
-                ext = cols[0].tail.lstrip(".")
-                col = list(cols[0])
-
-            self.log.debug(col)
-            # create subset name `familyTaskSubset_AOV`
-            group_name = 'render{}{}{}{}'.format(
-                task[0].upper(), task[1:],
-                subset[0].upper(), subset[1:])
-
-            cam = [c for c in cameras if c in col.head]
-            if cam:
-                if aov:
-                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
-                else:
-                    subset_name = '{}_{}'.format(group_name, cam)
-            else:
-                if aov:
-                    subset_name = '{}_{}'.format(group_name, aov)
-                else:
-                    subset_name = '{}'.format(group_name)
-
-            if isinstance(col, (list, tuple)):
-                staging = os.path.dirname(col[0])
-            else:
-                staging = os.path.dirname(col)
-
-            success, rootless_staging_dir = (
-                self.anatomy.find_root_template_from_path(staging)
-            )
-            if success:
-                staging = rootless_staging_dir
-            else:
-                self.log.warning((
-                    "Could not find root path for remapping \"{}\"."
-                    " This may cause issues on farm."
-                ).format(staging))
-
-            self.log.info("Creating data for: {}".format(subset_name))
-
-            app = os.environ.get("AVALON_APP", "")
-
-            preview = False
-
-            if isinstance(col, list):
-                render_file_name = os.path.basename(col[0])
-            else:
-                render_file_name = os.path.basename(col)
-            aov_patterns = self.aov_filter
-
-            preview = match_aov_pattern(app, aov_patterns, render_file_name)
-            # toggle preview on if multipart is on
-
-            if instance_data.get("multipartExr"):
-                self.log.debug("Adding preview tag because its multipartExr")
-                preview = True
-            self.log.debug("preview:{}".format(preview))
-            new_instance = deepcopy(instance_data)
-            new_instance["subset"] = subset_name
-            new_instance["subsetGroup"] = group_name
-            if preview:
-                new_instance["review"] = True
-
-            # create representation
-            if isinstance(col, (list, tuple)):
-                files = [os.path.basename(f) for f in col]
-            else:
-                files = os.path.basename(col)
-
-            # Copy render product "colorspace" data to representation.
-            colorspace = ""
-            products = additional_data["renderProducts"].layer_data.products
-            for product in products:
-                if product.productName == aov:
-                    colorspace = product.colorspace
-                    break
-
-            rep = {
-                "name": ext,
-                "ext": ext,
-                "files": files,
-                "frameStart": int(instance_data.get("frameStartHandle")),
-                "frameEnd": int(instance_data.get("frameEndHandle")),
-                # If expectedFile are absolute, we need only filenames
-                "stagingDir": staging,
-                "fps": new_instance.get("fps"),
-                "tags": ["review"] if preview else [],
-                "colorspaceData": {
-                    "colorspace": colorspace,
-                    "config": {
-                        "path": additional_data["colorspaceConfig"],
-                        "template": additional_data["colorspaceTemplate"]
-                    },
-                    "display": additional_data["display"],
-                    "view": additional_data["view"]
-                }
-            }
-
-            # support conversion from tiled to scanline
-            if instance_data.get("convertToScanline"):
-                self.log.info("Adding scanline conversion.")
-                rep["tags"].append("toScanline")
-
-            # poor man exclusion
-            if ext in self.skip_integration_repre_list:
-                rep["tags"].append("delete")
-
-            self._solve_families(new_instance, preview)
-
-            new_instance["representations"] = [rep]
-
-            # if extending frames from existing version, copy files from there
-            # into our destination directory
-            if new_instance.get("extendFrames", False):
-                self._copy_extend_frames(new_instance, rep)
-            instances.append(new_instance)
-            self.log.debug("instances:{}".format(instances))
-        return instances
-
     def _get_representations(self, instance, exp_files):
         """Create representations for file sequences.
 
@@ -748,8 +488,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # type: (pyblish.api.Instance) -> None
         """Process plugin.
 
-        Detect type of renderfarm submission and create and post dependent job
-        in case of Deadline. It creates json file with metadata needed for
+        Detect type of render farm submission and create and post dependent
+        job in case of Deadline. It creates json file with metadata needed for
         publishing in directory of render.
 
         Args:
@@ -760,145 +500,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.info("Skipping local instance.")
             return
 
-        data = instance.data.copy()
-        context = instance.context
-        self.context = context
-        self.anatomy = instance.context.data["anatomy"]
-
-        asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
-        subset = data.get("subset")
-
-        start = instance.data.get("frameStart")
-        if start is None:
-            start = context.data["frameStart"]
-
-        end = instance.data.get("frameEnd")
-        if end is None:
-            end = context.data["frameEnd"]
-
-        handle_start = instance.data.get("handleStart")
-        if handle_start is None:
-            handle_start = context.data["handleStart"]
-
-        handle_end = instance.data.get("handleEnd")
-        if handle_end is None:
-            handle_end = context.data["handleEnd"]
-
-        fps = instance.data.get("fps")
-        if fps is None:
-            fps = context.data["fps"]
-
-        if data.get("extendFrames", False):
-            start, end = self._extend_frames(
-                asset,
-                subset,
-                start,
-                end,
-                data["overrideExistingFrame"])
-
-        try:
-            source = data["source"]
-        except KeyError:
-            source = context.data["currentFile"]
-
-        success, rootless_path = (
-            self.anatomy.find_root_template_from_path(source)
-        )
-        if success:
-            source = rootless_path
-
-        else:
-            # `rootless_path` is not set to `source` if none of roots match
-            self.log.warning((
-                "Could not find root path for remapping \"{}\"."
-                " This may cause issues."
-            ).format(source))
-
-        family = "render"
-        if "prerender" in instance.data["families"]:
-            family = "prerender"
-        families = [family]
-
-        # pass review to families if marked as review
-        if data.get("review"):
-            families.append("review")
-
-        instance_skeleton_data = {
-            "family": family,
-            "subset": subset,
-            "families": families,
-            "asset": asset,
-            "frameStart": start,
-            "frameEnd": end,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStartHandle": start - handle_start,
-            "frameEndHandle": end + handle_end,
-            "comment": instance.data["comment"],
-            "fps": fps,
-            "source": source,
-            "extendFrames": data.get("extendFrames"),
-            "overrideExistingFrame": data.get("overrideExistingFrame"),
-            "pixelAspect": data.get("pixelAspect", 1),
-            "resolutionWidth": data.get("resolutionWidth", 1920),
-            "resolutionHeight": data.get("resolutionHeight", 1080),
-            "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview", True),
-            # map inputVersions `ObjectId` -> `str` so json supports it
-            "inputVersions": list(map(str, data.get("inputVersions", [])))
-        }
-
-        # skip locking version if we are creating v01
-        instance_version = instance.data.get("version")  # take this if exists
-        if instance_version != 1:
-            instance_skeleton_data["version"] = instance_version
-
-        # transfer specific families from original instance to new render
-        for item in self.families_transfer:
-            if item in instance.data.get("families", []):
-                instance_skeleton_data["families"] += [item]
-
-        # transfer specific properties from original instance based on
-        # mapping dictionary `instance_transfer`
-        for key, values in self.instance_transfer.items():
-            if key in instance.data.get("families", []):
-                for v in values:
-                    instance_skeleton_data[v] = instance.data.get(v)
-
-        # look into instance data if representations are not having any
-        # which are having tag `publish_on_farm` and include them
-        for repre in instance.data.get("representations", []):
-            staging_dir = repre.get("stagingDir")
-            if staging_dir:
-                success, rootless_staging_dir = (
-                    self.anatomy.find_root_template_from_path(
-                        staging_dir
-                    )
-                )
-                if success:
-                    repre["stagingDir"] = rootless_staging_dir
-                else:
-                    self.log.warning((
-                        "Could not find root path for remapping \"{}\"."
-                        " This may cause issues on farm."
-                    ).format(staging_dir))
-                    repre["stagingDir"] = staging_dir
-
-            if "publish_on_farm" in repre.get("tags"):
-                # create representations attribute of not there
-                if "representations" not in instance_skeleton_data.keys():
-                    instance_skeleton_data["representations"] = []
-
-                instance_skeleton_data["representations"].append(repre)
+        instance_skeleton_data = create_skeleton_instance(
+                                    instance,
+                                    families_transfer=self.families_transfer,
+                                    instance_transfer=self.instance_transfer)
 
         instances = None
-        assert data.get("expectedFiles"), ("Submission from old Pype version"
-                                           " - missing expectedFiles")
 
         """
-        if content of `expectedFiles` are dictionaries, we will handle
-        it as list of AOVs, creating instance from every one of them.
+        if content of `expectedFiles` list are dictionaries, we will handle
+        it as list of AOVs, creating instance for every one of them.
 
         Example:
         --------
@@ -920,7 +531,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         This will create instances for `beauty` and `Z` subset
         adding those files to their respective representations.
 
-        If we've got only list of files, we collect all filesequences.
+        If we have only list of files, we collect all file sequences.
         More then one doesn't probably make sense, but we'll handle it
         like creating one instance with multiple representations.
 
@@ -938,55 +549,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         `foo` and `xxx`
         """
 
-        self.log.info(data.get("expectedFiles"))
-
-        if isinstance(data.get("expectedFiles")[0], dict):
-            # we cannot attach AOVs to other subsets as we consider every
-            # AOV subset of its own.
-
-            additional_data = {
-                "renderProducts": instance.data["renderProducts"],
-                "colorspaceConfig": instance.data["colorspaceConfig"],
-                "display": instance.data["colorspaceDisplay"],
-                "view": instance.data["colorspaceView"]
-            }
-
-            # Get templated path from absolute config path.
-            anatomy = instance.context.data["anatomy"]
-            colorspaceTemplate = instance.data["colorspaceConfig"]
-            success, rootless_staging_dir = (
-                anatomy.find_root_template_from_path(colorspaceTemplate)
-            )
-            if success:
-                colorspaceTemplate = rootless_staging_dir
-            else:
-                self.log.warning((
-                    "Could not find root path for remapping \"{}\"."
-                    " This may cause issues on farm."
-                ).format(colorspaceTemplate))
-            additional_data["colorspaceTemplate"] = colorspaceTemplate
-
-            if len(data.get("attachTo")) > 0:
-                assert len(data.get("expectedFiles")[0].keys()) == 1, (
-                    "attaching multiple AOVs or renderable cameras to "
-                    "subset is not supported")
-
-            # create instances for every AOV we found in expected files.
-            # note: this is done for every AOV and every render camere (if
-            #       there are multiple renderable cameras in scene)
-            instances = self._create_instances_for_aov(
-                instance_skeleton_data,
-                data.get("expectedFiles"),
-                additional_data
-            )
-            self.log.info("got {} instance{}".format(
-                len(instances),
-                "s" if len(instances) > 1 else ""))
+        if isinstance(instance.data.get("expectedFiles")[0], dict):
+            instances = create_instances_for_aov(
+                instance, instance_skeleton_data)
 
         else:
             representations = self._get_representations(
                 instance_skeleton_data,
-                data.get("expectedFiles")
+                instance.data.get("expectedFiles")
             )
 
             if "representations" not in instance_skeleton_data.keys():
@@ -1029,11 +599,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         render_job = None
         submission_type = ""
         if instance.data.get("toBeRenderedOn") == "deadline":
-            render_job = data.pop("deadlineSubmissionJob", None)
+            render_job = instance.data.pop("deadlineSubmissionJob", None)
             submission_type = "deadline"
 
         if instance.data.get("toBeRenderedOn") == "muster":
-            render_job = data.pop("musterSubmissionJob", None)
+            render_job = instance.data.pop("musterSubmissionJob", None)
             submission_type = "muster"
 
         if not render_job and instance.data.get("tileRendering") is False:
@@ -1056,9 +626,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "jobBatchName")
             else:
                 render_job["Props"]["Batch"] = os.path.splitext(
-                    os.path.basename(context.data.get("currentFile")))[0]
+                    os.path.basename(instance.context.data.get("currentFile")))[0]
             # User is deadline user
-            render_job["Props"]["User"] = context.data.get(
+            render_job["Props"]["User"] = instance.context.data.get(
                 "deadlineUser", getpass.getuser())
 
             render_job["Props"]["Env"] = {
@@ -1080,15 +650,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # publish job file
         publish_job = {
-            "asset": asset,
-            "frameStart": start,
-            "frameEnd": end,
-            "fps": context.data.get("fps", None),
-            "source": source,
-            "user": context.data["user"],
-            "version": context.data["version"],  # this is workfile version
-            "intent": context.data.get("intent"),
-            "comment": context.data.get("comment"),
+            "asset": instance_skeleton_data["asset"],
+            "frameStart": instance_skeleton_data["frameStart"],
+            "frameEnd": instance_skeleton_data["frameEnd"],
+            "fps": instance_skeleton_data["fps"],
+            "source": instance_skeleton_data["source"],
+            "user": instance.context.data["user"],
+            "version": instance.context.data["version"],  # this is workfile version
+            "intent": instance.context.data.get("intent"),
+            "comment": instance.context.data.get("comment"),
             "job": render_job or None,
             "session": legacy_io.Session.copy(),
             "instances": instances
@@ -1098,7 +668,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             publish_job["deadline_publish_job_id"] = deadline_publish_job_id
 
         # add audio to metadata file if available
-        audio_file = context.data.get("audioFile")
+        audio_file = instance.context.data.get("audioFile")
         if audio_file and os.path.isfile(audio_file):
             publish_job.update({"audio": audio_file})
 
