@@ -418,7 +418,10 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_name is None:
+        if (
+            self._context_change_is_enabled()
+            and self._get_asset_name() is None
+        ):
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
