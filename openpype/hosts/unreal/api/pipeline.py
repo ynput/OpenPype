@@ -314,7 +314,7 @@ def imprint(node, data):
 def show_tools_popup():
     """Show popup with tools.
 
-    Popup will disappear on click or loosing focus.
+    Popup will disappear on click or losing focus.
     """
     from openpype.hosts.unreal.api import tools_ui
 

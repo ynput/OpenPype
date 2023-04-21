@@ -41,13 +41,6 @@ class CreateWritePrerender(napi.NukeWriteCreator):
         ]
         return attr_defs
 
-    def get_instance_attr_defs(self):
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool()
-        ]
-        return attr_defs
-
     def create_instance_node(self, subset_name, instance_data):
         linked_knobs_ = []
         if "use_range_limit" in self.instance_attributes:

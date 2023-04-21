@@ -1,4 +1,4 @@
-name: Nightly Prerelease
+name: ⏳ Nightly Prerelease
 
 on:
   workflow_dispatch:
@@ -65,3 +65,9 @@ jobs:
         source_ref: 'main'
         target_branch: 'develop'
         commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'
+
+    - name: Invoke Update bug report workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: update_bug_report.yml
+        token: ${{ secrets.YNPUT_BOT_TOKEN }}
