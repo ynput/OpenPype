@@ -1,5 +1,4 @@
 from openpype.modules import OpenPypeModule, ITrayService
-from .server import Server
 import socket
 
 
@@ -8,28 +7,30 @@ class PerforceModule(OpenPypeModule, ITrayService):
     label = "Perforce"
 
     def initialize(self, module_settings):
-        self.enabled = True
+        self.enabled = module_settings[self.name]["enabled"]
+        self.server_manager = None
         self.server = None
-        self.port = self.find_free_port()
+        self.port = self.find_free_port(port_from=10000)
 
     def tray_init(self):
-        self.server = Server(port=self.port)
+        from .server import P4ServerManager
+
+        self.server_manager = P4ServerManager(self.port, "0.0.0.0")
+
 
     def tray_start(self):
-        if self.server:
-            self.server.start_server()
+        self.start_server()
 
     def tray_exit(self):
-        if self.server:
-            self.stop_server()
+        self.stop_server()
 
     def start_server(self):
-        if self.server:
-            self.server.start_server()
+        if self.server_manager:
+            self.server_manager.start_server()
 
     def stop_server(self):
-        if self.server:
-            self.server.stop_server()
+        if self.server_manager:
+            self.server_manager.stop_server()
 
     @staticmethod
     def find_free_port(
