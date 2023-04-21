@@ -57,6 +57,9 @@ class PSAutoCreator(AutoCreator):
                 project_name, host_name, None
             ))
 
+            if not self.active_on_create:
+                data["active"] = False
+
             new_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )

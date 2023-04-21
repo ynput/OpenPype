@@ -24,4 +24,5 @@ class WorkfileCreator(PSAutoCreator):
             project_settings["photoshop"]["create"]["WorkfileCreator"]
         )
 
-        self.default_variant = plugin_settings["default_variant"]
+        self.active_on_create = plugin_settings["active_on_create"]
+        self.enabled = plugin_settings["enabled"]

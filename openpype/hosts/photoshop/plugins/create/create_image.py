@@ -23,6 +23,11 @@ class ImageCreator(Creator):
     family = "image"
     description = "Image creator"
 
+    # Settings
+    default_variants = ""
+    mark_for_review = False
+    active_on_create = True
+
     def create(self, subset_name_from_ui, data, pre_create_data):
         groups_to_create = []
         top_layers_to_wrap = []
@@ -94,9 +99,11 @@ class ImageCreator(Creator):
             data.update({"layer_name": layer_name})
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
-            creator_attributes = {"mark_for_review":
-                                  pre_create_data["mark_for_review"]}
+            creator_attributes = {"mark_for_review": self.mark_for_review}
             data.update({"creator_attributes": creator_attributes})
+
+            if not self.active_on_create:
+                data["active"] = False
 
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
@@ -163,6 +170,17 @@ class ImageCreator(Creator):
                 label="Review"
             )
         ]
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["photoshop"]["create"]["ImageCreator"]
+        )
+
+        self.active_on_create = plugin_settings["active_on_create"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings["enabled"]
+
 
     def get_detail_description(self):
         return """Creator for Image instances

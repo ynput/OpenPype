@@ -1,13 +1,9 @@
-from openpype.pipeline import CreatedInstance, CreatorError
+from openpype.pipeline import CreatedInstance
 
-from openpype.lib import (
-    prepare_template_data,
-    TextDef,
-    BoolDef,
-)
-
+from openpype.lib import BoolDef
 import openpype.hosts.photoshop.api as api
 from openpype.hosts.photoshop.lib import PSAutoCreator
+from openpype.pipeline.create import get_subset_name, get_asset_by_name
 
 
 class AutoImageCreator(PSAutoCreator):
@@ -20,10 +16,10 @@ class AutoImageCreator(PSAutoCreator):
     family = "image"
 
     # Settings
-    # - template for subset name
-    flatten_subset_template = ""
+    default_variant = ""
     # - Mark by default instance for review
     mark_for_review = True
+    active_on_create = True
 
     def create(self, options=None):
         existing_instance = None
@@ -33,13 +29,17 @@ class AutoImageCreator(PSAutoCreator):
                 break
 
         context = self.create_context
+        project_name = context.get_current_project_name()
         asset_name = context.get_current_asset_name()
         task_name = context.get_current_task_name()
-        if existing_instance is None:
-            subset_name = self._get_subset_name(asset_name, task_name)
+        host_name = context.host_name
+        asset_doc = get_asset_by_name(project_name, asset_name)
 
-            asset_name = context.get_current_asset_name()
-            task_name = context.get_current_task_name()
+        if existing_instance is None:
+            subset_name = self.get_subset_name(
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
+            )
 
             publishable_ids = [layer.id for layer in api.stub().get_layers()
                                if layer.visible]
@@ -48,6 +48,9 @@ class AutoImageCreator(PSAutoCreator):
                 "task": task_name,
                 "members": publishable_ids
             }
+
+            if not self.active_on_create:
+                data["active"] = False
 
             creator_attributes = {"mark_for_review": self.mark_for_review}
             data.update({"creator_attributes": creator_attributes})
@@ -72,29 +75,8 @@ class AutoImageCreator(PSAutoCreator):
             api.stub().imprint(existing_instance.get("instance_id"),
                                existing_instance.data_to_store())
 
-    def _get_subset_name(self, asset_name, task_name):
-        """Use configured template to create subset name"""
-        if not self.flatten_subset_template:
-            raise CreatorError((
-                "You need to provide template for subset name in Settings."
-            ))
-
-        fill_pairs = {
-            "asset": asset_name,
-            "task": task_name
-        }
-
-        subset_name = self.flatten_subset_template.format(
-            **prepare_template_data(fill_pairs))
-        return subset_name
-
     def get_pre_create_attr_defs(self):
         return [
-            TextDef(
-                "flatten_subset_template",
-                label="Subset name template",
-                items=TextDef
-            ),
             BoolDef(
                 "mark_for_review",
                 label="Review",
@@ -115,8 +97,8 @@ class AutoImageCreator(PSAutoCreator):
             project_settings["photoshop"]["create"]["AutoImageCreator"]
         )
 
-        self.flatten_subset_template = \
-            plugin_settings["flatten_subset_template"]
+        self.active_on_create = plugin_settings["active_on_create"]
+        self.default_variant = plugin_settings["deafault_variant"]
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.enabled = plugin_settings["enabled"]
 

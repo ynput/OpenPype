@@ -11,21 +11,27 @@
     },
     "create": {
         "ImageCreator": {
+            "enabled": true,
+            "active_on_create": true,
+            "mark_for_review": false,
             "default_variants": [
                 "Main"
             ]
         },
         "AutoImageCreator": {
             "enabled": false,
-            "flatten_subset_template": "",
-            "mark_for_review": false
+            "active_on_create": true,
+            "mark_for_review": false,
+            "default_variant": ""
         },
         "ReviewCreator": {
             "enabled": true,
+            "active_on_create": true,
             "default_variant": ""
         },
         "WorkfileCreator": {
             "enabled": true,
+            "active_on_create": true,
             "default_variant": "Main"
         }
     },
