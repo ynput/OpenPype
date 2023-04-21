@@ -155,7 +155,9 @@ class FusionLoadSequence(load.LoaderPlugin):
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
-            args = (-32768, -32768)
+            x = data.get('x', -32768)
+            y = data.get('y', -32768)
+            args = (x, y)
             tool = comp.AddTool("Loader", *args)
             tool["Clip"] = path
 
