@@ -68,16 +68,16 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Collects the frame range of a plate instance and bundles it into a list of tuples which describe media frame and
-            target output frame. Warns the user if the media frame range is outside the expected extract frame range.
+        target output frame. Warns the user if the media frame range is outside the expected extract frame range.
 
-            Args:
-                instance (pyblish.api.Instance): The instance to process.
+        Args:
+            instance (pyblish.api.Instance): The instance to process.
 
-            Raises:
-                Exception: If the output frame range is out of the source frame range of the media.
+        Raises:
+            Exception: If the output frame range is out of the source frame range of the media.
 
-            Returns:
-                None
+        Returns:
+            None
         """
         track_item = instance.data["item"]
 
@@ -102,7 +102,11 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
             # Calculate input_frame for output by normalizing input media to first frame
             input_frame = source_start + clip_source_in - handle_start + output_frame - first_frame
             if input_frame - source_start < 0 or input_frame > source_end:
-                self.log.critical("Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(output_frame, input_frame))
+                self.log.critical(
+                    "Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(
+                        output_frame, input_frame
+                    )
+                )
                 exception = True
                 continue
             else:

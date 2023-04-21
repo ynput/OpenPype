@@ -9,7 +9,16 @@ from openpype.pipeline import publish
 from openpype.lib.applications import ApplicationManager
 
 
-def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, read_path, write_path, src_colorspace, dst_colorspace):
+def nuke_transcode_template(
+    output_ext,
+    input_frame,
+    first_frame,
+    last_frame,
+    read_path,
+    write_path,
+    src_colorspace,
+    dst_colorspace,
+):
     python_template = "/pipe/hiero/templates/nuke_transcode.py"
     nuke_template = "/pipe/hiero/templates/ingest_transcode.nk"
     app_manager = ApplicationManager()
@@ -25,7 +34,7 @@ def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, re
         read_path,
         write_path,
         src_colorspace,
-        dst_colorspace
+        dst_colorspace,
     ]
 
     # If non exist status is returned output will raise exception.
@@ -70,12 +79,23 @@ class TranscodeFrames(publish.Extractor):
         len_frames = len(frame_range)
         files = []
         for index, (input_frame, output_frame) in enumerate(frame_range):
-            print(index, input_frame, output_frame, 'index, input_frame, output_frame')
             output_path = f"{output_template}.{output_frame:04d}.{self.output_ext}"
             # If either source or output is a video format, transcode using Nuke
-            if self.output_ext.lower() in self.movie_extensions or source_ext.lower() in self.movie_extensions:
+            if (
+                self.output_ext.lower() in self.movie_extensions
+                or source_ext.lower() in self.movie_extensions
+            ):
                 # No need to raise error as Nuke raises an error exit value if something went wrong
-                nuke_transcode_template(self.output_ext, input_frame, output_frame, output_frame, input_path, output_path, src_colorspace, self.dst_colorspace)
+                nuke_transcode_template(
+                    self.output_ext,
+                    input_frame,
+                    output_frame,
+                    output_frame,
+                    input_path,
+                    output_path,
+                    src_colorspace,
+                    self.dst_colorspace,
+                )
 
             # Else use OIIO instead of Nuke for faster transcoding
             else:
@@ -106,22 +126,17 @@ class TranscodeFrames(publish.Extractor):
 
                 failed_output = "oiiotool produced no output."
                 if failed_output in output:
-                    raise ValueError(
-                        "oiiotool processing failed. Args: {}".format(args)
-                    )
+                    raise ValueError("oiiotool processing failed. Args: {}".format(args))
 
             files.append(output_path)
 
             # Feedback to user because "oiiotool" can make the publishing
             # appear unresponsive.
-            self.log.info(
-                "Processed {} of {} frames".format(
-                    index + 1,
-                    len_frames
-                )
-            )
+            self.log.info("Processed {} of {} frames".format(index + 1, len_frames))
 
-        ext_representations = [rep for rep in instance.data["representations"] if rep['ext'] == source_ext]
+        ext_representations = [
+            rep for rep in instance.data["representations"] if rep["ext"] == source_ext
+        ]
         if ext_representations:
             self.log.info("Removing source representation and replacing with transcoded frames")
             instance.data["representations"].remove(ext_representations[0])
@@ -132,7 +147,9 @@ class TranscodeFrames(publish.Extractor):
             {
                 "name": self.output_ext,
                 "ext": self.output_ext,
-                "files": os.path.basename(files[0]) if len(files) == 1 else [os.path.basename(x) for x in files],
-                "stagingDir": output_dir
+                "files": os.path.basename(files[0])
+                if len(files) == 1
+                else [os.path.basename(x) for x in files],
+                "stagingDir": output_dir,
             }
         )
