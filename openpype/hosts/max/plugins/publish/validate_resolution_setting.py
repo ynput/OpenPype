@@ -47,16 +47,13 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
         asset_resolution_data = asset_resolution["data"]
         # Set project resolution
         project_width = int(
-            project_resolution_data.get("resolutionWidth", 1920)
-            )
+            project_resolution_data.get("resolutionWidth", 1920))
         project_height = int(
             project_resolution_data.get("resolutionHeight", 1080))
         width = int(
-            asset_resolution_data.get("resolutionWidth", project_width)
-            )
+            asset_resolution_data.get("resolutionWidth", project_width))
         height = int(
-            asset_resolution_data.get("resolutionHeight", project_height)
-            )
+            asset_resolution_data.get("resolutionHeight", project_height))
 
         return width, height
 
