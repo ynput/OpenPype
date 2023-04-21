@@ -9,6 +9,7 @@ from openpype.pipeline import legacy_io
 from openpype.client import get_last_version_by_subset_name
 from openpype.hosts.maya import api
 from . import lib
+from .alembic import get_alembic_ids_cache
 
 
 log = logging.getLogger(__name__)
@@ -68,6 +69,11 @@ def get_nodes_by_id(standin):
         (dict): Dictionary with node full name/path and id.
     """
     path = cmds.getAttr(standin + ".dso")
+
+    if path.endswith(".abc"):
+        # Support alembic files directly
+        return get_alembic_ids_cache(path)
+
     json_path = None
     for f in os.listdir(os.path.dirname(path)):
         if f.endswith(".json"):

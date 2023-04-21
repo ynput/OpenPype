@@ -52,7 +52,7 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 # we need to build our own patchelf
 WORKDIR /temp-patchelf
-RUN git clone https://github.com/NixOS/patchelf.git . \
+RUN git clone -b 0.17.0 --single-branch https://github.com/NixOS/patchelf.git . \
     && source scl_source enable devtoolset-7 \
     && ./bootstrap.sh \
     && ./configure \
