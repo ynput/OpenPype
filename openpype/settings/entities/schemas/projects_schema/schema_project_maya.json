@@ -60,7 +60,7 @@
                 {
                     "type": "boolean",
                     "key": "set_ocio_config",
-                    "label": "Use OCIO config file in host"
+                    "label": "Set OCIO config file in host"
                 },
                 {
                     "type": "schema",
