@@ -1,0 +1,49 @@
+name: 🔖 PR labels
+
+on:
+  pull_request_target:
+    types: [opened, assigned]
+
+jobs:
+  size-label:
+    name: pr_size_label
+    runs-on: ubuntu-latest
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
+    steps:
+      - name: Add size label
+        uses: "pascalgn/size-label-action@v0.4.3"
+        env:
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
+          IGNORED: ".gitignore\n*.md\n*.json"
+        with:
+          sizes: >
+            {
+              "0": "XS",
+              "100": "S",
+              "500": "M",
+              "1000": "L",
+              "1500": "XL",
+              "2500": "XXL"
+            }
+
+  label_prs_branch:
+    name: pr_branch_label
+    runs-on: ubuntu-latest
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
+    steps:
+    - name: Label PRs - Branch name detection
+      uses: ffittschen/pr-branch-labeler@v1
+      with:
+        repo-token: ${{ secrets.YNPUT_BOT_TOKEN }}
+
+  label_prs_globe:
+    name: pr_globe_label
+    runs-on: ubuntu-latest
+    if: github.event.action == 'assigned' || github.event.action == 'opened'
+    steps:
+    - name: Label PRs - Globe detection
+      uses: actions/labeler@v4.0.3
+      with:
+        repo-token: ${{ secrets.YNPUT_BOT_TOKEN }}
+        configuration-path: ".github/pr-glob-labeler.yml"
+        sync-labels: false

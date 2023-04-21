@@ -1,11 +1,10 @@
 from maya import cmds, mel
-import pymel.core as pm
 
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-from openpype.pipeline import legacy_io
-from openpype.hosts.maya.api.lib import get_attribute_input
+from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.hosts.maya.api import lib
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -16,7 +15,6 @@ class CollectReview(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.3
     label = 'Collect Review Data'
     families = ["review"]
-    legacy = True
 
     def process(self, instance):
 
@@ -31,62 +29,88 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, long=True,
-                          dag=True, cameras=True)
         self.log.debug('members: {}'.format(members))
+        cameras = cmds.ls(members, long=True, dag=True, cameras=True)
+        camera = cameras[0] if cameras else None
 
-        # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
-        camera = cameras[0]
-        self.log.debug('camera: {}'.format(camera))
+        context = instance.context
+        objectset = context.data['objectsets']
 
-        objectset = instance.context.data['objectsets']
+        # Convert enum attribute index to string for Display Lights.
+        index = instance.data.get("displayLights", 0)
+        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
+        if display_lights == "project_settings":
+            settings = instance.context.data["project_settings"]
+            settings = settings["maya"]["publish"]["ExtractPlayblast"]
+            settings = settings["capture_preset"]["Viewport Options"]
+            display_lights = settings["displayLights"]
 
-        reviewable_subset = None
-        reviewable_subset = list(set(members) & set(objectset))
-        if reviewable_subset:
-            assert len(reviewable_subset) <= 1, "Multiple subsets for review"
-            self.log.debug('subset for review: {}'.format(reviewable_subset))
+        # Collect camera focal length.
+        burninDataMembers = instance.data.get("burninDataMembers", {})
+        if camera is not None:
+            attr = camera + ".focalLength"
+            if lib.get_attribute_input(attr):
+                start = instance.data["frameStart"]
+                end = instance.data["frameEnd"] + 1
+                time_range = range(int(start), int(end))
+                focal_length = [cmds.getAttr(attr, time=t) for t in time_range]
+            else:
+                focal_length = cmds.getAttr(attr)
 
-            i = 0
-            for inst in instance.context:
+            burninDataMembers["focalLength"] = focal_length
 
-                self.log.debug('filtering {}'.format(inst))
-                data = instance.context[i].data
+        # Account for nested instances like model.
+        reviewable_subsets = list(set(members) & set(objectset))
+        if reviewable_subsets:
+            if len(reviewable_subsets) > 1:
+                raise KnownPublishError(
+                    "Multiple attached subsets for review are not supported. "
+                    "Attached: {}".format(", ".join(reviewable_subsets))
+                )
 
-                if inst.name != reviewable_subset[0]:
-                    self.log.debug('subset name does not match {}'.format(
-                        reviewable_subset[0]))
-                    i += 1
-                    continue
+            reviewable_subset = reviewable_subsets[0]
+            self.log.debug(
+                "Subset attached to review: {}".format(reviewable_subset)
+            )
 
-                if data.get('families'):
-                    data['families'].append('review')
-                else:
-                    data['families'] = ['review']
-                self.log.debug('adding review family to {}'.format(
-                    reviewable_subset))
-                data['review_camera'] = camera
-                # data["publish"] = False
-                data['frameStartFtrack'] = instance.data["frameStartHandle"]
-                data['frameEndFtrack'] = instance.data["frameEndHandle"]
-                data['frameStartHandle'] = instance.data["frameStartHandle"]
-                data['frameEndHandle'] = instance.data["frameEndHandle"]
-                data["frameStart"] = instance.data["frameStart"]
-                data["frameEnd"] = instance.data["frameEnd"]
-                data['handles'] = instance.data.get('handles', None)
-                data['step'] = instance.data['step']
-                data['fps'] = instance.data['fps']
-                data['review_width'] = instance.data['review_width']
-                data['review_height'] = instance.data['review_height']
-                data["isolate"] = instance.data["isolate"]
-                data["panZoom"] = instance.data.get("panZoom", False)
-                data["panel"] = instance.data["panel"]
-                cmds.setAttr(str(instance) + '.active', 1)
-                self.log.debug('data {}'.format(instance.context[i].data))
-                instance.context[i].data.update(data)
-                instance.data['remove'] = True
-                self.log.debug('isntance data {}'.format(instance.data))
+            # Find the relevant publishing instance in the current context
+            reviewable_inst = next(inst for inst in context
+                                   if inst.name == reviewable_subset)
+            data = reviewable_inst.data
+
+            self.log.debug(
+                'Adding review family to {}'.format(reviewable_subset)
+            )
+            if data.get('families'):
+                data['families'].append('review')
+            else:
+                data['families'] = ['review']
+
+            data["cameras"] = cameras
+            data['review_camera'] = camera
+            data['frameStartFtrack'] = instance.data["frameStartHandle"]
+            data['frameEndFtrack'] = instance.data["frameEndHandle"]
+            data['frameStartHandle'] = instance.data["frameStartHandle"]
+            data['frameEndHandle'] = instance.data["frameEndHandle"]
+            data['handleStart'] = instance.data["handleStart"]
+            data['handleEnd'] = instance.data["handleEnd"]
+            data["frameStart"] = instance.data["frameStart"]
+            data["frameEnd"] = instance.data["frameEnd"]
+            data['step'] = instance.data['step']
+            data['fps'] = instance.data['fps']
+            data['review_width'] = instance.data['review_width']
+            data['review_height'] = instance.data['review_height']
+            data["isolate"] = instance.data["isolate"]
+            data["panZoom"] = instance.data.get("panZoom", False)
+            data["panel"] = instance.data["panel"]
+            data["displayLights"] = display_lights
+            data["burninDataMembers"] = burninDataMembers
+
+            # The review instance must be active
+            cmds.setAttr(str(instance) + '.active', 1)
+
+            instance.data['remove'] = True
+
         else:
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
@@ -101,67 +125,52 @@ class CollectReview(pyblish.api.InstancePlugin):
                 self.log.debug("Existing subsets found, keep legacy name.")
                 instance.data['subset'] = legacy_subset_name
 
+            instance.data["cameras"] = cameras
             instance.data['review_camera'] = camera
             instance.data['frameStartFtrack'] = \
                 instance.data["frameStartHandle"]
             instance.data['frameEndFtrack'] = \
                 instance.data["frameEndHandle"]
+            instance.data["displayLights"] = display_lights
+            instance.data["burninDataMembers"] = burninDataMembers
 
             # make ftrack publishable
-            instance.data["families"] = ['ftrack']
+            instance.data.setdefault("families", []).append('ftrack')
 
             cmds.setAttr(str(instance) + '.active', 1)
 
             # Collect audio
             playback_slider = mel.eval('$tmpVar=$gPlayBackSlider')
-            audio_name = cmds.timeControl(playback_slider, q=True, s=True)
+            audio_name = cmds.timeControl(playback_slider,
+                                          query=True,
+                                          sound=True)
             display_sounds = cmds.timeControl(
-                playback_slider, q=True, displaySound=True
+                playback_slider, query=True, displaySound=True
             )
 
-            audio_nodes = []
+            def get_audio_node_data(node):
+                return {
+                    "offset": cmds.getAttr("{}.offset".format(node)),
+                    "filename": cmds.getAttr("{}.filename".format(node))
+                }
+
+            audio_data = []
 
             if audio_name:
-                audio_nodes.append(pm.PyNode(audio_name))
+                audio_data.append(get_audio_node_data(audio_name))
 
-            if not audio_name and display_sounds:
-                start_frame = int(pm.playbackOptions(q=True, min=True))
-                end_frame = float(pm.playbackOptions(q=True, max=True))
-                frame_range = range(int(start_frame), int(end_frame))
+            elif display_sounds:
+                start_frame = int(cmds.playbackOptions(query=True, min=True))
+                end_frame = int(cmds.playbackOptions(query=True, max=True))
 
-                for node in pm.ls(type="audio"):
+                for node in cmds.ls(type="audio"):
                     # Check if frame range and audio range intersections,
                     # for whether to include this audio node or not.
-                    start_audio = node.offset.get()
-                    end_audio = node.offset.get() + node.duration.get()
-                    audio_range = range(int(start_audio), int(end_audio))
+                    duration = cmds.getAttr("{}.duration".format(node))
+                    start_audio = cmds.getAttr("{}.offset".format(node))
+                    end_audio = start_audio + duration
 
-                    if bool(set(frame_range).intersection(audio_range)):
-                        audio_nodes.append(node)
+                    if start_audio <= end_frame and end_audio > start_frame:
+                        audio_data.append(get_audio_node_data(node))
 
-            instance.data["audio"] = []
-            for node in audio_nodes:
-                instance.data["audio"].append(
-                    {
-                        "offset": node.offset.get(),
-                        "filename": node.filename.get()
-                    }
-                )
-
-        # Collect focal length.
-        attr = camera + ".focalLength"
-        focal_length = None
-        if get_attribute_input(attr):
-            start = instance.data["frameStart"]
-            end = instance.data["frameEnd"] + 1
-            focal_length = [
-                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
-            ]
-        else:
-            focal_length = cmds.getAttr(attr)
-
-        key = "focalLength"
-        try:
-            instance.data["burninDataMembers"][key] = focal_length
-        except KeyError:
-            instance.data["burninDataMembers"] = {key: focal_length}
+            instance.data["audio"] = audio_data

@@ -24,6 +24,7 @@ from .commands import (
     remove_unused_looks
 )
 from .vray_proxies import vrayproxy_assign_look
+from . import arnold_standin
 
 module = sys.modules[__name__]
 module.window = None
@@ -43,7 +44,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         filename = get_workfile()
 
         self.setObjectName("lookManager")
-        self.setWindowTitle("Look Manager 1.3.0 - [{}]".format(filename))
+        self.setWindowTitle("Look Manager 1.4.0 - [{}]".format(filename))
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)
 
@@ -240,18 +241,38 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
             ))
             nodes = item["nodes"]
 
+            # Assign Vray Proxy look.
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
                 self.echo("Getting vray proxy nodes ...")
                 vray_proxies = set(cmds.ls(type="VRayProxy", long=True))
 
-                if vray_proxies:
-                    for vp in vray_proxies:
-                        if vp in nodes:
-                            vrayproxy_assign_look(vp, subset_name)
+                for vp in vray_proxies:
+                    if vp in nodes:
+                        vrayproxy_assign_look(vp, subset_name)
 
-                    nodes = list(set(item["nodes"]).difference(vray_proxies))
+                nodes = list(set(nodes).difference(vray_proxies))
+            else:
+                self.echo(
+                    "Could not assign to VRayProxy because vrayformaya plugin "
+                    "is not loaded."
+                )
 
-                # Assign look
+            # Assign Arnold Standin look.
+            if cmds.pluginInfo("mtoa", query=True, loaded=True):
+                arnold_standins = set(cmds.ls(type="aiStandIn", long=True))
+
+                for standin in arnold_standins:
+                    if standin in nodes:
+                        arnold_standin.assign_look(standin, subset_name)
+
+                nodes = list(set(nodes).difference(arnold_standins))
+            else:
+                self.echo(
+                    "Could not assign to aiStandIn because mtoa plugin is not "
+                    "loaded."
+                )
+
+            # Assign look
             if nodes:
                 assign_look_by_version(nodes, version_id=version["_id"])
 
