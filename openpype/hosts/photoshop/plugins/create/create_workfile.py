@@ -18,3 +18,10 @@ class WorkfileCreator(PSAutoCreator):
         workfile. (Instance shouldn't be deleted though as it will be recreated
         in next publish automatically).
         """
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["photoshop"]["create"]["WorkfileCreator"]
+        )
+
+        self.default_variant = plugin_settings["default_variant"]
