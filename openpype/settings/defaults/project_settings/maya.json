@@ -420,6 +420,12 @@
             "override_global_rules": false,
             "rules": {}
         },
+        "workfile": {
+            "enabled": false,
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
+        },
         "colorManagementPreference_v2": {
             "enabled": true,
             "renderSpace": "ACEScg",
@@ -447,6 +453,10 @@
             "source-path": [],
             "destination-path": []
         }
+    },
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
     },
     "scriptsmenu": {
         "name": "OpenPype Tools",
@@ -1545,10 +1555,6 @@
                 ]
             }
         ]
-    },
-    "include_handles": {
-        "include_handles_default": false,
-        "per_task_type": []
     },
     "templated_workfile_build": {
         "profiles": []

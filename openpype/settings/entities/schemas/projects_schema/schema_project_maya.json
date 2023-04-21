@@ -71,16 +71,16 @@
                     "name": "schema_imageio_file_rules"
                 },
                 {
-                    "key": "colorManagementPreference_v2",
+                    "key": "workfile",
                     "type": "dict",
-                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "label": "Workfile",
                     "collapsible": true,
                     "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "boolean",
                             "key": "enabled",
-                            "label": "Use Color Management Preference v2"
+                            "label": "Enabled"
                         },
                         {
                             "type": "text",
@@ -100,20 +100,57 @@
                     ]
                 },
                 {
-                    "key": "colorManagementPreference",
-                    "type": "dict",
-                    "label": "Color Management Preference (legacy)",
+                    "type": "collapsible-wrap",
+                    "label": "<b>[Deprecated] please migrate all to 'Workfile' and enable it.</b>",
                     "collapsible": true,
+                    "collapsed": true,
                     "children": [
                         {
-                            "type": "text",
-                            "key": "renderSpace",
-                            "label": "Rendering Space"
+                            "key": "colorManagementPreference_v2",
+                            "type": "dict",
+                            "label": "[DEPRECATED] Color Management Preference v2 (Maya 2022+)",
+                            "collapsible": true,
+                            "checkbox_key": "enabled",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Use Color Management Preference v2"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "renderSpace",
+                                    "label": "Rendering Space"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "displayName",
+                                    "label": "Display"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "viewName",
+                                    "label": "View"
+                                }
+                            ]
                         },
                         {
-                            "type": "text",
-                            "key": "viewTransform",
-                            "label": "Viewer Transform"
+                            "key": "colorManagementPreference",
+                            "type": "dict",
+                            "label": "[DEPRECATED] Color Management Preference (legacy)",
+                            "collapsible": true,
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "renderSpace",
+                                    "label": "Rendering Space"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "viewTransform",
+                                    "label": "Viewer Transform (workfile/viewName)"
+                                }
+                            ]
                         }
                     ]
                 }
