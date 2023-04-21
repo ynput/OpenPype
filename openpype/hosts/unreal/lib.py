@@ -189,7 +189,7 @@ def create_unreal_project(project_name: str,
 
     As there is no way I know to create a project via command line, this is
     easiest option. Unreal project file is basically a JSON file. If we find
-    the `OPENPYPE_UNREAL_PLUGIN` environment variable we assume this is the
+    the `AYON_UNREAL_PLUGIN` environment variable we assume this is the
     location of the Integration Plugin and we copy its content to the project
     folder and enable this plugin.
 
@@ -203,8 +203,7 @@ def create_unreal_project(project_name: str,
             sources. This will trigger automatically if `Binaries`
             directory is not found in plugin folders as this indicates
             this is only source distribution of the plugin. Dev mode
-            is also set by preset file `unreal/project_setup.json` in
-            **OPENPYPE_CONFIG**.
+            is also set in Settings.
         env (dict, optional): Environment to use. If not set, `os.environ`.
 
     Throws:
@@ -237,7 +236,7 @@ def create_unreal_project(project_name: str,
     print("--- Generating a new project ...")
     commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
                       f'{cmdlet_project.as_posix()}',
-                      f'-run=OPGenerateProject',
+                      f'-run=AyonGenerateProject',
                       f'{project_file.resolve().as_posix()}']
 
     if dev_mode or preset["dev_mode"]:
@@ -324,13 +323,12 @@ def get_path_to_uat(engine_path: Path) -> Path:
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmd_project = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
+    cmd_project = Path(os.path.dirname(
+        os.path.abspath(os.getenv("OPENPYPE_ROOT"))))
 
-    # For now, only tested on Windows (For Linux and Mac it has to be implemented)
-    if ue_version.split(".")[0] == "4":
-        cmd_project /= "hosts/unreal/integration/UE_4.7"
-    elif ue_version.split(".")[0] == "5":
-        cmd_project /= "hosts/unreal/integration/UE_5.0"
+    # For now, only tested on Windows (For Linux and Mac
+    # it has to be implemented)
+    cmd_project /= f"hosts/unreal/integration/UE_{ue_version}"
 
     return cmd_project / "CommandletProject/CommandletProject.uproject"
 
@@ -375,13 +373,13 @@ def get_build_id(engine_path: Path, ue_version: str) -> str:
 
 def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
     env = env or os.environ
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if not os.path.isdir(integration_plugin_path):
         raise RuntimeError("Path to the integration plugin is null!")
 
     # Create a path to the plugin in the engine
-    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
 
     if not op_plugin_path.is_dir():
         return False
@@ -396,13 +394,13 @@ def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
 def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
     env = env or os.environ
 
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if not os.path.isdir(integration_plugin_path):
         raise RuntimeError("Path to the integration plugin is null!")
 
     # Create a path to the plugin in the engine
-    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
 
     if not op_plugin_path.is_dir():
         op_plugin_path.mkdir(parents=True, exist_ok=True)
@@ -423,12 +421,12 @@ def _build_and_move_plugin(engine_path: Path,
     uat_path: Path = get_path_to_uat(engine_path)
 
     env = env or os.environ
-    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
     if uat_path.is_file():
         temp_dir: Path = integration_plugin_path.parent / "Temp"
         temp_dir.mkdir(exist_ok=True)
-        uplugin_path: Path = integration_plugin_path / "OpenPype.uplugin"
+        uplugin_path: Path = integration_plugin_path / "Ayon.uplugin"
 
         # in order to successfully build the plugin,
         # It must be built outside the Engine directory and then moved
@@ -439,7 +437,7 @@ def _build_and_move_plugin(engine_path: Path,
         subprocess.run(build_plugin_cmd)
 
         # Copy the contents of the 'Temp' dir into the
-        # 'OpenPype' directory in the engine
+        # 'Ayon' directory in the engine
         dir_util.copy_tree(temp_dir.as_posix(), plugin_build_path.as_posix())
 
         # We need to also copy the config folder.

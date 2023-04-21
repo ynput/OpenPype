@@ -13,15 +13,16 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
 
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
-        # Set OPENPYPE_UNREAL_PLUGIN required for Unreal implementation
+        # Set AYON_UNREAL_PLUGIN required for Unreal implementation
 
-        ue_plugin = "UE_5.0" if app.name[:1] == "5" else "UE_4.7"
+        ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
-            UNREAL_ROOT_DIR, "integration", ue_plugin, "OpenPype"
+            UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
         )
-        if not env.get("OPENPYPE_UNREAL_PLUGIN") or \
-                env.get("OPENPYPE_UNREAL_PLUGIN") != unreal_plugin_path:
-            env["OPENPYPE_UNREAL_PLUGIN"] = unreal_plugin_path
+
+        if not env.get("AYON_UNREAL_PLUGIN") or \
+                env.get("AYON_UNREAL_PLUGIN") != unreal_plugin_path:
+            env["AYON_UNREAL_PLUGIN"] = unreal_plugin_path
 
         # Set default environments if are not set via settings
         defaults = {

@@ -11,7 +11,7 @@ from unreal import MovieSceneSkeletalAnimationSection
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -139,9 +139,9 @@ class AnimationFBXLoader(plugin.Loader):
         Returns:
             list(str): list of container content
         """
-        # Create directory for asset and avalon container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
@@ -223,8 +223,8 @@ class AnimationFBXLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

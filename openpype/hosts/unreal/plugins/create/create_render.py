@@ -14,7 +14,7 @@ from openpype.lib import UILabelDef
 class CreateRender(UnrealAssetCreator):
     """Create instance for sequence for rendering"""
 
-    identifier = "io.openpype.creators.unreal.render"
+    identifier = "io.ayon.creators.unreal.render"
     label = "Render"
     family = "render"
     icon = "eye"
@@ -45,22 +45,22 @@ class CreateRender(UnrealAssetCreator):
             # The asset name is the third element of the path which
             # contains the map.
             # To take the asset name, we remove from the path the prefix
-            # "/Game/OpenPype/" and then we split the path by "/".
+            # "/Game/Ayon/" and then we split the path by "/".
             sel_path = selected_asset_path
-            asset_name = sel_path.replace("/Game/OpenPype/", "").split("/")[0]
+            asset_name = sel_path.replace("/Game/Ayon/", "").split("/")[0]
 
             # Get the master sequence and the master level.
             # There should be only one sequence and one level in the directory.
             ar_filter = unreal.ARFilter(
                 class_names=["LevelSequence"],
-                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                package_paths=[f"/Game/Ayon/{asset_name}"],
                 recursive_paths=False)
             sequences = ar.get_assets(ar_filter)
             master_seq = sequences[0].get_asset().get_path_name()
             master_seq_obj = sequences[0].get_asset()
             ar_filter = unreal.ARFilter(
                 class_names=["World"],
-                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                package_paths=[f"/Game/Ayon/{asset_name}"],
                 recursive_paths=False)
             levels = ar.get_assets(ar_filter)
             master_lvl = levels[0].get_asset().get_path_name()
