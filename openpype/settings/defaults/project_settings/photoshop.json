@@ -21,10 +21,12 @@
             "mark_for_review": false
         },
         "ReviewCreator": {
-            "enabled": true
+            "enabled": true,
+            "default_variant": ""
         },
         "WorkfileCreator": {
-            "enabled": true
+            "enabled": true,
+            "default_variant": "Main"
         }
     },
     "publish": {

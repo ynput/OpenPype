@@ -87,6 +87,11 @@
                             "key": "enabled",
                             "label": "Enabled",
                             "default": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_variant",
+                            "label": "Default variant"
                         }
                     ]
                 },
@@ -105,6 +110,11 @@
                             "type": "boolean",
                             "key": "enabled",
                             "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_variant",
+                            "label": "Default variant"
                         }
                     ]
                 }
