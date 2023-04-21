@@ -316,6 +316,9 @@ class CreateWidget(QtWidgets.QWidget):
         self._first_show = True
         self._last_thumbnail_path = None
 
+        self._last_current_context_asset = None
+        self._last_current_context_task = None
+
     @property
     def current_asset_name(self):
         return self._controller.current_asset_name
@@ -357,10 +360,27 @@ class CreateWidget(QtWidgets.QWidget):
             self._invalidate_prereq()
 
     def refresh(self):
+        current_asset_name = self._controller.current_asset_name
+        current_task_name = self._controller.current_task_name
+
         # Get context before refresh to keep selection of asset and
         #   task widgets
         asset_name = self._get_asset_name()
         task_name = self._get_task_name()
+        # Replace by current context if last loaded context was
+        #   'current context' before reset
+        if (
+            self._last_current_context_asset
+            and (
+                asset_name == self._last_current_context_asset
+                and task_name == self._last_current_context_task
+            )
+        ):
+            asset_name = current_asset_name
+            task_name = current_task_name
+
+        self._last_current_context_asset = current_asset_name
+        self._last_current_context_task = current_task_name
 
         self._prereq_available = False
 
