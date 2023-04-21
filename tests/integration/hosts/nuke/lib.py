@@ -57,14 +57,15 @@ class NukeStaticTestHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Nuke to userSetup file from input data"""
+        print("Using startup scripts from input data")
         startup_path = os.path.join(download_test_data,
                                     "input",
                                     "startup")
         original_nuke_path = os.environ.get("NUKE_PATH", "")
-        monkeypatch_session.setenv("NUKE_PATH",
-                                   "{}{}{}".format(startup_path,
-                                                   os.pathsep,
-                                                   original_nuke_path))
+        new_nuke_path = os.pathsep.join([startup_path, original_nuke_path])
+
+        print("Setting Nuke path to: {}".format(new_nuke_path))
+        monkeypatch_session.setenv("NUKE_PATH", new_nuke_path)
 
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
@@ -72,6 +73,18 @@ class NukeStaticTestHostFixtures(HostFixtures):
 
 
 class NukeSyntheticHostFixtures(NukeStaticTestHostFixtures, ModuleUnitTest):
+
+    @pytest.fixture(scope="module")
+    def startup_scripts(self, monkeypatch_session):
+        """Points Nuke to userSetup file from input data"""
+        print("Using startup scripts from input data")
+        test_host_dir = os.path.dirname(os.path.abspath(__file__))
+        startup_path = os.path.join(test_host_dir, "startup")
+        original_nuke_path = os.environ.get("NUKE_PATH", "")
+        new_nuke_path = os.pathsep.join([startup_path, original_nuke_path])
+
+        print("Setting Nuke path to: {}".format(new_nuke_path))
+        monkeypatch_session.setenv("NUKE_PATH", new_nuke_path)
 
     @pytest.fixture(scope="module")
     def last_workfile_path(
