@@ -12,7 +12,7 @@
         },
         {
             "type": "boolean",
-            "key": "use_ocio_config",
+            "key": "set_ocio_config",
             "label": "Use OCIO config file in host"
         },
         {
