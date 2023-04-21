@@ -18,9 +18,31 @@ from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
 
+
+log = Logger.get_logger()
+
+
 # Backwards compatibility: these functions has been moved to lib.
-get_reference_node = lib.get_reference_node
-get_reference_node_parents = lib.get_reference_node_parents
+def get_reference_node(*args, **kwargs):
+    """
+    Deprecated:
+        This funcation was moved ... and will be removed in 3.16.x.
+    """
+    msg = "Function 'get_reference_node' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node(*args, **kwargs)
+
+
+def get_reference_node_parents(*args, **kwargs):
+    """
+    Deprecated:
+        This funcation was moved ... and will be removed in 3.16.x.
+    """
+    msg = "Function 'get_reference_node_parents' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node_parents(*args, **kwargs)
 
 
 def get_custom_namespace(custom_namespace):
@@ -182,7 +204,7 @@ class ReferenceLoader(Loader):
             if not nodes:
                 return
 
-            ref_node = get_reference_node(nodes, self.log)
+            ref_node = lib.get_reference_node(nodes, self.log)
             container = containerise(
                 name=name,
                 namespace=namespace,
@@ -211,7 +233,7 @@ class ReferenceLoader(Loader):
 
         # Get reference node from container members
         members = get_container_members(node)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
         namespace = cmds.referenceQuery(reference_node, namespace=True)
 
         file_type = {
@@ -359,7 +381,7 @@ class ReferenceLoader(Loader):
 
         # Assume asset has been referenced
         members = cmds.sets(node, query=True)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
 
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")
