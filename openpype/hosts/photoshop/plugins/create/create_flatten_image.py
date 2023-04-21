@@ -3,7 +3,8 @@ from openpype.pipeline import CreatedInstance
 from openpype.lib import BoolDef
 import openpype.hosts.photoshop.api as api
 from openpype.hosts.photoshop.lib import PSAutoCreator
-from openpype.pipeline.create import get_subset_name, get_asset_by_name
+from openpype.pipeline.create import get_subset_name
+from openpype.client import get_asset_by_name
 
 
 class AutoImageCreator(PSAutoCreator):
@@ -36,8 +37,8 @@ class AutoImageCreator(PSAutoCreator):
         asset_doc = get_asset_by_name(project_name, asset_name)
 
         if existing_instance is None:
-            subset_name = self.get_subset_name(
-                self.default_variant, task_name, asset_doc,
+            subset_name = get_subset_name(
+                self.family, self.default_variant, task_name, asset_doc,
                 project_name, host_name
             )
 
@@ -46,7 +47,9 @@ class AutoImageCreator(PSAutoCreator):
             data = {
                 "asset": asset_name,
                 "task": task_name,
-                "members": publishable_ids
+                # ids are "virtual" layers, won't get grouped as 'members' do
+                # same difference in color coded layers in WP
+                "ids": publishable_ids
             }
 
             if not self.active_on_create:
@@ -66,7 +69,10 @@ class AutoImageCreator(PSAutoCreator):
             existing_instance["asset"] != asset_name
             or existing_instance["task"] != task_name
         ):
-            subset_name = self._get_subset_name(asset_name, task_name)
+            subset_name = get_subset_name(
+                self.family, self.default_variant, task_name, asset_doc,
+                project_name, host_name
+            )
 
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
@@ -98,7 +104,7 @@ class AutoImageCreator(PSAutoCreator):
         )
 
         self.active_on_create = plugin_settings["active_on_create"]
-        self.default_variant = plugin_settings["deafault_variant"]
+        self.default_variant = plugin_settings["default_variant"]
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.enabled = plugin_settings["enabled"]
 

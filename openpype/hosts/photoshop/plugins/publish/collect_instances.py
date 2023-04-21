@@ -4,12 +4,9 @@ import pyblish.api
 
 from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
-from openpype.lib import prepare_template_data
-from openpype.pipeline.context_tools import (
-    get_current_asset_name,
-    get_current_project_name,
-    get_current_task_name
-)
+from openpype.pipeline.create import get_subset_name
+from openpype.pipeline.context_tools import get_current_project_name
+from openpype.client import get_asset_by_name
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -58,6 +55,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "container" in layer_meta_data["id"]:
                 continue
 
+            if layer_meta_data.get("creator_identifier") == "auto_image":
+                continue
+
             # active might not be in legacy meta
             if not layer_meta_data.get("active", True):
                 continue
@@ -93,32 +93,32 @@ class CollectInstances(pyblish.api.ContextPlugin):
             "photoshop", {}).get(
             "create", {}).get(
             "AutoImageCreator", {})
-        if auto_creator and auto_creator["enabled"]:
-            flatten_subset_template = auto_creator["flatten_subset_template"]
-        if len(instance_names) == 0 and flatten_subset_template:
+
+        if (len(instance_names) == 0 and
+                auto_creator and auto_creator["enabled"]):
             variants = proj_settings.get(
                 "photoshop", {}).get(
                 "create", {}).get(
                 "CreateImage", {}).get(
                 "default_variants", [''])
             family = "image"
-            task_name = get_current_task_name()
-            asset_name = get_current_asset_name()
+            project_name = context.get_current_project_name()
+            asset_name = context.get_current_asset_name()
+            task_name = context.get_current_task_name()
+            host_name = context.host_name
+            asset_doc = get_asset_by_name(project_name, asset_name)
 
             variant = context.data.get("variant") or variants[0]
-            fill_pairs = {
-                "variant": variant,
-                "family": family,
-                "task": task_name
-            }
 
-            subset = flatten_subset_template.format(
-                **prepare_template_data(fill_pairs))
+            subset_name = get_subset_name(
+                family, variant, task_name, asset_doc,
+                project_name, host_name
+            )
 
-            instance = context.create_instance(subset)
+            instance = context.create_instance(subset_name)
             instance.data["family"] = family
             instance.data["asset"] = asset_name
-            instance.data["subset"] = subset
+            instance.data["subset"] = subset_name
             instance.data["ids"] = all_layer_ids
             instance.data["families"] = self.families_mapping[family]
             instance.data["publish"] = True
