@@ -9,14 +9,6 @@
         "file_rules": {
             "override_global_rules": false,
             "rules": {}
-        },
-        "ocio": {
-            "enabled": false,
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            }
         }
     },
     "copy_fusion_settings": {
