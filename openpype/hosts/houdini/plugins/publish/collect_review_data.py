@@ -17,6 +17,7 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         # which isn't the actual frame range that this instance renders.
         instance.data["handleStart"] = 0
         instance.data["handleEnd"] = 0
+        instance.data["fps"] = instance.context.data["fps"]
 
         # Get the camera from the rop node to collect the focal length
         ropnode_path = instance.data["instance_node"]
