@@ -33,30 +33,6 @@ def nuke_transcode_template(output_ext, input_frame, first_frame, last_frame, re
     run_subprocess(cmd)
 
 
-def openpype_publish_tag(track_item, instance_tags):
-    """Get tag that was used to publish track item"""
-    for instance_tag in instance_tags:
-        tag_metadata = dict(instance_tag.metadata())
-        tag_family = tag_metadata.get("tag.family", "")
-        if tag_family == "plate":
-            for item_tag in track_item.tags():
-                if instance_tag.name() == item_tag.name():
-                    return dict(item_tag.metadata())
-
-    return {}
-
-
-def get_tag_handles(track_item, instance_tags):
-    tag = openpype_publish_tag(track_item, instance_tags)
-    try:
-        handle_start = int(tag.get("tag.handleStart", "0"))
-        handle_end = int(tag.get("tag.handleEnd", "0"))
-    except ValueError:
-        raise Exception("Handle field should only contain numbers")
-
-    return handle_start, handle_end
-
-
 class TranscodeFrames(publish.Extractor):
     """Transcode frames"""
 
@@ -75,21 +51,8 @@ class TranscodeFrames(publish.Extractor):
         """
         oiio_tool_path = get_oiio_tools_path()
 
-        instance_tags = instance.data["tags"]
         track_item = instance.data["item"]
         media_source = track_item.source().mediaSource()
-
-        # Define frame output range
-        # handleStart and handleEnd are overriden to reflect media range and not absolute handles
-        # Solution is to take the handle values directly from the tag instead of instance data
-        handle_start, handle_end = get_tag_handles(track_item, instance_tags)
-        first_frame = instance.data["frameStart"]
-        end_frame = instance.data["frameEnd"] + handle_end
-
-        # Need clip source in and original clip source media in and out to calculate matching input frame
-        clip_source_in = track_item.sourceIn()
-        source_start = track_item.source().sourceIn()
-        source_end = track_item.source().sourceOut()
 
         # Define source path along with extension
         input_path = media_source.fileinfos()[0].filename()
@@ -103,22 +66,16 @@ class TranscodeFrames(publish.Extractor):
         # Determine color transformation
         src_colorspace = track_item.sourceMediaColourTransform()
 
+        frame_range = instance.data["frameRange"]
+        len_frames = len(frame_range)
         files = []
-        frames = range(first_frame, end_frame + handle_start + 1)
-        len_frames = len(frames)
-        self.log.info("Trancoding frame range {0} - {1}".format(frames[0], frames[-1]))
-        for index, frame in enumerate(frames):
-            # Calculate input_frame for output by normalizing input media to first frame
-            input_frame = source_start + clip_source_in - handle_start + frame - first_frame
-            if input_frame < 1 or input_frame > source_end:
-                self.log.warning("Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(frame, input_frame))
-                continue
-
-            output_path = f"{output_template}.{frame:04d}.{self.output_ext}"
+        for index, (input_frame, output_frame) in enumerate(frame_range):
+            print(index, input_frame, output_frame, 'index, input_frame, output_frame')
+            output_path = f"{output_template}.{output_frame:04d}.{self.output_ext}"
             # If either source or output is a video format, transcode using Nuke
             if self.output_ext.lower() in self.movie_extensions or source_ext.lower() in self.movie_extensions:
                 # No need to raise error as Nuke raises an error exit value if something went wrong
-                nuke_transcode_template(self.output_ext, input_frame, frame, frame, input_path, output_path, src_colorspace, self.dst_colorspace)
+                nuke_transcode_template(self.output_ext, input_frame, output_frame, output_frame, input_path, output_path, src_colorspace, self.dst_colorspace)
 
             # Else use OIIO instead of Nuke for faster transcoding
             else:
