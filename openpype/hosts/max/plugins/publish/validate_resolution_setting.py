@@ -16,7 +16,7 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
                                 OptionalPyblishPluginMixin):
     """Validate the resolution setting aligned with DB"""
 
-    order = pyblish.api.ValidatorOrder- 0.01
+    order = pyblish.api.ValidatorOrder - 0.01
     families = ["maxrender"]
     hosts = ["max"]
     label = "Validate Resolution Setting"
@@ -39,7 +39,6 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
             raise PublishValidationError("Height in Resolution Setting "
                                          "not aligned with DB")
 
-
     def get_db_resolution(self, instance):
         data = ["data.resolutionWidth", "data.resolutionHeight"]
         project_resolution = get_current_project(fields=data)
@@ -47,10 +46,17 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
         asset_resolution = get_current_project_asset(fields=data)
         asset_resolution_data = asset_resolution["data"]
         # Set project resolution
-        project_width = int(project_resolution_data.get("resolutionWidth", 1920))
-        project_height = int(project_resolution_data.get("resolutionHeight", 1080))
-        width = int(asset_resolution_data.get("resolutionWidth", project_width))
-        height = int(asset_resolution_data.get("resolutionHeight", project_height))
+        project_width = int(
+            project_resolution_data.get("resolutionWidth", 1920)
+            )
+        project_height = int(
+            project_resolution_data.get("resolutionHeight", 1080))
+        width = int(
+            asset_resolution_data.get("resolutionWidth", project_width)
+            )
+        height = int(
+            asset_resolution_data.get("resolutionHeight", project_height)
+            )
 
         return width, height
 
