@@ -780,7 +780,7 @@ class PublishClip:
         return self.track_item
 
     def get_asset_parents(self):
-        """ Grab an asset parents from the Avalon Database """
+        """Return parents from asset stored on the Avalon database."""
 
         project_name = get_current_project_name()
         asset_name = self.ti_name
