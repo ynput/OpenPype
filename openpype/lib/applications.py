@@ -1639,8 +1639,8 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         data (EnvironmentPrepData): Dictionary where result and intermediate
             result will be stored.
     """
-
     from openpype.pipeline.template_data import get_template_data
+    from openpype.pipeline.context_tools import get_hierarchy_env
 
     # Context environments
     log = data["log"]
@@ -1677,6 +1677,11 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         "AVALON_TASK": task_name,
         "AVALON_APP_NAME": app.full_name
     }
+
+    ### Starts Alkemy-X Override ###
+    # Get hierarchy environment variables (i.e., SEASON, SHOW, SEQUENCE...)
+    context_env.update(get_hierarchy_env(project_doc, asset_doc))
+    ### Ends Alkemy-X Override ###
 
     log.debug(
         "Context environments set:\n{}".format(
