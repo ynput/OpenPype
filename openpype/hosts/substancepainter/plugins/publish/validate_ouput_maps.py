@@ -34,7 +34,6 @@ class ValidateOutputMaps(pyblish.api.InstancePlugin):
         parameters["sizeLog2"] = [1, 1]  # output 2x2 images (smallest)
         parameters["paddingAlgorithm"] = "passthrough"  # no dilation (faster)
         parameters["dithering"] = False     # no dithering (faster)
-        config["exportParameters"][0]["parameters"]["sizeLog2"] = [1, 1]
 
         result = substance_painter.export.export_project_textures(config)
         if result.status != substance_painter.export.ExportStatus.Success:
