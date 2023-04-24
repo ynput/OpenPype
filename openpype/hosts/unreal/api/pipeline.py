@@ -439,7 +439,7 @@ def create_container(container: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.AssetContainerFactory()
+    factory = unreal.AyonAssetContainerFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
     return tools.create_asset(container, path, None, factory)

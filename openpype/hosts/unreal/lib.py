@@ -317,18 +317,46 @@ def get_path_to_uat(engine_path: Path) -> Path:
     if platform.system().lower() == "windows":
         return engine_path / "Engine/Build/BatchFiles/RunUAT.bat"
 
-    if platform.system().lower() == "linux" \
-            or platform.system().lower() == "darwin":
+    if platform.system().lower() in ["linux", "darwin"]:
         return engine_path / "Engine/Build/BatchFiles/RunUAT.sh"
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmd_project = Path(os.path.dirname(
-        os.path.abspath(os.getenv("OPENPYPE_ROOT"))))
+    cmd_project = Path(
+        os.path.abspath(os.getenv("OPENPYPE_ROOT")))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
-    cmd_project /= f"hosts/unreal/integration/UE_{ue_version}"
+    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
+
+    # if the integration doesn't exist for current engine version
+    # try to find the closest to it.
+    if cmd_project.exists():
+        return cmd_project / "CommandletProject/CommandletProject.uproject"
+
+    major, minor = ue_version.split(".")
+    integration_paths = [p for p in cmd_project.parent.iterdir()
+                         if p.is_dir()]
+
+    compatible_versions = [cmd_project]
+    for i in integration_paths:
+
+        # parse version from path
+        i_major, i_minor = re.search(
+            r"(?P<major>\d+).(?P<minor>\d+)$", i.name).groups()
+
+        # consider versions with different major so different that they
+        # are incompatible
+        if int(major) != int(i_major):
+            continue
+
+        compatible_versions.append(i)
+
+    sorted(set(compatible_versions))
+
+
+
+
 
     return cmd_project / "CommandletProject/CommandletProject.uproject"
 
