@@ -36,6 +36,30 @@ class CollectReview(pyblish.api.InstancePlugin):
         context = instance.context
         objectset = context.data['objectsets']
 
+        # Convert enum attribute index to string for Display Lights.
+        index = instance.data.get("displayLights", 0)
+        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
+        if display_lights == "project_settings":
+            settings = instance.context.data["project_settings"]
+            settings = settings["maya"]["publish"]["ExtractPlayblast"]
+            settings = settings["capture_preset"]["Viewport Options"]
+            display_lights = settings["displayLights"]
+
+        # Collect camera focal length.
+        burninDataMembers = instance.data.get("burninDataMembers", {})
+        if camera is not None:
+            attr = camera + ".focalLength"
+            if lib.get_attribute_input(attr):
+                start = instance.data["frameStart"]
+                end = instance.data["frameEnd"] + 1
+                time_range = range(int(start), int(end))
+                focal_length = [cmds.getAttr(attr, time=t) for t in time_range]
+            else:
+                focal_length = cmds.getAttr(attr)
+
+            burninDataMembers["focalLength"] = focal_length
+
+        # Account for nested instances like model.
         reviewable_subsets = list(set(members) & set(objectset))
         if reviewable_subsets:
             if len(reviewable_subsets) > 1:
@@ -68,6 +92,8 @@ class CollectReview(pyblish.api.InstancePlugin):
             data['frameEndFtrack'] = instance.data["frameEndHandle"]
             data['frameStartHandle'] = instance.data["frameStartHandle"]
             data['frameEndHandle'] = instance.data["frameEndHandle"]
+            data['handleStart'] = instance.data["handleStart"]
+            data['handleEnd'] = instance.data["handleEnd"]
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
             data['step'] = instance.data['step']
@@ -77,6 +103,8 @@ class CollectReview(pyblish.api.InstancePlugin):
             data["isolate"] = instance.data["isolate"]
             data["panZoom"] = instance.data.get("panZoom", False)
             data["panel"] = instance.data["panel"]
+            data["displayLights"] = display_lights
+            data["burninDataMembers"] = burninDataMembers
 
             # The review instance must be active
             cmds.setAttr(str(instance) + '.active', 1)
@@ -103,6 +131,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data["frameStartHandle"]
             instance.data['frameEndFtrack'] = \
                 instance.data["frameEndHandle"]
+            instance.data["displayLights"] = display_lights
+            instance.data["burninDataMembers"] = burninDataMembers
 
             # make ftrack publishable
             instance.data.setdefault("families", []).append('ftrack')
@@ -144,33 +174,3 @@ class CollectReview(pyblish.api.InstancePlugin):
                         audio_data.append(get_audio_node_data(node))
 
             instance.data["audio"] = audio_data
-
-        # Convert enum attribute index to string.
-        index = instance.data.get("displayLights", 0)
-        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
-        if display_lights == "project_settings":
-            settings = instance.context.data["project_settings"]
-            settings = settings["maya"]["publish"]["ExtractPlayblast"]
-            settings = settings["capture_preset"]["Viewport Options"]
-            display_lights = settings["displayLights"]
-        instance.data["displayLights"] = display_lights
-
-        # Collect focal length.
-        if camera is None:
-            return
-
-        attr = camera + ".focalLength"
-        if lib.get_attribute_input(attr):
-            start = instance.data["frameStart"]
-            end = instance.data["frameEnd"] + 1
-            focal_length = [
-                cmds.getAttr(attr, time=t) for t in range(int(start), int(end))
-            ]
-        else:
-            focal_length = cmds.getAttr(attr)
-
-        key = "focalLength"
-        try:
-            instance.data["burninDataMembers"][key] = focal_length
-        except KeyError:
-            instance.data["burninDataMembers"] = {key: focal_length}
