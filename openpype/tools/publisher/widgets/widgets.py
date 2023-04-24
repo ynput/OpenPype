@@ -1385,6 +1385,11 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
                 tooltip = attr_def.tooltip
                 if tooltip:
                     label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 content_layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -1522,6 +1527,11 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                         tooltip = attr_def.tooltip
                         if tooltip:
                             label_widget.setToolTip(tooltip)
+                        if attr_def.is_label_horizontal:
+                            label_widget.setAlignment(
+                                QtCore.Qt.AlignRight
+                                | QtCore.Qt.AlignVCenter
+                            )
                         attr_def_layout.addWidget(
                             label_widget, row, 0, 1, expand_cols
                         )

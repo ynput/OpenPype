@@ -148,6 +148,11 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
                 tooltip = attr_def.tooltip
                 if tooltip:
                     label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
