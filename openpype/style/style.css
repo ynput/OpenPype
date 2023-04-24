@@ -42,7 +42,7 @@ QLabel {
 /* Inputs */
 QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
     background: {color:bg-inputs};
     padding: 0.1em;
 }
@@ -226,7 +226,7 @@ QMenu::separator {
 /* Combobox */
 QComboBox {
     border: 1px solid {color:border};
-    border-radius: 3px;
+    border-radius: 0.2em;
     padding: 1px 3px 1px 3px;
     background: {color:bg-inputs};
 }
@@ -743,7 +743,7 @@ OverlayMessageWidget QWidget {
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #TypeEditor:focus, #ToolEditor:focus, #NameEditor:focus, #NumberEditor:focus {
@@ -1072,7 +1072,7 @@ ValidationArtistMessage QLabel {
 #AssetNameInputWidget {
     background: {color:bg-inputs};
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #AssetNameInputWidget QWidget {
