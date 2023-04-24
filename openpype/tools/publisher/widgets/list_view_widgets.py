@@ -1039,7 +1039,8 @@ class InstanceListView(AbstractInstanceView):
             proxy_index = proxy_model.mapFromSource(select_indexes[0])
             selection_model.setCurrentIndex(
                 proxy_index,
-                selection_model.ClearAndSelect | selection_model.Rows
+                QtCore.QItemSelectionModel.ClearAndSelect
+                | QtCore.QItemSelectionModel.Rows
             )
             return
 
