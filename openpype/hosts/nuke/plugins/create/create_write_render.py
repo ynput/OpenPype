@@ -31,17 +31,10 @@ class CreateWriteRender(napi.NukeWriteCreator):
         attr_defs = [
             BoolDef(
                 "use_selection",
-                default=True,
+                default=not self.create_context.headless,
                 label="Use selection"
             ),
             self._get_render_target_enum()
-        ]
-        return attr_defs
-
-    def get_instance_attr_defs(self):
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool()
         ]
         return attr_defs
 

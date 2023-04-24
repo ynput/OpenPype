@@ -23,6 +23,8 @@ def get_engine_versions(env=None):
     Location can be overridden by `UNREAL_ENGINE_LOCATION` environment
     variable.
 
+    .. deprecated:: 3.15.4
+
     Args:
         env (dict, optional): Environment to use.
 
@@ -103,6 +105,8 @@ def _win_get_engine_versions():
     This file is JSON file listing installed stuff, Unreal engines
     are marked with `"AppName" = "UE_X.XX"`` like `UE_4.24`
 
+    .. deprecated:: 3.15.4
+
     Returns:
         dict: version as a key and path as a value.
 
@@ -121,6 +125,8 @@ def _darwin_get_engine_version() -> dict:
     """Get Unreal Engine versions on MacOS.
 
     It works the same as on Windows, just JSON file location is different.
+
+    .. deprecated:: 3.15.4
 
     Returns:
         dict: version as a key and path as a value.
@@ -143,6 +149,8 @@ def _darwin_get_engine_version() -> dict:
 
 def _parse_launcher_locations(install_json_path: str) -> dict:
     """This will parse locations from json file.
+
+    .. deprecated:: 3.15.4
 
     Args:
         install_json_path (str): Path to `LauncherInstalled.dat`.
@@ -252,7 +260,7 @@ def create_unreal_project(project_name: str,
 
     with open(project_file.as_posix(), mode="r+") as pf:
         pf_json = json.load(pf)
-        pf_json["EngineAssociation"] = _get_build_id(engine_path, ue_version)
+        pf_json["EngineAssociation"] = get_build_id(engine_path, ue_version)
         pf.seek(0)
         json.dump(pf_json, pf, indent=4)
         pf.truncate()
@@ -338,7 +346,7 @@ def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
     return Path(u_build_tool_path)
 
 
-def _get_build_id(engine_path: Path, ue_version: str) -> str:
+def get_build_id(engine_path: Path, ue_version: str) -> str:
     ue_modules = Path()
     if platform.system().lower() == "windows":
         ue_modules_path = engine_path / "Engine/Binaries/Win64"
@@ -365,6 +373,26 @@ def _get_build_id(engine_path: Path, ue_version: str) -> str:
             return "{" + loaded_modules.get("BuildId") + "}"
 
 
+def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
+    env = env or os.environ
+    integration_plugin_path: Path = Path(env.get("OPENPYPE_UNREAL_PLUGIN", ""))
+
+    if not os.path.isdir(integration_plugin_path):
+        raise RuntimeError("Path to the integration plugin is null!")
+
+    # Create a path to the plugin in the engine
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
+
+    if not op_plugin_path.is_dir():
+        return False
+
+    if not (op_plugin_path / "Binaries").is_dir() \
+            or not (op_plugin_path / "Intermediate").is_dir():
+        return False
+
+    return True
+
+
 def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
     env = env or os.environ
 
@@ -377,7 +405,6 @@ def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
     op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
 
     if not op_plugin_path.is_dir():
-        print("--- OpenPype Plugin is not present. Installing ...")
         op_plugin_path.mkdir(parents=True, exist_ok=True)
 
         engine_plugin_config_path: Path = op_plugin_path / "Config"
@@ -387,7 +414,6 @@ def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
 
     if not (op_plugin_path / "Binaries").is_dir() \
             or not (op_plugin_path / "Intermediate").is_dir():
-        print("--- Binaries are not present. Building the plugin ...")
         _build_and_move_plugin(engine_path, op_plugin_path, env)
 
 

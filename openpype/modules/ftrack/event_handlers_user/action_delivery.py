@@ -601,7 +601,7 @@ class Delivery(BaseAction):
         return self.report(report_items)
 
     def report(self, report_items):
-        """Returns dict with final status of delivery (succes, fail etc.)."""
+        """Returns dict with final status of delivery (success, fail etc.)."""
         items = []
 
         for msg, _items in report_items.items():

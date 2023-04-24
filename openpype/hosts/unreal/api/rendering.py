@@ -5,6 +5,7 @@ import unreal
 from openpype.settings import get_project_settings
 from openpype.pipeline import Anatomy
 from openpype.hosts.unreal.api import pipeline
+from openpype.widgets.message_window import Window
 
 
 queue = None
@@ -37,6 +38,15 @@ def start_rendering():
 
     # Get selected sequences
     assets = unreal.EditorUtilityLibrary.get_selected_assets()
+
+    if not assets:
+        Window(
+            parent=None,
+            title="No assets selected",
+            message="No assets selected. Select a render instance.",
+            level="warning")
+        raise RuntimeError(
+            "No assets selected. You need to select a render instance.")
 
     # instances = pipeline.ls_inst()
     instances = [

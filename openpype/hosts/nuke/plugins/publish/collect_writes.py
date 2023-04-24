@@ -3,12 +3,14 @@ from pprint import pformat
 import nuke
 import pyblish.api
 from openpype.hosts.nuke import api as napi
+from openpype.pipeline import publish
 
 
-class CollectNukeWrites(pyblish.api.InstancePlugin):
+class CollectNukeWrites(pyblish.api.InstancePlugin,
+                        publish.ColormanagedPyblishPluginMixin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder - 0.48
+    order = pyblish.api.CollectorOrder + 0.0021
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["render", "prerender", "image"]
@@ -65,6 +67,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         write_file_path = nuke.filename(write_node)
         output_dir = os.path.dirname(write_file_path)
+
+        # get colorspace and add to version data
+        colorspace = napi.get_colorspace_from_node(write_node)
 
         self.log.debug('output dir: {}'.format(output_dir))
 
@@ -128,6 +133,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 else:
                     representation['files'] = collected_frames
 
+            # inject colorspace data
+            self.set_representation_colorspace(
+                representation, instance.context,
+                colorspace=colorspace
+            )
+
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
@@ -145,8 +156,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             instance.data["farm"] = True
             self.log.info("Farm rendering ON ...")
 
-        # get colorspace and add to version data
-        colorspace = napi.get_colorspace_from_node(write_node)
+        # TODO: remove this when we have proper colorspace support
         version_data = {
             "colorspace": colorspace
         }
@@ -179,7 +189,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             })
 
         # make sure rendered sequence on farm will
-        # be used for exctract review
+        # be used for extract review
         if not instance.data["review"]:
             instance.data["useSequenceForReview"] = False
 

@@ -363,6 +363,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateBackdrop": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateScript": {
             "enabled": true,
             "optional": true,
@@ -537,32 +542,7 @@
         "create_first_version": false,
         "custom_templates": [],
         "builder_on_start": false,
-        "profiles": [
-            {
-                "task_types": [],
-                "tasks": [],
-                "current_context": [
-                    {
-                        "subset_name_filters": [],
-                        "families": [
-                            "render",
-                            "plate"
-                        ],
-                        "repre_names": [
-                            "exr",
-                            "dpx",
-                            "mov",
-                            "mp4",
-                            "h264"
-                        ],
-                        "loaders": [
-                            "LoadClip"
-                        ]
-                    }
-                ],
-                "linked_assets": []
-            }
-        ]
+        "profiles": []
     },
     "templated_workfile_build": {
         "profiles": []

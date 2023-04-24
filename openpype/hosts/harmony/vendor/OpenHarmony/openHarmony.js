@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -78,7 +78,7 @@
  * $.log("hello");                     // prints out a message to the MessageLog.
  * var myPoint = new $.oPoint(0,0,0);  // create a new class instance from an openHarmony class.
  *
- * // function members of the $ objects get published to the global scope, which means $ can be ommited
+ * // function members of the $ objects get published to the global scope, which means $ can be omitted
  *
  * log("hello");
  * var myPoint = new oPoint(0,0,0);    // This is all valid
@@ -118,7 +118,7 @@ Object.defineProperty( $, "directory", {
 
 
 /**
- * Wether Harmony is run with the interface or simply from command line
+ * Whether Harmony is run with the interface or simply from command line
  */
 Object.defineProperty( $, "batchMode", {
   get: function(){

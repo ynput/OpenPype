@@ -95,7 +95,8 @@ def update_op_assets(
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
             item_doc = get_asset_by_id(
-                project_name, insert_result.inserted_id)
+                project_name, insert_result.inserted_id
+            )
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -128,44 +129,56 @@ def update_op_assets(
                 frame_out = frame_in + frames_duration - 1
             else:
                 frame_out = project_doc["data"].get("frameEnd", frame_in)
-        item_data["frameEnd"] = frame_out
+        item_data["frameEnd"] = int(frame_out)
         # Fps, fallback to project's value or default value (25.0)
         try:
             fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
-            fps = float(gazu_project.get(
-                "fps", project_doc["data"].get("fps", 25)))
+            fps = float(
+                gazu_project.get("fps", project_doc["data"].get("fps", 25))
+            )
         item_data["fps"] = fps
         # Resolution, fall back to project default
         match_res = re.match(
             r"(\d+)x(\d+)",
-            item_data.get("resolution", gazu_project.get("resolution"))
+            item_data.get("resolution", gazu_project.get("resolution")),
         )
         if match_res:
             item_data["resolutionWidth"] = int(match_res.group(1))
             item_data["resolutionHeight"] = int(match_res.group(2))
         else:
-            item_data["resolutionWidth"] = project_doc["data"].get(
-                "resolutionWidth")
-            item_data["resolutionHeight"] = project_doc["data"].get(
-                "resolutionHeight")
+            item_data["resolutionWidth"] = int(
+                project_doc["data"].get("resolutionWidth")
+            )
+            item_data["resolutionHeight"] = int(
+                project_doc["data"].get("resolutionHeight")
+            )
         # Properties that doesn't fully exist in Kitsu.
         # Guessing those property names below:
         # Pixel Aspect Ratio
-        item_data["pixelAspect"] = item_data.get(
-            "pixel_aspect", project_doc["data"].get("pixelAspect"))
+        item_data["pixelAspect"] = float(
+            item_data.get(
+                "pixel_aspect", project_doc["data"].get("pixelAspect")
+            )
+        )
         # Handle Start
-        item_data["handleStart"] = item_data.get(
-            "handle_start", project_doc["data"].get("handleStart"))
+        item_data["handleStart"] = int(
+            item_data.get(
+                "handle_start", project_doc["data"].get("handleStart")
+            )
+        )
         # Handle End
-        item_data["handleEnd"] = item_data.get(
-            "handle_end", project_doc["data"].get("handleEnd"))
+        item_data["handleEnd"] = int(
+            item_data.get("handle_end", project_doc["data"].get("handleEnd"))
+        )
         # Clip In
-        item_data["clipIn"] = item_data.get(
-            "clip_in", project_doc["data"].get("clipIn"))
+        item_data["clipIn"] = int(
+            item_data.get("clip_in", project_doc["data"].get("clipIn"))
+        )
         # Clip Out
-        item_data["clipOut"] = item_data.get(
-            "clip_out", project_doc["data"].get("clipOut"))
+        item_data["clipOut"] = int(
+            item_data.get("clip_out", project_doc["data"].get("clipOut"))
+        )
 
         # Tasks
         tasks_list = []
@@ -175,11 +188,9 @@ def update_op_assets(
         elif item_type == "Shot":
             tasks_list = gazu.task.all_tasks_for_shot(item)
         item_data["tasks"] = {
-            item_data["tasks"] = {
-                t["task_type_name"]: {
-                    "type": t["task_type_name"],
-                    "zou": gazu.task.get_task(t["id"]),
-                }
+            t["task_type_name"]: {
+                "type": t["task_type_name"],
+                "zou": gazu.task.get_task(t["id"]),
             }
             for t in tasks_list
         }
@@ -218,7 +229,9 @@ def update_op_assets(
             if parent_zou_id_dict is not None:
                 visual_parent_doc_id = (
                     parent_zou_id_dict.get("_id")
-                    if parent_zou_id_dict else None)
+                    if parent_zou_id_dict
+                    else None
+                )
 
         if visual_parent_doc_id is None:
             # Find root folder doc ("Assets" or "Shots")
@@ -316,6 +329,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
+            "active": project['project_status_name'] != "Closed",
         }
     )
 
@@ -345,7 +359,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
 
 
 def sync_all_projects(
-        login: str, password: str, ignore_projects: list = None):
+    login: str, password: str, ignore_projects: list = None
+):
     """Update all OP projects in DB with Zou data.
 
     Args:
@@ -365,7 +380,7 @@ def sync_all_projects(
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_open_projects()
+    all_projects = gazu.project.all_projects()
     for project in all_projects:
         if ignore_projects and project["name"] in ignore_projects:
             continue
@@ -390,7 +405,21 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    log.info("Synchronizing {}...".format(project['name']))
+    # Get all statuses for projects from Kitsu
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project['project_status_id'] == status['id']:
+            project['project_status_name'] = status['name']
+            break
+
+    #  Do not sync closed kitsu project that is not found in openpype
+    if (
+        project['project_status_name'] == "Closed"
+        and not get_project(project['name'])
+    ):
+        return
+
+    log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
@@ -414,6 +443,9 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project_dict:
         log.info("Project created: {}".format(project_name))
     bulk_writes.append(write_project_to_op(project, dbcon))
+
+    if project['project_status_name'] == "Closed":
+        return
 
     # Try to find project document
     if not project_dict:
@@ -473,8 +505,11 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, project, project_dict,
-                all_entities, zou_ids_and_asset_docs
+                dbcon,
+                project,
+                project_dict,
+                all_entities,
+                zou_ids_and_asset_docs,
             )
         ]
     )
