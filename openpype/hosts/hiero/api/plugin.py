@@ -668,7 +668,9 @@ class PublishClip:
     tag_data = dict()
     types = {
         "shot": "shot",
+        ### Starts Alkemy-X Override ###
         "path": "path",
+        ### Ends Alkemy-X Override ###
         "folder": "folder",
         "episode": "episode",
         "sequence": "sequence",
@@ -720,9 +722,14 @@ class PublishClip:
 
         ### Starts Alkemy-X Override ###
         # If shot path token found, update hierarchy data to respect those values
+        hierarchy_data_value = self.ui_inputs.get("hierarchy", {}).get("value")
         hierarchy_value = self.ui_inputs.get("hierarchy", {}).get("value")
-        if hierarchy_value:
-            self.add_path_token_value()
+        if hierarchy_data_value:
+            # Only update episode, sequence, shot values if they are being used for path token
+            # If path token is being used UI values will be ignored
+            # Meaning episode, sequence, and shot will not react as expected when using path
+            if "{path}" in hierarchy_value:
+                self.update_path_token_hierarchy()
         ### Ends Alkemy-X Override ###
 
         # populate default data before we get other attributes
@@ -730,6 +737,12 @@ class PublishClip:
 
         # use all populated default data to create all important attributes
         self._populate_attributes()
+
+        ### Starts Alkemy-X Override ###
+        # Override self.hierarchy if path token was updated
+        if hierarchy_value:
+            self.solve_path_token_hierarchy()
+        ### Ends Alkemy-X Override ###
 
         # create parents with correct types
         self._create_parents()
@@ -771,17 +784,14 @@ class PublishClip:
         return self.track_item
 
     ### Starts Alkemy-X Override ###
-    def add_path_token_value(self):
-        """Add path token values to ui_inputs. Path token resolves to Avalon entity parents.
-        Which is the equivalent to how OP builds hierarchy from SG Leecher
-        """
+    def get_asset_parents(self):
+        """Return parents from asset stored on the Avalon database."""
 
         project_name = get_current_project_name()
         asset_name = self.ti_name
         asset_item = get_asset_by_name(project_name, asset_name)
         if asset_item:
-            # Leave off beginning separator
-            hierarchy = os.path.join(*asset_item["data"]["parents"], asset_name)
+            parents = asset_item["data"]["parents"]
         else:
             QtWidgets.QMessageBox.warning(
                 hiero.ui.mainWindow(),
@@ -790,10 +800,44 @@ class PublishClip:
             )
             raise Exception("Asset/Shot does not exist in Database")
 
-        self.ui_inputs["hierarchyData"]["value"]["path"] = {
-            "value": hierarchy,
-            "Tag":True,
-        }
+        return parents
+
+    def update_path_token_hierarchy(self):
+        """Update UI inputs from clip name to avoid typing values for episode/sequence.
+        Need to recreate the entity relationship that would be seen in Shotgrid
+        There is an assumption that the hierarchy is build for a shot/asset
+        """
+        episode = ""
+        sequence = ""
+        parents = self.get_asset_parents()
+        # Parents will always start with shots or assets
+        folder = parents[0]
+        shot = self.ti_name
+        if folder == "shots":
+            if len(parents) > 1:
+                sequence = parents[-1]
+            if len(parents) > 2:
+                episode = parents[-2]
+            if len(parents) == 4:
+                season = parents[-3]
+
+        self.shot_path_tokens = {"folder": folder, "episode": episode, "sequence": sequence, "shot": shot}
+        for key in self.shot_path_tokens:
+            self.ui_inputs["hierarchyData"]["value"][key]["value"] = self.shot_path_tokens[key]
+
+    def solve_path_token_hierarchy(self):
+        """Override self.hierarchy with new inferred path tokens."""
+        # Don't change ui_inputs - this is needed for next iterations
+        if self.shot_path_tokens.get("season"):
+            new_subpath = "{folder}/{season}/{episode}/{sequence}"
+        elif self.shot_path_tokens.get("episode"):
+            new_subpath = "{folder}/{episode}/{sequence}"
+        elif self.shot_path_tokens.get("sequence"):
+            new_subpath = "{folder}/{sequence}"
+        else:
+            new_subpath = "{folder}"
+
+        self.hierarchy = self.hierarchy.replace("{path}", new_subpath)
     ### Ends Alkemy-X Override ###
 
     def _populate_track_item_default_data(self):
