@@ -948,6 +948,7 @@ PixmapButton:disabled {
     border-top-left-radius: 0px;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    width: 0.5em;
 }
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
