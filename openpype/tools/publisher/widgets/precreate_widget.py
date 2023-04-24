@@ -117,8 +117,11 @@ class AttributesWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            if attr_def.label:
+            if attr_def.is_value_def and attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
                 self._layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
