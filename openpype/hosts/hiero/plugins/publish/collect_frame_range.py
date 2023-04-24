@@ -1,52 +1,6 @@
 import pyblish.api
 
 
-def openpype_publish_tag(track_item):
-    """Find the tag that was used to publish the given track item.
-
-    This function iterates through all the tags associated with the given track_item and returns the metadata of the
-    tag that belongs to the 'plate' family.
-
-    Returns:
-        dict: The metadata of the tag belonging to the 'plate' family, or an empty dictionary if no such tag is found.
-    """
-    for item_tag in track_item.tags():
-        tag_metadata = item_tag.metadata().dict()
-        tag_family = tag_metadata.get("tag.family")
-        if tag_family == "plate":
-            return tag_metadata
-
-    return None
-
-
-def get_tag_handles(track_item):
-    """Get the handles of the tag used for publishing the given track item.
-
-    This function retrieves the 'handleStart' and 'handleEnd' values from the metadata of the tag associated with the
-    given track_item, and returns them as a tuple.
-
-    Args:
-        track_item (hiero.core.TrackItem): The track item for which to retrieve the handles.
-
-    Raises:
-        Exception: If the 'handleStart' or 'handleEnd' field in the tag metadata contains non-numeric characters.
-
-    Returns:
-        tuple: A tuple containing the handle start and handle end values as integers.
-    """
-    tag = openpype_publish_tag(track_item)
-    if tag is None:
-        raise Exception("No OpenPype Publish tag found")
-
-    try:
-        handle_start = int(tag.get("tag.handleStart", "0"))
-        handle_end = int(tag.get("tag.handleEnd", "0"))
-    except ValueError:
-        raise Exception("Handle field should only contain numbers")
-
-    return handle_start, handle_end
-
-
 class CollectFrameRange(pyblish.api.InstancePlugin):
     """A Pyblish plugin for collecting the frame range of a plate instance that will be used in extract frames. The media
     frame range is checked to ensure that it is within the expected extract frame range. The plugin bundles frame range
@@ -79,19 +33,19 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-        track_item = instance.data["item"]
+        self.track_item = instance.data["item"]
 
         # Define frame output range
         # handleStart and handleEnd are overriden to reflect media range and not absolute handles
         # Solution is to take the handle values directly from the tag instead of instance data
-        handle_start, handle_end = get_tag_handles(track_item)
+        handle_start, handle_end = self.get_tag_handles()
         first_frame = instance.data["frameStart"]
         end_frame = instance.data["frameEnd"] + handle_end
 
         # Need clip source in and original clip source media in and out to calculate matching input frame
-        clip_source_in = track_item.sourceIn()
-        source_start = track_item.source().sourceIn()
-        source_end = track_item.source().sourceOut()
+        clip_source_in = self.track_item.sourceIn()
+        source_start = self.track_item.source().sourceIn()
+        source_end = self.track_item.source().sourceOut()
 
         frames = range(first_frame, end_frame + handle_start + 1)
         self.log.info("Transcoding frame range {0} - {1}".format(frames[0], frames[-1]))
@@ -117,3 +71,49 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
             raise Exception("Output frame range out of source frame range of media")
 
         instance.data["frameRange"] = frame_range
+
+
+    def openpype_publish_tag(self):
+        """Find the tag that was used to publish the given track item.
+
+        This function iterates through all the tags associated with the given self.track_item and returns the metadata of the
+        tag that belongs to the 'plate' family.
+
+        Returns:
+            dict: The metadata of the tag belonging to the 'plate' family, or an empty dictionary if no such tag is found.
+        """
+        for item_tag in self.track_item.tags():
+            tag_metadata = item_tag.metadata().dict()
+            tag_family = tag_metadata.get("tag.family")
+            if tag_family == "plate":
+                return tag_metadata
+
+        return None
+
+
+    def get_tag_handles(self):
+        """Get the handles of the tag used for publishing the given track item.
+
+        This function retrieves the 'handleStart' and 'handleEnd' values from the metadata of the tag associated with the
+        given self.track_item, and returns them as a tuple.
+
+        Args:
+            self.track_item (hiero.core.TrackItem): The track item for which to retrieve the handles.
+
+        Raises:
+            Exception: If the 'handleStart' or 'handleEnd' field in the tag metadata contains non-numeric characters.
+
+        Returns:
+            tuple: A tuple containing the handle start and handle end values as integers.
+        """
+        tag = self.openpype_publish_tag()
+        if tag is None:
+            raise Exception("No OpenPype Publish tag found")
+
+        try:
+            handle_start = int(tag.get("tag.handleStart", "0"))
+            handle_end = int(tag.get("tag.handleEnd", "0"))
+        except ValueError:
+            raise ValueError("Handle field should only contain numbers")
+
+        return handle_start, handle_end
