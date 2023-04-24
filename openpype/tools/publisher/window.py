@@ -406,6 +406,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._comment_input.setText("")  # clear comment
         self._reset_on_show = True
         self._controller.clear_thumbnail_temp_dir_path()
+        # Trigger custom event that should be captured only in UI
+        #   - backend (controller) must not be dependent on this event topic!!!
+        self._controller.event_system.emit("main.window.closed", {}, "window")
         super(PublisherWindow, self).closeEvent(event)
 
     def leaveEvent(self, event):
