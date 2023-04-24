@@ -48,7 +48,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
         source_end = self.track_item.source().sourceOut()
 
         frames = range(first_frame, end_frame + handle_start + 1)
-        self.log.info("Transcoding frame range {0} - {1}".format(frames[0], frames[-1]))
+        self.log.info("Transcoding frame range %d - %d" % (frames[0], frames[-1]))
 
         frame_range = []
         exception = False
@@ -57,7 +57,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
             input_frame = source_start + clip_source_in - handle_start + output_frame - first_frame
             if input_frame - source_start < 0 or input_frame > source_end:
                 self.log.critical(
-                    "Frame out of range of source - Skipping frame '{0}' - Source frame '{1}'".format(
+                    "Frame out of range of source - Skipping frame '%d' - Source frame '%d'" % (
                         output_frame, input_frame
                     )
                 )
