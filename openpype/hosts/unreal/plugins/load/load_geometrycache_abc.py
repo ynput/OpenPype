@@ -22,7 +22,7 @@ class PointCacheAlembicLoader(plugin.Loader):
     color = "orange"
 
     def get_task(
-        self, filename, asset_dir, asset_name, replace, frame_start, frame_end
+        self, filename, asset_dir, asset_name, replace, frame_start=None, frame_end=None
     ):
         task = unreal.AssetImportTask()
         options = unreal.AbcImportSettings()
@@ -51,8 +51,10 @@ class PointCacheAlembicLoader(plugin.Loader):
         conversion_settings.set_editor_property(
             'rotation', unreal.Vector(x=-90.0, y=0.0, z=180.0))
 
-        sampling_settings.set_editor_property('frame_start', frame_start)
-        sampling_settings.set_editor_property('frame_end', frame_end)
+        if frame_start is not None:
+            sampling_settings.set_editor_property('frame_start', frame_start)
+        if frame_end is not None:
+            sampling_settings.set_editor_property('frame_end', frame_end)
 
         options.geometry_cache_settings = gc_settings
         options.conversion_settings = conversion_settings
@@ -145,9 +147,9 @@ class PointCacheAlembicLoader(plugin.Loader):
         name = container["asset_name"]
         source_path = get_representation_path(representation)
         destination_path = container["namespace"]
+        representation["context"]
 
-        task = self.get_task(source_path, destination_path, name, True)
-
+        task = self.get_task(source_path, destination_path, name, False)
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
