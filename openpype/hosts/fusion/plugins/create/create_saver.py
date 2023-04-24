@@ -26,7 +26,7 @@ class CreateSaver(Creator):
     family = "render"
     default_variants = ["Main", "Mask"]
     description = "Fusion Saver to generate image sequence"
-    icon = "eye"
+    icon = "fa5.eye"
 
     instance_attributes = ["reviewable"]
 

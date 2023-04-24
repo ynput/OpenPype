@@ -13,7 +13,7 @@ class FusionWorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
     label = "Workfile"
-    icon = "file-o"
+    icon = "fa5.file"
 
     default_variant = "Main"
 
