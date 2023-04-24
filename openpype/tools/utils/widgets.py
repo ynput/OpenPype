@@ -41,7 +41,28 @@ class FocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             super(FocusDoubleSpinBox, self).wheelEvent(event)
 
 
-class CustomTextComboBox(QtWidgets.QComboBox):
+class ComboBox(QtWidgets.QComboBox):
+    """Base of combobox with pre-implement changes used in tools.
+
+    Combobox is using styled delegate by default so stylesheets are propagated.
+
+    Items are not changed on scroll until the combobox is in focus.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return super(ComboBox, self).wheelEvent(event)
+
+
+class CustomTextComboBox(ComboBox):
     """Combobox which can have different text showed."""
 
     def __init__(self, *args, **kwargs):
