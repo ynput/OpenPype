@@ -14,6 +14,7 @@ from openpype.hosts.blender.api.utils import (
     AVALON_PROPERTY,
     BL_OUTLINER_TYPES,
     assign_loader_to_datablocks,
+    build_op_basename,
     get_all_outliner_children,
     get_instanced_collections,
 )
@@ -94,10 +95,11 @@ def parse_container(
 
     return data
 
-def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
-    """Update containers in scene from outliner entities.
+def update_scene_containers()->List[OpenpypeContainer]:
+    """Update containers in scene from datablocks.
 
     For example, if a loaded collection has been duplicated using the outliner
+    or an containerized action has been linked from a blend file,
     a container will be created with this collection.
 
     Returns:
@@ -121,10 +123,15 @@ def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
     # Get container datablocks not already correctly created
     # (e.g collection duplication or linked by hand)
     # For outliner datablocks, they must be in current scene
+    # Sorted by type to ensure high level entities are processed first
+    datatype_order = {  # Lower is first
+        bpy.types.Collection: 0,
+        bpy.types.Object: 1,
+    }
     all_instanced_collections = get_instanced_collections()
     container_datablocks = [
         datablock
-        for datablock in lsattr("id", AVALON_CONTAINER_ID)
+        for datablock in sorted(lsattr("id", AVALON_CONTAINER_ID), key=lambda d: datatype_order.get(type(d), 10))
         if not (
             isinstance(datablock, tuple(BL_OUTLINER_TYPES))
             and datablock
@@ -147,9 +154,13 @@ def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
     assign_loader_to_datablocks(container_datablocks)
 
     # Create containers from container datablocks
-    created_containers = set()
+    created_containers = {c.name: c for c in openpype_containers}
+    user_map = bpy.data.user_map(subset=container_datablocks)
     for entity in container_datablocks:
-        if entity in datablocks_to_skip:
+        if (
+            entity in datablocks_to_skip
+            or user_map.get(entity) <= datablocks_to_skip
+        ):
             continue
 
         # Find datablocks depending on type
@@ -168,36 +179,51 @@ def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
         else:
             container_datablocks = [entity]
 
-        # Create container
-        container = create_container(entity.name, container_datablocks)
+        # Add library references of datablocks to avoid duplicates
+        container_datablocks.extend(
+            datablock.override_library.reference
+            for datablock in container_datablocks
+            if datablock and datablock.override_library
+        )
 
-        # Transfer container metadata and keep original outliner entity
-        metadata = (
+        # Skip container datablocks later
+        datablocks_to_skip.update(container_datablocks)
+
+        # Get container metadata
+        container_metadata = (
             entity.instance_collection
             if hasattr(entity, "instance_collection")
             and entity.instance_collection
             else entity
         ).get(AVALON_PROPERTY)
-        # Keep objectName for update/switch
-        metadata["objectName"] = container.name
-        container[AVALON_PROPERTY] = metadata
-        container.library = entity.library
-        # Try to match library in case of override
-        if not container.library:
-            representation = get_representation_by_id(
-                legacy_io.Session["AVALON_PROJECT"],
-                container[AVALON_PROPERTY].get("representation"),
+
+        # Get container if already created
+        representation_id = container_metadata.get("representation")
+        container = created_containers.get(representation_id)
+        if container:
+            add_datablocks_to_container(container_datablocks, container)
+        else:
+            # Create container and keep it
+            container_name = build_op_basename(
+                container_metadata.get("asset_name"),
+                container_metadata.get("name"),
             )
-            representation_path = get_representation_path(representation)
-            library = bpy.data.libraries.get(Path(representation_path).name)
-            container.library = library
+            container = create_container(container_name, container_datablocks)
+            created_containers[representation_id] = container
 
-        # Keep outliner entity if any
-        if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
-            container.outliner_entity = entity
+            # Keep objectName for update/switch
+            container_metadata["objectName"] = container.name
+            # Transfer container metadata and keep original outliner entity
+            container[AVALON_PROPERTY] = container_metadata
+            container.library = (
+                entity.override_library.reference.library
+                if entity.override_library
+                else entity.library
+            )
 
-        # Keep created container
-        created_containers.add(container)
+            # Keep outliner entity if any
+            if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
+                container.outliner_entity = entity
 
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):
@@ -217,7 +243,7 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-    update_scene_containers_from_outliner()
+    update_scene_containers()
 
     # Parse containers
     return [

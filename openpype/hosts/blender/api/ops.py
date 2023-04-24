@@ -23,7 +23,7 @@ from openpype.client.entities import (
     get_asset_by_name,
     get_assets,
 )
-from openpype.hosts.blender.api.lib import add_datablocks_to_container, update_scene_containers_from_outliner
+from openpype.hosts.blender.api.lib import add_datablocks_to_container, update_scene_containers
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
@@ -1223,7 +1223,7 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
         outliner_entity.use_fake_user = False
 
         # Update containers list
-        update_scene_containers_from_outliner()
+        update_scene_containers()
 
         return {"FINISHED"}
 
