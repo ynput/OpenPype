@@ -107,8 +107,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.hierarchy_view_changed.connect(
             self._on_hierarchy_view_change
         )
-        view.data_changed.connect(self.refresh)
-        refresh_button.clicked.connect(self.refresh)
+        view.data_changed.connect(self._refresh_callback)
+        refresh_button.clicked.connect(self._refresh_callback)
         update_all_button.clicked.connect(self._on_update_all)
 
         self._update_all_button = update_all_button
@@ -138,6 +138,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         whilst trying to name an instance.
 
         """
+
+    def _refresh_callback(self):
+        """Signal callback to trigger 'refresh' without any arguments."""
+
+        self.refresh()
 
     def refresh(self, items=None):
         with preserve_expanded_rows(
