@@ -99,8 +99,10 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
                     var = rop.evalParm("vm_variable_plane%d" % i)
                     if var:
                         aov_name = "vm_filename_plane%d" % i
+                        aov_boolean = "vm_usefile_plane%d" % i
+                        aov_enabled = rop.evalParm(aov_boolean)
                         has_aov_path = rop.evalParm(aov_name)
-                        if has_aov_path:
+                        if has_aov_path and aov_enabled == 1:
                             aov_prefix = evalParmNoFrame(rop, aov_name)
                             aov_product = self.get_render_product_name(
                                 prefix=aov_prefix, suffix=None

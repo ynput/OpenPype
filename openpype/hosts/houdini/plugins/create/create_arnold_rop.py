@@ -42,8 +42,8 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         ext = pre_create_data.get("image_format")
 
         filepath = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4.{}".format(subset_name, ext)
+            hou.text.expandString("$HIP/pyblish/renders/"),
+            "{}/{}.$F4.{}".format(subset_name, subset_name, ext)
         )
         parms = {
             # Render frame range

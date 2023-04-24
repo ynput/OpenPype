@@ -70,10 +70,11 @@ class CreateVrayROP(plugin.HoudiniCreator):
         if pre_create_data.get("render_element_enabled", True):
             # Vray has its own tag for AOV file output
             filepath = "{}{}".format(
-                hou.text.expandString("$HIP/pyblish/"),
-                "{}.${}.$F4.{}".format(subset_name,
-                                       "AOV",
-                                       ext)
+                hou.text.expandString("$HIP/pyblish/renders/"),
+                "{}/{}.${}.$F4.{}".format(subset_name,
+                                          subset_name,
+                                          "AOV",
+                                          ext)
             )
             re_rop = instance_node.parent().createNode(
                 "vray_render_channels",
@@ -90,8 +91,8 @@ class CreateVrayROP(plugin.HoudiniCreator):
 
         else:
             filepath = "{}{}".format(
-                hou.text.expandString("$HIP/pyblish/"),
-                "{}.$F4.{}".format(subset_name, ext)
+                hou.text.expandString("$HIP/pyblish/renders/"),
+                "{}/{}.$F4.{}".format(subset_name, subset_name, ext)
             )
             parms.update({
                 "use_render_channels": 0,
