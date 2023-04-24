@@ -35,6 +35,11 @@ QWidget:disabled {
     color: {color:font-disabled};
 }
 
+/* Some DCCs have set borders to solid color */
+QScrollArea {
+    border: none;
+}
+
 QLabel {
     background: transparent;
 }
@@ -474,7 +479,6 @@ QAbstractItemView:disabled{
 }
 
 QAbstractItemView::item:hover {
-    /* color: {color:bg-view-hover}; */
     background: {color:bg-view-hover};
 }
 
