@@ -332,7 +332,7 @@ class ContextCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(icon_layout, 0)
         layout.addWidget(label_widget, 1)
 
@@ -363,7 +363,7 @@ class ConvertorItemCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(icon_layout, 0)
         layout.addWidget(label_widget, 1)
 
@@ -424,7 +424,7 @@ class InstanceCardWidget(CardWidget):
         top_layout.addWidget(expand_btn, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(top_layout)
         layout.addWidget(detail_widget)
 
