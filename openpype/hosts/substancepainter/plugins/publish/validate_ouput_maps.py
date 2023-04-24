@@ -31,7 +31,7 @@ class ValidateOutputMaps(pyblish.api.InstancePlugin):
         # generate the smallest size / fastest export as possible
         config = copy.deepcopy(config)
         parameters = config["exportParameters"][0]["parameters"]
-        parameters["sizeLog2"] = [1, 1]  # output 2x2 images (smallest)
+        parameters["sizeLog2"] = [1, 1]     # output 2x2 images (smallest)
         parameters["paddingAlgorithm"] = "passthrough"  # no dilation (faster)
         parameters["dithering"] = False     # no dithering (faster)
 
