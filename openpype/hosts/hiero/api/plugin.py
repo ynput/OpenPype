@@ -816,7 +816,7 @@ class PublishClip:
             if len(parents) == 4:
                 season = parents[-3]
 
-        self.shot_path_tokens = {"folder":folder, "episode": episode, "sequence": sequence, "shot": shot}
+        self.shot_path_tokens = {"folder": folder, "episode": episode, "sequence": sequence, "shot": shot}
         for key in self.shot_path_tokens:
             self.ui_inputs["hierarchyData"]["value"][key]["value"] = self.shot_path_tokens[key]
 
