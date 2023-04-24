@@ -36,6 +36,8 @@ from .icons import (
 from ..constants import (
     VARIANT_TOOLTIP,
     ResetKeySequence,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 
@@ -1098,6 +1100,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
+        main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
         main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
@@ -1346,6 +1350,8 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
+        content_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        content_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         row = 0
         for attr_def, attr_instances, values in result:
@@ -1479,6 +1485,8 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
         attr_def_layout.setColumnStretch(0, 0)
         attr_def_layout.setColumnStretch(1, 1)
+        attr_def_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        attr_def_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.addWidget(attr_def_widget, 0)

@@ -15,6 +15,9 @@ VARIANT_TOOLTIP = (
     "\nnumerical characters (0-9) dot (\".\") or underscore (\"_\")."
 )
 
+INPUTS_LAYOUT_HSPACING = 4
+INPUTS_LAYOUT_VSPACING = 2
+
 # Roles for instance views
 INSTANCE_ID_ROLE = QtCore.Qt.UserRole + 1
 SORT_VALUE_ROLE = QtCore.Qt.UserRole + 2

@@ -2,6 +2,8 @@ from qtpy import QtWidgets, QtCore
 
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 
+from ..constants import INPUTS_LAYOUT_HSPACING, INPUTS_LAYOUT_VSPACING
+
 
 class PreCreateWidget(QtWidgets.QWidget):
     def __init__(self, parent):
@@ -81,6 +83,8 @@ class AttributesWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         self._layout = layout
 
