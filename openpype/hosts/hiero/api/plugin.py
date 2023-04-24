@@ -668,7 +668,9 @@ class PublishClip:
     tag_data = dict()
     types = {
         "shot": "shot",
+        ### Starts Alkemy-X Override ###
         "path": "path",
+        ### Ends Alkemy-X Override ###
         "folder": "folder",
         "episode": "episode",
         "sequence": "sequence",
@@ -736,9 +738,11 @@ class PublishClip:
         # use all populated default data to create all important attributes
         self._populate_attributes()
 
+        ### Starts Alkemy-X Override ###
         # Override self.hierarchy if path token was updated
         if hierarchy_value:
             self.solve_path_token_hierarchy()
+        ### Ends Alkemy-X Override ###
 
         # create parents with correct types
         self._create_parents()
@@ -797,6 +801,7 @@ class PublishClip:
 
         return parents
 
+    ### Starts Alkemy-X Override ###
     def update_path_token_hierarchy(self):
         """Update UI inputs from clip name to avoid typing values for episode/sequence.
         Need to recreate the entity relationship that would be seen in Shotgrid
@@ -833,6 +838,7 @@ class PublishClip:
             new_subpath = "{folder}"
 
         self.hierarchy = self.hierarchy.replace("{path}", new_subpath)
+    ### Ends Alkemy-X Override ###
 
     def _populate_track_item_default_data(self):
         """ Populate default formatting data from track item. """
