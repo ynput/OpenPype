@@ -800,7 +800,7 @@ class PublishClip:
     def update_path_token_hierarchy(self):
         """Update UI inputs from clip name to avoid typing values for episode/sequence.
         Need to recreate the entity relationship that would be seen in Shotgrid
-        There is an assumption that the hierachry is build for a shot/asset
+        There is an assumption that the hierarchy is build for a shot/asset
         """
         episode = ""
         sequence = ""
