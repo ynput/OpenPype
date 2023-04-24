@@ -448,9 +448,18 @@ class PublisherWindow(QtWidgets.QDialog):
             event.accept()
             return
 
-        if ResetKeySequence.matches(
-            QtGui.QKeySequence(event.key() | event.modifiers())
-        ):
+        # PySide6 Support
+        if hasattr(event, "keyCombination"):
+            match_result = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.keyCombination())
+            )
+            reset_pressed = match_result == QtGui.QKeySequence.ExactMatch
+        else:
+            reset_pressed = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.modifiers() | event.key())
+            )
+
+        if reset_pressed:
             if not self.controller.publish_is_running:
                 self.reset()
             event.accept()
