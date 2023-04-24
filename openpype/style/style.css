@@ -864,7 +864,13 @@ OverlayMessageWidget QWidget {
     background: {color:bg-view-hover};
 }
 
-/* New Create/Publish UI */
+/* Publisher UI (Create/Publish) */
+#PublishWindow QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+#PublishWindow QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
 PublisherTabsWidget {
     background: {color:publisher:tab-bg};
 }
@@ -1470,6 +1476,12 @@ CreateNextPageOverlay {
 }
 
 /* Attribute Definition widgets */
+AttributeDefinitionsWidget QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+AttributeDefinitionsWidget QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
 InViewButton, InViewButton:disabled {
     background: transparent;
 }
