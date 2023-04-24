@@ -11,7 +11,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 - Backspace - disable selection
 
 ```
-|- Options
+|- Context
 |- <Group 1> [x]
 |  |- <Instance 1> [x]
 |  |- <Instance 2> [x]

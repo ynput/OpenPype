@@ -2,7 +2,7 @@ from qtpy import QtCore, QtGui
 
 # ID of context item in instance view
 CONTEXT_ID = "context"
-CONTEXT_LABEL = "Options"
+CONTEXT_LABEL = "Context"
 # Not showed anywhere - used as identifier
 CONTEXT_GROUP = "__ContextGroup__"
 
