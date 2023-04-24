@@ -380,6 +380,7 @@ How output of the schema could look like on save:
 - simple text input
     - key `"multiline"` allows to enter multiple lines of text (Default: `False`)
     - key `"placeholder"` allows to show text inside input when is empty (Default: `None`)
+    - key `"minimum_lines_count"` allows to define minimum size hint for UI. Can be 0-n lines.
 
 ```
 {

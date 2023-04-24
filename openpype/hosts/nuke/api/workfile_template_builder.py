@@ -42,7 +42,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was successfully imported or not
+            bool: Whether the template was successfully imported or not
         """
 
         # TODO check if the template is already imported
@@ -219,19 +219,22 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         # fix the problem of z_order for backdrops
         self._fix_z_order(placeholder)
-        self._imprint_siblings(placeholder)
+
+        if placeholder.data.get("keep_placeholder"):
+            self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
-            # save initial nodes postions and dimensions, update them
+            # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of loaded nodes
+            if placeholder.data.get("keep_placeholder"):
+                self._imprint_inits()
+                self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
 
-            self._imprint_inits()
-            self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
             self._set_loaded_connections(placeholder)
 
         elif placeholder.data["siblings"]:
             # create copies of placeholder siblings for the new loaded nodes,
-            # set their inputs and outpus and update all nodes positions and
+            # set their inputs and outputs and update all nodes positions and
             # dimensions and siblings names
 
             siblings = get_nodes_by_names(placeholder.data["siblings"])
@@ -629,19 +632,23 @@ class NukePlaceholderCreatePlugin(
 
         # fix the problem of z_order for backdrops
         self._fix_z_order(placeholder)
-        self._imprint_siblings(placeholder)
+
+        if placeholder.data.get("keep_placeholder"):
+            self._imprint_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
-            # save initial nodes postions and dimensions, update them
+            # save initial nodes positions and dimensions, update them
             # and set inputs and outputs of created nodes
 
-            self._imprint_inits()
-            self._update_nodes(placeholder, nuke.allNodes(), nodes_created)
+            if placeholder.data.get("keep_placeholder"):
+                self._imprint_inits()
+                self._update_nodes(placeholder, nuke.allNodes(), nodes_created)
+
             self._set_created_connections(placeholder)
 
         elif placeholder.data["siblings"]:
             # create copies of placeholder siblings for the new created nodes,
-            # set their inputs and outpus and update all nodes positions and
+            # set their inputs and outputs and update all nodes positions and
             # dimensions and siblings names
 
             siblings = get_nodes_by_names(placeholder.data["siblings"])

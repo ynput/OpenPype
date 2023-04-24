@@ -127,6 +127,8 @@ def get_output_parameter(node):
         return node.parm("filename")
     elif node_type == "comp":
         return node.parm("copoutput")
+    elif node_type == "opengl":
+        return node.parm("picture")
     elif node_type == "arnold":
         if node.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
@@ -479,23 +481,13 @@ def reset_framerange():
 
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset_data.get("edit_in")
-        frame_end = asset_data.get("edit_out")
 
     if frame_start is None or frame_end is None:
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset_data.get("handles") or 0
-    handle_start = asset_data.get("handleStart")
-    if handle_start is None:
-        handle_start = handles
-
-    handle_end = asset_data.get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
+    handle_start = asset_data.get("handleStart", 0)
+    handle_end = asset_data.get("handleEnd", 0)
 
     frame_start -= int(handle_start)
     frame_end += int(handle_end)

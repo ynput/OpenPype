@@ -193,8 +193,8 @@ def parse_container(item, validate=True):
             return
         # convert the data to list and validate them
         for _, obj_data in _data.items():
-            cotnainer = data_to_container(item, obj_data)
-            return_list.append(cotnainer)
+            container = data_to_container(item, obj_data)
+            return_list.append(container)
         return return_list
     else:
         _data = lib.get_trackitem_openpype_data(item)
