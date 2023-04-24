@@ -783,6 +783,7 @@ class PublishClip:
 
         return self.track_item
 
+    ### Starts Alkemy-X Override ###
     def get_asset_parents(self):
         """Return parents from asset stored on the Avalon database."""
 
@@ -801,7 +802,6 @@ class PublishClip:
 
         return parents
 
-    ### Starts Alkemy-X Override ###
     def update_path_token_hierarchy(self):
         """Update UI inputs from clip name to avoid typing values for episode/sequence.
         Need to recreate the entity relationship that would be seen in Shotgrid
