@@ -1294,6 +1294,26 @@ class AssetLoader(Loader):
                             if new_bone:
                                 transfer_stack(bone, "constraints", new_bone)
 
+                    # Ensure drivers reassignation
+                    if (
+                        isinstance(old_datablock, bpy.types.Object)
+                        and hasattr(new_datablock.data, "shape_keys")
+                        and new_datablock.data.shape_keys
+                    ):
+                        for i, driver in enumerate(
+                            new_datablock.data.shape_keys.animation_data.drivers
+                        ):
+                            for j, var in enumerate(driver.driver.variables):
+                                for k, target in enumerate(var.targets):
+                                    target.id = (
+                                        old_datablock.data.shape_keys.animation_data.drivers[
+                                            i
+                                        ]
+                                        .driver.variables[j]
+                                        .targets[k]
+                                        .id
+                                    )
+
             # Restore parent collection if existing
             if parent_collection:
                 unlink_from_collection(
