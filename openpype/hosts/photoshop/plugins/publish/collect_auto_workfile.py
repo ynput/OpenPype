@@ -3,8 +3,6 @@ import pyblish.api
 
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import get_subset_name
-from openpype.client import get_asset_by_name
-from openpype.pipeline import get_current_asset_name, get_current_task_name
 
 
 class CollectAutoWorkfile(pyblish.api.ContextPlugin):
@@ -53,8 +51,8 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
                     self.log.debug("Workfile instance disabled")
                     return
 
-        project_name = get_current_project_name()
-        proj_settings = get_project_settings(project_name)
+        project_name = context.data["anatomyData"]["project"]["name"]
+        proj_settings = context.data["project_settings"]
         auto_creator = proj_settings.get(
             "photoshop", {}).get(
             "create", {}).get(
@@ -62,16 +60,15 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
 
         if not auto_creator or not auto_creator["enabled"]:
             self.log.debug("Workfile creator disabled, won't create new")
+            return
 
         # context.data["variant"] might come only from collect_batch_data
-        variant = context.data.get("variant") or \
-                    auto_creator["default_variant"]
+        variant = (context.data.get("variant") or
+                   auto_creator["default_variant"])
 
-        project_name = context.data["anatomyData"]["project"]["name"]
-        proj_settings = context.data["project_settings"]
         task_name = context.data["anatomyData"]["task"]["name"]
         host_name = context.data["hostName"]
-        asset_doc =  context.data["assetEntity"]
+        asset_doc = context.data["assetEntity"]
         asset_name = asset_doc["name"]
 
         subset_name = get_subset_name(
@@ -85,7 +82,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         )
 
         # Create instance
-        instance = context.create_instance(subset)
+        instance = context.create_instance(subset_name)
         instance.data.update({
             "subset": subset_name,
             "label": base_name,

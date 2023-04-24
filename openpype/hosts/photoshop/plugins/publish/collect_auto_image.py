@@ -1,19 +1,16 @@
-import pprint
-
 import pyblish.api
 
-from openpype.settings import get_project_settings
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import get_subset_name
-from openpype.pipeline.context_tools import get_current_project_name
-from openpype.client import get_asset_by_name
-from openpype.pipeline import get_current_asset_name, get_current_task_name
 
 
 class CollectAutoImage(pyblish.api.ContextPlugin):
-    """Creates auto image in non artist based publishes (Webpublisher)"""
+    """Creates auto image in non artist based publishes (Webpublisher).
 
-    label = "Collect Instances"
+    'remotepublish' should be renamed to 'autopublish' or similar in the future
+    """
+
+    label = "Collect Auto Image"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
@@ -32,7 +29,7 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         proj_settings = context.data["project_settings"]
         task_name = context.data["anatomyData"]["task"]["name"]
         host_name = context.data["hostName"]
-        asset_doc =  context.data["assetEntity"]
+        asset_doc = context.data["assetEntity"]
         asset_name = asset_doc["name"]
 
         auto_creator = proj_settings.get(
@@ -42,11 +39,12 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
 
         if not auto_creator or not auto_creator["enabled"]:
             self.log.debug("Auto image creator disabled, won't create new")
+            return
 
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()
         for item in stored_items:
-            if item.get("creator_identifier") == family:
+            if item.get("creator_identifier") == "auto_image":
                 if not item.get("active"):
                     self.log.debug("Auto_image instance disabled")
                     return

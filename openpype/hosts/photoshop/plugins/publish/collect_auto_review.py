@@ -5,9 +5,6 @@ Requires:
 Provides:
     instance     -> family ("review")
 """
-
-import os
-
 import pyblish.api
 
 from openpype.hosts.photoshop import api as photoshop
@@ -20,8 +17,7 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
     Called only if PS is triggered in Webpublisher or in tests.
     """
 
-    label = "Collect Review"
-    label = "Review"
+    label = "Collect Auto Review"
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
     targets = ["remotepublish"]
@@ -59,18 +55,19 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
 
         if not auto_creator or not auto_creator["enabled"]:
             self.log.debug("Review creator disabled, won't create new")
+            return
 
-        variant = context.data.get("variant") or \
-                    auto_creator["default_variant"]
+        variant = (context.data.get("variant") or
+                   auto_creator["default_variant"])
 
         project_name = context.data["anatomyData"]["project"]["name"]
         proj_settings = context.data["project_settings"]
         task_name = context.data["anatomyData"]["task"]["name"]
         host_name = context.data["hostName"]
-        asset_doc =  context.data["assetEntity"]
+        asset_doc = context.data["assetEntity"]
         asset_name = asset_doc["name"]
 
-        subset = get_subset_name(
+        subset_name = get_subset_name(
             family,
             variant,
             task_name,
@@ -80,11 +77,11 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
             project_settings=proj_settings
         )
 
-        instance = context.create_instance(subset)
+        instance = context.create_instance(subset_name)
         instance.data.update({
-            "subset": subset,
-            "label": subset,
-            "name": subset,
+            "subset": subset_name,
+            "label": subset_name,
+            "name": subset_name,
             "family": family,
             "families": [],
             "representations": [],
