@@ -17,6 +17,7 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         # which isn't the actual frame range that this instance renders.
         instance.data["handleStart"] = 0
         instance.data["handleEnd"] = 0
+        instance.data["fps"] = instance.context.data["fps"]
 
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
