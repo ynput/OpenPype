@@ -46,6 +46,8 @@ class PublisherWindow(QtWidgets.QDialog):
     def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
+        self.setObjectName("PublishWindow")
+
         self.setWindowTitle("OpenPype publisher")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
