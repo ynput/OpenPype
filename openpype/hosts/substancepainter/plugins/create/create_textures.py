@@ -91,7 +91,34 @@ class CreateTextures(Creator):
             EnumDef("exportFileFormat",
                     items={
                         None: "Based on output template",
-                        # TODO: implement extensions
+                        # TODO: Get available extensions from substance API
+                        "bmp": "bmp",
+                        "ico": "ico",
+                        "jpeg": "jpeg",
+                        "jng": "jng",
+                        "pbm": "pbm",
+                        "pgm": "pgm",
+                        "png": "png",
+                        "ppm": "ppm",
+                        "tga": "targa",
+                        "tif": "tiff",
+                        "wap": "wap",
+                        "wbmp": "wbmp",
+                        "xpm": "xpm",
+                        "gif": "gif",
+                        "hdr": "hdr",
+                        "exr": "exr",
+                        "j2k": "j2k",
+                        "jp2": "jp2",
+                        "pfm": "pfm",
+                        "webp": "webp",
+                        # TODO: Unsure why jxr format fails to export
+                        # "jxr": "jpeg-xr",
+                        # TODO: File formats that combine the exported textures
+                        #   like psd are not correctly supported due to
+                        #   publishing only a single file
+                        # "psd": "psd",
+                        # "sbsar": "sbsar",
                     },
                     default=None,
                     label="File type"),
