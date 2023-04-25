@@ -297,7 +297,8 @@ def load_casting(project_name: str, shot_name: str) -> Set[OpenpypeContainer]:
             all_datablocks.update(datablocks)
         except TypeError:
             print(
-                f"Cannot load {representation['context']['asset']} {representation['context']['subset']}."
+                f"Cannot load {representation['context']['asset']}"
+                f"{representation['context']['subset']}."
             )
 
     return containers, all_datablocks
@@ -389,6 +390,7 @@ def build_layout(project_name, asset_name):
 
     # Load casting from kitsu breakdown.
     containers = {}
+    errors = []
     try:
         _casting_containers, casting_datablocks = load_casting(
             project_name, asset_name
@@ -404,14 +406,18 @@ def build_layout(project_name, asset_name):
                 continue
             if c.outliner_entity not in layout_container.children.values():
                 layout_container.children.link(c.outliner_entity)
-            if c.outliner_entity in bpy.context.scene.collection.children.values():
+            if (
+                c.outliner_entity
+                in bpy.context.scene.collection.children.values()
+            ):
                 bpy.context.scene.collection.children.unlink(c.outliner_entity)
 
         # Create GDEFORMER collection
         create_gdeformer_collection(
             layout_instance.datablock_refs[0].datablock
         )
-    except RuntimeError:
+    except RuntimeError as err:
+        errors.append(f"Load casting failed ! {err}")
         # Wait for download
         wait_for_download(project_name, [board_repre, audio_repre])
 
@@ -475,7 +481,8 @@ def build_layout(project_name, asset_name):
                 ),
                 None,
             )
-    except RuntimeError:
+    except RuntimeError as err:
+        errors.append(f"Build setdress failed ! {err}")
         camera_collection = None
 
     # Ensure camera instance
@@ -524,6 +531,8 @@ def build_layout(project_name, asset_name):
             "Background",
         )
 
+    assert not errors, "; ".join(errors)
+
 
 def build_anim(project_name, asset_name):
     """Build anim workfile.
@@ -558,6 +567,7 @@ def build_anim(project_name, asset_name):
     )
 
     # Switch hero containers to versioned
+    errors = []
     for container in bpy.context.scene.openpype_containers:
         container_metadata = container["avalon"]
         # Get version representation
@@ -606,7 +616,10 @@ def build_anim(project_name, asset_name):
                 switch_container(
                     container_metadata, version_representation, loader
                 )
-            except RuntimeError:
+            except RuntimeError as err:
+                errors.append(
+                    f"Switch versioned failed for {container.name}: {err}"
+                )
                 continue
 
     # Substitute overridden GDEFORMER collection by local one
@@ -668,6 +681,8 @@ def build_anim(project_name, asset_name):
 
     # load the board mov as image background linked into the camera
     load_subset(project_name, board_repre, "Background")
+
+    assert not errors, "; ".join(errors)
 
 
 def build_lipsync(project_name: str, shot_name: str):
