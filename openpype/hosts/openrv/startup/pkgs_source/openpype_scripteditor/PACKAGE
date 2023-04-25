@@ -5,7 +5,7 @@ version: 1.0
 rv: 3.12
 openrv: 1.0.0
 requires: ''
-optional: false
+optional: true
 
 modes:
   - file: openpype_scripteditor
