@@ -1,9 +1,12 @@
 import os
 import shutil
+import zipfile
+import tempfile
 from pathlib import Path
 
 from openpype.lib import PreLaunchHook
 from openpype.hosts.openrv import OPENRV_ROOT_DIR
+from openpype.lib.execute import run_subprocess
 
 
 class PreSetupOpenRV(PreLaunchHook):
@@ -11,51 +14,52 @@ class PreSetupOpenRV(PreLaunchHook):
     app_groups = ["openrv"]
 
     def execute(self):
-        root = Path(OPENRV_ROOT_DIR)
-        startup = root / "startup"
-        startup_packages = startup / "Packages"
-        startup_python = startup / "Python"
 
-        # Ensure folder exists
-        startup_python.mkdir(exist_ok=True)
+        executable = self.application.find_executable()
+        if not executable:
+            self.log.error("Unable to find executable for RV.")
+            return
 
-        # TODO: Auto deployment should not be this hacky
-        # Redeploy the source packages to zips to auto-update
-        # during development of OpenRV
-        import zipfile
-        for package_name in ["comments",
-                             "openpype_menus-1.0",
-                             "openpype_scripteditor"]:
-            package_src = startup / "pkgs_source" / package_name
-            package_dest = startup_packages / "{}.zip".format(package_name)
-            self.log.info(f"Writing: {package_dest}")
-            with zipfile.ZipFile(package_dest, mode="w") as zip:
-                for filepath in package_src.iterdir():
-                    if not filepath.is_file():
-                        continue
+        # We use the `rvpkg` executable next to the `rv` executable to
+        # install and opt-in to the OpenPype plug-in packages
+        rvpkg = Path(os.path.dirname(str(executable))) / "rvpkg"
+        packages_src_folder = Path(OPENRV_ROOT_DIR) / "startup" / "pkgs_source"
 
-                    zip.write(filepath,
-                              arcname=filepath.name)
+        # TODO: Are we sure we want to deploy the addons into a temporary
+        #   RV_SUPPORT_PATH on each launch. This would create redundant temp
+        #   files that remain on disk but it does allow us to ensure RV is
+        #   now running with the correct version of the RV packages of this
+        #   current running OpenPype version
+        op_support_path = Path(tempfile.mkdtemp(
+            prefix="openpype_rv_support_path_"
+        ))
 
-                    if filepath.suffix == ".py":
-                        # Include it in Python subfolder where OpenRV deploys
-                        # the files after first install (and does not update
-                        # after)
-                        self.log.info(
-                            f"Copying {filepath} to folder {startup_python}"
-                        )
-                        shutil.copy(filepath, startup_python)
+        # Write the OpenPype RV package zips directly to the support path
+        # Packages/ folder then we don't need to `rvpkg -add` them afterwards
+        packages_dest_folder = op_support_path / "Packages"
+        packages_dest_folder.mkdir(exist_ok=True)
+        packages = ["comments", "openpype_menus", "openpype_scripteditor"]
+        for package_name in packages:
+            package_src = packages_src_folder / package_name
+            package_dest = packages_dest_folder / "{}.zip".format(package_name)
 
-        self.log.debug(f"Adding RV_SUPPORT_PATH: {startup}")
+            self.log.debug(f"Writing: {package_dest}")
+            shutil.make_archive(str(package_dest), "zip", str(package_src))
+
+        # Install and opt-in the OpenPype RV packages
+        install_args = [rvpkg, "-only", op_support_path, "-install"]
+        install_args.extend(packages)
+        optin_args = [rvpkg, "-only", op_support_path, "-optin"]
+        optin_args.extend(packages)
+        run_subprocess(install_args, logger=self.log)
+        run_subprocess(optin_args, logger=self.log)
+
+        self.log.debug(f"Adding RV_SUPPORT_PATH: {op_support_path}")
         support_path = self.launch_context.env.get("RV_SUPPORT_PATH")
         if support_path:
-            support_path = os.pathsep.join([support_path, str(startup)])
+            support_path = os.pathsep.join([support_path,
+                                            str(op_support_path)])
         else:
-            support_path = str(startup)
+            support_path = str(op_support_path)
         self.log.debug(f"Setting RV_SUPPORT_PATH: {support_path}")
         self.launch_context.env["RV_SUPPORT_PATH"] = support_path
-
-        # TODO: OpenRV does write files into RV_SUPPORT_PATH during runtime
-        #   so we should actually not deploy that as a path inside OP deploy
-        #   to avoid openpype checksum validation issues, etc. but for now
-        #   it helps running from code to run the integration for development
