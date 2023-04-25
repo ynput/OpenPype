@@ -11,8 +11,8 @@ from openpype.pipeline.colorspace import (
 
 
 class ValidateColorspace(pyblish.api.InstancePlugin,
-                        publish.OpenPypePyblishPluginMixin,
-                        publish.ColormanagedPyblishPluginMixin):
+                         publish.OpenPypePyblishPluginMixin,
+                         publish.ColormanagedPyblishPluginMixin):
     """Validate representation colorspaces"""
 
     label = "Validate representation colorspace"
