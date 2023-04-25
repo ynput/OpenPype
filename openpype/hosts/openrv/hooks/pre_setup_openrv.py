@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -45,9 +46,14 @@ class PreSetupOpenRV(PreLaunchHook):
                         )
                         shutil.copy(filepath, startup_python)
 
-        # TODO: Make sure we don't override a full studios RV_SUPPORT_PATH
-        print("Setting RV_SUPPORT_PATH", startup)
-        self.launch_context.env["RV_SUPPORT_PATH"] = str(startup)
+        self.log.debug(f"Adding RV_SUPPORT_PATH: {startup}")
+        support_path = self.launch_context.env.get("RV_SUPPORT_PATH")
+        if support_path:
+            support_path = os.pathsep.join([support_path, str(startup)])
+        else:
+            support_path = str(startup)
+        self.log.debug(f"Setting RV_SUPPORT_PATH: {support_path}")
+        self.launch_context.env["RV_SUPPORT_PATH"] = support_path
 
         # TODO: OpenRV does write files into RV_SUPPORT_PATH during runtime
         #   so we should actually not deploy that as a path inside OP deploy
