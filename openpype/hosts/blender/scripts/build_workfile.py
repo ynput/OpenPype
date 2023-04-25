@@ -317,7 +317,7 @@ def build_model(project_name, asset_name):
     create_instance("CreateModel", "modelMain", useSelection=True)
     # load the concept reference as image reference in the scene.
     download_and_load_subset(
-        project_name, asset_name, "conceptReference", "Reference"
+        project_name, asset_name, "ConceptReference", "Reference"
     )
 
 
