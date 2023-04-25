@@ -29,13 +29,13 @@ from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.pipeline.load.utils import switch_container
 
 
-def get_loader(project_name, representation, loader_type=None):
+def get_loader(project_name: str, representation: dict, loader_type: str):
     """Get loader from representation by matching type.
 
     Args:
         project_name (str): The project name.
         representation (dict): The representation.
-        loader_type (str, optional): The loader name. Defaults to None.
+        loader_type (str): The loader name.
 
     Returns:
         The matched loader class.
@@ -154,14 +154,14 @@ def wait_for_download(project_name, representations: List[dict]):
 
 
 def load_subset(
-    project_name, representation, loader_type=None
+    project_name: str, representation: dict, loader_type: str
 ) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
     """Load the representation of the subset last version.
 
     Args:
         project_name (str): The project name.
         representation (dict): The representation.
-        loader_type (str, optional): The loader name. Defaults to None.
+        loader_type (str): The loader name.
 
     Returns:
         Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
@@ -176,7 +176,7 @@ def load_subset(
 
 
 def download_and_load_subset(
-    project_name, asset_name, subset_name, loader_type=None
+    project_name: str, asset_name: str, subset_name: str, loader_type: str
 ) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
     """Download and load the representation of the subset last version.
 
@@ -184,7 +184,7 @@ def download_and_load_subset(
         project_name (str): The project name.
         asset_name (str): The asset name.
         subset_name (str): The subset name.
-        loader_type (str, optional): The loader name. Defaults to None.
+        loader_type (str): The loader name.
 
     Returns:
         Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
@@ -291,7 +291,7 @@ def load_casting(project_name: str, shot_name: str) -> Set[OpenpypeContainer]:
             container, datablocks = load_subset(
                 project_name,
                 representation,
-                f"Link",
+                "Link",
             )
             containers.append(container)
             all_datablocks.update(datablocks)
@@ -316,7 +316,7 @@ def build_model(project_name, asset_name):
     create_instance("CreateModel", "modelMain", useSelection=True)
     # load the concept reference as image reference in the scene.
     download_and_load_subset(
-        project_name, asset_name, "ConceptReference", "Reference", "jpg"
+        project_name, asset_name, "conceptReference", "Reference"
     )
 
 
@@ -385,8 +385,10 @@ def build_layout(project_name, asset_name):
 
     # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
+    layout_container = layout_instance.datablock_refs[0].datablock
 
     # Load casting from kitsu breakdown.
+    containers = {}
     try:
         _casting_containers, casting_datablocks = load_casting(
             project_name, asset_name
@@ -398,18 +400,18 @@ def build_layout(project_name, asset_name):
 
         # Link loaded containers to layout collection
         for c in containers:
-            layout_instance.datablock_refs[0].datablock.children.link(
-                c.outliner_entity
-            )
-            bpy.context.scene.collection.children.unlink(c.outliner_entity)
+            if not isinstance(c.outliner_entity, bpy.types.Collection):
+                continue
+            if c.outliner_entity not in layout_container.children.values():
+                layout_container.children.link(c.outliner_entity)
+            if c.outliner_entity in bpy.context.scene.collection.children.values():
+                bpy.context.scene.collection.children.unlink(c.outliner_entity)
 
         # Create GDEFORMER collection
         create_gdeformer_collection(
             layout_instance.datablock_refs[0].datablock
         )
     except RuntimeError:
-        containers = {}
-
         # Wait for download
         wait_for_download(project_name, [board_repre, audio_repre])
 
@@ -594,12 +596,18 @@ def build_anim(project_name, asset_name):
         )
 
         # Switch container to versioned
-        loader = get_loader(
-            project_name,
-            version_representation,
-            container_metadata.get("loader"),
-        )
-        switch_container(container_metadata, version_representation, loader)
+        loader_name = container_metadata.get("loader")
+        if not loader_name or not isinstance(loader_name, str):
+            continue
+        loader = get_loader(project_name, version_representation, loader_name)
+
+        if loader:
+            try:
+                switch_container(
+                    container_metadata, version_representation, loader
+                )
+            except RuntimeError:
+                continue
 
     # Substitute overridden GDEFORMER collection by local one
     old_gdeform_collection = bpy.data.collections.get("GDEFORMER")
