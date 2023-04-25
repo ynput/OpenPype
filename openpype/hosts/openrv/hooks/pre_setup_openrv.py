@@ -46,9 +46,9 @@ class PreSetupOpenRV(PreLaunchHook):
             shutil.make_archive(str(package_dest), "zip", str(package_src))
 
         # Install and opt-in the OpenPype RV packages
-        install_args = [rvpkg, "-only", op_support_path, "-install"]
+        install_args = [rvpkg, "-only", op_support_path, "-install", "-force"]
         install_args.extend(packages)
-        optin_args = [rvpkg, "-only", op_support_path, "-optin"]
+        optin_args = [rvpkg, "-only", op_support_path, "-optin", "-force"]
         optin_args.extend(packages)
         run_subprocess(install_args, logger=self.log)
         run_subprocess(optin_args, logger=self.log)
