@@ -353,6 +353,21 @@
             ]
         },
         {
+            "type": "dict",
+            "key": "perforce",
+            "label": "Perforce (P4)",
+            "collapsible": true,
+            "require_restart": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "dynamic_schema",
             "name": "system_settings/modules"
         }
