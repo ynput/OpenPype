@@ -22,6 +22,8 @@ from ..constants import (
     CREATOR_IDENTIFIER_ROLE,
     CREATOR_THUMBNAIL_ENABLED_ROLE,
     CREATOR_SORT_ROLE,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 SEPARATORS = ("---separator---", "---")
@@ -198,6 +200,8 @@ class CreateWidget(QtWidgets.QWidget):
 
         variant_subset_layout = QtWidgets.QFormLayout(variant_subset_widget)
         variant_subset_layout.setContentsMargins(0, 0, 0, 0)
+        variant_subset_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        variant_subset_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         variant_subset_layout.addRow("Variant", variant_widget)
         variant_subset_layout.addRow("Subset", subset_name_input)
 

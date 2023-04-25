@@ -46,6 +46,8 @@ class PublisherWindow(QtWidgets.QDialog):
     def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
+        self.setObjectName("PublishWindow")
+
         self.setWindowTitle("OpenPype publisher")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
@@ -440,15 +442,24 @@ class PublisherWindow(QtWidgets.QDialog):
             event.accept()
             return
 
-        if event.matches(QtGui.QKeySequence.Save):
+        save_match = event.matches(QtGui.QKeySequence.Save)
+        if save_match == QtGui.QKeySequence.ExactMatch:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()
             return
 
-        if ResetKeySequence.matches(
-            QtGui.QKeySequence(event.key() | event.modifiers())
-        ):
+        # PySide6 Support
+        if hasattr(event, "keyCombination"):
+            reset_match_result = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.keyCombination())
+            )
+        else:
+            reset_match_result = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.modifiers() | event.key())
+            )
+
+        if reset_match_result == QtGui.QKeySequence.ExactMatch:
             if not self.controller.publish_is_running:
                 self.reset()
             event.accept()

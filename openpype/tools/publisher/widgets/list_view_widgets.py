@@ -11,7 +11,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 - Backspace - disable selection
 
 ```
-|- Options
+|- Context
 |- <Group 1> [x]
 |  |- <Instance 1> [x]
 |  |- <Instance 2> [x]
@@ -486,6 +486,9 @@ class InstanceListView(AbstractInstanceView):
             group_widget.set_expanded(expanded)
 
     def _on_toggle_request(self, toggle):
+        if not self._active_toggle_enabled:
+            return
+
         selected_instance_ids = self._instance_view.get_selected_instance_ids()
         if toggle == -1:
             active = None
