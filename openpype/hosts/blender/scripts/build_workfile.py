@@ -386,7 +386,14 @@ def build_layout(project_name, asset_name):
 
     # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
-    layout_container = layout_instance.datablock_refs[0].datablock
+    layout_collection = next(
+        (
+            root
+            for root in layout_instance.get_root_outliner_datablocks()
+            if isinstance(root, bpy.types.Collection)
+        ),
+        None,
+    )
 
     # Load casting from kitsu breakdown.
     containers = {}
@@ -401,16 +408,13 @@ def build_layout(project_name, asset_name):
         containers = bpy.context.scene.openpype_containers
 
         # Link loaded containers to layout collection
-        for c in containers:
-            if not isinstance(c.outliner_entity, bpy.types.Collection):
-                continue
-            if c.outliner_entity not in layout_container.children.values():
-                layout_container.children.link(c.outliner_entity)
-            if (
-                c.outliner_entity
-                in bpy.context.scene.collection.children.values()
-            ):
-                bpy.context.scene.collection.children.unlink(c.outliner_entity)
+        for container in containers:
+            for root in container.get_root_outliner_datablocks():
+                if not isinstance(root, bpy.types.Collection):
+                    if root not in layout_collection.children.values():
+                        layout_collection.children.link(root)
+                    if root in bpy.context.scene.collection.children.values():
+                        bpy.context.scene.collection.children.unlink(root)
 
         # Create GDEFORMER collection
         create_gdeformer_collection(
@@ -560,8 +564,16 @@ def build_anim(project_name, asset_name):
         project_name, layout_repre, "LinkLayoutLoader"
     )
 
+    # keep layout root collection name before make container publishable.
+    layout_collection_name = next(
+        (
+            root.name
+            for root in layout_container.get_root_outliner_datablocks()
+            if isinstance(root, bpy.types.Collection)
+        ),
+        None,
+    )
     # Make container publishable, expose its content
-    layout_collection_name = layout_container.outliner_entity.name
     bpy.ops.scene.make_container_publishable(
         container_name=layout_container.name
     )
@@ -623,12 +635,16 @@ def build_anim(project_name, asset_name):
                 continue
 
     # Substitute overridden GDEFORMER collection by local one
-    old_gdeform_collection = bpy.data.collections.get("GDEFORMER")
-    if old_gdeform_collection:
-        old_gdeform_collection.name += ".old"
-        layout_collection = bpy.data.collections.get(layout_collection_name)
+    scene_collections_by_name = {
+        c.name: c
+        for c in bpy.scene.scene.collection.children_recursive
+    }
+    gdeform_collection = scene_collections_by_name.get("GDEFORMER")
+    layout_collection = scene_collections_by_name.get(layout_collection_name)
+    if gdeform_collection and layout_collection:
+        gdeform_collection.name += ".old"
         create_gdeformer_collection(layout_collection)
-        bpy.data.collections.remove(old_gdeform_collection)
+        bpy.data.collections.remove(gdeform_collection)
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
