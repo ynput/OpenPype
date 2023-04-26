@@ -21,8 +21,10 @@ from openpype.hosts.blender.api.utils import (
     BL_TYPE_DATAPATH,
     BL_TYPE_ICON,
     build_op_basename,
+    ensure_unique_name,
     get_children_recursive,
     get_parent_collection,
+    get_root_datablocks,
     link_to_collection,
     transfer_stack,
     unlink_from_collection,
@@ -55,7 +57,7 @@ log = Logger.get_logger(__name__)
 def get_unique_number(
     asset: str, subset: str, start_number: Optional[int] = None
 ) -> str:
-    """Return a unique number based on the asset name."""
+    """Return a unique number based on the asset name."""  # TODO remove this
     container_names = [c.name for c in bpy.data.collections]
     container_names += [
         obj.name
@@ -84,7 +86,7 @@ def context_override(
     active: Optional[bpy.types.Object] = None,
     selected: Optional[bpy.types.Object] = None,
     window: Optional[bpy.types.Window] = None,
-    area_type: Optional[str] = "VIEW_3D"
+    area_type: Optional[str] = "VIEW_3D",
 ):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
@@ -242,26 +244,6 @@ def get_last_representation(representation_id: str) -> Optional[Dict]:
     return last_representation
 
 
-def get_container_objects(
-    container: Union[bpy.types.Collection, bpy.types.Object]
-) -> List[bpy.types.Object]:
-    """Get recursively all the child objects for the given container collection
-    or object empty.
-
-    Arguments:
-        container: The parent container.
-
-    Returns:
-        All the child objects of the container.
-    """
-    return [
-        d_ref.datablock
-        for d_ref in container.datablock_refs
-        if type(d_ref.datablock) is bpy.types.Object
-        and d_ref.datablock != container.outliner_entity
-    ]
-
-
 def get_collections_by_objects(
     objects: List[bpy.types.Object],
     collections: Optional[List[bpy.types.Collection]] = None
@@ -345,7 +327,7 @@ def deselect_all():
 def orphans_purge():
     """Purge orphan datablocks and libraries."""
     # clear unused datablock
-    bpy.data.orphans_purge(do_recursive=False)
+    bpy.data.orphans_purge(do_recursive=True)
 
     # clear unused libraries
     for library in list(bpy.data.libraries):
@@ -374,6 +356,7 @@ def make_local(obj, data_local=True):
         if data_local:
             obj.data.make_local()
     return obj
+
 
 def exec_process(process_func: Callable):
     """Decorator to make sure the process function is executed in main thread.
@@ -468,7 +451,9 @@ class Creator(LegacyCreator):
             bpy.types.Collection: Created container collection
         """
         # Filter outliner datablocks
-        collections, objects = self._filter_outliner_datablocks(datablocks)
+        collections, objects = self._filter_outliner_datablocks(
+            get_root_datablocks(datablocks)
+        )
 
         # Determine collections to include if all children are included
         for collection in get_collections_by_objects(objects):
@@ -477,23 +462,14 @@ class Creator(LegacyCreator):
             # Remove objects to not link them to container
             objects -= set(collection.all_objects)
 
-        container_collection = bpy.data.collections.get(collection_name)
-        if container_collection is None:
+        # Bundle into one collection
+        if len(collections) == 1:
             # If only one collection handling all objects, use it as container
-            collections_as_list = list(collections)
-            if len(collections) == 1 and objects.issubset(
-                set(collections_as_list[0].objects)
-            ) and not collections_as_list[0].is_openpype_instance:
-                container_collection = collections_as_list[0]
-                container_collection.name = collection_name  # Rename
-            else:
-                container_collection = bpy.data.collections.new(
-                    collection_name
-                )
-                bpy.context.scene.collection.children.link(
-                    container_collection
-                )
-            container_collection.is_openpype_instance = True
+            container_collection = list(collections)[0]
+            container_collection.name = collection_name
+        else:
+            container_collection = bpy.data.collections.new(collection_name)
+            bpy.context.scene.collection.children.link(container_collection)
 
         # Remove container collection from collections to link
         if container_collection in collections:
@@ -538,7 +514,10 @@ class Creator(LegacyCreator):
         # Get info from data and create name value.
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = build_op_basename(asset, subset)
+        name = ensure_unique_name(
+            build_op_basename(asset, subset),
+            bpy.context.scene.openpype_instances.keys(),
+        )
 
         # Use selected objects if useSelection is True
         if (self.options or {}).get("useSelection"):
@@ -558,10 +537,8 @@ class Creator(LegacyCreator):
                 BL_TYPE_ICON.get(t, "NONE") for t in self.bl_types
             ]
             op_instance["creator_name"] = self.__class__.__name__
-        else:
-            # If no datablocks, then empty instance is already existing
-            if not datablocks:
-                raise RuntimeError(f"This instance already exists: {name}")
+        elif not datablocks:
+            raise RuntimeError(f"This instance already exists: {name}")
 
         # Add custom property on the instance container with the data.
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
@@ -630,6 +607,7 @@ class Creator(LegacyCreator):
         openpype_instances.remove(op_instance_index)
 
         return True
+
 
 class Loader(LoaderPlugin):
     """Base class for Loader plug-ins."""
@@ -739,9 +717,9 @@ class AssetLoader(Loader):
                 loaded_data_collections.add(data_collection_name)
 
         # Convert datablocks names to datablocks references
-        datablocks = set()
+        datablocks = []
         for collection_name in loaded_data_collections:
-            datablocks.update(getattr(data_to, collection_name))
+            datablocks.extend(getattr(data_to, collection_name))
 
             # Remove fake user from loaded datablocks
             datacol = getattr(bpy.data, collection_name)
@@ -750,82 +728,52 @@ class AssetLoader(Loader):
             ]
             datacol.foreach_set("use_fake_user", seq)
 
-        if self.bl_types & BL_OUTLINER_TYPES:
-            # Get datablocks to override, which have
-            # no user in the loaded datablocks (orphan at this point)
-            datablocks_to_override = {
-                    d
-                    for d, users in bpy.data.user_map(
-                        subset=datablocks
-                    ).items()
-                    if not users & datablocks
-                }
+        # Get datablocks to override, which have
+        # no user in the loaded datablocks (orphan at this point)
+        datablocks_to_override = {
+            d
+            for d, users in bpy.data.user_map(subset=datablocks).items()
+            if not users & set(datablocks)
+        }
 
-            # Try to get the right asset container from imported collections.
-            # TODO this whole outliner entity is a bad idea
-            # it must be refactored to deal correctly with nested
-            # outliner entities using user_map()
-            outliner_entity = next(
-                (
-                    entity
-                    for entity in datablocks_to_override
-                    if entity.name.startswith(container_name)
-                ),
-                None,
-            )
+        # Override datablocks if needed
+        if link and do_override:
+            for d in datablocks_to_override:
+                override_datablock = d.override_hierarchy_create(
+                    bpy.context.scene,
+                    bpy.context.view_layer
+                    # NOTE After BL3.4: do_fully_editable=True
+                )
 
-            # Override datablocks if needed
-            if do_override:
-                datablocks = set()
-                for d in datablocks_to_override:
-                    override_datablock = d.override_hierarchy_create(
-                        bpy.context.scene,
-                        bpy.context.view_layer
-                        # NOTE After BL3.4: do_fully_editable=True
-                    )
+                # Update datablocks because could have been renamed
+                datablocks.append(override_datablock)
+                if isinstance(override_datablock, tuple(BL_OUTLINER_TYPES)):
+                    datablocks.extend(override_datablock.children_recursive)
+                    if isinstance(override_datablock, bpy.types.Collection):
+                        datablocks.extend(override_datablock.all_objects)
 
-                    # Update outliner entity
-                    outliner_entity = override_datablock
+            # Ensure user override NOTE: will be unecessary after BL3.4
+            for d in datablocks:
+                if hasattr(d.override_library, "is_system_override"):
+                    d.override_library.is_system_override = False
 
-                    # Update datablocks because could have been renamed
-                    datablocks.add(override_datablock)
-                    if isinstance(
-                        override_datablock, tuple(BL_OUTLINER_TYPES)
-                    ):
-                        datablocks.update(
-                            override_datablock.children_recursive
-                        )
-                        if isinstance(
-                            override_datablock, bpy.types.Collection
-                        ):
-                            datablocks.update(
-                                set(override_datablock.all_objects)
-                            )
-
-                # Ensure user override NOTE: will be unecessary after BL3.4
-                for d in datablocks:
-                    if hasattr(d.override_library, "is_system_override"):
-                        d.override_library.is_system_override = False
-
-            if outliner_entity:
-                # Set color
-                if hasattr(outliner_entity, "color_tag"):
-                    outliner_entity.color_tag = self.color_tag
-
-                # Substitute name in case renamed with .###
-                container_name = outliner_entity.name
-        else:
-            outliner_entity = None
+        # Add meshes to datablocks
+        datablocks.extend(
+            d.data for d in datablocks if d and isinstance(d, bpy.types.Object)
+        )
 
         # Put into container
         container = self._containerize_datablocks(
             container_name, datablocks, container=container
         )
 
+        # Set color
+        for d in container.get_root_outliner_datablocks():
+            if hasattr(d, "color_tag"):
+                d.color_tag = self.color_tag
+
         # Set data to container
         container.library = bpy.data.libraries.get(libpath.name)
-        if outliner_entity:
-            container.outliner_entity = outliner_entity
 
         return container, datablocks
 
@@ -884,7 +832,7 @@ class AssetLoader(Loader):
         libpath: Path,
         container_name: str,
         container: OpenpypeContainer = None,
-        override=True
+        override=True,
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Link blend process.
 
@@ -905,8 +853,7 @@ class AssetLoader(Loader):
             libpath, container_name, container=container, do_override=override
         )
 
-        container_collection = container.outliner_entity
-        if container_collection:
+        for container_collection in container.get_root_outliner_datablocks():
             # If override_hierarchy_create method is not implemented for older
             # Blender versions we need the following steps.
             if not hasattr(container_collection, "override_hierarchy_create"):
@@ -933,7 +880,7 @@ class AssetLoader(Loader):
         self,
         libpath: Path,
         container_name: str,
-        container: OpenpypeContainer = None
+        container: OpenpypeContainer = None,
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Append blend process.
 
@@ -953,8 +900,7 @@ class AssetLoader(Loader):
         )
 
         # Link loaded collection to scene
-        container_collection = container.outliner_entity
-        if container_collection:
+        for container_collection in container.get_root_outliner_datablocks():
             link_to_collection(
                 container_collection, bpy.context.scene.collection
             )
@@ -965,7 +911,7 @@ class AssetLoader(Loader):
         self,
         libpath: Path,
         container_name: str,
-        container: OpenpypeContainer = None
+        container: OpenpypeContainer = None,
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Instance blend process.
 
@@ -986,27 +932,26 @@ class AssetLoader(Loader):
             libpath, container_name, container=container, override=False
         )
 
-        # Avoid duplicates between instance and collection
-        if bpy.data.collections.get(container.name):
-            instance_object_name = f"{container.name}.001"
-        else:
-            instance_object_name = container.name
+        for outliner_datablock in container.get_root_outliner_datablocks():
+            # Avoid duplicates between instance and collection
+            instance_object_name = ensure_unique_name(
+                container.name, set(bpy.data.collections)
+            )
 
-        # Create empty object
-        instance_object = bpy.data.objects.new(
-            instance_object_name, object_data=None
-        )
-        bpy.context.scene.collection.objects.link(instance_object)
+            # Create empty object
+            instance_object = bpy.data.objects.new(
+                instance_object_name, object_data=None
+            )
+            bpy.context.scene.collection.objects.link(instance_object)
 
-        # Instance collection to object
-        instance_object.instance_collection = container.outliner_entity
-        instance_object.instance_type = "COLLECTION"
-        container.outliner_entity = instance_object
+            # Instance collection to object
+            instance_object.instance_collection = outliner_datablock
+            instance_object.instance_type = "COLLECTION"
 
-        # Keep instance object as only datablock
-        container.datablock_refs.clear()
-        instance_ref = container.datablock_refs.add()
-        instance_ref.datablock = instance_object
+            # Keep instance object as only datablock
+            container.datablock_refs.clear()
+            instance_ref = container.datablock_refs.add()
+            instance_ref.datablock = instance_object
 
         return container, all_datablocks
 
@@ -1071,23 +1016,22 @@ class AssetLoader(Loader):
             return container, datablocks
 
         # Ensure container metadata
-        if not container.get(AVALON_PROPERTY):
-            metadata_update(
-                container,
-                {
-                    "schema": "openpype:container-2.0",
-                    "id": AVALON_CONTAINER_ID,
-                    "name": context["subset"]["name"],
-                    "namespace": namespace or "",
-                    "loader": self.__class__.__name__,
-                    "representation": str(context["representation"]["_id"]),
-                    "libpath": libpath.as_posix(),
-                    "asset_name": context["asset"]["name"],
-                    "parent": str(context["representation"]["parent"]),
-                    "family": context["representation"]["context"]["family"],
-                    "objectName": container.name,
-                },
-            )
+        metadata_update(
+            container,
+            {
+                "schema": "openpype:container-2.0",
+                "id": AVALON_CONTAINER_ID,
+                "name": context["subset"]["name"],
+                "namespace": namespace or "",
+                "loader": self.__class__.__name__,
+                "representation": str(context["representation"]["_id"]),
+                "libpath": libpath.as_posix(),
+                "asset_name": context["asset"]["name"],
+                "parent": str(context["representation"]["parent"]),
+                "family": context["representation"]["context"]["family"],
+                "objectName": container.name,
+            },
+        )
 
         # Apply options
         if options is not None:
@@ -1115,7 +1059,9 @@ class AssetLoader(Loader):
                 (Container, Datablocks)
         """
         container = self._get_scene_container(container_metadata)
-        assert container, f"The asset is not loaded: {container_metadata.get('objectName')}"
+        assert (
+            container
+        ), f"The asset is not loaded: {container_metadata.get('objectName')}"
 
         new_libpath = Path(get_representation_path(representation))
         assert (
@@ -1129,11 +1075,8 @@ class AssetLoader(Loader):
         )
 
         # Process container replacement
-        container_basename = build_op_basename(
-            container_metadata["asset_name"], container_metadata["name"]
-        )
         container, datablocks = self.replace_container(
-            container, new_libpath, container_basename
+            container, new_libpath, container_metadata.get("objectName")
         )
 
         # update metadata
@@ -1142,8 +1085,13 @@ class AssetLoader(Loader):
             {
                 "libpath": new_libpath.as_posix(),
                 "representation": str(representation["_id"]),
+                "objectName": container.name,
             },
         )
+
+        # Clear and purge useless datablocks
+        orphans_purge()
+
         return container, datablocks
 
     def replace_container(
@@ -1186,6 +1134,7 @@ class AssetLoader(Loader):
         if (
             same_loader
             and self.load_type in ("INSTANCE", "LINK")
+            and container.library
             and not library_multireferenced
         ):
             # Keep current datablocks
@@ -1200,11 +1149,13 @@ class AssetLoader(Loader):
 
             # Substitute library to keep reference
             # if purged because duplicate references
-            if container.outliner_entity:
+            outliner_datablocks = container.get_root_outliner_datablocks()
+            if outliner_datablocks:
+                outliner_datablock = list(outliner_datablocks)[0]
                 container.library = (
-                    container.outliner_entity.override_library.reference.library
+                    outliner_datablock.override_library.reference.library
                     if self.load_type == "LINK"
-                    else container.outliner_entity.instance_collection.library
+                    else outliner_datablock.instance_collection.library
                 )
 
             datablocks = [
@@ -1213,22 +1164,22 @@ class AssetLoader(Loader):
         else:
             # Default behaviour to wipe and reload everything
             # but keeping same container
-            if container.outliner_entity:
-                parent_collection = get_parent_collection(
-                    container.outliner_entity
-                )
-                unlink_from_collection(
-                    container.outliner_entity, parent_collection
-                )
-            else:
-                parent_collection = None
+            parent_collections = {}
+            for outliner_datablock in container.get_root_outliner_datablocks():
+                if parent_collection := get_parent_collection(
+                    outliner_datablock
+                ):
+                    unlink_from_collection(
+                        outliner_datablock, parent_collection
+                    )
+
+                    # Store parent collection by name
+                    parent_collections.setdefault(
+                        parent_collection, []
+                    ).append(outliner_datablock.name)
 
             # Keep current datablocks
-            old_datablocks = {
-                d_ref.datablock
-                for d_ref in container.datablock_refs
-                if d_ref.datablock
-            }
+            old_datablocks = container.get_datablocks(only_local=False)
 
             # Clear container datablocks
             container.datablock_refs.clear()
@@ -1237,6 +1188,7 @@ class AssetLoader(Loader):
             for old_datablock in old_datablocks:
                 old_datablock["original_name"] = old_datablock.name
                 old_datablock.name += ".old"
+                old_datablock.use_fake_user = False
 
             # Load new into same container
             container, datablocks = load_func(
@@ -1245,8 +1197,12 @@ class AssetLoader(Loader):
                 container=container,
             )
 
-            # Old datablocks remap and deletion
+            # Old datablocks remap
             for old_datablock in old_datablocks:
+                # Skip linked datablocks
+                if old_datablock.library:
+                    continue
+
                 # Find matching new datablock by name without .###
                 new_datablock = next(
                     (
@@ -1315,19 +1271,21 @@ class AssetLoader(Loader):
                                     )
 
             # Restore parent collection if existing
-            if parent_collection:
-                unlink_from_collection(
-                    container.outliner_entity, bpy.context.scene.collection
-                )
+            for (
+                parent_collection,
+                datablock_names,
+            ) in parent_collections.items():
+                datablocks_to_change_parent = {
+                    d
+                    for d in datablocks
+                    if d and not d.library and d.name in datablock_names
+                }
                 link_to_collection(
-                    container.outliner_entity, parent_collection
+                    datablocks_to_change_parent, parent_collection
                 )
-
-        # Clear and purge useless datablocks.
-        orphans_purge()
 
         # Update override library operations from asset objects if available.
-        for obj in get_container_objects(container):
+        for obj in container.get_datablocks(bpy.types.Object):
             if getattr(obj.override_library, "operations_update", None):
                 obj.override_library.operations_update()
 
@@ -1369,7 +1327,14 @@ class AssetLoader(Loader):
 
         # Replace container
         container, datablocks = self.replace_container(
-            container, new_libpath, container_basename
+            container,
+            new_libpath,
+            container.name
+            if container.name.startswith(container_basename)
+            else ensure_unique_name(
+                container_basename,
+                bpy.context.scene.openpype_containers.keys(),
+            ),
         )
 
         # update metadata
@@ -1390,6 +1355,9 @@ class AssetLoader(Loader):
             },
         )
 
+        # Clear and purge useless datablocks
+        orphans_purge()
+
         return container, datablocks
 
     @exec_process
@@ -1409,12 +1377,14 @@ class AssetLoader(Loader):
 
         remove_container(scene_container)
 
+        # Clear and purge useless datablocks
+        orphans_purge()
+
         return True
 
 
 class StructDescriptor:
-    """Generic Descriptor to store and restor properties from blender struct.
-    """
+    """Generic Descriptor to store and restor properties from blender struct."""
 
     _invalid_property_names = [
         "__doc__",

@@ -23,14 +23,14 @@ from openpype.client.entities import (
     get_asset_by_name,
     get_assets,
 )
-from openpype.hosts.blender.api.lib import add_datablocks_to_container, update_scene_containers
+from openpype.hosts.blender.api.lib import add_datablocks_to_container
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
     build_op_basename,
-    get_all_outliner_children,
     get_parent_collection,
     link_to_collection,
+    unlink_from_collection,
 )
 from openpype.pipeline import legacy_io
 from openpype.pipeline.create.creator_plugins import (
@@ -535,7 +535,7 @@ class SCENE_OT_CreateOpenpypeInstance(
             self.all_assets.add().name = asset_doc["name"]
 
         self.asset_name = legacy_io.Session["AVALON_ASSET"]
-        
+
         # Setup all data
         _update_entries_preset(self, bpy.context)
 
@@ -582,14 +582,13 @@ class SCENE_OT_CreateOpenpypeInstance(
         # Checkbox to gather selected element in outliner
         draw_gather_into_collection(self, context)
 
-
     def execute(self, _context):
         if not self.asset_name:
-            self.report({"ERROR"}, f"Asset name must be filled!")
+            self.report({"ERROR"}, "Asset name must be filled!")
             return {"CANCELLED"}
 
         if not self.datablock_name and not self.use_selection:
-            self.report({"WARNING"}, f"No any datablock to process...")
+            self.report({"WARNING"}, "No any datablock to process...")
 
         # Get creator class
         Creator = get_legacy_creator_by_name(self.creator_name)
@@ -736,7 +735,7 @@ class SCENE_OT_AddToOpenpypeInstance(
 
 def draw_gather_into_collection(self, context):
     """Draw checkbox to gather selected element in outliner.
-    
+
     Only if collections are handled by creator family.
     """
     if self.datapath in {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES} and bpy.types.Collection.__name__ in {
@@ -1054,7 +1053,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
 
     convert_to_current_asset: bpy.props.BoolProperty(
         name="Convert container to current OpenPype asset",
-        description="It changes the asset but keeps the subset name"
+        description="It changes the asset but keeps the subset name",
     )
 
     # NOTE cannot use AVALON_PROPERTY because of circular dependency
@@ -1063,11 +1062,16 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
     def invoke(self, context, _event):
         wm = context.window_manager
 
-        # Prefill with outliner collection
-        matched_container = context.scene.openpype_containers.get(
-            context.collection.name
-        )
-        if matched_container:
+        # Try to match the container referencing the current collection
+        if matched_container := next(
+            (
+                container
+                for container in context.scene.openpype_containers
+                if context.collection
+                in container.get_root_outliner_datablocks()
+            ),
+            None,
+        ):
             self.container_name = matched_container.name
 
         return wm.invoke_props_dialog(self)
@@ -1089,15 +1093,11 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         openpype_containers = context.scene.openpype_containers
         container = openpype_containers.get(self.container_name)
         avalon_data = dict(container["avalon"])
-        container_datablocks = [d_ref.datablock for d_ref in container.datablock_refs]
 
         # Expose container content and get neutral outliner entity
-        bpy.ops.scene.expose_container_content(
-            container_name=self.container_name
-        )
-        outliner_entity = bpy.data.collections.get(
+        root_outliner_datablocks = expose_container_content(
             self.container_name
-        ) or bpy.data.objects.get(self.container_name)
+        )
 
         # Get creator name
         for creator_name, creator_attrs in bpy.context.scene[
@@ -1106,52 +1106,94 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             if creator_attrs["family"] == avalon_data.get("family"):
                 break
 
-        # Create instance
-        create_args = {
-            "creator_name": creator_name,
-            "asset_name": legacy_io.Session["AVALON_ASSET"]
+        # Create new instance
+        bpy.ops.scene.create_openpype_instance(
+            creator_name=creator_name,
+            asset_name=legacy_io.Session["AVALON_ASSET"]
             if self.convert_to_current_asset
             else avalon_data["asset_name"],
-            "subset_name": avalon_data["name"],
-            "gather_into_collection": isinstance(
-                outliner_entity, bpy.types.Collection
+            subset_name=avalon_data["name"],
+            gather_into_collection=any(
+                isinstance(datablock, bpy.types.Collection)
+                for datablock in root_outliner_datablocks
             ),
-        }
-
-        if outliner_entity:
-            # For collection, allow renaming
-            if isinstance(outliner_entity, bpy.types.Collection):
-                # TODO may not be a good design because this value is from source workfile...
-                outliner_entity.is_openpype_instance = False
-
-            datablock_args = {
-                "datapath": BL_TYPE_DATAPATH.get(type(outliner_entity)),
-                "datablock_name": outliner_entity.name,
-            }
-        else:
-            datablock_args = {
-                "datapath": BL_TYPE_DATAPATH.get(
-                    type(container_datablocks[0])
-                ),
-                "datablock_name": container_datablocks[0].name,
-            }
-        create_args.update(datablock_args)
-
-        # Create new instance
-        bpy.ops.scene.create_openpype_instance(**create_args)
+            use_selection=False,
+            datapath="collections",
+            datablock_name=root_outliner_datablocks[0].name,
+        )
 
         # Reassign container datablocks to new instance
-        if not outliner_entity:
-            add_datablocks_to_container(
-                container_datablocks[1:],
-                bpy.context.scene.openpype_instances[-1],
-            )
+        add_datablocks_to_container(
+            [
+                d
+                for d in root_outliner_datablocks
+                if d
+                not in bpy.context.scene.openpype_instances[-1].get_datablocks(
+                    bpy.types.Collection
+                )
+            ],
+            bpy.context.scene.openpype_instances[-1],
+        )
 
         return {"FINISHED"}
 
 
+def expose_container_content(container_name: str) -> List[bpy.types.ID]:
+    """Expose container content and return root outliner datablocks.
+
+    Args:
+        container_name (str): Name of the container to expose.
+
+    Returns:
+        List[bpy.types.ID]: List of root outliner datablocks.
+    """
+    # Recover required data
+    openpype_containers = bpy.context.scene.openpype_containers
+    container = openpype_containers.get(container_name)
+
+    # Remove old container
+    root_outliner_datablocks = container.get_root_outliner_datablocks()
+    openpype_containers.remove(openpype_containers.find(container.name))
+
+    if not root_outliner_datablocks:
+        return
+
+    new_root_outliner_datablocks = []
+    kept_root_outliner_datablocks = []
+    for outliner_datablock in root_outliner_datablocks:
+        # If collection, convert it to regular one
+        if isinstance(outliner_datablock, bpy.types.Collection):
+            outliner_datablock.name += ".old"
+            parent_collection = get_parent_collection(outliner_datablock)
+            substitute_collection = bpy.data.collections.new(container_name)
+
+            # Link new substitute collection to parent collection
+            link_to_collection(substitute_collection, parent_collection)
+
+            # Link old collection objects to new substitute collection
+            link_to_collection(
+                outliner_datablock.objects, substitute_collection
+            )
+            # Link old collection children to new substitute collection
+            link_to_collection(
+                outliner_datablock.children, substitute_collection
+            )
+
+            # Unlink entity from scene
+            unlink_from_collection(outliner_datablock, parent_collection)
+            outliner_datablock.use_fake_user = False
+
+            # Keep new collection as root outliner datablock
+            new_root_outliner_datablocks.append(substitute_collection)
+        else:
+            kept_root_outliner_datablocks.append(outliner_datablock)
+
+    return new_root_outliner_datablocks + kept_root_outliner_datablocks
+
+
 class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
     """Container's content is exposed to be accessible in scene inventory.\n"""
+
     """It breaks the possibility to update the target container later"""
 
     bl_idname = "scene.expose_container_content"
@@ -1165,11 +1207,16 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
     def invoke(self, context, _event):
         wm = context.window_manager
 
-        # Prefill with outliner collection
-        matched_container = context.scene.openpype_containers.get(
-            context.collection.name
-        )
-        if matched_container:
+        # Try to match the container referencing the current collection
+        if matched_container := next(
+            (
+                container
+                for container in context.scene.openpype_containers
+                if context.collection
+                in container.get_root_outliner_datablocks()
+            ),
+            None,
+        ):
             self.container_name = matched_container.name
 
         return wm.invoke_props_dialog(self)
@@ -1186,44 +1233,7 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
             self.report({"WARNING"}, "No container to make publishable...")
             return {"CANCELLED"}
 
-        # Recover required data
-        openpype_containers = context.scene.openpype_containers
-        container = openpype_containers.get(self.container_name)
-
-        # Remove old container
-        outliner_entity = container.outliner_entity
-        openpype_containers.remove(openpype_containers.find(container.name))
-
-        if not outliner_entity:
-            return {"FINISHED"}
-
-        # If collection, convert it to regular one
-        parent_collection = get_parent_collection(outliner_entity)
-        substitute_collection = None
-        if isinstance(outliner_entity, bpy.types.Collection):
-            outliner_entity.name += ".old"
-            substitute_collection = bpy.data.collections.new(
-                self.container_name
-            )
-
-            # Link old collection objects to new substitute collection
-            link_to_collection(outliner_entity.objects, substitute_collection)
-
-            # Link new substitute collection to parent collection
-            parent_collection.children.link(substitute_collection)
-
-        # Move objects to either substituted collection or the parent one
-        link_to_collection(
-            outliner_entity.children,
-            substitute_collection or parent_collection,
-        )
-
-        # Unlink entity from scene
-        parent_collection.children.unlink(outliner_entity)
-        outliner_entity.use_fake_user = False
-
-        # Update containers list
-        update_scene_containers()
+        expose_container_content(self.container_name)
 
         return {"FINISHED"}
 

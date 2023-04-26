@@ -10,7 +10,7 @@ from openpype.pipeline.load.plugins import (
     LoaderPlugin,
     discover_loader_plugins,
 )
-from openpype.pipeline.load.utils import loaders_from_repre_context
+from openpype.pipeline.load.utils import loaders_from_representation
 
 
 # Key for metadata dict
@@ -36,6 +36,37 @@ BL_TYPE_ICON = {
 }
 # Types which can be handled through the outliner
 BL_OUTLINER_TYPES = frozenset((bpy.types.Collection, bpy.types.Object))
+
+
+def ensure_unique_name(name: str, list_of_existing_names: Set[str]) -> str:
+    """Return a unique name based on the name passed in.
+
+    Args:
+        name (str): Name to make unique.
+        list_of_existing_names (Set[str]): List of existing names.
+
+    Returns:
+        str: Unique name.
+    """
+    # Cast to set
+    if not isinstance(list_of_existing_names, set):
+        list_of_existing_names = set(list_of_existing_names)
+
+    # Guess basename and extension
+    split_name = name.rsplit(".", 1)
+    if len(split_name) > 1 and split_name[1].isdigit():
+        basename, number = split_name
+        extension_i = int(number) + 1
+    else:
+        basename = split_name[0]
+        extension_i = 1
+
+    # Increment extension based on existing ones
+    while name in list_of_existing_names:
+        name = f"{basename}.{extension_i:0>3}"
+        extension_i += 1
+
+    return name
 
 
 def build_op_basename(
@@ -109,17 +140,17 @@ def get_parent_collection(
         Optional[bpy.types.Collection]: Parent of entity
     """
     scene_collection = bpy.context.scene.collection
-    if entity.name in scene_collection.children:
+    if entity in scene_collection.children.values():
         return scene_collection
     # Entity is a Collection.
     elif isinstance(entity, bpy.types.Collection):
         for col in scene_collection.children_recursive:
-            if entity.name in col.children:
+            if entity in col.children.values():
                 return col
     # Entity is an Object.
     elif isinstance(entity, bpy.types.Object):
         for col in scene_collection.children_recursive:
-            if entity.name in col.objects:
+            if entity in col.objects.values():
                 return col
 
 
@@ -244,12 +275,9 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
             datablocks_to_skip.update(datablock.all_objects)
 
         # Get available loaders
-        context = {
-            "subset": {"schema": AVALON_CONTAINER_ID},
-            "version": {"data": {"families": [avalon_data["family"]]}},
-            "representation": {"name": "blend"},
-        }
-        loaders = loaders_from_repre_context(all_loaders, context)
+        loaders = loaders_from_representation(
+            all_loaders, avalon_data.get("representation")
+        )
         if datablock.library or datablock.override_library:
             # Instance loader, an instance in OP is necessarily a link
             if datablock in all_instanced_collections:
@@ -259,7 +287,7 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
                 loader_name = get_loader_name(loaders, "Link")
         else:  # Append loader
             loader_name = get_loader_name(loaders, "Append")
-        datablock[AVALON_PROPERTY]["loader"] = loader_name
+        datablock[AVALON_PROPERTY]["loader"] = loader_name or ""
 
         # Set to related container
         container = bpy.context.scene.openpype_containers.get(datablock.name)
@@ -344,3 +372,30 @@ def make_paths_absolute(source_filepath: Path = None):
             print(e)
 
     bpy.ops.file.make_paths_absolute()
+
+
+def get_root_datablocks(
+    datablocks: List[bpy.types.ID],
+    types: Union[bpy.types.ID, Iterable[bpy.types.ID]] = None,
+) -> Set[bpy.types.ID]:
+    """Get the root datablocks from a sequence of datablocks.
+
+    A root datablock is the first datablock of the hierarchy that is not
+    referenced by another datablock in the given list.
+
+    Args:
+        types (Iterable): List of types to filter the datablocks
+
+    Returns:
+        bpy.types.ID: Root datablock
+    """
+    # Put into iterable if not
+    if types is not None and not isinstance(types, Iterable):
+        types = (types,)
+
+    return {
+        d
+        for d, users in bpy.data.user_map(subset=datablocks).items()
+        if (types is None or isinstance(d, tuple(types)))
+        and not users & set(datablocks)
+    }

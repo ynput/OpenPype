@@ -94,7 +94,7 @@ class RigLoader(plugin.AssetLoader):
         task = legacy_io.Session.get("AVALON_TASK")
         for armature in [
             obj
-            for obj in container.outliner_entity.all_objects
+            for obj in container.get_datablocks({bpy.types.Object})
             if obj.type == "ARMATURE"
         ]:
             if armature.animation_data is None:

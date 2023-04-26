@@ -15,6 +15,7 @@ from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     assign_loader_to_datablocks,
     build_op_basename,
+    ensure_unique_name,
     get_all_outliner_children,
     get_instanced_collections,
 )
@@ -54,6 +55,11 @@ def create_container(
     Returns:
         OpenpypeContainer: Created container
     """
+    # Ensure container name
+    name = ensure_unique_name(
+        name, bpy.context.scene.openpype_containers.keys()
+    )
+
     container = bpy.context.scene.openpype_containers.add()
     container.name = name
 
@@ -64,7 +70,7 @@ def create_container(
 
 def parse_container(
     container: Union[bpy.types.Collection, bpy.types.Object],
-    validate: bool = True
+    validate: bool = True,
 ) -> Dict:
     """Return the container node's full container data.
 
@@ -95,7 +101,8 @@ def parse_container(
 
     return data
 
-def update_scene_containers()->List[OpenpypeContainer]:
+
+def update_scene_containers() -> List[OpenpypeContainer]:
     """Update containers in scene from datablocks.
 
     For example, if a loaded collection has been duplicated using the outliner
@@ -110,15 +117,14 @@ def update_scene_containers()->List[OpenpypeContainer]:
 
     # Prepare datablocks to skip for containers auto creation
     # Datablocks already in containers are ignored
-    datablocks_to_skip = {
-        d_ref.datablock
-        for d_ref in chain.from_iterable(
+    datablocks_to_skip = set(
+        chain.from_iterable(
             [
-                op_container.datablock_refs
+                op_container.get_datablocks(only_local=False)
                 for op_container in openpype_containers
             ]
         )
-    }
+    )
 
     # Get container datablocks not already correctly created
     # (e.g collection duplication or linked by hand)
@@ -131,7 +137,10 @@ def update_scene_containers()->List[OpenpypeContainer]:
     all_instanced_collections = get_instanced_collections()
     container_datablocks = [
         datablock
-        for datablock in sorted(lsattr("id", AVALON_CONTAINER_ID), key=lambda d: datatype_order.get(type(d), 10))
+        for datablock in sorted(
+            lsattr("id", AVALON_CONTAINER_ID),
+            key=lambda d: datatype_order.get(type(d), 10),
+        )
         if not (
             isinstance(datablock, tuple(BL_OUTLINER_TYPES))
             and datablock
@@ -179,6 +188,13 @@ def update_scene_containers()->List[OpenpypeContainer]:
         else:
             container_datablocks = [entity]
 
+        # Add mesh datablocks
+        container_datablocks.extend(
+            datablock.data
+            for datablock in container_datablocks
+            if datablock and isinstance(datablock, bpy.types.Object)
+        )
+
         # Add library references of datablocks to avoid duplicates
         container_datablocks.extend(
             datablock.override_library.reference
@@ -198,8 +214,13 @@ def update_scene_containers()->List[OpenpypeContainer]:
         ).get(AVALON_PROPERTY)
 
         # Get container if already created
+        container = None
         representation_id = container_metadata.get("representation")
-        container = created_containers.get(representation_id)
+        for c in openpype_containers:
+            if container_metadata.get("representation") == representation_id:
+                container = c
+                break
+
         if container:
             add_datablocks_to_container(container_datablocks, container)
         else:
@@ -208,8 +229,10 @@ def update_scene_containers()->List[OpenpypeContainer]:
                 container_metadata.get("asset_name"),
                 container_metadata.get("name"),
             )
-            container = create_container(container_name, container_datablocks)
-            created_containers[representation_id] = container
+            create_container(container_name, container_datablocks)
+            # NOTE need to get it this way because memory could have changed
+            # BUG: https://projects.blender.org/blender/blender/issues/105338
+            container = bpy.context.scene.openpype_containers[-1]
 
             # Keep objectName for update/switch
             container_metadata["objectName"] = container.name
@@ -221,17 +244,13 @@ def update_scene_containers()->List[OpenpypeContainer]:
                 else entity.library
             )
 
-            # Keep outliner entity if any
-            if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
-                container.outliner_entity = entity
-
     # Clear containers when data has been deleted from the outliner
-    for container in reversed(openpype_containers):
+    for i, container in reversed(
+        list(enumerate(bpy.context.scene.openpype_containers))
+    ):
         # In case all datablocks removed, remove container
-        if not any({d_ref.datablock for d_ref in container.datablock_refs}):
-            openpype_containers.remove(
-                openpype_containers.find(container.name)
-            )
+        if not any(container.get_datablocks(only_local=False)):
+            openpype_containers.remove(i)
 
     return created_containers
 
