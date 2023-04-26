@@ -565,8 +565,11 @@ def build_anim(project_name, asset_name):
 
     # keep layout root collection name before make container publishable.
     layout_collection_name = next(
-        iter(
-            layout_container.get_root_outliner_datablocks(bpy.types.Collection)
+        (
+            root.name
+            for root in layout_container.get_root_outliner_datablocks(
+                bpy.types.Collection
+            )
         ),
         None,
     )
