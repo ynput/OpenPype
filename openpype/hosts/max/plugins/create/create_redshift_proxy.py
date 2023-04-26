@@ -18,6 +18,7 @@ class CreateRedshiftProxy(plugin.MaxCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
         container = rt.getNodeByName(instance.data.get("instance_node"))
-
-        for obj in sel_obj:
-            obj.parent = container
+        if self.selected_nodes:
+            sel_obj = list(self.selected_nodes)
+            for obj in sel_obj:
+                obj.parent = container

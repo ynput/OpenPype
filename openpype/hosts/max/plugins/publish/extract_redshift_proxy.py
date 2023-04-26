@@ -45,7 +45,6 @@ class ExtractRedshiftProxy(publish.Extractor):
         representation = {
             'name': 'rs',
             'ext': 'rs',
-            # need to count the files
             'files': rs_filenames if len(rs_filenames) > 1 else rs_filenames[0],    # noqa
             "stagingDir": stagingdir,
         }
@@ -53,7 +52,7 @@ class ExtractRedshiftProxy(publish.Extractor):
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           stagingdir))
 
-        # TODO: set sequence
+
     def get_rsfiles(self, instance, startFrame, endFrame):
         rs_filenames = []
         rs_name = instance.data["name"]
