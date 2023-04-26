@@ -12,7 +12,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.maya.api import lib
 
-from .vray_proxies import get_alembic_ids_cache
+from .alembic import get_alembic_ids_cache, get_alembic_source_ids_cache
 from . import arnold_standin
 
 log = logging.getLogger(__name__)
@@ -63,7 +63,9 @@ def get_all_nodes():
 
 
 def create_asset_id_hash(nodes):
-    """Create a hash based on cbId attribute value
+    """Create a hash based on source_id attribute value
+
+    This also implements the hashing for legacy `cbId` attributes.
 
     Args:
         nodes (list): a list of nodes
@@ -71,12 +73,15 @@ def create_asset_id_hash(nodes):
     Returns:
         dict
     """
-    # TODO: Implement `source_id` functionality instead
-    # TODO: Include project_name per asset id as well
     node_id_hash = defaultdict(list)
 
+    active_project = legacy_io.active_project()
     has_vray = cmds.pluginInfo('vrayformaya', query=True, loaded=True)
     has_mtoa = cmds.pluginInfo('mtoa', query=True, loaded=True)
+
+    def _get_legacy_id_key(id):
+        asset_id = id.split(":", 1)[0]
+        return (active_project, asset_id)
 
     for node in nodes:
         # iterate over content of reference node
@@ -87,23 +92,42 @@ def create_asset_id_hash(nodes):
             ref_hashes = create_asset_id_hash(ref_members)
             for asset_id, ref_nodes in ref_hashes.items():
                 node_id_hash[asset_id] += ref_nodes
+
         elif has_vray and cmds.nodeType(node) == "VRayProxy":
             path = cmds.getAttr("{}.fileName".format(node))
-            ids = get_alembic_ids_cache(path)
-            for k, _ in ids.items():
-                id = k.split(":")[0]
-                node_id_hash[id].append(node)
-        elif has_mtoa and cmds.nodeType(node) == "aiStandIn":
-            for id, _ in arnold_standin.get_nodes_by_id(node).items():
-                id = id.split(":")[0]
-                node_id_hash[id].append(node)
-        else:
-            value = lib.get_id(node)
-            if value is None:
-                continue
 
-            asset_id = value.split(":")[0]
-            node_id_hash[asset_id].append(node)
+            source_id_paths = get_alembic_source_ids_cache(path)
+            for key in source_id_paths.keys():
+                node_id_hash[key] = node
+
+            # legacy `cbId`
+            legacy_id_paths = get_alembic_ids_cache(path)
+            for _id in legacy_id_paths.keys():
+                node_id_hash[_get_legacy_id_key(_id)].append(node)
+
+        elif has_mtoa and cmds.nodeType(node) == "aiStandIn":
+            # TODO: For the non alembic support we'll need to add extra
+            #   source id into the extracted json next to the published standin
+
+            # legacy `cbId`
+            for _id in arnold_standin.get_nodes_by_id(node).keys():
+                node_id_hash[_get_legacy_id_key(_id)].append(node)
+
+        else:
+            if cmds.attributeQuery("source_id", node=node, exists=True):
+                # Get node project + asset from source_id attribute
+                source_id = cmds.getAttr("{}.source_id".format(node))
+                project_name, asset_id = source_id.split(":", 1)
+                node_id_hash[(project_name, asset_id)].append(node)
+
+            else:
+
+                # legacy `cbId`
+                value = lib.get_id(node)
+                if value is None:
+                    continue
+
+                node_id_hash[_get_legacy_id_key(value)].append(node)
 
     return dict(node_id_hash)
 
@@ -133,9 +157,8 @@ def create_items_from_nodes(nodes):
         log.warning("No id hashes")
         return asset_view_items
 
-    project_name = legacy_io.active_project()
-    for _id, id_nodes in id_hashes.items():
-        asset = get_asset_by_id(project_name, _id, fields=["name"])
+    for (project_name, asset_id), id_nodes in id_hashes.items():
+        asset = get_asset_by_id(project_name, asset_id, fields=["name"])
 
         # Skip if asset id is not found
         if not asset:
@@ -157,7 +180,7 @@ def create_items_from_nodes(nodes):
             "asset": asset,
             "looks": looks,
             "namespaces": namespaces,
-            "project": project_name
+            "project_name": project_name
         })
 
     return asset_view_items
