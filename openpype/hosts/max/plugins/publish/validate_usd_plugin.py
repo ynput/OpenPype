@@ -14,8 +14,6 @@ class ValidateUSDPlugin(pyblish.api.InstancePlugin):
     label = "USD Plugin"
 
     def process(self, instance):
-        #usdimport.dli
-        #usdexport.dle
         plugin_mgr = rt.pluginManager
         plugin_count = plugin_mgr.pluginDllCount
         plugin_info = self.get_plugins(plugin_mgr,
