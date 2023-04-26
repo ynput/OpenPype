@@ -388,7 +388,7 @@ def build_layout(project_name, asset_name):
     layout_instance = create_instance("CreateLayout", "layoutMain")
     layout_collection = next(
         iter(
-            layout_instance.get_datablocks(bpy.types.Collection)
+            layout_instance.get_root_datablocks(bpy.types.Collection)
         ),
         None,
     )
@@ -407,7 +407,7 @@ def build_layout(project_name, asset_name):
 
         # Link loaded containers to layout collection
         for container in containers:
-            for root in container.get_datablocks(
+            for root in container.get_root_datablocks(
                 bpy.types.Collection
             ):
                 if root not in layout_collection.children.values():
@@ -567,7 +567,7 @@ def build_anim(project_name, asset_name):
     layout_collection_name = next(
         (
             root.name
-            for root in layout_container.get_datablocks(
+            for root in layout_container.get_root_datablocks(
                 bpy.types.Collection
             )
         ),
@@ -637,7 +637,7 @@ def build_anim(project_name, asset_name):
     # Substitute overridden GDEFORMER collection by local one
     scene_collections_by_name = {
         c.name: c
-        for c in bpy.scene.scene.collection.children_recursive
+        for c in bpy.context.scene.collection.children_recursive
     }
     gdeform_collection = scene_collections_by_name.get("GDEFORMER")
     layout_collection = scene_collections_by_name.get(layout_collection_name)
