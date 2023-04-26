@@ -387,10 +387,8 @@ def build_layout(project_name, asset_name):
     # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
     layout_collection = next(
-        (
-            root
-            for root in layout_instance.get_root_outliner_datablocks()
-            if isinstance(root, bpy.types.Collection)
+        iter(
+            layout_instance.get_root_outliner_datablocks(bpy.types.Collection)
         ),
         None,
     )
@@ -409,12 +407,13 @@ def build_layout(project_name, asset_name):
 
         # Link loaded containers to layout collection
         for container in containers:
-            for root in container.get_root_outliner_datablocks():
-                if not isinstance(root, bpy.types.Collection):
-                    if root not in layout_collection.children.values():
-                        layout_collection.children.link(root)
-                    if root in bpy.context.scene.collection.children.values():
-                        bpy.context.scene.collection.children.unlink(root)
+            for root in container.get_root_outliner_datablocks(
+                bpy.types.Collection
+            ):
+                if root not in layout_collection.children.values():
+                    layout_collection.children.link(root)
+                if root in bpy.context.scene.collection.children.values():
+                    bpy.context.scene.collection.children.unlink(root)
 
         # Create GDEFORMER collection
         create_gdeformer_collection(
@@ -566,10 +565,8 @@ def build_anim(project_name, asset_name):
 
     # keep layout root collection name before make container publishable.
     layout_collection_name = next(
-        (
-            root.name
-            for root in layout_container.get_root_outliner_datablocks()
-            if isinstance(root, bpy.types.Collection)
+        iter(
+            layout_container.get_root_outliner_datablocks(bpy.types.Collection)
         ),
         None,
     )
