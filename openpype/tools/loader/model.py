@@ -123,7 +123,7 @@ class BaseRepresentationModel(object):
         self.remote_provider = remote_provider
 
 
-class SubsetsModel(TreeModel, BaseRepresentationModel):
+class SubsetsModel(BaseRepresentationModel, TreeModel):
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
