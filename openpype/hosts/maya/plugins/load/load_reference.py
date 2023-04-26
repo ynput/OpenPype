@@ -165,9 +165,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
 
                 display_handle = settings['maya']['load'].get(
-                    'reference_loader', {}).get('display_handle', True)
+                    'reference_loader', {}
+                ).get('display_handle', True)
                 cmds.setAttr(
-                    "{}.displayHandle".format(group_name), display_handle)
+                    "{}.displayHandle".format(group_name), display_handle
+                )
 
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
@@ -179,7 +181,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                  (float(c[2]) / 255))
 
                 cmds.setAttr(
-                    "{}.displayHandle".format(group_name), display_handle)
+                    "{}.displayHandle".format(group_name), display_handle
+                )
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
