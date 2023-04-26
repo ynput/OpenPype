@@ -32,7 +32,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
                       "{}".format(container))
 
         con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        selection_list = list(con.Children) or rt.getCurrentSelection()
         for sel in selection_list:
             if rt.classOf(sel) in rt.Camera.classes:
                 invalid.append(sel)
