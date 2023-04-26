@@ -242,6 +242,10 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
 
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        cmds.delete(placeholder._scene_identifier)
+
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
 

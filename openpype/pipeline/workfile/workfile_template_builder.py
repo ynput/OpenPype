@@ -1555,6 +1555,15 @@ class PlaceholderLoadMixin(object):
                 self.load_succeed(placeholder, container)
             self.cleanup_placeholder(placeholder, failed)
 
+        if failed:
+            self.log.debug(
+                "Placeholder cleanup skipped due to failed placeholder "
+                "population."
+            )
+            return
+        if not placeholder.data["keep_placeholder"]:
+            self.delete_placeholder(placeholder)
+
     def load_failed(self, placeholder, representation):
         if hasattr(placeholder, "load_failed"):
             placeholder.load_failed(representation)
@@ -1576,6 +1585,10 @@ class PlaceholderLoadMixin(object):
         """
 
         pass
+
+    def delete_placeholder(self, placeholder, failed):
+        """Called when all item population is done."""
+        self.log.debug("Clean up of placeholder is not implemented.")
 
 
 class PlaceholderCreateMixin(object):
