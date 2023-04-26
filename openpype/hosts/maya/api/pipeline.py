@@ -21,6 +21,10 @@ from openpype.lib import (
     register_event_callback,
     emit_event
 )
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_name
+)
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -561,6 +565,15 @@ def on_save():
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+    # Store project:asset per node
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+    data = {
+        "origin_id": "{}:{}".format(project_name, asset_name)
+    }
+    for node in nodes:
+        lib.imprint(node, data)
 
 
 def on_open():
