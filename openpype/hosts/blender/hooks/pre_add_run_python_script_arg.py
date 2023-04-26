@@ -31,7 +31,8 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
                 f"Adding python script {python_script_path} to launch"
             )
             # Test script path exists
-            if not Path(python_script_path).exists():
+            python_script_path = Path(python_script_path)
+            if not python_script_path.exists():
                 raise ValueError(
                     f"Python script {python_script_path} doesn't exist."
                 )
@@ -45,11 +46,11 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
                 )
                 self.launch_context.launch_args.insert(
                     separator_index + 1,
-                    Path(python_script_path).as_posix(),
+                    python_script_path.as_posix(),
                 )
             else:
                 self.launch_context.launch_args.extend(
-                    ["-P", Path(python_script_path).as_posix()]
+                    ["-P", python_script_path.as_posix()]
                 )
 
         # Ensure separator
