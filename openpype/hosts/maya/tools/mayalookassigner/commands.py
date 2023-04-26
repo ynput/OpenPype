@@ -149,7 +149,8 @@ def create_items_from_nodes(nodes):
             "label": asset["name"],
             "asset": asset,
             "looks": looks,
-            "namespaces": namespaces
+            "namespaces": namespaces,
+            "project": project_name
         })
 
     return asset_view_items
