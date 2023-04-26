@@ -19,7 +19,7 @@ class ValidateRendererRedshiftProxy(pyblish.api.InstancePlugin):
     actions = [RepairAction]
 
     def process(self, instance):
-        invalid = self.get_all_renderer(instance)
+        invalid = self.get_redshift_renderer(instance)
         if invalid:
             raise PublishValidationError("Please install Redshift for 3dsMax"
                                          " before using the Redshift proxy instance")   # noqa
@@ -47,8 +47,8 @@ class ValidateRendererRedshiftProxy(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        renderer_count = len(rt.RendererClass.classes)
-        for r in range(renderer_count):
-            if "Redshift_Renderer" in str(rt.RendererClass.classes[r]()):
-                rt.renderers.production = rt.RendererClass.classes[r]()
+        for Renderer in rt.RendererClass.classes:
+            renderer = Renderer()
+            if "Redshift_Renderer" in str(renderer):
+                rt.renderers.production = renderer
                 break
