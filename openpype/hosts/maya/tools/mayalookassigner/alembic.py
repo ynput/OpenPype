@@ -79,9 +79,19 @@ def get_alembic_paths_by_property(filename, attr, verbose=False):
     return obj_ids
 
 
+def _get_cache_by_attr(path, attr):
+    # type: (str, str) -> dict
+    node_ids = get_alembic_paths_by_property(path, attr=attr)
+    id_nodes = defaultdict(list)
+    for node, _id in six.iteritems(node_ids):
+        id_nodes[_id].append(node)
+
+    return dict(id_nodes)
+
+
 def get_alembic_ids_cache(path):
     # type: (str) -> dict
-    """Build a id to node mapping in Alembic file.
+    """Build an id to node mapping in Alembic file using `cbId` attribute.
 
     Nodes without IDs are ignored.
 
@@ -89,9 +99,17 @@ def get_alembic_ids_cache(path):
         dict: Mapping of id to nodes in the Alembic.
 
     """
-    node_ids = get_alembic_paths_by_property(path, attr="cbId")
-    id_nodes = defaultdict(list)
-    for node, _id in six.iteritems(node_ids):
-        id_nodes[_id].append(node)
+    return _get_cache_by_attr(path, attr="cbId")
 
-    return dict(six.iteritems(id_nodes))
+
+def get_alembic_source_ids_cache(path):
+    # type: (str) -> dict
+    """Build a id to node mapping in Alembic file.
+
+    Nodes without `source_id` are ignored.
+
+    Returns:
+        dict: Mapping of `source_id` to nodes in the Alembic.
+
+    """
+    return _get_cache_by_attr(path, attr="source_id")
