@@ -323,12 +323,11 @@ def get_path_to_uat(engine_path: Path) -> Path:
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmd_project = Path(os.path.dirname(
-        os.path.abspath(os.getenv("OPENPYPE_ROOT"))))
+    cmd_project = Path(os.getenv("OPENPYPE_ROOT"))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
-    cmd_project /= f"hosts/unreal/integration/UE_{ue_version}"
+    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
 
     return cmd_project / "CommandletProject/CommandletProject.uproject"
 

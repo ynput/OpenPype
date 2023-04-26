@@ -58,7 +58,7 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 	if (!IsValid(Asset))
 	{
 		UE_LOG(LogAssetData, Warning, TEXT("Asset \"%s\" is not valid! Skipping the addition."),
-		       *InAssetData.ObjectPath.ToString());
+		       *InAssetData.GetSoftObjectPath().ToString());
 		return;
 	}
 
