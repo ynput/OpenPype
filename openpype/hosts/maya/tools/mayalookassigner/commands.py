@@ -70,6 +70,8 @@ def create_asset_id_hash(nodes):
     Returns:
         dict
     """
+    # TODO: Implement `source_id` functionality instead
+    # TODO: Include project_name per asset id as well
     node_id_hash = defaultdict(list)
     for node in nodes:
         # iterate over content of reference node
