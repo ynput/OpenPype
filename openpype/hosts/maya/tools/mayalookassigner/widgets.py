@@ -94,7 +94,7 @@ class AssetOutliner(QtWidgets.QWidget):
         with preserve_expanded_rows(self.view):
             with preserve_selection(self.view):
                 self.clear()
-                nodes = commands.get_all_asset_nodes()
+                nodes = commands.get_all_nodes()
                 items = commands.create_items_from_nodes(nodes)
                 self.add_items(items)
 

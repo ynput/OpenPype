@@ -53,11 +53,11 @@ def get_selected_nodes():
     return list(set(selection + hierarchy))
 
 
-def get_all_asset_nodes():
-    """Get all assets from the scene, container based
+def get_all_nodes():
+    """Get all nodes from the scene.
 
     Returns:
-        list: list of dictionaries
+        list: list of nodes
     """
     return cmds.ls(dag=True, noIntermediate=True, long=True)
 
