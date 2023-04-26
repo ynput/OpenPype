@@ -8,6 +8,7 @@ import maya.api.OpenMaya as om
 
 import pyblish.api
 
+from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.host import (
     HostBase,
@@ -33,7 +34,7 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
     deregister_creator_plugin_path,
-    AVALON_CONTAINER_ID,
+    AVALON_CONTAINER_ID
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.pipeline.workfile.lock_workfile import (
@@ -566,11 +567,12 @@ def on_save():
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
 
-    # Store project:asset per node
+    # Store project_name:asset_id per node
     project_name = get_current_project_name()
     asset_name = get_current_asset_name()
+    asset_doc = get_asset_by_name(project_name, asset_name)
     data = {
-        "origin_id": "{}:{}".format(project_name, asset_name)
+        "origin_id": "{}:{}".format(project_name, asset_doc["_id"])
     }
     for node in nodes:
         lib.imprint(node, data)
