@@ -64,6 +64,7 @@ def get_all_nodes():
 
 def create_asset_id_hash(nodes):
     """Create a hash based on cbId attribute value
+
     Args:
         nodes (list): a list of nodes
 
@@ -73,22 +74,26 @@ def create_asset_id_hash(nodes):
     # TODO: Implement `source_id` functionality instead
     # TODO: Include project_name per asset id as well
     node_id_hash = defaultdict(list)
+
+    has_vray = cmds.pluginInfo('vrayformaya', query=True, loaded=True)
+    has_mtoa = cmds.pluginInfo('mtoa', query=True, loaded=True)
+
     for node in nodes:
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
-            ref_hashes = create_asset_id_hash(
-                list(set(cmds.referenceQuery(node, nodes=True, dp=True))))
+            ref_members = list(
+                set(cmds.referenceQuery(node, nodes=True, dagPath=True))
+            )
+            ref_hashes = create_asset_id_hash(ref_members)
             for asset_id, ref_nodes in ref_hashes.items():
                 node_id_hash[asset_id] += ref_nodes
-        elif cmds.pluginInfo('vrayformaya', query=True,
-                             loaded=True) and cmds.nodeType(
-                node) == "VRayProxy":
+        elif has_vray and cmds.nodeType(node) == "VRayProxy":
             path = cmds.getAttr("{}.fileName".format(node))
             ids = get_alembic_ids_cache(path)
             for k, _ in ids.items():
                 id = k.split(":")[0]
                 node_id_hash[id].append(node)
-        elif cmds.nodeType(node) == "aiStandIn":
+        elif has_mtoa and cmds.nodeType(node) == "aiStandIn":
             for id, _ in arnold_standin.get_nodes_by_id(node).items():
                 id = id.split(":")[0]
                 node_id_hash[id].append(node)
