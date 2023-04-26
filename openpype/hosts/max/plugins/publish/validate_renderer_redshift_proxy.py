@@ -22,11 +22,11 @@ class ValidateRendererRedshiftProxy(pyblish.api.InstancePlugin):
         invalid = self.get_all_renderer(instance)
         if invalid:
             raise PublishValidationError("Please install Redshift for 3dsMax"
-                                         " before using the Redshift proxy instance")
+                                         " before using the Redshift proxy instance")   # noqa
         invalid = self.get_current_renderer(instance)
         if invalid:
-            raise PublishValidationError("The Redshift proxy extraction discontinued"
-                                         "since the current renderer is not Redshift")
+            raise PublishValidationError("The Redshift proxy extraction"
+                                         "discontinued since the current renderer is not Redshift")  # noqa
 
     def get_redshift_renderer(self, instance):
         invalid = list()

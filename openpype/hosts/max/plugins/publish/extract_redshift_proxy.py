@@ -52,7 +52,6 @@ class ExtractRedshiftProxy(publish.Extractor):
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           stagingdir))
 
-
     def get_rsfiles(self, instance, startFrame, endFrame):
         rs_filenames = []
         rs_name = instance.data["name"]
