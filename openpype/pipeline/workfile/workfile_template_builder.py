@@ -477,7 +477,9 @@ class AbstractTemplateBuilder(object):
             create_first_version = template_preset["create_first_version"]
 
         # check if first version is created
-        created_version_workfile = self.create_first_workfile_version()
+        created_version_workfile = False
+        if create_first_version:
+            created_version_workfile = self.create_first_workfile_version()
 
         # if first version is created, import template
         # and populate placeholders
