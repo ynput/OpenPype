@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from openpype.lib import PreLaunchHook
-from openpype.settings.lib import get_project_settings
 
 
 class AddPythonScriptToLaunchArgs(PreLaunchHook):
@@ -14,10 +13,11 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
     ]
 
     def execute(self):
+        if not self.launch_context.data.get("python_scripts"):
+            return
+
         # Add path to workfile to arguments
-        for python_script_path in self.launch_context.data.get(
-            "python_scripts", []
-        ):
+        for python_script_path in self.launch_context.data["python_scripts"]:
             self.log.info(
                 f"Adding python script {python_script_path} to launch"
             )
