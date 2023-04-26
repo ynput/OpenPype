@@ -1565,7 +1565,7 @@ def list_looks(asset_id, project_name=None):
     ]
 
 
-def assign_look_by_version(nodes, version_id):
+def assign_look_by_version(nodes, version_id, project_name=None):
     """Assign nodes a specific published look version by id.
 
     This assumes the nodes correspond with the asset.
@@ -1573,12 +1573,15 @@ def assign_look_by_version(nodes, version_id):
     Args:
         nodes(list): nodes to assign look to
         version_id (bson.ObjectId): database id of the version
+        project_name (str): project name for the project where the version id
+            should exist.
 
     Returns:
         None
     """
 
-    project_name = legacy_io.active_project()
+    if project_name is None:
+        project_name = legacy_io.active_project()
 
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
@@ -1623,30 +1626,11 @@ def assign_look_by_version(nodes, version_id):
     apply_shaders(relationships, shader_nodes, nodes)
 
 
-def assign_look(nodes, subset="lookDefault"):
-    """Assigns a look to a node.
+def _assign_looks(asset_id_nodes, subset, project_name):
 
-    Optimizes the nodes by grouping by asset id and finding
-    related subset by name.
-
-    Args:
-        nodes (list): all nodes to assign the look to
-        subset (str): name of the subset to find
-    """
-
-    # Group all nodes per asset id
-    grouped = defaultdict(list)
-    for node in nodes:
-        pype_id = get_id(node)
-        if not pype_id:
-            continue
-
-        parts = pype_id.split(":", 1)
-        grouped[parts[0]].append(node)
-
-    project_name = legacy_io.active_project()
+    asset_ids = list(asset_id_nodes.keys())
     subset_docs = get_subsets(
-        project_name, subset_names=[subset], asset_ids=grouped.keys()
+        project_name, subset_names=[subset], asset_ids=asset_ids
     )
     subset_docs_by_asset_id = {
         str(subset_doc["parent"]): subset_doc
@@ -1666,7 +1650,7 @@ def assign_look(nodes, subset="lookDefault"):
         for last_version_doc in last_version_docs
     }
 
-    for asset_id, asset_nodes in grouped.items():
+    for asset_id, asset_nodes in asset_id_nodes.items():
         # create objectId for database
         subset_doc = subset_docs_by_asset_id.get(asset_id)
         if not subset_doc:
@@ -1691,7 +1675,53 @@ def assign_look(nodes, subset="lookDefault"):
         log.debug("Assigning look '{}' <v{:03d}>".format(
             subset, last_version["name"]))
 
-        assign_look_by_version(asset_nodes, last_version["_id"])
+        assign_look_by_version(asset_nodes,
+                               last_version["_id"],
+                               project_name=project_name)
+
+
+def assign_look(nodes, subset="lookDefault"):
+    """Assigns a look to a node.
+
+    Optimizes the nodes by grouping by asset id and finding
+    related subset by name.
+
+    Args:
+        nodes (list): all nodes to assign the look to
+        subset (str): name of the subset to find
+    """
+    active_project_name = legacy_io.active_project()
+
+    # Group all nodes by project and asset id to optimize the queries
+    # for the look assignments itself
+    project_asset_id_nodes = defaultdict(lambda: defaultdict(list))
+    fallback_nodes = []
+    for node in nodes:
+        if cmds.attributeQuery("source_id", node=node, exists=True):
+            # Get node project + asset from source_id attribute
+            source_id = cmds.getAttr("{}.source_id".format(node))
+            project_name, asset_id = source_id.split(":", 1)
+            project_asset_id_nodes[project_name][asset_id].append(node)
+
+        else:
+            # Group all nodes per asset id (backwards compatible: cbId)
+            pype_id = get_id(node)
+            if not pype_id:
+                continue
+
+            parts = pype_id.split(":", 1)
+            asset_id, node_id = parts
+            project_asset_id_nodes[active_project_name][asset_id].append(node)
+            fallback_nodes.append(node)
+
+    if fallback_nodes:
+        log.debug("Falling back to legacy `cbId` look assignment due to "
+                  "missing `source_id` attribute for nodes: {}".format(nodes))
+
+    for project_name, asset_id_nodes in project_asset_id_nodes.items():
+        _assign_looks(asset_id_nodes=asset_id_nodes,
+                      subset=subset,
+                      project_name=project_name)
 
 
 def apply_shaders(relationships, shadernodes, nodes):
