@@ -14,15 +14,6 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
     ]
 
     def execute(self):
-        # Check enabled in settings
-        project_name = self.data["project_name"]
-        project_settings = get_project_settings(project_name)
-        host_name = self.application.host_name
-        host_settings = project_settings.get(host_name)
-        if not host_settings:
-            self.log.info(f"""Host "{host_name}" doesn\'t have settings""")
-            return None
-
         # Add path to workfile to arguments
         for python_script_path in self.launch_context.data.get(
             "python_scripts", []
