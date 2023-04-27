@@ -9,7 +9,7 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib.attribute_definitions import UnknownDef, UIDef
+from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -36,6 +36,8 @@ from .icons import (
 from ..constants import (
     VARIANT_TOOLTIP,
     ResetKeySequence,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 
@@ -1098,6 +1100,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
+        main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
         main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
@@ -1346,6 +1350,8 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
+        content_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        content_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         row = 0
         for attr_def, attr_instances, values in result:
@@ -1371,9 +1377,19 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            label = attr_def.label or attr_def.key
+            label = None
+            if attr_def.is_value_def:
+                label = attr_def.label or attr_def.key
             if label:
                 label_widget = QtWidgets.QLabel(label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 content_layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -1474,6 +1490,8 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
         attr_def_layout.setColumnStretch(0, 0)
         attr_def_layout.setColumnStretch(1, 1)
+        attr_def_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        attr_def_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.addWidget(attr_def_widget, 0)
@@ -1501,12 +1519,19 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                         expand_cols = 1
 
                     col_num = 2 - expand_cols
-                    label = attr_def.label or attr_def.key
+                    label = None
+                    if attr_def.is_value_def:
+                        label = attr_def.label or attr_def.key
                     if label:
                         label_widget = QtWidgets.QLabel(label, content_widget)
                         tooltip = attr_def.tooltip
                         if tooltip:
                             label_widget.setToolTip(tooltip)
+                        if attr_def.is_label_horizontal:
+                            label_widget.setAlignment(
+                                QtCore.Qt.AlignRight
+                                | QtCore.Qt.AlignVCenter
+                            )
                         attr_def_layout.addWidget(
                             label_widget, row, 0, 1, expand_cols
                         )
@@ -1517,7 +1542,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                     )
                     row += 1
 
-                if isinstance(attr_def, UIDef):
+                if not attr_def.is_value_def:
                     continue
 
                 widget.value_changed.connect(self._input_value_changed)
