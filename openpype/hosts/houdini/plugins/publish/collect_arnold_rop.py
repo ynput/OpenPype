@@ -4,52 +4,13 @@ import os
 import hou
 import pyblish.api
 
-
-def get_top_referenced_parm(parm):
-
-    processed = set()  # disallow infinite loop
-    while True:
-        if parm.path() in processed:
-            raise RuntimeError("Parameter references result in cycle.")
-
-        processed.add(parm.path())
-
-        ref = parm.getReferencedParm()
-        if ref.path() == parm.path():
-            # It returns itself when it doesn't reference
-            # another parameter
-            return ref
-        else:
-            parm = ref
-
-
-def evalParmNoFrame(node, parm, pad_character="#"):
-
-    parameter = node.parm(parm)
-    assert parameter, "Parameter does not exist: %s.%s" % (node, parm)
-
-    # If the parameter has a parameter reference, then get that
-    # parameter instead as otherwise `unexpandedString()` fails.
-    parameter = get_top_referenced_parm(parameter)
-
-    # Substitute out the frame numbering with padded characters
-    try:
-        raw = parameter.unexpandedString()
-    except hou.Error as exc:
-        print("Failed: %s" % parameter)
-        raise RuntimeError(exc)
-
-    def replace(match):
-        padding = 1
-        n = match.group(2)
-        if n and int(n):
-            padding = int(n)
-        return pad_character * padding
-
-    expression = re.sub(r"(\$F([0-9]*))", replace, raw)
-
-    with hou.ScriptEvalContext(parameter):
-        return hou.expandStringAtFrame(expression, 0)
+from openpype.hosts.houdini.api.lib import (
+    evalParmNoFrame,
+    get_color_management_preferences
+)
+from openpype.hosts.houdini.api import(
+    colorspace
+)
 
 
 class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
@@ -114,6 +75,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
 
         filenames = list(render_products)
         instance.data["files"] = filenames
+        instance.data["renderProducts"] = colorspace.ARenderProduct()
 
         # For now by default do NOT try to publish the rendered output
         instance.data["publishJobState"] = "Suspended"
@@ -122,6 +84,12 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
         instance.data["expectedFiles"].append(files_by_aov)
+
+        # update the colorspace data
+        colorspace_data = get_color_management_preferences()
+        instance.data["colorspaceConfig"] = colorspace_data["config"]
+        instance.data["colorspaceDisplay"] = colorspace_data["display"]
+        instance.data["colorspaceView"] = colorspace_data["view"]
 
     def get_render_product_name(self, prefix, suffix):
         """Return the output filename using the AOV prefix and suffix"""
@@ -157,9 +125,10 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         file = os.path.basename(path)
 
         if "#" in file:
-            pparts = file.split("#")
-            padding = "%0{}d".format(len(pparts) - 1)
-            file = pparts[0] + padding + pparts[-1]
+            def replace(match):
+                return "%0{}d".format(len(match.group()))
+
+            file = re.sub("#+", replace, file)
 
         if "%" not in file:
             return path
