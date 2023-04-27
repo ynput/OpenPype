@@ -155,8 +155,9 @@ class FusionLoadSequence(load.LoaderPlugin):
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
-            x = data.get('x', -32768)
-            y = data.get('y', -32768)
+            # If no X and Y data was passed, place the node on mouse location
+            x = data.get("x", -32768)
+            y = data.get("y", -32768)
             args = (x, y)
             tool = comp.AddTool("Loader", *args)
             tool["Clip"] = path
@@ -274,7 +275,7 @@ class FusionLoadSequence(load.LoaderPlugin):
 
         # Get frame start without handles
         start = version_data.get("frameStart")
-        
+
         if start is None:
             start = context["asset"]["data"].get("frameStart")
             if start is None:

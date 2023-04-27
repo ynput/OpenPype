@@ -485,6 +485,7 @@ class FusionPlaceholderCreatePlugin(
         return output
 
     def populate_placeholder(self, placeholder):
+        placeholder.data["loader_args"] = "{'x': -32767, 'y': -32767}"
         self.populate_create_placeholder(placeholder)
 
     def repopulate_placeholder(self, placeholder):
