@@ -29,6 +29,73 @@ ERROR_VISIBLE = 1 << 6
 INFO_VISIBLE = 1 << 6
 
 
+class VerticalScrollArea(QtWidgets.QScrollArea):
+    """Scroll area for validation error titles.
+
+    The biggest difference is that the scroll area has scroll bar on left side
+    and resize of content will also resize scrollarea itself.
+
+    Resize if deferred by 100ms because at the moment of resize are not yet
+    propagated sizes and visibility of scroll bars.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(VerticalScrollArea, self).__init__(*args, **kwargs)
+
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        # Background of scrollbar will be transparent
+        scrollbar_bg = self.verticalScrollBar().parent()
+        if scrollbar_bg:
+            scrollbar_bg.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setViewportMargins(0, 0, 0, 0)
+
+        self.verticalScrollBar().installEventFilter(self)
+
+        # Timer with 100ms offset after changing size
+        size_changed_timer = QtCore.QTimer()
+        size_changed_timer.setInterval(100)
+        size_changed_timer.setSingleShot(True)
+
+        size_changed_timer.timeout.connect(self._on_timer_timeout)
+        self._size_changed_timer = size_changed_timer
+
+    def setVerticalScrollBar(self, widget):
+        old_widget = self.verticalScrollBar()
+        if old_widget:
+            old_widget.removeEventFilter(self)
+
+        super(VerticalScrollArea, self).setVerticalScrollBar(widget)
+        if widget:
+            widget.installEventFilter(self)
+
+    def setWidget(self, widget):
+        old_widget = self.widget()
+        if old_widget:
+            old_widget.removeEventFilter(self)
+
+        super(VerticalScrollArea, self).setWidget(widget)
+        if widget:
+            widget.installEventFilter(self)
+
+    def _on_timer_timeout(self):
+        width = self.widget().width()
+        if self.verticalScrollBar().isVisible():
+            width += self.verticalScrollBar().width()
+        self.setMinimumWidth(width)
+
+    def eventFilter(self, obj, event):
+        if (
+            event.type() == QtCore.QEvent.Resize
+            and (obj is self.widget() or obj is self.verticalScrollBar())
+        ):
+            self._size_changed_timer.start()
+        return super(VerticalScrollArea, self).eventFilter(obj, event)
+
+
 class ValidationErrorInstanceList(QtWidgets.QListView):
     """List of publish instances that caused a validation error.
 
@@ -418,73 +485,6 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self._controller.run_action(plugin_id, action_id)
 
 
-class VerticallScrollArea(QtWidgets.QScrollArea):
-    """Scroll area for validation error titles.
-
-    The biggest difference is that the scroll area has scroll bar on left side
-    and resize of content will also resize scrollarea itself.
-
-    Resize if deferred by 100ms because at the moment of resize are not yet
-    propagated sizes and visibility of scroll bars.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(VerticallScrollArea, self).__init__(*args, **kwargs)
-
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.setLayoutDirection(QtCore.Qt.RightToLeft)
-
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        # Background of scrollbar will be transparent
-        scrollbar_bg = self.verticalScrollBar().parent()
-        if scrollbar_bg:
-            scrollbar_bg.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.setViewportMargins(0, 0, 0, 0)
-
-        self.verticalScrollBar().installEventFilter(self)
-
-        # Timer with 100ms offset after changing size
-        size_changed_timer = QtCore.QTimer()
-        size_changed_timer.setInterval(100)
-        size_changed_timer.setSingleShot(True)
-
-        size_changed_timer.timeout.connect(self._on_timer_timeout)
-        self._size_changed_timer = size_changed_timer
-
-    def setVerticalScrollBar(self, widget):
-        old_widget = self.verticalScrollBar()
-        if old_widget:
-            old_widget.removeEventFilter(self)
-
-        super(VerticallScrollArea, self).setVerticalScrollBar(widget)
-        if widget:
-            widget.installEventFilter(self)
-
-    def setWidget(self, widget):
-        old_widget = self.widget()
-        if old_widget:
-            old_widget.removeEventFilter(self)
-
-        super(VerticallScrollArea, self).setWidget(widget)
-        if widget:
-            widget.installEventFilter(self)
-
-    def _on_timer_timeout(self):
-        width = self.widget().width()
-        if self.verticalScrollBar().isVisible():
-            width += self.verticalScrollBar().width()
-        self.setMinimumWidth(width)
-
-    def eventFilter(self, obj, event):
-        if (
-            event.type() == QtCore.QEvent.Resize
-            and (obj is self.widget() or obj is self.verticalScrollBar())
-        ):
-            self._size_changed_timer.start()
-        return super(VerticallScrollArea, self).eventFilter(obj, event)
-
-
 class ValidationArtistMessage(QtWidgets.QWidget):
     def __init__(self, message, parent):
         super(ValidationArtistMessage, self).__init__(parent)
@@ -513,7 +513,7 @@ class ValidationsWidget(QtWidgets.QFrame):
 
         content_widget = QtWidgets.QWidget(self)
 
-        errors_scroll = VerticallScrollArea(content_widget)
+        errors_scroll = VerticalScrollArea(content_widget)
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
@@ -845,7 +845,7 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super(PublishInstancesViewWidget, self).__init__(parent)
 
-        scroll_area = VerticallScrollArea(self)
+        scroll_area = VerticalScrollArea(self)
         scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
