@@ -9,7 +9,6 @@ from openpype.pipeline import legacy_io
 from openpype.client import get_last_version_by_subset_name
 from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.hosts.maya.api import lib_looks
-from . import lib
 from .alembic import get_alembic_ids_cache
 
 
@@ -153,8 +152,8 @@ def assign_look(standin, subset, project_name=None):
             ))
             continue
 
-        relationships = lib.get_look_relationships(version["_id"])
-        shader_nodes, container_node = lib.load_look(version["_id"])
+        relationships = lib_looks.get_look_relationships(version["_id"])
+        shader_nodes, container_node = lib_looks.load_look(version["_id"])
         namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset

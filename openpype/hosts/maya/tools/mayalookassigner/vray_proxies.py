@@ -8,7 +8,6 @@ from maya import cmds
 from openpype.client import get_last_version_by_subset_name
 from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import lib_looks
-from . import lib
 from .alembic import get_alembic_ids_cache
 
 
@@ -92,8 +91,8 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
             ))
             continue
 
-        relationships = lib.get_look_relationships(version["_id"])
-        shadernodes, _ = lib.load_look(version["_id"])
+        relationships = lib_looks.get_look_relationships(version["_id"])
+        shadernodes, _ = lib_looks.load_look(version["_id"])
 
         # Get only the node ids and paths related to this asset
         # And get the shader edits the look supplies
