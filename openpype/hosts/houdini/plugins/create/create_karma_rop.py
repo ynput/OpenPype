@@ -32,18 +32,19 @@ class CreateKarmaROP(plugin.HoudiniCreator):
 
         ext = pre_create_data.get("image_format")
 
-        filepath = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/render/"),
-            "{}/{}.$F4.{}".format(subset_name, subset_name, ext)
+        filepath = "{renders_dir}{subset_name}/{subset_name}.$F4.{ext}".format(
+            renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
+            subset_name=subset_name,
+            ext=ext,
         )
-        checkpoint = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4.checkpoint".format(subset_name)
+        checkpoint = "{cp_dir}{subset_name}.$F4.checkpoint".format(
+            cp_dir= hou.text.expandString("$HIP/pyblish/"),
+            subset_name= subset_name
         )
 
-        usd_directory = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/renders/usd_renders/"),
-            "{}_$RENDERID".format(subset_name, subset_name, ext)
+        usd_directory = "{usd_dir}{subset_name}_$RENDERID".format(
+            usd_dir = hou.text.expandString("$HIP/pyblish/renders/usd_renders/"),
+            subset_name=subset_name
         )
 
         parms = {
@@ -66,12 +67,10 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             camera = None
             for node in self.selected_nodes:
                 if node.type().name() == "cam":
-                    camera = node.path()
-                    camera_node = hou.node(camera)
                     has_camera = pre_create_data.get("cam_res")
                     if has_camera:
-                        res_x = camera_node.evalParm("resx")
-                        res_y = camera_node.evalParm("resy")
+                        res_x = node.evalParm("resx")
+                        res_y = node.evalParm("resy")
 
             if not camera:
                 self.log.warning("No render camera found in selection")
