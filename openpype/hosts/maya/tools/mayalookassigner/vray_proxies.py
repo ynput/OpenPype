@@ -100,37 +100,43 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
         asset_nodes_by_id = {
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
-        edits = list(
-            maya_lib.iter_shader_edits(
-                relationships, shadernodes, asset_nodes_by_id
-            )
+
+        iter_edits = maya_lib.iter_shader_edits(
+            relationships, shadernodes, asset_nodes_by_id
         )
 
-        # Create assignments
-        assignments = {}
-        for edit in edits:
-            if edit["action"] == "assign":
-                nodes = edit["nodes"]
-                shader = edit["shader"]
-                if not cmds.ls(shader, type="shadingEngine"):
-                    print("Skipping non-shader: %s" % shader)
-                    continue
+        apply_edits(vrayproxy, iter_edits)
 
-                inputs = cmds.listConnections(
-                    shader + ".surfaceShader", source=True)
-                if not inputs:
-                    print("Shading engine missing material: %s" % shader)
 
-                # Strip off component assignments
-                for i, node in enumerate(nodes):
-                    if "." in node:
-                        log.warning(
-                            ("Converting face assignment to full object "
-                             "assignment. This conversion can be lossy: "
-                             "{}").format(node))
-                        nodes[i] = node.split(".")[0]
+def apply_edits(vrayproxy, edits):
+    """Apply look edits to the VRayProxy."""
 
-                material = inputs[0]
-                assignments[material] = nodes
+    # Create assignments
+    assignments = {}
+    for edit in edits:
+        if edit["action"] == "assign":
+            nodes = edit["nodes"]
+            shader = edit["shader"]
+            if not cmds.ls(shader, type="shadingEngine"):
+                print("Skipping non-shader: %s" % shader)
+                continue
 
-        assign_vrayproxy_shaders(vrayproxy, assignments)
+            inputs = cmds.listConnections(
+                shader + ".surfaceShader", source=True)
+            if not inputs:
+                print("Shading engine missing material: %s" % shader)
+
+            # Strip off component assignments
+            for i, node in enumerate(nodes):
+                if "." in node:
+                    log.warning(
+                        "Converting face assignment to full object "
+                        "assignment. This conversion can be lossy: "
+                        "{}".format(node)
+                    )
+                    nodes[i] = node.split(".")[0]
+
+            material = inputs[0]
+            assignments[material] = nodes
+
+    assign_vrayproxy_shaders(vrayproxy, assignments)

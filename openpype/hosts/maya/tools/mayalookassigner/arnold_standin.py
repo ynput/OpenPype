@@ -123,7 +123,7 @@ def shading_engine_assignments(shading_engine, attribute, nodes, assignments):
         assignments[node].append(assignment)
 
 
-def assign_look(standin, subset):
+def assign_look(standin, subset, project_name=None):
     log.info("Assigning {} to {}.".format(subset, standin))
 
     nodes_by_id = get_nodes_by_id(standin)
@@ -134,7 +134,9 @@ def assign_look(standin, subset):
         asset_id = node_id.split(":", 1)[0]
         node_ids_by_asset_id[asset_id].add(node_id)
 
-    project_name = legacy_io.active_project()
+    if project_name is None:
+        project_name = legacy_io.active_project()
+
     for asset_id, node_ids in node_ids_by_asset_id.items():
 
         # Get latest look version
@@ -159,95 +161,100 @@ def assign_look(standin, subset):
         asset_nodes_by_id = {
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
-        edits = list(
-            api.lib.iter_shader_edits(
-                relationships, shader_nodes, asset_nodes_by_id
-            )
+        edits = api.lib.iter_shader_edits(
+            relationships, shader_nodes, asset_nodes_by_id
         )
 
-        # Create assignments
-        node_assignments = {}
-        for edit in edits:
-            for node in edit["nodes"]:
-                if node not in node_assignments:
-                    node_assignments[node] = []
+        apply_edits(standin, edits, container_node, namespace)
 
-            if edit["action"] == "assign":
-                if not cmds.ls(edit["shader"], type="shadingEngine"):
-                    log.info("Skipping non-shader: %s" % edit["shader"])
-                    continue
 
-                shading_engine_assignments(
-                    shading_engine=edit["shader"],
-                    attribute="surfaceShader",
-                    nodes=edit["nodes"],
-                    assignments=node_assignments
-                )
-                shading_engine_assignments(
-                    shading_engine=edit["shader"],
-                    attribute="displacementShader",
-                    nodes=edit["nodes"],
-                    assignments=node_assignments
-                )
+def apply_edits(standin, edits, container_node=None, namespace=""):
+    """Apply look edits to the aiStandin."""
 
-            if edit["action"] == "setattr":
-                visibility = False
-                for attr, value in edit["attributes"].items():
-                    if attr not in ATTRIBUTE_MAPPING:
-                        log.warning(
-                            "Skipping setting attribute {} on {} because it is"
-                            " not recognized.".format(attr, edit["nodes"])
-                        )
-                        continue
+    # Create assignments
+    node_assignments = {}
+    for edit in edits:
+        for node in edit["nodes"]:
+            if node not in node_assignments:
+                node_assignments[node] = []
 
-                    if isinstance(value, str):
-                        value = "'{}'".format(value)
-
-                    if ATTRIBUTE_MAPPING[attr] == "visibility":
-                        visibility = True
-                        continue
-
-                    assignment = "{}={}".format(ATTRIBUTE_MAPPING[attr], value)
-
-                    for node in edit["nodes"]:
-                        node_assignments[node].append(assignment)
-
-                if visibility:
-                    mask = calculate_visibility_mask(edit["attributes"])
-                    assignment = "visibility={}".format(mask)
-
-                    for node in edit["nodes"]:
-                        node_assignments[node].append(assignment)
-
-        # Assign shader
-        # Clear all current shader assignments
-        plug = standin + ".operators"
-        num = cmds.getAttr(plug, size=True)
-        for i in reversed(range(num)):
-            cmds.removeMultiInstance("{}[{}]".format(plug, i), b=True)
-
-        # Create new assignment overrides
-        index = 0
-        for node, assignments in node_assignments.items():
-            if not assignments:
+        if edit["action"] == "assign":
+            if not cmds.ls(edit["shader"], type="shadingEngine"):
+                log.info("Skipping non-shader: %s" % edit["shader"])
                 continue
 
-            with api.lib.maintained_selection():
-                operator = cmds.createNode("aiSetParameter")
-                operator = cmds.rename(operator, namespace + ":" + operator)
+            shading_engine_assignments(
+                shading_engine=edit["shader"],
+                attribute="surfaceShader",
+                nodes=edit["nodes"],
+                assignments=node_assignments
+            )
+            shading_engine_assignments(
+                shading_engine=edit["shader"],
+                attribute="displacementShader",
+                nodes=edit["nodes"],
+                assignments=node_assignments
+            )
 
-            cmds.setAttr(operator + ".selection", node, type="string")
-            for i, assignment in enumerate(assignments):
-                cmds.setAttr(
-                    "{}.assignment[{}]".format(operator, i),
-                    assignment,
-                    type="string"
-                )
+        if edit["action"] == "setattr":
+            visibility = False
+            for attr, value in edit["attributes"].items():
+                if attr not in ATTRIBUTE_MAPPING:
+                    log.warning(
+                        "Skipping setting attribute {} on {} because it is"
+                        " not recognized.".format(attr, edit["nodes"])
+                    )
+                    continue
 
-                cmds.connectAttr(
-                    operator + ".out", "{}[{}]".format(plug, index)
-                )
+                if isinstance(value, str):
+                    value = "'{}'".format(value)
 
-                index += 1
+                if ATTRIBUTE_MAPPING[attr] == "visibility":
+                    visibility = True
+                    continue
 
+                assignment = "{}={}".format(ATTRIBUTE_MAPPING[attr], value)
+
+                for node in edit["nodes"]:
+                    node_assignments[node].append(assignment)
+
+            if visibility:
+                mask = calculate_visibility_mask(edit["attributes"])
+                assignment = "visibility={}".format(mask)
+
+                for node in edit["nodes"]:
+                    node_assignments[node].append(assignment)
+
+    # Assign shader
+    # Clear all current shader assignments
+    plug = standin + ".operators"
+    num = cmds.getAttr(plug, size=True)
+    for i in reversed(range(num)):
+        cmds.removeMultiInstance("{}[{}]".format(plug, i), b=True)
+
+    # Create new assignment overrides
+    index = 0
+    for node, assignments in node_assignments.items():
+        if not assignments:
+            continue
+
+        with api.lib.maintained_selection():
+            operator = cmds.createNode("aiSetParameter")
+            operator = cmds.rename(operator, namespace + ":" + operator)
+
+        cmds.setAttr(operator + ".selection", node, type="string")
+        for i, assignment in enumerate(assignments):
+            cmds.setAttr(
+                "{}.assignment[{}]".format(operator, i),
+                assignment,
+                type="string"
+            )
+
+            cmds.connectAttr(
+                operator + ".out", "{}[{}]".format(plug, index)
+            )
+
+            index += 1
+
+        if container_node:
             cmds.sets(operator, edit=True, addElement=container_node)
