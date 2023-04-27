@@ -259,6 +259,8 @@ class FusionPlaceholderLoadPlugin(
             # set their inputs and outpus and update all nodes positions and
             # dimensions and siblings names
 
+            # TODO Convert to Fusion:
+            """
             siblings = get_nodes_by_names(placeholder.data["siblings"])
             refresh_nodes(siblings)
             copies = self._create_sib_copies(placeholder)
@@ -273,11 +275,14 @@ class FusionPlaceholderLoadPlugin(
 
             new_siblings = get_names_from_nodes(new_nodes)
             placeholder.data["siblings"] = new_siblings
+            """
 
         else:
             # if the placeholder doesn't have siblings, the loaded
             # nodes will be placed in a free space
 
+            # TODO Convert to Fusion:
+            """
             xpointer, ypointer = find_free_space_to_paste_nodes(
                 nodes_loaded, direction="bottom", offset=200
             )
@@ -288,6 +293,7 @@ class FusionPlaceholderLoadPlugin(
                 xpos = (node.xpos() - min_x) + xpointer
                 ypos = (node.ypos() - min_y) + ypointer
                 node.setXYpos(xpos, ypos)
+            """
 
         placeholder.data["nb_children"] += 1
 
@@ -406,6 +412,8 @@ class FusionPlaceholderLoadPlugin(
             copies (dict) : with copied nodes names and their copies
         """
 
+        # TODO Convert to Fusion:
+        """
         copies = {}
         siblings = get_nodes_by_names(placeholder.data["siblings"])
         for node in siblings:
@@ -425,6 +433,8 @@ class FusionPlaceholderLoadPlugin(
                 node.removeKnob(node.knob("repre_id"))
             copies[node.name()] = new_node
         return copies
+        """
+        pass
 
     def _set_copies_connections(self, placeholder, copies):
         """Set inputs and outputs of the copies.
@@ -433,6 +443,8 @@ class FusionPlaceholderLoadPlugin(
             copies (dict): Copied nodes by their names.
         """
 
+        # TODO Convert to Fusion:
+        """
         last_input, last_output = get_group_io_nodes(
             placeholder.data["last_loaded"]
         )
@@ -469,6 +481,8 @@ class FusionPlaceholderLoadPlugin(
                         node_copy.setInput(idx, last_output)
 
         siblings_input.setInput(0, copy_output)
+        """
+        pass
 
 
 class FusionPlaceholderCreatePlugin(
@@ -574,6 +588,8 @@ class FusionPlaceholderCreatePlugin(
             # set their inputs and outpus and update all nodes positions and
             # dimensions and siblings names
 
+            # TODO Convert to Fusion:
+            """
             siblings = get_nodes_by_names(placeholder.data["siblings"])
             refresh_nodes(siblings)
             copies = self._create_sib_copies(placeholder)
@@ -588,11 +604,13 @@ class FusionPlaceholderCreatePlugin(
 
             new_siblings = get_names_from_nodes(new_nodes)
             placeholder.data["siblings"] = new_siblings
+            """
 
         else:
             # if the placeholder doesn't have siblings, the created
             # nodes will be placed in a free space
 
+            # TODO Convert to Fusion:
             xpointer, ypointer = find_free_space_to_paste_nodes(
                 nodes_created, direction="bottom", offset=200
             )
