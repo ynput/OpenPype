@@ -1,14 +1,13 @@
 import os
 import hou
 
-from openpype.pipeline import legacy_io
 import pyblish.api
 
 
 class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    order = pyblish.api.CollectorOrder - 0.01
+    order = pyblish.api.CollectorOrder - 0.1
     label = "Houdini Current File"
     hosts = ["houdini"]
 
@@ -17,10 +16,10 @@ class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
 
         current_file = hou.hipFile.path()
         if not os.path.exists(current_file):
-            # By default Houdini will even point a new scene to a path.
+            # By default, Houdini will even point a new scene to a path.
             # However if the file is not saved at all and does not exist,
             # we assume the user never set it.
-            filepath = ""
+            current_file = ""
 
         elif os.path.basename(current_file) == "untitled.hip":
             # Due to even a new file being called 'untitled.hip' we are unable
@@ -35,42 +34,4 @@ class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
             )
 
         context.data["currentFile"] = current_file
-
-        folder, file = os.path.split(current_file)
-        filename, ext = os.path.splitext(file)
-
-        task = legacy_io.Session["AVALON_TASK"]
-
-        data = {}
-
-        # create instance
-        instance = context.create_instance(name=filename)
-        subset = 'workfile' + task.capitalize()
-
-        data.update({
-            "subset": subset,
-            "asset": os.getenv("AVALON_ASSET", None),
-            "label": subset,
-            "publish": True,
-            "family": 'workfile',
-            "families": ['workfile'],
-            "setMembers": [current_file],
-            "frameStart": context.data['frameStart'],
-            "frameEnd": context.data['frameEnd'],
-            "handleStart": context.data['handleStart'],
-            "handleEnd": context.data['handleEnd']
-        })
-
-        data['representations'] = [{
-            'name': ext.lstrip("."),
-            'ext': ext.lstrip("."),
-            'files': file,
-            "stagingDir": folder,
-        }]
-
-        instance.data.update(data)
-
-        self.log.info('Collected instance: {}'.format(file))
-        self.log.info('Scene path: {}'.format(current_file))
-        self.log.info('staging Dir: {}'.format(folder))
-        self.log.info('subset: {}'.format(subset))
+        self.log.info('Current workfile path: {}'.format(current_file))

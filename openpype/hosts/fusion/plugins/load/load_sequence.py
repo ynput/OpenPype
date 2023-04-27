@@ -1,16 +1,18 @@
-import os
 import contextlib
 
-from openpype.client import get_version_by_id
-from openpype.pipeline import (
-    load,
-    legacy_io,
-    get_representation_path,
+import openpype.pipeline.load as load
+from openpype.pipeline.load import (
+    get_representation_context,
+    get_representation_path_from_context
 )
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
     comp_lock_and_undo_chunk
+)
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS,
+    VIDEO_EXTENSIONS
 )
 
 comp = get_current_comp()
@@ -101,6 +103,9 @@ def loader_shift(loader, frame, relative=True):
     else:
         shift = frame - old_in
 
+    if not shift:
+        return 0
+
     # Shifting global in will try to automatically compensate for the change
     # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
     # input values to "just shift" the clip
@@ -126,6 +131,9 @@ class FusionLoadSequence(load.LoaderPlugin):
 
     families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load sequence"
     order = -10
@@ -138,7 +146,7 @@ class FusionLoadSequence(load.LoaderPlugin):
             namespace = context['asset']['name']
 
         # Use the first file for now
-        path = self._get_first_image(os.path.dirname(self.fname))
+        path = get_representation_path_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
@@ -149,9 +157,8 @@ class FusionLoadSequence(load.LoaderPlugin):
             tool["Clip"] = path
 
             # Set global in point to start frame (if in version.data)
-            start = context["version"]["data"].get("frameStart", None)
-            if start is not None:
-                loader_shift(tool, start, relative=False)
+            start = self._get_start(context["version"], tool)
+            loader_shift(tool, start, relative=False)
 
             imprint_container(tool,
                               name=name,
@@ -208,18 +215,11 @@ class FusionLoadSequence(load.LoaderPlugin):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = os.path.dirname(get_representation_path(representation))
-        path = self._get_first_image(root)
+        context = get_representation_context(representation)
+        path = get_representation_path_from_context(context)
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
-        version = get_version_by_id(project_name, representation["parent"])
-        start = version["data"].get("frameStart")
-        if start is None:
-            self.log.warning("Missing start frame for updated version"
-                             "assuming starts at frame 0 for: "
-                             "{} ({})".format(tool.Name, representation))
-            start = 0
+        start = self._get_start(context["version"], tool)
 
         with comp_lock_and_undo_chunk(comp, "Update Loader"):
 
@@ -252,7 +252,26 @@ class FusionLoadSequence(load.LoaderPlugin):
         with comp_lock_and_undo_chunk(comp, "Remove Loader"):
             tool.Delete()
 
-    def _get_first_image(self, root):
-        """Get first file in representation root"""
-        files = sorted(os.listdir(root))
-        return os.path.join(root, files[0])
+    def _get_start(self, version_doc, tool):
+        """Return real start frame of published files (incl. handles)"""
+        data = version_doc["data"]
+
+        # Get start frame directly with handle if it's in data
+        start = data.get("frameStartHandle")
+        if start is not None:
+            return start
+
+        # Get frame start without handles
+        start = data.get("frameStart")
+        if start is None:
+            self.log.warning("Missing start frame for version "
+                             "assuming starts at frame 0 for: "
+                             "{}".format(tool.Name))
+            return 0
+
+        # Use `handleStart` if the data is available
+        handle_start = data.get("handleStart")
+        if handle_start:
+            start -= handle_start
+
+        return start

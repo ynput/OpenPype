@@ -10,8 +10,9 @@ from wsrpc_aiohttp import (
     WebSocketAsync
 )
 
-from Qt import QtCore
+from qtpy import QtCore
 
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool
@@ -84,8 +85,6 @@ class ProcessLauncher(QtCore.QObject):
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger("{}-launcher".format(
                 self.route_name))
         return self._log
@@ -285,9 +284,6 @@ class AfterEffectsRoute(WebSocketRoute):
         return await self.socket.call('aftereffects.read')
 
     # panel routes for tools
-    async def creator_route(self):
-        self._tool_route("creator")
-
     async def workfiles_route(self):
         self._tool_route("workfiles")
 
@@ -295,13 +291,10 @@ class AfterEffectsRoute(WebSocketRoute):
         self._tool_route("loader")
 
     async def publish_route(self):
-        self._tool_route("publish")
+        self._tool_route("publisher")
 
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
-
-    async def subsetmanager_route(self):
-        self._tool_route("subsetmanager")
 
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")

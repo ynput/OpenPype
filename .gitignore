@@ -110,3 +110,5 @@ tools/run_eventserver.*
 
 #  Developer tools
 tools/dev_*
+
+.github_changelog_generator

@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 
 import bpy
 import addon_utils
-from openpype.api import Logger
+from openpype.lib import Logger
 
 from . import pipeline
 
@@ -284,3 +284,13 @@ def maintained_selection():
             # This could happen if the active node was deleted during the
             # context.
             log.exception("Failed to set active object.")
+
+
+@contextlib.contextmanager
+def maintained_time():
+    """Maintain current frame during context."""
+    current_time = bpy.context.scene.frame_current
+    try:
+        yield
+    finally:
+        bpy.context.scene.frame_current = current_time

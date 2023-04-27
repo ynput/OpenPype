@@ -1,7 +1,6 @@
 import os
 import platform
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostAddon
+from openpype.modules import OpenPypeModule, IHostAddon
 
 NUKE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,7 +27,12 @@ class NukeAddon(OpenPypeModule, IHostAddon):
                 new_nuke_paths.append(norm_path)
 
         env["NUKE_PATH"] = os.pathsep.join(new_nuke_paths)
+        # Remove auto screen scale factor for Qt
+        # - let Nuke decide it's value
         env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
+        # Remove tkinter library paths if are set
+        env.pop("TK_LIBRARY", None)
+        env.pop("TCL_LIBRARY", None)
 
         # Add vendor to PYTHONPATH
         python_path = env["PYTHONPATH"]
@@ -58,6 +62,13 @@ class NukeAddon(OpenPypeModule, IHostAddon):
             ]
             path_paths.append(quick_time_path)
             env["PATH"] = os.pathsep.join(path_paths)
+
+    def get_launch_hook_paths(self, app):
+        if app.host_name != self.host_name:
+            return []
+        return [
+            os.path.join(NUKE_ROOT_DIR, "hooks")
+        ]
 
     def get_workfile_extensions(self):
         return [".nk"]

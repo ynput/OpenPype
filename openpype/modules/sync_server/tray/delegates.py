@@ -1,5 +1,5 @@
 import os
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype.lib import Logger
 

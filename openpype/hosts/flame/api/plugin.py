@@ -4,18 +4,19 @@ import shutil
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
-from Qt import QtCore, QtWidgets
-
-import openpype.api as openpype
 import qargparse
+from qtpy import QtCore, QtWidgets
+
 from openpype import style
+from openpype.lib import Logger, StringTemplate
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.settings import get_current_project_settings
 
 from . import constants
 from . import lib as flib
 from . import pipeline as fpipeline
 
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -156,7 +157,7 @@ class CreatorWidget(QtWidgets.QDialog):
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
 
-        # assign the new text to lable widget
+        # assign the new text to label widget
         label = QtWidgets.QLabel(label_text)
         label.setObjectName("LineLabel")
 
@@ -305,7 +306,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "flame"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context flame objects
@@ -344,8 +345,8 @@ class PublishableClip:
         "track": "sequence",
     }
 
-    # parents search patern
-    parents_search_patern = r"\{([a-z]*?)\}"
+    # parents search pattern
+    parents_search_pattern = r"\{([a-z]*?)\}"
 
     # default templates for non-ui use
     rename_default = False
@@ -444,7 +445,7 @@ class PublishableClip:
         return self.current_segment
 
     def _populate_segment_default_data(self):
-        """ Populate default formating data from segment. """
+        """ Populate default formatting data from segment. """
 
         self.current_segment_default_data = {
             "_folder_": "shots",
@@ -537,7 +538,7 @@ class PublishableClip:
         if not self.index_from_segment:
             self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = {}
+        hierarchy_formatting_data = {}
         hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.current_segment_default_data.copy()
         if self.ui_inputs:
@@ -551,7 +552,7 @@ class PublishableClip:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
-                    # if review layer is defined and not the same as defalut
+                    # if review layer is defined and not the same as default
                     self.review_layer = self.review_track
 
                 # shot num calculate
@@ -577,13 +578,13 @@ class PublishableClip:
 
             # fill up pythonic expresisons in hierarchy data
             for k, _v in hierarchy_data.items():
-                hierarchy_formating_data[k] = _v["value"].format(**_data)
+                hierarchy_formatting_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = hierarchy_data
+            hierarchy_formatting_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
-            hierarchy_formating_data
+            hierarchy_formatting_data
         )
 
         tag_hierarchy_data.update({"heroTrack": True})
@@ -595,36 +596,46 @@ class PublishableClip:
         if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), hero_data in self.vertical_clip_match.items():
-                hero_data.update({"heroTrack": False})
-                if _in == self.clip_in and _out == self.clip_out:
+                """
+                Since only one instance of hero clip is expected in
+                `self.vertical_clip_match`, this will loop only once
+                until none hero clip will be matched with hero clip.
+
+                `tag_hierarchy_data` will be set only once for every
+                clip which is not hero clip.
+                """
+                _hero_data = deepcopy(hero_data)
+                _hero_data.update({"heroTrack": False})
+                if _in <= self.clip_in and _out >= self.clip_out:
                     data_subset = hero_data["subset"]
                     # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        hero_data["subset"] = self.subset + str(
+                        _hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        hero_data["subset"] = self.subset
-                    # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = hero_data
+                        _hero_data["subset"] = self.subset
+                    # assign data to return hierarchy data to tag
+                    tag_hierarchy_data = _hero_data
+                    break
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
 
-    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+    def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve marker data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
-        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
-        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formatting_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formatting_data)
 
         # remove shot from hierarchy data: is not needed anymore
-        hierarchy_formating_data.pop("shot")
+        hierarchy_formatting_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
             "parents": self.parents,
-            "hierarchyData": hierarchy_formating_data,
+            "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
             "families": [self.family]
@@ -639,17 +650,17 @@ class PublishableClip:
             type
         )
 
-        # first collect formating data to use for formating template
-        formating_data = {}
+        # first collect formatting data to use for formatting template
+        formatting_data = {}
         for _k, _v in self.hierarchy_data.items():
             value = _v["value"].format(
                 **self.current_segment_default_data)
-            formating_data[_k] = value
+            formatting_data[_k] = value
 
         return {
             "entity_type": entity_type,
             "entity_name": template.format(
-                **formating_data
+                **formatting_data
             )
         }
 
@@ -657,9 +668,9 @@ class PublishableClip:
         """ Create parents and return it in list. """
         self.parents = []
 
-        patern = re.compile(self.parents_search_patern)
+        pattern = re.compile(self.parents_search_pattern)
 
-        par_split = [(patern.findall(t).pop(), t)
+        par_split = [(pattern.findall(t).pop(), t)
                      for t in self.hierarchy.split("/")]
 
         for type, template in par_split:
@@ -678,6 +689,7 @@ class ClipLoader(LoaderPlugin):
     `update` logic.
 
     """
+    log = log
 
     options = [
         qargparse.Boolean(
@@ -688,14 +700,97 @@ class ClipLoader(LoaderPlugin):
         )
     ]
 
+    _mapping = None
+
+    def apply_settings(cls, project_settings, system_settings):
+
+        plugin_type_settings = (
+            project_settings
+            .get("flame", {})
+            .get("load", {})
+        )
+
+        if not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                print("  - is disabled by preset")
+            elif option == "representations":
+                continue
+            else:
+                print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
+
+    def get_colorspace(self, context):
+        """Get colorspace name
+
+        Look either to version data or representation data.
+
+        Args:
+            context (dict): version context data
+
+        Returns:
+            str: colorspace name or None
+        """
+        version = context['version']
+        version_data = version.get("data", {})
+        colorspace = version_data.get(
+            "colorspace", None
+        )
+
+        if (
+            not colorspace
+            or colorspace == "Unknown"
+        ):
+            colorspace = context["representation"]["data"].get(
+                "colorspace", None)
+
+        return colorspace
+
+    @classmethod
+    def get_native_colorspace(cls, input_colorspace):
+        """Return native colorspace name.
+
+        Args:
+            input_colorspace (str | None): colorspace name
+
+        Returns:
+            str: native colorspace name defined in mapping or None
+        """
+        if not cls._mapping:
+            settings = get_current_project_settings()["flame"]
+            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            cls._mapping = {
+                input["ocioName"]: input["flameName"]
+                for input in mapping
+            }
+
+        return cls._mapping.get(input_colorspace)
+
 
 class OpenClipSolver(flib.MediaInfoFile):
     create_new_clip = False
 
     log = log
 
-    def __init__(self, openclip_file_path, feed_data):
+    def __init__(self, openclip_file_path, feed_data, logger=None):
         self.out_file = openclip_file_path
+
+        # replace log if any
+        if logger:
+            self.log = logger
 
         # new feed variables:
         feed_path = feed_data.pop("path")
@@ -703,13 +798,18 @@ class OpenClipSolver(flib.MediaInfoFile):
         # initialize parent class
         super(OpenClipSolver, self).__init__(
             feed_path,
-            **feed_data
+            logger=logger
         )
 
         # get other metadata
         self.feed_version_name = feed_data["version"]
         self.feed_colorspace = feed_data.get("colorspace")
         self.log.debug("feed_version_name: {}".format(self.feed_version_name))
+
+        # layer rename variables
+        self.layer_rename_template = feed_data["layer_rename_template"]
+        self.layer_rename_patterns = feed_data["layer_rename_patterns"]
+        self.context_data = feed_data["context_data"]
 
         # derivate other feed variables
         self.feed_basename = os.path.basename(feed_path)
@@ -749,19 +849,22 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     def _create_new_open_clip(self):
         self.log.info("Building new openClip")
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # clip data comming from MediaInfoFile
-        tmp_xml_feeds = self.clip_data.find('tracks/track/feeds')
-        tmp_xml_feeds.set('currentVersion', self.feed_version_name)
-        for tmp_feed in tmp_xml_feeds:
-            tmp_feed.set('vuid', self.feed_version_name)
+        for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
 
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_feed, self.feed_colorspace)
+            tmp_xml_feeds = tmp_xml_track.find('feeds')
+            tmp_xml_feeds.set('currentVersion', self.feed_version_name)
 
-            self._clear_handler(tmp_feed)
+            for tmp_feed in tmp_xml_track.iter("feed"):
+                tmp_feed.set('vuid', self.feed_version_name)
+
+                # add colorspace if any is set
+                if self.feed_colorspace:
+                    self._add_colorspace(tmp_feed, self.feed_colorspace)
+
+                self._clear_handler(tmp_feed)
 
         tmp_xml_versions_obj = self.clip_data.find('versions')
         tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
@@ -774,6 +877,59 @@ class OpenClipSolver(flib.MediaInfoFile):
 
         self.write_clip_data_to_file(self.out_file, self.clip_data)
 
+    def _get_xml_track_obj_by_uid(self, xml_data, uid):
+        # loop all tracks of input xml data
+        for xml_track in xml_data.iter("track"):
+            track_uid = xml_track.get("uid")
+            self.log.debug(
+                ">> track_uid:uid: {}:{}".format(track_uid, uid))
+
+            # get matching uids
+            if uid == track_uid:
+                return xml_track
+
+    def _rename_track_name(self, xml_track_data):
+        layer_uid = xml_track_data.get("uid")
+        name_obj = xml_track_data.find("name")
+        layer_name = name_obj.text
+
+        if (
+            self.layer_rename_patterns
+            and not any(
+                re.search(lp_.lower(), layer_name.lower())
+                for lp_ in self.layer_rename_patterns
+            )
+        ):
+            return
+
+        formatting_data = self._update_formatting_data(
+            layerName=layer_name,
+            layerUID=layer_uid
+        )
+        name_obj.text = StringTemplate(
+            self.layer_rename_template
+        ).format(formatting_data)
+
+    def _update_formatting_data(self, **kwargs):
+        """ Updating formatting data for layer rename
+
+        Attributes:
+            key=value (optional): will be included to formatting data
+                                  as {key: value}
+        Returns:
+            dict: anatomy context data for formatting
+        """
+        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
+        clip_name_obj = self.clip_data.find("name")
+        data = {
+            "originalBasename": clip_name_obj.text
+        }
+        # include version context data
+        data.update(self.context_data)
+        # include input kwargs data
+        data.update(kwargs)
+        return data
+
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
@@ -781,54 +937,84 @@ class OpenClipSolver(flib.MediaInfoFile):
         out_xml = out_xml.getroot()
 
         self.log.debug(">> out_xml: {}".format(out_xml))
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
+        # loop tmp tracks
+        updated_any = False
+        for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
 
-        # Get new feed from tmp file
-        tmp_xml_feed = self.clip_data.find('tracks/track/feeds/feed')
+            # get tmp track uid
+            tmp_track_uid = tmp_xml_track.get("uid")
+            self.log.debug(">> tmp_track_uid: {}".format(tmp_track_uid))
 
-        self._clear_handler(tmp_xml_feed)
+            # get out data track by uid
+            out_track_element = self._get_xml_track_obj_by_uid(
+                out_xml, tmp_track_uid)
+            self.log.debug(
+                ">> out_track_element: {}".format(out_track_element))
 
-        # update fps from MediaInfoFile class
-        if self.fps:
-            tmp_feed_fps_obj = tmp_xml_feed.find(
-                "startTimecode/rate")
-            tmp_feed_fps_obj.text = str(self.fps)
+            # loop tmp feeds
+            for tmp_xml_feed in tmp_xml_track.iter("feed"):
+                new_path_obj = tmp_xml_feed.find(
+                    "spans/span/path")
+                new_path = new_path_obj.text
 
-        # update start_frame from MediaInfoFile class
-        if self.start_frame:
-            tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
-                "startTimecode/nbTicks")
-            tmp_feed_nb_ticks_obj.text = str(self.start_frame)
+                # check if feed path already exists in track's feeds
+                if (
+                    out_track_element is not None
+                    and self._feed_exists(out_track_element, new_path)
+                ):
+                    continue
 
-        # update drop_mode from MediaInfoFile class
-        if self.drop_mode:
-            tmp_feed_drop_mode_obj = tmp_xml_feed.find(
-                "startTimecode/dropMode")
-            tmp_feed_drop_mode_obj.text = str(self.drop_mode)
+                # rename versions on feeds
+                tmp_xml_feed.set('vuid', self.feed_version_name)
+                self._clear_handler(tmp_xml_feed)
 
-        new_path_obj = tmp_xml_feed.find(
-            "spans/span/path")
-        new_path = new_path_obj.text
+                # update fps from MediaInfoFile class
+                if self.fps is not None:
+                    tmp_feed_fps_obj = tmp_xml_feed.find(
+                        "startTimecode/rate")
+                    tmp_feed_fps_obj.text = str(self.fps)
 
-        feed_added = False
-        if not self._feed_exists(out_xml, new_path):
-            tmp_xml_feed.set('vuid', self.feed_version_name)
-            # Append new temp file feed to .clip source out xml
-            out_track = out_xml.find("tracks/track")
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
+                # update start_frame from MediaInfoFile class
+                if self.start_frame is not None:
+                    tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
+                        "startTimecode/nbTicks")
+                    tmp_feed_nb_ticks_obj.text = str(self.start_frame)
 
-            out_feeds = out_track.find('feeds')
-            out_feeds.set('currentVersion', self.feed_version_name)
-            out_feeds.append(tmp_xml_feed)
+                # update drop_mode from MediaInfoFile class
+                if self.drop_mode is not None:
+                    tmp_feed_drop_mode_obj = tmp_xml_feed.find(
+                        "startTimecode/dropMode")
+                    tmp_feed_drop_mode_obj.text = str(self.drop_mode)
 
-            self.log.info(
-                "Appending new feed: {}".format(
-                    self.feed_version_name))
-            feed_added = True
+                # add colorspace if any is set
+                if self.feed_colorspace is not None:
+                    self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
 
-        if feed_added:
+                # then append/update feed to correct track in output
+                if out_track_element:
+                    self.log.debug("updating track element ..")
+                    # update already present track
+                    out_feeds = out_track_element.find('feeds')
+                    out_feeds.set('currentVersion', self.feed_version_name)
+                    out_feeds.append(tmp_xml_feed)
+
+                    self.log.info(
+                        "Appending new feed: {}".format(
+                            self.feed_version_name))
+                else:
+                    self.log.debug("adding new track element ..")
+                    # create new track as it doesnt exists yet
+                    # set current version to feeds on tmp
+                    tmp_xml_feeds = tmp_xml_track.find('feeds')
+                    tmp_xml_feeds.set('currentVersion', self.feed_version_name)
+                    out_tracks = out_xml.find("tracks")
+                    out_tracks.append(tmp_xml_track)
+
+                updated_any = True
+
+        if updated_any:
             # Append vUID to versions
             out_xml_versions_obj = out_xml.find('versions')
             out_xml_versions_obj.set(

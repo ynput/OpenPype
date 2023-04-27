@@ -1,11 +1,11 @@
 import os
 import re
 import tempfile
-from pprint import pformat
 from copy import deepcopy
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.flame import api as opfapi
 from openpype.hosts.flame.api import MediaInfoFile
 from openpype.pipeline.editorial import (
@@ -15,7 +15,7 @@ from openpype.pipeline.editorial import (
 import flame
 
 
-class ExtractSubsetResources(openpype.api.Extractor):
+class ExtractSubsetResources(publish.Extractor):
     """
     Extractor for transcoding files from Flame clip
     """
@@ -80,10 +80,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
         retimed_data = self._get_retimed_attributes(instance)
 
         # get individual keys
-        r_handle_start = retimed_data["handle_start"]
-        r_handle_end = retimed_data["handle_end"]
-        r_source_dur = retimed_data["source_duration"]
-        r_speed = retimed_data["speed"]
+        retimed_handle_start = retimed_data["handle_start"]
+        retimed_handle_end = retimed_data["handle_end"]
+        retimed_source_duration = retimed_data["source_duration"]
+        retimed_speed = retimed_data["speed"]
 
         # get handles value - take only the max from both
         handle_start = instance.data["handleStart"]
@@ -97,22 +97,23 @@ class ExtractSubsetResources(openpype.api.Extractor):
         source_end_handles = instance.data["sourceEndH"]
 
         # retime if needed
-        if r_speed != 1.0:
+        if retimed_speed != 1.0:
             if retimed_handles:
                 # handles are retimed
                 source_start_handles = (
-                    instance.data["sourceStart"] - r_handle_start)
+                    instance.data["sourceStart"] - retimed_handle_start)
                 source_end_handles = (
                     source_start_handles
-                    + (r_source_dur - 1)
-                    + r_handle_start
-                    + r_handle_end
+                    + (retimed_source_duration - 1)
+                    + retimed_handle_start
+                    + retimed_handle_end
                 )
+
             else:
                 # handles are not retimed
                 source_end_handles = (
                     source_start_handles
-                    + (r_source_dur - 1)
+                    + (retimed_source_duration - 1)
                     + handle_start
                     + handle_end
                 )
@@ -121,11 +122,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
         frame_start_handle = frame_start - handle_start
         repre_frame_start = frame_start_handle
         if include_handles:
-            if r_speed == 1.0 or not retimed_handles:
+            if retimed_speed == 1.0 or not retimed_handles:
                 frame_start_handle = frame_start
             else:
                 frame_start_handle = (
-                    frame_start - handle_start) + r_handle_start
+                    frame_start - handle_start) + retimed_handle_start
 
         self.log.debug("_ frame_start_handle: {}".format(
             frame_start_handle))
@@ -136,8 +137,14 @@ class ExtractSubsetResources(openpype.api.Extractor):
         source_duration_handles = (
             source_end_handles - source_start_handles) + 1
 
+        self.log.debug("_ source_duration_handles: {}".format(
+            source_duration_handles))
+
         # create staging dir path
         staging_dir = self.staging_dir(instance)
+
+        # append staging dir for later cleanup
+        instance.context.data["cleanupFullPaths"].append(staging_dir)
 
         # add default preset type for thumbnail and reviewable video
         # update them with settings and override in case the same
@@ -159,15 +166,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
         if version_data:
             instance.data["versionData"].update(version_data)
 
-        if r_speed != 1.0:
-            instance.data["versionData"].update({
-                "frameStart": frame_start_handle,
-                "frameEnd": (
-                    (frame_start_handle + source_duration_handles - 1)
-                    - (r_handle_start + r_handle_end)
-                )
-            })
-        self.log.debug("_ i_version_data: {}".format(
+        # version data start frame
+        version_frame_start = frame_start
+        if include_handles:
+            version_frame_start = frame_start_handle
+        if retimed_speed != 1.0:
+            if retimed_handles:
+                instance.data["versionData"].update({
+                    "frameStart": version_frame_start,
+                    "frameEnd": (
+                        (version_frame_start + source_duration_handles - 1)
+                        - (retimed_handle_start + retimed_handle_end)
+                    )
+                })
+            else:
+                instance.data["versionData"].update({
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": version_frame_start,
+                    "frameEnd": (
+                        (version_frame_start + source_duration_handles - 1)
+                        - (handle_start + handle_end)
+                    )
+                })
+        self.log.debug("_ version_data: {}".format(
             instance.data["versionData"]
         ))
 
@@ -205,7 +227,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 self.hide_others(
                     exporting_clip, segment_name, s_track_name)
 
-                # change name patern
+                # change name pattern
                 name_patern_xml = (
                     "<segment name>_<shot name>_{}.").format(
                         unique_name)
@@ -336,7 +358,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 representation_data["stagingDir"] = n_stage_dir
                 files = n_files
 
-            # add files to represetation but add
+            # add files to representation but add
             # imagesequence as list
             if (
                 # first check if path in files is not mov extension
@@ -529,30 +551,3 @@ class ExtractSubsetResources(openpype.api.Extractor):
                 "Path `{}` is containing more that one clip".format(path)
             )
         return clips[0]
-
-    def staging_dir(self, instance):
-        """Provide a temporary directory in which to store extracted files
-
-        Upon calling this method the staging directory is stored inside
-        the instance.data['stagingDir']
-        """
-        staging_dir = instance.data.get('stagingDir', None)
-        openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
-
-        if not staging_dir:
-            if openpype_temp_dir and os.path.exists(openpype_temp_dir):
-                staging_dir = os.path.normpath(
-                    tempfile.mkdtemp(
-                        prefix="pyblish_tmp_",
-                        dir=openpype_temp_dir
-                    )
-                )
-            else:
-                staging_dir = os.path.normpath(
-                    tempfile.mkdtemp(prefix="pyblish_tmp_")
-                )
-            instance.data['stagingDir'] = staging_dir
-
-        instance.context.data["cleanupFullPaths"].append(staging_dir)
-
-        return staging_dir

@@ -23,10 +23,11 @@ class CreateShotClip(opfapi.Creator):
                 # nested dictionary (only one level allowed
                 # for sections and dict)
                 for _k, _v in v["value"].items():
-                    if presets.get(_k):
+                    if presets.get(_k) is not None:
                         gui_inputs[k][
                             "value"][_k]["value"] = presets[_k]
-            if presets.get(k):
+
+            if presets.get(k) is not None:
                 gui_inputs[k]["value"] = presets[k]
 
         # open widget for plugins inputs
@@ -208,7 +209,7 @@ class CreateShotClip(opfapi.Creator):
                         "type": "QComboBox",
                         "label": "Subset Name",
                         "target": "ui",
-                        "toolTip": "chose subset name patern, if [ track name ] is selected, name of track layer will be used",  # noqa
+                        "toolTip": "chose subset name pattern, if [ track name ] is selected, name of track layer will be used",  # noqa
                         "order": 0},
                     "subsetFamily": {
                         "value": ["plate", "take"],

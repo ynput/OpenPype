@@ -1,4 +1,14 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "simple_creators": [
         {
             "family": "workfile",
@@ -293,15 +303,24 @@
             ]
         }
     },
-    "BatchMovieCreator": {
-        "default_variants": [
-            "Main"
-        ],
-        "default_tasks": [
-            "Compositing"
-        ],
-        "extensions": [
-            ".mov"
-        ]
+    "create": {
+        "BatchMovieCreator": {
+            "default_variants": [
+                "Main"
+            ],
+            "default_tasks": [
+                "Compositing"
+            ],
+            "extensions": [
+                ".mov"
+            ]
+        }
+    },
+    "publish": {
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
     }
 }

@@ -9,6 +9,7 @@ import logging
 import platform
 import threading
 import collections
+import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
@@ -139,6 +140,15 @@ class _InterfacesClass(_ModuleClass):
                 "cannot import name '{}' from 'openpype_interfaces'"
             ).format(attr_name))
 
+        if _LoadCache.interfaces_loaded and attr_name != "log":
+            stack = list(traceback.extract_stack())
+            stack.pop(-1)
+            self.log.warning((
+                "Using deprecated import of \"{}\" from 'openpype_interfaces'."
+                " Please switch to use import"
+                " from 'openpype.modules.interfaces'"
+                " (will be removed after 3.16.x).{}"
+            ).format(attr_name, "".join(traceback.format_list(stack))))
         return self.__attributes__[attr_name]
 
 
@@ -462,7 +472,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environemnt variables.
+            env (dict): Current environment variables.
         """
 
         pass
@@ -612,7 +622,7 @@ class ModulesManager:
 
                 # Check if class is abstract (Developing purpose)
                 if inspect.isabstract(modules_item):
-                    # Find missing implementations by convetion on `abc` module
+                    # Find abstract attributes by convention on `abc` module
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
@@ -698,13 +708,13 @@ class ModulesManager:
         ]
 
     def collect_global_environments(self):
-        """Helper to collect global enviornment variabled from modules.
+        """Helper to collect global environment variabled from modules.
 
         Returns:
             dict: Global environment variables from enabled modules.
 
         Raises:
-            AssertionError: Gobal environment variables must be unique for
+            AssertionError: Global environment variables must be unique for
                 all modules.
         """
         module_envs = {}
@@ -776,29 +786,68 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
-    def collect_creator_plugin_paths(self, host_name):
-        """Helper to collect creator plugin paths from modules.
-
-        Args:
-            host_name (str): For which host are creators meants.
-
-        Returns:
-            list: List of creator plugin paths.
-        """
-        # Output structure
+    def _collect_plugin_paths(self, method_name, *args, **kwargs):
         output = []
         for module in self.get_enabled_modules():
             # Skip module that do not inherit from `IPluginPaths`
             if not isinstance(module, IPluginPaths):
                 continue
 
-            paths = module.get_creator_plugin_paths(host_name)
+            method = getattr(module, method_name)
+            paths = method(*args, **kwargs)
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):
                     paths = [paths]
                 output.extend(paths)
         return output
+
+    def collect_create_plugin_paths(self, host_name):
+        """Helper to collect creator plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are creators meant.
+
+        Returns:
+            list: List of creator plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_create_plugin_paths",
+            host_name
+        )
+
+    collect_creator_plugin_paths = collect_create_plugin_paths
+
+    def collect_load_plugin_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of load plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_load_plugin_paths",
+            host_name
+        )
+
+    def collect_publish_plugin_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_publish_plugin_paths",
+            host_name
+        )
 
     def get_host_module(self, host_name):
         """Find host module by host name.
@@ -1125,7 +1174,7 @@ class TrayModulesManager(ModulesManager):
 
 
 def get_module_settings_defs():
-    """Check loaded addons/modules for existence of thei settings definition.
+    """Check loaded addons/modules for existence of their settings definition.
 
     Check if OpenPype addon/module as python module has class that inherit
     from `ModuleSettingsDef` in python module variables (imported
@@ -1155,7 +1204,7 @@ def get_module_settings_defs():
                 continue
 
             if inspect.isabstract(attr):
-                # Find missing implementations by convetion on `abc` module
+                # Find missing implementations by convention on `abc` module
                 not_implemented = []
                 for attr_name in dir(attr):
                     attr = getattr(attr, attr_name, None)
@@ -1244,7 +1293,7 @@ class BaseModuleSettingsDef:
 
 
 class ModuleSettingsDef(BaseModuleSettingsDef):
-    """Settings definiton with separated system and procect settings parts.
+    """Settings definition with separated system and procect settings parts.
 
     Reduce conditions that must be checked and adds predefined methods for
     each case.

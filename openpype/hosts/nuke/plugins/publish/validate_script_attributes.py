@@ -1,35 +1,35 @@
-from pprint import pformat
+from copy import deepcopy
 import pyblish.api
-
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.nuke.api.lib import (
-    get_avalon_knob_data,
     WorkfileSettings
 )
-import nuke
 
 
-@pyblish.api.log
-class ValidateScriptAttributes(pyblish.api.InstancePlugin):
+class ValidateScriptAttributes(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
     families = ["workfile"]
-    label = "Validatte script attributes"
+    label = "Validate script attributes"
     hosts = ["nuke"]
     optional = True
     actions = [RepairAction]
 
     def process(self, instance):
-        root = nuke.root()
-        knob_data = get_avalon_knob_data(root)
+        if not self.is_active(instance.data):
+            return
+
+        script_data = deepcopy(instance.context.data["scriptData"])
+
         asset = instance.data["assetEntity"]
-        # get asset data frame values
-        frame_start = asset["data"]["frameStart"]
-        frame_end = asset["data"]["frameEnd"]
-        handle_start = asset["data"]["handleStart"]
-        handle_end = asset["data"]["handleEnd"]
 
         # These attributes will be checked
         attributes = [
@@ -48,37 +48,11 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
             for attr in attributes
             if attr in asset["data"]
         }
-        # fix float to max 4 digints (only for evaluating)
-        fps_data = float("{0:.4f}".format(
-            asset_attributes["fps"]))
         # fix frame values to include handles
-        asset_attributes.update({
-            "frameStart": frame_start - handle_start,
-            "frameEnd": frame_end + handle_end,
-            "fps": fps_data
-        })
-
-        self.log.debug(pformat(
-            asset_attributes
-        ))
-
-        # Get format
-        _format = root["format"].value()
-
-        # Get values from nukescript
-        script_attributes = {
-            "handleStart": int(knob_data["handleStart"]),
-            "handleEnd": int(knob_data["handleEnd"]),
-            "fps": float("{0:.4f}".format(root['fps'].value())),
-            "frameStart": int(root["first_frame"].getValue()),
-            "frameEnd": int(root["last_frame"].getValue()),
-            "resolutionWidth": _format.width(),
-            "resolutionHeight": _format.height(),
-            "pixelAspect": _format.pixelAspect()
-        }
-        self.log.debug(pformat(
-            script_attributes
-        ))
+        asset_attributes["fps"] = float("{0:.4f}".format(
+            asset_attributes["fps"]))
+        script_data["fps"] = float("{0:.4f}".format(
+            script_data["fps"]))
 
         # Compare asset's values Nukescript X Database
         not_matching = []
@@ -87,14 +61,14 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
                 "Asset vs Script attribute \"{}\": {}, {}".format(
                     attr,
                     asset_attributes[attr],
-                    script_attributes[attr]
+                    script_data[attr]
                 )
             )
-            if asset_attributes[attr] != script_attributes[attr]:
+            if asset_attributes[attr] != script_data[attr]:
                 not_matching.append({
                     "name": attr,
                     "expected": asset_attributes[attr],
-                    "actual": script_attributes[attr]
+                    "actual": script_data[attr]
                 })
 
         # Raise error if not matching

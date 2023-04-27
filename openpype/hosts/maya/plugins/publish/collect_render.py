@@ -102,23 +102,26 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         }
 
         for layer in collected_render_layers:
-            try:
-                if layer.startswith("LAYER_"):
-                    # this is support for legacy mode where render layers
-                    # started with `LAYER_` prefix.
-                    expected_layer_name = re.search(
-                        r"^LAYER_(.*)", layer).group(1)
-                else:
-                    # new way is to prefix render layer name with instance
-                    # namespace.
-                    expected_layer_name = re.search(
-                        r"^.+:(.*)", layer).group(1)
-            except IndexError:
+            if layer.startswith("LAYER_"):
+                # this is support for legacy mode where render layers
+                # started with `LAYER_` prefix.
+                layer_name_pattern = r"^LAYER_(.*)"
+            else:
+                # new way is to prefix render layer name with instance
+                # namespace.
+                layer_name_pattern = r"^.+:(.*)"
+
+            # todo: We should have a more explicit way to link the renderlayer
+            match = re.match(layer_name_pattern, layer)
+            if not match:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
                 self.log.warning(msg)
                 continue
 
-            self.log.info("processing %s" % layer)
+            expected_layer_name = match.group(1)
+            self.log.info("Processing '{}' as layer [ {} ]"
+                          "".format(layer, expected_layer_name))
+
             # check if layer is part of renderSetup
             if expected_layer_name not in maya_render_layers:
                 msg = "Render layer [ {} ] is not in " "Render Setup".format(
@@ -181,7 +184,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
-            self.log.info(exp_files)
+            self.log.info(
+                "expected files: {}".format(
+                    json.dumps(exp_files, indent=4, sort_keys=True)
+                )
+            )
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -262,7 +269,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
-
+            colorspace_data = lib.get_color_management_preferences()
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
@@ -315,6 +322,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
+                ),
+                "colorspaceConfig": colorspace_data["config"],
+                "colorspaceDisplay": colorspace_data["display"],
+                "colorspaceView": colorspace_data["view"],
+                "strict_error_checking": render_instance.data.get(
+                    "strict_error_checking", True
                 )
             }
 

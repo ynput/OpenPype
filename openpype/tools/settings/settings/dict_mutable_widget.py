@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 
 from .base import BaseWidget
 from .lib import (

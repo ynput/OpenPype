@@ -3,35 +3,22 @@ from .icons import (
     get_pixmap,
     get_icon
 )
-from .border_label_widget import (
-    BorderedLabelWidget
-)
 from .widgets import (
-    SubsetAttributesWidget,
-
-    StopBtn,
+    SaveBtn,
     ResetBtn,
+    StopBtn,
     ValidateBtn,
     PublishBtn,
-
-    CreateInstanceBtn,
-    RemoveInstanceBtn,
-    ChangeViewBtn
+    CreateNextPageOverlay,
 )
-from .publish_widget import (
-    PublishFrame
+from .help_widget import (
+    HelpButton,
+    HelpDialog,
 )
-from .create_dialog import (
-    CreateDialog
-)
-
-from .card_view_widgets import (
-    InstanceCardView
-)
-
-from .list_view_widgets import (
-    InstanceListView
-)
+from .publish_frame import PublishFrame
+from .tabs_widget import PublisherTabsWidget
+from .overview_widget import OverviewWidget
+from .validations_widget import ValidationsWidget
 
 
 __all__ = (
@@ -39,22 +26,19 @@ __all__ = (
     "get_pixmap",
     "get_icon",
 
-    "SubsetAttributesWidget",
-    "BorderedLabelWidget",
-
-    "StopBtn",
+    "SaveBtn",
     "ResetBtn",
+    "StopBtn",
     "ValidateBtn",
     "PublishBtn",
+    "CreateNextPageOverlay",
 
-    "CreateInstanceBtn",
-    "RemoveInstanceBtn",
-    "ChangeViewBtn",
+    "HelpButton",
+    "HelpDialog",
 
     "PublishFrame",
 
-    "CreateDialog",
-
-    "InstanceCardView",
-    "InstanceListView",
+    "PublisherTabsWidget",
+    "OverviewWidget",
+    "ValidationsWidget",
 )

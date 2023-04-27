@@ -98,6 +98,7 @@ install_requires = [
     "jinxed",
     "blessed",
     "Qt",
+    "qtpy",
     "speedcopy",
     "googleapiclient",
     "httplib2",

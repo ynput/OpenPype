@@ -1,6 +1,7 @@
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
+
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     RecursiveSortFilterProxyModel,
@@ -13,18 +14,17 @@ from openpype.tools.utils.assets_widget import (
 )
 
 
-class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
+class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
     current_context_required = QtCore.Signal()
     header_height_changed = QtCore.Signal(int)
 
     def __init__(self, controller, parent):
         self._controller = controller
-        super(CreateDialogAssetsWidget, self).__init__(None, parent)
+        super(CreateWidgetAssetsWidget, self).__init__(None, parent)
 
         self.set_refresh_btn_visibility(False)
         self.set_current_asset_btn_visibility(False)
 
-        self._current_asset_name = None
         self._last_selection = None
         self._enabled = None
 
@@ -42,11 +42,11 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
             self.header_height_changed.emit(height)
 
     def resizeEvent(self, event):
-        super(CreateDialogAssetsWidget, self).resizeEvent(event)
+        super(CreateWidgetAssetsWidget, self).resizeEvent(event)
         self._check_header_height()
 
     def showEvent(self, event):
-        super(CreateDialogAssetsWidget, self).showEvent(event)
+        super(CreateWidgetAssetsWidget, self).showEvent(event)
         self._check_header_height()
 
     def _on_current_asset_click(self):
@@ -63,19 +63,19 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
             self.select_asset(self._last_selection)
 
     def _select_indexes(self, *args, **kwargs):
-        super(CreateDialogAssetsWidget, self)._select_indexes(*args, **kwargs)
+        super(CreateWidgetAssetsWidget, self)._select_indexes(*args, **kwargs)
         if self._enabled:
             return
         self._last_selection = self.get_selected_asset_id()
         self._clear_selection()
 
-    def set_current_asset_name(self, asset_name):
-        self._current_asset_name = asset_name
+    def update_current_asset(self):
         # Hide set current asset if there is no one
-        self.set_current_asset_btn_visibility(asset_name is not None)
+        asset_name = self._get_current_session_asset()
+        self.set_current_asset_btn_visibility(bool(asset_name))
 
     def _get_current_session_asset(self):
-        return self._current_asset_name
+        return self._controller.current_asset_name
 
     def _create_source_model(self):
         return AssetsHierarchyModel(self._controller)
@@ -86,9 +86,9 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    """Assets hiearrchy model.
+    """Assets hierarchy model.
 
-    For selecting asset for which should beinstance created.
+    For selecting asset for which an instance should be created.
 
     Uses controller to load asset hierarchy. All asset documents are stored by
     their parents.
@@ -164,6 +164,16 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
         return item_name in self._items_by_name
 
 
+class AssetDialogView(QtWidgets.QTreeView):
+    double_clicked = QtCore.Signal(QtCore.QModelIndex)
+
+    def mouseDoubleClickEvent(self, event):
+        index = self.indexAt(event.pos())
+        if index.isValid():
+            self.double_clicked.emit(index)
+            event.accept()
+
+
 class AssetsDialog(QtWidgets.QDialog):
     """Dialog to select asset for a context of instance."""
 
@@ -179,11 +189,11 @@ class AssetsDialog(QtWidgets.QDialog):
         filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter assets..")
 
-        asset_view = QtWidgets.QTreeView(self)
+        asset_view = AssetDialogView(self)
         asset_view.setModel(proxy_model)
         asset_view.setHeaderHidden(True)
         asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        asset_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         asset_view.setAlternatingRowColors(True)
         asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
         asset_view.setAllColumnsShowFocus(True)
@@ -201,6 +211,11 @@ class AssetsDialog(QtWidgets.QDialog):
         layout.addWidget(asset_view, 1)
         layout.addLayout(btns_layout, 0)
 
+        controller.event_system.add_callback(
+            "controller.reset.finished", self._on_controller_reset
+        )
+
+        asset_view.double_clicked.connect(self._on_ok_clicked)
         filter_input.textChanged.connect(self._on_filter_change)
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
@@ -233,6 +248,10 @@ class AssetsDialog(QtWidgets.QDialog):
         new_pos.setX(new_pos.x() - int(self.width() / 2))
         new_pos.setY(new_pos.y() - int(self.height() / 2))
         self.move(new_pos)
+
+    def _on_controller_reset(self):
+        # Change reset enabled so model is reset on show event
+        self._soft_reset_enabled = True
 
     def showEvent(self, event):
         """Refresh asset model on show."""
@@ -275,7 +294,7 @@ class AssetsDialog(QtWidgets.QDialog):
         index = self._asset_view.currentIndex()
         asset_name = None
         if index.isValid():
-            asset_name = index.data(QtCore.Qt.DisplayRole)
+            asset_name = index.data(ASSET_NAME_ROLE)
         self._selected_asset = asset_name
         self.done(1)
 

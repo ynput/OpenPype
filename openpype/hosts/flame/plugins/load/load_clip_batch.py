@@ -1,9 +1,13 @@
+from copy import deepcopy
 import os
 import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
-
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 class LoadClipBatch(opfapi.ClipLoader):
     """Load a subset to timeline as clip
@@ -13,7 +17,10 @@ class LoadClipBatch(opfapi.ClipLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip to current batch"
     order = -10
@@ -22,7 +29,15 @@ class LoadClipBatch(opfapi.ClipLoader):
 
     # settings
     reel_name = "OP_LoadedReel"
-    clip_name_template = "{asset}_{subset}<_{output}>"
+    clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
+
+    """ Anatomy keys from version context data and dynamically added:
+        - {layerName} - original layer name token
+        - {layerUID} - original layer UID token
+        - {originalBasename} - original clip name taken from file
+    """
+    layer_rename_template = "{asset}_{subset}<_{output}>"
+    layer_rename_patterns = []
 
     def load(self, context, name, namespace, options):
 
@@ -34,19 +49,25 @@ class LoadClipBatch(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
-            self.clip_name_template.replace("output", "representation")
+            self.clip_name_template = self.clip_name_template.replace(
+                "output", "representation")
+            self.layer_rename_template = self.layer_rename_template.replace(
+                "output", "representation")
+
+        formatting_data = deepcopy(context["representation"]["context"])
+        formatting_data["batch"] = self.batch.name.get_value()
 
         clip_name = StringTemplate(self.clip_name_template).format(
-            context["representation"]["context"])
+            formatting_data)
 
-        # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
-        colorspace = colorspace
+        colorspace = self.get_native_colorspace(colorspace)
+        self.log.info("Loading with colorspace: `{}`".format(colorspace))
 
         # create workfile path
         workfile_dir = options.get("workdir") or os.environ["AVALON_WORKDIR"]
@@ -56,6 +77,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         openclip_path = os.path.join(
             openclip_dir, clip_name + ".clip"
         )
+
         if not os.path.exists(openclip_dir):
             os.makedirs(openclip_dir)
 
@@ -64,8 +86,9 @@ class LoadClipBatch(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
-            "logger": self.log
-
+            "layer_rename_template": self.layer_rename_template,
+            "layer_rename_patterns": self.layer_rename_patterns,
+            "context_data": formatting_data
         }
         self.log.debug(pformat(
             loading_context
@@ -73,7 +96,8 @@ class LoadClipBatch(opfapi.ClipLoader):
         self.log.debug(openclip_path)
 
         # make openpype clip file
-        opfapi.OpenClipSolver(openclip_path, loading_context).make()
+        opfapi.OpenClipSolver(
+            openclip_path, loading_context, logger=self.log).make()
 
         # prepare Reel group in actual desktop
         opc = self._get_clip(

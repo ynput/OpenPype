@@ -2,16 +2,15 @@
 """Validate if instance asset is the same as context asset."""
 from __future__ import absolute_import
 
-import nuke
 import pyblish.api
 
 import openpype.hosts.nuke.api.lib as nlib
-import openpype.hosts.nuke.api as nuke_api
+
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
+    OptionalPyblishPluginMixin
 )
-
 
 class SelectInvalidInstances(pyblish.api.Action):
     """Select invalid instances in Outliner."""
@@ -51,9 +50,10 @@ class SelectInvalidInstances(pyblish.api.Action):
             self.deselect()
 
     def select(self, instances):
-        nlib.select_nodes(
-            [nuke.toNode(str(x)) for x in instances]
-        )
+        for inst in instances:
+            if inst.data.get("transientData", {}).get("node"):
+                select_node = inst.data["transientData"]["node"]
+                select_node["selected"].setValue(True)
 
     def deselect(self):
         nlib.reset_selection()
@@ -82,16 +82,20 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
+        self.log.debug(instances)
 
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
-            origin_node = instance[0]
-            nuke_api.lib.recreate_instance(
-                origin_node, avalon_data={"asset": context_asset}
-            )
+            node = instance.data["transientData"]["node"]
+            node_data = nlib.get_node_data(node, nlib.INSTANCE_DATA_KNOB)
+            node_data["asset"] = context_asset
+            nlib.set_node_data(node, nlib.INSTANCE_DATA_KNOB, node_data)
 
 
-class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
+class ValidateCorrectAssetName(
+    pyblish.api.InstancePlugin,
+    OptionalPyblishPluginMixin
+):
     """Validator to check if instance asset match context asset.
 
     When working in per-shot style you always publish data in context of
@@ -110,8 +114,12 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
+        node = instance.data["transientData"]["node"]
 
         msg = (
             "Instance `{}` has wrong shot/asset name:\n"
@@ -123,7 +131,7 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
         if asset != context_asset:
             raise PublishXmlValidationError(
                 self, msg, formatting_data={
-                    "node_name": instance[0]["name"].value(),
+                    "node_name": node.name(),
                     "wrong_name": asset,
                     "correct_name": context_asset
                 }

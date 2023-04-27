@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## OpenPype global tools
 
--   [Set Context](artist_tools.md#set-context)
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Set Context](artist_tools_context_manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Working with OpenPype in Maya
 
@@ -55,7 +55,7 @@ low resolution stuff. See [Subset](artist_concepts.md#subset).
 :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools_inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -85,7 +85,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/maya-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools.md#publisher).
+For more detail see [Publisher](artist_tools_publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. Green square indicate they are ready for
@@ -139,7 +139,7 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools_loader) - **OpenPype → Load...**.
 There you should see your model, named `modelMain`.
 
 ## Look development
@@ -200,8 +200,8 @@ there are few yellow icons in left shelf:
 
 ![Maya - shortcut icons](assets/maya-shortcut_buttons.jpg)
 
-Those are shortcuts for **Look Manager**, [Work Files](artist_tools.md#workfiles),
-[Load](artist_tools.md#loader), and [Manage (Inventory)](artist_tools.md#inventory).
+Those are shortcuts for **Look Manager**, [Work Files](artist_tools_workfiles),
+[Load](artist_tools_loader), and [Manage (Inventory)](artist_tools_inventory).
 
 Those can be found even in top menu, but that depends on your studio setup.
 
@@ -230,20 +230,20 @@ Maya settings concerning framerate, resolution and frame range are handled by
 OpenPype. If set correctly in Ftrack, Maya will validate you have correct fps on
 scene save and publishing offering way to fix it for you.
 
-For resolution and frame range, use **OpenPype → Reset Frame Range** and
-**OpenPype → Reset Resolution**
+For resolution and frame range, use **OpenPype → Set Frame Range** and
+**OpenPype → Set Resolution**
 
 
 ## Creating rigs with OpenPype
 
 Creating and publishing rigs with OpenPype follows similar workflow as with
 other data types. Create your rig and mark parts of your hierarchy in sets to
-help OpenPype validators and extractors to check it and publish it.
+help OpenPype validators and extractors to check and publish it.
 
 ### Preparing rig for publish
 
 When creating rigs, it is recommended (and it is in fact enforced by validators)
-to separate bones or driving objects, their controllers and geometry so they are
+to separate bones or driven objects, their controllers and geometry so they are
 easily managed. Currently OpenPype doesn't allow to publish model at the same time as
 its rig so for demonstration purposes, I'll first create simple model for robotic
 arm, just made out of simple boxes and I'll publish it.
@@ -252,41 +252,48 @@ arm, just made out of simple boxes and I'll publish it.
 
 For more information about publishing models, see [Publishing models](artist_hosts_maya.md#publishing-models).
 
-Now lets start with empty scene. Load your model - **OpenPype → Load...**, right
+Now let's start with empty scene. Load your model - **OpenPype → Load...**, right
 click on it and select **Reference (abc)**.
 
-I've created few bones and their controllers in two separate
-groups - `rig_GRP` and `controls_GRP`. Naming is not important - just adhere to
-your naming conventions.
+I've created a few bones in `rig_GRP`, their controllers in `controls_GRP` and
+placed the rig's output geometry in `geometry_GRP`. Naming of the groups is not important - just adhere to
+your naming conventions. Then I parented everything into a single top group named `arm_rig`.
 
-Then I've put everything into `arm_rig` group.
-
-When you've prepared your hierarchy, it's time to create *Rig instance* in OpenPype.
-Select your whole rig hierarchy and go **OpenPype → Create...**. Select **Rig**.
-Set is created in your scene to mark rig parts for export. Notice that it has
-two subsets - `controls_SET` and `out_SET`. Put your controls into `controls_SET`
+With the prepared hierarchy it is time to create a *Rig instance* in OpenPype.
+Select the top group of your rig and go to **OpenPype → Create...**. Select **Rig**.
+A publish set for your rig is created in your scene to mark rig parts for export.
+Notice that it has two subsets - `controls_SET` and `out_SET`. Put your controls into `controls_SET`
 and geometry to `out_SET`. You should end up with something like this:
 
 ![Maya - Rig Hierarchy Example](assets/maya-rig_hierarchy_example.jpg)
 
+:::note controls_SET and out_SET contents
+It is totally allowed to put the `geometry_GRP` in the `out_SET` as opposed to
+the individual meshes - it's even **recommended**. However, the `controls_SET`
+requires the individual controls in it that the artist is supposed to animate
+and manipulate so the publish validators can accurately check the rig's
+controls.
+:::
+
 ### Publishing rigs
 
-Publishing rig is done in same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. When you run validation you'll mostly run at first into
-few issues. Although number of them will seem to be intimidating at first, you'll
-find out they are mostly minor things easily fixed.
+Publishing rigs is done in a same way as publishing everything else. Save your scene
+and go **OpenPype → Publish**. When you run validation you'll most likely run into
+a few issues at first. Although a number of them will seem to be intimidating you
+will find out they are mostly minor things, easily fixed and are there to optimize
+your rig for consistency and safe usage by the artist.
 
-* **Non Duplicate Instance Members (ID)** - This will most likely fail because when
+- **Non Duplicate Instance Members (ID)** - This will most likely fail because when
 creating rigs, we usually duplicate few parts of it to reuse them. But duplication
 will duplicate also ID of original object and OpenPype needs every object to have
 unique ID. This is easily fixed by **Repair** action next to validator name. click
 on little up arrow on right side of validator name and select **Repair** form menu.
 
-* **Joints Hidden** - This is enforcing joints (bones) to be hidden for user as
+- **Joints Hidden** - This is enforcing joints (bones) to be hidden for user as
 animator usually doesn't need to see them and they clutter his viewports. So
 well behaving rig should have them hidden. **Repair** action will help here also.
 
-* **Rig Controllers** will check if there are no transforms on unlocked attributes
+- **Rig Controllers** will check if there are no transforms on unlocked attributes
 of controllers. This is needed because animator should have ease way to reset rig
 to it's default position. It also check that those attributes doesn't have any
 incoming connections from other parts of scene to ensure that published rig doesn't
@@ -294,8 +301,21 @@ have any missing dependencies.
 
 ### Loading rigs
 
-You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and **Reference** it.
+
+### Animation instances
+
+Whenever you load a rig an animation publish instance is automatically created
+for it. This means that if you load a rig you don't need to create a pointcache
+instance yourself to publish the geometry. This is all cleanly prepared for you
+when loading a published rig.
+
+:::tip Missing animation instance for your loaded rig?
+Did you accidentally delete the animation instance for a loaded rig? You can
+recreate it using the [**Recreate rig animation instance**](artist_hosts_maya.md#recreate-rig-animation-instance)
+inventory action.
+:::
 
 ## Point caches
 OpenPype is using Alembic format for point caches. Workflow is very similar as
@@ -308,13 +328,25 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
 
-:::note Publish on farm
-If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
-Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+#### Options
+
+- **Frame Start**: which frame to start the export at.
+- **Frame End**: which frame to end the export at.
+- **Handle Start**: additional frames to export at frame start. Ei. frame start - handle start = export start.
+- **Handle Start**: additional frames to export at frame end. Ei. frame end + handle end = export end.
+- **Step**: frequency of sampling the export. For example when dealing with quick movements for motion blur, a step size of less than 1 might be better.
+- **Refresh**: refresh the viewport when exporting the pointcache. For performance is best to leave off, but certain situations can require to refresh the viewport, for example using the Bullet plugin.
+- **Attr**: specific attributes to publish separated by `;`.
+- **AttrPrefix**: specific attributes which start with this prefix to publish separated by `;`.
+- **Include User Defined Attribudes**: include all user defined attributes in the publish.
+- **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
+- **Priority**: Farm priority.
 
 ### Loading Point Caches
 
@@ -332,7 +364,7 @@ OpenPype allows to version and manage those sets.
 ### Publishing Set dress / Layout
 
 Working with Set dresses is very easy. Just load your assets into scene with
-[Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
+[Loader](artist_tools_loader) (**OpenPype → Load...**). Populate your scene as
 you wish, translate each piece to fit your need. When ready, select all imported
 stuff and go **OpenPype → Create...** and select **Set Dress** or **Layout**.
 This will create set containing your selection and marking it for publishing.
@@ -345,7 +377,7 @@ Now you can publish is with **OpenPype → Publish**.
 
 ### Loading Set dress / Layout
 
-You can load Set dress / Layout using [Loader](artist_tools.md#loader)
+You can load Set dress / Layout using [Loader](artist_tools_loader)
 (**OpenPype → Load...**). Select you layout or set dress, right click on it and
 select **Reference Maya Ascii (ma)**. This will populate your scene with all those
 models you've put into layout.
@@ -374,7 +406,7 @@ Lets start with empty scene. First I'll pull in my favorite Buddha model.
 there just click on **Reference (abc)**.
 
 Next, I want to be sure that I have same frame range as is set on shot I am working
-on. To do this just **OpenPype → Reset Frame Range**. This should set Maya timeline to same
+on. To do this just **OpenPype → Set Frame Range**. This should set Maya timeline to same
 values as they are set on shot in *Ftrack* for example.
 
 I have my time set, so lets create some animation. We'll turn Buddha model around for
@@ -488,7 +520,7 @@ and for vray:
 maya/<Layer>/<Layer>
 ```
 
-Doing **OpenPype → Reset Resolution** will set correct resolution on camera.
+Doing **OpenPype → Set Resolution** will set correct resolution on camera.
 
 Scene is now ready for submission and should publish without errors.
 
@@ -503,6 +535,22 @@ You can create render that will be attached to another subset you are publishing
 In the scene from where you want to publish your model create *Render subset*. Prepare your render layer as needed and then drag
 model subset (Maya set node) under corresponding `LAYER_` set under *Render instance*. During publish, it will submit this render to farm and
 after it is rendered, it will be attached to your model subset.
+
+### Tile Rendering
+:::note Deadline
+This feature is only supported when using Deadline. See [here](module_deadline#openpypetileassembler-plugin) for setup.
+:::
+On the render instance objectset you'll find:
+
+* `Tile Rendering` - for enabling tile rendering.
+* `Tile X` - number of tiles in the X axis.
+* `Tile Y` - number of tiles in the Y axis.
+
+When submittig to Deadline, you'll get:
+
+- for each frame a tile rendering job, to render each from Maya.
+- for each frame a tile assembly job, to assemble the rendered tiles.
+- job to publish the assembled frames.
 
 ## Render Setups
 
@@ -601,3 +649,32 @@ about customizing review process refer to [admin section](project_settings/setti
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
+
+
+## Inventory Actions
+
+### Connect Geometry
+
+This action will connect geometries between containers.
+
+#### Usage
+
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
+
+#### Details
+
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
+
+The connection between geometries is done with a live blendshape.
+
+### Recreate rig animation instance
+
+This action can regenerate an animation instance for a loaded rig, for example
+for when it was accidentally deleted by the user.
+
+![Maya - Inventory Action Recreate Rig Animation Instance](assets/maya-inventory_action_recreate_animation_instance.png)
+
+#### Usage
+
+Select 1 or more container of type `rig` for which you want to recreate the
+animation instance.

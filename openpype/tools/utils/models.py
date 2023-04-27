@@ -1,8 +1,8 @@
 import re
 import logging
 
-import Qt
-from Qt import QtCore, QtGui
+import qtpy
+from qtpy import QtCore, QtGui
 from openpype.client import get_projects
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
@@ -69,7 +69,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                 item[key] = value
 
                 # passing `list()` for PyQt5 (see PYSIDE-462)
-                if Qt.__binding__ in ("PyQt4", "PySide"):
+                if qtpy.API in ("pyqt4", "pyside"):
                     self.dataChanged.emit(index, index)
                 else:
                     self.dataChanged.emit(index, index, [role])
@@ -202,9 +202,23 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
     Use case: Filtering by string - parent won't be filtered if does not match
         the filter string but first checks if any children does.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(RecursiveSortFilterProxyModel, self).__init__(*args, **kwargs)
+        recursive_enabled = False
+        if hasattr(self, "setRecursiveFilteringEnabled"):
+            self.setRecursiveFilteringEnabled(True)
+            recursive_enabled = True
+        self._recursive_enabled = recursive_enabled
+
     def filterAcceptsRow(self, row, parent_index):
-        regex = self.filterRegExp()
-        if not regex.isEmpty():
+        if hasattr(self, "filterRegExp"):
+            regex = self.filterRegExp()
+        else:
+            regex = self.filterRegularExpression()
+
+        pattern = regex.pattern()
+        if pattern:
             model = self.sourceModel()
             source_index = model.index(
                 row, self.filterKeyColumn(), parent_index
@@ -214,8 +228,9 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
 
                 # Check current index itself
                 value = model.data(source_index, self.filterRole())
-                if re.search(pattern, value, re.IGNORECASE):
-                    return True
+                matched = bool(re.search(pattern, value, re.IGNORECASE))
+                if matched or self._recursive_enabled:
+                    return matched
 
                 rows = model.rowCount(source_index)
                 for idx in range(rows):
@@ -330,11 +345,26 @@ class ProjectModel(QtGui.QStandardItemModel):
         if new_items:
             root_item.appendRows(new_items)
 
+    def find_project(self, project_name):
+        """
+            Get index of 'project_name' value.
+
+            Args:
+                project_name (str):
+            Returns:
+                (QModelIndex)
+        """
+        val = self._items_by_name.get(project_name)
+        if val:
+            return self.indexFromItem(val)
+
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
         self._filter_enabled = True
+        # Disable case sensitivity
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
     def lessThan(self, left_index, right_index):
         if left_index.data(PROJECT_NAME_ROLE) is None:
@@ -356,10 +386,14 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 0, source_parent)
+        string_pattern = self.filterRegularExpression().pattern()
         if self._filter_enabled:
             result = self._custom_index_filter(index)
             if result is not None:
-                return result
+                project_name = index.data(PROJECT_NAME_ROLE)
+                if project_name is None:
+                    return result
+                return string_pattern.lower() in project_name.lower()
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent

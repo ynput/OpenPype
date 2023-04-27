@@ -1,6 +1,5 @@
 import os
 import json
-import contextlib
 import tempfile
 import logging
 
@@ -9,8 +8,9 @@ import requests
 import pyblish.api
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.hosts import tvpaint
-from openpype.api import get_current_project_settings
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
+from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
+from openpype.settings import get_current_project_settings
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
     legacy_io,
@@ -18,6 +18,7 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.context_tools import get_global_context
 
 from .lib import (
     execute_george,
@@ -26,14 +27,10 @@ from .lib import (
 
 log = logging.getLogger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(tvpaint.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 METADATA_SECTION = "avalon"
 SECTION_NAME_CONTEXT = "context"
+SECTION_NAME_CREATE_CONTEXT = "create_context"
 SECTION_NAME_INSTANCES = "instances"
 SECTION_NAME_CONTAINERS = "containers"
 # Maximum length of metadata chunk string
@@ -63,30 +60,158 @@ instances=2
 """
 
 
-def install():
-    """Install TVPaint-specific functionality."""
+class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
+    name = "tvpaint"
 
-    log.info("OpenPype - Installing TVPaint integration")
-    legacy_io.install()
+    def install(self):
+        """Install TVPaint-specific functionality."""
 
-    # Create workdir folder if does not exist yet
-    workdir = legacy_io.Session["AVALON_WORKDIR"]
-    if not os.path.exists(workdir):
-        os.makedirs(workdir)
+        log.info("OpenPype - Installing TVPaint integration")
+        legacy_io.install()
 
-    pyblish.api.register_host("tvpaint")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
+        # Create workdir folder if does not exist yet
+        workdir = legacy_io.Session["AVALON_WORKDIR"]
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
 
-    registered_callbacks = (
-        pyblish.api.registered_callbacks().get("instanceToggled") or []
-    )
-    if on_instance_toggle not in registered_callbacks:
-        pyblish.api.register_callback("instanceToggled", on_instance_toggle)
+        plugins_dir = os.path.join(TVPAINT_ROOT_DIR, "plugins")
+        publish_dir = os.path.join(plugins_dir, "publish")
+        load_dir = os.path.join(plugins_dir, "load")
+        create_dir = os.path.join(plugins_dir, "create")
 
-    register_event_callback("application.launched", initial_launch)
-    register_event_callback("application.exit", application_exit)
+        pyblish.api.register_host("tvpaint")
+        pyblish.api.register_plugin_path(publish_dir)
+        register_loader_plugin_path(load_dir)
+        register_creator_plugin_path(create_dir)
+
+        registered_callbacks = (
+            pyblish.api.registered_callbacks().get("instanceToggled") or []
+        )
+
+        register_event_callback("application.launched", self.initial_launch)
+        register_event_callback("application.exit", self.application_exit)
+
+    def get_current_project_name(self):
+        """
+        Returns:
+            Union[str, None]: Current project name.
+        """
+
+        return self.get_current_context().get("project_name")
+
+    def get_current_asset_name(self):
+        """
+        Returns:
+            Union[str, None]: Current asset name.
+        """
+
+        return self.get_current_context().get("asset_name")
+
+    def get_current_task_name(self):
+        """
+        Returns:
+            Union[str, None]: Current task name.
+        """
+
+        return self.get_current_context().get("task_name")
+
+    def get_current_context(self):
+        context = get_current_workfile_context()
+        if not context:
+            return get_global_context()
+
+        if "project_name" in context:
+            return context
+        # This is legacy way how context was stored
+        return {
+            "project_name": context.get("project"),
+            "asset_name": context.get("asset"),
+            "task_name": context.get("task")
+        }
+
+    # --- Create ---
+    def get_context_data(self):
+        return get_workfile_metadata(SECTION_NAME_CREATE_CONTEXT, {})
+
+    def update_context_data(self, data, changes):
+        return write_workfile_metadata(SECTION_NAME_CREATE_CONTEXT, data)
+
+    def list_instances(self):
+        """List all created instances from current workfile."""
+        return list_instances()
+
+    def write_instances(self, data):
+        return write_instances(data)
+
+    # --- Workfile ---
+    def open_workfile(self, filepath):
+        george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
+            filepath.replace("\\", "/")
+        )
+        return execute_george_through_file(george_script)
+
+    def save_workfile(self, filepath=None):
+        if not filepath:
+            filepath = self.get_current_workfile()
+        context = get_global_context()
+        save_current_workfile_context(context)
+
+        # Execute george script to save workfile.
+        george_script = "tv_SaveProject {}".format(filepath.replace("\\", "/"))
+        return execute_george(george_script)
+
+    def work_root(self, session):
+        return session["AVALON_WORKDIR"]
+
+    def get_current_workfile(self):
+        return execute_george("tv_GetProjectName")
+
+    def workfile_has_unsaved_changes(self):
+        return None
+
+    def get_workfile_extensions(self):
+        return [".tvpp"]
+
+    # --- Load ---
+    def get_containers(self):
+        return get_containers()
+
+    def initial_launch(self):
+        # Setup project settings if its the template that's launched.
+        # TODO also check for template creation when it's possible to define
+        #   templates
+        last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
+        if not last_workfile or os.path.exists(last_workfile):
+            return
+
+        log.info("Setting up project...")
+        global_context = get_global_context()
+        project_name = global_context.get("project_name")
+        asset_name = global_context.get("aset_name")
+        if not project_name or not asset_name:
+            return
+
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+        set_context_settings(project_name, asset_doc)
+
+    def application_exit(self):
+        """Logic related to TimerManager.
+
+        Todo:
+            This should be handled out of TVPaint integration logic.
+        """
+
+        data = get_current_project_settings()
+        stop_timer = data["tvpaint"]["stop_timer_on_application_exit"]
+
+        if not stop_timer:
+            return
+
+        # Stop application timer.
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
+        requests.post(rest_api_url)
 
 
 def containerise(
@@ -116,7 +241,7 @@ def containerise(
         "representation": str(context["representation"]["_id"])
     }
     if current_containers is None:
-        current_containers = ls()
+        current_containers = get_containers()
 
     # Add container to containers list
     current_containers.append(container_data)
@@ -125,15 +250,6 @@ def containerise(
     write_workfile_metadata(SECTION_NAME_CONTAINERS, current_containers)
 
     return container_data
-
-
-@contextlib.contextmanager
-def maintained_selection():
-    # TODO implement logic
-    try:
-        yield
-    finally:
-        pass
 
 
 def split_metadata_string(text, chunk_length=None):
@@ -333,23 +449,6 @@ def save_current_workfile_context(context):
     return write_workfile_metadata(SECTION_NAME_CONTEXT, context)
 
 
-def remove_instance(instance):
-    """Remove instance from current workfile metadata."""
-    current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
-    instance_id = instance.get("uuid")
-    found_idx = None
-    if instance_id:
-        for idx, _inst in enumerate(current_instances):
-            if _inst["uuid"] == instance_id:
-                found_idx = idx
-                break
-
-    if found_idx is None:
-        return
-    current_instances.pop(found_idx)
-    write_instances(current_instances)
-
-
 def list_instances():
     """List all created instances from current workfile."""
     return get_workfile_metadata(SECTION_NAME_INSTANCES)
@@ -359,12 +458,7 @@ def write_instances(data):
     return write_workfile_metadata(SECTION_NAME_INSTANCES, data)
 
 
-# Backwards compatibility
-def _write_instances(*args, **kwargs):
-    return write_instances(*args, **kwargs)
-
-
-def ls():
+def get_containers():
     output = get_workfile_metadata(SECTION_NAME_CONTAINERS)
     if output:
         for item in output:
@@ -376,70 +470,25 @@ def ls():
     return output
 
 
-def on_instance_toggle(instance, old_value, new_value):
-    """Update instance data in workfile on publish toggle."""
-    # Review may not have real instance in wokrfile metadata
-    if not instance.data.get("uuid"):
-        return
-
-    instance_id = instance.data["uuid"]
-    found_idx = None
-    current_instances = list_instances()
-    for idx, workfile_instance in enumerate(current_instances):
-        if workfile_instance["uuid"] == instance_id:
-            found_idx = idx
-            break
-
-    if found_idx is None:
-        return
-
-    if "active" in current_instances[found_idx]:
-        current_instances[found_idx]["active"] = new_value
-        write_instances(current_instances)
-
-
-def initial_launch():
-    # Setup project settings if its the template that's launched.
-    # TODO also check for template creation when it's possible to define
-    #   templates
-    last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
-    if not last_workfile or os.path.exists(last_workfile):
-        return
-
-    log.info("Setting up project...")
-    set_context_settings()
-
-
-def application_exit():
-    data = get_current_project_settings()
-    stop_timer = data["tvpaint"]["stop_timer_on_application_exit"]
-
-    if not stop_timer:
-        return
-
-    # Stop application timer.
-    webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
-    rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
-    requests.post(rest_api_url)
-
-
-def set_context_settings(asset_doc=None):
+def set_context_settings(project_name, asset_doc):
     """Set workfile settings by asset document data.
 
     Change fps, resolution and frame start/end.
     """
 
-    project_name = legacy_io.active_project()
-    if asset_doc is None:
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        # Use current session asset if not passed
-        asset_doc = get_asset_by_name(project_name, asset_name)
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
-    project_doc = get_project(project_name)
+    width = asset_doc["data"].get(width_key)
+    height = asset_doc["data"].get(height_key)
+    if width is None or height is None:
+        print("Resolution was not found!")
+    else:
+        execute_george(
+            "tv_resizepage {} {} 0".format(width, height)
+        )
 
     framerate = asset_doc["data"].get("fps")
-    if framerate is None:
-        framerate = project_doc["data"].get("fps")
 
     if framerate is not None:
         execute_george(
@@ -448,22 +497,6 @@ def set_context_settings(asset_doc=None):
     else:
         print("Framerate was not found!")
 
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-
-    width = asset_doc["data"].get(width_key)
-    height = asset_doc["data"].get(height_key)
-    if width is None or height is None:
-        width = project_doc["data"].get(width_key)
-        height = project_doc["data"].get(height_key)
-
-    if width is None or height is None:
-        print("Resolution was not found!")
-    else:
-        execute_george(
-            "tv_resizepage {} {} 0".format(width, height)
-        )
-
     frame_start = asset_doc["data"].get("frameStart")
     frame_end = asset_doc["data"].get("frameEnd")
 
@@ -471,13 +504,8 @@ def set_context_settings(asset_doc=None):
         print("Frame range was not found!")
         return
 
-    handles = asset_doc["data"].get("handles") or 0
     handle_start = asset_doc["data"].get("handleStart")
     handle_end = asset_doc["data"].get("handleEnd")
-
-    if handle_start is None or handle_end is None:
-        handle_start = handles
-        handle_end = handles
 
     # Always start from 0 Mark In and set only Mark Out
     mark_in = 0

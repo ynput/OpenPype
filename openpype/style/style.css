@@ -35,6 +35,11 @@ QWidget:disabled {
     color: {color:font-disabled};
 }
 
+/* Some DCCs have set borders to solid color */
+QScrollArea {
+    border: none;
+}
+
 QLabel {
     background: transparent;
 }
@@ -42,7 +47,7 @@ QLabel {
 /* Inputs */
 QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
     background: {color:bg-inputs};
     padding: 0.1em;
 }
@@ -148,6 +153,10 @@ QPushButton::menu-indicator  {
     padding-right: 5px;
 }
 
+QPushButton[state="error"] {
+    background: {color:publisher:error};
+}
+
 QToolButton {
     border: 0px solid transparent;
     background: {color:bg-buttons};
@@ -222,7 +231,7 @@ QMenu::separator {
 /* Combobox */
 QComboBox {
     border: 1px solid {color:border};
-    border-radius: 3px;
+    border-radius: 0.2em;
     padding: 1px 3px 1px 3px;
     background: {color:bg-inputs};
 }
@@ -470,7 +479,6 @@ QAbstractItemView:disabled{
 }
 
 QAbstractItemView::item:hover {
-    /* color: {color:bg-view-hover}; */
     background: {color:bg-view-hover};
 }
 
@@ -688,22 +696,23 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Messages overlay */
-#OverlayMessageWidget {
+OverlayMessageWidget {
     border-radius: 0.2em;
-    background: {color:bg-buttons};
-}
-
-#OverlayMessageWidget:hover {
-    background: {color:bg-button-hover};
-}
-#OverlayMessageWidget {
     background: {color:overlay-messages:bg-success};
 }
-#OverlayMessageWidget:hover {
+
+OverlayMessageWidget:hover {
     background: {color:overlay-messages:bg-success-hover};
 }
 
-#OverlayMessageWidget QWidget {
+OverlayMessageWidget[type="error"] {
+    background: {color:overlay-messages:bg-error};
+}
+OverlayMessageWidget[type="error"]:hover {
+    background: {color:overlay-messages:bg-error-hover};
+}
+
+OverlayMessageWidget QWidget {
     background: transparent;
 }
 
@@ -738,7 +747,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #TypeEditor:focus, #ToolEditor:focus, #NameEditor:focus, #NumberEditor:focus {
@@ -855,7 +864,60 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-hover};
 }
 
-/* New Create/Publish UI */
+/* Publisher UI (Create/Publish) */
+#PublishWindow QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+#PublishWindow QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
+PublisherTabsWidget {
+    background: {color:publisher:tab-bg};
+}
+
+PublisherTabBtn {
+    border-radius: 0px;
+    background: {color:bg-inputs};
+    font-size: 9pt;
+    font-weight: regular;
+    padding: 0.5em 1em 0.5em 1em;
+}
+
+PublisherTabBtn:disabled {
+    background: {color:bg-inputs};
+}
+
+PublisherTabBtn:hover {
+    background: {color:bg-buttons};
+}
+
+PublisherTabBtn[active="1"] {
+    background: {color:bg};
+}
+PublisherTabBtn[active="1"]:hover {
+    background: {color:bg};
+}
+
+PixmapButton{
+    border: 0px solid transparent;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+PixmapButton:hover {
+    background: {color:bg-button-hover};
+}
+PixmapButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+#ThumbnailPixmapHoverButton {
+    font-size: 11pt;
+    background: {color:bg-view};
+}
+#ThumbnailPixmapHoverButton:hover {
+    background: {color:bg-button-hover};
+}
+
 #CreatorDetailedDescription {
     padding-left: 5px;
     padding-right: 5px;
@@ -865,18 +927,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CreateDialogHelpButton {
-    background: rgba(255, 255, 255, 31);
+    background: {color:bg-buttons};
     border-top-left-radius: 0.2em;
     border-bottom-left-radius: 0.2em;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    font-size: 10pt;
     font-weight: bold;
-    padding: 0px;
 }
 
 #CreateDialogHelpButton:hover {
-    background: rgba(255, 255, 255, 63);
+    background: {color:bg-button-hover};
 }
 #CreateDialogHelpButton QWidget {
     background: transparent;
@@ -885,15 +945,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #PublishLogConsole {
     font-family: "Noto Sans Mono";
 }
-VariantInputsWidget QLineEdit {
+#VariantInputsWidget QLineEdit {
     border-bottom-right-radius: 0px;
     border-top-right-radius: 0px;
 }
-VariantInputsWidget QToolButton {
+#VariantInputsWidget QToolButton {
     border-bottom-left-radius: 0px;
     border-top-left-radius: 0px;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    width: 0.5em;
 }
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
@@ -944,36 +1005,24 @@ VariantInputsWidget QToolButton {
     color: {color:publisher:error};
 }
 
-#PublishFrame {
-    background: rgba(0, 0, 0, 127);
-}
-#PublishFrame[state="1"] {
-    background: rgb(22, 25, 29);
-}
-#PublishFrame[state="2"] {
-    background: {color:bg};
-}
-
 #PublishInfoFrame {
     background: {color:bg};
-    border: 2px solid black;
     border-radius: 0.3em;
 }
-
-#PublishInfoFrame[state="-1"] {
-    background: rgb(194, 226, 236);
-}
-
 #PublishInfoFrame[state="0"] {
-	background: {color:publisher:error};
+  background: {color:publisher:success};
 }
 
 #PublishInfoFrame[state="1"] {
-	background: {color:publisher:success};
+	background: {color:publisher:crash};
 }
 
 #PublishInfoFrame[state="2"] {
 	background: {color:publisher:warning};
+}
+
+#PublishInfoFrame[state="3"], #PublishInfoFrame[state="4"] {
+    background: rgb(194, 226, 236);
 }
 
 #PublishInfoFrame QLabel {
@@ -987,6 +1036,11 @@ VariantInputsWidget QToolButton {
 
 #PublishContextLabel {
     font-size: 13pt;
+}
+
+ValidationArtistMessage QLabel {
+    font-size: 20pt;
+    font-weight: bold;
 }
 
 #ValidationActionButton {
@@ -1005,17 +1059,16 @@ VariantInputsWidget QToolButton {
 }
 
 #ValidationErrorTitleFrame {
-    background: {color:bg-inputs};
-    border-left: 4px solid transparent;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
 }
 
 #ValidationErrorTitleFrame:hover {
-    border-left-color: {color:border};
+    background: {color:bg-buttons-hover};
 }
 
 #ValidationErrorTitleFrame[selected="1"] {
-    background: {color:bg};
-    border-left-color: {palette:blue-light};
+    background: {color:bg-view-selection};
 }
 
 #ValidationErrorInstanceList {
@@ -1030,7 +1083,7 @@ VariantInputsWidget QToolButton {
 #AssetNameInputWidget {
     background: {color:bg-inputs};
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #AssetNameInputWidget QWidget {
@@ -1068,7 +1121,7 @@ VariantInputsWidget QToolButton {
     border-color: {color:publisher:error};
 }
 
-#PublishProgressBar[state="0"]::chunk {
+#PublishProgressBar[state="1"]::chunk, #PublishProgressBar[state="4"]::chunk {
     background: {color:bg-buttons};
 }
 
@@ -1086,6 +1139,10 @@ VariantInputsWidget QToolButton {
 }
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
+}
+
+CreateNextPageOverlay {
+    font-size: 32pt;
 }
 
 /* Settings - NOT USED YET
@@ -1374,6 +1431,13 @@ VariantInputsWidget QToolButton {
 }
 
 /* Globally used names */
+#ValidatedLineEdit[state="valid"], #ValidatedLineEdit[state="valid"]:focus, #ValidatedLineEdit[state="valid"]:hover {
+    border-color: {color:publisher:success};
+}
+#ValidatedLineEdit[state="invalid"], #ValidatedLineEdit[state="invalid"]:focus, #ValidatedLineEdit[state="invalid"]:hover {
+    border-color: {color:publisher:error};
+}
+
 #Separator {
     background: {color:bg-menu-separator};
 }
@@ -1412,6 +1476,12 @@ VariantInputsWidget QToolButton {
 }
 
 /* Attribute Definition widgets */
+AttributeDefinitionsWidget QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+AttributeDefinitionsWidget QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
 InViewButton, InViewButton:disabled {
     background: transparent;
 }

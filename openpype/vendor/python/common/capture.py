@@ -7,6 +7,7 @@ Playblasting with independent viewport, camera and display options
 import re
 import sys
 import contextlib
+import logging
 
 from maya import cmds
 from maya import mel
@@ -21,6 +22,7 @@ version_info = (2, 3, 0)
 
 __version__ = "%s.%s.%s" % version_info
 __license__ = "MIT"
+logger = logging.getLogger("capture")
 
 
 def capture(camera=None,
@@ -46,7 +48,8 @@ def capture(camera=None,
             display_options=None,
             viewport_options=None,
             viewport2_options=None,
-            complete_filename=None):
+            complete_filename=None,
+            log=None):
     """Playblast in an independent panel
 
     Arguments:
@@ -91,6 +94,7 @@ def capture(camera=None,
             options, using `Viewport2Options`
         complete_filename (str, optional): Exact name of output file. Use this
             to override the output of `filename` so it excludes frame padding.
+        log (logger, optional): pass logger for logging messages.
 
     Example:
         >>> # Launch default capture
@@ -109,7 +113,9 @@ def capture(camera=None,
 
 
     """
-
+    global logger
+    if log:
+        logger = log
     camera = camera or "persp"
 
     # Ensure camera exists
@@ -726,17 +732,39 @@ def _applied_viewport_options(options, panel):
     """Context manager for applying `options` to `panel`"""
 
     options = dict(ViewportOptions, **(options or {}))
+    plugin_options = options.pop("pluginObjects", {})
 
+    # BUGFIX Maya 2020 some keys in viewport options dict may not be unicode
+    #        This is a local OpenPype edit to capture.py for issue #4730
+    # TODO: Remove when dropping Maya 2020 compatibility
+    if int(cmds.about(version=True)) <= 2020:
+        options = {
+            str(key): value for key, value in options.items()
+        }
+        plugin_options = {
+            str(key): value for key, value in plugin_options.items()
+        }
+
+    # Backwards compatibility for `pluginObjects` flattened into `options`
     # separate the plugin display filter options since they need to
     # be set differently (see #55)
-    plugins = cmds.pluginDisplayFilter(query=True, listFilters=True)
-    plugin_options = dict()
+    plugins = set(cmds.pluginDisplayFilter(query=True, listFilters=True))
     for plugin in plugins:
         if plugin in options:
             plugin_options[plugin] = options.pop(plugin)
 
     # default options
-    cmds.modelEditor(panel, edit=True, **options)
+    try:
+        cmds.modelEditor(panel, edit=True, **options)
+    except TypeError as e:
+        # Try to set as much as possible of the state by setting them one by
+        # one. This way we can also report the failing key values explicitly.
+        for key, value in options.items():
+            try:
+                cmds.modelEditor(panel, edit=True, **{key: value})
+            except TypeError:
+                logger.error("Failing to apply option '{}': {}".format(key,
+                                                                       value))
 
     # plugin display filter options
     for plugin, state in plugin_options.items():

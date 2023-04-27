@@ -5,7 +5,7 @@ import os
 import contextlib
 from pyblish import api as pyblish
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -38,7 +38,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
     register_creator_plugin_path(CREATE_PATH)
-    log.info("OpenPype Flame plug-ins registred ...")
+    log.info("OpenPype Flame plug-ins registered ...")
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -90,8 +90,7 @@ def containerise(flame_clip_segment,
 def ls():
     """List available containers.
     """
-    # TODO: ls
-    pass
+    return []
 
 
 def parse_container(tl_segment, validate=True):
@@ -106,6 +105,7 @@ def update_container(tl_segment, data=None):
     """
     # TODO: update_container
     pass
+
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node passthrough states on instance toggles."""

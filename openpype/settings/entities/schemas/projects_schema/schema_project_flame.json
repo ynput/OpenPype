@@ -6,6 +6,77 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                },
+                {
+                    "key": "project",
+                    "type": "dict",
+                    "label": "Project",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "form",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "colourPolicy",
+                                    "label": "Colour Policy (name or path)"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "frameDepth",
+                                    "label": "Image Depth"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "fieldDominance",
+                                    "label": "Field Dominance"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "key": "profilesMapping",
+                    "type": "dict",
+                    "label": "Profile names mapping",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "inputs",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "flameName",
+                                        "label": "Flame name"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "ocioName",
+                                        "label": "OCIO name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -128,6 +199,16 @@
                                 "type": "boolean",
                                 "key": "includeHandles",
                                 "label": "Enable handles including"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "retimedHandles",
+                                "label": "Enable retimed handles"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "retimedFramerange",
+                                "label": "Enable retimed shot frameranges"
                             }
                           ]
                         }
@@ -414,12 +495,6 @@
                             "object_type": "text"
                         },
                         {
-                            "type": "list",
-                            "key": "representations",
-                            "label": "Representations",
-                            "object_type": "text"
-                        },
-                        {
                             "type": "separator"
                         },
                         {
@@ -439,6 +514,17 @@
                             "type": "text",
                             "key": "clip_name_template",
                             "label": "Clip name template"
+                        },
+                        {
+                            "type": "text",
+                            "key": "layer_rename_template",
+                            "label": "Layer name template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "layer_rename_patterns",
+                            "label": "Layer rename patters",
+                            "object_type": "text"
                         }
                     ]
                 },
@@ -461,12 +547,6 @@
                             "object_type": "text"
                         },
                         {
-                            "type": "list",
-                            "key": "representations",
-                            "label": "Representations",
-                            "object_type": "text"
-                        },
-                        {
                             "type": "separator"
                         },
                         {
@@ -481,6 +561,17 @@
                             "type": "text",
                             "key": "clip_name_template",
                             "label": "Clip name template"
+                        },
+                        {
+                            "type": "text",
+                            "key": "layer_rename_template",
+                            "label": "Layer name template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "layer_rename_patterns",
+                            "label": "Layer rename patters",
+                            "object_type": "text"
                         }
                     ]
                 }

@@ -135,9 +135,9 @@ class FirstVersionStatus(BaseEvent):
 
             new_status = asset_version_statuses.get(found_item["status"])
             if not new_status:
-                self.log.warning(
+                self.log.warning((
                     "AssetVersion doesn't have status `{}`."
-                ).format(found_item["status"])
+                ).format(found_item["status"]))
                 continue
 
             try:

@@ -4,10 +4,10 @@ import os
 import shutil
 from zipfile import ZipFile
 
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractWorkfile(openpype.api.Extractor):
+class ExtractWorkfile(publish.Extractor):
     """Extract and zip complete workfile folder into zip."""
 
     label = "Extract Workfile"

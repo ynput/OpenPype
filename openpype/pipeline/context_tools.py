@@ -5,11 +5,13 @@ import json
 import types
 import logging
 import platform
+import uuid
 
 import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
@@ -30,13 +32,14 @@ from .workfile import (
 from . import (
     legacy_io,
     register_loader_plugin_path,
-    register_inventory_action,
+    register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
 )
 
 
 _is_installed = False
+_process_id = None
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
@@ -156,17 +159,24 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = _get_modules_manager()
-    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
-    for path in publish_plugin_dirs:
-        pyblish.api.register_plugin_path(path)
-
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
 
-    creator_paths = modules_manager.collect_creator_plugin_paths(host_name)
-    for creator_path in creator_paths:
-        register_creator_plugin_path(creator_path)
+    modules_manager = _get_modules_manager()
+    publish_plugin_dirs = modules_manager.collect_publish_plugin_paths(
+        host_name)
+    for path in publish_plugin_dirs:
+        pyblish.api.register_plugin_path(path)
+
+    create_plugin_paths = modules_manager.collect_create_plugin_paths(
+        host_name)
+    for path in create_plugin_paths:
+        register_creator_plugin_path(path)
+
+    load_plugin_paths = modules_manager.collect_load_plugin_paths(
+        host_name)
+    for path in load_plugin_paths:
+        register_loader_plugin_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -197,7 +207,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
-            register_inventory_action(path)
+            register_inventory_action_path(path)
 
 
 def uninstall_host():
@@ -297,6 +307,58 @@ def debug_host():
     return host
 
 
+def get_current_host_name():
+    """Current host name.
+
+    Function is based on currently registered host integration or environment
+    variant 'AVALON_APP'.
+
+    Returns:
+        Union[str, None]: Name of host integration in current process or None.
+    """
+
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.name
+    return os.environ.get("AVALON_APP")
+
+
+def get_global_context():
+    return {
+        "project_name": os.environ.get("AVALON_PROJECT"),
+        "asset_name": os.environ.get("AVALON_ASSET"),
+        "task_name": os.environ.get("AVALON_TASK"),
+    }
+
+
+def get_current_context():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_context()
+    return get_global_context()
+
+
+def get_current_project_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_project_name()
+    return get_global_context()["project_name"]
+
+
+def get_current_asset_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_asset_name()
+    return get_global_context()["asset_name"]
+
+
+def get_current_task_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_task_name()
+    return get_global_context()["task_name"]
+
+
 def get_current_project(fields=None):
     """Helper function to get project document based on global Session.
 
@@ -307,7 +369,7 @@ def get_current_project(fields=None):
         None: Project is not set.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return get_project(project_name, fields=fields)
 
 
@@ -332,12 +394,12 @@ def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
         None: Asset is not set or not exist.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     if asset_id:
         return get_asset_by_id(project_name, asset_id, fields=fields)
 
     if not asset_name:
-        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        asset_name = get_current_asset_name()
         # Skip if is not set even on context
         if not asset_name:
             return None
@@ -354,7 +416,7 @@ def is_representation_from_latest(representation):
         bool: Whether the representation is of latest version.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return version_is_latest(project_name, representation["parent"])
 
 
@@ -401,9 +463,7 @@ def get_workdir_from_session(session=None, template_key=None):
         session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
-    anatomy = Anatomy(project_name)
     template_data = get_template_data_from_session(session)
-    anatomy_filled = anatomy.format(template_data)
 
     if not template_key:
         task_type = template_data["task"]["type"]
@@ -412,7 +472,10 @@ def get_workdir_from_session(session=None, template_key=None):
             host_name,
             project_name=project_name
         )
-    path = anatomy_filled[template_key]["folder"]
+
+    anatomy = Anatomy(project_name)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
+    path = template_obj.format_strict(template_data)
     if path:
         path = os.path.normpath(path)
     return path
@@ -546,3 +609,18 @@ def change_current_context(asset_doc, task_name, template_key=None):
     emit_event("taskChanged", data)
 
     return changes
+
+
+def get_process_id():
+    """Fake process id created on demand using uuid.
+
+    Can be used to create process specific folders in temp directory.
+
+    Returns:
+        str: Process id.
+    """
+
+    global _process_id
+    if _process_id is None:
+        _process_id = str(uuid.uuid4())
+    return _process_id

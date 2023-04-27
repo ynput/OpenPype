@@ -1,6 +1,8 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
-from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools.attribute_defs import create_widget_for_attr_def
+
+from ..constants import INPUTS_LAYOUT_HSPACING, INPUTS_LAYOUT_VSPACING
 
 
 class PreCreateWidget(QtWidgets.QWidget):
@@ -58,12 +60,12 @@ class PreCreateWidget(QtWidgets.QWidget):
     def current_value(self):
         return self._attributes_widget.current_value()
 
-    def set_plugin(self, creator):
+    def set_creator_item(self, creator_item):
         attr_defs = []
         creator_selected = False
-        if creator is not None:
+        if creator_item is not None:
             creator_selected = True
-            attr_defs = creator.get_pre_create_attr_defs()
+            attr_defs = creator_item.pre_create_attributes_defs
 
         self._attributes_widget.set_attr_defs(attr_defs)
 
@@ -81,6 +83,8 @@ class AttributesWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         self._layout = layout
 
@@ -117,8 +121,16 @@ class AttributesWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            if attr_def.label:
+            if attr_def.is_value_def and attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 self._layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )

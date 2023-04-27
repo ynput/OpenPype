@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mainMenu>
     <menuBar>
-        <subMenu id="avalon_menu">
+        <subMenu id="openpype_menu">
             <label>OpenPype</label>
 
-            <scriptItem id="avalon_create">
+            <scriptItem id="openpype_create">
                 <label>Create...</label>
                 <scriptCode><![CDATA[
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_creator(parent)
+host_tools.show_publisher(parent, tab="create")
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="avalon_load">
+            <scriptItem id="openpype_load">
                 <label>Load...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -30,11 +30,11 @@ host_tools.show_loader(parent=parent, use_context=True)
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_publish(parent)
+host_tools.show_publisher(parent, tab="publish")
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="avalon_manage">
+            <scriptItem id="openpype_manage">
                 <label>Manage...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -66,8 +66,8 @@ host_tools.show_workfiles(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="reset_frame_range">
-                <label>Reset Frame Range</label>
+            <scriptItem id="set_frame_range">
+                <label>Set Frame Range</label>
                 <scriptCode><![CDATA[
 import openpype.hosts.houdini.api.lib
 openpype.hosts.houdini.api.lib.reset_framerange()

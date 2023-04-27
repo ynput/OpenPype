@@ -3,8 +3,8 @@ import logging
 import shutil
 import copy
 
-import Qt
-from Qt import QtWidgets, QtCore
+import qtpy
+from qtpy import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
@@ -379,7 +379,7 @@ class FilesWidget(QtWidgets.QWidget):
 
             # Disable/Enable buttons based on available files in model
             has_valid_items = self._workarea_files_model.has_valid_items()
-            self._btn_browse.setEnabled(has_valid_items)
+            self._btn_browse.setEnabled(True)
             self._btn_open.setEnabled(has_valid_items)
 
             if self._publish_context_select_mode:
@@ -525,22 +525,25 @@ class FilesWidget(QtWidgets.QWidget):
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
-        messagebox.setWindowFlags(messagebox.windowFlags() |
-                                  QtCore.Qt.FramelessWindowHint)
-        messagebox.setIcon(messagebox.Warning)
+        messagebox.setWindowFlags(
+            messagebox.windowFlags() | QtCore.Qt.FramelessWindowHint
+        )
+        messagebox.setIcon(QtWidgets.QMessageBox.Warning)
         messagebox.setWindowTitle("Unsaved Changes!")
         messagebox.setText(
             "There are unsaved changes to the current file."
             "\nDo you want to save the changes?"
         )
         messagebox.setStandardButtons(
-            messagebox.Yes | messagebox.No | messagebox.Cancel
+            QtWidgets.QMessageBox.Yes
+            | QtWidgets.QMessageBox.No
+            | QtWidgets.QMessageBox.Cancel
         )
 
         result = messagebox.exec_()
-        if result == messagebox.Yes:
+        if result == QtWidgets.QMessageBox.Yes:
             return True
-        if result == messagebox.No:
+        if result == QtWidgets.QMessageBox.No:
             return False
         return None
 
@@ -614,14 +617,24 @@ class FilesWidget(QtWidgets.QWidget):
         ext_filter = "Work File (*{0})".format(
             " *".join(self._get_host_extensions())
         )
+        dir_key = "directory"
+        if qtpy.API in ("pyside", "pyside2", "pyside6"):
+            dir_key = "dir"
+
+        workfile_root = self._workfiles_root
+        # Find existing directory of workfile root
+        #   - Qt will use 'cwd' instead, if path does not exist, which may lead
+        #       to igniter directory
+        while workfile_root:
+            if os.path.exists(workfile_root):
+                break
+            workfile_root = os.path.dirname(workfile_root)
+
         kwargs = {
             "caption": "Work Files",
-            "filter": ext_filter
+            "filter": ext_filter,
+            dir_key: workfile_root
         }
-        if Qt.__binding__ in ("PySide", "PySide2"):
-            kwargs["dir"] = self._workfiles_root
-        else:
-            kwargs["directory"] = self._workfiles_root
 
         work_file = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
         if work_file:

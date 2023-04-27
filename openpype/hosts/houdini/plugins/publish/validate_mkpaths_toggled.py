@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """Validate Create Intermediate Directories is enabled on ROP node."""
 
-    order = ValidateContentsOrder
+    order = pyblish.api.ValidatorOrder
     families = ["pointcache", "camera", "vdbcache"]
     hosts = ["houdini"]
     label = "Create Intermediate Directories Checked"
@@ -14,10 +15,10 @@ class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Found ROP node with Create Intermediate "
-                "Directories turned off: %s" % invalid
-            )
+            raise PublishValidationError(
+                ("Found ROP node with Create Intermediate "
+                 "Directories turned off: {}".format(invalid)),
+                title=self.label)
 
     @classmethod
     def get_invalid(cls, instance):

@@ -1,7 +1,7 @@
 import os
 import nuke
 
-from openpype.api import resources
+from openpype import resources
 from .lib import maintained_selection
 
 
@@ -87,7 +87,7 @@ def bake_gizmos_recursively(in_group=None):
 def colorspace_exists_on_node(node, colorspace_name):
     """ Check if colorspace exists on node
 
-    Look through all options in the colorpsace knob, and see if we have an
+    Look through all options in the colorspace knob, and see if we have an
     exact match to one of the items.
 
     Args:

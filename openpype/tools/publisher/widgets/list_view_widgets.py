@@ -11,7 +11,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 - Backspace - disable selection
 
 ```
-|- Options
+|- Context
 |- <Group 1> [x]
 |  |- <Instance 1> [x]
 |  |- <Instance 2> [x]
@@ -24,18 +24,21 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 """
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from openpype.tools.utils.lib import html_escape
+from openpype.tools.utils.lib import html_escape, checkstate_int_to_enum
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
     IS_GROUP_ROLE,
     CONTEXT_ID,
-    CONTEXT_LABEL
+    CONTEXT_LABEL,
+    GROUP_ROLE,
+    CONVERTER_IDENTIFIER_ROLE,
+    CONVERTOR_ITEM_GROUP,
 )
 
 
@@ -54,8 +57,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent):
         super(ListItemDelegate, self).__init__(parent)
 
-        colors_data = get_objected_colors()
-        group_color_info = colors_data["publisher"]["list-view-group"]
+        group_color_info = get_objected_colors("publisher", "list-view-group")
 
         self._group_colors = {
             key: value.get_qcolor()
@@ -84,9 +86,9 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         painter.save()
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.TextAntialiasing
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+            | QtGui.QPainter.TextAntialiasing
         )
 
         # Draw backgrounds
@@ -196,6 +198,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.instance["active"] = new_value
         self.active_changed.emit(self.instance.id, new_value)
 
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
 
 class ListContextWidget(QtWidgets.QFrame):
     """Context (or global attributes) widget."""
@@ -270,6 +275,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             state(QtCore.Qt.CheckState): Checkstate of checkbox. Have 3
                 variants Unchecked, Checked and PartiallyChecked.
         """
+
         if self.checkstate() == state:
             return
         self._ignore_state_change = True
@@ -277,7 +283,8 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self._ignore_state_change = False
 
     def checkstate(self):
-        """CUrrent checkstate of "active" checkbox."""
+        """Current checkstate of "active" checkbox."""
+
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
@@ -297,6 +304,9 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             self.expand_btn.setArrowType(QtCore.Qt.DownArrow)
         else:
             self.expand_btn.setArrowType(QtCore.Qt.RightArrow)
+
+    def set_active_toggle_enabled(self, enabled):
+        self.toggle_checkbox.setEnabled(enabled)
 
 
 class InstanceTreeView(QtWidgets.QTreeView):
@@ -331,6 +341,9 @@ class InstanceTreeView(QtWidgets.QTreeView):
         """Ids of selected instances."""
         instance_ids = set()
         for index in self.selectionModel().selectedIndexes():
+            if index.data(CONVERTER_IDENTIFIER_ROLE) is not None:
+                continue
+
             instance_id = index.data(INSTANCE_ID_ROLE)
             if instance_id is not None:
                 instance_ids.add(instance_id)
@@ -410,7 +423,7 @@ class InstanceListView(AbstractInstanceView):
     def __init__(self, controller, parent):
         super(InstanceListView, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
 
         instance_view = InstanceTreeView(self)
         instance_delegate = ListItemDelegate(instance_view)
@@ -440,28 +453,42 @@ class InstanceListView(AbstractInstanceView):
         self._group_items = {}
         self._group_widgets = {}
         self._widgets_by_id = {}
+        # Group by instance id for handling of active state
         self._group_by_instance_id = {}
         self._context_item = None
         self._context_widget = None
+
+        self._convertor_group_item = None
+        self._convertor_group_widget = None
+        self._convertor_items_by_id = {}
 
         self._instance_view = instance_view
         self._instance_delegate = instance_delegate
         self._instance_model = instance_model
         self._proxy_model = proxy_model
 
+        self._active_toggle_enabled = True
+
     def _on_expand(self, index):
-        group_name = index.data(SORT_VALUE_ROLE)
-        group_widget = self._group_widgets.get(group_name)
-        if group_widget:
-            group_widget.set_expanded(True)
+        self._update_widget_expand_state(index, True)
 
     def _on_collapse(self, index):
-        group_name = index.data(SORT_VALUE_ROLE)
-        group_widget = self._group_widgets.get(group_name)
+        self._update_widget_expand_state(index, False)
+
+    def _update_widget_expand_state(self, index, expanded):
+        group_name = index.data(GROUP_ROLE)
+        if group_name == CONVERTOR_ITEM_GROUP:
+            group_widget = self._convertor_group_widget
+        else:
+            group_widget = self._group_widgets.get(group_name)
+
         if group_widget:
-            group_widget.set_expanded(False)
+            group_widget.set_expanded(expanded)
 
     def _on_toggle_request(self, toggle):
+        if not self._active_toggle_enabled:
+            return
+
         selected_instance_ids = self._instance_view.get_selected_instance_ids()
         if toggle == -1:
             active = None
@@ -518,83 +545,30 @@ class InstanceListView(AbstractInstanceView):
 
     def refresh(self):
         """Refresh instances in the view."""
+        # Sort view at the end of refresh
+        # - is turned off until any change in view happens
+        sort_at_the_end = False
+        # Create or use already existing context item
+        # - context widget does not change so we don't have to update anything
+        if self._make_sure_context_item_exists():
+            sort_at_the_end = True
+
+        self._update_convertor_items_group()
+
         # Prepare instances by their groups
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
-        for instance in self.controller.instances:
+        for instance in self._controller.instances.values():
             group_label = instance.group_label
             group_names.add(group_label)
             instances_by_group_name[group_label].append(instance)
 
-        # Sort view at the end of refresh
-        # - is turned off until any change in view happens
-        sort_at_the_end = False
-
-        # Access to root item of main model
-        root_item = self._instance_model.invisibleRootItem()
-
-        # Create or use already existing context item
-        # - context widget does not change so we don't have to update anything
-        context_item = None
-        if self._context_item is None:
-            sort_at_the_end = True
-            context_item = QtGui.QStandardItem()
-            context_item.setData(0, SORT_VALUE_ROLE)
-            context_item.setData(CONTEXT_ID, INSTANCE_ID_ROLE)
-
-            root_item.appendRow(context_item)
-
-            index = self._instance_model.index(
-                context_item.row(), context_item.column()
-            )
-            proxy_index = self._proxy_model.mapFromSource(index)
-            widget = ListContextWidget(self._instance_view)
-            self._instance_view.setIndexWidget(proxy_index, widget)
-
-            self._context_widget = widget
-            self._context_item = context_item
-
         # Create new groups based on prepared `instances_by_group_name`
-        new_group_items = []
-        for group_name in group_names:
-            if group_name in self._group_items:
-                continue
-
-            group_item = QtGui.QStandardItem()
-            group_item.setData(group_name, SORT_VALUE_ROLE)
-            group_item.setData(True, IS_GROUP_ROLE)
-            group_item.setFlags(QtCore.Qt.ItemIsEnabled)
-            self._group_items[group_name] = group_item
-            new_group_items.append(group_item)
-
-        # Add new group items to root item if there are any
-        if new_group_items:
-            # Trigger sort at the end
+        if self._make_sure_groups_exists(group_names):
             sort_at_the_end = True
-            root_item.appendRows(new_group_items)
-
-        # Create widget for each new group item and store it for future usage
-        for group_item in new_group_items:
-            index = self._instance_model.index(
-                group_item.row(), group_item.column()
-            )
-            proxy_index = self._proxy_model.mapFromSource(index)
-            group_name = group_item.data(SORT_VALUE_ROLE)
-            widget = InstanceListGroupWidget(group_name, self._instance_view)
-            widget.expand_changed.connect(self._on_group_expand_request)
-            widget.toggle_requested.connect(self._on_group_toggle_request)
-            self._group_widgets[group_name] = widget
-            self._instance_view.setIndexWidget(proxy_index, widget)
 
         # Remove groups that are not available anymore
-        for group_name in tuple(self._group_items.keys()):
-            if group_name in group_names:
-                continue
-
-            group_item = self._group_items.pop(group_name)
-            root_item.removeRow(group_item.row())
-            widget = self._group_widgets.pop(group_name)
-            widget.deleteLater()
+        self._remove_groups_except(group_names)
 
         # Store which groups should be expanded at the end
         expand_groups = set()
@@ -653,6 +627,7 @@ class InstanceListView(AbstractInstanceView):
                 # Create new item and store it as new
                 item = QtGui.QStandardItem()
                 item.setData(instance["subset"], SORT_VALUE_ROLE)
+                item.setData(instance["subset"], GROUP_ROLE)
                 item.setData(instance_id, INSTANCE_ID_ROLE)
                 new_items.append(item)
                 new_items_with_instance.append((item, instance))
@@ -703,6 +678,9 @@ class InstanceListView(AbstractInstanceView):
                     widget = InstanceListItemWidget(
                         instance, self._instance_view
                     )
+                    widget.set_active_toggle_enabled(
+                        self._active_toggle_enabled
+                    )
                     widget.active_changed.connect(self._on_active_changed)
                     self._instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.id] = widget
@@ -718,19 +696,161 @@ class InstanceListView(AbstractInstanceView):
 
             self._instance_view.expand(proxy_index)
 
+    def _make_sure_context_item_exists(self):
+        if self._context_item is not None:
+            return False
+
+        root_item = self._instance_model.invisibleRootItem()
+        context_item = QtGui.QStandardItem()
+        context_item.setData(0, SORT_VALUE_ROLE)
+        context_item.setData(CONTEXT_ID, INSTANCE_ID_ROLE)
+
+        root_item.appendRow(context_item)
+
+        index = self._instance_model.index(
+            context_item.row(), context_item.column()
+        )
+        proxy_index = self._proxy_model.mapFromSource(index)
+        widget = ListContextWidget(self._instance_view)
+        self._instance_view.setIndexWidget(proxy_index, widget)
+
+        self._context_widget = widget
+        self._context_item = context_item
+        return True
+
+    def _update_convertor_items_group(self):
+        created_new_items = False
+        convertor_items_by_id = self._controller.convertor_items
+        group_item = self._convertor_group_item
+        if not convertor_items_by_id and group_item is None:
+            return created_new_items
+
+        root_item = self._instance_model.invisibleRootItem()
+        if not convertor_items_by_id:
+            root_item.removeRow(group_item.row())
+            self._convertor_group_widget.deleteLater()
+            self._convertor_group_widget = None
+            self._convertor_items_by_id = {}
+            return created_new_items
+
+        if group_item is None:
+            created_new_items = True
+            group_item = QtGui.QStandardItem()
+            group_item.setData(CONVERTOR_ITEM_GROUP, GROUP_ROLE)
+            group_item.setData(1, SORT_VALUE_ROLE)
+            group_item.setData(True, IS_GROUP_ROLE)
+            group_item.setFlags(QtCore.Qt.ItemIsEnabled)
+
+            root_item.appendRow(group_item)
+
+            index = self._instance_model.index(
+                group_item.row(), group_item.column()
+            )
+            proxy_index = self._proxy_model.mapFromSource(index)
+            widget = InstanceListGroupWidget(
+                CONVERTOR_ITEM_GROUP, self._instance_view
+            )
+            widget.toggle_checkbox.setVisible(False)
+            widget.expand_changed.connect(
+                self._on_convertor_group_expand_request
+            )
+            self._instance_view.setIndexWidget(proxy_index, widget)
+
+            self._convertor_group_item = group_item
+            self._convertor_group_widget = widget
+
+        for row in reversed(range(group_item.rowCount())):
+            child_item = group_item.child(row)
+            child_identifier = child_item.data(CONVERTER_IDENTIFIER_ROLE)
+            if child_identifier not in convertor_items_by_id:
+                self._convertor_items_by_id.pop(child_identifier, None)
+                group_item.removeRows(row, 1)
+
+        new_items = []
+        for identifier, convertor_item in convertor_items_by_id.items():
+            item = self._convertor_items_by_id.get(identifier)
+            if item is None:
+                created_new_items = True
+                item = QtGui.QStandardItem(convertor_item.label)
+                new_items.append(item)
+            item.setData(convertor_item.id, INSTANCE_ID_ROLE)
+            item.setData(convertor_item.label, SORT_VALUE_ROLE)
+            item.setData(CONVERTOR_ITEM_GROUP, GROUP_ROLE)
+            item.setData(
+                convertor_item.identifier, CONVERTER_IDENTIFIER_ROLE
+            )
+            self._convertor_items_by_id[identifier] = item
+
+        if new_items:
+            group_item.appendRows(new_items)
+
+        return created_new_items
+
+    def _make_sure_groups_exists(self, group_names):
+        new_group_items = []
+        for group_name in group_names:
+            if group_name in self._group_items:
+                continue
+
+            group_item = QtGui.QStandardItem()
+            group_item.setData(group_name, GROUP_ROLE)
+            group_item.setData(group_name, SORT_VALUE_ROLE)
+            group_item.setData(True, IS_GROUP_ROLE)
+            group_item.setFlags(QtCore.Qt.ItemIsEnabled)
+            self._group_items[group_name] = group_item
+            new_group_items.append(group_item)
+
+        # Add new group items to root item if there are any
+        if not new_group_items:
+            return False
+
+        # Access to root item of main model
+        root_item = self._instance_model.invisibleRootItem()
+        root_item.appendRows(new_group_items)
+
+        # Create widget for each new group item and store it for future usage
+        for group_item in new_group_items:
+            index = self._instance_model.index(
+                group_item.row(), group_item.column()
+            )
+            proxy_index = self._proxy_model.mapFromSource(index)
+            group_name = group_item.data(GROUP_ROLE)
+            widget = InstanceListGroupWidget(group_name, self._instance_view)
+            widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
+            )
+            widget.expand_changed.connect(self._on_group_expand_request)
+            widget.toggle_requested.connect(self._on_group_toggle_request)
+            self._group_widgets[group_name] = widget
+            self._instance_view.setIndexWidget(proxy_index, widget)
+
+        return True
+
+    def _remove_groups_except(self, group_names):
+        # Remove groups that are not available anymore
+        root_item = self._instance_model.invisibleRootItem()
+        for group_name in tuple(self._group_items.keys()):
+            if group_name in group_names:
+                continue
+
+            group_item = self._group_items.pop(group_name)
+            root_item.removeRow(group_item.row())
+            widget = self._group_widgets.pop(group_name)
+            widget.deleteLater()
+
     def refresh_instance_states(self):
         """Trigger update of all instances."""
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
     def _on_active_changed(self, changed_instance_id, new_value):
-        selected_instances, _ = self.get_selected_items()
+        selected_instance_ids, _, _ = self.get_selected_items()
 
         selected_ids = set()
         found = False
-        for instance in selected_instances:
-            selected_ids.add(instance.id)
-            if not found and instance.id == changed_instance_id:
+        for instance_id in selected_instance_ids:
+            selected_ids.add(instance_id)
+            if not found and instance_id == changed_instance_id:
                 found = True
 
         if not found:
@@ -761,32 +881,6 @@ class InstanceListView(AbstractInstanceView):
         if changed_ids:
             self.active_changed.emit()
 
-    def get_selected_items(self):
-        """Get selected instance ids and context selection.
-
-        Returns:
-            tuple<list, bool>: Selected instance ids and boolean if context
-                is selected.
-        """
-        instances = []
-        context_selected = False
-        instances_by_id = {
-            instance.id: instance
-            for instance in self.controller.instances
-        }
-
-        for index in self._instance_view.selectionModel().selectedIndexes():
-            instance_id = index.data(INSTANCE_ID_ROLE)
-            if not context_selected and instance_id == CONTEXT_ID:
-                context_selected = True
-
-            elif instance_id is not None:
-                instance = instances_by_id.get(instance_id)
-                if instance:
-                    instances.append(instance)
-
-        return instances, context_selected
-
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
 
@@ -801,7 +895,18 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self._proxy_model.mapFromSource(group_index)
         self._instance_view.setExpanded(proxy_index, expanded)
 
+    def _on_convertor_group_expand_request(self, _, expanded):
+        group_item = self._convertor_group_item
+        if not group_item:
+            return
+        group_index = self._instance_model.index(
+            group_item.row(), group_item.column()
+        )
+        proxy_index = self._proxy_model.mapFromSource(group_index)
+        self._instance_view.setExpanded(proxy_index, expanded)
+
     def _on_group_toggle_request(self, group_name, state):
+        state = checkstate_int_to_enum(state)
         if state == QtCore.Qt.PartiallyChecked:
             return
 
@@ -826,3 +931,154 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self._proxy_model.mapFromSource(group_item.index())
         if not self._instance_view.isExpanded(proxy_index):
             self._instance_view.expand(proxy_index)
+
+    def has_items(self):
+        if self._convertor_group_widget is not None:
+            return True
+        if self._group_items:
+            return True
+        return False
+
+    def get_selected_items(self):
+        """Get selected instance ids and context selection.
+
+        Returns:
+            tuple<list, bool>: Selected instance ids and boolean if context
+                is selected.
+        """
+
+        instance_ids = []
+        convertor_identifiers = []
+        context_selected = False
+
+        for index in self._instance_view.selectionModel().selectedIndexes():
+            convertor_identifier = index.data(CONVERTER_IDENTIFIER_ROLE)
+            if convertor_identifier is not None:
+                convertor_identifiers.append(convertor_identifier)
+                continue
+
+            instance_id = index.data(INSTANCE_ID_ROLE)
+            if not context_selected and instance_id == CONTEXT_ID:
+                context_selected = True
+
+            elif instance_id is not None:
+                instance_ids.append(instance_id)
+
+        return instance_ids, context_selected, convertor_identifiers
+
+    def set_selected_items(
+        self, instance_ids, context_selected, convertor_identifiers
+    ):
+        s_instance_ids = set(instance_ids)
+        s_convertor_identifiers = set(convertor_identifiers)
+        cur_ids, cur_context, cur_convertor_identifiers = (
+            self.get_selected_items()
+        )
+        if (
+            set(cur_ids) == s_instance_ids
+            and cur_context == context_selected
+            and set(cur_convertor_identifiers) == s_convertor_identifiers
+        ):
+            return
+
+        view = self._instance_view
+        src_model = self._instance_model
+        proxy_model = self._proxy_model
+
+        select_indexes = []
+
+        select_queue = collections.deque()
+        select_queue.append(
+            (src_model.invisibleRootItem(), [])
+        )
+        while select_queue:
+            queue_item = select_queue.popleft()
+            item, parent_items = queue_item
+
+            if item.hasChildren():
+                new_parent_items = list(parent_items)
+                new_parent_items.append(item)
+                for row in range(item.rowCount()):
+                    select_queue.append(
+                        (item.child(row), list(new_parent_items))
+                    )
+
+            convertor_identifier = item.data(CONVERTER_IDENTIFIER_ROLE)
+
+            select = False
+            expand_parent = True
+            if convertor_identifier is not None:
+                if convertor_identifier in s_convertor_identifiers:
+                    select = True
+            else:
+                instance_id = item.data(INSTANCE_ID_ROLE)
+                if instance_id == CONTEXT_ID:
+                    if context_selected:
+                        select = True
+                        expand_parent = False
+
+                elif instance_id in s_instance_ids:
+                    select = True
+
+            if not select:
+                continue
+
+            select_indexes.append(item.index())
+            if not expand_parent:
+                continue
+
+            for parent_item in parent_items:
+                index = parent_item.index()
+                proxy_index = proxy_model.mapFromSource(index)
+                if not view.isExpanded(proxy_index):
+                    view.expand(proxy_index)
+
+        selection_model = view.selectionModel()
+        if not select_indexes:
+            selection_model.clear()
+            return
+
+        if len(select_indexes) == 1:
+            proxy_index = proxy_model.mapFromSource(select_indexes[0])
+            selection_model.setCurrentIndex(
+                proxy_index,
+                QtCore.QItemSelectionModel.ClearAndSelect
+                | QtCore.QItemSelectionModel.Rows
+            )
+            return
+
+        first_index = proxy_model.mapFromSource(select_indexes.pop(0))
+        last_index = proxy_model.mapFromSource(select_indexes.pop(-1))
+
+        selection_model.setCurrentIndex(
+            first_index,
+            QtCore.QItemSelectionModel.ClearAndSelect
+            | QtCore.QItemSelectionModel.Rows
+        )
+
+        for index in select_indexes:
+            proxy_index = proxy_model.mapFromSource(index)
+            selection_model.select(
+                proxy_index,
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
+            )
+
+        selection_model.setCurrentIndex(
+            last_index,
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
+        )
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+
+        self._active_toggle_enabled = enabled
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceListItemWidget):
+                widget.set_active_toggle_enabled(enabled)
+
+        for widget in self._group_widgets.values():
+            if isinstance(widget, InstanceListGroupWidget):
+                widget.set_active_toggle_enabled(enabled)

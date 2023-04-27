@@ -1,0 +1,28 @@
+name: 👉🏻 Milestone - assign to PRs
+
+on:
+  pull_request_target:
+    types: [closed]
+
+jobs:
+  run_if_release:
+    if:  startsWith(github.base_ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Assign Milestone [next-minor]'
+        if: github.event.pull_request.milestone == null
+        uses: zoispag/action-assign-milestone@v1
+        with:
+          repo-token: "${{ secrets.YNPUT_BOT_TOKEN }}"
+          milestone: 'next-minor'
+
+  run_if_develop:
+    if:  ${{ github.base_ref == 'develop' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Assign Milestone [next-patch]'
+        if: github.event.pull_request.milestone == null
+        uses: zoispag/action-assign-milestone@v1
+        with:
+          repo-token: "${{ secrets.YNPUT_BOT_TOKEN }}"
+          milestone: 'next-patch'

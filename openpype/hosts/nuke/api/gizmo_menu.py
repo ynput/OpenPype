@@ -2,7 +2,7 @@ import os
 import re
 import nuke
 
-from openpype.api import Logger
+from openpype.lib import Logger
 
 log = Logger.get_logger(__name__)
 
@@ -53,12 +53,18 @@ class GizmoMenu():
 
                 item_type = item.get("sourcetype")
 
-                if item_type == ("python" or "file"):
+                if item_type == "python":
                     parent.addCommand(
                         item["title"],
                         command=str(item["command"]),
                         icon=item.get("icon"),
-                        shortcut=item.get("hotkey")
+                        shortcut=item.get("shortcut")
+                    )
+                elif item_type == "file":
+                    parent.addCommand(
+                        item['title'],
+                        "nuke.createNode('{}')".format(item.get('file_name')),
+                        shortcut=item.get('shortcut')
                     )
 
                 # add separator

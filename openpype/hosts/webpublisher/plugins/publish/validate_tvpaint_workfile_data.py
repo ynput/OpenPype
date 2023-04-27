@@ -13,7 +13,7 @@ class ValidateWorkfileData(pyblish.api.ContextPlugin):
     targets = ["tvpaint_worker"]
 
     def process(self, context):
-        # Data collected in `CollectAvalonEntities`
+        # Data collected in `CollectContextEntities`
         frame_start = context.data["frameStart"]
         frame_end = context.data["frameEnd"]
         handle_start = context.data["handleStart"]

@@ -195,7 +195,7 @@
         "enabled": true
     },
     "standalonepublish_tool": {
-        "enabled": true
+        "enabled": false
     },
     "project_manager": {
         "enabled": true

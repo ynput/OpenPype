@@ -28,7 +28,6 @@ from openpype.lib import (
     TemplateUnsolved,
 )
 from openpype.pipeline import (
-    schema,
     legacy_io,
     Anatomy,
 )
@@ -37,7 +36,7 @@ log = logging.getLogger(__name__)
 
 ContainersFilterResult = collections.namedtuple(
     "ContainersFilterResult",
-    ["latest", "outdated", "not_foud", "invalid"]
+    ["latest", "outdated", "not_found", "invalid"]
 )
 
 
@@ -58,6 +57,16 @@ class HeroVersionType(object):
 
     def __format__(self, format_spec):
         return self.version.__format__(format_spec)
+
+
+class LoadError(Exception):
+    """Known error that happened during loading.
+
+    A message is shown to user (without traceback). Make sure an artist can
+    understand the problem.
+    """
+
+    pass
 
 
 class IncompatibleLoaderError(ValueError):
@@ -87,12 +96,19 @@ def get_repres_contexts(representation_ids, dbcon=None):
     if not dbcon:
         dbcon = legacy_io
 
-    contexts = {}
     if not representation_ids:
-        return contexts
+        return {}
 
     project_name = dbcon.active_project()
     repre_docs = get_representations(project_name, representation_ids)
+
+    return get_contexts_for_repre_docs(project_name, repre_docs)
+
+
+def get_contexts_for_repre_docs(project_name, repre_docs):
+    contexts = {}
+    if not repre_docs:
+        return contexts
 
     repre_docs_by_id = {}
     version_ids = set()
@@ -626,7 +642,10 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     def path_from_config():
         try:
-            version_, subset, asset, project = dbcon.parenthood(representation)
+            project_name = dbcon.active_project()
+            version_, subset, asset, project = get_representation_parents(
+                project_name, representation
+            )
         except ValueError:
             log.debug(
                 "Representation %s wasn't found in database, "
@@ -731,25 +750,9 @@ def is_compatible_loader(Loader, context):
 
     Returns:
         bool
-
     """
-    maj_version, _ = schema.get_schema_version(context["subset"]["schema"])
-    if maj_version < 3:
-        families = context["version"]["data"].get("families", [])
-    else:
-        families = context["subset"]["data"]["families"]
 
-    representation = context["representation"]
-    has_family = (
-        "*" in Loader.families or any(
-            family in Loader.families for family in families
-        )
-    )
-    representations = Loader.get_representations()
-    has_representation = (
-        "*" in representations or representation["name"] in representations
-    )
-    return has_family and has_representation
+    return Loader.is_compatible_loader(context)
 
 
 def loaders_from_repre_context(loaders, repre_context):
@@ -808,7 +811,7 @@ def filter_containers(containers, project_name):
 
     Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
     The 'lastest' containers are from last version, 'outdated' are not,
-    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    'invalid' are invalid containers (invalid content) and 'not_found' has
     some missing entity in database.
 
     Args:

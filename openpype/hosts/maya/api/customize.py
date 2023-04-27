@@ -8,9 +8,10 @@ from functools import partial
 import maya.cmds as cmds
 import maya.mel as mel
 
-from openpype.api import resources
+from openpype import resources
 from openpype.tools.utils import host_tools
 from .lib import get_main_window
+from ..tools import show_look_assigner
 
 log = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ def override_toolbox_ui():
             annotation="Look Manager",
             label="Look Manager",
             image=os.path.join(icons, "lookmanager.png"),
-            command=host_tools.show_look_assigner,
+            command=show_look_assigner,
             width=icon_size,
             height=icon_size,
             parent=parent

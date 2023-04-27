@@ -10,6 +10,7 @@ import opentimelineio as otio
 import pyblish.api
 from pprint import pformat
 from openpype.pipeline.editorial import (
+    get_media_range_with_retimes,
     otio_range_to_frame_range,
     otio_range_with_handles
 )
@@ -29,7 +30,7 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         # get basic variables
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]
-        workfile_source_duration = instance.data.get("notRetimedFramerange")
+        workfile_source_duration = instance.data.get("shotDurationFromSource")
 
         # get ranges
         otio_tl_range = otio_clip.range_in_parent()
@@ -57,8 +58,15 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
 
         # in case of retimed clip and frame range should not be retimed
         if workfile_source_duration:
-            frame_end = frame_start + otio.opentime.to_frames(
-                otio_src_range.duration, otio_src_range.duration.rate) - 1
+            # get available range trimmed with processed retimes
+            retimed_attributes = get_media_range_with_retimes(
+                otio_clip, 0, 0)
+            self.log.debug(
+                ">> retimed_attributes: {}".format(retimed_attributes))
+            media_in = int(retimed_attributes["mediaIn"])
+            media_out = int(retimed_attributes["mediaOut"])
+            frame_end = frame_start + (media_out - media_in) + 1
+            self.log.debug(frame_end)
 
         data = {
             "frameStart": frame_start,

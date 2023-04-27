@@ -9,7 +9,7 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     legacy_io,
 )
-from openpype.host import HostBase, INewPublisher
+from openpype.host import HostBase, IPublishHost
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(
@@ -19,7 +19,7 @@ PUBLISH_PATH = os.path.join(ROOT_DIR, "plugins", "publish")
 CREATE_PATH = os.path.join(ROOT_DIR, "plugins", "create")
 
 
-class TrayPublisherHost(HostBase, INewPublisher):
+class TrayPublisherHost(HostBase, IPublishHost):
     name = "traypublisher"
 
     def install(self):
@@ -37,7 +37,7 @@ class TrayPublisherHost(HostBase, INewPublisher):
         return HostContext.get_context_data()
 
     def update_context_data(self, data, changes):
-        HostContext.save_context_data(data, changes)
+        HostContext.save_context_data(data)
 
     def set_project_name(self, project_name):
         # TODO Deregister project specific plugins and register new project

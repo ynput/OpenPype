@@ -15,32 +15,32 @@ const key_features = [
         label: "Workfiles",
         description:
             "Save and load workfiles in progress. Change the context inside of the application.",
-        docs: "/docs/artist_tools#workfiles",
+        docs: "/docs/artist_tools_workfiles",
     },
     {
         label: "Creator",
         description:
             "Universal GUI for defining content for publishing from your DCC app.",
-        docs: "/docs/artist_tools#creator",
+        docs: "/docs/artist_tools_creator",
     },
     {
         label: "Loader",
         description:
             "Universal GUI for loading published assets into your DCC app.",
-        docs: "/docs/artist_tools#loader",
+        docs: "/docs/artist_tools_loader",
     },
     {
         label: "Publisher",
         description:
             "Universal GUI for validating and publishng content from your DCC app.",
         image: "",
-        docs: "/docs/artist_tools#publisher",
+        docs: "/docs/artist_tools_publisher",
     },
     {
         label: "Scene manager",
         description:
             "Universal GUI for managing versions of assets loaded into your working scene.",
-        docs: "docs/artist_tools#inventory",
+        docs: "docs/artist_tools_inventory",
       },
       {
           label: "Project manager",
@@ -52,7 +52,7 @@ const key_features = [
         label: "Library Loader",
         description:
         "A loader GUI that allows yo to load content from dedicated cross project asset library",
-        docs: "docs/artist_tools#library-loader",
+        docs: "docs/artist_tool_library_loader",
         image: "",
     },
     {

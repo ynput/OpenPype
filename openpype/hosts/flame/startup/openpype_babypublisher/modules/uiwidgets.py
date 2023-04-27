@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 
 class FlameLabel(QtWidgets.QLabel):

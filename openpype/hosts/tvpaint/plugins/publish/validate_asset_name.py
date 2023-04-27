@@ -1,6 +1,12 @@
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
-from openpype.hosts.tvpaint.api import pipeline
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
+from openpype.hosts.tvpaint.api.pipeline import (
+    list_instances,
+    write_instances,
+)
 
 
 class FixAssetNames(pyblish.api.Action):
@@ -15,7 +21,7 @@ class FixAssetNames(pyblish.api.Action):
 
     def process(self, context, plugin):
         context_asset_name = context.data["asset"]
-        old_instance_items = pipeline.list_instances()
+        old_instance_items = list_instances()
         new_instance_items = []
         for instance_item in old_instance_items:
             instance_asset_name = instance_item.get("asset")
@@ -25,11 +31,14 @@ class FixAssetNames(pyblish.api.Action):
             ):
                 instance_item["asset"] = context_asset_name
             new_instance_items.append(instance_item)
-        pipeline._write_instances(new_instance_items)
+        write_instances(new_instance_items)
 
 
-class ValidateAssetNames(pyblish.api.ContextPlugin):
-    """Validate assset name present on instance.
+class ValidateAssetName(
+    OptionalPyblishPluginMixin,
+    pyblish.api.ContextPlugin
+):
+    """Validate asset name present on instance.
 
     Asset name on instance should be the same as context's.
     """
@@ -40,6 +49,8 @@ class ValidateAssetNames(pyblish.api.ContextPlugin):
     actions = [FixAssetNames]
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
         context_asset_name = context.data["asset"]
         for instance in context:
             asset_name = instance.data.get("asset")

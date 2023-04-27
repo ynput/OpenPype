@@ -16,21 +16,28 @@ from .pype_commands import PypeCommands
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
 @click.option("--list-versions", is_flag=True, expose_value=False,
-              help=("list all detected versions. Use With `--use-staging "
-                    "to list staging versions."))
+              help="list all detected versions.")
 @click.option("--validate-version", expose_value=False,
               help="validate given version integrity")
 @click.option("--debug", is_flag=True, expose_value=False,
-              help=("Enable debug"))
+              help="Enable debug")
 @click.option("--verbose", expose_value=False,
               help=("Change OpenPype log level (debug - critical or 0-50)"))
+@click.option("--automatic-tests", is_flag=True, expose_value=False,
+              help=("Run in automatic tests mode"))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
     It wraps different commands together.
     """
+
     if ctx.invoked_subcommand is None:
-        ctx.invoke(tray)
+        # Print help if headless mode is used
+        if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+            print(ctx.get_help())
+            sys.exit(0)
+        else:
+            ctx.invoke(tray)
 
 
 @main.command()
@@ -277,6 +284,13 @@ def projectmanager():
     PypeCommands().launch_project_manager()
 
 
+@main.command(context_settings={"ignore_unknown_options": True})
+def publish_report_viewer():
+    from openpype.tools.publisher.publish_report_viewer import main
+
+    sys.exit(main())
+
+
 @main.command()
 @click.argument("output_path")
 @click.option("--project", help="Define project context")
@@ -353,11 +367,15 @@ def run(script):
               "--timeout",
               help="Provide specific timeout value for test case",
               default=None)
+@click.option("-so",
+              "--setup_only",
+              help="Only create dbs, do not run tests",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout):
+             timeout, setup_only):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout)
+                             persist, app_variant, timeout, setup_only)
 
 
 @main.command()
@@ -416,20 +434,18 @@ def unpack_project(zipfile, root):
 
 @main.command()
 def interactive():
-    """Interative (Python like) console.
+    """Interactive (Python like) console.
 
-    Helpfull command not only for development to directly work with python
+    Helpful command not only for development to directly work with python
     interpreter.
 
     Warning:
-        Executable 'openpype_gui' on windows won't work.
+        Executable 'openpype_gui' on Windows won't work.
     """
 
     from openpype.version import __version__
 
-    banner = "OpenPype {}\nPython {} on {}".format(
-        __version__, sys.version, sys.platform
-    )
+    banner = f"OpenPype {__version__}\nPython {sys.version} on {sys.platform}"
     code.interact(banner)
 
 

@@ -73,7 +73,7 @@ class ImageLoader(load.LoaderPlugin):
 
         # Imprint it manually
         data = {
-            "schema": "avalon-core:container-2.0",
+            "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": node_name,
             "namespace": namespace,
@@ -125,3 +125,6 @@ class ImageLoader(load.LoaderPlugin):
         prefix, padding, suffix = first_fname.rsplit(".", 2)
         fname = ".".join([prefix, "$F{}".format(len(padding)), suffix])
         return os.path.join(root, fname).replace("\\", "/")
+
+    def switch(self, container, representation):
+        self.update(container, representation)

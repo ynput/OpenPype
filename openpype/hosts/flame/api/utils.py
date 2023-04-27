@@ -4,7 +4,7 @@ Flame utils for syncing scripts
 
 import os
 import shutil
-from openpype.api import Logger
+from openpype.lib import Logger
 log = Logger.get_logger(__name__)
 
 
@@ -108,7 +108,7 @@ def _sync_utility_scripts(env=None):
                     shutil.copy2(src, dst)
             except (PermissionError, FileExistsError) as msg:
                 log.warning(
-                    "Not able to coppy to: `{}`, Problem with: `{}`".format(
+                    "Not able to copy to: `{}`, Problem with: `{}`".format(
                         dst,
                         msg
                     )

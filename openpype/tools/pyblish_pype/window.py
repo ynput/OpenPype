@@ -45,7 +45,7 @@ from functools import partial
 from . import delegate, model, settings, util, view, widgets
 from .awesome import tags as awesome
 
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 from .constants import (
     PluginStates, PluginActionStates, InstanceStates, GroupStates, Roles
 )

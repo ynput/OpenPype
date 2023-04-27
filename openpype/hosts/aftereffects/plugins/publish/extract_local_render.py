@@ -21,41 +21,55 @@ class ExtractLocalRender(publish.Extractor):
     def process(self, instance):
         stub = get_stub()
         staging_dir = instance.data["stagingDir"]
-        self.log.info("staging_dir::{}".format(staging_dir))
+        self.log.debug("staging_dir::{}".format(staging_dir))
 
-        # pull file name from Render Queue Output module
-        render_q = stub.get_render_info()
-        stub.render(staging_dir)
-        if not render_q:
+        # pull file name collected value from Render Queue Output module
+        if not instance.data["file_names"]:
             raise ValueError("No file extension set in Render Queue")
-        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
-        ext = ext[1:]
 
-        first_file_path = None
-        files = []
-        self.log.info("files::{}".format(os.listdir(staging_dir)))
-        for file_name in os.listdir(staging_dir):
-            files.append(file_name)
-            if first_file_path is None:
-                first_file_path = os.path.join(staging_dir,
-                                               file_name)
+        comp_id = instance.data['comp_id']
+        stub.render(staging_dir, comp_id)
 
-        resulting_files = files
-        if len(files) == 1:
-            resulting_files = files[0]
+        representations = []
+        for file_name in instance.data["file_names"]:
+            _, ext = os.path.splitext(os.path.basename(file_name))
+            ext = ext[1:]
 
-        repre_data = {
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
-            "name": ext,
-            "ext": ext,
-            "files": resulting_files,
-            "stagingDir": staging_dir
-        }
-        if instance.data["review"]:
-            repre_data["tags"] = ["review"]
+            first_file_path = None
+            files = []
+            for found_file_name in os.listdir(staging_dir):
+                if not found_file_name.endswith(ext):
+                    continue
 
-        instance.data["representations"] = [repre_data]
+                files.append(found_file_name)
+                if first_file_path is None:
+                    first_file_path = os.path.join(staging_dir,
+                                                   found_file_name)
+
+            if not files:
+                self.log.info("no files")
+                return
+
+            # single file cannot be wrapped in array
+            resulting_files = files
+            if len(files) == 1:
+                resulting_files = files[0]
+
+            repre_data = {
+                "frameStart": instance.data["frameStart"],
+                "frameEnd": instance.data["frameEnd"],
+                "name": ext,
+                "ext": ext,
+                "files": resulting_files,
+                "stagingDir": staging_dir
+            }
+            first_repre = not representations
+            if instance.data["review"] and first_repre:
+                repre_data["tags"] = ["review"]
+
+            representations.append(repre_data)
+
+        instance.data["representations"] = representations
 
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
         # Generate thumbnail.

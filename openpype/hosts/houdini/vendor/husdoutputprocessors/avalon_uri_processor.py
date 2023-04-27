@@ -128,14 +128,14 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
         if not asset_doc:
             raise RuntimeError("Invalid asset name: '%s'" % asset)
 
-        formatted_anatomy = anatomy.format({
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        path = template_obj.format_strict({
             "project": PROJECT,
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": ext,
             "version": 0  # stub version zero
         })
-        path = formatted_anatomy["publish"]["path"]
 
         # Remove the version folder
         subset_folder = os.path.dirname(os.path.dirname(path))

@@ -6,10 +6,10 @@ import csv
 from PIL import Image, ImageDraw, ImageFont
 
 import openpype.hosts.harmony.api as harmony
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractPalette(openpype.api.Extractor):
+class ExtractPalette(publish.Extractor):
     """Extract palette."""
 
     label = "Extract Palette"

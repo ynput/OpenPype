@@ -32,12 +32,28 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io
 
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
+from openpype.hosts.maya.api.lib import get_attr_in_layer
+
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
+
+
+def _validate_deadline_bool_value(instance, attribute, value):
+    if not isinstance(value, (str, bool)):
+        raise TypeError(
+            "Attribute {} must be str or bool.".format(attribute))
+    if value not in {"1", "0", True, False}:
+        raise ValueError(
+            ("Value of {} must be one of "
+             "'0', '1', True, False").format(attribute)
+        )
 
 
 @attr.s
-class MayaPluginInfo:
+class MayaPluginInfo(object):
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -46,11 +62,14 @@ class MayaPluginInfo:
     RenderLayer = attr.ib(default=None)  # Render only this layer
     Renderer = attr.ib(default=None)
     ProjectPath = attr.ib(default=None)  # Resolve relative references
-    RenderSetupIncludeLights = attr.ib(default=None)  # Include all lights flag
+    # Include all lights flag
+    RenderSetupIncludeLights = attr.ib(
+        default="1", validator=_validate_deadline_bool_value)
+    StrictErrorChecking = attr.ib(default=True)
 
 
 @attr.s
-class PythonPluginInfo:
+class PythonPluginInfo(object):
     ScriptFile = attr.ib()
     Version = attr.ib(default="3.6")
     Arguments = attr.ib(default=None)
@@ -58,7 +77,7 @@ class PythonPluginInfo:
 
 
 @attr.s
-class VRayPluginInfo:
+class VRayPluginInfo(object):
     InputFilename = attr.ib(default=None)   # Input
     SeparateFilesPerFrame = attr.ib(default=None)
     VRayEngine = attr.ib(default="V-Ray")
@@ -69,7 +88,7 @@ class VRayPluginInfo:
 
 
 @attr.s
-class ArnoldPluginInfo:
+class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
 
 
@@ -105,6 +124,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
+        if is_in_tests():
+            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
@@ -120,10 +142,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
         job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
@@ -144,9 +164,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "OPENPYPE_DEV",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_DEV"
+            "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -167,7 +192,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Adding file dependencies.
         if self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
-            dependencies.append(context.data["currentFile"])
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
 
@@ -185,14 +209,31 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         instance = self._instance
         context = instance.context
 
+        # Set it to default Maya behaviour if it cannot be determined
+        # from instance (but it should be, by the Collector).
+
+        default_rs_include_lights = (
+            instance.context.data['project_settings']
+                                 ['maya']
+                                 ['RenderSettings']
+                                 ['enable_all_lights']
+        )
+
+        rs_include_lights = instance.data.get(
+            "renderSetupIncludeLights", default_rs_include_lights)
+        if rs_include_lights not in {"1", "0", True, False}:
+            rs_include_lights = default_rs_include_lights
+        strict_error_checking = instance.data.get("strict_error_checking",
+                                                  True)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
             Renderer=instance.data["renderer"],
-            RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights"),  # noqa
+            RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
+            StrictErrorChecking=strict_error_checking
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -264,7 +305,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add export job as dependency --------------------------------------
         if export_job:
             job_info, _ = payload
-            job_info.JobDependency = export_job
+            job_info.JobDependencies = export_job
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
@@ -283,6 +324,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         payload_job_info, payload_plugin_info = payload
         job_info = copy.deepcopy(payload_job_info)
         plugin_info = copy.deepcopy(payload_plugin_info)
+
+        # Force plugin reload for vray cause the region does not get flushed
+        # between tile renders.
+        if plugin_info["Renderer"] == "vray":
+            job_info.ForceReloadPlugin = True
 
         # if we have sequence of files, we need to create tile job for
         # every frame
@@ -376,8 +422,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
+        assembly_job_info.Priority = instance.data.get(
+            "tile_priority", self.tile_priority
+        )
+        assembly_job_info.TileJob = False
+
+        pool = instance.context.data["project_settings"]["deadline"]
+        pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
+        assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
@@ -387,6 +439,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         assembly_payloads = []
         output_dir = self.job_info.OutputDirectory[0]
+        config_files = []
         for file in assembly_files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
@@ -401,18 +454,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
             frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
-            frame_assembly_job_info.JobDependency = tile_job_id
+            frame_assembly_job_info.JobDependencies = tile_job_id
+            frame_assembly_job_info.Frames = frame
 
             # write assembly job config files
-            now = datetime.now()
-
             config_file = os.path.join(
                 output_dir,
                 "{}_config_{}.txt".format(
                     os.path.splitext(file)[0],
-                    now.strftime("%Y_%m_%d_%H_%M_%S")
+                    datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
                 )
             )
+            config_files.append(config_file)
             try:
                 if not os.path.isdir(output_dir):
                     os.makedirs(output_dir)
@@ -429,25 +482,34 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 print("ImageHeight={}".format(
                     instance.data.get("resolutionHeight")), file=cf)
 
+            reversed_y = False
+            if plugin_info["Renderer"] == "arnold":
+                reversed_y = True
+
+            with open(config_file, "a") as cf:
+                # Need to reverse the order of the y tiles, because image
+                # coordinates are calculated from bottom left corner.
                 tiles = _format_tiles(
                     file, 0,
                     instance.data.get("tilesX"),
                     instance.data.get("tilesY"),
                     instance.data.get("resolutionWidth"),
                     instance.data.get("resolutionHeight"),
-                    payload_plugin_info["OutputFilePrefix"]
+                    payload_plugin_info["OutputFilePrefix"],
+                    reversed_y=reversed_y
                 )[1]
                 for k, v in sorted(tiles.items()):
                     print("{}={}".format(k, v), file=cf)
 
-            payload = self.assemble_payload(
-                job_info=frame_assembly_job_info,
-                plugin_info=assembly_plugin_info.copy(),
-                # todo: aux file transfers don't work with deadline webservice
-                # add config file as job auxFile
-                # aux_files=[config_file]
+            assembly_payloads.append(
+                self.assemble_payload(
+                    job_info=frame_assembly_job_info,
+                    plugin_info=assembly_plugin_info.copy(),
+                    # This would fail if the client machine and webserice are
+                    # using different storage paths.
+                    aux_files=[config_file]
+                )
             )
-            assembly_payloads.append(payload)
 
         # Submit assembly jobs
         assembly_job_ids = []
@@ -457,10 +519,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )
+            self.log.info(payload)
             assembly_job_id = self.submit(payload)
             assembly_job_ids.append(assembly_job_id)
 
         instance.data["assemblySubmissionJobs"] = assembly_job_ids
+
+        # Remove config files to avoid confusion about where data is coming
+        # from in Deadline.
+        for config_file in config_files:
+            os.remove(config_file)
 
     def _get_maya_payload(self, data):
 
@@ -471,9 +539,17 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.AssetDependency += self.scene_path
 
         # Get layer prefix
-        render_products = self._instance.data["renderProducts"]
-        layer_metadata = render_products.layer_data
-        layer_prefix = layer_metadata.filePrefix
+        renderlayer = self._instance.data["setMembers"]
+        renderer = self._instance.data["renderer"]
+        layer_prefix_attr = RenderSettings.get_image_prefix_attr(renderer)
+        layer_prefix = get_attr_in_layer(layer_prefix_attr, layer=renderlayer)
+
+        plugin_info = copy.deepcopy(self.plugin_info)
+        plugin_info.update({
+            # Output directory and filename
+            "OutputFilePath": data["dirname"].replace("\\", "/"),
+            "OutputFilePrefix": layer_prefix,
+        })
 
         # This hack is here because of how Deadline handles Renderman version.
         # it considers everything with `renderman` set as version older than
@@ -491,12 +567,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if int(rman_version.split(".")[0]) > 22:
                 renderer = "renderman22"
 
-        plugin_info = copy.deepcopy(self.plugin_info)
-        plugin_info.update({
-            # Output directory and filename
-            "OutputFilePath": data["dirname"].replace("\\", "/"),
-            "OutputFilePrefix": layer_prefix,
-        })
+            plugin_info["Renderer"] = renderer
+
+            # this is needed because renderman plugin in Deadline
+            # handles directory and file prefixes separately
+            plugin_info["OutputFilePath"] = job_info.OutputDirectory[0]
 
         return job_info, plugin_info
 
@@ -709,8 +784,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
 
 def _format_tiles(
-        filename, index, tiles_x, tiles_y,
-        width, height, prefix):
+        filename,
+        index,
+        tiles_x,
+        tiles_y,
+        width,
+        height,
+        prefix,
+        reversed_y=False
+):
     """Generate tile entries for Deadline tile job.
 
     Returns two dictionaries - one that can be directly used in Deadline
@@ -729,10 +811,10 @@ def _format_tiles(
 
     Example::
         Image prefix is:
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         Result for tile 0 for 4x4 will be:
-        `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
 
         Calculating coordinates is tricky as in Job they are defined as top,
     left, bottom, right with zero being in top-left corner. But Assembler
@@ -747,6 +829,7 @@ def _format_tiles(
         width (int): Width resolution of final image.
         height (int):  Height resolution of final image.
         prefix (str): Image prefix.
+        reversed_y (bool): Reverses the order of the y tiles.
 
     Returns:
         (dict, dict): Tuple of two dictionaries - first can be used to
@@ -769,12 +852,16 @@ def _format_tiles(
     cfg["TilesCropped"] = "False"
 
     tile = 0
+    range_y = range(1, tiles_y + 1)
+    reversed_y_range = list(reversed(range_y))
     for tile_x in range(1, tiles_x + 1):
-        for tile_y in reversed(range(1, tiles_y + 1)):
+        for i, tile_y in enumerate(range_y):
+            tile_y_index = tile_y
+            if reversed_y:
+                tile_y_index = reversed_y_range[i]
+
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
-                tile_x, tile_y,
-                tiles_x,
-                tiles_y
+                tile_x, tile_y_index, tiles_x, tiles_y
             )
 
             new_filename = "{}/{}{}".format(
@@ -789,19 +876,20 @@ def _format_tiles(
             right = (tile_x * w_space) - 1
 
             # Job info
-            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename  # noqa: E501
+            key = "OutputFilename{}".format(index)
+            out["JobInfo"][key] = new_filename
 
             # Plugin Info
-            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
-                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
+            key = "RegionPrefix{}".format(str(tile))
+            out["PluginInfo"][key] = "/{}".format(
+                tile_prefix
+            ).join(prefix.rsplit("/", 1))
             out["PluginInfo"]["RegionTop{}".format(tile)] = top
             out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
             out["PluginInfo"]["RegionLeft{}".format(tile)] = left
             out["PluginInfo"]["RegionRight{}".format(tile)] = right
 
             # Tile config
-            cfg["Tile{}".format(tile)] = new_filename
-            cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = left
             cfg["Tile{}Y".format(tile)] = top

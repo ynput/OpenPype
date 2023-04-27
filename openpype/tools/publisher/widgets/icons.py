@@ -1,6 +1,6 @@
 import os
 
-from Qt import QtGui
+from qtpy import QtGui
 
 
 def get_icon_path(icon_name=None, filename=None):

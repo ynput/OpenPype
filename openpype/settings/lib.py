@@ -138,8 +138,7 @@ def save_studio_settings(data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -160,6 +159,7 @@ def save_studio_settings(data):
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
 
+    _SETTINGS_HANDLER.save_change_log(None, changes, "system")
     _SETTINGS_HANDLER.save_studio_settings(data)
     if warnings:
         raise SaveWarningExc(warnings)
@@ -186,8 +186,7 @@ def save_project_settings(project_name, overrides):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     if project_name:
@@ -220,7 +219,7 @@ def save_project_settings(project_name, overrides):
                 )
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
-
+    _SETTINGS_HANDLER.save_change_log(project_name, changes, "project")
     _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
 
     if warnings:
@@ -248,8 +247,7 @@ def save_project_anatomy(project_name, anatomy_data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     if project_name:
@@ -283,6 +281,7 @@ def save_project_anatomy(project_name, anatomy_data):
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
 
+    _SETTINGS_HANDLER.save_change_log(project_name, changes, "anatomy")
     _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
     if warnings:
@@ -584,7 +583,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
     Data are loaded recursively from a directory and recreate the
     hierarchy as a dictionary.
 
-    Entered path hiearchy:
+    Entered path hierarchy:
     |_ folder1
     | |_ data1.json
     |_ folder2
@@ -1041,6 +1040,17 @@ def get_current_project_settings():
             "Missing context project in environemt variable `AVALON_PROJECT`."
         )
     return get_project_settings(project_name)
+
+
+@require_handler
+def get_global_settings():
+    default_settings = load_openpype_default_settings()
+    default_values = default_settings["system_settings"]["general"]
+    studio_values = _SETTINGS_HANDLER.get_global_settings()
+    return {
+        key: studio_values.get(key, default_values.get(key))
+        for key in _SETTINGS_HANDLER.global_keys
+    }
 
 
 def get_general_environments():

@@ -12,6 +12,9 @@ import xml.etree.cElementTree as cET
 from copy import deepcopy, copy
 from xml.etree import ElementTree as ET
 from pprint import pformat
+
+from openpype.lib import Logger, run_subprocess
+
 from .constants import (
     MARKER_COLOR,
     MARKER_DURATION,
@@ -20,9 +23,7 @@ from .constants import (
     MARKER_PUBLISH_DEFAULT
 )
 
-import openpype.api as openpype
-
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
@@ -766,13 +767,13 @@ class MediaInfoFile(object):
     _drop_mode = None
     _file_pattern = None
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, logger=None):
 
         # replace log if any
-        if kwargs.get("logger"):
-            self.log = kwargs["logger"]
+        if logger:
+            self.log = logger
 
-        # test if `dl_get_media_info` paht exists
+        # test if `dl_get_media_info` path exists
         self._validate_media_script_path()
 
         # derivate other feed variables
@@ -992,7 +993,7 @@ class MediaInfoFile(object):
 
     def _validate_media_script_path(self):
         if not os.path.isfile(self.MEDIA_SCRIPT_PATH):
-            raise IOError("Media Scirpt does not exist: `{}`".format(
+            raise IOError("Media Script does not exist: `{}`".format(
                 self.MEDIA_SCRIPT_PATH))
 
     def _generate_media_info_file(self, fpath, feed_ext, feed_dir):
@@ -1016,7 +1017,7 @@ class MediaInfoFile(object):
 
         try:
             # execute creation of clip xml template data
-            openpype.run_subprocess(cmd_args)
+            run_subprocess(cmd_args)
         except TypeError as error:
             raise TypeError(
                 "Error creating `{}` due: {}".format(fpath, error))

@@ -1,7 +1,6 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
 
@@ -17,7 +16,6 @@ class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['camera']
-    version = (0, 1, 0)
     label = "No Default Cameras"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 

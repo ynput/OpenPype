@@ -4,11 +4,12 @@ import tempfile
 import random
 import string
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
-from openpype.api import execute, Logger
 from openpype.pipeline import legacy_io
 from openpype.lib import (
+    execute,
+    Logger,
     get_openpype_execute_args,
     apply_project_environments_value
 )

@@ -1,15 +1,15 @@
 {
-    "shelves": [
-        {
-            "shelf_set_name": "OpenPype Shelves",
-            "shelf_set_source_path": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            },
-            "shelf_definition": []
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
         }
-    ],
+    },
+    "shelves": [],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,

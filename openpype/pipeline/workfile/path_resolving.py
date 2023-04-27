@@ -132,9 +132,9 @@ def get_workdir_with_workdir_data(
             project_settings
         )
 
-    anatomy_filled = anatomy.format(workdir_data)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
     # Output is TemplateResult object which contain useful data
-    output = anatomy_filled[template_key]["folder"]
+    output = template_obj.format_strict(workdir_data)
     if output:
         return output.normalized()
     return output
@@ -263,6 +263,10 @@ def get_last_workfile_with_version(
     for filename in sorted(filenames):
         match = re.match(file_template, filename, **kwargs)
         if not match:
+            continue
+
+        if not match.groups():
+            output_filenames.append(filename)
             continue
 
         file_version = int(match.group(1))

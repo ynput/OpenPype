@@ -1,4 +1,31 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
+        },
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
+                }
+            ]
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -17,7 +44,9 @@
             "workfileFrameStart": 1001,
             "handleStart": 5,
             "handleEnd": 5,
-            "includeHandles": false
+            "includeHandles": false,
+            "retimedHandles": true,
+            "retimedFramerange": true
         }
     },
     "publish": {
@@ -85,20 +114,14 @@
                 "render",
                 "review"
             ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
-            ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
-            "clip_name_template": "{asset}_{subset}<_{output}>"
+            "clip_name_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_patterns": [
+                "rgb",
+                "rgba"
+            ]
         },
         "LoadClipBatch": {
             "enabled": true,
@@ -109,19 +132,13 @@
                 "render",
                 "review"
             ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
-            ],
             "reel_name": "OP_LoadedReel",
-            "clip_name_template": "{asset}_{subset}<_{output}>"
+            "clip_name_template": "{batch}_{asset}_{subset}<_{output}>",
+            "layer_rename_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_patterns": [
+                "rgb",
+                "rgba"
+            ]
         }
     }
 }

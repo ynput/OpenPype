@@ -1,6 +1,5 @@
 import os
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
 
@@ -43,7 +42,8 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
         resources = instance.data.get("resources", [])
         for resource in resources:
             files = resource["files"]
-            self.log.debug("Resouce '{}', files: [{}]".format(resource, files))
+            self.log.debug(
+                "Resource '{}', files: [{}]".format(resource, files))
             node = resource["node"]
             if len(files) == 0:
                 self.log.error("File node '{}' uses no or non-existing "
@@ -81,13 +81,14 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
     def is_or_has_mipmap(self, fname, files):
         ext = os.path.splitext(fname)[1][1:]
         if ext in MIPMAP_EXTENSIONS:
-            self.log.debug("Is a mipmap '{}'".format(fname))
+            self.log.debug("  - Is a mipmap '{}'".format(fname))
             return True
 
         for colour_space in COLOUR_SPACES:
             for mipmap_ext in MIPMAP_EXTENSIONS:
                 mipmap_fname = '.'.join([fname, colour_space, mipmap_ext])
                 if mipmap_fname in files:
-                    self.log.debug("Has a mipmap '{}'".format(fname))
+                    self.log.debug(
+                        "  - Has a mipmap '{}'".format(mipmap_fname))
                     return True
         return False

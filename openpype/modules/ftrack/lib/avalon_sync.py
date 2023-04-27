@@ -891,7 +891,7 @@ class SyncEntitiesFactory:
                 parent_dict = self.entities_dict.get(parent_id, {})
 
             for child_id in parent_dict.get("children", []):
-                # keep original `remove` value for all childs
+                # keep original `remove` value for all children
                 _remove = (remove is True)
                 if not _remove:
                     if self.entities_dict[child_id]["avalon_attrs"].get(
@@ -1191,8 +1191,8 @@ class SyncEntitiesFactory:
         avalon_hier = []
         for item in items:
             value = item["value"]
-            # WARNING It is not possible to propage enumerate hierachical
-            # attributes with multiselection 100% right. Unseting all values
+            # WARNING It is not possible to propagate enumerate hierarchical
+            # attributes with multiselection 100% right. Unsetting all values
             # will cause inheritance from parent.
             if (
                 value is None
@@ -1231,7 +1231,7 @@ class SyncEntitiesFactory:
                 items.append("{} - \"{}\"".format(ent_path, value))
             self.report_items["error"][fps_msg] = items
 
-        # Get dictionary with not None hierarchical values to pull to childs
+        # Get dictionary with not None hierarchical values to pull to children
         top_id = self.ft_project_id
         project_values = {}
         for key, value in self.entities_dict[top_id]["hier_attrs"].items():
@@ -1556,7 +1556,7 @@ class SyncEntitiesFactory:
             deleted_entities.append(mongo_id)
 
             av_ent = self.avalon_ents_by_id[mongo_id]
-            av_ent_path_items = [p for p in av_ent["data"]["parents"]]
+            av_ent_path_items = list(av_ent["data"]["parents"])
             av_ent_path_items.append(av_ent["name"])
             self.log.debug("Deleted <{}>".format("/".join(av_ent_path_items)))
 
@@ -1749,7 +1749,7 @@ class SyncEntitiesFactory:
                 # TODO logging
                 ent_path = self.get_ent_path(ftrack_id)
                 msg = (
-                    "<Entity moved back in hierachy> It is not possible"
+                    "<Entity moved back in hierarchy> It is not possible"
                     " to change the hierarchy of an entity or it's parents,"
                     " if it already contained published data."
                 )
@@ -1855,7 +1855,7 @@ class SyncEntitiesFactory:
                 _vis_par = _avalon_ent["data"]["visualParent"]
                 _name = _avalon_ent["name"]
                 if _name in self.all_ftrack_names:
-                    av_ent_path_items = _avalon_ent["data"]["parents"]
+                    av_ent_path_items = list(_avalon_ent["data"]["parents"])
                     av_ent_path_items.append(_name)
                     av_ent_path = "/".join(av_ent_path_items)
                     # TODO report
@@ -1997,7 +1997,7 @@ class SyncEntitiesFactory:
                 {"_id": mongo_id},
                 item
             ))
-            av_ent_path_items = item["data"]["parents"]
+            av_ent_path_items = list(item["data"]["parents"])
             av_ent_path_items.append(item["name"])
             av_ent_path = "/".join(av_ent_path_items)
             self.log.debug(
@@ -2110,6 +2110,7 @@ class SyncEntitiesFactory:
 
         entity_dict = self.entities_dict[ftrack_id]
 
+        final_parents = entity_dict["final_entity"]["data"]["parents"]
         if archived_by_id:
             # if is changeable then unarchive (nothing to check here)
             if self.changeability_by_mongo_id[mongo_id]:
@@ -2123,10 +2124,8 @@ class SyncEntitiesFactory:
             archived_name = archived_by_id["name"]
 
             if (
-                archived_name != entity_dict["name"] or
-                archived_parents != entity_dict["final_entity"]["data"][
-                    "parents"
-                ]
+                archived_name != entity_dict["name"]
+                or archived_parents != final_parents
             ):
                 return None
 
@@ -2136,11 +2135,7 @@ class SyncEntitiesFactory:
         for archived in archived_by_name:
             mongo_id = str(archived["_id"])
             archived_parents = archived.get("data", {}).get("parents")
-            if (
-                archived_parents == entity_dict["final_entity"]["data"][
-                    "parents"
-                ]
-            ):
+            if archived_parents == final_parents:
                 return mongo_id
 
         # Secondly try to find more close to current ftrack entity
@@ -2350,8 +2345,7 @@ class SyncEntitiesFactory:
                 continue
 
             changed = True
-            parents = [par for par in _parents]
-            hierarchy = "/".join(parents)
+            parents = list(_parents)
             self.entities_dict[ftrack_id][
                 "final_entity"]["data"]["parents"] = parents
 
@@ -2590,8 +2584,8 @@ class SyncEntitiesFactory:
                 #
                 # ent_dict = self.entities_dict[found_by_name_id]
 
-                # TODO report - CRITICAL entity with same name alread exists in
-                # different hierarchy - can't recreate entity
+                # TODO report - CRITICAL entity with same name already exists
+                #     in different hierarchy - can't recreate entity
                 continue
 
             _vis_parent = deleted_entity["data"]["visualParent"]

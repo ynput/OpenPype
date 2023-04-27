@@ -42,6 +42,7 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
+from .workfile_template_builder import MayaPlaceholderLoadPlugin
 from .workio import (
     open_file,
     save_file,
@@ -134,6 +135,11 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
     def get_containers(self):
         return ls()
+
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            MayaPlaceholderLoadPlugin
+        ]
 
     @contextlib.contextmanager
     def maintained_selection(self):
@@ -508,6 +514,9 @@ def check_lock_on_current_file():
 
     # add the lock file when opening the file
     filepath = current_file()
+    # Skip if current file is 'untitled'
+    if not filepath:
+        return
 
     if is_workfile_locked(filepath):
         # add lockfile dialog
@@ -557,7 +566,7 @@ def on_save():
 def on_open():
     """On scene open let's assume the containers have changed."""
 
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import popup
 
     cmds.evalDeferred(
@@ -674,10 +683,12 @@ def before_workfile_save(event):
 
 def after_workfile_save(event):
     workfile_name = event["filename"]
-    if handle_workfile_locks():
-        if workfile_name:
-            if not is_workfile_locked(workfile_name):
-                create_workfile_lock(workfile_name)
+    if (
+        handle_workfile_locks()
+        and workfile_name
+        and not is_workfile_locked(workfile_name)
+    ):
+        create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):

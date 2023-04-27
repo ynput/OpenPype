@@ -6,8 +6,9 @@ import ctypes
 import platform
 import contextlib
 
+from qtpy import QtCore, QtGui, QtWidgets
+
 from . import control, settings, util, window
-from Qt import QtCore, QtGui, QtWidgets
 
 self = sys.modules[__name__]
 

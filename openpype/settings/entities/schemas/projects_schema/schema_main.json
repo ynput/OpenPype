@@ -84,11 +84,23 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_applications"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_max"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_maya"
                 },
                 {
                     "type": "schema",
                     "name": "schema_project_nuke"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_fusion"
                 },
                 {
                     "type": "schema",
