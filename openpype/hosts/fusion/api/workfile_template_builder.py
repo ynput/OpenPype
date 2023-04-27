@@ -444,26 +444,26 @@ class FusionPlaceholderCreatePlugin(
     label = "Fusion create"
 
     def _parse_placeholder_node_data(self, node):
-        placeholder_data = super(
+        node_data = super(
             FusionPlaceholderCreatePlugin, self
         )._parse_placeholder_node_data(node)
 
-        node_knobs = node.knobs()
+        placeholder_data = node.GetData("placeholder_data")
         nb_children = 0
-        if "nb_children" in node_knobs:
-            nb_children = int(node_knobs["nb_children"].getValue())
-        placeholder_data["nb_children"] = nb_children
+        if "nb_children" in placeholder_data:
+            nb_children = int(placeholder_data["nb_children"])
+        node_data["nb_children"] = nb_children
 
         siblings = []
-        if "siblings" in node_knobs:
-            siblings = node_knobs["siblings"].values()
-        placeholder_data["siblings"] = siblings
+        if "siblings" in placeholder_data:
+            siblings = placeholder_data["siblings"]
+        node_data["siblings"] = siblings
 
-        node_full_name = node.fullName()
-        placeholder_data["group_name"] = node_full_name.rpartition(".")[0]
-        placeholder_data["last_loaded"] = []
-        placeholder_data["delete"] = False
-        return placeholder_data
+        node_full_name = node.Name
+        node_data["group_name"] = node_full_name.rpartition(".")[0]
+        node_data["last_loaded"] = []
+        node_data["delete"] = False
+        return node_data
 
     def collect_placeholders(self):
         output = []
