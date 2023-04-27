@@ -492,46 +492,19 @@ class ValidationsWidget(QtWidgets.QFrame):
 
     Shows validation error titles with instances on which happened and
     validation error detail with possible actions (repair).
-
-    ┌──────┬────────────────┬───────┐
-    │titles│                │actions│
-    │      │                │       │
-    │      │  Error detail  │       │
-    │      │                │       │
-    │      │                │       │
-    └──────┴────────────────┴───────┘
     """
 
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)
 
-        # Before publishing
-        before_publish_widget = ValidationArtistMessage(
-            "Nothing to report until you run publish", self
-        )
-        # After success publishing
-        publish_started_widget = ValidationArtistMessage(
-            "So far so good", self
-        )
-        # After success publishing
-        publish_stop_ok_widget = ValidationArtistMessage(
-            "Publishing finished successfully", self
-        )
-        # After failed publishing (not with validation error)
-        publish_stop_fail_widget = ValidationArtistMessage(
-            "This is not your fault...", self
-        )
-
-        # Validation errors
-        validations_widget = QtWidgets.QWidget(self)
-
-        content_widget = QtWidgets.QWidget(validations_widget)
+        content_widget = QtWidgets.QWidget(self)
 
         errors_scroll = VerticallScrollArea(content_widget)
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
         errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         errors_layout = QtWidgets.QVBoxLayout(errors_widget)
         errors_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -564,37 +537,9 @@ class ValidationsWidget(QtWidgets.QFrame):
         top_label.setObjectName("PublishInfoMainLabel")
         top_label.setAlignment(QtCore.Qt.AlignCenter)
 
-        validation_layout = QtWidgets.QVBoxLayout(validations_widget)
-        validation_layout.setContentsMargins(0, 0, 0, 0)
-        validation_layout.addWidget(top_label, 0)
-        validation_layout.addWidget(content_widget, 1)
-
-        main_layout = QtWidgets.QStackedLayout(self)
-        main_layout.addWidget(before_publish_widget)
-        main_layout.addWidget(publish_started_widget)
-        main_layout.addWidget(publish_stop_ok_widget)
-        main_layout.addWidget(publish_stop_fail_widget)
-        main_layout.addWidget(validations_widget)
-
-        main_layout.setCurrentWidget(before_publish_widget)
-
-        controller.event_system.add_callback(
-            "publish.process.started", self._on_publish_start
-        )
-        controller.event_system.add_callback(
-            "publish.reset.finished", self._on_publish_reset
-        )
-        controller.event_system.add_callback(
-            "publish.process.stopped", self._on_publish_stop
-        )
-
-        self._main_layout = main_layout
-
-        self._before_publish_widget = before_publish_widget
-        self._publish_started_widget = publish_started_widget
-        self._publish_stop_ok_widget = publish_stop_ok_widget
-        self._publish_stop_fail_widget = publish_stop_fail_widget
-        self._validations_widget = validations_widget
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(top_label, 0)
+        main_layout.addWidget(content_widget, 1)
 
         self._top_label = top_label
         self._errors_widget = errors_widget
@@ -658,31 +603,9 @@ class ValidationsWidget(QtWidgets.QFrame):
 
         self.updateGeometry()
 
-    def _set_current_widget(self, widget):
-        self._main_layout.setCurrentWidget(widget)
-
-    def _on_publish_start(self):
-        self._set_current_widget(self._publish_started_widget)
-
-    def _on_publish_reset(self):
-        self._set_current_widget(self._before_publish_widget)
-
-    def _on_publish_stop(self):
-        if self._controller.publish_has_crashed:
-            self._set_current_widget(self._publish_stop_fail_widget)
-            return
-
-        if self._controller.publish_has_validation_errors:
-            validation_errors = self._controller.get_validation_errors()
-            self._set_current_widget(self._validations_widget)
-            self._set_errors(validation_errors)
-            return
-
-        if self._controller.publish_has_finished:
-            self._set_current_widget(self._publish_stop_ok_widget)
-            return
-
-        self._set_current_widget(self._publish_started_widget)
+    def update_data(self):
+        validation_errors = self._controller.get_validation_errors()
+        self._set_errors(validation_errors)
 
     def _on_select(self, index):
         if self._previous_select:
@@ -1352,3 +1275,194 @@ class InstancesLogsView(QtWidgets.QFrame):
         self._update_instances()
 
 
+class ReportsWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super(ReportsWidget, self).__init__(parent)
+
+        header_label = QtWidgets.QLabel(self)
+        header_label.setAlignment(QtCore.Qt.AlignCenter)
+        header_label.setObjectName("PublishInfoMainLabel")
+
+        content_widget = QtWidgets.QWidget(self)
+
+        views_widget = QtWidgets.QWidget(content_widget)
+
+        instances_view = PublishInstancesViewWidget(content_widget)
+        # TODO add validation errors view
+
+        views_layout = QtWidgets.QHBoxLayout(views_widget)
+        views_layout.setContentsMargins(0, 0, 0, 0)
+        views_layout.addWidget(instances_view)
+
+        details_widget = QtWidgets.QFrame(content_widget)
+        details_widget.setObjectName("PublishInstancesDetails")
+
+        logs_view = InstancesLogsView(details_widget)
+
+        details_layout = QtWidgets.QHBoxLayout(details_widget)
+        details_layout.addWidget(logs_view, 1)
+
+        content_layout = QtWidgets.QHBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(views_widget, 0)
+        content_layout.addWidget(details_widget, 1)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(header_label, 0)
+        layout.addWidget(content_widget, 1)
+
+        instances_view.selection_changed.connect(self._on_selection_change)
+
+        self._header_label = header_label
+        self._instances_view = instances_view
+        self._details_widget = details_widget
+
+        self._logs_view = logs_view
+
+        self._controller = controller
+
+    def _update_label(self):
+        if not self._controller.publish_has_started:
+            # This probably never happen when this widget is visible
+            header_label = "Publishing didn't start yet"
+        elif self._controller.publish_has_crashed:
+            header_label = "Publish error report"
+        elif self._controller.publish_has_validation_errors:
+            header_label = "Publish validation report"
+        elif self._controller.publish_has_finished:
+            header_label = "Publish success report"
+        else:
+            header_label = "Publish report"
+        self._header_label.setText(header_label)
+
+    def _get_instance_items(self):
+        report = self._controller.get_publish_report()
+        context_label = report["context"]["label"] or CONTEXT_LABEL
+        instances_by_id = report["instances"]
+        plugins_info = report["plugins_data"]
+        logs_by_instance_id = collections.defaultdict(list)
+        for plugin_info in plugins_info:
+            for instance_info in plugin_info["instances_data"]:
+                instance_id = instance_info["id"]
+                logs_by_instance_id[instance_id].extend(
+                    instance_info["logs"])
+
+        context_item = _InstanceItem.create_context_item(
+            context_label, logs_by_instance_id[None])
+        instance_items = [
+            _InstanceItem.from_report(
+                instance_id, instance, logs_by_instance_id[instance_id]
+            )
+            for instance_id, instance in instances_by_id.items()
+            if instance["exists"]
+        ]
+        instance_items.sort()
+        instance_items.insert(0, context_item)
+        return instance_items
+
+    def update_data(self):
+        self._update_label()
+        if (
+            not self._controller.publish_has_crashed
+            and self._controller.publish_has_validation_errors
+        ):
+            pass
+        else:
+            instance_items = self._get_instance_items()
+            self._instances_view.update_instances(instance_items)
+            self._logs_view.update_instances(instance_items)
+
+    def _on_selection_change(self):
+        instance_ids = self._instances_view.get_selected_instance_ids()
+        self._logs_view.set_instances(instance_ids)
+
+
+class ReportPageWidget(QtWidgets.QFrame):
+    """Widgets showing report for artis.
+
+    There are 5 possible states:
+    1. Publishing did not start yet.         > Only label.
+    2. Publishing is paused.                ┐
+    3. Publishing successfully finished.    │> Instances with logs.
+    4. Publishing crashed.                  ┘
+    5. Crashed because of validation error.  > Errors with logs.
+
+    This widget is shown if validation error/s happened during validation part.
+
+    Shows validation error titles with instances on which happened and
+    validation error detail with possible actions (repair).
+
+    ┌──────┬──────────────────┐
+    │titles│  Details         │
+    │      │                  │
+    │      │                  │
+    │      │                  │
+    │      │                  │
+    └──────┴──────────────────┘
+    """
+
+    def __init__(self, controller, parent):
+        super(ReportPageWidget, self).__init__(parent)
+
+        # Before publishing
+        before_publish_widget = ValidationArtistMessage(
+            "Nothing to report until you run publish", self
+        )
+
+        publish_instances_widget = ReportsWidget(controller, self)
+
+        validations_widget = ValidationsWidget(controller, self)
+
+        main_layout = QtWidgets.QStackedLayout(self)
+        main_layout.addWidget(before_publish_widget)
+        main_layout.addWidget(publish_instances_widget)
+        main_layout.addWidget(validations_widget)
+
+        main_layout.setCurrentWidget(before_publish_widget)
+
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
+        )
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "publish.process.stopped", self._on_publish_stop
+        )
+
+        self._main_layout = main_layout
+
+        self._before_publish_widget = before_publish_widget
+        self._publish_instances_widget = publish_instances_widget
+        self._validations_widget = validations_widget
+
+        self._controller = controller
+
+    def _set_current_widget(self, widget):
+        self._main_layout.setCurrentWidget(widget)
+
+    def _go_to_current_widget(self):
+        if not self._controller.publish_has_started:
+            new_widget = self._before_publish_widget
+        elif (
+            not self._controller.publish_has_crashed
+            and self._controller.publish_has_validation_errors
+        ):
+            new_widget = self._validations_widget
+            new_widget.update_data()
+        else:
+            new_widget = self._publish_instances_widget
+            new_widget.update_data()
+
+        self._set_current_widget(new_widget)
+        self.updateGeometry()
+
+    def _on_publish_start(self):
+        self._go_to_current_widget()
+
+    def _on_publish_reset(self):
+        self._go_to_current_widget()
+
+    def _on_publish_stop(self):
+        self._go_to_current_widget()
