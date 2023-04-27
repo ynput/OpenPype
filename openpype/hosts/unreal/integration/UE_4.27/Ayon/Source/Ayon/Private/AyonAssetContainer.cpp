@@ -3,7 +3,6 @@
 #include "AyonAssetContainer.h"
 #include "AssetRegistryModule.h"
 #include "Misc/PackageName.h"
-#include "Engine.h"
 #include "Containers/UnrealString.h"
 
 UAyonAssetContainer::UAyonAssetContainer(const FObjectInitializer& ObjectInitializer)

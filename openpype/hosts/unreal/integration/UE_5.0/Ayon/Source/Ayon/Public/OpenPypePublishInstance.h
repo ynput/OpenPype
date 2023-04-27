@@ -3,7 +3,6 @@
 // and will be removed in next versions of Ayon.
 #pragma once
 
-#include "Engine.h"
 #include "OpenPypePublishInstance.generated.h"
 
 
