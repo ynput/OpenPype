@@ -425,8 +425,9 @@ def build_layout(project_name, asset_name):
         )
     except RuntimeError as err:
         errors.append(f"Load casting failed ! {err}")
-        # Wait for download
-        wait_for_download(project_name, [board_repre, audio_repre])
+    
+    # Wait for download
+    wait_for_download(project_name, [board_repre, audio_repre])
 
     # Try to load datablocks from environment's setdress
     camera_collection = None
