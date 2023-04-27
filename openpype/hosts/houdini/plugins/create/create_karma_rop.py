@@ -38,12 +38,13 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             ext=ext,
         )
         checkpoint = "{cp_dir}{subset_name}.$F4.checkpoint".format(
-            cp_dir= hou.text.expandString("$HIP/pyblish/"),
-            subset_name= subset_name
+            cp_dir=hou.text.expandString("$HIP/pyblish/"),
+            subset_name=subset_name
         )
 
         usd_directory = "{usd_dir}{subset_name}_$RENDERID".format(
-            usd_dir = hou.text.expandString("$HIP/pyblish/renders/usd_renders/"),
+            usd_dir=hou.text.expandString(
+            "$HIP/pyblish/renders/usd_renders/"),
             subset_name=subset_name
         )
 
