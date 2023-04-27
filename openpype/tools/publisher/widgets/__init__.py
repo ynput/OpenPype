@@ -18,7 +18,7 @@ from .help_widget import (
 from .publish_frame import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import OverviewWidget
-from .validations_widget import ValidationsWidget
+from .report_page import ValidationsWidget
 
 
 __all__ = (
