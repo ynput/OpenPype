@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import collections
+import logging
+
 try:
     import commonmark
 except Exception:
@@ -8,10 +11,13 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (
-    IconValuePixmapLabel
+    IconValuePixmapLabel,
+    get_pixmap,
 )
 from ..constants import (
-    INSTANCE_ID_ROLE
+    INSTANCE_ID_ROLE,
+    CONTEXT_ID,
+    CONTEXT_LABEL,
 )
 
 
