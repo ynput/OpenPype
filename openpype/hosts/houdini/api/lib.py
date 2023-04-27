@@ -583,6 +583,7 @@ def splitext(name, allowed_multidot_extensions):
 
     return os.path.splitext(name)
 
+
 def get_top_referenced_parm(parm):
 
     processed = set()  # disallow infinite loop
@@ -633,7 +634,7 @@ def evalParmNoFrame(node, parm, pad_character="#"):
 def get_color_management_preferences():
     """Get default OCIO preferences"""
     data = {
-        "config":  hou.Color.ocio_configPath()
+        "config": hou.Color.ocio_configPath()
 
     }
 
