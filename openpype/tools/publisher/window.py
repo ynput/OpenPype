@@ -18,7 +18,7 @@ from .publish_report_viewer import PublishReportViewerWidget
 from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
-    ValidationsWidget,
+    ReportPageWidget,
     PublishFrame,
 
     PublisherTabsWidget,
@@ -182,7 +182,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ValidationsWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, parent)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(

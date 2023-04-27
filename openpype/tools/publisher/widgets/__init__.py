@@ -18,7 +18,7 @@ from .help_widget import (
 from .publish_frame import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import OverviewWidget
-from .report_page import ValidationsWidget
+from .report_page import ReportPageWidget
 
 
 __all__ = (
@@ -40,5 +40,5 @@ __all__ = (
 
     "PublisherTabsWidget",
     "OverviewWidget",
-    "ValidationsWidget",
+    "ReportPageWidget",
 )
