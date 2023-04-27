@@ -5,7 +5,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     load,
     get_representation_path,
 )
@@ -43,8 +43,8 @@ class LinkAsGroup(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname.replace("\\", "/")
-        self.log.info("file: {}\n".format(self.fname))
+        file = self.filepath_from_context(context).replace("\\", "/")
+        self.log.info("file: {}\n".format(file))
 
         precomp_name = context["representation"]["context"]["subset"]
 
@@ -124,7 +124,7 @@ class LinkAsGroup(load.LoaderPlugin):
         root = get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]

@@ -4,7 +4,6 @@ from openpype.client import (
     get_asset_by_name,
     get_subsets,
 )
-from openpype.pipeline import legacy_io
 from openpype.hosts.houdini.api import plugin
 
 
@@ -21,7 +20,7 @@ class CreateHDA(plugin.HoudiniCreator):
         # type: (str) -> bool
         """Check if existing subset name versions already exists."""
         # Get all subsets of the current asset
-        project_name = legacy_io.active_project()
+        project_name = self.project_name
         asset_doc = get_asset_by_name(
             project_name, self.data["asset"], fields=["_id"]
         )

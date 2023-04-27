@@ -8,10 +8,7 @@ from openpype.lib import Logger, register_event_callback
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    legacy_io,
 )
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects

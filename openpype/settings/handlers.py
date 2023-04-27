@@ -7,9 +7,13 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype.version
-from openpype.client.mongo import OpenPypeMongoConnection
-from openpype.client.entities import get_project_connection, get_project
+from openpype.client.mongo import (
+    OpenPypeMongoConnection,
+    get_project_connection,
+)
+from openpype.client.entities import get_project
 from openpype.lib.pype_info import get_workstation_info
+
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -185,6 +189,7 @@ class SettingsStateInfo:
 class SettingsHandler(object):
     global_keys = {
         "openpype_path",
+        "local_openpype_path",
         "admin_password",
         "log_to_server",
         "disk_mapping",

@@ -18,6 +18,7 @@ import collections
 import six
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
 
@@ -38,6 +39,10 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
+        if AYON_SERVER_ENABLED:
+            self.log.info("AYON is enabled. Skipping v3 thumbnail integration")
+            return
+
         # Filter instances which can be used for integration
         filtered_instance_items = self._prepare_instances(context)
         if not filtered_instance_items:

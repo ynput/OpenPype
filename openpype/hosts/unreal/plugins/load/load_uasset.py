@@ -60,7 +60,8 @@ class UAssetLoader(plugin.Loader):
             Path(unreal.Paths.project_content_dir()).as_posix(),
             1)
 
-        shutil.copy(self.fname, f"{destination_path}/{name}.uasset")
+        path = self.filepath_from_context(context)
+        shutil.copy(path, f"{destination_path}/{name}.uasset")
 
         # Create Asset Container
         unreal_pipeline.create_container(
