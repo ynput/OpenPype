@@ -246,15 +246,12 @@ def download_kitsu_casting(
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
             if (
-                actor["asset_type_name"] == "Character"
-                and (not asset_types or "Character" in asset_types)
-            ):
-                subset_name = "rigMain"
-            elif (
                 actor["asset_type_name"] == "Environment"
                 and (not asset_types or "Environment" in asset_types)
             ):
                 subset_name = "setdressMain"
+            elif not asset_types or actor["asset_type_name"] in asset_types:
+                subset_name = "rigMain"
             else:
                 continue
 
@@ -262,6 +259,13 @@ def download_kitsu_casting(
             representation = download_subset(
                 project_name, actor["asset_name"], subset_name
             )
+            if (
+                not representation
+                and actor["asset_type_name"] in ("Bidulo", "Props")
+            ):
+                representation = download_subset(
+                    project_name, actor["asset_name"], "modelMain"
+                )
             if representation:
                 representations.append(representation)
 
@@ -515,7 +519,13 @@ def build_layout(project_name, asset_name):
     bpy.context.scene.world = setdress_world or bpy.data.worlds[-1]
 
     # load the board mov as image background linked into the camera
-    load_subset(project_name, board_repre, "Background")
+    if board_repre:
+        load_subset(project_name, board_repre, "Background")
+    else:
+        errors.append(
+            "load subset BoardReference failed:"
+            f" Missing subset for {asset_name}"
+        )
 
     # Delete sound sequence from board mov
     if len(bpy.context.scene.sequence_editor.sequences) > 0:
@@ -524,7 +534,13 @@ def build_layout(project_name, asset_name):
             bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
 
     # load the audio reference as sound into sequencer
-    load_subset(project_name, audio_repre, "Audio")
+    if audio_repre:
+        load_subset(project_name, audio_repre, "Audio")
+    else:
+        errors.append(
+            "load subset AudioReference failed:"
+            f" Missing subset for {asset_name}"
+        )
 
     # load the concept reference of the environment as image background.
     if env_asset_name and concept_repre:
