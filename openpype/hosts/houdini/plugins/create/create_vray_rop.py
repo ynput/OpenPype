@@ -72,8 +72,8 @@ class CreateVrayROP(plugin.HoudiniCreator):
             filepath = "{renders_dir}{subset_name}/{subset_name}.{fmt}".format(
                 renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
                 subset_name=subset_name,
-                fmt="${aov}.$F4.{ext}".format(aov = "AOV",
-                                               ext=ext,)
+                fmt="${aov}.$F4.{ext}".format(aov="AOV",
+                                              ext=ext)
             )
             filepath = "{}{}".format(
                 hou.text.expandString("$HIP/pyblish/renders/"),

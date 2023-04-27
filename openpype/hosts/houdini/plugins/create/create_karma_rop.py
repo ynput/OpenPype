@@ -43,8 +43,7 @@ class CreateKarmaROP(plugin.HoudiniCreator):
         )
 
         usd_directory = "{usd_dir}{subset_name}_$RENDERID".format(
-            usd_dir=hou.text.expandString(
-            "$HIP/pyblish/renders/usd_renders/"),
+            usd_dir=hou.text.expandString("$HIP/pyblish/renders/usd_renders/"),     # noqa
             subset_name=subset_name
         )
 
