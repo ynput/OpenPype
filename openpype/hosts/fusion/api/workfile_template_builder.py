@@ -499,37 +499,39 @@ class FusionPlaceholderCreatePlugin(
         Move all nodes to correct location,
         do the correct connections and delete template nodes if expected
         """
+        comp = get_current_comp()
+
+        # Make sure no node is selected before starting to process
+        flow = comp.CurrentFrame.FlowView
+        flow.Select()
+        placeholder.data["node"] = comp.FindTool(placeholder.scene_identifier)
 
         # getting the latest nodes added
         nodes_init = placeholder.data["nodes_init"]
-        nodes_created = list(set(nuke.allNodes()) - set(nodes_init))
-        self.log.debug("Created nodes: {}".format(nodes_created))
+        added_nodes = []
+        for node in comp.GetToolList().values():
+            added_nodes.append(node.Name)
+        nodes_created_names = list(set(added_nodes) - set(nodes_init))
+        nodes_created = []
+        for name in nodes_created_names:
+            nodes_created.append(comp.FindTool(name))
+
+        self.log.debug("Created node: {}".format(nodes_created_names))
+
         if not nodes_created:
             return
 
         placeholder.data["delete"] = True
 
         placeholder.data["last_created"] = nodes_created
-        refresh_nodes(nodes_created)
 
-        # positioning of the created nodes
-        min_x, min_y, _, _ = get_extreme_positions(nodes_created)
-        for node in nodes_created:
-            xpos = (node.xpos() - min_x) + placeholder_node.xpos()
-            ypos = (node.ypos() - min_y) + placeholder_node.ypos()
-            node.setXYpos(xpos, ypos)
-        refresh_nodes(nodes_created)
-
-        # fix the problem of z_order for backdrops
-        self._fix_z_order(placeholder)
         if placeholder.data.get("keep_placeholder"):
             self._setdata_siblings(placeholder)
 
         if placeholder.data["nb_children"] == 0:
             # save initial nodes postions and dimensions, update them
             # and set inputs and outputs of created nodes
-            if placeholder.data.get("keep_placeholder"):
-                self._update_nodes(placeholder, nuke.allNodes(), nodes_loaded)
+            self._update_nodes(placeholder.data["node"], nodes_created)
 
             self._set_created_connections(placeholder)
 
@@ -575,19 +577,15 @@ class FusionPlaceholderCreatePlugin(
             """
 
         placeholder.data["nb_children"] += 1
-        reset_selection()
 
         # remove placeholders marked as delete
         if placeholder.data.get("delete") and not placeholder.data.get(
             "keep_placeholder"
         ):
             self.log.debug(
-                "Deleting node: {}".format(placeholder_node.name())
+                "Deleting node: {}".format(placeholder.data["node"].Name)
             )
-            nuke.delete(placeholder_node)
-
-        # go back to root group
-        nuke.root().begin()
+            placeholder.data["node"].Delete()
 
     def _setdata_siblings(self, placeholder):
         """
