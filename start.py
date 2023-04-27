@@ -1051,7 +1051,7 @@ def boot():
 
     if "validate" in commands:
         valid = _boot_validate_versions(use_version, local_version)
-        sys.exit(1 if not valid else 0)
+        sys.exit(0 if valid else 1)
 
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
