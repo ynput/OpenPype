@@ -109,7 +109,18 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
 
 
 def apply_edits(vrayproxy, edits):
-    """Apply look edits to the VRayProxy."""
+    """Apply look edits to the VRayProxy.
+
+    Note: Only shader assignments are supported.
+
+    Args:
+        vrayproxy (str): VRayProxy node name
+        edits (iterable): Edits as returned by `iter_shader_edits`
+
+    Returns:
+        None
+
+    """
 
     # Create assignments
     assignments = {}
