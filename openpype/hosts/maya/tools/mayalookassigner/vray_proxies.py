@@ -105,10 +105,10 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
             relationships, shadernodes, asset_nodes_by_id
         )
 
-        apply_edits(vrayproxy, iter_edits)
+        apply_shader_edits(vrayproxy, iter_edits)
 
 
-def apply_edits(vrayproxy, edits):
+def apply_shader_edits(vrayproxy, edits):
     """Apply look edits to the VRayProxy.
 
     Note: Only shader assignments are supported.

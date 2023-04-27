@@ -165,10 +165,10 @@ def assign_look(standin, subset, project_name=None):
             relationships, shader_nodes, asset_nodes_by_id
         )
 
-        apply_edits(standin, edits, container_node, namespace)
+        apply_shader_edits(standin, edits, container_node, namespace)
 
 
-def apply_edits(standin, edits, container_node=None, namespace=""):
+def apply_shader_edits(standin, edits, container_node=None, namespace=""):
     """Apply look edits to the aiStandin."""
 
     # Create assignments
