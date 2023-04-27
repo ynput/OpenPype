@@ -214,7 +214,10 @@ class FusionPlaceholderLoadPlugin(
         return self.get_load_plugin_options(options)
 
     def cleanup_placeholder(self, placeholder, failed):
-        # deselect all selected nodes
+        """
+        Move all nodes to correct location,
+        do the correct connections and delete template nodes if expected
+        """
         comp = get_current_comp()
 
         # Make sure no node is selected before starting to process
@@ -223,7 +226,6 @@ class FusionPlaceholderLoadPlugin(
         placeholder.data["node"] = comp.FindTool(placeholder.scene_identifier)
 
         # getting the latest nodes added
-        # TODO get from shared populate data!
         nodes_init = placeholder.data["nodes_init"]
         added_nodes = []
         for node in comp.GetToolList().values():
@@ -529,8 +531,10 @@ class FusionPlaceholderCreatePlugin(
         return self.get_create_plugin_options(options)
 
     def cleanup_placeholder(self, placeholder, failed):
-        # deselect all selected nodes
-        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        """
+        Move all nodes to correct location,
+        do the correct connections and delete template nodes if expected
+        """
 
         # getting the latest nodes added
         nodes_init = placeholder.data["nodes_init"]
