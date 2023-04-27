@@ -135,7 +135,9 @@ def apply_edits(vrayproxy, edits):
             inputs = cmds.listConnections(
                 shader + ".surfaceShader", source=True)
             if not inputs:
-                log.debug("Shading engine missing material: %s" % shader)
+                log.debug("Shading engine missing material: %s. "
+                          "Skipping shader assignment." % shader)
+                continue
 
             # Strip off component assignments
             for i, node in enumerate(nodes):
