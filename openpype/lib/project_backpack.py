@@ -260,7 +260,7 @@ def unpack_project(
                 "{}.json".format(METADATA_FILE_NAME),
                 "{}.json".format(DOCUMENTS_FILE_NAME),
             ):
-                zip_stream.extract(filename, os.path.join(tmp_dir, filename))
+                zip_stream.extract(filename, tmp_dir)
         else:
             zip_stream.extractall(tmp_dir)
 
