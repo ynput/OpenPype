@@ -569,7 +569,9 @@ class ValidationErrorItem:
         title,
         description,
         detail,
+        item_id=None
     ):
+        self.id = item_id or uuid.uuid4().hex
         self.instance_id = instance_id
         self.instance_label = instance_label
         self.plugin_id = plugin_id
@@ -593,6 +595,7 @@ class ValidationErrorItem:
             "title": self.title,
             "description": self.description,
             "detail": self.detail,
+            "item_id": self.id,
         }
 
     @classmethod
