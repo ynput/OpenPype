@@ -597,16 +597,10 @@ class FusionPlaceholderCreatePlugin(
         created_nodes_set = set(created_nodes)
 
         for node in created_nodes:
-            node_knobs = node.knobs()
-
-            if "is_placeholder" not in node_knobs or (
-                "is_placeholder" in node_knobs
-                and node.knob("is_placeholder").value()
-            ):
+            if node.GetData("is_placeholder"):
                 siblings = list(created_nodes_set - {node})
                 siblings_name = get_names_from_nodes(siblings)
-                siblings = {"siblings": siblings_name}
-                imprint(node, siblings)
+                node.SetData("siblings", siblings_name)
 
     def _update_nodes(self, placeholder_node, nodes):
         """Adjust nodes positions.
