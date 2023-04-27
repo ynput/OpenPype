@@ -615,77 +615,26 @@ class FusionPlaceholderCreatePlugin(
 
         Args:
             nodes (list): list of nodes to update
-            considered_nodes (list): list of nodes to consider while updating
-                positions and dimensions
-            offset (int): distance between copies
         """
 
-        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        comp = get_current_comp()
+        flow = comp.CurrentFrame.FlowView
 
-        min_x, min_y, max_x, max_y = get_extreme_positions(considered_nodes)
-
-        diff_x = diff_y = 0
-        contained_nodes = []  # for backdrops
-
-        if offset_y is None:
-            width_ph = placeholder_node.screenWidth()
-            height_ph = placeholder_node.screenHeight()
-            diff_y = max_y - min_y - height_ph
-            diff_x = max_x - min_x - width_ph
-            contained_nodes = [placeholder_node]
-            min_x = placeholder_node.xpos()
-            min_y = placeholder_node.ypos()
-        else:
-            siblings = get_nodes_by_names(placeholder.data["siblings"])
-            minX, _, maxX, _ = get_extreme_positions(siblings)
-            diff_y = max_y - min_y + 20
-            diff_x = abs(max_x - min_x - maxX + minX)
-            contained_nodes = considered_nodes
-
-        if diff_y <= 0 and diff_x <= 0:
-            return
-
+        x, y = flow.GetPosTable(placeholder_node).values()
+        flow.SetPos(placeholder_node, x - 1, y)
+        x_offset = 0
         for node in nodes:
-            refresh_node(node)
-
-            if node == placeholder_node or node in considered_nodes:
-                continue
-
-            if not isinstance(node, nuke.BackdropNode) or (
-                isinstance(node, nuke.BackdropNode)
-                and not set(contained_nodes) <= set(node.getNodes())
-            ):
-                if offset_y is None and node.xpos() >= min_x:
-                    node.setXpos(node.xpos() + diff_x)
-
-                if node.ypos() >= min_y:
-                    node.setYpos(node.ypos() + diff_y)
-
-            else:
-                width = node.screenWidth()
-                height = node.screenHeight()
-                node.knob("bdwidth").setValue(width + diff_x)
-                node.knob("bdheight").setValue(height + diff_y)
-
-            refresh_node(node)
+            flow.SetPos(node, x + x_offset, y)
+            x_offset = x_offset + 1
 
     def _set_created_connections(self, placeholder):
         """
         set inputs and outputs of created nodes"""
 
-        placeholder_node = nuke.toNode(placeholder.scene_identifier)
-        input_node, output_node = get_group_io_nodes(
-            placeholder.data["last_created"]
-        )
-        for node in placeholder_node.dependent():
-            for idx in range(node.inputs()):
-                if node.input(idx) == placeholder_node and output_node:
-                    node.setInput(idx, output_node)
-
-        for node in placeholder_node.dependencies():
-            for idx in range(placeholder_node.inputs()):
-                if placeholder_node.input(idx) == node and input_node:
-                    input_node.setInput(0, node)
+        # TODO Make it connect to outputs also
+        inputs = placeholder.data["node"].Output.GetConnectedInputs().values()
+        for input in inputs:
+            input.ConnectTo(placeholder.data["last_created"][0].Output)
 
     def _create_sib_copies(self, placeholder):
         """creating copies of the palce_holder siblings (the ones who were
