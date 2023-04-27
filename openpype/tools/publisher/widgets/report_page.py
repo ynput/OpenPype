@@ -20,6 +20,14 @@ from ..constants import (
     CONTEXT_LABEL,
 )
 
+LOG_DEBUG_VISIBLE = 1 << 1
+LOG_INFO_VISIBLE = 1 << 2
+LOG_WARNING_VISIBLE = 1 << 3
+LOG_ERROR_VISIBLE = 1 << 4
+LOG_CRITICAL_VISIBLE = 1 << 5
+ERROR_VISIBLE = 1 << 6
+INFO_VISIBLE = 1 << 6
+
 
 class ValidationErrorInstanceList(QtWidgets.QListView):
     """List of publish instances that caused a validation error.
