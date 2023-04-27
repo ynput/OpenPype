@@ -41,7 +41,7 @@ def get_look_relationships(version_id):
 
 
 def load_look(version_id):
-    # type: (str) -> list
+    # type: (str) -> tuple
     """Load look from version.
 
     Get look from version and invoke Loader for it.
@@ -50,7 +50,7 @@ def load_look(version_id):
         version_id (str): Version ID
 
     Returns:
-        list of shader nodes.
+        tuple: 2-tuple of (look members, look container node)
 
     """
 
