@@ -358,7 +358,7 @@ class PypeCommands:
 
         pack_project(project_name, dirpath, database_only)
 
-    def unpack_project(self, zip_filepath, new_root):
+    def unpack_project(self, zip_filepath, new_root, database_only):
         from openpype.lib.project_backpack import unpack_project
 
-        unpack_project(zip_filepath, new_root)
+        unpack_project(zip_filepath, new_root, database_only)

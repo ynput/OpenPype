@@ -428,9 +428,11 @@ def pack_project(project, dirpath, dbonly):
 @click.option(
     "--root", help="Replace root which was stored in project", default=None
 )
-def unpack_project(zipfile, root):
+@click.option(
+    "--dbonly", help="Store only Database data", default=False, is_flag=True)
+def unpack_project(zipfile, root, dbonly):
     """Create a package of project with all files and database dump."""
-    PypeCommands().unpack_project(zipfile, root)
+    PypeCommands().unpack_project(zipfile, root, dbonly)
 
 
 @main.command()

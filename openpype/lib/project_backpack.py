@@ -230,16 +230,22 @@ def _unpack_project_files(unzip_dir, root_path, project_name):
     shutil.move(src_project_files_dir, dst_project_files_dir)
 
 
-def unpack_project(path_to_zip, new_root=None, database_name=None):
+def unpack_project(
+    path_to_zip, new_root=None, database_only=None, database_name=None
+):
     """Unpack project zip file to recreate project.
 
     Args:
-        path_to_zip(str): Path to zip which was created using 'pack_project'
+        path_to_zip (str): Path to zip which was created using 'pack_project'
             function.
-        new_root(str): Optional way how to set different root path for unpacked
-            project.
+        new_root (str): Optional way how to set different root path for
+            unpacked project.
+        database_only (Optional[bool]): Unpack only database from zip.
         database_name (str): Name of database where project will be recreated.
     """
+
+    if database_only is None:
+        database_only = False
 
     print("Unpacking project from zip {}".format(path_to_zip))
     if not os.path.exists(path_to_zip):
@@ -249,7 +255,14 @@ def unpack_project(path_to_zip, new_root=None, database_name=None):
     tmp_dir = tempfile.mkdtemp(prefix="unpack_")
     print("Zip is extracted to temp: {}".format(tmp_dir))
     with zipfile.ZipFile(path_to_zip, "r") as zip_stream:
-        zip_stream.extractall(tmp_dir)
+        if database_only:
+            for filename in (
+                "{}.json".format(METADATA_FILE_NAME),
+                "{}.json".format(DOCUMENTS_FILE_NAME),
+            ):
+                zip_stream.extract(filename, os.path.join(tmp_dir, filename))
+        else:
+            zip_stream.extractall(tmp_dir)
 
     metadata_json_path = os.path.join(tmp_dir, METADATA_FILE_NAME + ".json")
     with open(metadata_json_path, "r") as stream:
