@@ -15,7 +15,6 @@ from .lib import (
     get_current_comp,
     get_bmd_library,
     get_names_from_nodes,
-    comp_lock_and_undo_chunk,
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
