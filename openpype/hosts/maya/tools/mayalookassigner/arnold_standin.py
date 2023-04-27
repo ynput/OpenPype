@@ -7,7 +7,8 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io
 from openpype.client import get_last_version_by_subset_name
-from openpype.hosts.maya import api
+from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api import lib_looks
 from . import lib
 from .alembic import get_alembic_ids_cache
 
@@ -161,7 +162,7 @@ def assign_look(standin, subset, project_name=None):
         asset_nodes_by_id = {
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
-        edits = api.lib.iter_shader_edits(
+        edits = lib_looks.iter_shader_edits(
             relationships, shader_nodes, asset_nodes_by_id
         )
 
@@ -238,7 +239,7 @@ def apply_shader_edits(standin, edits, container_node=None, namespace=""):
         if not assignments:
             continue
 
-        with api.lib.maintained_selection():
+        with maintained_selection():
             operator = cmds.createNode("aiSetParameter")
             operator = cmds.rename(operator, namespace + ":" + operator)
 

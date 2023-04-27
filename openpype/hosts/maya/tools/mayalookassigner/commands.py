@@ -10,7 +10,7 @@ from openpype.pipeline import (
     remove_container,
     registered_host,
 )
-from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib, lib_looks
 
 from .alembic import get_alembic_ids_cache, get_alembic_source_ids_cache
 from . import arnold_standin
@@ -167,7 +167,7 @@ def create_items_from_nodes(nodes):
             continue
 
         # Collect available look subsets for this asset
-        looks = lib.list_looks(asset["_id"])
+        looks = lib_looks.list_looks(asset["_id"])
 
         # Collect namespaces the asset is found in
         namespaces = set()

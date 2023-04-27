@@ -7,7 +7,7 @@ from maya import cmds
 
 from openpype.client import get_last_version_by_subset_name
 from openpype.pipeline import legacy_io
-import openpype.hosts.maya.api.lib as maya_lib
+from openpype.hosts.maya.api import lib_looks
 from . import lib
 from .alembic import get_alembic_ids_cache
 
@@ -101,7 +101,7 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
 
-        iter_edits = maya_lib.iter_shader_edits(
+        iter_edits = lib_looks.iter_shader_edits(
             relationships, shadernodes, asset_nodes_by_id
         )
 

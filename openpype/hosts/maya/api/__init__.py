@@ -30,13 +30,13 @@ from .lib import (
     lsattrs,
     read,
 
-    apply_shaders,
     maintained_selection,
     suspended_refresh,
 
     unique_namespace,
 )
 
+from .lib_looks import apply_shaders
 
 __all__ = [
     "uninstall",

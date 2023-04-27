@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from qtpy import QtWidgets
 
+from openpype.hosts.maya.api import lib_looks
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
     legacy_io,
@@ -97,7 +98,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             cmds.file(cr=reference_node)  # cleanReference
 
             # reapply shading groups from json representation on orig nodes
-            lib.apply_shaders(json_data, shader_nodes, orig_nodes)
+            lib_looks.apply_shaders(json_data, shader_nodes, orig_nodes)
 
             msg = ["During reference update some edits failed.",
                    "All successful edits were kept intact.\n",

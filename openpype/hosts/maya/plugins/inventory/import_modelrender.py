@@ -10,10 +10,8 @@ from openpype.pipeline import (
     get_representation_context,
     legacy_io,
 )
-from openpype.hosts.maya.api.lib import (
-    maintained_selection,
-    apply_shaders
-)
+from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib_looks import apply_shaders
 
 
 class ImportModelRender(InventoryAction):
