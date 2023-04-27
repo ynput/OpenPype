@@ -21,6 +21,7 @@ class RenderProduct(object):
     view = attr.ib()
     productName = attr.ib(default=None)
 
+
 class ARenderProduct(object):
 
     def __init__(self):

@@ -8,7 +8,7 @@ from openpype.hosts.houdini.api.lib import (
     evalParmNoFrame,
     get_color_management_preferences
 )
-from openpype.hosts.houdini.api import(
+from openpype.hosts.houdini.api import (
     colorspace
 )
 
