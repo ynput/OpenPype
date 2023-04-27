@@ -306,37 +306,6 @@ class FusionPlaceholderLoadPlugin(
             )
             placeholder.data["node"].Delete()
 
-    def _fix_z_order(self, placeholder):
-        """Fix the problem of z_order when a backdrop is loaded."""
-
-        nodes_loaded = placeholder.data["last_loaded"]
-        loaded_backdrops = []
-        bd_orders = set()
-        for node in nodes_loaded:
-            if isinstance(node, nuke.BackdropNode):
-                loaded_backdrops.append(node)
-                bd_orders.add(node.knob("z_order").getValue())
-
-        if not bd_orders:
-            return
-
-        sib_orders = set()
-        for node_name in placeholder.data["siblings"]:
-            node = nuke.toNode(node_name)
-            if isinstance(node, nuke.BackdropNode):
-                sib_orders.add(node.knob("z_order").getValue())
-
-        if not sib_orders:
-            return
-
-        min_order = min(bd_orders)
-        max_order = max(sib_orders)
-        for backdrop_node in loaded_backdrops:
-            z_order = backdrop_node.knob("z_order").getValue()
-            backdrop_node.knob("z_order").setValue(
-                z_order + max_order - min_order + 1
-            )
-
     def _setdata_siblings(self, placeholder):
         """
         - add siblings names to placeholder attributes (nodes loaded with it)
@@ -359,25 +328,7 @@ class FusionPlaceholderLoadPlugin(
                 siblings_name = get_names_from_nodes(siblings)
                 node.SetData("siblings", siblings_name)
 
-    def _setdata_inits(self):
-        """Add initial positions and dimensions to the attributes"""
-
-        for node in nuke.allNodes():
-            refresh_node(node)
-            imprint(node, {"x_init": node.xpos(), "y_init": node.ypos()})
-            node.knob("x_init").setVisible(False)
-            node.knob("y_init").setVisible(False)
-            width = node.screenWidth()
-            height = node.screenHeight()
-            if "bdwidth" in node.knobs():
-                imprint(node, {"w_init": width, "h_init": height})
-                node.knob("w_init").setVisible(False)
-                node.knob("h_init").setVisible(False)
-            refresh_node(node)
-
-    def _update_nodes(
-        self, placeholder_node, nodes
-    ):
+    def _update_nodes(self, placeholder_node, nodes):
         """Adjust nodes positions.
 
         Considering some nodes sizes.
@@ -390,16 +341,17 @@ class FusionPlaceholderLoadPlugin(
         flow = comp.CurrentFrame.FlowView
 
         x, y = flow.GetPosTable(placeholder_node).values()
-        flow.SetPos(placeholder_node, x-1, y)
+        flow.SetPos(placeholder_node, x - 1, y)
         x_offset = 0
         for node in nodes:
-            flow.SetPos(node, x+x_offset, y)
+            flow.SetPos(node, x + x_offset, y)
             x_offset = x_offset + 1
 
     def _set_loaded_connections(self, placeholder):
         """
         set inputs and outputs of loaded nodes"""
 
+        # TODO Make it connect to outputs also
         inputs = placeholder.data["node"].Output.GetConnectedInputs().values()
         for input in inputs:
             input.ConnectTo(placeholder.data["last_loaded"][0].Output)
@@ -513,9 +465,6 @@ class FusionPlaceholderCreatePlugin(
         placeholder_data["delete"] = False
         return placeholder_data
 
-    def _before_instance_create(self, placeholder):
-        placeholder.data["nodes_init"] = nuke.allNodes()
-
     def collect_placeholders(self):
         output = []
         scene_placeholders = self._collect_scene_placeholders()
@@ -611,6 +560,7 @@ class FusionPlaceholderCreatePlugin(
             # nodes will be placed in a free space
 
             # TODO Convert to Fusion:
+            """
             xpointer, ypointer = find_free_space_to_paste_nodes(
                 nodes_created, direction="bottom", offset=200
             )
@@ -621,6 +571,7 @@ class FusionPlaceholderCreatePlugin(
                 xpos = (node.xpos() - min_x) + xpointer
                 ypos = (node.ypos() - min_y) + ypointer
                 node.setXYpos(xpos, ypos)
+            """
 
         placeholder.data["nb_children"] += 1
         reset_selection()
@@ -636,37 +587,6 @@ class FusionPlaceholderCreatePlugin(
 
         # go back to root group
         nuke.root().begin()
-
-    def _fix_z_order(self, placeholder):
-        """Fix the problem of z_order when a backdrop is create."""
-
-        nodes_created = placeholder.data["last_created"]
-        created_backdrops = []
-        bd_orders = set()
-        for node in nodes_created:
-            if isinstance(node, nuke.BackdropNode):
-                created_backdrops.append(node)
-                bd_orders.add(node.knob("z_order").getValue())
-
-        if not bd_orders:
-            return
-
-        sib_orders = set()
-        for node_name in placeholder.data["siblings"]:
-            node = nuke.toNode(node_name)
-            if isinstance(node, nuke.BackdropNode):
-                sib_orders.add(node.knob("z_order").getValue())
-
-        if not sib_orders:
-            return
-
-        min_order = min(bd_orders)
-        max_order = max(sib_orders)
-        for backdrop_node in created_backdrops:
-            z_order = backdrop_node.knob("z_order").getValue()
-            backdrop_node.knob("z_order").setValue(
-                z_order + max_order - min_order + 1
-            )
 
     def _setdata_siblings(self, placeholder):
         """
@@ -689,26 +609,8 @@ class FusionPlaceholderCreatePlugin(
                 siblings = {"siblings": siblings_name}
                 imprint(node, siblings)
 
-    def _setdata_inits(self):
-        """Add initial positions and dimensions to the attributes"""
-
-        for node in nuke.allNodes():
-            refresh_node(node)
-            imprint(node, {"x_init": node.xpos(), "y_init": node.ypos()})
-            node.knob("x_init").setVisible(False)
-            node.knob("y_init").setVisible(False)
-            width = node.screenWidth()
-            height = node.screenHeight()
-            if "bdwidth" in node.knobs():
-                imprint(node, {"w_init": width, "h_init": height})
-                node.knob("w_init").setVisible(False)
-                node.knob("h_init").setVisible(False)
-            refresh_node(node)
-
-    def _update_nodes(
-        self, placeholder, nodes, considered_nodes, offset_y=None
-    ):
-        """Adjust backdrop nodes dimensions and positions.
+    def _update_nodes(self, placeholder_node, nodes):
+        """Adjust nodes positions.
 
         Considering some nodes sizes.
 
@@ -794,6 +696,8 @@ class FusionPlaceholderCreatePlugin(
             copies (dict) : with copied nodes names and their copies
         """
 
+        # TODO Convert to Fusion:
+        """
         copies = {}
         siblings = get_nodes_by_names(placeholder.data["siblings"])
         for node in siblings:
@@ -813,6 +717,8 @@ class FusionPlaceholderCreatePlugin(
                 node.removeKnob(node.knob("repre_id"))
             copies[node.name()] = new_node
         return copies
+        """
+        pass
 
     def _set_copies_connections(self, placeholder, copies):
         """Set inputs and outputs of the copies.
@@ -821,6 +727,8 @@ class FusionPlaceholderCreatePlugin(
             copies (dict): Copied nodes by their names.
         """
 
+        # TODO Convert to Fusion:
+        """
         last_input, last_output = get_group_io_nodes(
             placeholder.data["last_created"]
         )
@@ -857,6 +765,8 @@ class FusionPlaceholderCreatePlugin(
                         node_copy.setInput(idx, last_output)
 
         siblings_input.setInput(0, copy_output)
+        """
+        pass
 
 
 def build_workfile_template(*args, **kwargs):
