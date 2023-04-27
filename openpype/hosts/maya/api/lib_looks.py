@@ -107,11 +107,11 @@ def assign_look_by_version(nodes, version_id, project_name=None):
     apply_shaders(relationships, shader_nodes, nodes)
 
 
-def _assign_looks(asset_id_nodes, subset, project_name):
+def _assign_looks(asset_id_nodes, subset_name, project_name):
 
     asset_ids = list(asset_id_nodes.keys())
     subset_docs = get_subsets(
-        project_name, subset_names=[subset], asset_ids=asset_ids
+        project_name, subset_names=[subset_name], asset_ids=asset_ids
     )
     subset_docs_by_asset_id = {
         str(subset_doc["parent"]): subset_doc
@@ -135,14 +135,15 @@ def _assign_looks(asset_id_nodes, subset, project_name):
         # create objectId for database
         subset_doc = subset_docs_by_asset_id.get(asset_id)
         if not subset_doc:
-            log.warning("No subset '{}' found for {}".format(subset, asset_id))
+            log.warning("No subset '{}' found for {}".format(subset_name,
+                                                             asset_id))
             continue
 
         last_version = last_version_docs_by_subset_id.get(subset_doc["_id"])
         if not last_version:
             log.warning((
                 "Not found last version for subset '{}' on asset with id {}"
-            ).format(subset, asset_id))
+            ).format(subset_name, asset_id))
             continue
 
         families = last_version.get("data", {}).get("families") or []
@@ -150,11 +151,11 @@ def _assign_looks(asset_id_nodes, subset, project_name):
             log.warning((
                 "Last version for subset '{}' on asset with id {}"
                 " does not have look family"
-            ).format(subset, asset_id))
+            ).format(subset_name, asset_id))
             continue
 
         log.debug("Assigning look '{}' <v{:03d}>".format(
-            subset, last_version["name"]))
+            subset_name, last_version["name"]))
 
         assign_look_by_version(asset_nodes,
                                last_version["_id"],
@@ -201,7 +202,7 @@ def assign_look(nodes, subset="lookDefault"):
 
     for project_name, asset_id_nodes in project_asset_id_nodes.items():
         _assign_looks(asset_id_nodes=asset_id_nodes,
-                      subset=subset,
+                      subset_name=subset,
                       project_name=project_name)
 
 
