@@ -18,15 +18,37 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
         # TODO: Use path template solver to build version code from settings
         anatomy = instance.data.get("anatomyData", {})
-        code = "_".join(
-            [
-                anatomy["project"]["code"],
-                anatomy["parent"],
-                anatomy["asset"],
-                anatomy["task"]["name"],
-                "v{:03}".format(int(anatomy["version"])),
-            ]
-        )
+        ### Starts Alkemy-X Override ###
+        # code = "_".join(
+        #     [
+        #         anatomy["project"]["code"],
+        #         anatomy["parent"],
+        #         anatomy["asset"],
+        #         anatomy["task"]["name"],
+        #         "v{:03}".format(int(anatomy["version"])),
+        #     ]
+        # )
+        # Initial editorial Shotgrid versions don't need task in name
+        if 'hiero' == anatomy['app']:
+            code = "_".join(
+                [
+                    anatomy["project"]["code"],
+                    anatomy["parent"],
+                    anatomy["asset"],
+                    "v{:03}".format(int(anatomy["version"])),
+                ]
+            )
+        else:
+            code = "_".join(
+                [
+                    anatomy["project"]["code"],
+                    anatomy["parent"],
+                    anatomy["asset"],
+                    anatomy["task"]["name"],
+                    "v{:03}".format(int(anatomy["version"])),
+                ]
+            )
+        ### Ends Alkemy-X Override ###
 
         version = self._find_existing_version(code, context)
 

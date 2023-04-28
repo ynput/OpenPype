@@ -264,7 +264,40 @@ class PypeCommands:
         pass
 
     def run_application(self, app, project, asset, task, tools, arguments):
-        pass
+        ### Starts Alkemy-X Override ###
+        # pass
+        from openpype.lib.applications import get_app_environments_for_context,\
+                                                ApplicationLaunchContext,\
+                                                ApplicationManager
+        from openpype.pipeline import install_openpype_plugins
+        from openpype.lib import Logger
+
+        log = Logger.get_logger("CLI-Launch")
+
+        install_openpype_plugins()
+        app_manager = ApplicationManager()
+        if not app_manager.applications.get(app):
+            log.warning("App not found: {}".format(app))
+            log.info("All valid apps {}".format(list(app_manager.applications.keys())))
+            return
+
+        app = app_manager.applications[app]
+        executable = app.find_executable()
+
+        data = {
+            "project_name": project,
+            "asset_name": asset,
+            "task_name": task,
+            "app_args": arguments,
+        }
+        context = ApplicationLaunchContext(
+            app, executable, **data,
+        )
+
+        context.launch()
+
+        log.info("Application launched ...")
+        ### Ends Alkemy-X Override ###
 
     def validate_jsons(self):
         pass
@@ -353,12 +386,12 @@ class PypeCommands:
         version_packer = VersionRepacker(directory)
         version_packer.process()
 
-    def pack_project(self, project_name, dirpath):
+    def pack_project(self, project_name, dirpath, database_only):
         from openpype.lib.project_backpack import pack_project
 
-        pack_project(project_name, dirpath)
+        pack_project(project_name, dirpath, database_only)
 
-    def unpack_project(self, zip_filepath, new_root):
+    def unpack_project(self, zip_filepath, new_root, database_only):
         from openpype.lib.project_backpack import unpack_project
 
-        unpack_project(zip_filepath, new_root)
+        unpack_project(zip_filepath, new_root, database_only)

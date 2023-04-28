@@ -132,6 +132,7 @@ def run_subprocess(*args, **kwargs):
     kwargs["stdin"] = kwargs.get("stdin", subprocess.PIPE)
     kwargs["env"] = filtered_env
 
+    logger.info("Executing ({})".format(" ".join(*args)))
     proc = subprocess.Popen(*args, **kwargs)
 
     full_output = ""
@@ -282,6 +283,8 @@ def run_detached_process(args, **kwargs):
         # Return process which is already terminated
         return process
 
+    logger = Logger.get_logger("run_detached_process")
+    logger.info("Executing in detached process ({})".format(" ".join(*args)))
     process = subprocess.Popen(args, **kwargs)
     return process
 

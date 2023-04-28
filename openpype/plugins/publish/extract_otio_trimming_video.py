@@ -87,7 +87,8 @@ class ExtractOTIOTrimmingVideo(publish.Extractor):
         video_path = input_file_path
         frame_start = otio_range.start_time.value
         input_fps = otio_range.start_time.rate
-        frame_duration = otio_range.duration.value - 1
+        # Duration is end - start + 1
+        frame_duration = otio_range.duration.value
         sec_start = frames_to_seconds(frame_start, input_fps)
         sec_duration = frames_to_seconds(frame_duration, input_fps)
 
