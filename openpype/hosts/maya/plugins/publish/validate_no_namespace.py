@@ -1,4 +1,3 @@
-import pymel.core as pm
 import maya.cmds as cmds
 
 import pyblish.api
@@ -12,7 +11,7 @@ import openpype.hosts.maya.api.action
 
 def get_namespace(node_name):
     # ensure only node's name (not parent path)
-    node_name = node_name.rsplit("|")[-1]
+    node_name = node_name.rsplit("|", 1)[-1]
     # ensure only namespace
     return node_name.rpartition(":")[0]
 
@@ -23,8 +22,6 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
-    category = 'cleanup'
-    version = (0, 1, 0)
     label = 'No Namespaces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
@@ -47,13 +44,11 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
 
         invalid = cls.get_invalid(instance)
 
-        # Get nodes with pymel since we'll be renaming them
-        # Since we don't want to keep checking the hierarchy
-        # or full paths
-        nodes = pm.ls(invalid)
+        # Iterate over the nodes by long to short names to iterate the lowest
+        # in hierarchy nodes first. This way we avoid having renamed parents
+        # before renaming children nodes
+        for node in sorted(invalid, key=len, reverse=True):
 
-        for node in nodes:
-            namespace = node.namespace()
-            if namespace:
-                name = node.nodeName()
-                node.rename(name[len(namespace):])
+            node_name = node.rsplit("|", 1)[-1]
+            node_name_without_namespace = node_name.rsplit(":")[-1]
+            cmds.rename(node, node_name_without_namespace)

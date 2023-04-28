@@ -52,6 +52,7 @@ __all__ = (
     # utils.py
     "HeroVersionType",
 
+    "LoadError",
     "IncompatibleLoaderError",
     "InvalidRepresentationContext",
 

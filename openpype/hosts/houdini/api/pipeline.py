@@ -18,7 +18,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.houdini import HOUDINI_HOST_DIR
-from openpype.hosts.houdini.api import lib, shelves
+from openpype.hosts.houdini.api import lib, shelves, creator_node_shelves
 
 from openpype.lib import (
     register_event_callback,
@@ -83,6 +83,10 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         _set_context_settings()
         shelves.generate_shelves()
 
+        if not IS_HEADLESS:
+            import hdefereval # noqa, hdefereval is only available in ui mode
+            hdefereval.executeDeferred(creator_node_shelves.install)
+
     def has_unsaved_changes(self):
         return hou.hipFile.hasUnsavedChanges()
 
@@ -144,13 +148,17 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         """
         obj_network = hou.node("/obj")
-        op_ctx = obj_network.createNode(
-            "null", node_name="OpenPypeContext")
+        op_ctx = obj_network.createNode("subnet",
+                                        node_name="OpenPypeContext",
+                                        run_init_scripts=False,
+                                        load_contents=False)
+
         op_ctx.moveToGoodPosition()
         op_ctx.setBuiltExplicitly(False)
         op_ctx.setCreatorState("OpenPype")
         op_ctx.setComment("OpenPype node to hold context metadata")
         op_ctx.setColor(hou.Color((0.081, 0.798, 0.810)))
+        op_ctx.setDisplayFlag(False)
         op_ctx.hide(True)
         return op_ctx
 

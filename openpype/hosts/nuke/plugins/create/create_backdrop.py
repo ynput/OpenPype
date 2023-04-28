@@ -2,10 +2,8 @@ from nukescripts import autoBackdrop
 
 from openpype.hosts.nuke.api import (
     NukeCreator,
-    NukeCreatorError,
     maintained_selection,
     select_nodes
-
 )
 
 

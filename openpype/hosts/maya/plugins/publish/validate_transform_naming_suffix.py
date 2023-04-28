@@ -21,7 +21,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
         - nurbsSurface: _NRB
         - locator: _LOC
         - null/group: _GRP
-    Suffices can also be overriden by project settings.
+    Suffices can also be overridden by project settings.
 
     .. warning::
         This grabs the first child shape as a reference and doesn't use the
@@ -32,9 +32,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
-    category = 'cleanup'
     optional = True
-    version = (0, 1, 0)
     label = 'Suffix Naming Conventions'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     SUFFIX_NAMING_TABLE = {"mesh": ["_GEO", "_GES", "_GEP", "_OSD"],

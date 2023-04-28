@@ -50,4 +50,3 @@ class AELocalPublishTestClass(AEHostFixtures, PublishTest):
 
 class AEDeadlinePublishTestClass(AEHostFixtures, DeadlinePublishTest):
     """Testing class for Deadline publishes."""
-

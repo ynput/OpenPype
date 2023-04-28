@@ -84,6 +84,12 @@ class ResourceFile(FileItem):
     def __repr__(self):
         return "<{}> '{}'".format(self.__class__.__name__, self.relative_path)
 
+    @property
+    def is_valid_file(self):
+        if not self.relative_path:
+            return False
+        return super(ResourceFile, self).is_valid_file
+
 
 class ProjectPushItem:
     def __init__(
@@ -326,6 +332,26 @@ class ProjectPushRepreItem:
             self.get_source_files()
         return self._resource_files
 
+    @staticmethod
+    def _clean_path(path):
+        new_value = path.replace("\\", "/")
+        while "//" in new_value:
+            new_value = new_value.replace("//", "/")
+        return new_value
+
+    @staticmethod
+    def _get_relative_path(path, src_dirpath):
+        dirpath, basename = os.path.split(path)
+        if not dirpath.lower().startswith(src_dirpath.lower()):
+            return None
+
+        relative_dir = dirpath[len(src_dirpath):].lstrip("/")
+        if relative_dir:
+            relative_path = "/".join([relative_dir, basename])
+        else:
+            relative_path = basename
+        return relative_path
+
     @property
     def frame(self):
         """First frame of representation files.
@@ -407,9 +433,9 @@ class ProjectPushRepreItem:
         fill_roots = fill_repre_context["root"]
         for root_name in tuple(fill_roots.keys()):
             fill_roots[root_name] = "{{root[{}]}}".format(root_name)
-        repre_path = StringTemplate.format_template(template,
-                                                    fill_repre_context)
-        repre_path = repre_path.replace("\\", "/")
+        repre_path = StringTemplate.format_template(
+            template, fill_repre_context)
+        repre_path = self._clean_path(repre_path)
         src_dirpath, src_basename = os.path.split(repre_path)
         src_basename = (
             re.escape(src_basename)
@@ -418,21 +444,20 @@ class ProjectPushRepreItem:
         )
         src_basename_regex = re.compile("^{}$".format(src_basename))
         for file_info in self._repre_doc["files"]:
-            filepath_template = file_info["path"].replace("\\", "/")
-            filepath = filepath_template.format(root=self._roots)
+            filepath_template = self._clean_path(file_info["path"])
+            filepath = self._clean_path(
+                filepath_template.format(root=self._roots)
+            )
             dirpath, basename = os.path.split(filepath_template)
             if (
-                dirpath != src_dirpath
+                dirpath.lower() != src_dirpath.lower()
                 or not src_basename_regex.match(basename)
             ):
-                relative_dir = dirpath.replace(src_dirpath, "")
-                if relative_dir:
-                    relative_path = "/".join([relative_dir, basename])
-                else:
-                    relative_path = basename
+                relative_path = self._get_relative_path(filepath, src_dirpath)
                 resource_files.append(ResourceFile(filepath, relative_path))
                 continue
 
+            filepath = os.path.join(src_dirpath, basename)
             frame = None
             udim = None
             for item in src_basename_regex.finditer(basename):
@@ -458,21 +483,21 @@ class ProjectPushRepreItem:
             fill_roots[root_name] = "{{root[{}]}}".format(root_name)
         repre_path = StringTemplate.format_template(template,
                                                     fill_repre_context)
-        repre_path = repre_path.replace("\\", "/")
+        repre_path = self._clean_path(repre_path)
         src_dirpath = os.path.dirname(repre_path)
         for file_info in self._repre_doc["files"]:
-            filepath_template = file_info["path"].replace("\\", "/")
-            filepath = filepath_template.format(root=self._roots)
-            if filepath_template == repre_path:
-                src_files.append(SourceFile(filepath))
-            else:
-                dirpath, basename = os.path.split(filepath_template)
-                relative_dir = dirpath.replace(src_dirpath, "")
-                if relative_dir:
-                    relative_path = "/".join([relative_dir, basename])
-                else:
-                    relative_path = basename
+            filepath_template = self._clean_path(file_info["path"])
+            filepath = self._clean_path(
+                filepath_template.format(root=self._roots))
 
+            if filepath_template.lower() == repre_path.lower():
+                src_files.append(
+                    SourceFile(repre_path.format(root=self._roots))
+                )
+            else:
+                relative_path = self._get_relative_path(
+                    filepath_template, src_dirpath
+                )
                 resource_files.append(
                     ResourceFile(filepath, relative_path)
                 )
@@ -1025,8 +1050,8 @@ class ProjectPushItemProcess:
                 repre_format_data["ext"] = ext[1:]
                 break
 
-            tmp_result = anatomy.format(formatting_data)
-            folder_path = tmp_result[template_name]["folder"]
+            template_obj = anatomy.templates_obj[template_name]["folder"]
+            folder_path = template_obj.format_strict(formatting_data)
             repre_context = folder_path.used_values
             folder_path_rootless = folder_path.rootless
             repre_filepaths = []

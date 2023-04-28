@@ -24,8 +24,9 @@ from openpype.hosts.nuke.api import (
 class LoadGizmo(load.LoaderPlugin):
     """Loading nuke Gizmo"""
 
-    representations = ["gizmo"]
     families = ["gizmo"]
+    representations = ["*"]
+    extension = {"gizmo"}
 
     label = "Load Gizmo"
     order = 0

@@ -1,4 +1,4 @@
-name: Milestone - create default
+name: ➕ Milestone - create default
 
 on:
   milestone:
@@ -12,7 +12,7 @@ jobs:
         uses: "WyriHaximus/github-action-get-milestones@master"
         id: milestones
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
 
       - run: printf "name=number::%s" $(printenv MILESTONES | jq --arg MILESTONE $(printenv MILESTONE) '.[]  | select(.title == $MILESTONE) | .number')
         id: querymilestone
@@ -31,7 +31,7 @@ jobs:
         with:
           title: 'next-patch'
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
 
   generate-next-minor:
     runs-on: ubuntu-latest
@@ -40,7 +40,7 @@ jobs:
         uses: "WyriHaximus/github-action-get-milestones@master"
         id: milestones
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
 
       - run: printf "name=number::%s" $(printenv MILESTONES | jq --arg MILESTONE $(printenv MILESTONE) '.[]  | select(.title == $MILESTONE) | .number')
         id: querymilestone
@@ -59,4 +59,4 @@ jobs:
         with:
           title: 'next-minor'
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"

@@ -70,7 +70,8 @@ def get_subset_name(
     host_name=None,
     default_template=None,
     dynamic_data=None,
-    project_settings=None
+    project_settings=None,
+    family_filter=None,
 ):
     """Calculate subset name based on passed context and OpenPype settings.
 
@@ -82,23 +83,35 @@ def get_subset_name(
     That's main reason why so many arguments are required to calculate subset
     name.
 
+    Option to pass family filter was added for special cases when creator or
+    automated publishing require special subset name template which would be
+    hard to maintain using its family value.
+        Why not just pass the right family? -> Family is also used as fill
+            value and for filtering of publish plugins.
+
+    Todos:
+        Find better filtering options to avoid requirement of
+            argument 'family_filter'.
+
     Args:
         family (str): Instance family.
         variant (str): In most of the cases it is user input during creation.
         task_name (str): Task name on which context is instance created.
         asset_doc (dict): Queried asset document with its tasks in data.
             Used to get task type.
-        project_name (str): Name of project on which is instance created.
-            Important for project settings that are loaded.
-        host_name (str): One of filtering criteria for template profile
-            filters.
-        default_template (str): Default template if any profile does not match
-            passed context. Constant 'DEFAULT_SUBSET_TEMPLATE' is used if
-            is not passed.
-        dynamic_data (dict): Dynamic data specific for a creator which creates
-            instance.
-        project_settings (Union[Dict[str, Any], None]): Prepared settings for
-            project. Settings are queried if not passed.
+        project_name (Optional[str]): Name of project on which is instance
+            created. Important for project settings that are loaded.
+        host_name (Optional[str]): One of filtering criteria for template
+            profile filters.
+        default_template (Optional[str]): Default template if any profile does
+            not match passed context. Constant 'DEFAULT_SUBSET_TEMPLATE'
+            is used if is not passed.
+        dynamic_data (Optional[Dict[str, Any]]): Dynamic data specific for
+            a creator which creates instance.
+        project_settings (Optional[Union[Dict[str, Any]]]): Prepared settings
+            for project. Settings are queried if not passed.
+        family_filter (Optional[str]): Use different family for subset template
+            filtering. Value of 'family' is used when not passed.
     """
 
     if not family:
@@ -119,7 +132,7 @@ def get_subset_name(
 
     template = get_subset_name_template(
         project_name,
-        family,
+        family_filter or family,
         task_name,
         task_type,
         host_name,

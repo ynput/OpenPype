@@ -1,4 +1,4 @@
-name: Milestone - assign to PRs
+name: 👉🏻 Milestone - assign to PRs
 
 on:
   pull_request_target:
@@ -13,7 +13,7 @@ jobs:
         if: github.event.pull_request.milestone == null
         uses: zoispag/action-assign-milestone@v1
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-token: "${{ secrets.YNPUT_BOT_TOKEN }}"
           milestone: 'next-minor'
 
   run_if_develop:
@@ -24,5 +24,5 @@ jobs:
         if: github.event.pull_request.milestone == null
         uses: zoispag/action-assign-milestone@v1
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-token: "${{ secrets.YNPUT_BOT_TOKEN }}"
           milestone: 'next-patch'

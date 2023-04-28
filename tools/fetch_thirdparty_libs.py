@@ -130,8 +130,10 @@ def install_thirdparty(pyproject, openpype_root, platform_name):
             _print("trying to get universal url for all platforms")
             url = v.get("url")
             if not url:
-                _print("cannot get url", 1)
-                sys.exit(1)
+                _print("cannot get url for all platforms", 1)
+                _print((f"Warning: {k} is not installed for current platform "
+                       "and it might be missing in the build"), 1)
+                continue
         else:
             url = v.get(platform_name).get("url")
             destination_path = destination_path / platform_name
@@ -158,7 +160,9 @@ def install_thirdparty(pyproject, openpype_root, platform_name):
             with manager.counter(
                 color='green',
                 total=content_len and math.ceil(content_len / 2 ** 20),
-                unit='MiB', leave=False) as counter:
+                unit='MiB',
+                leave=False
+            ) as counter:
                 with open(temp_file, 'wb', buffering=2 ** 24) as file_handle:
                     for chunk in r.iter_content(chunk_size=2 ** 20):
                         file_handle.write(chunk)

@@ -80,7 +80,7 @@ class AfterEffectsServerStub():
             Get complete stored JSON with metadata from AE.Metadata.Label
             field.
 
-            It contains containers loaded by any Loader OR instances creted
+            It contains containers loaded by any Loader OR instances created
             by Creator.
 
         Returns:

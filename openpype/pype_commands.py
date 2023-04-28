@@ -270,7 +270,7 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout):
+                  test_data_folder, persist, app_variant, timeout, setup_only):
         """
             Runs tests from 'folder'
 
@@ -311,6 +311,9 @@ class PypeCommands:
         if timeout:
             args.extend(["--timeout", timeout])
 
+        if setup_only:
+            args.extend(["--setup_only", setup_only])
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
@@ -350,12 +353,12 @@ class PypeCommands:
         version_packer = VersionRepacker(directory)
         version_packer.process()
 
-    def pack_project(self, project_name, dirpath):
+    def pack_project(self, project_name, dirpath, database_only):
         from openpype.lib.project_backpack import pack_project
 
-        pack_project(project_name, dirpath)
+        pack_project(project_name, dirpath, database_only)
 
-    def unpack_project(self, zip_filepath, new_root):
+    def unpack_project(self, zip_filepath, new_root, database_only):
         from openpype.lib.project_backpack import unpack_project
 
-        unpack_project(zip_filepath, new_root)
+        unpack_project(zip_filepath, new_root, database_only)

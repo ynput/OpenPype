@@ -34,7 +34,10 @@ from .icons import (
 )
 
 from ..constants import (
-    VARIANT_TOOLTIP
+    VARIANT_TOOLTIP,
+    ResetKeySequence,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 
@@ -198,12 +201,26 @@ class CreateBtn(PublishIconBtn):
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
+class SaveBtn(PublishIconBtn):
+    """Save context and instances information."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("save")
+        super(SaveBtn, self).__init__(icon_path, parent)
+        self.setToolTip(
+            "Save changes ({})".format(
+                QtGui.QKeySequence(QtGui.QKeySequence.Save).toString()
+            )
+        )
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Refresh publishing")
+        self.setToolTip(
+            "Reset & discard changes ({})".format(ResetKeySequence.toString())
+        )
 
 
 class StopBtn(PublishIconBtn):
@@ -250,21 +267,25 @@ class PublishReportBtn(PublishIconBtn):
         self._actions = []
 
     def add_action(self, label, identifier):
-        action = QtWidgets.QAction(label)
-        action.setData(identifier)
-        action.triggered.connect(
-            functools.partial(self._on_action_trigger, action)
+        self._actions.append(
+            (label, identifier)
         )
-        self._actions.append(action)
 
-    def _on_action_trigger(self, action):
-        identifier = action.data()
+    def _on_action_trigger(self, identifier):
         self.triggered.emit(identifier)
 
     def mouseReleaseEvent(self, event):
         super(PublishReportBtn, self).mouseReleaseEvent(event)
         menu = QtWidgets.QMenu(self)
-        menu.addActions(self._actions)
+        actions = []
+        for item in self._actions:
+            label, identifier = item
+            action = QtWidgets.QAction(label, menu)
+            action.triggered.connect(
+                functools.partial(self._on_action_trigger, identifier)
+            )
+            actions.append(action)
+        menu.addActions(actions)
         menu.exec_(event.globalPos())
 
 
@@ -342,6 +363,19 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         raise NotImplementedError((
             "{} Method 'set_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_active_toggle_enabled(self, enabled):
+        """Instances are disabled for changing enabled state.
+
+        Active state should stay the same until is "unset".
+
+        Args:
+            enabled (bool): Instance state can be changed.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_active_toggle_enabled' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -1066,6 +1100,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
+        main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
         main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
@@ -1220,7 +1256,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         asset_task_combinations = []
         for instance in instances:
-            if instance.creator is None:
+            # NOTE I'm not sure how this can even happen?
+            if instance.creator_identifier is None:
                 editable = False
 
             variants.add(instance.get("variant") or self.unknown_value)
@@ -1313,6 +1350,8 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
+        content_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        content_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         row = 0
         for attr_def, attr_instances, values in result:
@@ -1338,9 +1377,19 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            label = attr_def.label or attr_def.key
+            label = None
+            if attr_def.is_value_def:
+                label = attr_def.label or attr_def.key
             if label:
                 label_widget = QtWidgets.QLabel(label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 content_layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -1437,7 +1486,18 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        attr_def_widget = QtWidgets.QWidget(content_widget)
+        attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
+        attr_def_layout.setColumnStretch(0, 0)
+        attr_def_layout.setColumnStretch(1, 1)
+        attr_def_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        attr_def_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.addWidget(attr_def_widget, 0)
+        content_layout.addStretch(1)
+
+        row = 0
         for plugin_name, attr_defs, all_plugin_values in result:
             plugin_values = all_plugin_values[plugin_name]
 
@@ -1454,8 +1514,36 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                     hidden_widget = True
 
                 if not hidden_widget:
-                    label = attr_def.label or attr_def.key
-                    content_layout.addRow(label, widget)
+                    expand_cols = 2
+                    if attr_def.is_value_def and attr_def.is_label_horizontal:
+                        expand_cols = 1
+
+                    col_num = 2 - expand_cols
+                    label = None
+                    if attr_def.is_value_def:
+                        label = attr_def.label or attr_def.key
+                    if label:
+                        label_widget = QtWidgets.QLabel(label, content_widget)
+                        tooltip = attr_def.tooltip
+                        if tooltip:
+                            label_widget.setToolTip(tooltip)
+                        if attr_def.is_label_horizontal:
+                            label_widget.setAlignment(
+                                QtCore.Qt.AlignRight
+                                | QtCore.Qt.AlignVCenter
+                            )
+                        attr_def_layout.addWidget(
+                            label_widget, row, 0, 1, expand_cols
+                        )
+                        if not attr_def.is_label_horizontal:
+                            row += 1
+                    attr_def_layout.addWidget(
+                        widget, row, col_num, 1, expand_cols
+                    )
+                    row += 1
+
+                if not attr_def.is_value_def:
+                    continue
 
                 widget.value_changed.connect(self._input_value_changed)
 
@@ -1498,7 +1586,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     │   attributes    │  Thumbnail  │  TOP
     │                 │             │
     ├─────────────┬───┴─────────────┤
-    │  Family     │   Publish       │
+    │  Creator    │   Publish       │
     │  attributes │   plugin        │  BOTTOM
     │             │   attributes    │
     └───────────────────────────────┘

@@ -1,0 +1,50 @@
+name: 🚩 Milestone Release [trigger]
+
+on:
+  workflow_dispatch:
+    inputs:
+      milestone:
+        required: true
+      release-type:
+        type: choice
+        description: What release should be created
+        options:
+          - release
+          - pre-release
+  milestone:
+    types: closed
+
+
+jobs:
+  milestone-title:
+    runs-on: ubuntu-latest
+    outputs:
+      milestone: ${{ steps.milestoneTitle.outputs.value }}
+    steps:
+      - name: Switch input milestone
+        uses: haya14busa/action-cond@v1
+        id: milestoneTitle
+        with:
+          cond: ${{ inputs.milestone == '' }}
+          if_true: ${{ github.event.milestone.title }}
+          if_false: ${{ inputs.milestone }}
+      - name: Print resulted milestone
+        run: |
+          echo "${{ steps.milestoneTitle.outputs.value }}"
+
+  call-ci-tools-milestone-release:
+    needs: milestone-title
+    uses: ynput/ci-tools/.github/workflows/milestone_release_ref.yml@main
+    with:
+      milestone: ${{ needs.milestone-title.outputs.milestone }}
+      repo-owner: ${{ github.event.repository.owner.login }}
+      repo-name: ${{ github.event.repository.name }}
+      version-py-path: "./openpype/version.py"
+      pyproject-path: "./pyproject.toml"
+    secrets:
+      token: ${{ secrets.YNPUT_BOT_TOKEN }}
+      user_email: ${{ secrets.CI_EMAIL }}
+      user_name: ${{ secrets.CI_USER }}
+      cu_api_key: ${{ secrets.CLICKUP_API_KEY }}
+      cu_team_id: ${{ secrets.CLICKUP_TEAM_ID }}
+      cu_field_id: ${{ secrets.CLICKUP_RELEASE_FIELD_ID }}

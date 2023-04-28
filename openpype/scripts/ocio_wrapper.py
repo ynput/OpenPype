@@ -157,11 +157,21 @@ def _get_views_data(config_path):
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
-    return {
-        f"{d}/{v}": {"display": d, "view": v}
-        for d in config.getDisplays()
-        for v in config.getViews(d)
-    }
+    data = {}
+    for display in config.getDisplays():
+        for view in config.getViews(display):
+            colorspace = config.getDisplayViewColorSpaceName(display, view)
+            # Special token. See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
+            if colorspace == "<USE_DISPLAY_NAME>":
+                colorspace = display
+
+            data[f"{display}/{view}"] = {
+                "display": display,
+                "view": view,
+                "colorspace": colorspace
+            }
+
+    return data
 
 
 if __name__ == '__main__':

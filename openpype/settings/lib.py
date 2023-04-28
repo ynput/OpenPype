@@ -159,6 +159,7 @@ def save_studio_settings(data):
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
 
+    _SETTINGS_HANDLER.save_change_log(None, changes, "system")
     _SETTINGS_HANDLER.save_studio_settings(data)
     if warnings:
         raise SaveWarningExc(warnings)
@@ -218,7 +219,7 @@ def save_project_settings(project_name, overrides):
                 )
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
-
+    _SETTINGS_HANDLER.save_change_log(project_name, changes, "project")
     _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
 
     if warnings:
@@ -280,6 +281,7 @@ def save_project_anatomy(project_name, anatomy_data):
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
 
+    _SETTINGS_HANDLER.save_change_log(project_name, changes, "anatomy")
     _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
     if warnings:
@@ -581,7 +583,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
     Data are loaded recursively from a directory and recreate the
     hierarchy as a dictionary.
 
-    Entered path hiearchy:
+    Entered path hierarchy:
     |_ folder1
     | |_ data1.json
     |_ folder2

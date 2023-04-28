@@ -66,4 +66,3 @@ class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
 
 class NukeDeadlinePublishTestClass(NukeHostFixtures, DeadlinePublishTest):
     """Testing class for Deadline publishes."""
-

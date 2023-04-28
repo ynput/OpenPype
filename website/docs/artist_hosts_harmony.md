@@ -6,11 +6,11 @@ sidebar_label: Harmony
 
 ## Available Tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Publish](artist_tools.md#publisher)
--   [Manage](artist_tools.md#inventory)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Publish](artist_tools_publisher)
+-   [Manage](artist_tools_inventory)
 
 :::note
 Only one tool can be open at a time. If you open a tool while another tool is open, it will wait in queue for the existing tool to be closed. Once the existing tool is closed, the new tool will open.
@@ -44,7 +44,7 @@ Because the saving to the network location happens in the background, be careful
 
 `OpenPype > Create`
 
-![Creator](assets/harmony_creator.PNG)
+![Creator](assets/harmony_creator.png)
 
 These are the families supported in Harmony:
 

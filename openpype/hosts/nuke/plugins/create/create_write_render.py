@@ -6,10 +6,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import (
-    BoolDef,
-    NumberDef,
-    UISeparatorDef,
-    UILabelDef
+    BoolDef
 )
 from openpype.hosts.nuke import api as napi
 
@@ -34,45 +31,11 @@ class CreateWriteRender(napi.NukeWriteCreator):
         attr_defs = [
             BoolDef(
                 "use_selection",
-                default=True,
+                default=not self.create_context.headless,
                 label="Use selection"
             ),
             self._get_render_target_enum()
         ]
-        return attr_defs
-
-    def get_instance_attr_defs(self):
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool()
-        ]
-        if "farm_rendering" in self.instance_attributes:
-            attr_defs.extend([
-                UISeparatorDef(),
-                UILabelDef("Farm rendering attributes"),
-                BoolDef("suspended_publish", label="Suspended publishing"),
-                NumberDef(
-                    "farm_priority",
-                    label="Priority",
-                    minimum=1,
-                    maximum=99,
-                    default=50
-                ),
-                NumberDef(
-                    "farm_chunk",
-                    label="Chunk size",
-                    minimum=1,
-                    maximum=99,
-                    default=10
-                ),
-                NumberDef(
-                    "farm_concurency",
-                    label="Concurent tasks",
-                    minimum=1,
-                    maximum=10,
-                    default=1
-                )
-            ])
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):

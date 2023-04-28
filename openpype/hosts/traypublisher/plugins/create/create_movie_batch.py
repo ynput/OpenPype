@@ -33,12 +33,12 @@ class BatchMovieCreator(TrayPublishCreator):
 
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
+    # Position batch creator after simple creators
+    order = 110
 
-    def __init__(self, project_settings, *args, **kwargs):
-        super(BatchMovieCreator, self).__init__(project_settings,
-                                                *args, **kwargs)
+    def apply_settings(self, project_settings, system_settings):
         creator_settings = (
-            project_settings["traypublisher"]["BatchMovieCreator"]
+            project_settings["traypublisher"]["create"]["BatchMovieCreator"]
         )
         self.default_variants = creator_settings["default_variants"]
         self.default_tasks = creator_settings["default_tasks"]
@@ -149,4 +149,3 @@ class BatchMovieCreator(TrayPublishCreator):
         File names must then contain only asset name, or asset name + version.
         (eg. 'chair.mov', 'chair_v001.mov', not really safe `my_chair_v001.mov`
         """
-

@@ -1,4 +1,7 @@
 from .widgets import (
+    FocusSpinBox,
+    FocusDoubleSpinBox,
+    ComboBox,
     CustomTextComboBox,
     PlaceholderLineEdit,
     BaseClickableFrame,
@@ -34,6 +37,9 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "FocusSpinBox",
+    "FocusDoubleSpinBox",
+    "ComboBox",
     "CustomTextComboBox",
     "PlaceholderLineEdit",
     "BaseClickableFrame",

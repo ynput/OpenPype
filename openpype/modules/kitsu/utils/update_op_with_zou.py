@@ -5,10 +5,6 @@ from typing import Dict, List
 
 from pymongo import DeleteOne, UpdateOne
 import gazu
-from gazu.task import (
-    all_tasks_for_asset,
-    all_tasks_for_shot,
-)
 
 from openpype.client import (
     get_project,
@@ -18,7 +14,6 @@ from openpype.client import (
     create_project,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 from openpype.lib import Logger
@@ -69,6 +64,7 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 def update_op_assets(
     dbcon: AvalonMongoDB,
+    gazu_project: dict,
     project_doc: dict,
     entities_list: List[dict],
     asset_doc_ids: Dict[str, dict],
@@ -78,14 +74,18 @@ def update_op_assets(
 
     Args:
         dbcon (AvalonMongoDB): Connection to DB
+        gazu_project (dict): Dict of gazu,
+        project_doc (dict): Dict of project,
         entities_list (List[dict]): List of zou entities to update
         asset_doc_ids (Dict[str, dict]): Dicts of [{zou_id: asset_doc}, ...]
 
     Returns:
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
+    if not project_doc:
+        return
+
     project_name = project_doc["name"]
-    project_module_settings = get_project_settings(project_name)["kitsu"]
 
     assets_with_update = []
     for item in entities_list:
@@ -94,7 +94,9 @@ def update_op_assets(
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
-            item_doc = get_asset_by_id(project_name, insert_result.inserted_id)
+            item_doc = get_asset_by_id(
+                project_name, insert_result.inserted_id
+            )
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -113,38 +115,83 @@ def update_op_assets(
         except (TypeError, ValueError):
             frame_in = 1001
         item_data["frameStart"] = frame_in
-        # Frames duration, fallback on 0
+        # Frames duration, fallback on 1
         try:
             # NOTE nb_frames is stored directly in item
             # because of zou's legacy design
-            frames_duration = int(item.get("nb_frames", 0))
+            frames_duration = int(item.get("nb_frames", 1))
         except (TypeError, ValueError):
-            frames_duration = 0
+            frames_duration = None
         # Frame out, fallback on frame_in + duration or project's value or 1001
         frame_out = item_data.pop("frame_out", None)
         if not frame_out:
-            frame_out = frame_in + frames_duration
-        try:
-            frame_out = int(frame_out)
-        except (TypeError, ValueError):
-            frame_out = 1001
-        item_data["frameEnd"] = frame_out
+            if frames_duration:
+                frame_out = frame_in + frames_duration - 1
+            else:
+                frame_out = project_doc["data"].get("frameEnd", frame_in)
+        item_data["frameEnd"] = int(frame_out)
         # Fps, fallback to project's value or default value (25.0)
         try:
-            fps = float(item_data.get("fps", project_doc["data"].get("fps")))
+            fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
-            fps = 25.0
+            fps = float(
+                gazu_project.get("fps", project_doc["data"].get("fps", 25))
+            )
         item_data["fps"] = fps
+        # Resolution, fall back to project default
+        match_res = re.match(
+            r"(\d+)x(\d+)",
+            item_data.get("resolution", gazu_project.get("resolution")),
+        )
+        if match_res:
+            item_data["resolutionWidth"] = int(match_res.group(1))
+            item_data["resolutionHeight"] = int(match_res.group(2))
+        else:
+            item_data["resolutionWidth"] = int(
+                project_doc["data"].get("resolutionWidth")
+            )
+            item_data["resolutionHeight"] = int(
+                project_doc["data"].get("resolutionHeight")
+            )
+        # Properties that doesn't fully exist in Kitsu.
+        # Guessing those property names below:
+        # Pixel Aspect Ratio
+        item_data["pixelAspect"] = float(
+            item_data.get(
+                "pixel_aspect", project_doc["data"].get("pixelAspect")
+            )
+        )
+        # Handle Start
+        item_data["handleStart"] = int(
+            item_data.get(
+                "handle_start", project_doc["data"].get("handleStart")
+            )
+        )
+        # Handle End
+        item_data["handleEnd"] = int(
+            item_data.get("handle_end", project_doc["data"].get("handleEnd"))
+        )
+        # Clip In
+        item_data["clipIn"] = int(
+            item_data.get("clip_in", project_doc["data"].get("clipIn"))
+        )
+        # Clip Out
+        item_data["clipOut"] = int(
+            item_data.get("clip_out", project_doc["data"].get("clipOut"))
+        )
 
         # Tasks
         tasks_list = []
         item_type = item["type"]
         if item_type == "Asset":
-            tasks_list = all_tasks_for_asset(item)
+            tasks_list = gazu.task.all_tasks_for_asset(item)
         elif item_type == "Shot":
-            tasks_list = all_tasks_for_shot(item)
+            tasks_list = gazu.task.all_tasks_for_shot(item)
         item_data["tasks"] = {
-            t["task_type_name"]: {"type": t["task_type_name"], "zou": t}
+            t["task_type_name"]: {
+                "type": t["task_type_name"],
+                "zou": gazu.task.get_task(t["id"]),
+            }
             for t in tasks_list
         }
 
@@ -176,9 +223,16 @@ def update_op_assets(
             entity_root_asset_name = "Shots"
 
         # Root parent folder if exist
-        visual_parent_doc_id = (
-            asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
-        )
+        visual_parent_doc_id = None
+        if parent_zou_id is not None:
+            parent_zou_id_dict = asset_doc_ids.get(parent_zou_id)
+            if parent_zou_id_dict is not None:
+                visual_parent_doc_id = (
+                    parent_zou_id_dict.get("_id")
+                    if parent_zou_id_dict
+                    else None
+                )
+
         if visual_parent_doc_id is None:
             # Find root folder doc ("Assets" or "Shots")
             root_folder_doc = get_asset_by_name(
@@ -197,12 +251,15 @@ def update_op_assets(
         item_data["parents"] = []
         ancestor_id = parent_zou_id
         while ancestor_id is not None:
-            parent_doc = asset_doc_ids[ancestor_id]
-            item_data["parents"].insert(0, parent_doc["name"])
+            parent_doc = asset_doc_ids.get(ancestor_id)
+            if parent_doc is not None:
+                item_data["parents"].insert(0, parent_doc["name"])
 
-            # Get parent entity
-            parent_entity = parent_doc["data"]["zou"]
-            ancestor_id = parent_entity.get("parent_id")
+                # Get parent entity
+                parent_entity = parent_doc["data"]["zou"]
+                ancestor_id = parent_entity.get("parent_id")
+            else:
+                ancestor_id = None
 
         # Build OpenPype compatible name
         if item_type in ["Shot", "Sequence"] and parent_zou_id is not None:
@@ -250,13 +307,12 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         UpdateOne: Update instance for the project
     """
     project_name = project["name"]
-    project_doc = get_project(project_name)
-    if not project_doc:
-        log.info(f"Creating project '{project_name}'")
-        project_doc = create_project(project_name, project_name)
+    project_dict = get_project(project_name)
+    if not project_dict:
+        project_dict = create_project(project_name, project_name)
 
     # Project data and tasks
-    project_data = project_doc["data"] or {}
+    project_data = project_dict["data"] or {}
 
     # Build project code and update Kitsu
     project_code = project.get("code")
@@ -273,6 +329,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
+            "active": project['project_status_name'] != "Closed",
         }
     )
 
@@ -287,7 +344,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         )
 
     return UpdateOne(
-        {"_id": project_doc["_id"]},
+        {"_id": project_dict["_id"]},
         {
             "$set": {
                 "config.tasks": {
@@ -301,7 +358,9 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str, ignore_projects: list = None):
+def sync_all_projects(
+    login: str, password: str, ignore_projects: list = None
+):
     """Update all OP projects in DB with Zou data.
 
     Args:
@@ -321,7 +380,7 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_open_projects()
+    all_projects = gazu.project.all_projects()
     for project in all_projects:
         if ignore_projects and project["name"] in ignore_projects:
             continue
@@ -346,6 +405,20 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
+    # Get all statuses for projects from Kitsu
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project['project_status_id'] == status['id']:
+            project['project_status_name'] = status['name']
+            break
+
+    #  Do not sync closed kitsu project that is not found in openpype
+    if (
+        project['project_status_name'] == "Closed"
+        and not get_project(project['name'])
+    ):
+        return
+
     log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
@@ -365,12 +438,19 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     ]
 
     # Sync project. Create if doesn't exist
+    project_name = project["name"]
+    project_dict = get_project(project_name)
+    if not project_dict:
+        log.info("Project created: {}".format(project_name))
     bulk_writes.append(write_project_to_op(project, dbcon))
 
+    if project['project_status_name'] == "Closed":
+        return
+
     # Try to find project document
-    project_name = project["name"]
+    if not project_dict:
+        project_dict = get_project(project_name)
     dbcon.Session["AVALON_PROJECT"] = project_name
-    project_doc = get_project(project_name)
 
     # Query all assets of the local project
     zou_ids_and_asset_docs = {
@@ -378,7 +458,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         for asset_doc in get_assets(project_name)
         if asset_doc["data"].get("zou", {}).get("id")
     }
-    zou_ids_and_asset_docs[project["id"]] = project_doc
+    zou_ids_and_asset_docs[project["id"]] = project_dict
 
     # Create entities root folders
     to_insert = [
@@ -389,6 +469,8 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
             "data": {
                 "root_of": r,
                 "tasks": {},
+                "visualParent": None,
+                "parents": [],
             },
         }
         for r in ["Assets", "Shots"]
@@ -423,7 +505,11 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, project_doc, all_entities, zou_ids_and_asset_docs
+                dbcon,
+                project,
+                project_dict,
+                all_entities,
+                zou_ids_and_asset_docs,
             )
         ]
     )

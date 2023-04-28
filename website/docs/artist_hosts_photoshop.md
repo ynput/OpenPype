@@ -6,11 +6,11 @@ sidebar_label: Photoshop
 
 ## Available Tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Publish](artist_tools.md#publisher)
--   [Manage](artist_tools.md#inventory)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Publish](artist_tools_publisher)
+-   [Manage](artist_tools_inventory)
 
 ## Setup
 
@@ -75,7 +75,7 @@ enabled instances, you could see more information after clicking on `Details` ta
 
 ![Image instances creates](assets/photoshop_publish_validations.png)
 
-In this dialog you could see publishable instances in left colummn, triggered plugins in the middle and logs in the right column.
+In this dialog you could see publishable instances in left column, triggered plugins in the middle and logs in the right column.
 
 In left column you could see that `review` instance was created automatically. This instance flattens all publishable instances or
 all visible layers if no publishable instances were created into single image which could serve as a single reviewable element (for example in Ftrack).

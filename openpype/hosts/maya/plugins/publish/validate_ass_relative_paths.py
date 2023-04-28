@@ -2,11 +2,13 @@ import os
 import types
 
 import maya.cmds as cmds
+from mtoa.core import createOptions
 
 import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -34,8 +36,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
                 "defaultArnoldRenderOptions.pspath"
             )
         except ValueError:
-            assert False, ("Can not validate, render setting were not opened "
-                           "yet so Arnold setting cannot be validate")
+            raise PublishValidationError(
+                "Default Arnold options has not been created yet."
+            )
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
@@ -66,6 +69,8 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
+        createOptions()
+
         texture_path = cmds.getAttr("defaultArnoldRenderOptions.tspath")
         procedural_path = cmds.getAttr("defaultArnoldRenderOptions.pspath")
 
