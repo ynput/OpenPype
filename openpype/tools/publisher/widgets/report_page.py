@@ -96,6 +96,124 @@ class VerticalScrollArea(QtWidgets.QScrollArea):
         return super(VerticalScrollArea, self).eventFilter(obj, event)
 
 
+class ActionButton(BaseClickableFrame):
+    """Plugin's action callback button.
+
+    Action may have label or icon or both.
+
+    Args:
+        plugin_action_item (PublishPluginActionItem): Action item that can be
+            triggered by it's id.
+    """
+
+    action_clicked = QtCore.Signal(str, str)
+
+    def __init__(self, plugin_action_item, parent):
+        super(ActionButton, self).__init__(parent)
+
+        self.setObjectName("ValidationActionButton")
+
+        self.plugin_action_item = plugin_action_item
+
+        action_label = plugin_action_item.label
+        action_icon = plugin_action_item.icon
+        label_widget = QtWidgets.QLabel(action_label, self)
+        icon_label = None
+        if action_icon:
+            icon_label = IconValuePixmapLabel(action_icon, self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 0, 5, 0)
+        layout.addWidget(label_widget, 1)
+        if icon_label:
+            layout.addWidget(icon_label, 0)
+
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum,
+            self.sizePolicy().verticalPolicy()
+        )
+
+    def _mouse_release_callback(self):
+        self.action_clicked.emit(
+            self.plugin_action_item.plugin_id,
+            self.plugin_action_item.action_id
+        )
+
+
+class ValidateActionsWidget(QtWidgets.QFrame):
+    """Wrapper widget for plugin actions.
+
+    Change actions based on selected validation error.
+    """
+
+    def __init__(self, controller, parent):
+        super(ValidateActionsWidget, self).__init__(parent)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(content_widget)
+
+        self._controller = controller
+        self._content_widget = content_widget
+        self._content_layout = content_layout
+        self._actions_mapping = {}
+
+    def clear(self):
+        """Remove actions from widget."""
+        while self._content_layout.count():
+            item = self._content_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setVisible(False)
+                widget.deleteLater()
+        self._actions_mapping = {}
+
+    def set_error_item(self, error_item):
+        """Set selected plugin and show it's actions.
+
+        Clears current actions from widget and recreate them from the plugin.
+
+        Args:
+            Dict[str, Any]: Object holding error items, title and possible
+                actions to run.
+        """
+
+        self.clear()
+
+        if not error_item:
+            self.setVisible(False)
+            return
+
+        plugin_action_items = error_item["plugin_action_items"]
+        for plugin_action_item in plugin_action_items:
+            if not plugin_action_item.active:
+                continue
+
+            if plugin_action_item.on_filter not in ("failed", "all"):
+                continue
+
+            action_id = plugin_action_item.action_id
+            self._actions_mapping[action_id] = plugin_action_item
+
+            action_btn = ActionButton(plugin_action_item, self._content_widget)
+            action_btn.action_clicked.connect(self._on_action_click)
+            self._content_layout.addWidget(action_btn)
+
+        if self._content_layout.count() > 0:
+            self.setVisible(True)
+            self._content_layout.addStretch(1)
+        else:
+            self.setVisible(False)
+
+    def _on_action_click(self, plugin_id, action_id):
+        self._controller.run_action(plugin_id, action_id)
+
+
 class ValidationErrorInstanceList(QtWidgets.QListView):
     """List of publish instances that caused a validation error.
 
@@ -365,124 +483,6 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         sel_model = self._instances_view.selectionModel()
         if sel_model.selectedIndexes():
             self.instance_changed.emit(self._index)
-
-
-class ActionButton(BaseClickableFrame):
-    """Plugin's action callback button.
-
-    Action may have label or icon or both.
-
-    Args:
-        plugin_action_item (PublishPluginActionItem): Action item that can be
-            triggered by it's id.
-    """
-
-    action_clicked = QtCore.Signal(str, str)
-
-    def __init__(self, plugin_action_item, parent):
-        super(ActionButton, self).__init__(parent)
-
-        self.setObjectName("ValidationActionButton")
-
-        self.plugin_action_item = plugin_action_item
-
-        action_label = plugin_action_item.label
-        action_icon = plugin_action_item.icon
-        label_widget = QtWidgets.QLabel(action_label, self)
-        icon_label = None
-        if action_icon:
-            icon_label = IconValuePixmapLabel(action_icon, self)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(5, 0, 5, 0)
-        layout.addWidget(label_widget, 1)
-        if icon_label:
-            layout.addWidget(icon_label, 0)
-
-        self.setSizePolicy(
-            QtWidgets.QSizePolicy.Minimum,
-            self.sizePolicy().verticalPolicy()
-        )
-
-    def _mouse_release_callback(self):
-        self.action_clicked.emit(
-            self.plugin_action_item.plugin_id,
-            self.plugin_action_item.action_id
-        )
-
-
-class ValidateActionsWidget(QtWidgets.QFrame):
-    """Wrapper widget for plugin actions.
-
-    Change actions based on selected validation error.
-    """
-
-    def __init__(self, controller, parent):
-        super(ValidateActionsWidget, self).__init__(parent)
-
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        content_widget = QtWidgets.QWidget(self)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(content_widget)
-
-        self._controller = controller
-        self._content_widget = content_widget
-        self._content_layout = content_layout
-        self._actions_mapping = {}
-
-    def clear(self):
-        """Remove actions from widget."""
-        while self._content_layout.count():
-            item = self._content_layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.setVisible(False)
-                widget.deleteLater()
-        self._actions_mapping = {}
-
-    def set_error_item(self, error_item):
-        """Set selected plugin and show it's actions.
-
-        Clears current actions from widget and recreate them from the plugin.
-
-        Args:
-            Dict[str, Any]: Object holding error items, title and possible
-                actions to run.
-        """
-
-        self.clear()
-
-        if not error_item:
-            self.setVisible(False)
-            return
-
-        plugin_action_items = error_item["plugin_action_items"]
-        for plugin_action_item in plugin_action_items:
-            if not plugin_action_item.active:
-                continue
-
-            if plugin_action_item.on_filter not in ("failed", "all"):
-                continue
-
-            action_id = plugin_action_item.action_id
-            self._actions_mapping[action_id] = plugin_action_item
-
-            action_btn = ActionButton(plugin_action_item, self._content_widget)
-            action_btn.action_clicked.connect(self._on_action_click)
-            self._content_layout.addWidget(action_btn)
-
-        if self._content_layout.count() > 0:
-            self.setVisible(True)
-            self._content_layout.addStretch(1)
-        else:
-            self.setVisible(False)
-
-    def _on_action_click(self, plugin_id, action_id):
-        self._controller.run_action(plugin_id, action_id)
 
 
 class ValidationArtistMessage(QtWidgets.QWidget):
