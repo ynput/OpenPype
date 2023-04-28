@@ -1202,7 +1202,7 @@ class CrashWidget(QtWidgets.QWidget):
     actions.
     """
 
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(CrashWidget, self).__init__(parent)
 
         main_label = QtWidgets.QLabel("This is not your fault", self)
@@ -1245,11 +1245,15 @@ class CrashWidget(QtWidgets.QWidget):
         copy_clipboard_btn.clicked.connect(self._on_copy_to_clipboard)
         save_to_disk_btn.clicked.connect(self._on_save_to_disk_click)
 
+        self._controller = controller
+
     def _on_copy_to_clipboard(self):
-        print("Copy to clipboard")
+        self._controller.event_system.emit(
+            "copy_report.request", {}, "report_page")
 
     def _on_save_to_disk_click(self):
-        print("Save to disk")
+        self._controller.event_system.emit(
+            "export_report.request", {}, "report_page")
 
 
 class ReportsWidget(QtWidgets.QWidget):
@@ -1315,7 +1319,7 @@ class ReportsWidget(QtWidgets.QWidget):
         logs_view = InstancesLogsView(validation_info_widget)
 
         # Crash information
-        crash_widget = CrashWidget(details_widget)
+        crash_widget = CrashWidget(controller, details_widget)
 
         details_layout = QtWidgets.QHBoxLayout(details_widget)
         details_layout.addWidget(validation_info_widget, 1)

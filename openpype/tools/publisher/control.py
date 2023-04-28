@@ -47,6 +47,7 @@ PLUGIN_ORDER_OFFSET = 0.5
 
 class CardMessageTypes:
     standard = None
+    info = "info"
     error = "error"
 
 
