@@ -44,7 +44,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         inst_frame_start = int(instance.data.get("frameStart"))
         inst_frame_end = int(instance.data.get("frameEnd"))
 
-
         if frame_start != inst_frame_start:
             raise PublishValidationError(
                 "startFrame on instance does not match"
