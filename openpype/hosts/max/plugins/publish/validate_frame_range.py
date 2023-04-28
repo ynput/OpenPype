@@ -47,12 +47,14 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         if frame_start != inst_frame_start:
             raise PublishValidationError(
                 "startFrame on instance does not match"
-                " with startFrame from the context data")
+                " with startFrame from the context data"
+                " You can use repair action to fix it")
 
         if frame_end != inst_frame_end:
             raise PublishValidationError(
                 "endFrame on instance does not match"
-                " with endFrame from the context data")
+                " with endFrame from the context data"
+                " You can use repair action to fix it")
 
     @classmethod
     def repair(cls, instance):

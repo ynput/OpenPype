@@ -24,7 +24,8 @@ class ValidateFrameRangeType(pyblish.api.InstancePlugin):
     def process(self, instance):
         if rt.rendTimeType != 3:
             raise PublishValidationError("Incorrect type of frame range"
-                                         " used in render setting..")
+                                         " used in render setting.."
+                                         "Repair action can help to fix it.")
 
     @classmethod
     def repair(cls, instance):
