@@ -568,10 +568,8 @@ class ValidationErrorItem:
         context_validation,
         title,
         description,
-        detail,
-        item_id=None
+        detail
     ):
-        self.id = item_id or uuid.uuid4().hex
         self.instance_id = instance_id
         self.instance_label = instance_label
         self.plugin_id = plugin_id
@@ -595,7 +593,6 @@ class ValidationErrorItem:
             "title": self.title,
             "description": self.description,
             "detail": self.detail,
-            "item_id": self.id,
         }
 
     @classmethod
@@ -680,6 +677,7 @@ class PublishValidationErrorsReport:
 
             for title in titles:
                 grouped_error_items.append({
+                    "id": uuid.uuid4().hex,
                     "plugin_action_items": list(plugin_action_items),
                     "error_items": error_items_by_title[title],
                     "title": title
