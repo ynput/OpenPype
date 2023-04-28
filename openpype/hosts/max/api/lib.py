@@ -138,7 +138,7 @@ def get_default_render_folder(project_setting=None):
                            ["default_render_image_folder"])
 
 
-def set_framerange(start_frame, end_frame):
+def set_render_frame_range(start_frame, end_frame):
     """
     Note:
         Frame range can be specified in different types. Possible values are:
@@ -243,7 +243,7 @@ def reset_frame_range(fps: bool = True):
     frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
     frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
     rt.execute(frange_cmd)
-    set_framerange(frame_start, frame_end)
+    set_render_frame_range(frame_start, frame_end)
 
 
 def set_context_setting():
