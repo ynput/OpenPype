@@ -12,7 +12,7 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     get_container_members,
     get_id,
-    apply_attributes
+    set_attribute
 )
 from openpype.pipeline import (
     legacy_io,
@@ -187,57 +187,23 @@ def apply_shaders(relationships, shadernodes, nodes):
     Returns:
         None
     """
-
-    attributes = relationships.get("attributes", [])
-    shader_data = relationships.get("relationships", {})
-
-    shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
-    assert shading_engines, "Error in retrieving objectSets from reference"
-
-    # region compute lookup
     nodes_by_id = defaultdict(list)
     for node in nodes:
         nodes_by_id[get_id(node)].append(node)
 
-    shading_engines_by_id = defaultdict(list)
-    for shad in shading_engines:
-        shading_engines_by_id[get_id(shad)].append(shad)
-    # endregion
+    for edit in iter_shader_edits(
+            relationships,
+            shader_nodes=shadernodes,
+            nodes_by_id=nodes_by_id
+    ):
+        if edit["action"] == "assign":
+            # Assign shader
+            cmds.sets(edit["nodes"], forceElement=edit["shader"])
 
-    # region assign shading engines and other sets
-    for data in shader_data.values():
-        # collect all unique IDs of the set members
-        shader_uuid = data["uuid"]
-        member_uuids = [member["uuid"] for member in data["members"]]
-
-        filtered_nodes = list()
-        for m_uuid in member_uuids:
-            filtered_nodes.extend(nodes_by_id[m_uuid])
-
-        id_shading_engines = shading_engines_by_id[shader_uuid]
-        if not id_shading_engines:
-            log.error("No shader found with cbId "
-                      "'{}'".format(shader_uuid))
-            continue
-        elif len(id_shading_engines) > 1:
-            log.error("Skipping shader assignment. "
-                      "More than one shader found with cbId "
-                      "'{}'. (found: {})".format(shader_uuid,
-                                                 id_shading_engines))
-            continue
-
-        if not filtered_nodes:
-            log.warning("No nodes found for shading engine "
-                        "'{0}'".format(id_shading_engines[0]))
-            continue
-        try:
-            cmds.sets(filtered_nodes, forceElement=id_shading_engines[0])
-        except RuntimeError as rte:
-            log.error("Error during shader assignment: {}".format(rte))
-
-    # endregion
-
-    apply_attributes(attributes, nodes_by_id)
+        if edit["action"] == "setattr":
+            for node in edit["nodes"]:
+                for attr, value in edit["attributes"].items():
+                    set_attribute(attr, value, node)
 
 
 def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
