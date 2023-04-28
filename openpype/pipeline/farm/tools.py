@@ -53,14 +53,11 @@ def from_published_scene(instance, replace_in_path=True):
     template_data["comment"] = None
 
     anatomy = instance.context.data['anatomy']
-    anatomy_filled = anatomy.format(template_data)
-    template_filled = anatomy_filled["publish"]["path"]
+    template_obj = anatomy.templates_obj["publish"]["path"]
+    template_filled = template_obj.format_strict(template_data)
     file_path = os.path.normpath(template_filled)
 
-    self.log.info("Using published scene for render {}".format(file_path))
-
     if not os.path.exists(file_path):
-        self.log.error("published scene does not exist!")
         raise
 
     if not replace_in_path:
@@ -101,9 +98,5 @@ def from_published_scene(instance, replace_in_path=True):
         metadata_folder = metadata_folder.replace(orig_scene,
                                                   new_scene)
         instance.data["publishRenderMetadataFolder"] = metadata_folder
-
-    self.log.info("Scene name was switched {} -> {}".format(
-        orig_scene, new_scene
-    ))
 
     return file_path
