@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """3dsmax specific Avalon/Pyblish plugin definitions."""
 from pymxs import runtime as rt
+from typing import Union
 import six
 from abc import ABCMeta
 from openpype.pipeline import (
@@ -11,6 +12,59 @@ from openpype.pipeline import (
 from openpype.lib import BoolDef
 from .lib import imprint, read, lsattr
 
+
+MS_CUSTOM_ATTRIB = """attributes "openPypeData"
+(
+	parameters main rollout:OPparams
+	(
+		all_handles type:#maxObjectTab tabSize:0 tabSizeVariable:on
+	)
+
+	rollout OPparams "OP Parameters"
+	(
+		listbox list_node "Node References" items:#()
+		button button_add "Add Selection"
+
+		fn node_to_name the_node =
+		(
+			handle = the_node.handle
+			obj_name = the_node.name
+			handle_name = obj_name + "<" + handle as string + ">"
+			return handle_name
+		)
+
+		on button_add pressed do
+		(
+			current_selection = selectByName title:"Select Objects To Add To Container" buttontext:"Add"
+			temp_arr = #()
+			i_node_arr = #()
+			for c in current_selection do
+			(
+				handle_name = node_to_name c
+				node_ref = NodeTransformMonitor node:c
+				append temp_arr handle_name
+				append i_node_arr node_ref
+			)
+			all_handles = i_node_arr
+			list_node.items = temp_arr
+		)
+
+		on OPparams open do
+		(
+			if all_handles.count != 0 do
+			(
+				temp_arr = #()
+				for x in all_handles do
+				(
+					print(x.node)
+					handle_name = node_to_name x.node
+					append temp_arr handle_name
+				)
+				list_node.items = temp_arr
+			)
+		)
+	)
+)"""
 
 class OpenPypeCreatorError(CreatorError):
     pass
@@ -33,15 +87,25 @@ class MaxCreatorBase(object):
         return shared_data
 
     @staticmethod
-    def create_instance_node(node_name: str, parent: str = ""):
-        parent_node = rt.getNodeByName(parent) if parent else rt.rootScene
-        if not parent_node:
-            raise OpenPypeCreatorError(f"Specified parent {parent} not found")
+    def create_instance_node(node):
+        """Create instance node.
 
-        container = rt.container(name=node_name)
-        container.Parent = parent_node
+        If the supplied node is existing node, it will be used to hold the
+        instance, otherwise new node of type Dummy will be created.
 
-        return container
+        Args:
+            node (rt.MXSWrapperBase, str): Node or node name to use.
+
+        Returns:
+            instance
+        """
+        if isinstance(node, str):
+            node = rt.dummy(name=node)
+
+        attrs = rt.execute(MS_CUSTOM_ATTRIB)
+        rt.custAttributes.add(node.baseObject, attrs)
+
+        return node
 
 
 @six.add_metaclass(ABCMeta)
@@ -60,8 +124,11 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_data,
             self
         )
-        for node in self.selected_nodes:
-            node.Parent = instance_node
+        if pre_create_data.get("use_selection"):
+            print("adding selection")
+            print(rt.array(*self.selected_nodes))
+            instance_node.openPypeData.all_nodes = rt.array(
+                *self.selected_nodes)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
@@ -98,11 +165,11 @@ class MaxCreator(Creator, MaxCreatorBase):
 
         """
         for instance in instances:
-            instance_node = rt.getNodeByName(
-                instance.data.get("instance_node"))
-            if instance_node:
+            if instance_node := rt.getNodeByName(
+                instance.data.get("instance_node")
+            ):
                 rt.select(instance_node)
-                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
+                rt.execute("for o in selection do for c in o.children do c.parent = undefined")  # noqa
                 rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
