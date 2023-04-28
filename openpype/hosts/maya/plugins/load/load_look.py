@@ -116,7 +116,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         nodes_by_id = defaultdict(list)
         for n in nodes:
             nodes_by_id[lib.get_id(n)].append(n)
-        lib.apply_attributes(attributes, nodes_by_id)
+        lib_looks.apply_attributes(attributes, nodes_by_id)
 
     def _get_nodes_with_shader(self, shader_nodes):
         """

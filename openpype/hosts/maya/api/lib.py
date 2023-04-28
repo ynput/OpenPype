@@ -1482,27 +1482,6 @@ def set_attribute(attribute, value, node):
         cmds.setAttr(node_attr, value)
 
 
-def apply_attributes(attributes, nodes_by_id):
-    """Alter the attributes to match the state when publishing
-
-    Apply attribute settings from the publish to the node in the scene based
-    on the UUID which is stored in the cbId attribute.
-
-    Args:
-        attributes (list): list of dictionaries
-        nodes_by_id (dict): collection of nodes based on UUID
-                           {uuid: [node, node]}
-
-    """
-
-    for attr_data in attributes:
-        nodes = nodes_by_id[attr_data["uuid"]]
-        attr_value = attr_data["attributes"]
-        for node in nodes:
-            for attr, value in attr_value.items():
-                set_attribute(attr, value, node)
-
-
 def get_container_members(container):
     """Returns the members of a container.
     This includes the nodes from any loaded references in the container.
