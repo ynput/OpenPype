@@ -187,7 +187,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         self.data["source_filepath"] = last_published_workfile_path
 
         resources_dir = os.path.join(local_workfile_dir, 'resources')
-        if not os.path.exists(resource_dir):
+        if not os.path.exists(resources_dir):
             print(f"making dir {resources_dir}")
             os.mkdir(resources_dir)
 
