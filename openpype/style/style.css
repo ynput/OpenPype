@@ -136,7 +136,7 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
@@ -166,7 +166,7 @@ QToolButton {
 }
 
 QToolButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
@@ -914,7 +914,7 @@ PixmapButton{
     background: {color:bg-buttons};
 }
 PixmapButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 PixmapButton:disabled {
     background: {color:bg-buttons-disabled};
@@ -925,7 +925,7 @@ PixmapButton:disabled {
     background: {color:bg-view};
 }
 #ThumbnailPixmapHoverButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 
 #CreatorDetailedDescription {
@@ -946,7 +946,7 @@ PixmapButton:disabled {
 }
 
 #CreateDialogHelpButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 #CreateDialogHelpButton QWidget {
     background: transparent;
@@ -1005,7 +1005,7 @@ PixmapButton:disabled {
     border-radius: 0.2em;
 }
 #CardViewWidget:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 #CardViewWidget[state="selected"] {
     background: {color:bg-view-selection};
@@ -1060,7 +1060,7 @@ ValidationArtistMessage QLabel {
 }
 
 #ValidationActionButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
