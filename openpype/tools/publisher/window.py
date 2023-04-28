@@ -825,6 +825,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
 
+        if not publish_enabled:
+            self._publish_frame.set_shrunk_state(True)
+
         self._update_publish_details_widget()
 
     def _validate_create_instances(self):
