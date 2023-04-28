@@ -1,7 +1,10 @@
 import pyblish.api
 
-from openpype.pipeline import publish, OptionalPyblishPluginMixin
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    publish,
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 from openpype.hosts.fusion.api.action import SelectInvalidAction
 
