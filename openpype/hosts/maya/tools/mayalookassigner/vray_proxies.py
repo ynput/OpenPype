@@ -91,8 +91,12 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
             ))
             continue
 
-        relationships = lib_looks.get_look_relationships(version["_id"])
-        shadernodes, _ = lib_looks.load_look(version["_id"])
+        relationships = lib_looks.get_look_relationships(
+            version["_id"], project_name=project_name
+        )
+        shadernodes, _ = lib_looks.load_look(
+            version["_id"], project_name=project_name
+        )
 
         # Get only the node ids and paths related to this asset
         # And get the shader edits the look supplies

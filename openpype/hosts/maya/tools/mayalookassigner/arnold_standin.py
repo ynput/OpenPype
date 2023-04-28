@@ -152,8 +152,12 @@ def assign_look(standin, subset, project_name=None):
             ))
             continue
 
-        relationships = lib_looks.get_look_relationships(version["_id"])
-        shader_nodes, container_node = lib_looks.load_look(version["_id"])
+        relationships = lib_looks.get_look_relationships(
+            version["_id"], project_name=project_name
+        )
+        shader_nodes, container_node = lib_looks.load_look(
+            version["_id"], project_name=project_name
+        )
         namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset
