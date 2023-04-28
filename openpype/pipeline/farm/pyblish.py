@@ -11,10 +11,12 @@ from openpype.lib import Logger
 import attr
 import pyblish.api
 from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.farm.patterning import match_aov_pattern
 import os
 import clique
 from copy import deepcopy
 import re
+import warnings
 
 
 @attr.s
@@ -263,6 +265,7 @@ def create_skeleton_instance(
 
     return instance_skeleton_data
 
+
 def _solve_families(families):
     """Solve families.
 
@@ -277,7 +280,9 @@ def _solve_families(families):
     if "review" not in families:
         families.append("review")
     return families
-def create_instances_for_aov(instance, skeleton):
+
+
+def create_instances_for_aov(instance, skeleton, aov_filter):
     """Create instances from AOVs.
 
     This will create new pyblish.api.Instances by going over expected
@@ -328,11 +333,12 @@ def create_instances_for_aov(instance, skeleton):
     return _create_instances_for_aov(
         instance,
         skeleton,
+        aov_filter,
         additional_color_data
     )
 
 
-def _create_instances_for_aov(instance, skeleton, additional_data):
+def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data):
     """Create instance for each AOV found.
 
     This will create new instance for every AOV it can detect in expected
@@ -491,35 +497,64 @@ def _create_instances_for_aov(instance, skeleton, additional_data):
         log.debug("instances:{}".format(instances))
     return instances
 
-def get_resources(project_name, version, extension=None):
-    """Get the files from the specific version."""
 
-    # TODO this functions seems to be weird
-    #   - it's looking for representation with one extension or first (any)
-    #       representation from a version?
-    #  - not sure how this should work, maybe it does for specific use cases
-    #       but probably can't be used for all resources from 2D workflows
-    extensions = None
+def get_resources(project_name, version, extension=None):
+    """Get the files from the specific version.
+
+    This will return all get all files from representation.
+
+    Todo:
+        This is really weird function, and it's use is
+        highly controversial. First, it will not probably work
+        ar all in final release of AYON, second, the logic isn't sound.
+        It should try to find representation matching the current one -
+        because it is used to pull out files from previous version to
+        be included in this one.
+
+    .. deprecated:: 3.15.5
+       This won't work in AYON and even the logic must be refactored.
+
+    Args:
+        project_name (str): Name of the project.
+        version (dict): Version document.
+        extension (str): extension used to filter
+            representations.
+
+    Returns:
+        list: of files
+
+    """
+    warnings.warn((
+        "This won't work in AYON and even "
+        "the logic must be refactored."), DeprecationWarning)
+    extensions = []
     if extension:
         extensions = [extension]
-    repre_docs = list(get_representations(
-        project_name, version_ids=[version["_id"]], extensions=extensions
-    ))
-    assert repre_docs, "This is a bug"
 
-    representation = repre_docs[0]
+    # there is a `context_filter` argument that won't probably work in
+    # final release of AYON. SO we'll rather not use it
+    repre_docs = list(get_representations(
+        project_name, version_ids=[version["_id"]]))
+
+    filtered = []
+    for doc in repre_docs:
+        if doc["context"]["ext"] in extensions:
+            filtered.append(doc)
+
+    representation = filtered[0]
     directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
         [
-            os.path.normpath(os.path.join(directory, fname))
-            for fname in os.listdir(directory)
+            os.path.normpath(os.path.join(directory, file_name))
+            for file_name in os.listdir(directory)
         ]
     )
 
     return resources
 
-def copy_extend_frames(self, instance, representation):
+
+def copy_extend_frames(instance, representation):
     """Copy existing frames from latest version.
 
     This will copy all existing frames from subset's latest version back
@@ -533,11 +568,15 @@ def copy_extend_frames(self, instance, representation):
     """
     import speedcopy
 
+    R_FRAME_NUMBER = re.compile(
+        r".+\.(?P<frame>[0-9]+)\..+")
+
     log = Logger.get_logger("farm_publishing")
     log.info("Preparing to copy ...")
     start = instance.data.get("frameStart")
     end = instance.data.get("frameEnd")
     project_name = instance.context.data["project"]
+    anatomy = instance.data["anatomy"]  # type: Anatomy
 
     # get latest version of subset
     # this will stop if subset wasn't published yet
@@ -554,7 +593,7 @@ def copy_extend_frames(self, instance, representation):
     )
     r_col, _ = clique.assemble(subset_resources)
 
-    # if override remove all frames we are expecting to be rendered
+    # if override remove all frames we are expecting to be rendered,
     # so we'll copy only those missing from current render
     if instance.data.get("overrideExistingFrame"):
         for frame in range(start, end + 1):
@@ -568,18 +607,18 @@ def copy_extend_frames(self, instance, representation):
     resource_files = []
     r_filename = os.path.basename(
         representation.get("files")[0])  # first file
-    op = re.search(self.R_FRAME_NUMBER, r_filename)
+    op = re.search(R_FRAME_NUMBER, r_filename)
     pre = r_filename[:op.start("frame")]
     post = r_filename[op.end("frame"):]
     assert op is not None, "padding string wasn't found"
     for frame in list(r_col):
-        fn = re.search(self.R_FRAME_NUMBER, frame)
+        fn = re.search(R_FRAME_NUMBER, frame)
         # silencing linter as we need to compare to True, not to
         # type
         assert fn is not None, "padding string wasn't found"
         # list of tuples (source, destination)
         staging = representation.get("stagingDir")
-        staging = self.anatomy.fill_root(staging)
+        staging = anatomy.fill_root(staging)
         resource_files.append(
             (frame, os.path.join(
                 staging, "{}{}{}".format(pre, fn["frame"], post)))
@@ -596,3 +635,34 @@ def copy_extend_frames(self, instance, representation):
         log.info("  > {}".format(source[1]))
 
     log.info("Finished copying %i files" % len(resource_files))
+
+
+def attach_instances_to_subset(attach_to, instances):
+    """Attach instance to subset.
+
+    If we are attaching to other subsets, create copy of existing
+    instances, change data to match its subset and replace
+    existing instances with modified data.
+
+    Args:
+        attach_to (list): List of instances to attach to.
+        instances (list): List of instances to attach.
+
+    Returns:
+          list: List of attached instances.
+
+    """
+    #
+
+    new_instances = []
+    for attach_instance in attach_to:
+        for i in instances:
+            new_inst = copy(i)
+            new_inst["version"] = attach_instance.get("version")
+            new_inst["subset"] = attach_instance.get("subset")
+            new_inst["family"] = attach_instance.get("family")
+            new_inst["append"] = True
+            # don't set subsetGroup if we are attaching
+            new_inst.pop("subsetGroup")
+            new_instances.append(new_inst)
+    return new_instances

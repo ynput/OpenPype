@@ -2,14 +2,20 @@
 """Create publishing job on RoyalRender."""
 import os
 from copy import deepcopy
+import json
 
-from pyblish.api import InstancePlugin, IntegratorOrder
+from pyblish.api import InstancePlugin, IntegratorOrder, Instance
 
 from openpype.pipeline import legacy_io
 from openpype.modules.royalrender.rr_job import RRJob, RREnvList
 from openpype.pipeline.publish import KnownPublishError
 from openpype.lib.openpype_version import (
     get_OpenPypeVersion, get_openpype_version)
+from openpype.pipeline.farm.pyblish import (
+    create_skeleton_instance,
+    create_instances_for_aov,
+    attach_instances_to_subset
+)
 
 
 class CreatePublishRoyalRenderJob(InstancePlugin):
@@ -31,50 +37,84 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        # asset = data.get("asset")
-        # subset = data.get("subset")
-        # source = self._remap_source(
-        #   data.get("source") or context.data["source"])
+        if not instance.data.get("farm"):
+            self.log.info("Skipping local instance.")
+            return
 
-    def _remap_source(self, source):
-        success, rootless_path = (
-            self.anatomy.find_root_template_from_path(source)
-        )
-        if success:
-            source = rootless_path
+        instance_skeleton_data = create_skeleton_instance(
+            instance,
+            families_transfer=self.families_transfer,
+            instance_transfer=self.instance_transfer)
+
+        instances = None
+        if isinstance(instance.data.get("expectedFiles")[0], dict):
+            instances = create_instances_for_aov(
+                instance, instance_skeleton_data, self.aov_filter)
+
         else:
-            # `rootless_path` is not set to `source` if none of roots match
-            self.log.warning((
-                "Could not find root path for remapping \"{}\"."
-                " This may cause issues."
-            ).format(source))
-        return source
+            representations = self._get_representations(
+                instance_skeleton_data,
+                instance.data.get("expectedFiles")
+            )
 
-    def get_job(self, instance, job, instances):
-        """Submit publish job to RoyalRender."""
+            if "representations" not in instance_skeleton_data.keys():
+                instance_skeleton_data["representations"] = []
+
+            # add representation
+            instance_skeleton_data["representations"] += representations
+            instances = [instance_skeleton_data]
+
+        # attach instances to subset
+        if instance.data.get("attachTo"):
+            instances = attach_instances_to_subset(
+                instance.data.get("attachTo"), instances
+            )
+
+        self.log.info("Creating RoyalRender Publish job ...")
+
+        if not instance.data.get("rrJobs"):
+            self.log.error(("There is no prior RoyalRender "
+                            "job on the instance."))
+            raise KnownPublishError(
+                "Can't create publish job without prior ppducing jobs first")
+
+        publish_job = self.get_job(instance, instances)
+
+        instance.data["rrJobs"] += publish_job
+
+        metadata_path, rootless_metadata_path = self._create_metadata_path(
+            instance)
+
+        self.log.info("Writing json file: {}".format(metadata_path))
+        with open(metadata_path, "w") as f:
+            json.dump(publish_job, f, indent=4, sort_keys=True)
+
+    def get_job(self, instance, instances):
+        """Create RR publishing job.
+
+        Based on provided original instance and additional instances,
+        create publishing job and return it to be submitted to farm.
+
+        Args:
+            instance (Instance): Original instance.
+            instances (list of Instance): List of instances to
+                be published on farm.
+
+        Returns:
+            RRJob: RoyalRender publish job.
+
+        """
         data = instance.data.copy()
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
-        override_version = None
         instance_version = instance.data.get("version")  # take this if exists
-        if instance_version != 1:
-            override_version = instance_version
-        output_dir = self._get_publish_folder(
-            instance.context.data['anatomy'],
-            deepcopy(instance.data["anatomyData"]),
-            instance.data.get("asset"),
-            instances[0]["subset"],
-            # TODO: this shouldn't be hardcoded and is in fact settable by
-            #       Settings.
-            'render',
-            override_version
-        )
+        override_version = instance_version if instance_version != 1 else None
 
         # Transfer the environment from the original job to this dependent
         # job, so they use the same environment
         metadata_path, roothless_metadata_path = \
-            self._create_metadata_path(instance)
+                self._create_metadata_path(instance)
 
         environment = RREnvList({
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
@@ -96,7 +136,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         # and collect all pre_ids to wait for
         job_environ = {}
         jobs_pre_ids = []
-        for job in instance["rrJobs"]:  # type: RRJob
+        for job in instance.data["rrJobs"]:  # type: RRJob
             if job.rrEnvList:
                 job_environ.update(
                     dict(RREnvList.parse(job.rrEnvList))
@@ -159,11 +199,4 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         else:
             job.WaitForPreIDs += jobs_pre_ids
 
-        self.log.info("Creating RoyalRender Publish job ...")
-
-        if not instance.data.get("rrJobs"):
-            self.log.error("There is no RoyalRender job on the instance.")
-            raise KnownPublishError(
-                "Can't create publish job without producing jobs")
-
-        instance.data["rrJobs"] += job
+        return job

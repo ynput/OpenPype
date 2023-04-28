@@ -9,6 +9,17 @@ from collections import namedtuple, OrderedDict
 CustomAttribute = namedtuple("CustomAttribute", ["name", "value"])
 
 
+def get_rr_platform():
+    # type: () -> str
+    """Returns name of platform used in rr jobs."""
+    if sys.platform.lower() in ["win32", "win64"]:
+        return "windows"
+    elif sys.platform.lower() == "darwin":
+        return "mac"
+    else:
+        return "linux"
+
+
 class RREnvList(dict):
     def serialize(self):
         # <rrEnvList>VariableA=ValueA~~~VariableB=ValueB</rrEnvList>
@@ -162,17 +173,6 @@ class RRJob:
     # Environment
     # only used in RR 8.3 and newer
     rrEnvList = attr.ib(default=None)  # type: str
-
-    @staticmethod
-    def get_rr_platform():
-        # type: () -> str
-        """Returns name of platform used in rr jobs."""
-        if sys.platform.lower() in ["win32", "win64"]:
-            return "windows"
-        elif sys.platform.lower() == "darwin":
-            return "mac"
-        else:
-            return "linux"
 
 
 class SubmitterParameter:
