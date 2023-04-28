@@ -12,7 +12,7 @@ class FusionIncrementCurrentFile(
 
     """
 
-    label = "Increment current file"
+    label = "Increment workfile version"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["fusion"]
     families = ["workfile"]
