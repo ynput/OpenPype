@@ -12,59 +12,60 @@ from openpype.pipeline import (
 from openpype.lib import BoolDef
 from .lib import imprint, read, lsattr
 
-
 MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 (
-	parameters main rollout:OPparams
-	(
-		all_handles type:#maxObjectTab tabSize:0 tabSizeVariable:on
-	)
+    parameters main rollout:OPparams
+    (
+        all_handles type:#maxObjectTab tabSize:0 tabSizeVariable:on
+    )
 
-	rollout OPparams "OP Parameters"
-	(
-		listbox list_node "Node References" items:#()
-		button button_add "Add Selection"
+    rollout OPparams "OP Parameters"
+    (
+        listbox list_node "Node References" items:#()
+        button button_add "Add Selection"
 
-		fn node_to_name the_node =
-		(
-			handle = the_node.handle
-			obj_name = the_node.name
-			handle_name = obj_name + "<" + handle as string + ">"
-			return handle_name
-		)
+        fn node_to_name the_node =
+        (
+            handle = the_node.handle
+            obj_name = the_node.name
+            handle_name = obj_name + "<" + handle as string + ">"
+            return handle_name
+        )
 
-		on button_add pressed do
-		(
-			current_selection = selectByName title:"Select Objects To Add To Container" buttontext:"Add"
-			temp_arr = #()
-			i_node_arr = #()
-			for c in current_selection do
-			(
-				handle_name = node_to_name c
-				node_ref = NodeTransformMonitor node:c
-				append temp_arr handle_name
-				append i_node_arr node_ref
-			)
-			all_handles = i_node_arr
-			list_node.items = temp_arr
-		)
+        on button_add pressed do
+        (
+            current_selection = selectByName title:"Select Objects To Add To
+            Container" buttontext:"Add"
+            temp_arr = #()
+            i_node_arr = #()
+            for c in current_selection do
+            (
+                handle_name = node_to_name c
+                node_ref = NodeTransformMonitor node:c
+                append temp_arr handle_name
+                append i_node_arr node_ref
+            )
+            all_handles = i_node_arr
+            list_node.items = temp_arr
+        )
 
-		on OPparams open do
-		(
-			if all_handles.count != 0 do
-			(
-				temp_arr = #()
-				for x in all_handles do
-				(
-					print(x.node)
-					handle_name = node_to_name x.node
-					append temp_arr handle_name
-				)
-				list_node.items = temp_arr
-			)
-		)
-	)
+        on OPparams open do
+        (
+            if all_handles.count != 0 do
+            (
+                temp_arr = #()
+                for x in all_handles do
+                (
+                    print(x.node)
+                    handle_name = node_to_name x.node
+                    append temp_arr handle_name
+                )
+                list_node.items = temp_arr
+            )
+        )
+    )
 )"""
+
 
 class OpenPypeCreatorError(CreatorError):
     pass
@@ -83,7 +84,8 @@ class MaxCreatorBase(object):
                     shared_data["max_cached_subsets"][creator_id] = [i.name]
                 else:
                     shared_data[
-                        "max_cached_subsets"][creator_id].append(i.name)  # noqa
+                        "max_cached_subsets"][creator_id].append(
+                        i.name)  # noqa
         return shared_data
 
     @staticmethod
@@ -138,7 +140,7 @@ class MaxCreator(Creator, MaxCreatorBase):
     def collect_instances(self):
         self.cache_subsets(self.collection_shared_data)
         for instance in self.collection_shared_data[
-                "max_cached_subsets"].get(self.identifier, []):
+            "max_cached_subsets"].get(self.identifier, []):
             created_instance = CreatedInstance.from_existing(
                 read(rt.getNodeByName(instance)), self
             )
@@ -166,10 +168,12 @@ class MaxCreator(Creator, MaxCreatorBase):
         """
         for instance in instances:
             if instance_node := rt.getNodeByName(
-                instance.data.get("instance_node")
+                    instance.data.get("instance_node")
             ):
                 rt.select(instance_node)
-                rt.execute("for o in selection do for c in o.children do c.parent = undefined")  # noqa
+                rt.execute(
+                    "for o in selection do for c in o.children do c.parent = "
+                    "undefined")  # noqa
                 rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
