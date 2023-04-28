@@ -154,6 +154,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
