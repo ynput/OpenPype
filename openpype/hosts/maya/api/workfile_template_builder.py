@@ -233,7 +233,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_representation_load(self, placeholder, failed):
         """Hide placeholder, add them to placeholder set
         """
         node = placeholder._scene_identifier
