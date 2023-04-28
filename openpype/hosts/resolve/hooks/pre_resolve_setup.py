@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 from openpype.lib import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
@@ -16,10 +17,10 @@ class ResolvePrelaunch(PreLaunchHook):
     def execute(self):
         current_platform = platform.system().lower()
 
-        PROGRAMDATA = self.launch_context.env.get("PROGRAMDATA", "")
-        RESOLVE_SCRIPT_API_ = {
+        programdata = self.launch_context.env.get("PROGRAMDATA", "")
+        resolve_script_api_locations = {
             "windows": (
-                f"{PROGRAMDATA}/Blackmagic Design/"
+                f"{programdata}/Blackmagic Design/"
                 "DaVinci Resolve/Support/Developer/Scripting"
             ),
             "darwin": (
@@ -28,11 +29,10 @@ class ResolvePrelaunch(PreLaunchHook):
             ),
             "linux": "/opt/resolve/Developer/Scripting"
         }
-        RESOLVE_SCRIPT_API = os.path.normpath(
-            RESOLVE_SCRIPT_API_[current_platform])
-        self.launch_context.env["RESOLVE_SCRIPT_API"] = RESOLVE_SCRIPT_API
+        resolve_script_api = Path(resolve_script_api_locations[current_platform])
+        self.launch_context.env["RESOLVE_SCRIPT_API"] = resolve_script_api.as_posix()
 
-        RESOLVE_SCRIPT_LIB_ = {
+        resolve_script_lib_dirs = {
             "windows": (
                 "C:/Program Files/Blackmagic Design"
                 "/DaVinci Resolve/fusionscript.dll"
@@ -43,45 +43,39 @@ class ResolvePrelaunch(PreLaunchHook):
             ),
             "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
         }
-        RESOLVE_SCRIPT_LIB = os.path.normpath(
-            RESOLVE_SCRIPT_LIB_[current_platform])
-        self.launch_context.env["RESOLVE_SCRIPT_LIB"] = RESOLVE_SCRIPT_LIB
+        resolve_script_lib = Path(resolve_script_lib_dirs[current_platform])
+        self.launch_context.env["RESOLVE_SCRIPT_LIB"] = resolve_script_lib.as_posix()
 
-        # TODO: add OTIO installation from  `openpype/requirements.py`
+        # TODO: add OTIO installation from `openpype/requirements.py`
         # making sure python <3.9.* is installed at provided path
-        python3_home = os.path.normpath(
-            self.launch_context.env.get("RESOLVE_PYTHON3_HOME", ""))
+        python3_home = Path(self.launch_context.env.get("RESOLVE_PYTHON3_HOME", ""))
 
-        assert os.path.isdir(python3_home), (
+        assert python3_home.is_dir(), (
             "Python 3 is not installed at the provided folder path. Either "
             "make sure the `environments\resolve.json` is having correctly "
             "set `RESOLVE_PYTHON3_HOME` or make sure Python 3 is installed "
             f"in given path. \nRESOLVE_PYTHON3_HOME: `{python3_home}`"
         )
-        self.launch_context.env["PYTHONHOME"] = python3_home
-        self.log.info(f"Path to Resolve Python folder: `{python3_home}`...")
+        python3_home_str = python3_home.as_posix()
+        self.launch_context.env["PYTHONHOME"] = python3_home_str
+        self.log.info(f"Path to Resolve Python folder: `{python3_home_str}`")
 
-        # add to the python path to path
+        # add to the python path to PATH
         env_path = self.launch_context.env["PATH"]
-        self.launch_context.env["PATH"] = os.pathsep.join([
-            python3_home,
-            os.path.join(python3_home, "Scripts")
-        ] + env_path.split(os.pathsep))
+        self.launch_context.env["PATH"] = f"{python3_home_str}{os.pathsep}{env_path}"
 
         self.log.debug(f"PATH: {self.launch_context.env['PATH']}")
 
         # add to the PYTHONPATH
         env_pythonpath = self.launch_context.env["PYTHONPATH"]
-        self.launch_context.env["PYTHONPATH"] = os.pathsep.join([
-            os.path.join(python3_home, "Lib", "site-packages"),
-            os.path.join(RESOLVE_SCRIPT_API, "Modules"),
-        ] + env_pythonpath.split(os.pathsep))
+        modules_path = Path(resolve_script_api, "Modules").as_posix()
+        self.launch_context.env["PYTHONPATH"] = f"{modules_path}{os.pathsep}{env_pythonpath}"
 
         self.log.debug(f"PYTHONPATH: {self.launch_context.env['PYTHONPATH']}")
 
-        RESOLVE_UTILITY_SCRIPTS_DIR_ = {
+        resolve_utility_scripts_dirs = {
             "windows": (
-                f"{PROGRAMDATA}/Blackmagic Design"
+                f"{programdata}/Blackmagic Design"
                 "/DaVinci Resolve/Fusion/Scripts/Comp"
             ),
             "darwin": (
@@ -90,12 +84,9 @@ class ResolvePrelaunch(PreLaunchHook):
             ),
             "linux": "/opt/resolve/Fusion/Scripts/Comp"
         }
-        RESOLVE_UTILITY_SCRIPTS_DIR = os.path.normpath(
-            RESOLVE_UTILITY_SCRIPTS_DIR_[current_platform]
-        )
+        resolve_utility_scripts_dir = Path(resolve_utility_scripts_dirs[current_platform])
         # setting utility scripts dir for scripts syncing
-        self.launch_context.env["RESOLVE_UTILITY_SCRIPTS_DIR"] = (
-            RESOLVE_UTILITY_SCRIPTS_DIR)
+        self.launch_context.env["RESOLVE_UTILITY_SCRIPTS_DIR"] = resolve_utility_scripts_dir.as_posix()
 
         # remove terminal coloring tags
         self.launch_context.env["OPENPYPE_LOG_NO_COLORS"] = "True"
