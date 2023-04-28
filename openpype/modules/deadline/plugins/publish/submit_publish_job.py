@@ -23,7 +23,8 @@ from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.pyblish import (
     create_skeleton_instance,
-    create_instances_for_aov
+    create_instances_for_aov,
+    attach_instances_to_subset
 )
 
 
@@ -551,7 +552,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         if isinstance(instance.data.get("expectedFiles")[0], dict):
             instances = create_instances_for_aov(
-                instance, instance_skeleton_data)
+                instance, instance_skeleton_data, self.aov_filter)
 
         else:
             representations = self._get_representations(
@@ -566,25 +567,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_skeleton_data["representations"] += representations
             instances = [instance_skeleton_data]
 
-        # if we are attaching to other subsets, create copy of existing
-        # instances, change data to match its subset and replace
-        # existing instances with modified data
+        # attach instances to subset
         if instance.data.get("attachTo"):
-            self.log.info("Attaching render to subset:")
-            new_instances = []
-            for at in instance.data.get("attachTo"):
-                for i in instances:
-                    new_i = copy(i)
-                    new_i["version"] = at.get("version")
-                    new_i["subset"] = at.get("subset")
-                    new_i["family"] = at.get("family")
-                    new_i["append"] = True
-                    # don't set subsetGroup if we are attaching
-                    new_i.pop("subsetGroup")
-                    new_instances.append(new_i)
-                    self.log.info("  - {} / v{}".format(
-                        at.get("subset"), at.get("version")))
-            instances = new_instances
+            instances = attach_instances_to_subset(
+                instance.data.get("attachTo"), instances
+            )
 
         r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
           ____
