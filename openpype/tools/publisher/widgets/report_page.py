@@ -1195,6 +1195,63 @@ class InstancesLogsView(QtWidgets.QFrame):
         self._update_instances()
 
 
+class CrashWidget(QtWidgets.QWidget):
+    """Widget shown when publishing crashes.
+
+    Contains only minimum information for artis with easy access to report
+    actions.
+    """
+
+    def __init__(self, parent):
+        super(CrashWidget, self).__init__(parent)
+
+        main_label = QtWidgets.QLabel("This is not your fault", self)
+        main_label.setAlignment(QtCore.Qt.AlignCenter)
+        main_label.setObjectName("PublishCrashMainLabel")
+
+        report_label = QtWidgets.QLabel(
+            (
+                "Please report the error to your pipeline support"
+                " using one of the options below"
+            ),
+            self
+        )
+        report_label.setAlignment(QtCore.Qt.AlignCenter)
+        report_label.setWordWrap(True)
+        report_label.setObjectName("PublishCrashReportLabel")
+
+        btns_widget = QtWidgets.QWidget(self)
+        copy_clipboard_btn = QtWidgets.QPushButton(
+            "Copy to clipboard", btns_widget)
+        save_to_disk_btn = QtWidgets.QPushButton(
+            "Save to disk", btns_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(copy_clipboard_btn, 0)
+        btns_layout.addSpacing(20)
+        btns_layout.addWidget(save_to_disk_btn, 0)
+        btns_layout.addStretch(1)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addStretch(1)
+        layout.addWidget(main_label, 0)
+        layout.addSpacing(20)
+        layout.addWidget(report_label, 0)
+        layout.addSpacing(20)
+        layout.addWidget(btns_widget, 0)
+        layout.addStretch(2)
+
+        copy_clipboard_btn.clicked.connect(self._on_copy_to_clipboard)
+        save_to_disk_btn.clicked.connect(self._on_save_to_disk_click)
+
+    def _on_copy_to_clipboard(self):
+        print("Copy to clipboard")
+
+    def _on_save_to_disk_click(self):
+        print("Save to disk")
+
+
 class ReportsWidget(QtWidgets.QWidget):
     """
         # Crash layout
@@ -1238,35 +1295,32 @@ class ReportsWidget(QtWidgets.QWidget):
         details_widget = QtWidgets.QFrame(self)
         details_widget.setObjectName("PublishInstancesDetails")
 
-        # Details: Left side
-        details_left_widget = QtWidgets.QWidget(details_widget)
-
-        actions_widget = ValidateActionsWidget(
-            controller, details_left_widget)
-
-        logs_view = InstancesLogsView(details_left_widget)
-
-        details_left_layout = QtWidgets.QVBoxLayout(details_left_widget)
-        details_left_layout.setContentsMargins(0, 0, 0, 0)
-        details_left_layout.addWidget(actions_widget, 0)
-        details_left_layout.addWidget(logs_view, 1)
-
-        # Details: Right side
-        details_right_widget = QtWidgets.QWidget(details_widget)
-
-        error_details_input = QtWidgets.QTextEdit(details_right_widget)
+        # Validation details
+        error_details_input = QtWidgets.QTextEdit(details_widget)
         error_details_input.setObjectName("InfoText")
         error_details_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
+        validation_info_widget = QtWidgets.QWidget(details_widget)
 
-        details_right_layout = QtWidgets.QVBoxLayout(details_right_widget)
-        details_right_layout.setContentsMargins(0, 0, 0, 0)
-        details_right_layout.addWidget(error_details_input, 1)
+        actions_widget = ValidateActionsWidget(
+            controller, validation_info_widget)
+
+        validation_info_layout = QtWidgets.QVBoxLayout(
+            validation_info_widget)
+        validation_info_layout.setContentsMargins(0, 0, 0, 0)
+        validation_info_layout.addWidget(actions_widget, 0)
+        validation_info_layout.addWidget(error_details_input, 1)
+
+        logs_view = InstancesLogsView(validation_info_widget)
+
+        # Crash information
+        crash_widget = CrashWidget(details_widget)
 
         details_layout = QtWidgets.QHBoxLayout(details_widget)
-        details_layout.addWidget(details_left_widget, 1)
-        details_layout.addWidget(details_right_widget, 1)
+        details_layout.addWidget(validation_info_widget, 1)
+        details_layout.addWidget(logs_view, 1)
+        details_layout.addWidget(crash_widget, 1)
 
         content_layout = QtWidgets.QHBoxLayout(self)
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -1281,10 +1335,12 @@ class ReportsWidget(QtWidgets.QWidget):
         self._instances_view = instances_view
         self._validation_error_view = validation_error_view
 
-        self._details_right_widget = details_right_widget
+        self._validation_info_widget = validation_info_widget
+        self._actions_widget = actions_widget
         self._error_details_input = error_details_input
 
-        self._actions_widget = actions_widget
+        self._crash_widget = crash_widget
+
         self._logs_view = logs_view
 
         self._controller = controller
@@ -1323,13 +1379,14 @@ class ReportsWidget(QtWidgets.QWidget):
             and self._controller.publish_has_validation_errors
         ):
             self._views_layout.setCurrentWidget(self._validation_error_view)
-            self._details_right_widget.setVisible(True)
-            self._actions_widget.setVisible(True)
+            self._validation_info_widget.setVisible(True)
 
         else:
             self._views_layout.setCurrentWidget(self._instances_view)
-            self._details_right_widget.setVisible(False)
-            self._actions_widget.setVisible(False)
+            self._validation_info_widget.setVisible(False)
+
+        self._crash_widget.setVisible(self._controller.publish_has_crashed)
+        self._logs_view.setVisible(not self._controller.publish_has_crashed)
 
         # Instance view & logs update
         instance_items = self._get_instance_items()

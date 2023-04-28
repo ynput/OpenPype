@@ -1114,6 +1114,16 @@ ValidationArtistMessage QLabel {
     font-weight: bold;
 }
 
+#PublishCrashMainLabel{
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+#PublishCrashReportLabel {
+    font-weight: bold;
+    font-size: 13pt;
+}
+
 #AssetNameInputWidget {
     background: {color:bg-inputs};
     border: 1px solid {color:border};
