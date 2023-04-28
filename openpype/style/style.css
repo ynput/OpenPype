@@ -722,6 +722,13 @@ OverlayMessageWidget[type="error"]:hover {
     background: {color:overlay-messages:bg-error-hover};
 }
 
+OverlayMessageWidget[type="info"] {
+    background: {color:overlay-messages:bg-info};
+}
+OverlayMessageWidget[type="info"]:hover {
+    background: {color:overlay-messages:bg-info-hover};
+}
+
 OverlayMessageWidget QWidget {
     background: transparent;
 }
