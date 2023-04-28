@@ -677,7 +677,7 @@ class PublishInstanceCardWidget(BaseClickableFrame):
     def __init__(self, instance, parent):
         super(PublishInstanceCardWidget, self).__init__(parent)
 
-        self.setObjectName("PublishInstanceCard")
+        self.setObjectName("CardViewWidget")
 
         icon_widget = QtWidgets.QLabel(self)
         label_widget = QtWidgets.QLabel(instance.label, self)
@@ -1436,7 +1436,7 @@ class ReportPageWidget(QtWidgets.QFrame):
 
         header_label = QtWidgets.QLabel(self)
         header_label.setAlignment(QtCore.Qt.AlignCenter)
-        header_label.setObjectName("PublishInfoMainLabel")
+        header_label.setObjectName("PublishReportHeader")
 
         publish_instances_widget = ReportsWidget(controller, self)
 

@@ -1040,6 +1040,11 @@ PixmapButton:disabled {
     font-style: bold;
 }
 
+#PublishReportHeader {
+    font-size: 14pt;
+    font-weight: bold;
+}
+
 #PublishInfoMainLabel {
     font-size: 12pt;
 }
@@ -1088,6 +1093,25 @@ ValidationArtistMessage QLabel {
 #ValidationErrorInstanceList::item {
     border-bottom: 1px solid {color:border};
     border-left: 1px solid {color:border};
+}
+
+#PublishInstancesDetails {
+    border: 1px solid {color:border};
+    border-radius: 0.3em;
+}
+
+#InstancesLogsView {
+    border: 1px solid {color:border};
+    background: {color:bg-view};
+    border-radius: 0.3em;
+}
+
+#PublishLogMessage {
+    font-family: "Noto Sans Mono";
+}
+
+#PublishInstanceLogsLabel {
+    font-weight: bold;
 }
 
 #AssetNameInputWidget {
