@@ -150,10 +150,10 @@ def set_framerange(start_frame, end_frame):
     Todo:
         Current type is hard-coded, there should be a custom setting for this.
     """
-    rt.rendTimeType = 4
+    rt.rendTimeType = 3
     if start_frame is not None and end_frame is not None:
-        frame_range = "{0}-{1}".format(start_frame, end_frame)
-        rt.rendPickupFrames = frame_range
+        rt.rendStart = int(start_frame)
+        rt.rendEnd = int(end_frame)
 
 
 def get_multipass_setting(project_setting=None):
@@ -243,6 +243,7 @@ def reset_frame_range(fps: bool = True):
     frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
     frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
     rt.execute(frange_cmd)
+    set_framerange(frame_start, frame_end)
 
 
 def set_context_setting():
@@ -259,6 +260,7 @@ def set_context_setting():
         None
     """
     reset_scene_resolution()
+    reset_frame_range()
 
 
 def get_max_version():
