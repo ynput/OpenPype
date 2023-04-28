@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tools for loading looks to vray proxies."""
+"""Functions for reading data from Alembic files directly"""
 import os
 from collections import defaultdict
 import logging
