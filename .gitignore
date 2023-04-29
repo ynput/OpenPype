@@ -85,7 +85,6 @@ openpype/premiere/ppro/js/debug.log
 .env
 dump.sql
 test_localsystem.txt
-*.code-workspace
 
 # website
 ##########
