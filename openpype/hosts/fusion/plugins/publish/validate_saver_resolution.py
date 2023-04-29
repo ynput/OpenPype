@@ -39,7 +39,7 @@ class ValidateSaverResolution(
         # Save old comment
         oldComment = ""
         hasExpression = False
-        if saver["Comments"][firstFrame] is not "":
+        if saver["Comments"][firstFrame] != "":
             if saver["Comments"].GetExpression() is not None:
                 hasExpression = True
                 oldComment = saver["Comments"].GetExpression()
