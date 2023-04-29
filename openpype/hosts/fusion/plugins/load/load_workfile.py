@@ -24,7 +24,6 @@ class FusionLoadWorkfile(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
         # Get needed elements
         bmd = get_bmd_library()
         comp = get_current_comp()
