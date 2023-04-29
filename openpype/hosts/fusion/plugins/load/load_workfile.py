@@ -14,17 +14,9 @@ from openpype.hosts.fusion.api import (
 class FusionLoadWorkfile(load.LoaderPlugin):
     """Load the content of a workfile into Fusion"""
 
-    families = [
-        "imagesequence",
-        "review",
-        "render",
-        "plate",
-        "image",
-        "onilne",
-        "workfile",
-    ]
+    families = ["workfile"]
     representations = ["*"]
-    extensions = {"*"}
+    extensions = {"comp"}
 
     label = "Load Workfile"
     order = -10
