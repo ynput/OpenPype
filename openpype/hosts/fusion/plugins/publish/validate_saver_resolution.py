@@ -19,8 +19,8 @@ class ValidateSaverResolution(pyblish.api.InstancePlugin):
         if wrong_resolution is None:
             wrong_resolution = []
 
-        entityData = instance.data["assetEntity"]["data"]
         saver = instance[0]
+        firstFrame = saver.GetAttrs("TOOLNT_Region_Start")[1]
         comp = get_current_comp()
 
         # If the current saver hasn't bin rendered its input resolution
@@ -33,35 +33,36 @@ class ValidateSaverResolution(pyblish.api.InstancePlugin):
         # Save old comment
         oldComment = ""
         hasExpression = False
-        if saver["Comments"][entityData["frameStart"]] is not "":
+        if saver["Comments"][firstFrame] is not "":
             if saver["Comments"].GetExpression() is not None:
                 hasExpression = True
                 oldComment = saver["Comments"].GetExpression()
                 saver["Comments"].SetExpression(None)
             else:
-                oldComment = saver["Comments"][entityData["frameStart"]]
-                saver["Comments"][entityData["frameStart"]] = ""
+                oldComment = saver["Comments"][firstFrame]
+                saver["Comments"][firstFrame] = ""
 
         # Get input width
         saver["Comments"].SetExpression("self.Input.OriginalWidth")
-        width = int(saver["Comments"][entityData["frameStart"]])
+        width = int(saver["Comments"][firstFrame])
 
         # Get input height
         saver["Comments"].SetExpression("self.Input.OriginalHeight")
-        height = int(saver["Comments"][entityData["frameStart"]])
+        height = int(saver["Comments"][firstFrame])
 
         # Reset old comment
         saver["Comments"].SetExpression(None)
         if hasExpression:
             saver["Comments"].SetExpression(oldComment)
         else:
-            saver["Comments"][entityData["frameStart"]] = oldComment
+            saver["Comments"][firstFrame] = oldComment
 
         # False undo removes the undo-stack from the undo list
         comp.EndUndo(False)
 
         # Time to compare!
         wrong_resolution.append("{}x{}".format(width, height))
+        entityData = instance.data["assetEntity"]["data"]
         if entityData["resolutionWidth"] != width:
             return [saver]
         if entityData["resolutionHeight"] != height:
