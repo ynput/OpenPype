@@ -26,7 +26,6 @@ class ValidateFrameRange(
     actions = [RepairContextAction]
 
     def process(self, context):
-        # Workaround for ContextPlugin always running, even if no instance
         if not self.is_active(context.data):
             return
 

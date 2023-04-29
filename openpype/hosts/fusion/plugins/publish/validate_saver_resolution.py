@@ -1,17 +1,23 @@
 import pyblish.api
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin,
+)
 
 from openpype.hosts.fusion.api.action import SelectInvalidAction
 from openpype.hosts.fusion.api import get_current_comp
 
 
-class ValidateSaverResolution(pyblish.api.InstancePlugin):
+class ValidateSaverResolution(
+    pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
+):
     """Validate that the saver input resolution matches the projects"""
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Resolution"
     families = ["render"]
     hosts = ["fusion"]
+    optional = True
     actions = [SelectInvalidAction]
 
     @classmethod
@@ -71,6 +77,9 @@ class ValidateSaverResolution(pyblish.api.InstancePlugin):
         return []
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         wrong_resolution = []
         invalid = self.get_invalid(instance, wrong_resolution)
         if invalid:
