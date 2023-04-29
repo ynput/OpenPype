@@ -53,7 +53,6 @@ class SelectInvalidAction(pyblish.api.Action):
         names = set()
         for tool in invalid:
             flow.Select(tool, True)
+            comp.SetActiveTool(tool)
             names.add(tool.Name)
-        self.log.info(
-            "Selecting invalid tools: %s" % ", ".join(sorted(names))
-        )
+        self.log.info("Selecting invalid tools: %s" % ", ".join(sorted(names)))
