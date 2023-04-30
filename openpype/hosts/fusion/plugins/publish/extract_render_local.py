@@ -1,7 +1,10 @@
 import logging
 import contextlib
 import pyblish.api
-from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
+from openpype.hosts.fusion.api import (
+    comp_lock_and_undo_chunk,
+    update_frame_range,
+)
 
 
 log = logging.getLogger(__name__)
@@ -71,7 +74,9 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
 
         savers_to_render = [
             # Get the saver tool from the instance
-            instance[0] for instance in context if
+            instance[0]
+            for instance in context
+            if
             # Only active instances
             instance.data.get("publish", True) and
             # Only render.local instances
@@ -102,6 +107,15 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
                             "Wait": True,
                         }
                     )
+
+            if context.data.get("resetFramerange"):
+                update_frame_range(
+                    context.data["frameStart"],
+                    context.data["frameEnd"],
+                    set_render_range=True,
+                    handle_start=context.data["handleStart"],
+                    handle_end=context.data["handleEnd"],
+                )
 
             context.data[key] = bool(result)
 
