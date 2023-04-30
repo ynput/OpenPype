@@ -41,7 +41,7 @@ class ValidateFrameRange(
 
         # Calcualte in/out points
         range_start = start - handle_start
-        range_end = end - handle_start
+        range_end = end + handle_end
 
         invalid = self.get_invalid(context, range_start, range_end)
         if invalid:
