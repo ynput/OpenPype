@@ -62,7 +62,8 @@ class ValidateFrameRange(
 
         if range_start != context.data["frameStartHandle"]:
             invalid.append(
-                '"Globla start frame" is set to {} but should start at {}'.format(
+                '"Globla start frame" is set to {} '
+                "but should start at {}".format(
                     context.data["frameStartHandle"],
                     range_start,
                 )
