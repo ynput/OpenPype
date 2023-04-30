@@ -87,24 +87,47 @@ class ValidateFrameRange(
     def get_invalid(cls, context, range_start, range_end):
         invalid = []
 
-        if range_start != context.data["frameStartHandle"]:
+        if range_start != comp_global_start:
             invalid.append(
-                '"Globla start frame" is set to {} '
+                '"Global start" is set to {} '
                 "but should start at {}".format(
-                    context.data["frameStartHandle"],
+                    comp_global_start,
                     range_start,
                 )
             )
 
-        if range_end != context.data["frameEndHandle"]:
+        if range_end != comp_global_end:
             invalid.append(
-                '"Globla end frame" is set to {} but should end at {}'.format(
+                '"Global end" is set to {} but should end at {}'.format(
                     context.data["frameEndHandle"],
                     range_end,
                 )
             )
 
-        return invalid
+        if start != comp_start:
+            invalid.append(
+                '"Render start" is set to {} '
+                "but should start at {}".format(
+                    comp_start,
+                    start,
+                )
+            )
+
+        if end != comp_end:
+            invalid.append(
+                '"Render end" is set to {} but should end at {}'.format(
+                    comp_end,
+                    end,
+                )
+            )
+
+        if invalid:
+            raise PublishValidationError(
+                "The comp's frame range isn't correct"
+                "compared to the asset's properties."
+                "\n\n{}".format("\n\n".join(invalid)),
+                title=self.label,
+            )
 
     @classmethod
     def repair(cls, context):
