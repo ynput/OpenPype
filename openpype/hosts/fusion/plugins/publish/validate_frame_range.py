@@ -26,9 +26,6 @@ class ValidateFrameRange(
     actions = [RepairContextAction]
 
     def process(self, context):
-        if not self.is_active(context.data):
-            return
-
         asset_doc = get_current_project_asset()
         start = asset_doc["data"]["frameStart"]
         end = asset_doc["data"]["frameEnd"]
