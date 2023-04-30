@@ -67,24 +67,28 @@ class ValidateFrameRange(
             comp_global_end,
         ) = get_comp_render_range(comp)
 
+        # If the user skips the validation
         if not self.is_active(context.data):
             # If the validation is off, set the frameStart/EndHandle to the
             # current frame range, so that's what will be rendered later on
-            context.data["frameStartHandle"] = context.data["frameStart"]
-            context.data["frameEndHandle"] = context.data["frameEnd"]
+            context.data["frameStart"] = int(comp_start)
+            context.data["frameEnd"] = int(comp_end)
+            context.data["frameStartHandle"] = int(comp_start)
+            context.data["frameEndHandle"] = int(comp_end)
+            context.data["handleStart"] = 0
+            context.data["handleEnd"] = 0
             return
-
-        invalid = self.get_invalid(context, range_start, range_end)
-        if invalid:
-            raise PublishValidationError(
-                "The comp's frame range isn't correct"
-                "compared to the asset's properties."
-                "\n\n{}".format("\n\n".join(invalid)),
-                title=self.label,
+        else:
+            context.data["frameStart"] = int(comp_start)
+            context.data["frameEnd"] = int(comp_end)
+            context.data["frameStartHandle"] = int(comp_global_start)
+            context.data["frameEndHandle"] = int(comp_global_end)
+            context.data["handleStart"] = int(comp_global_start) - int(
+                comp_start
             )
+            context.data["handleEnd"] = int(comp_global_end) - int(comp_end)
+            context.data["resetFramerange"] = True
 
-    @classmethod
-    def get_invalid(cls, context, range_start, range_end):
         invalid = []
 
         if range_start != comp_global_start:
