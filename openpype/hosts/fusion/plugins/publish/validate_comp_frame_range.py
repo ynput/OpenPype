@@ -7,9 +7,25 @@ from openpype.pipeline import (
 from openpype.pipeline.publish import RepairContextAction
 
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.hosts.fusion.api.lib import (
-    set_asset_framerange,
-)
+from openpype.hosts.fusion.api.lib import set_asset_framerange
+
+
+def get_comp_render_range(comp):
+    """Return comp's start-end render range and global start-end range."""
+    comp_attrs = comp.GetAttrs()
+    start = comp_attrs["COMPN_RenderStart"]
+    end = comp_attrs["COMPN_RenderEnd"]
+    global_start = comp_attrs["COMPN_GlobalStart"]
+    global_end = comp_attrs["COMPN_GlobalEnd"]
+
+    # Whenever render ranges are undefined fall back
+    # to the comp's global start and end
+    if start == -1000000000:
+        start = global_start
+    if end == -1000000000:
+        end = global_end
+
+    return start, end, global_start, global_end
 
 
 class ValidateFrameRange(
@@ -41,6 +57,15 @@ class ValidateFrameRange(
         # Calcualte in/out points
         range_start = start - handle_start
         range_end = end + handle_end
+
+        # Get the comps range
+        comp = context.data["currentComp"]
+        (
+            comp_start,
+            comp_end,
+            comp_global_start,
+            comp_global_end,
+        ) = get_comp_render_range(comp)
 
         if not self.is_active(context.data):
             # If the validation is off, set the frameStart/EndHandle to the
