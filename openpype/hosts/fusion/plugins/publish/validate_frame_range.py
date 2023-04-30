@@ -47,8 +47,8 @@ class ValidateFrameRange(
         if invalid:
             raise PublishValidationError(
                 "The comp's frame range isn't correct"
-                "compared to the projects properties."
-                "\n\n{}".format("\n".join(invalid)),
+                "compared to the asset's properties."
+                "\n\n{}".format("\n\n".join(invalid)),
                 title=self.label,
             )
 
@@ -58,7 +58,7 @@ class ValidateFrameRange(
 
         if range_start != context.data["frameStartHandle"]:
             invalid.append(
-                "Inpoint is set to {} but should start at {}".format(
+                '"Globla start frame" is set to {} but should start at {}'.format(
                     context.data["frameStartHandle"],
                     range_start,
                 )
@@ -66,7 +66,7 @@ class ValidateFrameRange(
 
         if range_end != context.data["frameEndHandle"]:
             invalid.append(
-                "Outpoint is set to {} but should end at {}".format(
+                '"Globla end frame" is set to {} but should end at {}'.format(
                     context.data["frameEndHandle"],
                     range_end,
                 )
