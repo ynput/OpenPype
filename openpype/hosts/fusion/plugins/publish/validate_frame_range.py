@@ -43,6 +43,13 @@ class ValidateFrameRange(
         range_start = start - handle_start
         range_end = end + handle_end
 
+        if not self.is_active(context.data):
+            # If the validation is off, set the frameStart/EndHandle to the
+            # current frame range, so that's what will be rendered later on
+            context.data["frameStartHandle"] = context.data["frameStart"]
+            context.data["frameEndHandle"] = context.data["frameEnd"]
+            return
+
         invalid = self.get_invalid(context, range_start, range_end)
         if invalid:
             raise PublishValidationError(
