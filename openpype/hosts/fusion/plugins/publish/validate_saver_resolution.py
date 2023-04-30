@@ -86,7 +86,7 @@ class ValidateSaverResolution(
             entityData = instance.data["assetEntity"]["data"]
             raise PublishValidationError(
                 "The input's resolution does not match"
-                " the project's resolution of {}x{}.\n\n"
+                " the asset's resolution of {}x{}.\n\n"
                 "The input's resolution is {}".format(
                     entityData["resolutionWidth"],
                     entityData["resolutionHeight"],
