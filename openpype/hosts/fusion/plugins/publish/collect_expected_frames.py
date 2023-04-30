@@ -8,7 +8,7 @@ class CollectFusionExpectedFrames(
 ):
     """Collect all frames needed to publish expected frames"""
 
-    order = pyblish.api.CollectorOrder + 0.5
+    order = pyblish.api.CollectorOrder + 1.499
     label = "Collect Expected Frames"
     hosts = ["fusion"]
     families = ["render"]
@@ -34,6 +34,8 @@ class CollectFusionExpectedFrames(
             "files": files,
             "stagingDir": output_dir,
         }
+
+        self.log.info(repre)
 
         self.set_representation_colorspace(
             representation=repre,
