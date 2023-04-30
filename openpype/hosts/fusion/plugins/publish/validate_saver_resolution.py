@@ -5,7 +5,10 @@ from openpype.pipeline import (
 )
 
 from openpype.hosts.fusion.api.action import SelectInvalidAction
-from openpype.hosts.fusion.api import get_current_comp
+from openpype.hosts.fusion.api import (
+    get_current_comp,
+    comp_lock_and_undo_chunk,
+)
 
 
 class ValidateSaverResolution(
@@ -33,38 +36,34 @@ class ValidateSaverResolution(
         # hasn't bin saved. To combat this, add an expression in
         # the comments field to read the resolution
 
-        # Create undo stack so we later can remove all changes
-        comp.StartUndo("Read resolution")
-
-        # Save old comment
-        oldComment = ""
-        hasExpression = False
-        if saver["Comments"][firstFrame] != "":
-            if saver["Comments"].GetExpression() is not None:
-                hasExpression = True
-                oldComment = saver["Comments"].GetExpression()
-                saver["Comments"].SetExpression(None)
-            else:
-                oldComment = saver["Comments"][firstFrame]
-                saver["Comments"][firstFrame] = ""
-
-        # Get input width
-        saver["Comments"].SetExpression("self.Input.OriginalWidth")
-        width = int(saver["Comments"][firstFrame])
-
-        # Get input height
-        saver["Comments"].SetExpression("self.Input.OriginalHeight")
-        height = int(saver["Comments"][firstFrame])
-
-        # Reset old comment
-        saver["Comments"].SetExpression(None)
-        if hasExpression:
-            saver["Comments"].SetExpression(oldComment)
-        else:
-            saver["Comments"][firstFrame] = oldComment
-
         # False undo removes the undo-stack from the undo list
-        comp.EndUndo(False)
+        with comp_lock_and_undo_chunk(comp, "Read resolution", False):
+            # Save old comment
+            oldComment = ""
+            hasExpression = False
+            if saver["Comments"][firstFrame] != "":
+                if saver["Comments"].GetExpression() is not None:
+                    hasExpression = True
+                    oldComment = saver["Comments"].GetExpression()
+                    saver["Comments"].SetExpression(None)
+                else:
+                    oldComment = saver["Comments"][firstFrame]
+                    saver["Comments"][firstFrame] = ""
+
+            # Get input width
+            saver["Comments"].SetExpression("self.Input.OriginalWidth")
+            width = int(saver["Comments"][firstFrame])
+
+            # Get input height
+            saver["Comments"].SetExpression("self.Input.OriginalHeight")
+            height = int(saver["Comments"][firstFrame])
+
+            # Reset old comment
+            saver["Comments"].SetExpression(None)
+            if hasExpression:
+                saver["Comments"].SetExpression(oldComment)
+            else:
+                saver["Comments"][firstFrame] = oldComment
 
         # Time to compare!
         wrong_resolution.append("{}x{}".format(width, height))
