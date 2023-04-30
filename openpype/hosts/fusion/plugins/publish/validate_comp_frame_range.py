@@ -18,8 +18,10 @@ class ValidateFrameRange(
 ):
     """Validate if the comp has the correct frame range"""
 
-    order = pyblish.api.ValidatorOrder
-    label = "Validate Frame Range"
+    order = (
+        pyblish.api.ValidatorOrder - 1.05
+    )  # Move the validator so it runs before comp_frame_range
+    label = "Validate Comp Frame Range"
     families = ["render"]
     hosts = ["fusion"]
     optional = True
