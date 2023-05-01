@@ -15,7 +15,7 @@ print("Starting OpenPype usersetup...")
 project_settings = get_project_settings(os.environ['AVALON_PROJECT'])
 
 # Loading plugins explicitly.
-explicit_plugins_loading = project_settings["maya"]["explicit_plugins_loading"]
+explicit_plugins_loading = project_settings["maya"].get("explicit_plugins_loading", False)
 if explicit_plugins_loading["enabled"]:
     def _explicit_load_plugins():
         for plugin in explicit_plugins_loading["plugins_to_load"]:
