@@ -357,7 +357,7 @@ def get_imageio_config(
         "activate_global_color_management", False)
 
     if not activate_color_management:
-        # if global settings are disabled return False because
+        # if global settings are disabled return empty dict because
         # it is expected that no colorspace management is needed
         log.info(
             "Colorspace management is disabled."
@@ -477,6 +477,15 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
     # get file rules from global and host_name
     frules_global = imageio_global["file_rules"]
+    activate_global_rules = frules_global.get(
+        "activate_global_file_rules", False)
+
+    if not activate_global_rules:
+        log.info(
+            "Global File Rules are disabled."
+        )
+        return {}
+
     # host is optional, some might not have any settings
     frules_host = imageio_host.get("file_rules", {})
 
