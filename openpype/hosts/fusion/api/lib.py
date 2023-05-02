@@ -344,3 +344,21 @@ def comp_lock_and_undo_chunk(
     finally:
         comp.Unlock()
         comp.EndUndo(keep_undo)
+
+
+def get_comp_render_range(comp):
+    """Return comp's start-end render range and global start-end range."""
+    comp_attrs = comp.GetAttrs()
+    start = int(comp_attrs["COMPN_RenderStart"])
+    end = int(comp_attrs["COMPN_RenderEnd"])
+    global_start = int(comp_attrs["COMPN_GlobalStart"])
+    global_end = int(comp_attrs["COMPN_GlobalEnd"])
+
+    # Whenever render ranges are undefined fall back
+    # to the comp's global start and end
+    if start == -1000000000:
+        start = global_start
+    if end == -1000000000:
+        end = global_end
+
+    return start, end, global_start, global_end
