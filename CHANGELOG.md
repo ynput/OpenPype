@@ -1,6 +1,309 @@
 # Changelog
 
 
+## [3.15.5](https://github.com/ynput/OpenPype/tree/3.15.5)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.4...3.15.5)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Playblast profiles <a href="https://github.com/ynput/OpenPype/pull/4777">#4777</a></summary>
+
+Support playblast profiles.This enables studios to customize what playblast settings should be on a per task and/or subset basis. For example `modeling` should have `Wireframe On Shaded` enabled, while all other tasks should have it disabled.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Support .abc files directly for Arnold standin look assignment <a href="https://github.com/ynput/OpenPype/pull/4856">#4856</a></summary>
+
+If `.abc` file is loaded into arnold standin support look assignment through the `cbId` attributes in the alembic file.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Hide animation instance in creator <a href="https://github.com/ynput/OpenPype/pull/4872">#4872</a></summary>
+
+- Hide animation instance in creator
+- Add inventory action to recreate animation publish instance for loaded rigs
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Render Creator enhancements <a href="https://github.com/ynput/OpenPype/pull/4477">#4477</a></summary>
+
+<strong>Improvements to the creator for render family
+
+</strong>This PR introduces some enhancements to the creator for the render family in Unreal Engine:
+- Added the option to create a new, empty sequence for the render.
+- Added the option to not include the whole hierarchy for the selected sequence.
+- Improvements of the error messages.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Added settings for rendering <a href="https://github.com/ynput/OpenPype/pull/4575">#4575</a></summary>
+
+<strong>Added settings for rendering in Unreal Engine.
+
+</strong>Two settings has been added:
+- Pre roll frames, to set how many frames are used to load the scene before starting the actual rendering.
+- Configuration path, to allow to save a preset of settings from Unreal, and use it for rendering.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: Optimize anatomy formatting by only formatting used templates instead <a href="https://github.com/ynput/OpenPype/pull/4784">#4784</a></summary>
+
+Optimization to not format full anatomy when only a single template is used. Instead format only the single template instead.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Patchelf version locked <a href="https://github.com/ynput/OpenPype/pull/4853">#4853</a></summary>
+
+For Centos dockerfile it is necessary to lock the patchelf version to the older, otherwise the build process fails. 
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Implement `switch` method on loaders <a href="https://github.com/ynput/OpenPype/pull/4866">#4866</a></summary>
+
+Implement `switch` method on loaders
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Code: Tweak docstrings and return type hints <a href="https://github.com/ynput/OpenPype/pull/4875">#4875</a></summary>
+
+Tweak docstrings and return type hints for functions in `openpype.client.entities`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Clear comment on successful publish and on window close <a href="https://github.com/ynput/OpenPype/pull/4885">#4885</a></summary>
+
+Clear comment text field on successful publish and on window close.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Make sure to reset asset widget when hidden and reshown <a href="https://github.com/ynput/OpenPype/pull/4886">#4886</a></summary>
+
+Make sure to reset asset widget when hidden and reshown. Without this the asset list would never refresh in the set asset widget when changing context on an existing instance and thus would not show new assets from after the first time launching that widget.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Fix nested model instances. <a href="https://github.com/ynput/OpenPype/pull/4852">#4852</a></summary>
+
+Fix nested model instance under review instance, where data collection was not including "Display Lights" and "Focal Length".
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Make default namespace naming backwards compatible <a href="https://github.com/ynput/OpenPype/pull/4873">#4873</a></summary>
+
+Namespaces of loaded references are now _by default_ back to what they were before #4511
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Legacy convertor skips deprecation warnings <a href="https://github.com/ynput/OpenPype/pull/4846">#4846</a></summary>
+
+Nuke legacy convertor was triggering deprecated function which is causing a lot of logs which slows down whole process. Changed the convertor to skip all nodes without `AVALON_TAB` to avoid the warnings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: move startup script logic to hook <a href="https://github.com/ynput/OpenPype/pull/4849">#4849</a></summary>
+
+Startup script for OpenPype was interfering with Open Last Workfile feature. Moving this loggic from simple command line argument in the Settings to pre-launch hook is solving the order of command line arguments and making both features work.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Don't change time slider ranges in `get_frame_range` <a href="https://github.com/ynput/OpenPype/pull/4858">#4858</a></summary>
+
+Don't change time slider ranges in `get_frame_range`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Looks - calculate hash for tx texture <a href="https://github.com/ynput/OpenPype/pull/4878">#4878</a></summary>
+
+Texture hash is calculated for textures used in published look and it is used as key in dictionary. In recent changes, this hash is not calculated for TX files, resulting in `None` value as key in dictionary, crashing publishing. This PR is adding texture hash for TX files to solve that issue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Collect `currentFile` context data separate from workfile instance <a href="https://github.com/ynput/OpenPype/pull/4883">#4883</a></summary>
+
+Fix publishing without an active workfile instance due to missing `currentFile` data.Now collect `currentFile` into context in houdini through context plugin no matter the active instances.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: fixed broken slate workflow once published on deadline <a href="https://github.com/ynput/OpenPype/pull/4887">#4887</a></summary>
+
+Slate workflow is now working as expected and Validate Sequence Frames is not raising the once slate frame is included.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Add fps as instance.data in collect review in Houdini. <a href="https://github.com/ynput/OpenPype/pull/4888">#4888</a></summary>
+
+fix the bug of failing to publish extract review in HoudiniOriginal error:
+```python
+  File "OpenPype\build\exe.win-amd64-3.9\openpype\plugins\publish\extract_review.py", line 516, in prepare_temp_data
+    "fps": float(instance.data["fps"]),
+KeyError: 'fps'
+```
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Fill missing data for instances with review <a href="https://github.com/ynput/OpenPype/pull/4891">#4891</a></summary>
+
+Fill required data to instance in traypublisher if instance has review family. The data are required by ExtractReview and it would be complicated to do proper fix at this moment! The collector does for review instances what did https://github.com/ynput/OpenPype/pull/4383
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Keep track about current context and fix context selection widget <a href="https://github.com/ynput/OpenPype/pull/4892">#4892</a></summary>
+
+Change selected context to current context on reset. Fix bug when context widget is re-enabled.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Scene inventory: Model refresh fix with cherry picking <a href="https://github.com/ynput/OpenPype/pull/4895">#4895</a></summary>
+
+Fix cherry pick issue in scene inventory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Pre-render and missing review flag on instance causing crash <a href="https://github.com/ynput/OpenPype/pull/4897">#4897</a></summary>
+
+If instance created in nuke was missing `review` flag, collector crashed.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>After Effects: fix handles KeyError <a href="https://github.com/ynput/OpenPype/pull/4727">#4727</a></summary>
+
+Sometimes when publishing with AE (we only saw this error on AE 2023), we got a KeyError for the handles in the "Collect Workfile" step. So I did get the handles from the context if ther's no handles in the asset entity.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.4](https://github.com/ynput/OpenPype/tree/3.15.4)
 
 

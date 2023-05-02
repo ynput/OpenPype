@@ -45,7 +45,7 @@ class PublishValidationError(Exception):
 
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
-        self.title = title or "< Missing title >"
+        self.title = title
         self.description = description or message
         self.detail = detail
         super(PublishValidationError, self).__init__(message)

@@ -556,7 +556,7 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": true,
+            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
@@ -1461,7 +1461,7 @@
             ]
         },
         "reference_loader": {
-            "namespace": "{asset_name}_{subset}_##",
+            "namespace": "{asset_name}_{subset}_##_",
             "group_name": "_GRP"
         }
     },

@@ -163,7 +163,7 @@ class AssetDocsCache:
         return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
-class PublishReport:
+class PublishReportMaker:
     """Report for single publishing process.
 
     Report keeps current state of publishing and currently processed plugin.
@@ -784,6 +784,13 @@ class PublishValidationErrors:
 
         # Make sure the cached report is cleared
         plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        if not error.title:
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
+            else:
+                plugin_label = plugin.__name__
+            error.title = plugin_label
+
         self._error_items.append(
             ValidationErrorItem.from_result(plugin_id, error, instance)
         )
@@ -1674,7 +1681,7 @@ class PublisherController(BasePublisherController):
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
-        self._publish_report = PublishReport(self)
+        self._publish_report = PublishReportMaker(self)
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
 
