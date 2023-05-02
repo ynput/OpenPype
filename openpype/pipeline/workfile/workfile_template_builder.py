@@ -43,8 +43,10 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
+
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
+    discover_creator_plugins,
     CreateContext,
 )
 
@@ -1246,6 +1248,15 @@ class PlaceholderLoadMixin(object):
 
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
+
+        # Get families and sort them alphabetically
+        families = (
+            discover_legacy_creator_plugins() or
+            discover_creator_plugins()
+        )
+        families = [f.family for f in families]
+        families.sort()
+
         return [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
@@ -1272,11 +1283,11 @@ class PlaceholderLoadMixin(object):
                     " field \"inputLinks\""
                 )
             ),
-            attribute_definitions.TextDef(
+            attribute_definitions.EnumDef(
                 "family",
                 label="Family",
                 default=options.get("family"),
-                placeholder="model, look, ..."
+                items=families
             ),
             attribute_definitions.TextDef(
                 "representation",
