@@ -514,10 +514,7 @@ class Creator(LegacyCreator):
         # Get info from data and create name value.
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = ensure_unique_name(
-            build_op_basename(asset, subset),
-            bpy.context.scene.openpype_instances.keys(),
-        )
+        name = build_op_basename(asset, subset)
 
         # Use selected objects if useSelection is True
         if (self.options or {}).get("useSelection"):
