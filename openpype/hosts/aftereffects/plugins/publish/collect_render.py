@@ -88,10 +88,11 @@ class CollectAERender(publish.AbstractCollectRender):
                 raise ValueError("No file extension set in Render Queue")
             render_item = render_q[0]
 
+            instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family="render",
-                families=inst.data.get("families", []),
+                families=instance_families,
                 version=version,
                 time="",
                 source=current_file,
@@ -109,6 +110,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 tileRendering=False,
                 tilesX=0,
                 tilesY=0,
+                review="review" in instance_families,
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
@@ -220,8 +222,5 @@ class CollectAERender(publish.AbstractCollectRender):
         fam = "render.local"
         if fam not in instance.families:
             instance.families.append(fam)
-
-        if "review" in instance.families:
-            instance.review = True
 
         return instance
