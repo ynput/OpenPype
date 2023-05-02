@@ -188,13 +188,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         resources_dir = os.path.join(local_workfile_dir, 'resources')
         if not os.path.exists(resources_dir):
-            print(f"making dir {resources_dir}")
             os.mkdir(resources_dir)
 
         for file in workfile_representation['files']:
             resource_path = re.sub(r"\{root\[main\]\}", str(anatomy.roots['main']), file['path'])
             if os.path.exists(resource_path):
-                print(f"copying resource {resource_path}")
                 shutil.copy(resource_path, resources_dir)
-            else:
-                print(f"resource doesn't exist {resource_path}")
