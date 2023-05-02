@@ -63,11 +63,11 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 
 def update_op_assets(
-    dbcon: AvalonMongoDB,
-    gazu_project: dict,
-    project_doc: dict,
-    entities_list: List[dict],
-    asset_doc_ids: Dict[str, dict],
+        dbcon: AvalonMongoDB,
+        gazu_project: dict,
+        project_doc: dict,
+        entities_list: List[dict],
+        asset_doc_ids: Dict[str, dict],
 ) -> List[Dict[str, dict]]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
@@ -210,10 +210,10 @@ def update_op_assets(
                 item.get("entity_type_id")
                 if item_type == "Asset"
                 else None
-                # Else, fallback on usual hierarchy
-                or item.get("parent_id")
-                or item.get("episode_id")
-                or item.get("source_id")
+                     # Else, fallback on usual hierarchy
+                     or item.get("parent_id")
+                     or item.get("episode_id")
+                     or item.get("source_id")
             )
 
         # Substitute item type for general classification (assets or shots)
@@ -350,7 +350,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
                 "config.tasks": {
                     t["name"]: {"short_name": t.get("short_name", t["name"])}
                     for t in gazu.task.all_task_types_for_project(project)
-                    or gazu.task.all_task_types()
+                             or gazu.task.all_task_types()
                 },
                 "data": project_data,
             }
@@ -359,7 +359,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
 
 
 def sync_all_projects(
-    login: str, password: str, ignore_projects: list = None, specific_projects: list = None
+        login: str, password: str, ignore_projects: list = None,
+        specific_projects: list = None
 ):
     """Update all OP projects in DB with Zou data.
 
@@ -382,7 +383,6 @@ def sync_all_projects(
     dbcon = AvalonMongoDB()
     dbcon.install()
     all_projects = gazu.project.all_projects()
-
 
     project_to_sync = []
     if specific_projects == ['*']:
@@ -435,8 +435,8 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
 
     #  Do not sync closed kitsu project that is not found in openpype
     if (
-        project['project_status_name'] == "Closed"
-        and not get_project(project['name'])
+            project['project_status_name'] == "Closed"
+            and not get_project(project['name'])
     ):
         return
 
@@ -451,10 +451,10 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     all_entities = [
         item
         for item in all_assets
-        + all_asset_types
-        + all_episodes
-        + all_seqs
-        + all_shots
+                    + all_asset_types
+                    + all_episodes
+                    + all_seqs
+                    + all_shots
         if naming_pattern.match(item["name"])
     ]
 
@@ -526,12 +526,12 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon,
-                project,
-                project_dict,
-                all_entities,
-                zou_ids_and_asset_docs,
-            )
+            dbcon,
+            project,
+            project_dict,
+            all_entities,
+            zou_ids_and_asset_docs,
+        )
         ]
     )
 
