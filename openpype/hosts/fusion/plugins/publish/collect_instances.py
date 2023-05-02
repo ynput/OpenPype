@@ -28,21 +28,22 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         subset = instance.data["subset"]
         start = context.data["frameStart"]
         end = context.data["frameEnd"]
-        label = "{subset} ({start}-{end})".format(subset=subset,
-                                                  start=int(start),
-                                                  end=int(end))
-        instance.data.update({
-            "label": label,
-
-            # todo: Allow custom frame range per instance
-            "frameStart": context.data["frameStart"],
-            "frameEnd": context.data["frameEnd"],
-            "frameStartHandle": context.data["frameStartHandle"],
-            "frameEndHandle": context.data["frameStartHandle"],
-            "handleStart": context.data["handleStart"],
-            "handleEnd": context.data["handleEnd"],
-            "fps": context.data["fps"],
-        })
+        label = "{subset} ({start}-{end})".format(
+            subset=subset, start=int(start), end=int(end)
+        )
+        instance.data.update(
+            {
+                "label": label,
+                # todo: Allow custom frame range per instance
+                "frameStart": context.data["frameStart"],
+                "frameEnd": context.data["frameEnd"],
+                "frameStartHandle": context.data["frameStartHandle"],
+                "frameEndHandle": context.data["frameEndHandle"],
+                "handleStart": context.data["handleStart"],
+                "handleEnd": context.data["handleEnd"],
+                "fps": context.data["fps"],
+            }
+        )
 
         # Add review family if the instance is marked as 'review'
         # This could be done through a 'review' Creator attribute.
@@ -54,6 +55,7 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             # TODO: This should probably move into a collector of
             #       its own for the "render" family
             from openpype.hosts.fusion.api.lib import get_frame_path
+
             comp = context.data["currentComp"]
 
             # This is only the case for savers currently but not
@@ -64,16 +66,17 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             filename = os.path.basename(path)
             head, padding, tail = get_frame_path(filename)
             ext = os.path.splitext(path)[1]
-            assert tail == ext, ("Tail does not match %s" % ext)
+            assert tail == ext, "Tail does not match %s" % ext
 
-            instance.data.update({
-                "path": path,
-                "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant?
-
-                # Backwards compatibility: embed tool in instance.data
-                "tool": tool
-            })
+            instance.data.update(
+                {
+                    "path": path,
+                    "outputDir": os.path.dirname(path),
+                    "ext": ext,  # todo: should be redundant?
+                    # Backwards compatibility: embed tool in instance.data
+                    "tool": tool,
+                }
+            )
 
             # Add tool itself as member
             instance.append(tool)
