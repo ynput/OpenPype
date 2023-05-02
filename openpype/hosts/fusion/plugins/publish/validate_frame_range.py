@@ -9,7 +9,7 @@ from openpype.hosts.fusion.api.action import SelectInvalidAction
 from openpype.pipeline.publish import RepairAction
 
 from openpype.hosts.fusion.api.lib import (
-    update_frame_range,
+    set_asset_framerange,
     get_comp_render_range,
 )
 
@@ -65,24 +65,6 @@ class ValidateFrameRange(
                 )
             )
 
-        # render range should start at global start and
-        # end at global end to render out the full sequence
-        if comp_start != instance.data["frameStartHandle"]:
-            invalid_reason.append(
-                '"Render start" is set to {} but should start at {}'.format(
-                    int(comp_start),
-                    instance.data["frameStartHandle"],
-                )
-            )
-
-        if comp_end != instance.data["frameEndHandle"]:
-            invalid_reason.append(
-                '"Render end" is set to {} but should end at {}'.format(
-                    int(comp_end),
-                    instance.data["frameEndHandle"],
-                )
-            )
-
         if invalid_reason:
             # Pass instance for "Select invalid" in Publisher
             self.get_invalid(instance)
@@ -113,10 +95,6 @@ class ValidateFrameRange(
     @classmethod
     def repair(cls, instance):
         if instance.context.data["frame_range_type"] == "asset_render":
-            update_frame_range(
-                instance.data["frameStartHandle"],
-                instance.data["frameEndHandle"],
-                set_render_range=True,
-            )
+            set_asset_framerange()
         else:
             pass
