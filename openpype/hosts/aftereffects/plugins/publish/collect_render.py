@@ -141,7 +141,6 @@ class CollectAERender(publish.AbstractCollectRender):
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:
                     # to skip ExtractReview locally
-                    instance.review = False
                     instance.families.remove("review")
 
             instances.append(instance)
