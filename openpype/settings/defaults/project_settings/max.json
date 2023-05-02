@@ -1,7 +1,6 @@
 {
     "imageio": {
         "activate_host_color_management": true,
-        "set_ocio_config": false,
         "ocio_config": {
             "override_global_config": false,
             "filepath": []
@@ -17,8 +16,8 @@
         "image_format": "exr",
         "multipass": true
     },
-    "PointCloud":{
-        "attribute":{
+    "PointCloud": {
+        "attribute": {
             "Age": "age",
             "Radius": "radius",
             "Position": "position",
