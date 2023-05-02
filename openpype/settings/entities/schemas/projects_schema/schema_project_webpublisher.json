@@ -8,14 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management",
             "collapsible": true,
             "is_group": true,
             "children": [
                 {
                     "type": "boolean",
                     "key": "activate_host_color_management",
-                    "label": "Enable Color Management in host"
+                    "label": "Enable Color Management"
                 },
                 {
                     "type": "schema",

@@ -1,13 +1,13 @@
 {
     "key": "file_rules",
     "type": "dict",
-    "label": "File Rules",
+    "label": "File Rules (OCIO v1 only)",
     "collapsible": true,
     "children": [
         {
             "type": "boolean",
             "key": "override_global_rules",
-            "label": "Override global file rules"
+            "label": "Override global File Rules"
         },
         {
             "key": "rules",

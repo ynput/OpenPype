@@ -8,9 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management",
             "is_group": true,
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "activate_global_color_management",
+                    "label": "Enable Color Management"
+                },
                 {
                     "key": "ocio_config",
                     "type": "dict",
@@ -29,9 +34,14 @@
                 {
                     "key": "file_rules",
                     "type": "dict",
-                    "label": "File Rules",
+                    "label": "File Rules (OCIO v1 only)",
                     "collapsible": true,
                     "children": [
+                        {
+                            "type": "boolean",
+                            "key": "activate_global_file_rules",
+                            "label": "Enable File Rules"
+                        },
                         {
                             "key": "rules",
                             "label": "Rules",
