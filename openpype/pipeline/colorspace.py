@@ -346,11 +346,26 @@ def get_imageio_config(
     formatting_data["platform"] = platform.system().lower()
 
     # get colorspace settings
+    # check if global settings group is having activate_global_color_management
+    # key at all. If it does't then default it to False
+    # this is for backward compatibility only
+    # TODO: in future rewrite this to be more explicit
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
+    activate_color_management = imageio_global.get(
+        "activate_global_color_management", False)
+
+    if not activate_color_management:
+        # if global settings are disabled return False because
+        # it is expected that no colorspace management is needed
+        log.info(
+            "Colorspace management is disabled."
+        )
+        return {}
+
     # check if host settings group is having activate_host_color_management
-    # it it does not have activation key then default it to True so it uses
+    # if it does not have activation key then default it to True so it uses
     # global settings
     # this is for backward compatibility
     # TODO: in future rewrite this to be more explicit
