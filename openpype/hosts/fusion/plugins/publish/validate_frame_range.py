@@ -83,7 +83,8 @@ class ValidateFrameRange(
                 ).format("\n\n".join(invalid_reason))
             else:
                 message = (
-                    'The contexts frame range type is set to "Current frame range".\n\n'
+                    "The contexts frame range type is"
+                    ' set to "Current frame range".\n\n'
                     'Ether change it to "Asset\'s frame range" or disable'
                     ' "Validate Frame Range" range for this saver."'
                 )

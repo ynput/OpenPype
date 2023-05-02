@@ -87,9 +87,12 @@ class CollectFrameRange(
                 default=("asset_render" in self.frame_range_type),
                 label="Frame range",
                 tooltip=(
-                    '"Asset\'s frame range" uses the frame range set to your opened asset.'
-                    '\n"Fusion\'s current frame range" will render out the frame range you '
-                    "manually have selected. The handles will both be set to 0"
+                    '"Asset\'s frame range" uses the frame range'
+                    " set to your opened asset."
+                    '\n"Fusion\'s current frame range" will render'
+                    " out the frame range you"
+                    " manually have selected."
+                    " The handles will both be set to 0"
                 ),
             )
         ]
