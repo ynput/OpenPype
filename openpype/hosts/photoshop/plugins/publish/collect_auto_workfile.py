@@ -96,4 +96,4 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         # creating representation
         instance.data["representations"].append(workfile_representation)
 
-        self.log.debug("auto workfile review created::{}".format(instance.data))
+        self.log.debug("auto workfile review created:{}".format(instance.data))

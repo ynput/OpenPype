@@ -14,7 +14,6 @@ class PSAutoCreator(AutoCreator):
 
     def collect_instances(self):
         for instance_data in cache_and_get_instances(self):
-            self.log.debug("instance_data:: {}".format(instance_data))
             creator_id = instance_data.get("creator_identifier")
 
             if creator_id == self.identifier:

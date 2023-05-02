@@ -44,8 +44,6 @@ class ExtractReview(publish.Extractor):
         self.output_seq_filename = os.path.splitext(
             stub.get_active_document_name())[0] + ".%04d.jpg"
 
-        import pprint
-        self.log.info("insta::{}".format(pprint.pformat(instance.data, indent=4)))
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
