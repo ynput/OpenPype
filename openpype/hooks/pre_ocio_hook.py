@@ -1,8 +1,7 @@
 from openpype.lib import PreLaunchHook
 
 from openpype.pipeline.colorspace import (
-    get_imageio_config,
-    is_set_ocio_config_activated
+    get_imageio_config
 )
 from openpype.pipeline.template_data import get_template_data_with_names
 
@@ -42,18 +41,6 @@ class OCIOEnvHook(PreLaunchHook):
         )
 
         if config_data:
-            set_config_path = is_set_ocio_config_activated(
-                project_name=self.data["project_name"],
-                host_name=self.host_name,
-                project_settings=self.data["project_settings"]
-            )
-            if not set_config_path:
-                self.log.info(
-                    "Setting of OCIO environment with "
-                    "config path was not activated..."
-                )
-                return
-
             ocio_path = config_data["path"]
 
             self.log.info(
