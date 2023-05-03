@@ -35,10 +35,10 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
 
         """
         report = []
-        if invalid := self.get_tyflow_object(instance):
+        if invalid := self.get_tyflow_object(instance):  # noqa
             report.append(f"Non tyFlow object found: {invalid}")
 
-        if invalid := self.get_tyflow_operator(instance):
+        if invalid := self.get_tyflow_operator(instance):  # noqa
             report.append(
                 f"tyFlow ExportParticle operator not found: {invalid}")
 
@@ -49,7 +49,7 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
             report.append(("tyFlow Partition setting is "
                            "not at the default value"))
 
-        if invalid := self.validate_custom_attribute(instance):
+        if invalid := self.validate_custom_attribute(instance):  # noqa
             report.append(("Custom Attribute not found "
                            f":{invalid}"))
 

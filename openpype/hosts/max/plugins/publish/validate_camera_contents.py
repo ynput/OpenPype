@@ -18,7 +18,7 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
                    "$Physical_Camera", "$Target"]
 
     def process(self, instance):
-        if invalid := self.get_invalid(instance):
+        if invalid := self.get_invalid(instance):  # noqa
             raise PublishValidationError(("Camera instance must only include"
                                           "camera (and camera target). "
                                           f"Invalid content {invalid}"))

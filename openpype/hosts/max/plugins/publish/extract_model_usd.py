@@ -69,7 +69,8 @@ class ExtractModelUSD(publish.Extractor,
         }
         instance.data["representations"].append(log_representation)
 
-        self.log.info(f"Extracted instance '{instance.name}' to: {asset_filepath}")
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {asset_filepath}")
 
     @staticmethod
     def get_export_options(log_path):

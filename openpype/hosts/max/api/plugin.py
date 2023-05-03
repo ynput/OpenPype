@@ -144,10 +144,9 @@ class MaxCreator(Creator, MaxCreatorBase):
 
     def collect_instances(self):
         self.cache_subsets(self.collection_shared_data)
-        for instance in self.collection_shared_data[
-            "max_cached_subsets"].get(self.identifier, []):
+        for instance in self.collection_shared_data["max_cached_subsets"].get(self.identifier, []):  # noqa
             created_instance = CreatedInstance.from_existing(
-                read(rt.getNodeByName(instance)), self
+                read(rt.GetNodeByName(instance)), self
             )
             self._add_instance_to_context(created_instance)
 
@@ -172,12 +171,10 @@ class MaxCreator(Creator, MaxCreatorBase):
 
         """
         for instance in instances:
-            if instance_node := rt.getNodeByName(
-                    instance.data.get("instance_node")
-            ):
-                rt.select(instance_node)
+            if instance_node := rt.GetNodeByName(instance.data.get("instance_node")):  # noqa
+                rt.Select(instance_node)
                 rt.custAttributes.add(instance_node.baseObject, "openPypeData")
-                rt.delete(instance_node)
+                rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
 
