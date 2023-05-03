@@ -24,18 +24,18 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         context = instance.context
-        publ_settings = context.data["project_settings"]["global"]["publish"]
+        publish_settings = context.data["project_settings"]["global"]["publish"]
         version_padding = context.data["anatomy"]["templates"]["defaults"]\
             ["version_padding"]
 
-        if self._slate_settings_name in publ_settings:
+        if self._slate_settings_name in publish_settings:
 
-            settings = publ_settings[self._slate_settings_name]
+            settings = publish_settings[self._slate_settings_name]
 
             if not settings["enabled"]:
                 self.log.warning("ExtractSlateGlobal is not active. Skipping...")
                 return
-            
+
             if instance.context.data.get("host") == "nuke" and (
                 "render.farm" in instance.data.get("families")):
                 self.log.warning("Skipping Slate Global Collect "
@@ -44,24 +44,17 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
 
             self.log.info("ExtractSlateGlobal is active.")
 
-            tpl_path = settings["slate_template_path"].format(**os.environ)
-            res_path = settings["slate_template_res_path"].format(**os.environ)
-            _env = {
-                "PATH": "{0};{1}".format(
-                    os.path.dirname(get_oiio_tools_path()),
-                    os.path.dirname(get_ffmpeg_tool_path())
-                )
-            }
+            template_path = settings["slate_template_path"].format(**os.environ)
+            resources_path = settings["slate_template_res_path"].format(**os.environ)
 
             if "slateGlobal" not in instance.data:
                 slate_global = instance.data["slateGlobal"] = dict()
 
             slate_global.update({
-                "slate_template_path": tpl_path,
-                "slate_template_res_path": res_path,
+                "slate_template_path": template_path,
+                "slate_template_res_path": resources_path,
                 "slate_profiles": settings["profiles"],
                 "slate_common_data": {},
-                "slate_env": _env,
                 "slate_thumbnail": "",
                 "slate_repre_data": {},
                 "slate_task_types": settings["integrate_task_types"]
@@ -88,7 +81,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             if "families" not in instance.data:
                 instance.data["families"] = list()
 
-            if not "versionData" in instance.data:
+            if "versionData" not in instance.data:
                 instance.data["versionData"] = dict()
 
             if "families" not in instance.data["versionData"]:

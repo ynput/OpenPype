@@ -26,6 +26,7 @@ from .vendor_bin_utils import (
     get_vendor_bin_path,
     get_oiio_tools_path,
     get_ffmpeg_tool_path,
+    get_chrome_tool_path,
     is_oiio_supported
 )
 
@@ -222,6 +223,7 @@ __all__ = [
     "get_vendor_bin_path",
     "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
+    "get_chrome_tool_path",
     "is_oiio_supported",
 
     "AbstractAttrDef",
