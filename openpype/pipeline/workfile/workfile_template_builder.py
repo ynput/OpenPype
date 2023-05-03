@@ -38,7 +38,7 @@ from openpype.lib import (
     attribute_definitions,
 )
 from openpype.lib.attribute_definitions import get_attributes_keys
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import legacy_io, Anatomy, discover_loader_plugins
 from openpype.pipeline.load import (
     get_loaders_by_name,
     get_contexts_for_repre_docs,
@@ -47,6 +47,7 @@ from openpype.pipeline.load import (
 
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
+    discover_creator_plugins,
     CreateContext,
 )
 
