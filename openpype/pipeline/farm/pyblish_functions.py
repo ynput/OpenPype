@@ -659,7 +659,7 @@ def attach_instances_to_subset(attach_to, instances):
     new_instances = []
     for attach_instance in attach_to:
         for i in instances:
-            new_inst = copy(i)
+            new_inst = copy.deepcopy(i)
             new_inst["version"] = attach_instance.get("version")
             new_inst["subset"] = attach_instance.get("subset")
             new_inst["family"] = attach_instance.get("family")
