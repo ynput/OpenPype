@@ -136,7 +136,7 @@ def get_transferable_representations(instance):
         list of dicts: List of transferable representations.
 
     """
-    anatomy = instance.data.get("anatomy")  # type: Anatomy
+    anatomy = instance.context.data["anatomy"]  # type: Anatomy
     to_transfer = []
 
     for representation in instance.data.get("representations", []):
@@ -187,7 +187,7 @@ def create_skeleton_instance(
 
     context = instance.context
     data = instance.data.copy()
-    anatomy = data["anatomy"]  # type: Anatomy
+    anatomy = instance.context.data["anatomy"]  # type: Anatomy
 
     families = [data["family"]]
 
@@ -363,7 +363,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data):
     # TODO: this needs to be taking the task from context or instance
     task = os.environ["AVALON_TASK"]
 
-    anatomy = instance.data["anatomy"]
+    anatomy = instance.context.data["anatomy"]
     subset = skeleton["subset"]
     cameras = instance.data.get("cameras", [])
     exp_files = instance.data["expectedFiles"]
@@ -578,7 +578,7 @@ def copy_extend_frames(instance, representation):
     start = instance.data.get("frameStart")
     end = instance.data.get("frameEnd")
     project_name = instance.context.data["project"]
-    anatomy = instance.data["anatomy"]  # type: Anatomy
+    anatomy = instance.context.data["anatomy"]  # type: Anatomy
 
     # get latest version of subset
     # this will stop if subset wasn't published yet
