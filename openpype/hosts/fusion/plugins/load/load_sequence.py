@@ -276,10 +276,9 @@ class FusionLoadSequence(load.LoaderPlugin):
         # Get frame start without handles
         start = data.get("frameStart")
         if start is None:
-            self.log.warning("Missing start frame for version "
-                             "assuming starts at frame 0 for: "
-                             "{}".format(tool.Name))
-            return 0
+            comp = tool.Comp()
+            comp_attrs = comp.GetAttrs()
+            start = comp_attrs["COMPN_GlobalStart"]
 
         # Use `handleStart` if the data is available
         handle_start = data.get("handleStart")
