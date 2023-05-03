@@ -48,7 +48,7 @@
         "bg-view-selection-hover": "rgba(92, 173, 214, .8)",
 
         "border": "#373D48",
-        "border-hover": "rgba(168, 175, 189, .3)",
+        "border-hover": "rgb(92, 99, 111)",
         "border-focus": "rgb(92, 173, 214)",
 
         "restart-btn-bg": "#458056",
