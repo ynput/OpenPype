@@ -25,8 +25,8 @@ from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.pipeline.load.utils import get_representation_path
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.client.entities import (
-    get_matching_subset_id,
-    get_representation_by_task,
+    get_subsets,
+    get_representations,
     get_last_version_by_subset_id,
     get_asset_by_name,
 )
@@ -602,17 +602,50 @@ def download_last_workfile() -> str:
     session = legacy_io.Session
     project_name = session.get("AVALON_PROJECT")
     task_name = session.get("AVALON_TASK")
+    # task_type =   # TODO
     asset_name = session.get("AVALON_ASSET")
     anatomy = Anatomy(project_name)
     asset_doc = get_asset_by_name(
         project_name,
         session.get("AVALON_ASSET"),
     )
+    family = 'workfile'
 
-    # Get subset id
-    subset_id = get_matching_subset_id(
-        project_name, task_name, "workfile", asset_doc
-    )
+    # # Get subset id
+    # subset_id = get_matching_subset_id(
+    #     project_name, task_name, "workfile", asset_doc
+    # )
+
+    filtered_subsets = [
+        subset
+        for subset in get_subsets(
+                project_name,
+                asset_ids=[asset_doc['_id']],
+                fields=['_id', 'name', 'data.family', 'data.families'],
+        )
+        if (
+                subset['data'].get('family') == family
+                # Legacy compatibility
+                or family in subset['data'].get('families', {})
+        )
+    ]
+    if not filtered_subsets:
+        raise RuntimeError(
+            "Not any subset for asset '{}' with id '{}'".format(
+                asset_doc['name'], asset_doc['_id']
+            )
+        )
+
+    # Match subset wich has `task_name` in its name
+    low_task_name = task_name.lower()
+    if len(filtered_subsets) > 1:
+        for subset in filtered_subsets:
+            if low_task_name in subset['name'].lower():
+                subset_id = subset['_id']  # What if none is found?
+    else:
+        subset_id = filtered_subsets[0]['_id']
+
+
     if subset_id is None:
         print(
             f"Not any matched subset for task '{task_name}'"
@@ -628,10 +661,25 @@ def download_last_workfile() -> str:
         print("Subset does not have any version")
         return
 
-    workfile_representation = get_representation_by_task(
-        project_name,
-        task_name,
-        last_version_doc,
+    # workfile_representation = get_representation_by_task(
+    #     project_name,
+    #     task_name,
+    #     last_version_doc,
+    # )
+
+    workfile_representation = max(
+        filter(
+            lambda r: not r['context'].get('version'),
+            list(get_representations(
+                project_name,
+                context_filters={
+                    'asset': asset_name,
+                    'family': 'workfile',
+                    'task': {'name': task_name},  #, 'type': task_type},
+                }
+            )),
+        ),
+        key=lambda r: r['context']['version']
     )
     if not workfile_representation:
         print(
