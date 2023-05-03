@@ -389,16 +389,18 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None,
         # listen only
         return
 
-    if filter_projects == ['*']:
+    if '*' in filter_projects:
+        # all projects
         project_to_sync = all_projects
 
-    all_kitsu_projects = {p['name']: p for p in all_projects}
-    for proj_name in filter_projects:
-        if proj_name in all_kitsu_projects:
-            project_to_sync.append(all_kitsu_projects[proj_name])
-        else:
-            log.info(f'`{proj_name}` project does not exist in Kitsu.'
-                        f' Please make sure the project is spelled correctly.')
+    else:
+        all_kitsu_projects = {p['name']: p for p in all_projects}
+        for proj_name in filter_projects:
+            if proj_name in all_kitsu_projects:
+                project_to_sync.append(all_kitsu_projects[proj_name])
+            else:
+                log.info(f'`{proj_name}` project does not exist in Kitsu.'
+                            f' Please make sure the project is spelled correctly.')
 
     for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
