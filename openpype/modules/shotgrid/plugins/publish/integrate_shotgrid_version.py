@@ -8,6 +8,11 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.497
     label = "Shotgrid Version"
+    fields_to_add = {
+        "frameStart": "sg_first_frame",
+        "frameEnd": "sg_last_frame",
+        "comment": "sg_submission_notes"
+    }
 
     sg = None
 
@@ -62,6 +67,14 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         intent = context.data.get("intent")
         if intent:
             data_to_update["sg_status_list"] = intent["value"]
+
+        for op_field, sg_field in self.fields_to_add.items():
+            field_value = context.data.get(op_field)
+            if field_value:
+                self.log.info("Adding field '{}' to SG as '{}':'{}'".format(
+                    op_field, sg_field, field_value)
+                )
+                data_to_update[sg_field] = field_value
 
         for representation in instance.data.get("representations", []):
             local_path = get_publish_repre_path(
