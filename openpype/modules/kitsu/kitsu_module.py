@@ -128,7 +128,7 @@ def push_to_zou(login, password):
     "-prj",
     "--project",
     multiple=True,
-    default=[""]
+    default=[""],
     help="Sync specific kitsu projects"
 )
 @click.option(
