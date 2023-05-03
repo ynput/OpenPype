@@ -1,24 +1,18 @@
-# -*- coding: utf-8 -*-
-"""Simple alembic loader for 3dsmax.
 
-Because of limited api, alembics can be only loaded, but not easily updated.
-
-"""
 import os
 from openpype.pipeline import (
     load, get_representation_path
 )
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import maintained_selection
 
 
-class AbcLoader(load.LoaderPlugin):
-    """Alembic loader."""
+class ModelAbcLoader(load.LoaderPlugin):
+    """Loading model with the Alembic loader."""
 
-    families = ["camera",
-                "animation",
-                "pointcache"]
-    label = "Load Alembic"
+    families = ["model"]
+    label = "Load Model(Alembic)"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
@@ -34,14 +28,17 @@ class AbcLoader(load.LoaderPlugin):
             if rt.classOf(c) == rt.AlembicContainer
         }
 
-        abc_export_cmd = (f"""
+        abc_import_cmd = (f"""
 AlembicImport.ImportToRoot = false
+AlembicImport.CustomAttributes = true
+AlembicImport.UVs = true
+AlembicImport.VertexColors = true
 
 importFile @"{file_path}" #noPrompt
         """)
 
-        self.log.debug(f"Executing command: {abc_export_cmd}")
-        rt.execute(abc_export_cmd)
+        self.log.debug(f"Executing command: {abc_import_cmd}")
+        rt.execute(abc_import_cmd)
 
         abc_after = {
             c for c in rt.rootNode.Children
@@ -61,13 +58,23 @@ importFile @"{file_path}" #noPrompt
 
     def update(self, container, representation):
         from pymxs import runtime as rt
-
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
+        rt.select(node.Children)
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
+        for alembic in rt.selection:
+            abc = rt.getNodeByName(alembic.name)
+            rt.select(abc.Children)
+            for abc_con in rt.selection:
+                container = rt.getNodeByName(abc_con.name)
+                container.source = path
+                rt.select(container.Children)
+                for abc_obj in rt.selection:
+                    alembic_obj = rt.getNodeByName(abc_obj.name)
+                    alembic_obj.source = path
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
