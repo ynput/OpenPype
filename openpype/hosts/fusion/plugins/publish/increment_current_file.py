@@ -1,6 +1,7 @@
 import pyblish.api
 
 from openpype.pipeline import OptionalPyblishPluginMixin
+from openpype.pipeline import KnownPublishError
 
 
 class FusionIncrementCurrentFile(
@@ -29,7 +30,7 @@ class FusionIncrementCurrentFile(
             plugin.__name__ == "FusionSubmitDeadline"
             for plugin in errored_plugins
         ):
-            raise RuntimeError(
+            raise KnownPublishError(
                 "Skipping incrementing current file because "
                 "submission to render farm failed."
             )
