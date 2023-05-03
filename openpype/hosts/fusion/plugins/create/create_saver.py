@@ -4,7 +4,6 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
 )
-
 from openpype.lib import (
     BoolDef,
     EnumDef,
@@ -14,9 +13,8 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance,
 )
-from openpype.client import (
-    get_asset_by_name,
-)
+from openpype.client import get_asset_by_name
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 
 class CreateSaver(Creator):
@@ -119,23 +117,26 @@ class CreateSaver(Creator):
 
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""
-        if "subset" not in data:
+
+        if data.get("subset") is None:
+            self.log.warning("No subset found for _update_tool_with_data")
             return
 
-        original_subset = tool.GetData("openpype.subset")
+        # Get current session but change the asset to the one from
+        # data in case a new asset has bin selected
+        session = legacy_io.Session
+        session["AVALON_ASSET"] = data["asset"]
         subset = data["subset"]
-        if original_subset != subset:
-            # Subset change detected
-            # Update output filepath
-            workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-            filename = f"{subset}..exr"
-            filepath = os.path.join(workdir, "render", subset, filename)
-            tool["Clip"] = filepath
 
-            # Rename tool
-            if tool.Name != subset:
-                print(f"Renaming {tool.Name} -> {subset}")
-                tool.SetAttrs({"TOOLS_Name": subset})
+        workdir = os.path.normpath(get_workdir_from_session(session))
+        filename = f"{subset}..exr"
+        filepath = os.path.join(workdir, "render", subset, filename)
+        tool["Clip"] = filepath
+
+        # Rename tool
+        if tool.Name != subset:
+            print(f"Renaming {tool.Name} -> {subset}")
+            tool.SetAttrs({"TOOLS_Name": subset})
 
     def _collect_unmanaged_saver(self, tool):
         # TODO: this should not be done this way - this should actually
