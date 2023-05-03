@@ -16,10 +16,18 @@ If you want to connect Kitsu to OpenPype you have to set the `Server` url in Kit
 This setting is available for all the users of the OpenPype instance.
 
 ## Synchronize
-Updating OP with Kitsu data is executed running the `sync-service`, which requires to provide your Kitsu credentials with `-l, --login` and `-p, --password` or by setting the environment variables `KITSU_LOGIN` and `KITSU_PWD`. This process will request data from Kitsu and create/delete/update OP assets.
+Updating OP with Kitsu data is executed running the `sync-service`, which requires to provide your Kitsu credentials with `-l, --login` and `-p, --password` or by setting the environment variables `KITSU_LOGIN` and `KITSU_PWD`. This process will request data from Kitsu projects with `-proj, --project` and create/delete/update OP assets.
 Once this sync is done, the thread will automatically start a loop to listen to Kitsu events.
+The args for `-proj, --project` accept multiple project name, `-proj *` to sync all active projects, and the default value to start a loop to listen to Kitsu events only without any sync.
 
 ```bash
+// sync specific projects then run listen
+openpype_console module kitsu sync-service -l me@domain.ext -p my_password -proj project_name01 -proj  project_name02
+
+// sync all projects then run listen
+openpype_console module kitsu sync-service -l me@domain.ext -p my_password -proj *
+
+// start listen only
 openpype_console module kitsu sync-service -l me@domain.ext -p my_password
 ```
 
