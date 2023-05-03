@@ -63,11 +63,11 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 
 def update_op_assets(
-        dbcon: AvalonMongoDB,
-        gazu_project: dict,
-        project_doc: dict,
-        entities_list: List[dict],
-        asset_doc_ids: Dict[str, dict],
+    dbcon: AvalonMongoDB,
+    gazu_project: dict,
+    project_doc: dict,
+    entities_list: List[dict],
+    asset_doc_ids: Dict[str, dict],
 ) -> List[Dict[str, dict]]:
     """Update OpenPype assets.
     Set 'data' and 'parent' fields.
@@ -210,10 +210,10 @@ def update_op_assets(
                 item.get("entity_type_id")
                 if item_type == "Asset"
                 else None
-                     # Else, fallback on usual hierarchy
-                     or item.get("parent_id")
-                     or item.get("episode_id")
-                     or item.get("source_id")
+                    # Else, fallback on usual hierarchy
+                    or item.get("parent_id")
+                    or item.get("episode_id")
+                    or item.get("source_id")
             )
 
         # Substitute item type for general classification (assets or shots)
@@ -350,7 +350,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
                 "config.tasks": {
                     t["name"]: {"short_name": t.get("short_name", t["name"])}
                     for t in gazu.task.all_task_types_for_project(project)
-                             or gazu.task.all_task_types()
+                            or gazu.task.all_task_types()
                 },
                 "data": project_data,
             }
@@ -358,9 +358,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(
-        login: str, password: str, ignore_projects: list = None,
-        specific_projects: list = None
+def sync_all_projects(login: str, password: str, ignore_projects: list = None,
+    filter_projects: list = None
 ):
     """Update all OP projects in DB with Zou data.
 
@@ -368,7 +367,7 @@ def sync_all_projects(
         login (str): Kitsu user login
         password (str): Kitsu user password
         ignore_projects (list): List of unsynced project names
-        specific_projects (list): List of synced project names
+        filter_projects (list): List of filter project names to sync with
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -385,22 +384,21 @@ def sync_all_projects(
     all_projects = gazu.project.all_projects()
 
     project_to_sync = []
-    if specific_projects == ['*']:
+
+    if not filter_projects:
+        # listen only
+        return
+
+    if filter_projects == ['*']:
         project_to_sync = all_projects
 
-    elif specific_projects == ['^']:
-        return
-
-    elif isinstance(specific_projects, list):
-        all_kitsu_projects = {p['name']: p for p in all_projects}
-        for proj_name in specific_projects:
-            if proj_name in all_kitsu_projects:
-                project_to_sync.append(all_kitsu_projects[proj_name])
-            else:
-                log.info(f'`{proj_name}` project does not exists in kitsu.'
-                         f' Please make sure you write the project correctly.')
-    else:
-        return
+    all_kitsu_projects = {p['name']: p for p in all_projects}
+    for proj_name in filter_projects:
+        if proj_name in all_kitsu_projects:
+            project_to_sync.append(all_kitsu_projects[proj_name])
+        else:
+            log.info(f'`{proj_name}` project does not exist in Kitsu.'
+                        f' Please make sure the project is spelled correctly.')
 
     for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
@@ -451,10 +449,10 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     all_entities = [
         item
         for item in all_assets
-                    + all_asset_types
-                    + all_episodes
-                    + all_seqs
-                    + all_shots
+        + all_asset_types
+        + all_episodes
+        + all_seqs
+        + all_shots
         if naming_pattern.match(item["name"])
     ]
 

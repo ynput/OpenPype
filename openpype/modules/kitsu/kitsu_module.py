@@ -125,9 +125,10 @@ def push_to_zou(login, password):
 
 @cli_main.command()
 @click.option(
-    "-prjs",
-    "--projects",
-    envvar="SYNC_PROJECTS",
+    "-prj",
+    "--project",
+    multiple=True,
+    default=[""]
     help="Sync specific kitsu projects"
 )
 @click.option(
@@ -142,26 +143,18 @@ def push_to_zou(login, password):
     envvar="KITSU_PWD",
     help="Password for kitsu username"
 )
-def sync_service(login, password, projects="^"):
+def sync_service(login, password, project):
     """Synchronize openpype database from Zou sever database.
 
     Args:
         login (str): Kitsu user login
         password (str): Kitsu user password
         projects (str): specific kitsu projects
-
-    SYNC_PROJECTS:
-    *: all projects
-    ^: dont sync any project just listen
-    "project01 project02 ...": to choose custom projects
-
-
     """
     from .utils.update_op_with_zou import sync_all_projects
     from .utils.sync_service import start_listeners
 
-    projects = projects.strip()
-    projects = projects.split(' ')
+    projects = ' '.join(project)
 
     sync_all_projects(login, password, specific_projects=projects)
     start_listeners(login, password)
