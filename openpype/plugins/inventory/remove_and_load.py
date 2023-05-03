@@ -34,7 +34,7 @@ class RemoveAndLoad(InventoryAction):
             representation = get_representation_by_id(
                 project_name, container["representation"]
             )
-            assert representation, "Represenatation not found"
+            assert representation, "Representation not found"
 
             # Remove container
             remove_container(container)
