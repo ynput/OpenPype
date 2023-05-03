@@ -25,9 +25,9 @@ try:
     print(f"Qt path: {mod.__file__}")
     print("Qt library found, nothing to do..")
 
-except:
+except Exception:
     python_path = get_python_path()
-    if python_path == None:
+    if python_path is None:
         print("Can't find any any python environment.")
 
     print("Assuming no Qt library is installed..")
