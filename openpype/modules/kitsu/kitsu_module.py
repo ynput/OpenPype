@@ -149,12 +149,10 @@ def sync_service(login, password, project):
     Args:
         login (str): Kitsu user login
         password (str): Kitsu user password
-        projects (str): specific kitsu projects
+        project (str): specific kitsu projects
     """
     from .utils.update_op_with_zou import sync_all_projects
     from .utils.sync_service import start_listeners
 
-    projects = ' '.join(project)
-
-    sync_all_projects(login, password, specific_projects=projects)
+    sync_all_projects(login, password, filter_projects=project)
     start_listeners(login, password)
