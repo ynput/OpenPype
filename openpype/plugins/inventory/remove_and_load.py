@@ -25,10 +25,10 @@ class RemoveAndLoad(InventoryAction):
                 if get_loader_identifier(plugin) == loader_name:
                     loader = plugin
                     break
-
-            assert (
-                loader
-            ), "Failed to get loader, can't remove and load container"
+            else:
+                raise RuntimeError(
+                    "Failed to get loader, can't remove and load container"
+                )
 
             # Get representation
             representation = get_representation_by_id(
