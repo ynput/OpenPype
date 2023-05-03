@@ -38,7 +38,7 @@ class RREnvList(dict):
 
 
 @attr.s
-class RRJob:
+class RRJob(object):
     """Mapping of Royal Render job file to a data class."""
 
     # Required
@@ -197,7 +197,7 @@ class SubmitterParameter:
 
 
 @attr.s
-class SubmitFile:
+class SubmitFile(object):
     """Class wrapping Royal Render submission XML file."""
 
     # Syntax version of the submission file.
