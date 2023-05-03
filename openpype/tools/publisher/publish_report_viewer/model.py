@@ -162,7 +162,8 @@ class PluginsModel(QtGui.QStandardItemModel):
 
             items = []
             for plugin_item in plugin_items:
-                item = QtGui.QStandardItem(plugin_item.label)
+                label = plugin_item.label or plugin_item.name
+                item = QtGui.QStandardItem(label)
                 item.setData(False, ITEM_IS_GROUP_ROLE)
                 item.setData(plugin_item.label, ITEM_LABEL_ROLE)
                 item.setData(plugin_item.id, ITEM_ID_ROLE)

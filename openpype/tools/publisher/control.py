@@ -6,6 +6,7 @@ import collections
 import uuid
 import tempfile
 import shutil
+import inspect
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -26,8 +27,8 @@ from openpype.pipeline import (
     PublishValidationError,
     KnownPublishError,
     registered_host,
-    legacy_io,
     get_process_id,
+    OptionalPyblishPluginMixin,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -162,7 +163,7 @@ class AssetDocsCache:
         return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
-class PublishReport:
+class PublishReportMaker:
     """Report for single publishing process.
 
     Report keeps current state of publishing and currently processed plugin.
@@ -783,6 +784,13 @@ class PublishValidationErrors:
 
         # Make sure the cached report is cleared
         plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        if not error.title:
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
+            else:
+                plugin_label = plugin.__name__
+            error.title = plugin_label
+
         self._error_items.append(
             ValidationErrorItem.from_result(plugin_id, error, instance)
         )
@@ -1673,7 +1681,7 @@ class PublisherController(BasePublisherController):
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
-        self._publish_report = PublishReport(self)
+        self._publish_report = PublishReportMaker(self)
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
 
@@ -2307,6 +2315,37 @@ class PublisherController(BasePublisherController):
     def _process_main_thread_item(self, item):
         item()
 
+    def _is_publish_plugin_active(self, plugin):
+        """Decide if publish plugin is active.
+
+        This is hack because 'active' is mis-used in mixin
+        'OptionalPyblishPluginMixin' where 'active' is used for default value
+        of optional plugins. Because of that is 'active' state of plugin
+        which inherit from 'OptionalPyblishPluginMixin' ignored. That affects
+        headless publishing inside host, potentially remote publishing.
+
+        We have to change that to match pyblish base, but we can do that
+        only when all hosts use Publisher because the change requires
+        change of settings schemas.
+
+        Args:
+            plugin (pyblish.Plugin): Plugin which should be checked if is
+                active.
+
+        Returns:
+            bool: Is plugin active.
+        """
+
+        if plugin.active:
+            return True
+
+        if not plugin.optional:
+            return False
+
+        if OptionalPyblishPluginMixin in inspect.getmro(plugin):
+            return True
+        return False
+
     def _publish_iterator(self):
         """Main logic center of publishing.
 
@@ -2315,11 +2354,9 @@ class PublisherController(BasePublisherController):
         states of currently processed publish plugin and instance. Also
         change state of processed orders like validation order has passed etc.
 
-        Also stops publishing if should stop on validation.
-
-        QUESTION:
-        Does validate button still make sense?
+        Also stops publishing, if should stop on validation.
         """
+
         for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
@@ -2343,6 +2380,11 @@ class PublisherController(BasePublisherController):
 
             # Add plugin to publish report
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
+
+            # WARNING This is hack fix for optional plugins
+            if not self._is_publish_plugin_active(plugin):
+                self._publish_report.set_plugin_skipped()
+                continue
 
             # Trigger callback that new plugin is going to be processed
             plugin_label = plugin.__name__
@@ -2450,7 +2492,11 @@ def collect_families_from_instances(instances, only_active=False):
         instances(list<pyblish.api.Instance>): List of publish instances from
             which are families collected.
         only_active(bool): Return families only for active instances.
+
+    Returns:
+        list[str]: Families available on instances.
     """
+
     all_families = set()
     for instance in instances:
         if only_active:

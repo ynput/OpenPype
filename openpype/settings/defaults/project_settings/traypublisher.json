@@ -303,16 +303,18 @@
             ]
         }
     },
-    "BatchMovieCreator": {
-        "default_variants": [
-            "Main"
-        ],
-        "default_tasks": [
-            "Compositing"
-        ],
-        "extensions": [
-            ".mov"
-        ]
+    "create": {
+        "BatchMovieCreator": {
+            "default_variants": [
+                "Main"
+            ],
+            "default_tasks": [
+                "Compositing"
+            ],
+            "extensions": [
+                ".mov"
+            ]
+        }
     },
     "publish": {
         "ValidateFrameRange": {
