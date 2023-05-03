@@ -102,7 +102,7 @@ class MaxCreatorBase(object):
             instance
         """
         if isinstance(node, str):
-            node = rt.dummy(name=node)
+            node = rt.container(name=node)
 
         attrs = rt.execute(MS_CUSTOM_ATTRIB)
         rt.custAttributes.add(node.baseObject, attrs)
@@ -127,10 +127,15 @@ class MaxCreator(Creator, MaxCreatorBase):
             self
         )
         if pre_create_data.get("use_selection"):
-            print("adding selection")
-            print(rt.array(*self.selected_nodes))
-            instance_node.openPypeData.all_nodes = rt.array(
-                *self.selected_nodes)
+
+            node_list = []
+            for i in self.selected_nodes:
+                node_ref = rt.NodeTransformMonitor(node=i)
+                node_list.append(node_ref)
+
+            # Setting the property
+            rt.setProperty(
+                instance_node.openPypeData, "all_handles", node_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
@@ -171,9 +176,7 @@ class MaxCreator(Creator, MaxCreatorBase):
                     instance.data.get("instance_node")
             ):
                 rt.select(instance_node)
-                rt.execute(
-                    "for o in selection do for c in o.children do c.parent = "
-                    "undefined")  # noqa
+                rt.custAttributes.add(instance_node.baseObject, "openPypeData")
                 rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
