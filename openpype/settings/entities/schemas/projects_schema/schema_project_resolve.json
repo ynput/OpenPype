@@ -8,10 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management",
+            "label": "Color Management (remapped to OCIO)",
             "collapsible": true,
             "is_group": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "This application includes internal color management functionality, but it does not offer external control <br>over this feature. To address this limitation, OpenPype uses mapping rules to remap the native <br>colorspace names used in the internal color management system to the OpenColorIO (OCIO) <br>color management system. Remapping feature is used in Publishing and Loading procedures.."
+                },
                 {
                     "type": "boolean",
                     "key": "activate_host_color_management",

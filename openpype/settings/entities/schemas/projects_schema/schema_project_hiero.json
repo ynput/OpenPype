@@ -8,10 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management",
+            "label": "Color Management (OCIO managed)",
             "collapsible": true,
             "is_group": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "This application's colorspace management can be controlled through OpenPype settings.  <br>Specifically, the configured OpenColorIO (OCIO) confg path is utilized in the application's workfile. <br>Additionally, the File Rules feature can be leveraged for both publishing and loading procedures."
+                },
                 {
                     "type": "boolean",
                     "key": "activate_host_color_management",
