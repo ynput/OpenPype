@@ -18,6 +18,8 @@ jobs:
         uses: ynput/gha-populate-form-version@main
         with:
           github_token: ${{ secrets.YNPUT_BOT_TOKEN }}
+          github_user: ${{ secrets.CI_USER }}
+          github_email: ${{ secrets.CI_EMAIL }}
           registry: github
           dropdown: _version
           limit_to: 100

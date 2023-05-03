@@ -6,7 +6,7 @@ import pyblish.api
 
 from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
-    RepairContextAction,
+    RepairAction,
     ValidateContentsOrder,
 )
 
@@ -26,7 +26,7 @@ class ValidateAttributes(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     label = "Attributes"
     hosts = ["maya"]
-    actions = [RepairContextAction]
+    actions = [RepairAction]
     optional = True
 
     attributes = None
@@ -81,7 +81,7 @@ class ValidateAttributes(pyblish.api.InstancePlugin):
             if node_name not in attributes:
                 continue
 
-            for attr_name, expected in attributes.items():
+            for attr_name, expected in attributes[node_name].items():
 
                 # Skip if attribute does not exist
                 if not cmds.attributeQuery(attr_name, node=node, exists=True):
