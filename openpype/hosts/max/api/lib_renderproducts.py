@@ -91,7 +91,7 @@ class RenderProducts(object):
         """Get all the Arnold AOVs"""
         aovs = []
 
-        amw = rt.MaxtoAOps.AOVsManagerWindow()
+        amw = rt.MaxToAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
         # Check if there is any aov group set in AOV manager
         aov_group_num = len(aov_mgr.drivers)
@@ -114,7 +114,7 @@ class RenderProducts(object):
         """Get all the render element output files. """
         render_dirname = []
 
-        render_elem = rt.maxOps.GetCurRenderElementMgr()
+        render_elem = rt.MaxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
         # get render elements from the renders
         for i in range(render_elem_num):
