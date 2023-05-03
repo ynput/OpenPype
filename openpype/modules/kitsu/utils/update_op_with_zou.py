@@ -367,7 +367,7 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None,
         login (str): Kitsu user login
         password (str): Kitsu user password
         ignore_projects (list): List of unsynced project names
-        filter_projects (list): List of filter project names to sync with
+        filter_projects (tuple): Tuple of filter project names to sync with
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -385,15 +385,7 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None,
 
     project_to_sync = []
 
-    if not filter_projects:
-        # listen only
-        return
-
-    if '*' in filter_projects:
-        # all projects
-        project_to_sync = all_projects
-
-    else:
+    if filter_projects:
         all_kitsu_projects = {p['name']: p for p in all_projects}
         for proj_name in filter_projects:
             if proj_name in all_kitsu_projects:
@@ -401,6 +393,9 @@ def sync_all_projects(login: str, password: str, ignore_projects: list = None,
             else:
                 log.info(f'`{proj_name}` project does not exist in Kitsu.'
                             f' Please make sure the project is spelled correctly.')
+    else:
+        # all project
+        project_to_sync = all_projects
 
     for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
