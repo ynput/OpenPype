@@ -125,13 +125,6 @@ def push_to_zou(login, password):
 
 @cli_main.command()
 @click.option(
-    "-prj",
-    "--project",
-    multiple=True,
-    default=[""],
-    help="Sync specific kitsu projects"
-)
-@click.option(
     "-l",
     "--login",
     envvar="KITSU_LOGIN",
@@ -143,16 +136,32 @@ def push_to_zou(login, password):
     envvar="KITSU_PWD",
     help="Password for kitsu username"
 )
-def sync_service(login, password, project):
+@click.option(
+    "-prj",
+    "--project",
+    multiple=True,
+    default=[],
+    help="Sync specific kitsu projects"
+)
+@click.option(
+    "-lo",
+    "--listen_only/--listen-only",
+    default=False,
+    help="Listen to events only without any syncing"
+)
+def sync_service(login, password, project, listen_only):
     """Synchronize openpype database from Zou sever database.
 
     Args:
         login (str): Kitsu user login
         password (str): Kitsu user password
         project (str): specific kitsu projects
+        listen_only (bool): run listen only without any syncing
     """
     from .utils.update_op_with_zou import sync_all_projects
     from .utils.sync_service import start_listeners
 
-    sync_all_projects(login, password, filter_projects=project)
+    if not listen_only:
+        sync_all_projects(login, password, filter_projects=project)
+
     start_listeners(login, password)
