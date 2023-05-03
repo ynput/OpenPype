@@ -6,8 +6,7 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -27,21 +26,18 @@ class ExtractModelObj(publish.Extractor,
         if not self.is_active(instance.data):
             return
 
-        container = instance.data["instance_node"]
-
         self.log.info("Extracting Geometry ...")
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.obj".format(**instance.data)
         filepath = os.path.join(stagingdir,
                                 filename)
-        self.log.info("Writing OBJ '%s' to '%s'" % (filepath,
-                                                    stagingdir))
+        self.log.info(f"Writing OBJ '{filepath}' to '{stagingdir}'")
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(f'exportFile @"{filepath}" #noPrompt selectedOnly:true using:ObjExp')    # noqa
+            rt.Select(instance.data["members"])
+            rt.Execute(f'exportFile @"{filepath}" #noPrompt selectedOnly:true using:ObjExp')    # noqa
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
@@ -55,5 +51,4 @@ class ExtractModelObj(publish.Extractor,
         }
 
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          filepath))
+        self.log.info(f"Extracted instance '{instance.name}' to: {filepath}")

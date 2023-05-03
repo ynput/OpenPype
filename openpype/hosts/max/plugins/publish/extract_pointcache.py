@@ -42,8 +42,7 @@ import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -57,17 +56,14 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        container = instance.data["instance_node"]
-
         self.log.info("Extracting pointcache ...")
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, file_name)
 
-        # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (file_name,
-                                                        parent_dir))
+        self.log.info(
+            f"Writing alembic '{file_name}' to '{parent_dir}'")
 
         abc_export_cmd = (
             f"""
@@ -85,8 +81,8 @@ exportFile @"{path}" #noPrompt selectedOnly:on using:AlembicExport
         with maintained_selection():
             # select and export
 
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(abc_export_cmd)
+            rt.Select(instance.data["members"])
+            rt.Execute(abc_export_cmd)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

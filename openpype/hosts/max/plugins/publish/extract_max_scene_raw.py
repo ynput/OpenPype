@@ -6,8 +6,7 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -28,7 +27,6 @@ class ExtractMaxSceneRaw(publish.Extractor,
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = instance.data["instance_node"]
 
         # publish the raw scene for camera
         self.log.info("Extracting Raw Max Scene ...")
@@ -37,8 +35,7 @@ class ExtractMaxSceneRaw(publish.Extractor,
         filename = "{name}.max".format(**instance.data)
 
         max_path = os.path.join(stagingdir, filename)
-        self.log.info("Writing max file '%s' to '%s'" % (filename,
-                                                         max_path))
+        self.log.info(f"Writing max file '{filename}' to '{max_path}'")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -46,8 +43,8 @@ class ExtractMaxSceneRaw(publish.Extractor,
         # saving max scene
         with maintained_selection():
             # need to figure out how to select the camera
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(f'saveNodes selection "{max_path}" quiet:true')
+            rt.Select(instance.data["members"])
+            rt.Execute(f'saveNodes selection "{max_path}" quiet:true')
 
         self.log.info("Performing Extraction ...")
 
@@ -58,5 +55,4 @@ class ExtractMaxSceneRaw(publish.Extractor,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          max_path))
+        self.log.info(f"Extracted instance '{instance.name}' to: {max_path}")

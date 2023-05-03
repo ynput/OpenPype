@@ -6,8 +6,7 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -27,8 +26,6 @@ class ExtractModel(publish.Extractor,
         if not self.is_active(instance.data):
             return
 
-        container = instance.data["instance_node"]
-
         self.log.info("Extracting Geometry ...")
 
         stagingdir = self.staging_dir(instance)
@@ -36,8 +33,7 @@ class ExtractModel(publish.Extractor,
         filepath = os.path.join(stagingdir, filename)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (filename,
-                                                        stagingdir))
+        self.log.info(f"Writing alembic '{filename}' to '{stagingdir}'")
 
         export_cmd = (
             f"""
@@ -56,8 +52,8 @@ exportFile @"{filepath}" #noPrompt selectedOnly:on using:AlembicExport
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(export_cmd)
+            rt.Select(instance.data["members"])
+            rt.Execute(export_cmd)
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
@@ -70,5 +66,4 @@ exportFile @"{filepath}" #noPrompt selectedOnly:on using:AlembicExport
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          filepath))
+        self.log.info(f"Extracted instance '{instance.name}' to: {filepath}")

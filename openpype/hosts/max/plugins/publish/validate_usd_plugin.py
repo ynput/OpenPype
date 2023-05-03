@@ -14,21 +14,20 @@ class ValidateUSDPlugin(pyblish.api.InstancePlugin):
     label = "USD Plugin"
 
     def process(self, instance):
-        plugin_mgr = rt.pluginManager
+        plugin_mgr = rt.PluginManager
         plugin_count = plugin_mgr.pluginDllCount
         plugin_info = self.get_plugins(plugin_mgr,
                                        plugin_count)
         usd_import = "usdimport.dli"
         if usd_import not in plugin_info:
-            raise PublishValidationError("USD Plugin {}"
-                                         " not found".format(usd_import))
+            raise PublishValidationError(f"USD Plugin {usd_import} not found")
         usd_export = "usdexport.dle"
         if usd_export not in plugin_info:
-            raise PublishValidationError("USD Plugin {}"
-                                         " not found".format(usd_export))
+            raise PublishValidationError(f"USD Plugin {usd_export} not found")
 
-    def get_plugins(self, manager, count):
-        plugin_info_list = list()
+    @staticmethod
+    def get_plugins(manager, count):
+        plugin_info_list = []
         for p in range(1, count + 1):
             plugin_info = manager.pluginDllName(p)
             plugin_info_list.append(plugin_info)

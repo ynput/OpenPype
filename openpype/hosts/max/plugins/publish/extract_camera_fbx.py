@@ -6,8 +6,7 @@ from openpype.pipeline import (
 )
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
+    maintained_selection
 )
 
 
@@ -26,15 +25,13 @@ class ExtractCameraFbx(publish.Extractor,
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = instance.data["instance_node"]
 
         self.log.info("Extracting Camera ...")
         stagingdir = self.staging_dir(instance)
         filename = "{name}.fbx".format(**instance.data)
 
         filepath = os.path.join(stagingdir, filename)
-        self.log.info("Writing fbx file '%s' to '%s'" % (filename,
-                                                         filepath))
+        self.log.info(f"Writing fbx file '{filename}' to '{filepath}'")
 
         # Need to export:
         # Animation = True
@@ -57,8 +54,8 @@ exportFile @"{filepath}" #noPrompt selectedOnly:true using:FBXEXP
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(fbx_export_cmd)
+            rt.Select(instance.data["members"])
+            rt.Execute(fbx_export_cmd)
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
@@ -71,5 +68,4 @@ exportFile @"{filepath}" #noPrompt selectedOnly:true using:FBXEXP
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          filepath))
+        self.log.info(f"Extracted instance '{instance.name}' to: {filepath}")
