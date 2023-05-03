@@ -1,3 +1,12 @@
+import copy
+import attr
+from pyblish.api import Instance
+import os
+import clique
+from copy import deepcopy
+import re
+import warnings
+
 from openpype.pipeline import (
     get_current_project_name,
     get_representation_path,
@@ -8,19 +17,12 @@ from openpype.client import (
     get_representations
 )
 from openpype.lib import Logger
-import attr
-import pyblish.api
 from openpype.pipeline.publish import KnownPublishError
 from openpype.pipeline.farm.patterning import match_aov_pattern
-import os
-import clique
-from copy import deepcopy
-import re
-import warnings
 
 
 @attr.s
-class TimeData:
+class TimeData(object):
     """Structure used to handle time related data."""
     start = attr.ib(type=int)
     end = attr.ib(type=int)
@@ -160,7 +162,7 @@ def get_transferable_representations(instance):
 
 def create_skeleton_instance(
         instance, families_transfer=None, instance_transfer=None):
-    # type: (pyblish.api.Instance, list, dict) -> dict
+    # type: (Instance, list, dict) -> dict
     """Create skeleton instance from original instance data.
 
     This will create dictionary containing skeleton
