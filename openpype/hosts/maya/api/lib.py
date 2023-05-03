@@ -2284,39 +2284,10 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
     if instances:
-        # Update animation instances attributes if enabled in settings
         project_name = get_current_project_name()
         settings = get_project_settings(project_name)
         if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-            collected_instances = cmds.ls(
-                "*.id",
-                long=True,
-                type="objectSet",
-                recursive=True,
-                objectsOnly=True
-            )
-            frames_attributes = {
-                'frameStart': frame_start,
-                'frameEnd': frame_end,
-                'handleStart': frame_range["handleStart"],
-                'handleEnd': frame_range["handleEnd"]
-            }
-
-            for instance in collected_instances:
-                family_attr = "{}.family".format(instance)
-                if family_attr == "render":
-                    continue
-
-                id_attr = "{}.id".format(instance)
-                if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-                    continue
-
-                for key, value in frames_attributes.items():
-                    if cmds.attributeQuery(key, node=instance, exists=True):
-                        cmds.setAttr(
-                            "{}.{}".format(instance, key),
-                            value
-                        )
+            update_assets_frame_range()
 
 
 def reset_scene_resolution():
@@ -3147,10 +3118,7 @@ def remove_render_layer_observer():
         pass
 
 
-def update_instances_frame_range():
-    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'asset'
-    attributes of sets that got one, execpt if instance family is 'render'
-    """
+def update_assets_frame_range():
     collected_instances = cmds.ls(
         "*.id",
         long=True,
@@ -3159,25 +3127,24 @@ def update_instances_frame_range():
         objectsOnly=True
     )
     asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
 
-    asset_data = asset_doc["data"]
     frames_attributes = {
-        'frameStart': asset_data["frameStart"],
-        'frameEnd': asset_data["frameEnd"],
-        'handleStart': asset_data["handleStart"],
-        'handleEnd': asset_data["handleEnd"],
-        'asset': asset_doc['name']
+        'frameStart': new_data["frameStart"],
+        'frameEnd': new_data["frameEnd"],
+        'handleStart': new_data["handleStart"],
+        'handleEnd': new_data["handleEnd"],
+        'asset': new_asset
     }
 
     for instance in collected_instances:
-        id_attr = "{}.id".format(instance)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+        family_attr = "{}.family".format(instance)
+        if family_attr == "render":
             continue
 
-        if (
-            cmds.attributeQuery('family', node=instance, exists=True) and
-            cmds.getAttr("{}.family".format(instance)) == "render"
-        ):
+        id_attr = "{}.id".format(instance)
+        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
             continue
 
         for key, value in frames_attributes.items():
@@ -3193,7 +3160,6 @@ def update_instances_frame_range():
                         "{}.{}".format(instance, key),
                         value
                     )
-
 
 def show_message(title, msg):
     from qtpy import QtWidgets
