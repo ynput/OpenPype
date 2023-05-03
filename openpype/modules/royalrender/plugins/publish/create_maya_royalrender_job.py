@@ -11,6 +11,7 @@ from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
 from openpype.modules.royalrender.api import Api as rrApi
 from openpype.modules.royalrender.rr_job import RRJob, CustomAttribute
+from openpype.pipeline.farm.tools import iter_expected_files
 
 
 class CreateMayaRoyalRenderJob(InstancePlugin):
@@ -43,7 +44,7 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
                 return "linux"
 
         expected_files = self._instance.data["expectedFiles"]
-        first_file = next(self._iter_expected_files(expected_files))
+        first_file = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file)
         self._instance.data["outputDir"] = output_dir
         workspace = self._instance.context.data["workspaceDir"]
@@ -124,16 +125,6 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
             self._instance.data["rrJobs"] = []
 
         self._instance.data["rrJobs"] += self.get_job()
-
-    @staticmethod
-    def _iter_expected_files(exp):
-        if isinstance(exp[0], dict):
-            for _aov, files in exp[0].items():
-                for file in files:
-                    yield file
-        else:
-            for file in exp:
-                yield file
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):

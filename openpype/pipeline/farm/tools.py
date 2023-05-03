@@ -100,3 +100,13 @@ def from_published_scene(instance, replace_in_path=True):
         instance.data["publishRenderMetadataFolder"] = metadata_folder
 
     return file_path
+
+
+def iter_expected_files(exp):
+    if isinstance(exp[0], dict):
+        for _aov, files in exp[0].items():
+            for file in files:
+                yield file
+    else:
+        for file in exp:
+            yield file

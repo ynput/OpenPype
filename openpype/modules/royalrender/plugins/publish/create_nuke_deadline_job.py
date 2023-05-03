@@ -19,9 +19,11 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
+from openpype.pipeline import OpenPypePyblishPluginMixin
+from openpype.pipeline.farm.tools import iter_expected_files
 
 
-class CreateNukeRoyalRenderJob(InstancePlugin):
+class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
     label = "Create Nuke Render job in RR"
     order = IntegratorOrder + 0.1
     hosts = ["nuke"]
@@ -208,7 +210,8 @@ class CreateNukeRoyalRenderJob(InstancePlugin):
         # this will append expected files to instance as needed.
         expected_files = self.expected_files(
             render_path, start_frame, end_frame)
-        first_file = next(self._iter_expected_files(expected_files))
+        self._instance.data["expectedFiles"].extend(expected_files)
+        first_file = next(iter_expected_files(expected_files))
 
         job = RRJob(
             Software="Nuke",
