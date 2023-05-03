@@ -21,10 +21,11 @@ from openpype.pipeline import (
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
-from openpype.pipeline.farm.pyblish import (
+from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
-    attach_instances_to_subset
+    attach_instances_to_subset,
+    prepare_representations
 )
 
 
@@ -332,140 +333,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         return deadline_publish_job_id
 
-    def _get_representations(self, instance, exp_files):
-        """Create representations for file sequences.
-
-        This will return representations of expected files if they are not
-        in hierarchy of aovs. There should be only one sequence of files for
-        most cases, but if not - we create representation from each of them.
-
-        Arguments:
-            instance (dict): instance data for which we are
-                             setting representations
-            exp_files (list): list of expected files
-
-        Returns:
-            list of representations
-
-        """
-        representations = []
-        host_name = os.environ.get("AVALON_APP", "")
-        collections, remainders = clique.assemble(exp_files)
-
-        # create representation for every collected sequence
-        for collection in collections:
-            ext = collection.tail.lstrip(".")
-            preview = False
-            # TODO 'useSequenceForReview' is temporary solution which does
-            #   not work for 100% of cases. We must be able to tell what
-            #   expected files contains more explicitly and from what
-            #   should be review made.
-            # - "review" tag is never added when is set to 'False'
-            if instance["useSequenceForReview"]:
-                # toggle preview on if multipart is on
-                if instance.get("multipartExr", False):
-                    self.log.debug(
-                        "Adding preview tag because its multipartExr"
-                    )
-                    preview = True
-                else:
-                    render_file_name = list(collection)[0]
-                    # if filtered aov name is found in filename, toggle it for
-                    # preview video rendering
-                    preview = match_aov_pattern(
-                        host_name, self.aov_filter, render_file_name
-                    )
-
-            staging = os.path.dirname(list(collection)[0])
-            success, rootless_staging_dir = (
-                self.anatomy.find_root_template_from_path(staging)
-            )
-            if success:
-                staging = rootless_staging_dir
-            else:
-                self.log.warning((
-                    "Could not find root path for remapping \"{}\"."
-                    " This may cause issues on farm."
-                ).format(staging))
-
-            frame_start = int(instance.get("frameStartHandle"))
-            if instance.get("slate"):
-                frame_start -= 1
-
-            rep = {
-                "name": ext,
-                "ext": ext,
-                "files": [os.path.basename(f) for f in list(collection)],
-                "frameStart": frame_start,
-                "frameEnd": int(instance.get("frameEndHandle")),
-                # If expectedFile are absolute, we need only filenames
-                "stagingDir": staging,
-                "fps": instance.get("fps"),
-                "tags": ["review"] if preview else [],
-            }
-
-            # poor man exclusion
-            if ext in self.skip_integration_repre_list:
-                rep["tags"].append("delete")
-
-            if instance.get("multipartExr", False):
-                rep["tags"].append("multipartExr")
-
-            # support conversion from tiled to scanline
-            if instance.get("convertToScanline"):
-                self.log.info("Adding scanline conversion.")
-                rep["tags"].append("toScanline")
-
-            representations.append(rep)
-
-            self._solve_families(instance, preview)
-
-        # add remainders as representations
-        for remainder in remainders:
-            ext = remainder.split(".")[-1]
-
-            staging = os.path.dirname(remainder)
-            success, rootless_staging_dir = (
-                self.anatomy.find_root_template_from_path(staging)
-            )
-            if success:
-                staging = rootless_staging_dir
-            else:
-                self.log.warning((
-                    "Could not find root path for remapping \"{}\"."
-                    " This may cause issues on farm."
-                ).format(staging))
-
-            rep = {
-                "name": ext,
-                "ext": ext,
-                "files": os.path.basename(remainder),
-                "stagingDir": staging,
-            }
-
-            preview = match_aov_pattern(
-                host_name, self.aov_filter, remainder
-            )
-            if preview:
-                rep.update({
-                    "fps": instance.get("fps"),
-                    "tags": ["review"]
-                })
-            self._solve_families(instance, preview)
-
-            already_there = False
-            for repre in instance.get("representations", []):
-                # might be added explicitly before by publish_on_farm
-                already_there = repre.get("files") == rep["files"]
-                if already_there:
-                    self.log.debug("repre {} already_there".format(repre))
-                    break
-
-            if not already_there:
-                representations.append(rep)
-
-        return representations
-
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
 
@@ -552,12 +419,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         if isinstance(instance.data.get("expectedFiles")[0], dict):
             instances = create_instances_for_aov(
-                instance, instance_skeleton_data, self.aov_filter)
+                instance, instance_skeleton_data,
+                self.aov_filter, self.skip_integration_repre_list)
 
         else:
-            representations = self._get_representations(
+            representations = prepare_representations(
                 instance_skeleton_data,
-                instance.data.get("expectedFiles")
+                instance.data.get("expectedFiles"),
+                self.anatomy,
+                self.aov_filter,
+                self.skip_integration_repre_list
             )
 
             if "representations" not in instance_skeleton_data.keys():

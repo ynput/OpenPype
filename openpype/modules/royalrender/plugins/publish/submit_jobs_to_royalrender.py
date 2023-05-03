@@ -11,7 +11,7 @@ from openpype.pipeline.publish import KnownPublishError
 class SubmitJobsToRoyalRender(ContextPlugin):
     """Find all jobs, create submission XML and submit it to RoyalRender."""
     label = "Submit jobs to RoyalRender"
-    order = IntegratorOrder + 0.1
+    order = IntegratorOrder + 0.3
     targets = ["local"]
 
     def __init__(self):

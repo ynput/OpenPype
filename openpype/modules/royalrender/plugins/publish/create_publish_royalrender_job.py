@@ -11,10 +11,11 @@ from openpype.modules.royalrender.rr_job import RRJob, RREnvList
 from openpype.pipeline.publish import KnownPublishError
 from openpype.lib.openpype_version import (
     get_OpenPypeVersion, get_openpype_version)
-from openpype.pipeline.farm.pyblish import (
+from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
-    attach_instances_to_subset
+    attach_instances_to_subset,
+    prepare_representations
 )
 
 
@@ -31,6 +32,20 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
+    skip_integration_repre_list = []
+
+    # mapping of instance properties to be transferred to new instance
+    #     for every specified family
+    instance_transfer = {
+        "slate": ["slateFrames", "slate"],
+        "review": ["lutPath"],
+        "render2d": ["bakingNukeScripts", "version"],
+        "renderlayer": ["convertToScanline"]
+    }
+
+    # list of family names to transfer to new family if present
+    families_transfer = ["render3d", "render2d", "ftrack", "slate"]
+
     def process(self, instance):
         # data = instance.data.copy()
         context = instance.context
@@ -46,15 +61,18 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             families_transfer=self.families_transfer,
             instance_transfer=self.instance_transfer)
 
-        instances = None
         if isinstance(instance.data.get("expectedFiles")[0], dict):
             instances = create_instances_for_aov(
-                instance, instance_skeleton_data, self.aov_filter)
+                instance, instance_skeleton_data,
+                self.aov_filter, self.skip_integration_repre_list)
 
         else:
-            representations = self._get_representations(
+            representations = prepare_representations(
                 instance_skeleton_data,
-                instance.data.get("expectedFiles")
+                instance.data.get("expectedFiles"),
+                self.anatomy,
+                self.aov_filter,
+                self.skip_integration_repre_list
             )
 
             if "representations" not in instance_skeleton_data.keys():
@@ -104,7 +122,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             RRJob: RoyalRender publish job.
 
         """
-        data = instance.data.copy()
+        data = deepcopy(instance.data)
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 

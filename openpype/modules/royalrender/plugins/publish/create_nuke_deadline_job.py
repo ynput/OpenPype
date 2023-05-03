@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """Submitting render job to RoyalRender."""
+import copy
 import os
-import sys
 import re
 import platform
 from datetime import datetime
 
 from pyblish.api import InstancePlugin, IntegratorOrder, Context
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
 from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
 from openpype.modules.royalrender.api import Api as rrApi
@@ -34,6 +33,8 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
     priority = 50
     chunk_size = 1
     concurrent_tasks = 1
+    use_gpu = True
+    use_published = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -69,6 +70,11 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
                 "suspend_publish",
                 default=False,
                 label="Suspend publish"
+            ),
+            BoolDef(
+                "use_published",
+                default=cls.use_published,
+                label="Use published workfile"
             )
         ]
 
@@ -81,6 +87,17 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
         self.rr_api = None
 
     def process(self, instance):
+        # import json
+        # def _default_json(value):
+        #     return str(value)
+        # filepath = "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\tests\\unit\\openpype\\modules\\royalrender\\plugins\\publish\\resources\\instance.json"
+        # with open(filepath, "w") as f:
+        #     f.write(json.dumps(instance.data, indent=4, default=_default_json))
+        #
+        # filepath = "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\tests\\unit\\openpype\\modules\\royalrender\\plugins\\publish\\resources\\context.json"
+        # with open(filepath, "w") as f:
+        #     f.write(json.dumps(instance.context.data, indent=4, default=_default_json))
+
         if not instance.data.get("farm"):
             self.log.info("Skipping local instance.")
             return
@@ -93,6 +110,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             "suspend_publish"]
 
         context = instance.context
+        self._instance = instance
 
         self._rr_root = self._resolve_rr_path(context, instance.data.get(
             "rrPathName"))  # noqa
@@ -218,7 +236,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             Renderer="",
             SeqStart=int(start_frame),
             SeqEnd=int(end_frame),
-            SeqStep=int(self._instance.data.get("byFrameStep"), 1),
+            SeqStep=int(self._instance.data.get("byFrameStep", 1)),
             SeqFileOffset=0,
             Version=nuke_version.group(),
             SceneName=script_path,
@@ -298,7 +316,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
 
         if "%" not in file:
             expected_files.append(path)
-            return
+            return expected_files
 
         if self._instance.data.get("slate"):
             start_frame -= 1
@@ -308,3 +326,25 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             for i in range(start_frame, (end_frame + 1))
         )
         return expected_files
+
+    def preview_fname(self, path):
+        """Return output file path with #### for padding.
+
+        Deadline requires the path to be formatted with # in place of numbers.
+        For example `/path/to/render.####.png`
+
+        Args:
+            path (str): path to rendered images
+
+        Returns:
+            str
+
+        """
+        self.log.debug("_ path: `{}`".format(path))
+        if "%" in path:
+            search_results = re.search(r"(%0)(\d)(d.)", path).groups()
+            self.log.debug("_ search_results: `{}`".format(search_results))
+            return int(search_results[1])
+        if "#" in path:
+            self.log.debug("_ path: `{}`".format(path))
+        return path
