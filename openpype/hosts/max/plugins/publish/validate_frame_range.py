@@ -29,7 +29,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
     order = ValidateContentsOrder
     families = ["maxrender"]
     hosts = ["max"]
-    optional = False
+    optional = True
     actions = [RepairAction]
 
     def process(self, instance):
