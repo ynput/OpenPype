@@ -14,7 +14,7 @@
             "children": [
                 {
                     "type": "label",
-                    "label": "This application's colorspace management can be controlled through OpenPype settings.  <br>Specifically, the configured OpenColorIO (OCIO) confg path is utilized in the application's workfile. <br>Additionally, the File Rules feature can be leveraged for both publishing and loading procedures."
+                    "label": "This application's colorspace management can be controlled through OpenPype settings.  <br>Specifically, the configured OpenColorIO (OCIO) config path is utilized in the application's workfile. <br>Additionally, the File Rules feature can be leveraged for both publishing and loading procedures."
                 },
                 {
                     "type": "boolean",
