@@ -1376,8 +1376,8 @@ def parse_edl_events(path, color_edits_only=False):
         loc_value = ""
         tape_value = ""
         entry = {"clip_name": clip.name}
-        if clip.metadata.get("cdl"):
-            cdl = clip.metadata["cdl"]
+        cdl = clip.metadata["cdl"]
+        if cdl:
             entry.update(
                 {
                     "slope": tuple(cdl["asc_sop"]["slope"]),
