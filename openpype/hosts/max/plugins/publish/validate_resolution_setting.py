@@ -30,14 +30,17 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
         current_height = rt.renderHeight
         if current_width != width and current_height != height:
             raise PublishValidationError("Resolution Setting "
-                                         "not matching resolution set on asset or shot.")
+                                         "not matching resolution "
+                                         "set on asset or shot.")
         if current_width != width:
             raise PublishValidationError("Width in Resolution Setting "
-                                         "not matching resolution set on asset or shot.")
+                                         "not matching resolution set "
+                                         "on asset or shot.")
 
         if current_height != height:
             raise PublishValidationError("Height in Resolution Setting "
-                                         "not matching resolution set on asset or shot.")
+                                         "not matching resolution set "
+                                         "on asset or shot.")
 
     def get_db_resolution(self, instance):
         data = ["data.resolutionWidth", "data.resolutionHeight"]
