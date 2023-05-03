@@ -135,7 +135,7 @@ def update_scene_containers() -> List[OpenpypeContainer]:
         bpy.types.Object: 1,
     }
     all_instanced_collections = get_instanced_collections()
-    container_datablocks = [
+    containerized_datablocks = [
         datablock
         for datablock in sorted(
             lsattr("id", AVALON_CONTAINER_ID),
@@ -154,18 +154,18 @@ def update_scene_containers() -> List[OpenpypeContainer]:
     datablocks_to_skip.update(
         chain.from_iterable(
             get_all_outliner_children(d)
-            for d in container_datablocks
+            for d in containerized_datablocks
             if isinstance(d, tuple(BL_OUTLINER_TYPES))
         )
     )
 
     # Update loader type of containerized datablocks
-    assign_loader_to_datablocks(container_datablocks)
+    assign_loader_to_datablocks(containerized_datablocks)
 
     # Create containers from container datablocks
     created_containers = {c.name: c for c in openpype_containers}
-    user_map = bpy.data.user_map(subset=container_datablocks)
-    for entity in container_datablocks:
+    user_map = bpy.data.user_map(subset=containerized_datablocks)
+    for entity in containerized_datablocks:
         if (
             entity in datablocks_to_skip
             or user_map.get(entity) <= datablocks_to_skip
@@ -217,7 +217,7 @@ def update_scene_containers() -> List[OpenpypeContainer]:
         container = None
         representation_id = container_metadata.get("representation")
         for c in openpype_containers:
-            if container_metadata.get("representation") == representation_id:
+            if c[AVALON_PROPERTY]["representation"] == representation_id:
                 container = c
                 break
 
