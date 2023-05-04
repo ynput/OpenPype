@@ -513,7 +513,7 @@ def get_custom_workfile_template_from_session(
 
 ### Starts Alkemy-X Override ###
 def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
-    """Returns an environment dictionary based on the visual hierarchy of an asset in a project.
+    """Returns an environment dictionary based on the hierarchy of an asset in a project
 
     The environment dictionary contains keys representing the different levels of the
     visual hierarchy (e.g. "SHOW", "SEASON", "EPISODE", etc.) and their corresponding
@@ -525,7 +525,7 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
         skip_empty (bool): Whether to skip env entries that we don't have a value for.
 
     Returns:
-        dict: An environment dictionary with keys "SHOW", "SEASON", "EPISODE", "SEQUENCE",
+        dict: An environment dictionary with keys "SHOW", "SEASON", "EPISODE", "SEQ",
             "SHOT", and "ASSET_TYPE". The values of the keys are the names of the
             corresponding entities in the hierarchy. If an entity is not present in the
             hierarchy, its corresponding key will not be present or have a value of None
@@ -553,7 +553,7 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
         "Project": "SHOW",
         "Season": "SEASON",
         "Episode": "EPISODE",
-        "Sequence": "SEQUENCE",
+        "Sequence": "SEQ",
         "Shot": "SHOT",
     }
 
@@ -563,7 +563,7 @@ def get_hierarchy_env(project_doc, asset_doc, skip_empty=True):
         "SHOW": project_doc["data"]["code"],
         "SEASON": None,
         "EPISODE": None,
-        "SEQUENCE": None,
+        "SEQ": None,
         "SHOT": None,
         "ASSET_TYPE": None,
     }
