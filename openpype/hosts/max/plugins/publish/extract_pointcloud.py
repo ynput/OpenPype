@@ -138,7 +138,7 @@ class ExtractPointCloud(publish.Extractor):
                 obj = sel.baseobject
             # TODO: to see if it can be used maxscript instead
                 anim_names = rt.GetSubAnimNames(obj)
-            for anim_name in anim_names:
+                for anim_name in anim_names:
                 sub_anim = rt.GetSubAnim(obj, anim_name)
                 boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 if boolean:
