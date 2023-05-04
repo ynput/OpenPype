@@ -22,7 +22,7 @@ jobs:
     outputs:
         changed_python: ${{ steps.changes.outputs.python }}
   steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
       if: github.event_name == 'push'
     - uses: dorny/paths-filter@master
       id: changes
