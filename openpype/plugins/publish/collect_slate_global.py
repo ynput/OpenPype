@@ -5,6 +5,7 @@ from openpype.lib import (
     get_oiio_tools_path,
     get_ffmpeg_tool_path
 )
+from openpype import resources
 
 
 class CollectSlateGlobal(pyblish.api.InstancePlugin):
@@ -57,7 +58,19 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 slate_common_data.update(instance.data["customData"])
 
             template_path = settings["slate_template_path"].format(**os.environ)
+            if not template_path:
+                template_path = resources.get_resource("slate_template", "generic_slate.html")
+                self.log.info(
+                    "No 'slate_template_path' found on the project settings. "
+                    "Using default '%s'", template_path
+                )
             resources_path = settings["slate_resources_path"].format(**os.environ)
+            if not resources_path:
+                resources_path = resources.get_resource("slate_template", "resources")
+                self.log.info(
+                    "No 'slate_resources_path' found on the project settings. "
+                    "Using default '%s'", resources_path
+                )
             slate_global = {
                 "slate_template_path": template_path,
                 "slate_resources_path": resources_path,

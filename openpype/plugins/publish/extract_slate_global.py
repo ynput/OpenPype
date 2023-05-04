@@ -62,22 +62,19 @@ class SlateCreator:
 
         self.template_path = os.path.normpath(template_path)
         self.log.debug(
-            "Using newly specified Slate template path: '%s'",
-            self.template_path
+            "Using Slate template path: '%s'", self.template_path
         )
 
         if resources_path:
             self.resources_path = os.path.normpath(resources_path)
             self.log.debug(
-                "Using newly specified Slate resources path: '%s'",
-                self.resources_path
+                "Using Slate resources path: '%s'", self.resources_path
             )
         else:
             basedir = os.path.basename(self.template_path)
             self.resources_path = os.path.normpath(basedir)
             self.log.debug(
-                "No Slate resources path specified, using: '%s'",
-                self.resources_path
+                "No Slate resources path specified, using: '%s'", self.resources_path
             )
 
     def set_resolution(self, width, height):

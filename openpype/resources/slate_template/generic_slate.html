@@ -1,0 +1,54 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="resources/generic_slate.css" />
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="header"></div>
+            <div class="info-container">
+                <div class="title">{project[name]}</div>
+                <div class="subtitle">{asset}_{task[short]}_v{@version}</div>
+                <div class="info-entry">
+                    <div class="info-desc">Date:</div>
+                    <div class="info-text">{dd} {mmm} {yyyy}</div>
+                </div>
+                <div class="info-entry">
+                    <div class="info-desc">Length:</div>
+                    <div class="info-text">{frameStartHandle} - {frameEndHandle}</div>
+                </div>
+                <div class="info-entry">
+                    <div class="info-desc">Resolution:</div>
+                    <div class="info-text">{resolution_width}x{resolution_height}</div>
+                </div>
+                <div class="info-entry"{scope_optional}>
+                    <div class="info-desc">Scope:</div>
+                    <div class="info-text">{scope}</div>
+                </div>
+                <div class="info-entry"{intent}>
+                    <div class="info-desc">Intent:</div>
+                    <div class="info-text">{intent[label]}</div>
+                </div>
+                <div class="info-entry">
+                    <div class="info-desc">Artist:</div>
+                    <div class="info-text">{username}</div>
+                </div>
+                <div class="info-entry">
+                    <div class="info-desc">Notes:</div>
+                    <div class="info-text">{comment}</div>
+                </div>
+            </div>
+            <div class="sidebar">
+                <div class="thumbs">
+                    <img class="thumb" src="{thumbnail}" />
+                </div>
+                <div class="color-check">
+                    <div class="luma-check"></div>
+                    <div class="chroma-check"></div>
+                </div>
+            </div>
+            <div class="logo_footer">
+                <img class="logo" src="resources/logo.png" alt="Logo"/>
+            </div>
+        </div>
+    </body>
+</html>
