@@ -7,11 +7,12 @@ on:
     branches: [ develop ]
 
 jobs:
-  lint:
+  linting:
     runs-on: ubuntu-latest
     steps:
       - name: Code Check
-      - uses: wemake-services/wemake-python-styleguide@master
+        uses: wemake-services/wemake-python-styleguide@master
         with:
           reporter: 'github-pr-review'
+        env:
           GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
