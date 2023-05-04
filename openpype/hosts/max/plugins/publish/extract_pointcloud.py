@@ -132,7 +132,10 @@ class ExtractPointCloud(publish.Extractor):
         """
         opt_list = []
         for member in members:
-            obj = member.baseobject
+            node = rt.getNodeByName(member)
+            selection_list = list(node.Children)
+            for sel in selection_list:
+                obj = sel.baseobject
             # TODO: to see if it can be used maxscript instead
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
