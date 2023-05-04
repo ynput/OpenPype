@@ -22,8 +22,9 @@ from openpype.hosts.blender.api.utils import (
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
-from openpype.pipeline.load.utils import get_representation_path
+from openpype.modules import ModulesManager
 from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.client.entities import (
     get_subsets,
     get_representations,
@@ -595,14 +596,18 @@ def download_last_workfile() -> str:
         str: Path to last workfile.
     """
     from openpype.modules.sync_server.sync_server import (
-        get_last_published_workfile_path,
         download_last_published_workfile,
     )
+
+    sync_server = ModulesManager().get('sync_server')
+    if not sync_server or not sync_server.enabled:
+        raise RuntimeError(
+            'Sync server module is not enabled or available'
+        )
 
     session = legacy_io.Session
     project_name = session.get("AVALON_PROJECT")
     task_name = session.get("AVALON_TASK")
-    # task_type =   # TODO
     asset_name = session.get("AVALON_ASSET")
     anatomy = Anatomy(project_name)
     asset_doc = get_asset_by_name(
@@ -610,11 +615,6 @@ def download_last_workfile() -> str:
         session.get("AVALON_ASSET"),
     )
     family = 'workfile'
-
-    # # Get subset id
-    # subset_id = get_matching_subset_id(
-    #     project_name, task_name, "workfile", asset_doc
-    # )
 
     filtered_subsets = [
         subset
@@ -661,49 +661,43 @@ def download_last_workfile() -> str:
         print("Subset does not have any version")
         return
 
-    # workfile_representation = get_representation_by_task(
-    #     project_name,
-    #     task_name,
-    #     last_version_doc,
-    # )
+    workfile_representations = list(get_representations(
+        project_name,
+        context_filters={
+            'asset': asset_name,
+            'family': 'workfile',
+            'task': {'name': task_name},  #, 'type': task_type},
+        }
+    ))
+
+    if not workfile_representations:
+        raise RuntimeError(
+            f"No published workfile for task {task_name} and host {host_name}."
+        )
 
     workfile_representation = max(
         filter(
-            lambda r: not r['context'].get('version'),
-            list(get_representations(
-                project_name,
-                context_filters={
-                    'asset': asset_name,
-                    'family': 'workfile',
-                    'task': {'name': task_name},  #, 'type': task_type},
-                }
-            )),
+            lambda r: r['context'].get('version'),
+            workfile_representations,
         ),
-        key=lambda r: r['context']['version']
+        key=lambda r: r['context']['version'],
     )
     if not workfile_representation:
-        print(
+        raise RuntimeError(
             "No published workfile for task "
             f"'{task_name}' and host blender"
         )
-        return
 
     # Download last published workfile and return its path
     return download_last_published_workfile(
         "blender",
         project_name,
-        asset_name,
         task_name,
-        get_last_published_workfile_path(
-            "blender",
-            project_name,
-            task_name,
-            workfile_representation,
-            anatomy=anatomy,
-        ),
         workfile_representation,
-        subset_id,
-        last_version_doc,
+        int((
+            sync_server.sync_project_settings[
+                project_name
+            ]['config']['retry_cnt']
+        )),
         anatomy=anatomy,
-        asset_doc=asset_doc,
     ), last_version_doc["data"]["time"]
