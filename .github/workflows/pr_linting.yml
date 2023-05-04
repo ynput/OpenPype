@@ -1,0 +1,13 @@
+name: 📇 Code Linting
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  - linting:
+      - name: wemake-python-styleguide
+        uses: wemake-services/wemake-python-styleguide@master
+        with:
+          reporter: 'github-pr-review'
+          GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
