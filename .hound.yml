@@ -1,3 +1,4 @@
 flake8:
+  version: 6.0.0
   enabled: true
   config_file: setup.cfg
