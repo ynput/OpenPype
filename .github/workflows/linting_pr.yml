@@ -1,0 +1,36 @@
+name: 📇 Linting PR
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Black
+        uses: microsoft/action-python@0.6.3
+        with:
+          black: false
+
+      - name: Bandit
+        uses: microsoft/action-python@0.6.3
+        with:
+          bandit: true
+
+      - name: Pylint
+        uses: microsoft/action-python@0.6.3
+        with:
+          pylint: true
+
+      - name: Pyright
+        uses: microsoft/action-python@0.6.3
+        with:
+          pyright: true
+
+      - name: Flake8
+        uses: microsoft/action-python@0.6.3
+        with:
+          flake8: true
