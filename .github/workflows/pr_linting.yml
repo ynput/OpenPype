@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: [ develop ]
 
+  workflow_dispatch:
+
 permissions:
   contents: read
   pull-requests: write
@@ -19,6 +21,7 @@ jobs:
           echo "_CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} -- '*.py' | tr -s '\n' ' ' )" >> ${GITHUB_ENV}
       - name: Code Check
         uses: wemake-services/wemake-python-styleguide@master
+        if: ${{ env._CHANGED_FILES }}
         with:
           reporter: 'github-pr-review'
           path: "${{ env._CHANGED_FILES }}"
