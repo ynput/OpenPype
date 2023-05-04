@@ -6,7 +6,11 @@ import json
 
 from pyblish.api import InstancePlugin, IntegratorOrder, Instance
 
-from openpype.modules.royalrender.rr_job import RRJob, RREnvList
+from openpype.modules.royalrender.rr_job import (
+    RRJob,
+    RREnvList,
+    get_rr_platform
+)
 from openpype.pipeline.publish import KnownPublishError
 from openpype.lib.openpype_version import (
     get_OpenPypeVersion, get_openpype_version)
@@ -216,7 +220,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             ImageDir="<SceneFolder>",
             ImageExtension="",
             ImagePreNumberLetter="",
-            SceneOS=RRJob.get_rr_platform(),
+            SceneOS=get_rr_platform(),
             rrEnvList=environment.serialize(),
             Priority=priority
         )
