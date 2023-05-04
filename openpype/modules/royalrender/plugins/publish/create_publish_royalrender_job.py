@@ -47,6 +47,20 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
 
+    environ_job_filter = [
+        "OPENPYPE_METADATA_FILE"
+    ]
+
+    environ_keys = [
+        "FTRACK_API_USER",
+        "FTRACK_API_KEY",
+        "FTRACK_SERVER",
+        "AVALON_APP_NAME",
+        "OPENPYPE_USERNAME",
+        "OPENPYPE_SG_USER",
+    ]
+    priority = 50
+
     def process(self, instance):
         # data = instance.data.copy()
         context = instance.context
