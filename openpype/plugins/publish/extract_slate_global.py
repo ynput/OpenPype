@@ -340,20 +340,21 @@ class ExtractSlateGlobal(publish.Extractor):
     hosts = [
         "nuke",
         "maya",
+        "blender",
+        "houdini",
         "shell",
-        "houdini"
-        # "hiero",
-        # "premiere",
-        # "harmony",
-        # "traypublisher",
-        # "standalonepublisher",
-        # "fusion",
-        # "tvpaint",
-        # "resolve",
-        # "webpublisher",
-        # "aftereffects",
-        # "flame",
-        # "unreal"
+        "hiero",
+        "premiere",
+        "harmony",
+        "traypublisher",
+        "standalonepublisher",
+        "fusion",
+        "tvpaint",
+        "resolve",
+        "webpublisher",
+        "aftereffects",
+        "flame",
+        "unreal"
     ]
 
     _slate_data_name = "slateGlobal"
