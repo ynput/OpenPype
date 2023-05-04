@@ -139,8 +139,8 @@ class ExtractPointCloud(publish.Extractor):
             # TODO: to see if it can be used maxscript instead
                 anim_names = rt.GetSubAnimNames(obj)
                 for anim_name in anim_names:
-                sub_anim = rt.GetSubAnim(obj, anim_name)
-                boolean = rt.IsProperty(sub_anim, "Export_Particles")
+                    sub_anim = rt.GetSubAnim(obj, anim_name)
+                    boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 if boolean:
                     event_name = sub_anim.Name
                     opt = f"${member.Name}.{event_name}.export_particles"
