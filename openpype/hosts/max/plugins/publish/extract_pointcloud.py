@@ -6,7 +6,6 @@ from openpype.hosts.max.api import (
     maintained_selection
 )
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
 
 
 class ExtractPointCloud(publish.Extractor):
@@ -62,10 +61,12 @@ class ExtractPointCloud(publish.Extractor):
             instance.data["representations"] = []
 
         self.log.info("Writing PRT with TyFlow Plugin...")
-        filenames = self.get_files(container, path, start, end)
+        filenames = self.get_files(
+            instance.data["members"][0], path, start, end)
         self.log.debug(f"filenames: {filenames}")
 
-        partition = self.partition_output_name(container)
+        partition = self.partition_output_name(
+            instance.data["members"][0])
 
         representation = {
             'name': 'prt',
@@ -141,9 +142,9 @@ class ExtractPointCloud(publish.Extractor):
                     sub_anim = rt.GetSubAnim(obj, anim_name)
                     boolean = rt.IsProperty(sub_anim, "Export_Particles")
                     if boolean:
-                    event_name = sub_anim.Name
-                    opt = f"${member.Name}.{event_name}.export_particles"
-                    opt_list.append(opt)
+                        event_name = sub_anim.Name
+                        opt = f"${member.Name}.{event_name}.export_particles"
+                        opt_list.append(opt)
 
         return opt_list
 
