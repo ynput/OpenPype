@@ -812,3 +812,36 @@ def attach_instances_to_subset(attach_to, instances):
             new_inst.pop("subsetGroup")
             new_instances.append(new_inst)
     return new_instances
+
+
+def create_metadata_path(instance, anatomy):
+    ins_data = instance.data
+    # Ensure output dir exists
+    output_dir = ins_data.get(
+        "publishRenderMetadataFolder", ins_data["outputDir"])
+
+    log = Logger.get_logger("farm_publishing")
+
+    try:
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+    except OSError:
+        # directory is not available
+        log.warning("Path is unreachable: `{}`".format(output_dir))
+
+    metadata_filename = "{}_metadata.json".format(ins_data["subset"])
+
+    metadata_path = os.path.join(output_dir, metadata_filename)
+
+    # Convert output dir to `{root}/rest/of/path/...` with Anatomy
+    success, rootless_mtdt_p = anatomy.find_root_template_from_path(
+        metadata_path)
+    if not success:
+        # `rootless_path` is not set to `output_dir` if none of roots match
+        log.warning((
+            "Could not find root path for remapping \"{}\"."
+            " This may cause issues on farm."
+        ).format(output_dir))
+        rootless_mtdt_p = metadata_path
+
+    return metadata_path, rootless_mtdt_p

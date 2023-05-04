@@ -15,7 +15,8 @@ from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
     attach_instances_to_subset,
-    prepare_representations
+    prepare_representations,
+    create_metadata_path
 )
 
 
@@ -100,8 +101,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         instance.data["rrJobs"] += publish_job
 
-        metadata_path, rootless_metadata_path = self._create_metadata_path(
-            instance)
+        metadata_path, rootless_metadata_path = \
+            create_metadata_path(instance, self.anatomy)
 
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
@@ -122,7 +123,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             RRJob: RoyalRender publish job.
 
         """
-        data = deepcopy(instance.data)
+        # data = deepcopy(instance.data)
+        data = instance.data
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
@@ -132,7 +134,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job, so they use the same environment
         metadata_path, roothless_metadata_path = \
-                self._create_metadata_path(instance)
+            create_metadata_path(instance, self.anatomy)
 
         environment = RREnvList({
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Submit publishing job to farm."""
-
 import os
 import json
 import re
@@ -12,20 +11,18 @@ import pyblish.api
 
 from openpype.client import (
     get_last_version_by_subset_name,
-    get_representations,
 )
 from openpype.pipeline import (
-    get_representation_path,
     legacy_io,
 )
 from openpype.tests.lib import is_in_tests
-from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
     attach_instances_to_subset,
-    prepare_representations
+    prepare_representations,
+    create_metadata_path
 )
 
 
@@ -154,36 +151,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # poor man exclusion
     skip_integration_repre_list = []
 
-    def _create_metadata_path(self, instance):
-        ins_data = instance.data
-        # Ensure output dir exists
-        output_dir = ins_data.get(
-            "publishRenderMetadataFolder", ins_data["outputDir"])
-
-        try:
-            if not os.path.isdir(output_dir):
-                os.makedirs(output_dir)
-        except OSError:
-            # directory is not available
-            self.log.warning("Path is unreachable: `{}`".format(output_dir))
-
-        metadata_filename = "{}_metadata.json".format(ins_data["subset"])
-
-        metadata_path = os.path.join(output_dir, metadata_filename)
-
-        # Convert output dir to `{root}/rest/of/path/...` with Anatomy
-        success, rootless_mtdt_p = self.anatomy.find_root_template_from_path(
-            metadata_path)
-        if not success:
-            # `rootless_path` is not set to `output_dir` if none of roots match
-            self.log.warning((
-                "Could not find root path for remapping \"{}\"."
-                " This may cause issues on farm."
-            ).format(output_dir))
-            rootless_mtdt_p = metadata_path
-
-        return metadata_path, rootless_mtdt_p
-
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
 
@@ -216,7 +183,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, rootless_metadata_path = \
-            self._create_metadata_path(instance)
+            create_metadata_path(instance, self.anatomy)
 
         environment = {
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
@@ -539,8 +506,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
             publish_job.update({"ftrack": ftrack})
 
-        metadata_path, rootless_metadata_path = self._create_metadata_path(
-            instance)
+        metadata_path, rootless_metadata_path = \
+            create_metadata_path(instance, self.anatomy)
 
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
