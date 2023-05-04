@@ -76,7 +76,7 @@
             "enabled": false,
             "optional": true,
             "slate_template_path": "",
-            "slate_template_res_path": "",
+            "slate_resources_path": "",
             "integrate_task_types": [
                 "Paint",
                 "Compositing"

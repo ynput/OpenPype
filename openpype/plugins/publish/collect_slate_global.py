@@ -36,47 +36,38 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 self.log.warning("ExtractSlateGlobal is not active. Skipping...")
                 return
 
-            if instance.context.data.get("host") == "nuke" and (
-                "render.farm" in instance.data.get("families")):
-                self.log.warning("Skipping Slate Global Collect "
-                    "in nuke context, defer to deadline...")
+            if instance.context.data.get("host") == "nuke" and \
+                    "render.farm" in instance.data.get("families"):
+                self.log.warning(
+                    "Skipping Slate Global Collect in Nuke context, defer to Deadline."
+                )
                 return
 
             self.log.info("ExtractSlateGlobal is active.")
+            # Create dictionary of common data across all Slates
+            slate_common_data = {
+                "@version":  str(instance.data["version"]).zfill(version_padding),
+                "frame_padding": version_padding,
+                "intent": {"label": "", "value": ""},
+                "comment": "",
+                "scope": "",
+            }
+            slate_common_data.update(instance.data["anatomyData"])
+            if "customData" in instance.data:
+                slate_common_data.update(instance.data["customData"])
 
             template_path = settings["slate_template_path"].format(**os.environ)
-            resources_path = settings["slate_template_res_path"].format(**os.environ)
-
-            if "slateGlobal" not in instance.data:
-                slate_global = instance.data["slateGlobal"] = dict()
-
-            slate_global.update({
+            resources_path = settings["slate_resources_path"].format(**os.environ)
+            slate_global = {
                 "slate_template_path": template_path,
-                "slate_template_res_path": resources_path,
+                "slate_resources_path": resources_path,
                 "slate_profiles": settings["profiles"],
-                "slate_common_data": {},
+                "slate_common_data": slate_common_data,
                 "slate_thumbnail": "",
                 "slate_repre_data": {},
                 "slate_task_types": settings["integrate_task_types"]
-            })
-
-            slate_data = slate_global["slate_common_data"]
-            slate_data.update(instance.data["anatomyData"])
-            slate_data["@version"] = str(
-                instance.data["version"]
-            ).zfill(
-                version_padding
-            )
-            slate_data["frame_padding"] = version_padding
-            slate_data["intent"] = {
-                "label": "",
-                "value": ""
             }
-            slate_data["comment"] = ""
-            slate_data["scope"] = ""
-
-            if "customData" in instance.data:
-                slate_data.update(instance.data["customData"])
+            instance.data["slateGlobal"] = slate_global
 
             if "families" not in instance.data:
                 instance.data["families"] = list()
@@ -90,11 +81,11 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             if instance.data["anatomyData"]["task"]["type"] in \
                 settings["integrate_task_types"]:
 
-                self.log.debug("Task: {} is enabled for Extract "
-                    "Slate Global workflow, tagging for slate "
-                    "extraction on review families...".format(
+                self.log.debug("Task: {} is enabled for Extract Slate Global workflow, "
+                    "tagging for slate extraction on review families...".format(
                         instance.data["anatomyData"]["task"]["type"]
-                ))
+                    )
+                )
 
                 instance.data["slate"] = True
                 instance.data["families"].append("slate")

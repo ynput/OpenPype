@@ -222,7 +222,7 @@
                 },
                 {
                     "type": "text",
-                    "key": "slate_template_res_path",
+                    "key": "slate_resources_path",
                     "label": "Slate Template Resources Path"
                 },
                 {
