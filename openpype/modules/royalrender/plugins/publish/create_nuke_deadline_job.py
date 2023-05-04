@@ -142,7 +142,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
         if not self._instance.data.get("rrJobs"):
             self._instance.data["rrJobs"] = []
 
-        self._instance.data["rrJobs"] += self.create_jobs()
+        self._instance.data["rrJobs"].extend(self.create_jobs())
 
         # redefinition of families
         if "render" in self._instance.data["family"]:
@@ -154,7 +154,6 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
 
         self._instance.data["outputDir"] = os.path.dirname(
             self._instance.data["path"]).replace("\\", "/")
-
 
     def create_jobs(self):
         submit_frame_start = int(self._instance.data["frameStartHandle"])
@@ -255,6 +254,8 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             ImageHeight=self._instance.data["resolutionHeight"],
             CustomAttributes=custom_attributes
         )
+
+        return job
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
