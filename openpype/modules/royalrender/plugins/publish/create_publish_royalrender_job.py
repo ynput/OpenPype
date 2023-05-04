@@ -150,11 +150,13 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         metadata_path, roothless_metadata_path = \
             create_metadata_path(instance, self.anatomy)
 
+        anatomy_data = instance.context.data["anatomyData"]
+
         environment = RREnvList({
-            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
-            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
-            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
-            "OPENPYPE_USERNAME": instance.context.data["user"],
+            "AVALON_PROJECT": anatomy_data["project"]["name"],
+            "AVALON_ASSET": anatomy_data["asset"],
+            "AVALON_TASK": anatomy_data["task"]["name"],
+            "OPENPYPE_USERNAME": anatomy_data["user"],
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
             "OPENPYPE_REMOTE_JOB": "0",
