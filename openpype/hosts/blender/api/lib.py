@@ -24,7 +24,6 @@ from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.modules import ModulesManager
 from openpype.pipeline import legacy_io, Anatomy
-from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.client.entities import (
     get_subsets,
     get_representations,
@@ -619,14 +618,14 @@ def download_last_workfile() -> str:
     filtered_subsets = [
         subset
         for subset in get_subsets(
-                project_name,
-                asset_ids=[asset_doc['_id']],
-                fields=['_id', 'name', 'data.family', 'data.families'],
+            project_name,
+            asset_ids=[asset_doc['_id']],
+            fields=['_id', 'name', 'data.family', 'data.families'],
         )
         if (
-                subset['data'].get('family') == family
-                # Legacy compatibility
-                or family in subset['data'].get('families', {})
+            subset['data'].get('family') == family
+            # Legacy compatibility
+            or family in subset['data'].get('families', {})
         )
     ]
     if not filtered_subsets:
@@ -644,7 +643,6 @@ def download_last_workfile() -> str:
                 subset_id = subset['_id']  # What if none is found?
     else:
         subset_id = filtered_subsets[0]['_id']
-
 
     if subset_id is None:
         print(
@@ -666,13 +664,13 @@ def download_last_workfile() -> str:
         context_filters={
             'asset': asset_name,
             'family': 'workfile',
-            'task': {'name': task_name},  #, 'type': task_type},
+            'task': {'name': task_name},
         }
     ))
 
     if not workfile_representations:
         raise RuntimeError(
-            f"No published workfile for task {task_name} and host {host_name}."
+            f"No published workfile for task {task_name} and host blender."
         )
 
     workfile_representation = max(
