@@ -141,8 +141,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             RRJob: RoyalRender publish job.
 
         """
-        # data = deepcopy(instance.data)
-        data = instance.data
+        data = instance.data.copy()
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
