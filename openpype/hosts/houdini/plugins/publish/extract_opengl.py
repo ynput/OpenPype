@@ -2,27 +2,20 @@ import os
 
 import pyblish.api
 
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 import hou
 
 
-class ExtractOpenGL(publish.Extractor,
-                    OptionalPyblishPluginMixin):
+class ExtractOpenGL(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract OpenGL"
     families = ["review"]
     hosts = ["houdini"]
-    optional = True
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
         ropnode = hou.node(instance.data.get("instance_node"))
 
         output = ropnode.evalParm("picture")

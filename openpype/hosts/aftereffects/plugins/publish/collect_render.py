@@ -88,10 +88,11 @@ class CollectAERender(publish.AbstractCollectRender):
                 raise ValueError("No file extension set in Render Queue")
             render_item = render_q[0]
 
+            instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family="render",
-                families=inst.data.get("families", []),
+                families=instance_families,
                 version=version,
                 time="",
                 source=current_file,
@@ -109,6 +110,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 tileRendering=False,
                 tilesX=0,
                 tilesY=0,
+                review="review" in instance_families,
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
@@ -139,6 +141,9 @@ class CollectAERender(publish.AbstractCollectRender):
                 instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
+                if "review" in instance.families:
+                    # to skip ExtractReview locally
+                    instance.families.remove("review")
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -217,16 +222,5 @@ class CollectAERender(publish.AbstractCollectRender):
         fam = "render.local"
         if fam not in instance.families:
             instance.families.append(fam)
-
-        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        reviewable_subset_filter = (settings["deadline"]
-                                    ["publish"]
-                                    ["ProcessSubmittedJobOnFarm"]
-                                    ["aov_filter"].get(self.hosts[0]))
-        for aov_pattern in reviewable_subset_filter:
-            if re.match(aov_pattern, instance.subset):
-                instance.families.append("review")
-                instance.review = True
-                break
 
         return instance
