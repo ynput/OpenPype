@@ -17,13 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          echo "_CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} -- '*.py' | tr -s '\n' ' ' )" >> ${GITHUB_ENV}
       - name: Code Check
         uses: wemake-services/wemake-python-styleguide@master
-        if: ${{ env._CHANGED_FILES }}
         with:
           reporter: 'github-pr-review'
-          path: "${{ env._CHANGED_FILES }}"
+          filter: 'diff_context'
         env:
           GITHUB_TOKEN: "${{ secrets.YNPUT_BOT_TOKEN }}"
