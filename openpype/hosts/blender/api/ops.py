@@ -1506,13 +1506,8 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
-<<<<<<< HEAD
     BuildWorkFile,
-    WM_OT_DownloadLastWorkfile,
-    WM_OT_DrawWorkFileOutOfDateWarning,
-=======
     WM_OT_CheckWorkfileUpToDate,
->>>>>>> 5bb7dfe4b9 (Enhancement: workfile out of date check no longer uses modification time.)
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_ExposeContainerContent,
@@ -1544,7 +1539,6 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
 
-<<<<<<< HEAD
     # Add make_container_publishable to collection and outliner menus
     bpy.types.OUTLINER_MT_collection.append(draw_op_collection_menu)
     bpy.types.OUTLINER_MT_context_menu.append(draw_op_collection_menu)
@@ -1552,16 +1546,10 @@ def register():
     # Hack to store creators with parameters for optimization purpose
     bpy.app.handlers.load_post.append(discover_creators_handler)
 
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 8c439dbb58 (Fixed cherry-pick issues)
     # Regularily check the workfile is up-to-date
     bpy.app.timers.register(
         update_workfile_up_to_date, first_interval=0, persistent=True
     )
-
->>>>>>> 5bb7dfe4b9 (Enhancement: workfile out of date check no longer uses modification time.)
 
 def unregister():
     """Unregister the operators and menu."""
