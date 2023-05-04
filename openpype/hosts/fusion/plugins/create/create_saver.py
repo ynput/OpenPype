@@ -28,7 +28,7 @@ class CreateSaver(Creator):
     description = "Fusion Saver to generate image sequence"
     icon = "fa5.eye"
 
-    instance_attributes = ["reviewable"]
+    instance_attributes = ["reviewable", "farm_rendering"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         # TODO: Add pre_create attributes to choose file format?

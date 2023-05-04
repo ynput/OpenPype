@@ -23,3 +23,11 @@ class CollectFusionRenders(pyblish.api.InstancePlugin):
         instance.data["families"].append(
             "{}.{}".format(family, render_target)
         )
+        if render_target == "farm":
+            if "review" in instance.data["families"]:
+                instance.data["families"].remove("review")
+
+            # Farm rendering
+            instance.data["transfer"] = False
+            instance.data["farm"] = True
+            self.log.info("Farm rendering ON ...")
