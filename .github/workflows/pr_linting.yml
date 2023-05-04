@@ -21,21 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
         changed_python: ${{ steps.changes.outputs.python }}
-  steps:
-    - uses: actions/checkout@v3
-      if: github.event_name == 'push'
-    - uses: dorny/paths-filter@master
-      id: changes
-      with:
-        filters: |
-          cpp:
-            - ["lte/gateway/c/**", "orc8r/gateway/c/**", "lte/gateway/python/**"]
-          javascript:
-            - ["nms/**", "**/*.js"]
-          python:
-            - ["**/*.py"]
-          terraform:
-            - ["**/*.tf"]
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event_name == 'push'
+      - uses: dorny/paths-filter@master
+        id: changes
+        with:
+          filters: |
+            python:
+              - ["**/*.py"]
 
   linting:
     needs: files_changed
