@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create publishing job on RoyalRender."""
 import os
+import attr
 from copy import deepcopy
 import json
 
@@ -123,7 +124,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
-            json.dump(publish_job, f, indent=4, sort_keys=True)
+            json.dump(attr.asdict(publish_job), f, indent=4, sort_keys=True)
 
     def get_job(self, instance, instances):
         """Create RR publishing job.
