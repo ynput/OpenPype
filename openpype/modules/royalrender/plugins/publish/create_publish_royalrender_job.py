@@ -117,7 +117,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         publish_job = self.get_job(instance, instances)
 
-        instance.data["rrJobs"] += publish_job
+        instance.data["rrJobs"].append(publish_job)
 
         metadata_path, rootless_metadata_path = \
             create_metadata_path(instance, self.anatomy)
