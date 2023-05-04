@@ -1,10 +1,6 @@
 import os
 import json
 import pyblish.api
-from openpype.lib import (
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path
-)
 from openpype import resources
 
 
