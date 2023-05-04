@@ -6,7 +6,6 @@ import json
 
 from pyblish.api import InstancePlugin, IntegratorOrder, Instance
 
-from openpype.pipeline import legacy_io
 from openpype.modules.royalrender.rr_job import RRJob, RREnvList
 from openpype.pipeline.publish import KnownPublishError
 from openpype.lib.openpype_version import (
@@ -199,8 +198,6 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "--targets", "farm"
         ]
 
-        openpype_version = get_OpenPypeVersion()
-        current_version = openpype_version(version=get_openpype_version())
         job = RRJob(
             Software="OpenPype",
             Renderer="Once",
@@ -209,8 +206,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
-            Version="{}.{}".format(
-                current_version.major(), current_version.minor()),
+            Version=os.environ.get("OPENPYPE_VERSION"),
             # executable
             SceneName=roothless_metadata_path,
             # command line arguments
