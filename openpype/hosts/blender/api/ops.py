@@ -32,6 +32,12 @@ from openpype.hosts.blender.api.utils import (
     link_to_collection,
     unlink_from_collection,
 )
+from openpype.hosts.blender.api.utils import make_paths_absolute
+from openpype.lib.path_tools import version_up
+from openpype.hosts.blender.api.lib import add_datablocks_to_container, download_last_workfile
+from openpype.hosts.blender.scripts import build_workfile
+from openpype.lib.path_tools import version_up
+from openpype.modules.base import ModulesManager
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
 from openpype.pipeline.create.creator_plugins import (
@@ -1167,6 +1173,10 @@ class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
                 # Update variables
                 context.scene["op_published_time"] = last_published_time
                 context.scene.is_workfile_up_to_date = True
+
+                # TODO refactor when download_last_workfile split
+                # Remap paths to absolute with source path
+                make_paths_absolute(Path(last_workfile_path))
 
                 bpy.ops.wm.save_mainfile()
                 bpy.ops.wm.revert_mainfile()
