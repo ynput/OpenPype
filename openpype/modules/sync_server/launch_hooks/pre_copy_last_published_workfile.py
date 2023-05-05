@@ -186,11 +186,18 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         # Keep source filepath for further path conformation
         self.data["source_filepath"] = last_published_workfile_path
 
-        resources_dir = os.path.join(os.path.dirname(local_workfile_path), 'resources')
+        resources_dir = os.path.join(
+            os.path.dirname(local_workfile_path), 'resources'
+        )
         if not os.path.exists(resources_dir):
             os.mkdir(resources_dir)
 
         for file in workfile_representation['files']:
-            resource_path = re.sub(r"\{root\[main\]\}", str(anatomy.roots['main']), file['path'])
-            if os.path.exists(resource_path):
+            resource_path = re.sub(
+                r"\{root\[main\]\}", str(anatomy.roots['main']), file['path']
+            )
+            if (
+                os.path.exists(resource_path)
+                and resource_path != last_published_workfile_path
+            ):
                 shutil.copy(resource_path, resources_dir)
