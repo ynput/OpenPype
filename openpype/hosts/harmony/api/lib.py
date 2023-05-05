@@ -13,16 +13,17 @@ import contextlib
 import json
 import signal
 import time
+import platform
 from uuid import uuid4
-from qtpy import QtWidgets, QtCore, QtGui
 import collections
 
-from .server import Server
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.stdout_broker.app import StdOutBroker
 from openpype.tools.utils import host_tools
 from openpype import style
-from openpype.lib.applications import get_non_python_host_kwargs
+
+from .server import Server
 
 # Setup logging.
 log = logging.getLogger(__name__)
@@ -233,6 +234,35 @@ def get_local_harmony_path(filepath):
     return os.path.join(harmony_path, basename)
 
 
+def _get_process_kwargs():
+    """Explicit setting of kwargs for Popen for Harmony.
+
+    Expected behavior
+    - openpype_console opens window with logs
+    - openpype_gui has stdout/stderr available for capturing
+
+    Returns:
+        dict[str, Any]: Kwargs for 'subprocess.Popen' .
+    """
+
+    kwargs = {}
+    if platform.system().lower() != "windows":
+        return kwargs
+
+    executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
+    executable_filename = ""
+    if executable_path:
+        executable_filename = os.path.basename(executable_path)
+    if "openpype_gui" in executable_filename:
+        kwargs.update({
+            "creationflags": subprocess.CREATE_NO_WINDOW,
+            "stdout": subprocess.DEVNULL,
+            "stderr": subprocess.DEVNULL
+        })
+
+    return kwargs
+
+
 def launch_zip_file(filepath):
     """Launch a Harmony application instance with the provided zip file.
 
@@ -324,7 +354,7 @@ def launch_zip_file(filepath):
         return
 
     print("Launching {}".format(scene_path))
-    kwargs = get_non_python_host_kwargs({}, False)
+    kwargs = _get_process_kwargs()
     process = subprocess.Popen(
         [ProcessContext.application_path, scene_path],
         **kwargs
