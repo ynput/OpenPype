@@ -13,7 +13,7 @@ from openpype.settings.constants import (
 )
 from .exceptions import (
     ApplicationNotFound,
-    ApplictionExecutableNotFound,
+    ApplicationExecutableNotFound,
 )
 from .lib import ApplicationLaunchContext
 
@@ -539,8 +539,8 @@ class ApplicationManager:
         Raises:
             ApplicationNotFound: Application was not found by entered
                 argument `app_name`.
-            ApplictionExecutableNotFound: Executables in application definition
-                were not found on this machine.
+            ApplicationExecutableNotFound: Executables in application
+                definition were not found on this machine.
             ApplicationLaunchFailed: Something important for application launch
                 failed. Exception should contain explanation message,
                 traceback should not be needed.
@@ -551,7 +551,7 @@ class ApplicationManager:
 
         executable = app.find_executable()
         if not executable:
-            raise ApplictionExecutableNotFound(app)
+            raise ApplicationExecutableNotFound(app)
 
         context = ApplicationLaunchContext(
             app, executable, **data

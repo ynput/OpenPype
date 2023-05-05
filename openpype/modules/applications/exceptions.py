@@ -8,7 +8,7 @@ class ApplicationNotFound(Exception):
         )
 
 
-class ApplictionExecutableNotFound(Exception):
+class ApplicationExecutableNotFound(Exception):
     """Defined executable paths are not available on the machine."""
 
     def __init__(self, application):
@@ -35,7 +35,7 @@ class ApplictionExecutableNotFound(Exception):
             # Is good idea to pass new line symbol to exception message?
             exc_mgs += "\n" + details
         self.exc_msg = exc_mgs
-        super(ApplictionExecutableNotFound, self).__init__(exc_mgs)
+        super(ApplicationExecutableNotFound, self).__init__(exc_mgs)
 
 
 class ApplicationLaunchFailed(Exception):
