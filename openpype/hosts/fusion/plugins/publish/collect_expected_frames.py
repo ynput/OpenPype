@@ -35,7 +35,7 @@ class CollectFusionExpectedFrames(
             "stagingDir": output_dir,
         }
 
-        self.log.info(repre)
+        self.log.debug(repre)
 
         self.set_representation_colorspace(
             representation=repre,
