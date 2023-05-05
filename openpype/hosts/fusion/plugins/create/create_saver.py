@@ -144,7 +144,7 @@ class CreateSaver(NewCreator):
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
         formatting_data.update({
-            "workdir": workdir,
+            "workdir": workdir.replace("\\", "/"),
             "ext": "exr"
         })
 
