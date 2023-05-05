@@ -2,7 +2,7 @@ from qtpy import QtWidgets, QtCore
 
 from openpype import style
 from openpype.lib import Logger
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, discover_loader_plugins
 from openpype.tools.attribute_defs import AttributeDefinitionsWidget
 from openpype.tools.attribute_defs.widgets import EnumAttrWidget
 
@@ -168,10 +168,10 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._clear_content_widget()
         attr_defs = plugin.get_placeholder_options(options)
         widget = AttributeDefinitionsWidget(attr_defs, self._content_widget)
-        wids = widget.findChildren(EnumAttrWidget)
-        for wid in wids:
-            if wid.attr_def.label == "Family":
-                wid.value_changed.connect(
+        enum_widgets = widget.findChildren(EnumAttrWidget)
+        for enum_widget in enum_widgets:
+            if enum_widget.attr_def.label == "Family":
+                enum_widget.value_changed.connect(
                     lambda value: self.on_enum_change(
                         value,
                         plugin,
@@ -270,10 +270,7 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
             attr for attr in attr_defs if attr.label == target_widget_label
         ]
 
-        new_content = [
-            {"label": "ma", "value": 'ma'},
-            {"label": "mb", "value": 'mb'}
-        ]
+        new_content = self.get_representation_by_family(value)
         widget_to_modify[0].items = new_content
 
         widget = AttributeDefinitionsWidget(attr_defs, self._content_widget)
@@ -296,3 +293,25 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._content_layout.addWidget(widget, 0)
         self._content_layout.addStretch(1)
         self._attr_defs_widget = widget
+
+    def get_representation_by_family(self, family):
+        representations_by_family = []
+        representations = []
+        all_loaders = discover_loader_plugins()
+
+        for loader in all_loaders:
+            for loader_family in loader.families:
+                if loader_family == family:
+                    representations_by_family.extend(loader.representations)
+
+        representations_by_family = list(set(representations_by_family))
+
+        for repre in representations_by_family:
+            representations.append({
+                'label': repre,
+                'value': repre
+            })
+
+        representations = sorted(representations, key=lambda x: x['label'])
+
+        return representations
