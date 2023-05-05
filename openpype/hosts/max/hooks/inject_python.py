@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pre-launch hook to inject python environment."""
-from openpype.lib import PreLaunchHook
 import os
+from openpype_modules.applications import PreLaunchHook
 
 
 class InjectPythonPath(PreLaunchHook):

@@ -1,5 +1,8 @@
 import os
-from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
+from openpype_modules.applications import (
+    PreLaunchHook,
+    ApplicationLaunchFailed,
+)
 from openpype.hosts.fusion import (
     FUSION_HOST_DIR,
     FUSION_VERSIONS_DICT,

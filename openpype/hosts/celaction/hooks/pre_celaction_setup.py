@@ -2,8 +2,9 @@ import os
 import shutil
 import winreg
 import subprocess
-from openpype.lib import PreLaunchHook, get_openpype_execute_args
+from openpype.lib import get_openpype_execute_args
 from openpype.hosts.celaction import scripts
+from openpype_modules.applications import PreLaunchHook
 
 CELACTION_SCRIPTS_DIR = os.path.dirname(
     os.path.abspath(scripts.__file__)

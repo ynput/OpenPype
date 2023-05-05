@@ -11,10 +11,9 @@ from openpype.hosts.unreal.ue_workers import (
 )
 
 from openpype import resources
-from openpype.lib import (
+from openpype_modules.applications import (
     PreLaunchHook,
     ApplicationLaunchFailed,
-    ApplicationNotFound,
 )
 from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib

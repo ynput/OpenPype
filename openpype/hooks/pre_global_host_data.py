@@ -1,11 +1,11 @@
 from openpype.client import get_project, get_asset_by_name
-from openpype.lib import (
-    PreLaunchHook,
-    EnvironmentPrepData,
+from openpype.pipeline import AvalonMongoDB, Anatomy
+from openpype_modules.applications import PreLaunchHook
+from openpype_modules.applications.lib import EnvironmentPrepData
+from openpype_modules.applications.utils import (
     prepare_app_environments,
     prepare_context_environments
 )
-from openpype.pipeline import AvalonMongoDB, Anatomy
 
 
 class GlobalHostDataHook(PreLaunchHook):

@@ -1,10 +1,12 @@
 import os
 
 from openpype.lib import (
-    PreLaunchHook,
     get_openpype_execute_args
 )
-from openpype.lib.applications import get_non_python_host_kwargs
+from openpype_modules.applications import PreLaunchHook
+from openpype_modules.applications.utils import (
+    get_non_python_host_kwargs,
+)
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
 

@@ -1,4 +1,4 @@
-from openpype.lib import PostLaunchHook
+from openpype_modules.applications import PostLaunchHook
 
 
 class PostStartTimerHook(PostLaunchHook):

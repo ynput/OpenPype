@@ -1,7 +1,5 @@
-from openpype.lib import (
-    PreLaunchHook,
-    get_openpype_execute_args
-)
+from openpype.lib import get_openpype_execute_args
+from openpype_modules.applications import PreLaunchHook
 
 
 class TvpaintPrelaunchHook(PreLaunchHook):

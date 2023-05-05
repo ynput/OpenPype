@@ -6,8 +6,8 @@ from openpype.client.entities import (
     get_project
 )
 
-from openpype.lib import PreLaunchHook
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype_modules.applications import PreLaunchHook
 from openpype.modules.sync_server.sync_server import (
     download_last_published_workfile,
 )

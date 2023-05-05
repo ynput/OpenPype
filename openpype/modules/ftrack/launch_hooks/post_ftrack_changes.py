@@ -2,7 +2,7 @@ import os
 
 import ftrack_api
 from openpype.settings import get_project_settings
-from openpype.lib import PostLaunchHook
+from openpype_modules.applications import PostLaunchHook
 
 
 class PostFtrackHook(PostLaunchHook):

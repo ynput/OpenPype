@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 
 from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.template_data import get_template_data_with_names

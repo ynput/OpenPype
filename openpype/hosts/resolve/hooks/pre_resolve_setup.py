@@ -1,6 +1,6 @@
 import os
 import platform
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
 
 

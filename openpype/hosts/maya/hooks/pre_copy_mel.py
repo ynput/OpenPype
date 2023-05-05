@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 from openpype.hosts.maya.lib import create_workspace_mel
 
 

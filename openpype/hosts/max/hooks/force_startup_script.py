@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pre-launch to force 3ds max startup script."""
-from openpype.lib import PreLaunchHook
 import os
+from openpype_modules.applications import PreLaunchHook
 
 
 class ForceStartupScript(PreLaunchHook):

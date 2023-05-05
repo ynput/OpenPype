@@ -1,6 +1,6 @@
 import os
 import shutil
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 from openpype.settings import get_project_settings
 from openpype.pipeline.workfile import (
     get_custom_workfile_template,

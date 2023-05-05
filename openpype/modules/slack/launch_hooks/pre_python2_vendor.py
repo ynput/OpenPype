@@ -1,5 +1,5 @@
 import os
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 from openpype_modules.slack import SLACK_MODULE_DIR
 
 

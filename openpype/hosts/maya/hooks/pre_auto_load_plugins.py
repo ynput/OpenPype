@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype_modules.applications import PreLaunchHook
 
 
 class MayaPreAutoLoadPlugins(PreLaunchHook):

@@ -6,13 +6,10 @@ import socket
 from pprint import pformat
 
 from openpype.lib import (
-    PreLaunchHook,
     get_openpype_username,
     run_subprocess,
 )
-from openpype.lib.applications import (
-    ApplicationLaunchFailed
-)
+from openpype_modules.applications import PreLaunchHook
 from openpype.hosts import flame as opflame
 
 

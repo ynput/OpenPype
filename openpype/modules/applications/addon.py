@@ -27,7 +27,7 @@ class ApplicationsAddon(OpenPypeModule):
 
         manager.launch(app_name, **kwargs)
 
-    def get_app_launch_environments(
+    def get_app_environments_for_context(
         self,
         app_name,
         project_name,
@@ -76,7 +76,7 @@ def extractenvironments(
 
     manager = ModulesManager()
     addon = manager.get_enabled_module(ApplicationsAddon.name)
-    env = addon.get_app_launch_environments(
+    env = addon.get_app_environments_for_context(
         app, project, asset, task, env_group)
 
 
