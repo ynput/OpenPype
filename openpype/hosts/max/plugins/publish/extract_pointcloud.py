@@ -53,7 +53,9 @@ class ExtractPointCloud(publish.Extractor):
                                             start,
                                             end,
                                             path)
+
             for job in job_args:
+                self.log.debug("job:{}".format(job))
                 rt.Execute(job)
 
         self.log.info("Performing Extraction ...")
@@ -62,11 +64,11 @@ class ExtractPointCloud(publish.Extractor):
 
         self.log.info("Writing PRT with TyFlow Plugin...")
         filenames = self.get_files(
-            instance.data["members"][0], path, start, end)
+            instance.data["members"], path, start, end)
         self.log.debug(f"filenames: {filenames}")
 
         partition = self.partition_output_name(
-            instance.data["members"][0])
+            instance.data["members"])
 
         representation = {
             'name': 'prt',
@@ -105,7 +107,7 @@ class ExtractPointCloud(publish.Extractor):
             end_frame = f"{operator}.frameEnd={end}"
             job_args.append(end_frame)
             filepath = filepath.replace("\\", "/")
-            prt_filename = f"{operator}.PRTFilename={filepath}"
+            prt_filename = f"{operator}.PRTFilename='{filepath}'"
 
             job_args.append(prt_filename)
             # Partition
@@ -113,7 +115,8 @@ class ExtractPointCloud(publish.Extractor):
             job_args.append(mode)
 
             additional_args = self.get_custom_attr(operator)
-            job_args.extend(iter(additional_args))
+            for args in additional_args:
+                job_args.append(args)
             prt_export = f"{operator}.exportPRT()"
             job_args.append(prt_export)
 
@@ -132,19 +135,16 @@ class ExtractPointCloud(publish.Extractor):
         """
         opt_list = []
         for member in members:
-            node = rt.getNodeByName(member)
-            selection_list = list(node.Children)
-            for sel in selection_list:
-                obj = sel.baseobject
-            # TODO: to see if it can be used maxscript instead
-                anim_names = rt.GetSubAnimNames(obj)
-                for anim_name in anim_names:
-                    sub_anim = rt.GetSubAnim(obj, anim_name)
-                    boolean = rt.IsProperty(sub_anim, "Export_Particles")
-                    if boolean:
-                        event_name = sub_anim.Name
-                        opt = f"${member.Name}.{event_name}.export_particles"
-                        opt_list.append(opt)
+            obj = member.baseobject
+        # TODO: to see if it can be used maxscript instead
+            anim_names = rt.GetSubAnimNames(obj)
+            for anim_name in anim_names:
+                sub_anim = rt.GetSubAnim(obj, anim_name)
+                boolean = rt.IsProperty(sub_anim, "Export_Particles")
+                if boolean:
+                    event_name = sub_anim.Name
+                    opt = f"${member.Name}.{event_name}.export_particles"
+                    opt_list.append(opt)
 
         return opt_list
 

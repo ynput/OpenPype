@@ -54,7 +54,7 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                            f":{invalid}"))
 
         if report:
-            raise PublishValidationError
+            raise PublishValidationError(f"{report}")
 
     def get_tyflow_object(self, instance):
         invalid = []
