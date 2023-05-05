@@ -1297,7 +1297,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
                 # If asset or subset are selected for switching, we use latest
                 # version else we try to keep the current container version.
-                if selected_asset or selected_subset:
+                if (
+                    selected_asset not in (None, container_asset_name)
+                    or selected_subset not in (None, container_subset_name)
+                ):
                     version_name = max(version_docs_by_name)
                 else:
                     version_name = container_version_name
