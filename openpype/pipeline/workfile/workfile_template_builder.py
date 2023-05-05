@@ -47,7 +47,6 @@ from openpype.pipeline.load import (
 
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
-    discover_creator_plugins,
     CreateContext,
 )
 
@@ -1267,7 +1266,7 @@ class PlaceholderLoadMixin(object):
 
         for loader in all_loaders:
             for family in loader.families:
-                if family == families[0]:
+                if family == (options.get('family') or families[0]):
                     representations.extend(loader.representations)
 
         representations = list(set(representations))
