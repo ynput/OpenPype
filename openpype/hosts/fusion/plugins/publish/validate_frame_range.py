@@ -97,5 +97,3 @@ class ValidateFrameRange(
     def repair(cls, instance):
         if instance.context.data["frame_range_type"] == "asset_render":
             set_asset_framerange()
-        else:
-            pass
