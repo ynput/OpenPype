@@ -122,7 +122,8 @@ class CreateSaver(Creator):
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""
 
-        if data.get("subset") is None:
+        subset = data["subset"]
+        if subset is None:
             self.log.warning("No subset found for _update_tool_with_data")
             return
         subset = data["subset"]
