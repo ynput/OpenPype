@@ -30,7 +30,7 @@ openpype_console module kitsu sync-service -l me@domain.ext -p my_password
 // sync specific projects then run listen
 openpype_console module kitsu sync-service -l me@domain.ext -p my_password -prj project_name01 -prj  project_name02
 
-// start listen only
+// start listen only for all projects
 openpype_console module kitsu sync-service -l me@domain.ext -p my_password -lo
 ```
 
