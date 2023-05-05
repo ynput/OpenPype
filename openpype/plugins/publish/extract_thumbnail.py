@@ -19,9 +19,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     families = [
         "imagesequence", "render", "render2d", "prerender",
-        "source", "clip", "take", "online"
+        "source", "clip", "take", "online", "image"
     ]
-    hosts = ["shell", "fusion", "resolve", "traypublisher"]
+    hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
     # presetable attribute
