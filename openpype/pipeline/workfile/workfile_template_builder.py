@@ -1250,15 +1250,28 @@ class PlaceholderLoadMixin(object):
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
 
-        # Get families from all loaders excluding "*"
+        # Get families and sort them alphabetically
         all_loaders = discover_loader_plugins()
-        families = set()
-        for loader in all_loaders:
-            families.update(loader.families)
-        families.discard("*")
+        families = []
+        representations = []
 
-        # Sort for readability
-        families = list(sorted(families))
+        for loader in all_loaders:
+            for family in loader.families:
+                if family == "*":
+                    continue
+
+                if family not in families:
+                    families.append(family)
+
+        families.sort()
+
+        for loader in all_loaders:
+            for family in loader.families:
+                if family == families[0]:
+                    representations.extend(loader.representations)
+
+        representations = list(set(representations))
+        representations.sort()
 
         return [
             attribute_definitions.UISeparatorDef(),
@@ -1296,7 +1309,7 @@ class PlaceholderLoadMixin(object):
                 "representation",
                 label="Representation name",
                 default=options.get("representation"),
-                items=representations['animation']
+                items=representations
             ),
             attribute_definitions.EnumDef(
                 "loader",
