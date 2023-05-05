@@ -19,7 +19,7 @@ from openpype_modules.ftrack.lib import (
 )
 
 from openpype.settings import get_system_settings
-from openpype.lib import ApplicationManager
+from openpype.modules import ModulesManager
 
 """
 This action creates/updates custom attributes.
@@ -180,8 +180,9 @@ class CustomAttributes(BaseAction):
             })
         })
         session.commit()
-
-        self.app_manager = ApplicationManager()
+        modules_manager = ModulesManager()
+        apps_addon = modules_manager.get_enabled_module("applications")
+        self.app_manager = apps_addon.create_applications_manager()
 
         try:
             self.prepare_global_data(session)

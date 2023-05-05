@@ -20,8 +20,9 @@ from openpype.client.operations import (
     CURRENT_PROJECT_CONFIG_SCHEMA,
 )
 from openpype.settings import get_anatomy_settings
-from openpype.lib import ApplicationManager, Logger
+from openpype.lib import Logger
 from openpype.pipeline import AvalonMongoDB, schema
+from openpype.modules import ModulesManager
 
 from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
 from .custom_attributes import get_openpype_attr, query_custom_attributes
@@ -304,7 +305,12 @@ def get_project_apps(in_app_list):
         return apps, warnings
 
     missing_app_msg = "Missing definition of application"
-    application_manager = ApplicationManager()
+    modules = ModulesManager()
+    apps_addon = modules.get_enabled_module("applications")
+    if apps_addon is None:
+        return apps, warnings
+
+    application_manager = apps_addon.create_applications_manager()
     for app_name in in_app_list:
         if application_manager.applications.get(app_name):
             apps.append({"name": app_name})

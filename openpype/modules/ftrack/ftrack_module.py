@@ -9,7 +9,8 @@ from openpype.modules import (
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
-    ISettingsChangeListener
+    ISettingsChangeListener,
+    ModulesManager,
 )
 from openpype.settings import SaveWarningExc
 from openpype.lib import Logger
@@ -216,7 +217,8 @@ class FtrackModule(
             app_definitions_from_app_manager,
             tool_definitions_from_app_manager
         )
-        from openpype.lib import ApplicationManager
+        modules_manager = ModulesManager()
+        apps_addon = modules_manager.get_enabled_module("applications")
         query_keys = [
             "id",
             "key",
@@ -236,7 +238,8 @@ class FtrackModule(
             elif key == CUST_ATTR_TOOLS:
                 tool_attribute = custom_attribute
 
-        app_manager = ApplicationManager(new_value_metadata)
+        app_manager = apps_addon.create_applications_manager(
+            new_value_metadata)
         missing_attributes = []
         if not app_attribute:
             missing_attributes.append(CUST_ATTR_APPLICATIONS)
