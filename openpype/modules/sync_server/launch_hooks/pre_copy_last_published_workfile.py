@@ -186,7 +186,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         # Keep source filepath for further path conformation
         self.data["source_filepath"] = last_published_workfile_path
 
-        resources_dir = os.path.join(local_workfile_dir, 'resources')
+        resources_dir = os.path.join(os.path.dirname(local_workfile_path), 'resources')
         if not os.path.exists(resources_dir):
             os.mkdir(resources_dir)
 
