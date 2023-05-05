@@ -42,7 +42,7 @@ import copy
 import platform
 
 import click
-from openpype.modules import OpenPypeModule
+from openpype.modules import OpenPypeModule, ModulesManager
 from openpype.settings import get_system_settings
 
 
@@ -63,6 +63,14 @@ class JobQueueModule(OpenPypeModule):
         # Is always enabled
         #   - the module does nothing until is used
         self.enabled = True
+
+        self._apps_addon = None
+
+    def connect_with_modules(self, enabled_modules):
+        for module in enabled_modules:
+            if module.name == "applications":
+                self._apps_addon = module
+                break
 
     @classmethod
     def _root_conversion(cls, root_path):
@@ -155,40 +163,31 @@ class JobQueueModule(OpenPypeModule):
     def cli(self, click_group):
         click_group.add_command(cli_main)
 
-    @classmethod
-    def get_server_url_from_settings(cls):
-        module_settings = get_system_settings()["modules"]
-        return cls.url_conversion(
-            module_settings
-            .get(cls.name, {})
-            .get("server_url")
-        )
-
-    @classmethod
-    def start_server(cls, port=None, host=None):
+    def start_server(self, port=None, host=None):
         from .job_server import main
 
         return main(port, host)
 
-    @classmethod
-    def start_worker(cls, app_name, server_url=None):
+    def start_worker(self, app_name, server_url=None):
         import requests
-        from openpype.lib import ApplicationManager
+
+        if self._apps_addon is None:
+            raise ValueError("Applications addons is not available")
 
         if not server_url:
-            server_url = cls.get_server_url_from_settings()
+            server_url = self._server_url
 
         if not server_url:
             raise ValueError("Server url is not set.")
 
-        http_server_url = cls.url_conversion(server_url)
+        http_server_url = self.url_conversion(server_url)
 
         # Validate url
         requests.get(http_server_url)
 
-        ws_server_url = cls.url_conversion(server_url) + "/ws"
+        ws_server_url = self.url_conversion(server_url) + "/ws"
 
-        app_manager = ApplicationManager()
+        app_manager = self._apps_addon.create_applications_manager()
         app = app_manager.applications.get(app_name)
         if app is None:
             raise ValueError(
@@ -196,11 +195,10 @@ class JobQueueModule(OpenPypeModule):
             )
 
         if app.host_name == "tvpaint":
-            return cls._start_tvpaint_worker(app, ws_server_url)
+            return self._start_tvpaint_worker(app, ws_server_url)
         raise ValueError("Unknown host \"{}\"".format(app.host_name))
 
-    @classmethod
-    def _start_tvpaint_worker(cls, app, server_url):
+    def _start_tvpaint_worker(self, app, server_url):
         from openpype.hosts.tvpaint.worker import main
 
         executable = app.find_executable()
@@ -228,7 +226,9 @@ def cli_main():
 @click.option("--port", help="Server port")
 @click.option("--host", help="Server host (ip address)")
 def cli_start_server(port, host):
-    JobQueueModule.start_server(port, host)
+    modules_manager = ModulesManager()
+    job_queue_addon = modules_manager.get_enabled_module(JobQueueModule.name)
+    job_queue_addon.start_server(port, host)
 
 
 @cli_main.command(
@@ -239,4 +239,6 @@ def cli_start_server(port, host):
 @click.argument("app_name")
 @click.option("--server_url", help="Server url which handle workers and jobs.")
 def cli_start_worker(app_name, server_url):
-    JobQueueModule.start_worker(app_name, server_url)
+    modules_manager = ModulesManager()
+    job_queue_addon = modules_manager.get_enabled_module(JobQueueModule.name)
+    job_queue_addon.start_worker(app_name, server_url)
