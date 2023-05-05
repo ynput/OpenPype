@@ -58,7 +58,7 @@ class RenderInstance(object):
     # With default values
     # metadata
     renderer = attr.ib(default="")  # renderer - can be used in Deadline
-    review = attr.ib(default=False)  # generate review from instance (bool)
+    review = attr.ib(default=None)  # False - explicitly skip review
     priority = attr.ib(default=50)  # job priority on farm
 
     family = attr.ib(default="renderlayer")

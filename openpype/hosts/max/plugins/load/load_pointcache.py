@@ -16,8 +16,7 @@ from openpype.hosts.max.api.lib import maintained_selection
 class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
-    families = ["model",
-                "camera",
+    families = ["camera",
                 "animation",
                 "pointcache"]
     label = "Load Alembic"
