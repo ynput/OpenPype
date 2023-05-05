@@ -1292,11 +1292,11 @@ class PlaceholderLoadMixin(object):
                 default=options.get("family"),
                 items=families
             ),
-            attribute_definitions.TextDef(
+            attribute_definitions.EnumDef(
                 "representation",
                 label="Representation name",
                 default=options.get("representation"),
-                placeholder="ma, abc, ..."
+                items=representations['animation']
             ),
             attribute_definitions.EnumDef(
                 "loader",
