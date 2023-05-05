@@ -1,11 +1,12 @@
 import os
+import time
 
 from openpype.client import get_project
 from openpype_modules.ftrack.lib import BaseAction
 from openpype_modules.applications.constants import CUSTOM_LAUNCH_APP_GROUPS
 from openpype_modules.applications.exceptions import (
     ApplicationLaunchFailed,
-    ApplictionExecutableNotFound,
+    ApplicationExecutableNotFound,
 )
 from openpype_modules.applications.manager import ApplicationManager
 
@@ -24,7 +25,8 @@ class AppplicationsAction(BaseAction):
     def __init__(self, *args, **kwargs):
         super(AppplicationsAction, self).__init__(*args, **kwargs)
 
-        self.application_manager = ApplicationManager()
+        self._application_manager = None
+        self._manager_cache = 0
 
     @property
     def discover_identifier(self):
@@ -51,6 +53,15 @@ class AppplicationsAction(BaseAction):
     def construct_requirements_validations(self):
         # Override validation as this action does not need them
         return
+
+    @property
+    def application_manager(self):
+        if (
+            self._application_manager is None
+            or (self._manager_cache - time.time()) > 10
+        ):
+            self._application_manager = ApplicationManager()
+        return self._application_manager
 
     def register(self):
         """Registers the action, subscribing the discover and launch topics."""
@@ -219,7 +230,7 @@ class AppplicationsAction(BaseAction):
                 task_name=task_name
             )
 
-        except ApplictionExecutableNotFound as exc:
+        except ApplicationExecutableNotFound as exc:
             self.log.warning(exc.exc_msg)
             return {
                 "success": False,

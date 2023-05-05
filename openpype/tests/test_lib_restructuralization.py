@@ -5,11 +5,6 @@
 def test_backward_compatibility(printer):
     printer("Test if imports still work")
     try:
-        from openpype.lib import execute_hook
-        from openpype.lib import PypeHook
-
-        from openpype.lib import ApplicationLaunchFailed
-
         from openpype.lib import get_ffmpeg_tool_path
         from openpype.lib import get_last_version_from_path
         from openpype.lib import get_paths_from_environ

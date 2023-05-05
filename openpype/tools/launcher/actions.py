@@ -5,14 +5,14 @@ from qtpy import QtWidgets, QtGui
 from openpype import PLUGINS_DIR
 from openpype import style
 from openpype import resources
-from openpype.lib import (
-    Logger,
-    ApplictionExecutableNotFound,
-    ApplicationLaunchFailed
-)
+from openpype.lib import Logger
 from openpype.pipeline import (
     LauncherAction,
     register_launcher_action_path,
+)
+from openpype_modules.applications.exceptions import (
+    ApplicationExecutableNotFound,
+    ApplicationLaunchFailed,
 )
 
 
@@ -116,7 +116,7 @@ class ApplicationAction(LauncherAction):
                 **self.data
             )
 
-        except ApplictionExecutableNotFound as exc:
+        except ApplicationExecutableNotFound as exc:
             details = exc.details
             msg = exc.msg
             log_msg = str(msg)
