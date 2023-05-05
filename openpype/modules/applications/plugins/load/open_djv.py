@@ -1,6 +1,6 @@
 import os
-from openpype.lib import ApplicationManager
 from openpype.pipeline import load
+from openpype_modules.applications.manager import ApplicationManager
 
 
 def existing_djv_path():

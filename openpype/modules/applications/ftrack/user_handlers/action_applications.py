@@ -2,12 +2,12 @@ import os
 
 from openpype.client import get_project
 from openpype_modules.ftrack.lib import BaseAction
-from openpype.lib.applications import (
-    ApplicationManager,
+from openpype_modules.applications.constants import CUSTOM_LAUNCH_APP_GROUPS
+from openpype_modules.applications.exceptions import (
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound,
-    CUSTOM_LAUNCH_APP_GROUPS
 )
+from openpype_modules.applications.manager import ApplicationManager
 
 
 class AppplicationsAction(BaseAction):
