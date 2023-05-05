@@ -8,6 +8,7 @@ import xml.etree.ElementTree
 import importlib
 
 import six
+import pyblish.util
 import pyblish.plugin
 import pyblish.api
 
