@@ -1,9 +1,10 @@
+import os
 import platform
 from abc import ABCMeta, abstractmethod
 
 import six
 
-from openpype.lib import Logger
+from openpype.lib import Logger, classes_from_module, modules_from_path
 
 
 @six.add_metaclass(ABCMeta)
@@ -130,3 +131,27 @@ class PostLaunchHook(LaunchHook):
     Nothing will happen if any exception will happen during processing. And
     processing of other postlaunch hooks won't stop either.
     """
+
+
+def discover_launch_hooks(paths, logger=None):
+    logger = logger or Logger.get_logger("HookDiscover")
+    all_classes = {
+        "pre": [],
+        "post": []
+    }
+    for path in paths:
+        if not os.path.exists(path):
+            logger.info(
+                "Path to launch hooks does not exist: \"{}\"".format(path)
+            )
+            continue
+
+        modules, _crashed = modules_from_path(path)
+        for _filepath, module in modules:
+            all_classes["pre"].extend(
+                classes_from_module(PreLaunchHook, module)
+            )
+            all_classes["post"].extend(
+                classes_from_module(PostLaunchHook, module)
+            )
+    return all_classes

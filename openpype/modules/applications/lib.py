@@ -13,17 +13,15 @@ from openpype import PACKAGE_DIR as OPENPYPE_DIR
 from openpype.modules import ModulesManager
 from openpype.settings import get_system_settings
 from openpype.lib import Logger
-from openpype.lib.python_module_tools import (
-    modules_from_path,
-    classes_from_module
-)
 from openpype.lib.execute import (
     get_linux_launcher_args
 )
-
+# Use direct import because of possible difference in classes
+#   for discovery ('openpype.modules' vs. 'openpype_modules')
+# - did work in tray, did not work e.g. in ftrack
+from openpype.modules.applications.hook import discover_launch_hooks
 from .exceptions import MissingRequiredKey
 from .constants import DEFAULT_ENV_SUBGROUP, PLATFORM_NAMES
-from .hook import PreLaunchHook, PostLaunchHook
 
 
 def merge_env(env, current_env):
@@ -371,25 +369,7 @@ class ApplicationLaunchContext:
             "\n".join("- {}".format(path) for path in paths)
         ))
 
-        all_classes = {
-            "pre": [],
-            "post": []
-        }
-        for path in paths:
-            if not os.path.exists(path):
-                self.log.info(
-                    "Path to launch hooks does not exist: \"{}\"".format(path)
-                )
-                continue
-
-            modules, _crashed = modules_from_path(path)
-            for _filepath, module in modules:
-                all_classes["pre"].extend(
-                    classes_from_module(PreLaunchHook, module)
-                )
-                all_classes["post"].extend(
-                    classes_from_module(PostLaunchHook, module)
-                )
+        all_classes = discover_launch_hooks(paths, self.log)
 
         for launch_type, classes in all_classes.items():
             hooks_with_order = []
