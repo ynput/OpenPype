@@ -15,10 +15,7 @@ from openpype.client import (
     get_assets,
 )
 from openpype.lib import JSONSettingRegistry
-from openpype.lib.applications import (
-    CUSTOM_LAUNCH_APP_GROUPS,
-    ApplicationManager
-)
+from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 from openpype.pipeline import discover_launcher_actions
 from openpype.tools.utils.lib import (
@@ -58,7 +55,10 @@ class ActionModel(QtGui.QStandardItemModel):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
-        self.application_manager = ApplicationManager()
+        modules_manager = ModulesManager()
+        apps_addon = modules_manager.get_enabled_module("applications")
+        self.application_manager = apps_addon.create_applications_manager()
+        self.custom_app_groups = apps_addon.get_custom_application_groups()
 
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
@@ -104,7 +104,7 @@ class ActionModel(QtGui.QStandardItemModel):
             if not app or not app.enabled:
                 continue
 
-            if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
+            if app.group.name in self.custom_app_groups:
                 continue
 
             if only_available and not app.find_executable():

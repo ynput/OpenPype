@@ -4,6 +4,7 @@ from queue import Queue
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_project
+from openpype.modules import ModulesManager
 from .delegates import (
     NumberDelegate,
     NameDelegate,
@@ -11,7 +12,6 @@ from .delegates import (
     ToolsDelegate
 )
 
-from openpype.lib import ApplicationManager
 from .constants import (
     REMOVED_ROLE,
     IDENTIFIER_ROLE,
@@ -58,7 +58,9 @@ class ToolsCache:
         self.tools_data = []
 
     def refresh(self):
-        app_manager = ApplicationManager()
+        modules_manager = ModulesManager()
+        apps_addon = modules_manager.get_enabled_module("applications")
+        app_manager = apps_addon.create_applications_manager()
         tools_data = []
         for tool_name, tool in app_manager.tools.items():
             tools_data.append(
