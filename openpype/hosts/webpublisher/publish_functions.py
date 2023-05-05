@@ -4,10 +4,7 @@ import pyblish.api
 import pyblish.util
 
 from openpype.lib import Logger
-from openpype.lib.applications import (
-    ApplicationManager,
-    get_app_environments_for_context,
-)
+from openpype.modules import ModulesManager
 from openpype.pipeline import install_host
 from openpype.hosts.webpublisher.api import WebpublisherHost
 
@@ -152,12 +149,14 @@ def cli_publish_from_app(
     asset_name, task_name, task_type = get_batch_asset_task_info(
         task_data["context"])
 
-    application_manager = ApplicationManager()
+    modules_manager = ModulesManager()
+    apps_addon = modules_manager.get_enabled_module("applications")
+    application_manager = apps_addon.create_applications_manager()
     found_variant_key = find_variant_key(application_manager, host_name)
     app_name = "{}/{}".format(host_name, found_variant_key)
 
     # must have for proper launch of app
-    env = get_app_environments_for_context(
+    env = apps_addon.get_app_environments_for_context(
         project_name,
         asset_name,
         task_name,
