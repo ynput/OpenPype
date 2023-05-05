@@ -24,6 +24,7 @@ from openpype.client import (
     get_linked_assets,
     get_representations,
 )
+from openpype.pipeline.load.plugins import discover_loader_plugins
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -1250,11 +1251,14 @@ class PlaceholderLoadMixin(object):
         options = options or {}
 
         # Get families and sort them alphabetically
-        families = (
-            discover_legacy_creator_plugins() or
-            discover_creator_plugins()
-        )
-        families = [f.family for f in families]
+        all_loaders = discover_loader_plugins()
+        families = []
+        for loader in all_loaders:
+            families.extend(loader.families)
+
+        families = list(set(families))
+        if "*" in families:
+            families.remove("*")
         families.sort()
 
         return [
