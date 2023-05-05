@@ -55,7 +55,6 @@ class ExtractPointCloud(publish.Extractor):
                                             path)
 
             for job in job_args:
-                self.log.debug("job:{}".format(job))
                 rt.Execute(job)
 
         self.log.info("Performing Extraction ...")
@@ -107,8 +106,7 @@ class ExtractPointCloud(publish.Extractor):
             end_frame = f"{operator}.frameEnd={end}"
             job_args.append(end_frame)
             filepath = filepath.replace("\\", "/")
-            prt_filename = f"{operator}.PRTFilename='{filepath}'"
-
+            prt_filename = f'{operator}.PRTFilename="{filepath}"'
             job_args.append(prt_filename)
             # Partition
             mode = f"{operator}.PRTPartitionsMode=2"
