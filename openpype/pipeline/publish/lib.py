@@ -804,7 +804,7 @@ def get_published_workfile_instance(context):
 
         # test if there is instance of workfile waiting
         # to be published.
-        if i.data["publish"] is not True:
+        if not i.data.get("publish", True):
             continue
 
         return i
