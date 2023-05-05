@@ -76,8 +76,10 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
             instance[0]  # Get the saver tool from the instance
             for instance in context
             if (
-                instance.data.get("publish", True)  # Only active instances
-                and "render.local" in instance.data["families"]  # Only render.local instances
+                # Only active instances
+                instance.data.get("publish", True)
+                # Only render.local instances
+                and "render.local" in instance.data["families"]
             )
         ]
 
