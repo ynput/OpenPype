@@ -8,7 +8,12 @@ import bpy
 import addon_utils
 from openpype.lib import Logger
 from openpype.modules import ModulesManager
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import (
+    Anatomy,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
 from openpype.client.entities import (
     get_subsets,
     get_representations,
@@ -341,14 +346,13 @@ def download_last_workfile() -> str:
             'Sync server module is not enabled or available'
         )
 
-    session = legacy_io.Session
-    project_name = session.get("AVALON_PROJECT")
-    task_name = session.get("AVALON_TASK")
-    asset_name = session.get("AVALON_ASSET")
+    project_name = get_current_project_name()
+    task_name = get_current_task_name()
+    asset_name = get_current_asset_name()
     anatomy = Anatomy(project_name)
     asset_doc = get_asset_by_name(
         project_name,
-        session.get("AVALON_ASSET"),
+        asset_name,
     )
     family = 'workfile'
 

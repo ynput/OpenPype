@@ -5,7 +5,11 @@ from typing import List, Optional
 
 import bpy
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import (
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
 from openpype.client.entities import get_last_version_by_subset_name
 
 
@@ -102,13 +106,12 @@ def check_workfile_up_to_date() -> bool:
     Returns:
         bool: True if the current workfile is up to date.
     """
-    session = legacy_io.Session
 
     # Get date and time of the latest published workfile
     last_published_version = get_last_version_by_subset_name(
-        legacy_io.active_project(),
-        f"workfile{session.get('AVALON_TASK')}",
-        asset_name=session.get("AVALON_ASSET"),
+        get_current_project_name(),
+        f"workfile{get_current_task_name()}",
+        asset_name=get_current_asset_name(),
         fields=["data"]
     )
 
