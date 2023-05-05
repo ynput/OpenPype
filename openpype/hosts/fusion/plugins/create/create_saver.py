@@ -1,7 +1,5 @@
 import os
 
-import qtawesome
-
 from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
@@ -28,6 +26,7 @@ class CreateSaver(Creator):
     family = "render"
     default_variants = ["Main", "Mask"]
     description = "Fusion Saver to generate image sequence"
+    icon = "fa5.eye"
 
     instance_attributes = ["reviewable"]
 
@@ -88,9 +87,6 @@ class CreateSaver(Creator):
             created_instance.transient_data["tool"] = tool
 
             self._add_instance_to_context(created_instance)
-
-    def get_icon(self):
-        return qtawesome.icon("fa.eye", color="white")
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
