@@ -1,9 +1,10 @@
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from openpype import style
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.attribute_defs import AttributeDefinitionsWidget
+from openpype.tools.attribute_defs.widgets import EnumAttrWidget
 
 
 class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
@@ -167,6 +168,18 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._clear_content_widget()
         attr_defs = plugin.get_placeholder_options(options)
         widget = AttributeDefinitionsWidget(attr_defs, self._content_widget)
+        wids = widget.findChildren(EnumAttrWidget)
+        for wid in wids:
+            if wid.attr_def.label == "Family":
+                wid.value_changed.connect(
+                    lambda value: self.on_enum_change(
+                        value,
+                        plugin,
+                        "Family",
+                        "Representation name"
+                    )
+                )
+
         self._content_layout.addWidget(widget, 0)
         self._content_layout.addStretch(1)
         self._attr_defs_widget = widget
@@ -240,3 +253,46 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
             self.resize(390, 450)
+
+    @QtCore.Slot(str, EnumAttrWidget)
+    def on_enum_change(
+        self,
+        value,
+        plugin,
+        origin_widget_label,
+        target_widget_label,
+        options=None
+    ):
+        self._clear_content_widget()
+        attr_defs = plugin.get_placeholder_options(options)
+
+        widget_to_modify = [
+            attr for attr in attr_defs if attr.label == target_widget_label
+        ]
+
+        new_content = [
+            {"label": "ma", "value": 'ma'},
+            {"label": "mb", "value": 'mb'}
+        ]
+        widget_to_modify[0].items = new_content
+
+        widget = AttributeDefinitionsWidget(attr_defs, self._content_widget)
+
+        enum_widgets = widget.findChildren(EnumAttrWidget)
+        current_widget = [
+            w for w in enum_widgets if w.attr_def.label == origin_widget_label
+        ]
+        current_widget[0].set_value(value)
+
+        current_widget[0].value_changed.connect(
+            lambda value: self.on_enum_change(
+                value,
+                plugin,
+                origin_widget_label,
+                target_widget_label
+            )
+        )
+
+        self._content_layout.addWidget(widget, 0)
+        self._content_layout.addStretch(1)
+        self._attr_defs_widget = widget
