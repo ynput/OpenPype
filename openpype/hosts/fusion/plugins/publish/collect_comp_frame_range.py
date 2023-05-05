@@ -29,12 +29,10 @@ class CollectFrameRange(
             asset_doc = get_current_project_asset()
             asset_start = asset_doc["data"]["frameStart"]
             asset_end = asset_doc["data"]["frameEnd"]
-            asset_handle_start = asset_doc["data"]["handleStart"]
-            asset_handle_end = asset_doc["data"]["handleEnd"]
 
             # Convert any potential none type to zero
-            asset_handle_start = asset_handle_start or 0
-            asset_handle_end = asset_handle_end or 0
+            asset_handle_start = asset_doc["data"].get("handleStart", 0)
+            asset_handle_end = asset_doc["data"].get("handleEnd", 0)
 
             # Calcualte in/out points
             asset_global_start = asset_start - asset_handle_start
@@ -42,30 +40,35 @@ class CollectFrameRange(
 
             # If the validation is off, set the frameStart/EndHandle to the
             # current frame range, so that's what will be rendered later on
-            context.data["frameStart"] = int(asset_start)
-            context.data["frameEnd"] = int(asset_end)
-            context.data["frameStartHandle"] = int(asset_global_start)
-            context.data["frameEndHandle"] = int(asset_global_end)
-            context.data["handleStart"] = int(asset_handle_start)
-            context.data["handleEnd"] = int(asset_handle_end)
-            context.data["frame_range_type"] = "asset_render"
+            frame_start = int(asset_start)
+            frame_end = int(asset_end)
+            frame_start_handle = int(asset_global_start)
+            frame_end_handle = int(asset_global_end)
+            handle_start = int(asset_handle_start)
+            handle_end = int(asset_handle_end)
+            frame_range_type = "asset_render"
         else:
             # Get the comps range
-            comp = context.data["currentComp"]
             (
                 comp_start,
                 comp_end,
                 comp_global_start,
                 comp_global_end,
-            ) = get_comp_render_range(comp)
+            ) = get_comp_render_range(context.data["currentComp"])
 
-            context.data["frameStart"] = int(comp_start)
-            context.data["frameEnd"] = int(comp_end)
-            context.data["frameStartHandle"] = int(comp_start)
-            context.data["frameEndHandle"] = int(comp_end)
-            context.data["handleStart"] = 0
-            context.data["handleEnd"] = 0
-            context.data["frame_range_type"] = "freerange_render"
+            frame_start = frame_start_handle = int(comp_start)
+            frame_end = frame_end_handle = int(comp_end)
+            handle_start = 0
+            handle_end = 0
+            frame_range_type = "freerange_render"
+
+        context.data["frameStart"] = frame_start
+        context.data["frameEnd"] = frame_end
+        context.data["frameStartHandle"] = frame_start_handle
+        context.data["frameEndHandle"] = frame_end_handle
+        context.data["handleStart"] = handle_start
+        context.data["handleEnd"] = handle_end
+        context.data["frame_range_type"] = frame_range_type
 
         self.log.info(
             'Setting "frame_range_type" to "{}"'.format(
