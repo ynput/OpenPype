@@ -13,8 +13,12 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance,
 )
-from openpype.client import get_asset_by_name
-from openpype.pipeline.context_tools import get_workdir_from_session
+from openpype.client import (
+    get_asset_by_name,
+    get_project,
+)
+from openpype.pipeline.context_tools import get_current_context
+from openpype.pipeline.workfile import get_workdir
 
 
 class CreateSaver(Creator):
@@ -121,14 +125,15 @@ class CreateSaver(Creator):
         if data.get("subset") is None:
             self.log.warning("No subset found for _update_tool_with_data")
             return
-
-        # Get current session but change the asset to the one from
-        # data in case a new asset has bin selected
-        session = legacy_io.Session
-        session["AVALON_ASSET"] = data["asset"]
         subset = data["subset"]
 
-        workdir = os.path.normpath(get_workdir_from_session(session))
+        context = get_current_context()
+        project_doc = get_project(context["project_name"])
+        asset_doc = get_asset_by_name(context["project_name"], data["asset"])
+
+        workdir = os.path.normpath(
+            get_workdir(project_doc, asset_doc, context["task_name"], "fusion")
+        )
         filename = f"{subset}..exr"
         filepath = os.path.join(workdir, "render", subset, filename)
         tool["Clip"] = filepath
@@ -148,9 +153,10 @@ class CreateSaver(Creator):
         comp = tool.Comp()
 
         # Allow regular non-managed savers to also be picked up
-        project = legacy_io.Session["AVALON_PROJECT"]
-        asset = legacy_io.Session["AVALON_ASSET"]
-        task = legacy_io.Session["AVALON_TASK"]
+        context = get_current_context()
+        project = context["project_name"]
+        asset = context["asset_name"]
+        task = context["task_name"]
 
         asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
 
