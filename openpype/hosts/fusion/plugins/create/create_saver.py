@@ -126,7 +126,6 @@ class CreateSaver(Creator):
         if subset is None:
             self.log.warning("No subset found for _update_tool_with_data")
             return
-        subset = data["subset"]
 
         context = get_current_context()
         project_doc = get_project(context["project_name"])
@@ -135,9 +134,9 @@ class CreateSaver(Creator):
         workdir = os.path.normpath(
             get_workdir(project_doc, asset_doc, context["task_name"], "fusion")
         )
-        filename = f"{subset}..exr"
-        filepath = os.path.join(workdir, "render", subset, filename)
-        tool["Clip"] = filepath
+        tool["Clip"] = os.path.join(
+            workdir, "render", subset, f"{subset}..exr"
+        )
 
         # Rename tool
         if tool.Name != subset:
