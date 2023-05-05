@@ -173,7 +173,7 @@ class MaxCreator(Creator, MaxCreatorBase):
         for instance in instances:
             if instance_node := rt.GetNodeByName(instance.data.get("instance_node")):  # noqa
                 rt.Select(instance_node)
-                rt.custAttributes.add(instance_node.baseObject, "openPypeData")
+                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
                 rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
