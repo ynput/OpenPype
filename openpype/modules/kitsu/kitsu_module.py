@@ -94,7 +94,7 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
 
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")],
-            "actions": [os.path.join(current_dir, "actions")]
+            "actions": [os.path.join(current_dir, "actions")],
         }
 
     def cli(self, click_group):
@@ -124,30 +124,22 @@ def push_to_zou(login, password):
 
 
 @cli_main.command()
+@click.option("-l", "--login", envvar="KITSU_LOGIN", help="Kitsu login")
 @click.option(
-    "-l",
-    "--login",
-    envvar="KITSU_LOGIN",
-    help="Kitsu login"
-)
-@click.option(
-    "-p",
-    "--password",
-    envvar="KITSU_PWD",
-    help="Password for kitsu username"
+    "-p", "--password", envvar="KITSU_PWD", help="Password for kitsu username"
 )
 @click.option(
     "-prj",
     "--project",
     multiple=True,
     default=[],
-    help="Sync specific kitsu projects"
+    help="Sync specific kitsu projects",
 )
 @click.option(
     "-lo",
     "--listen_only/--listen-only",
     default=False,
-    help="Listen to events only without any syncing"
+    help="Listen to events only without any syncing",
 )
 def sync_service(login, password, project, listen_only):
     """Synchronize openpype database from Zou sever database.
