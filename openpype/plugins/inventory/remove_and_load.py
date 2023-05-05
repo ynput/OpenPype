@@ -1,5 +1,5 @@
 from openpype.pipeline import InventoryAction
-from openpype.pipeline.legacy_io import Session
+from openpype.pipeline import get_current_project_name
 from openpype.pipeline.load.plugins import discover_loader_plugins
 from openpype.pipeline.load.utils import (
     get_loader_identifier,
@@ -16,12 +16,13 @@ class RemoveAndLoad(InventoryAction):
     icon = "refresh"
 
     def process(self, containers):
+        project_name = get_current_project_name()
         for container in containers:
-            project_name = Session.get("AVALON_PROJECT")
 
             # Get loader
             loader_name = container["loader"]
-            for plugin in discover_loader_plugins(project_name=project_name):
+            loaders = discover_loader_plugins(project_name=project_name)
+            for plugin in loader:
                 if get_loader_identifier(plugin) == loader_name:
                     loader = plugin
                     break
