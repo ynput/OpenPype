@@ -1,6 +1,254 @@
 # Changelog
 
 
+## [3.15.6](https://github.com/ynput/OpenPype/tree/3.15.6)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.5...3.15.6)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Substance Painter Integration <a href="https://github.com/ynput/OpenPype/pull/4283">#4283</a></summary>
+
+<strong>This implements a part of #4205 by implementing a Substance Painter integration
+
+</strong>Status:
+- [x] Implement Host
+- [x] start substance with last workfile using `AddLastWorkfileToLaunchArgs` prelaunch hook
+- [x] Implement Qt tools
+- [x] Implement loaders
+- [x] Implemented a Set project mesh loader (this is relatively special case because a Project will always have exactly one mesh - a Substance Painter project cannot exist without a mesh).
+- [x] Implement project open callback
+- [x] On project open it notifies the user if the loaded model is outdated
+- [x] Implement publishing logic
+- [x] Workfile publishing
+- [x] Export Texture Sets
+- [x] Support OCIO using #4195 (draft brach is set up - see comment)
+- [ ] Likely needs more testing on the OCIO front
+- [x] Validate all outputs of the Export template are exported/generated
+- [x] Allow validation to be optional **(issue: there's no API method to detect what maps will be exported without doing an actual export to disk)**
+- [x] Support extracting/integration if not all outputs are generated
+- [x] Support multiple materials/texture sets per instance
+- [ ] Add validator that can enforce only a single texture set output if studio prefers that.
+- [ ] Implement Export File Format (extensions) override in Creator
+- [ ] Add settings so Admin can choose which extensions are available.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Data Exchange: Geometry in 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4555">#4555</a></summary>
+
+<strong>Introduces and updates a creator, extractors and loaders for model family
+
+</strong>Introduces new creator, extractors and loaders for model family while adding model families into the existing max scene loader and extractor
+- [x] creators
+- [x]  adding model family into max scene loader and extractor
+- [x]  fbx loader
+- [x]  fbx extractor
+- [x]  usd loader
+- [x]  usd extractor
+- [x] validator for model family
+- [x]  obj loader(update function)
+- [x]  fix the update function of the loader as #4675
+- [x]  Add documentation
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: add review flag to each instance <a href="https://github.com/ynput/OpenPype/pull/4884">#4884</a></summary>
+
+Adds `mark_for_review` flag to the Creator to allow artists to disable review if necessary.Exposed this flag in Settings, by default set to True (eg. same behavior as previously).
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Houdini: Fix Validate Output Node (VDB) <a href="https://github.com/ynput/OpenPype/pull/4819">#4819</a></summary>
+
+- Removes plug-in that was a duplicate of this plug-in.
+- Optimize logging of many prims slightly
+- Fix error reporting like https://github.com/ynput/OpenPype/pull/4818 did
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add null node as output indicator when using TAB search <a href="https://github.com/ynput/OpenPype/pull/4834">#4834</a></summary>
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Don't error in collect review if camera is not set correctly <a href="https://github.com/ynput/OpenPype/pull/4874">#4874</a></summary>
+
+Do not raise an error in collector when invalid path is set as camera path. Allow camera path to not be set correctly in review instance until validation so it's nicely shown in a validation report.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Project packager: Backup and restore can store only database <a href="https://github.com/ynput/OpenPype/pull/4879">#4879</a></summary>
+
+Pack project functionality have option to zip only project database without project files. Unpack project can skip project copy if the folder is not found.Added helper functions to `openpype.client.mongo` that can be also used for tests as replacement of mongo dump.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: ExtractOpenGL for Review instance not optional <a href="https://github.com/ynput/OpenPype/pull/4881">#4881</a></summary>
+
+Don't make ExtractOpenGL optional for review instance optional.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Small style changes <a href="https://github.com/ynput/OpenPype/pull/4894">#4894</a></summary>
+
+Small changes in styles and form of publisher UI.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Workfile icon in new publisher <a href="https://github.com/ynput/OpenPype/pull/4898">#4898</a></summary>
+
+Fix icon for the workfile instance in new publisher
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Simplify creator icons code <a href="https://github.com/ynput/OpenPype/pull/4899">#4899</a></summary>
+
+Simplify code for setting the icons for the Fusion creators
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: Fix PySide 6.5 support for loader <a href="https://github.com/ynput/OpenPype/pull/4900">#4900</a></summary>
+
+Fixes PySide 6.5 support in Loader.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Validate Attributes <a href="https://github.com/ynput/OpenPype/pull/4917">#4917</a></summary>
+
+This plugin was broken due to bad fetching of data and wrong repair action.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix: Locally copied version of last published workfile is not incremented <a href="https://github.com/ynput/OpenPype/pull/4722">#4722</a></summary>
+
+### Fix 1
+When copied, the local workfile version keeps the published version number, when it must be +1 to follow OP's naming convention.
+
+### Fix 2
+Local workfile version's name is built from anatomy. This avoids to get workfiles with their publish template naming.
+
+### Fix 3
+In the case a subset has at least two tasks with published workfiles, for example `Modeling` and `Rigging`, launching `Rigging` was getting the first one with the `next` and trying to find representations, therefore `workfileModeling` and trying to match the current `task_name` (`Rigging`) with the `representation["context"]["task"]["name"]` of a Modeling representation, which was ending up to a `workfile_representation` to `None`, and exiting the process.
+
+Trying to find the `task_name` in the `subset['name']` fixes it.
+
+### Fix 4
+Fetch input dependencies of workfile.
+
+Replacing https://github.com/ynput/OpenPype/pull/4102 for changes to bring this home.
+___
+
+</details>
+
+
+<details>
+<summary>Maya: soft-fail when pan/zoom locked on camera when playblasting <a href="https://github.com/ynput/OpenPype/pull/4929">#4929</a></summary>
+
+When pan/zoom enabled attribute on camera is locked, playblasting with pan/zoom fails because it is trying to restore it. This is fixing it by skipping over with warning.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Maya Load References - Add Display Handle Setting <a href="https://github.com/ynput/OpenPype/pull/4904">#4904</a></summary>
+
+When we load a reference in Maya using OpenPype loader, display handle is checked by default and prevent us to select easily the object in the viewport. I understand that some productions like to keep this option, so I propose to add display handle to the reference loader settings. 
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: add autocreators for review and flat image <a href="https://github.com/ynput/OpenPype/pull/4871">#4871</a></summary>
+
+Review and flatten image (produced when no instance of `image` family was created) were created somehow magically. This PRintroduces two new auto creators which allow artists to disable review or flatten image.For all `image` instances `Review` flag was added to provide functionality to create separate review per `image` instance. Previously was possible only to have separate instance of `review` family.Review is not enabled on `image` family by default. (Eg. follows original behavior)Review auto creator is enabled by default as it was before.Flatten image creator must be set in Settings in `project_settings/photoshop/create/AutoImageCreator`.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.5](https://github.com/ynput/OpenPype/tree/3.15.5)
 
 

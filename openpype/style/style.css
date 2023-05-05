@@ -132,6 +132,7 @@ QPushButton {
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
+    min-width: 0px; /* Substance Painter fix */
 }
 
 QPushButton:hover {
@@ -337,7 +338,15 @@ QTabWidget::tab-bar {
     alignment: left;
 }
 
+/* avoid QTabBar overrides in Substance Painter */
+QTabBar {
+    text-transform: none;
+    font-weight: normal;
+}
+
 QTabBar::tab {
+    text-transform: none;
+    font-weight: normal;
     border-top: 1px solid {color:border};
     border-left: 1px solid {color:border};
     border-right: 1px solid {color:border};
@@ -377,6 +386,7 @@ QHeaderView {
 QHeaderView::section  {
     background: {color:bg-view-header};
     padding: 4px;
+    border-top: 0px; /* Substance Painter fix */
     border-right: 1px solid {color:bg-view};
     border-radius: 0px;
     text-align: center;
