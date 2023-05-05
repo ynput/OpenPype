@@ -360,7 +360,7 @@ def sync_all_projects(
     login: str,
     password: str,
     ignore_projects: list = None,
-    filter_projects: list = None,
+    filter_projects: tuple = None,
 ):
     """Update all OP projects in DB with Zou data.
 
