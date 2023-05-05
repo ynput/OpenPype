@@ -88,7 +88,6 @@ class PypeCommands:
         """
 
         from openpype.lib import Logger
-        from openpype.lib.applications import get_app_environments_for_context
         from openpype.modules import ModulesManager
         from openpype.pipeline import install_openpype_plugins
         from openpype.tools.utils.host_tools import show_publish
@@ -104,6 +103,7 @@ class PypeCommands:
 
         manager = ModulesManager()
 
+
         publish_paths = manager.collect_plugin_paths()["publish"]
 
         for path in publish_paths:
@@ -113,7 +113,8 @@ class PypeCommands:
             raise RuntimeError("No publish paths specified")
 
         if os.getenv("AVALON_APP_NAME"):
-            env = get_app_environments_for_context(
+            apps_addon = manager.get_enabled_module("applications")
+            env = apps_addon.get_app_environments_for_context(
                 os.environ["AVALON_PROJECT"],
                 os.environ["AVALON_ASSET"],
                 os.environ["AVALON_TASK"],
@@ -232,21 +233,16 @@ class PypeCommands:
         Called by Deadline plugin to propagate environment into render jobs.
         """
 
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.modules.applications.addon import extractenvironments
 
-        if all((project, asset, task, app)):
-            env = get_app_environments_for_context(
-                project, asset, task, app, env_group
-            )
-        else:
-            env = os.environ.copy()
-
-        output_dir = os.path.dirname(output_json_path)
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        with open(output_json_path, "w") as file_stream:
-            json.dump(env, file_stream, indent=4)
+        return extractenvironments(
+            output_json_path,
+            project,
+            asset,
+            task,
+            app,
+            env_group
+        )
 
     @staticmethod
     def launch_project_manager():
