@@ -56,4 +56,3 @@ class NonPythonHostHook(PreLaunchHook):
 
         self.launch_context.kwargs = \
             get_non_python_host_kwargs(self.launch_context.kwargs)
-

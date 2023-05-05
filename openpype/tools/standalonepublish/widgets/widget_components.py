@@ -11,6 +11,8 @@ from openpype.lib import (
     execute,
     Logger,
     get_openpype_execute_args,
+)
+from openpype_modules.applications.utils import (
     apply_project_environments_value
 )
 
@@ -194,10 +196,10 @@ def cli_publish(data, publish_paths, gui=True):
         envcopy["PYBLISH_SUSPEND_LOGS"] = "1"
 
     project_name = os.environ["AVALON_PROJECT"]
-    env_copy = apply_project_environments_value(project_name, envcopy)
+    apply_project_environments_value(project_name, envcopy)
 
     args = get_openpype_execute_args("run", PUBLISH_SCRIPT_PATH)
-    result = execute(args, env=envcopy)
+    execute(args, env=envcopy)
 
     result = {}
     if os.path.exists(json_data_path):
