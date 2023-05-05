@@ -43,8 +43,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
         context = instance.context
         host_name = context.data["hostName"]
-        app_name = context.data["appName"]
-        app_label = context.data["appLabel"]
+        app_name = context.data.get("appName")
+        app_label = context.data.get("appLabel")
         comment = instance.data["comment"]
         if not comment:
             self.log.info("Comment is not set.")
@@ -96,10 +96,12 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
         base_format_data = {
             "host_name": host_name,
-            "app_name": app_name,
-            "app_label": app_label,
             "source": instance.data.get("source", '')
         }
+        if app_name:
+            base_format_data["app_name"] = app_name
+        if app_label:
+            base_format_data["app_label"] = app_label
         if comment:
             base_format_data["comment"] = comment
         for asset_version_data in asset_versions_data_by_id.values():
