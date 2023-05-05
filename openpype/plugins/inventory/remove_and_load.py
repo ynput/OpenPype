@@ -22,7 +22,7 @@ class RemoveAndLoad(InventoryAction):
             # Get loader
             loader_name = container["loader"]
             loaders = discover_loader_plugins(project_name=project_name)
-            for plugin in loader:
+            for plugin in loaders:
                 if get_loader_identifier(plugin) == loader_name:
                     loader = plugin
                     break
