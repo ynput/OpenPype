@@ -34,6 +34,7 @@ class SubmitJobsToRoyalRender(ContextPlugin):
 
         # iterate over all instances and try to find RRJobs
         jobs = []
+        instance_rr_path = None
         for instance in context:
             if isinstance(instance.data.get("rrJob"), RRJob):
                 jobs.append(instance.data.get("rrJob"))
@@ -42,10 +43,11 @@ class SubmitJobsToRoyalRender(ContextPlugin):
                         isinstance(job, RRJob)
                         for job in instance.data.get("rrJobs")):
                     jobs += instance.data.get("rrJobs")
+            if instance.data.get("rrPathName"):
+                instance_rr_path = instance.data["rrPathName"]
 
         if jobs:
-            self._rr_root = self._resolve_rr_path(
-                context, instance.data.get("rrPathName"))  # noqa
+            self._rr_root = self._resolve_rr_path(context, instance_rr_path)
             if not self._rr_root:
                 raise KnownPublishError(
                     ("Missing RoyalRender root. "
