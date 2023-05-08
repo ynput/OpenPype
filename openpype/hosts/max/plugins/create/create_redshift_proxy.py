@@ -12,13 +12,8 @@ class CreateRedshiftProxy(plugin.MaxCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
-        sel_obj = list(rt.selection)
-        instance = super(CreateRedshiftProxy, self).create(
+
+        _ = super(CreateRedshiftProxy, self).create(
             subset_name,
             instance_data,
             pre_create_data)  # type: CreatedInstance
-        container = rt.getNodeByName(instance.data.get("instance_node"))
-        if self.selected_nodes:
-            sel_obj = list(self.selected_nodes)
-            for obj in sel_obj:
-                obj.parent = container
