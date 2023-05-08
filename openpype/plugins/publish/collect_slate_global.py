@@ -16,29 +16,31 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         context = instance.context
-        publish_settings = context.data["project_settings"]["global"]["publish"]
+        global_settings = context.data["project_settings"]["global"]
+        publish_settings = global_settings["publish"]
         slate_settings = publish_settings.get("ExtractSlateGlobal")
 
         if slate_settings:
             if not slate_settings["enabled"]:
-                self.log.warning("ExtractSlateGlobal is not active. Skipping...")
+                self.log.warning("ExtractSlateGlobal is not active. Skipping.")
                 return
 
             if instance.context.data.get("host") == "nuke" and \
                     "render.farm" in instance.data.get("families"):
                 self.log.warning(
-                    "Skipping Slate Global Collect in Nuke context, defer to Deadline."
+                    "Skipping Slate Global Collect in Nuke context, defer to "
+                    "Deadline."
                 )
                 return
 
             self.log.info("ExtractSlateGlobal is active.")
 
             # Create dictionary of common data across all slates
-            version_padding = context.data["anatomy"]["templates"]["defaults"]\
-                ["version_padding"]
+            frame_padding = context.data["anatomy"]["templates"]["defaults"]\
+                ["frame_padding"]
             slate_common_data = {
-                "@version":  str(instance.data["version"]).zfill(version_padding),
-                "frame_padding": version_padding,
+                "@version": str(instance.data["version"]).zfill(frame_padding),
+                "frame_padding": frame_padding,
                 "intent": {"label": "", "value": ""},
                 "comment": "",
                 "scope": "",
@@ -47,7 +49,9 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             if "customData" in instance.data:
                 slate_common_data.update(instance.data["customData"])
 
-            template_path = slate_settings["slate_template_path"].format(**os.environ)
+            template_path = slate_settings["slate_template_path"].format(
+                **os.environ
+            )
             if not template_path:
                 template_path = resources.get_resource(
                     "slate_template", "generic_slate.html"
@@ -57,9 +61,13 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                     "Using default '%s'", template_path
                 )
 
-            resources_path = slate_settings["slate_resources_path"].format(**os.environ)
+            resources_path = slate_settings["slate_resources_path"].format(
+                **os.environ
+            )
             if not resources_path:
-                resources_path = resources.get_resource("slate_template", "resources")
+                resources_path = resources.get_resource(
+                    "slate_template", "resources"
+                )
                 self.log.info(
                     "No 'slate_resources_path' found on the project settings. "
                     "Using default '%s'", resources_path
@@ -88,8 +96,9 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             task_type = instance.data["anatomyData"]["task"]["type"]
             if task_type in slate_settings["integrate_task_types"]:
 
-                self.log.debug("Task: %s is enabled for Extract Slate Global workflow, "
-                    "tagging for slate extraction on review families...", task_type
+                self.log.debug(
+                    "Task: %s is enabled for Extract Slate Global workflow, "
+                    "tagging for slate extraction on review families", task_type
                 )
 
                 instance.data["slate"] = True
@@ -104,6 +113,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                     )
                 )
             else:
-                self.log.debug("Task: %s is disabled for Extract Slate Global workflow,"
-                    " skipping slate extraction on review families...", task_type
+                self.log.debug(
+                    "Task: %s is disabled for Extract Slate Global workflow, "
+                    "skipping slate extraction on review families...", task_type
                 )
