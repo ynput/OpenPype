@@ -35,7 +35,10 @@ class RemoveAndLoad(InventoryAction):
             representation = get_representation_by_id(
                 project_name, container["representation"]
             )
-            assert representation, "Representation not found"
+            if not representation:
+                self.log.warning(
+                    "Skipping remove and load because representation id is not"
+                    " found in database: '{}'".format(container["representation"])
 
             # Remove container
             remove_container(container)
