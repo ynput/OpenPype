@@ -18,7 +18,6 @@ class RemoveAndLoad(InventoryAction):
     def process(self, containers):
         project_name = get_current_project_name()
         for container in containers:
-
             # Get loader
             loader_name = container["loader"]
             loaders = discover_loader_plugins(project_name=project_name)
@@ -38,7 +37,11 @@ class RemoveAndLoad(InventoryAction):
             if not representation:
                 self.log.warning(
                     "Skipping remove and load because representation id is not"
-                    " found in database: '{}'".format(container["representation"])
+                    " found in database: '{}'".format(
+                        container["representation"]
+                    )
+                )
+                continue
 
             # Remove container
             remove_container(container)
