@@ -3,6 +3,8 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance, CreatorError
 
+import hou
+
 
 class CreateAlembicCamera(plugin.HoudiniCreator):
     """Single baked camera from Alembic ROP."""
@@ -47,3 +49,9 @@ class CreateAlembicCamera(plugin.HoudiniCreator):
         self.lock_parameters(instance_node, to_lock)
 
         instance_node.parm("trange").set(1)
+
+    def get_network_categories(self):
+        return [
+            hou.ropNodeTypeCategory(),
+            hou.objNodeTypeCategory()
+        ]
