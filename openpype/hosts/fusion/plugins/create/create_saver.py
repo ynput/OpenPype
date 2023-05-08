@@ -1,4 +1,6 @@
+from copy import deepcopy
 import os
+from pprint import pformat
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
@@ -11,7 +13,7 @@ from openpype.lib import (
 )
 from openpype.pipeline import (
     legacy_io,
-    Creator,
+    Creator as NewCreator,
     CreatedInstance,
 )
 from openpype.client import (
@@ -19,7 +21,7 @@ from openpype.client import (
 )
 
 
-class CreateSaver(Creator):
+class CreateSaver(NewCreator):
     identifier = "io.openpype.creators.fusion.saver"
     label = "Render (saver)"
     name = "render"
@@ -28,7 +30,15 @@ class CreateSaver(Creator):
     description = "Fusion Saver to generate image sequence"
     icon = "fa5.eye"
 
-    instance_attributes = ["reviewable", "farm_rendering"]
+    instance_attributes = [
+        "reviewable"
+    ]
+    default_variants = [
+        "Main",
+        "Mask"
+    ]
+    temp_rendering_path_template = (
+        "{workdir}/renders/fusion/{subset}/{subset}..{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
         # TODO: Add pre_create attributes to choose file format?
@@ -125,17 +135,34 @@ class CreateSaver(Creator):
         original_subset = tool.GetData("openpype.subset")
         subset = data["subset"]
         if original_subset != subset:
-            # Subset change detected
-            # Update output filepath
-            workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-            filename = f"{subset}..exr"
-            filepath = os.path.join(workdir, "render", subset, filename)
-            tool["Clip"] = filepath
+            self._configure_saver_tool(data, tool, subset)
 
-            # Rename tool
-            if tool.Name != subset:
-                print(f"Renaming {tool.Name} -> {subset}")
-                tool.SetAttrs({"TOOLS_Name": subset})
+    def _configure_saver_tool(self, data, tool, subset):
+        formatting_data = deepcopy(data)
+        self.log.warning(pformat(formatting_data))
+
+        # Subset change detected
+        workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
+        formatting_data.update({
+            "workdir": workdir.replace("\\", "/"),
+            "ext": "exr"
+        })
+
+        # build file path to render
+        filepath = self.temp_rendering_path_template.format(
+            **formatting_data)
+
+        # create directory
+        if not os.path.isdir(os.path.dirname(filepath)):
+            self.log.warning("Path does not exist! I am creating it.")
+            os.makedirs(os.path.dirname(filepath))
+
+        tool["Clip"] = filepath
+
+        # Rename tool
+        if tool.Name != subset:
+            print(f"Renaming {tool.Name} -> {subset}")
+            tool.SetAttrs({"TOOLS_Name": subset})
 
     def _collect_unmanaged_saver(self, tool):
         # TODO: this should not be done this way - this should actually
@@ -238,3 +265,28 @@ class CreateSaver(Creator):
             default=("reviewable" in self.instance_attributes),
             label="Review",
         )
+
+    def apply_settings(
+        self,
+        project_settings,
+        system_settings
+    ):
+        """Method called on initialization of plugin to apply settings."""
+
+        # plugin settings
+        plugin_settings = self._get_creator_settings(project_settings)
+
+        # individual attributes
+        self.instance_attributes = plugin_settings.get(
+            "instance_attributes") or self.instance_attributes
+        self.default_variants = plugin_settings.get(
+            "default_variants") or self.default_variants
+        self.temp_rendering_path_template = (
+            plugin_settings.get("temp_rendering_path_template")
+            or self.temp_rendering_path_template
+        )
+
+    def _get_creator_settings(self, project_settings, settings_key=None):
+        if not settings_key:
+            settings_key = self.__class__.__name__
+        return project_settings["fusion"]["create"][settings_key]
