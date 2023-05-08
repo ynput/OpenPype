@@ -53,8 +53,8 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         ext = pre_create_data.get("image_format")
         filepath = "{renders_dir}{subset_name}/{subset_name}.{fmt}".format(
             renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
-                subset_name=subset_name,
-                fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
+            subset_name=subset_name,
+            fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
             )
 
         parms = {
