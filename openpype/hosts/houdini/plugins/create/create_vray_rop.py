@@ -154,5 +154,3 @@ class CreateVrayROP(plugin.HoudiniCreator):
                             "if enabled",
                     default=False)
         ]
-
-# ${HIP}/render/${HIPNAME}.${AOV}.$F4.exr
