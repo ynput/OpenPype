@@ -3,6 +3,8 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
 
+import hou
+
 
 class CreateVDBCache(plugin.HoudiniCreator):
     """OpenVDB from Geometry ROP"""
@@ -34,3 +36,9 @@ class CreateVDBCache(plugin.HoudiniCreator):
             parms["soppath"] = self.selected_nodes[0].path()
 
         instance_node.setParms(parms)
+
+    def get_network_categories(self):
+        return [
+            hou.ropNodeTypeCategory(),
+            hou.sopNodeTypeCategory()
+        ]

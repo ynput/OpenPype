@@ -1460,7 +1460,8 @@
         },
         "reference_loader": {
             "namespace": "{asset_name}_{subset}_##_",
-            "group_name": "_GRP"
+            "group_name": "_GRP",
+            "display_handle": true
         }
     },
     "workfile_build": {
