@@ -19,7 +19,6 @@ class CreateRender(plugin.MaxCreator):
             instance_data,
             pre_create_data)
         container_name = instance.data.get("instance_node")
-        container = rt.GetNodeByName(container_name)
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
         sel_obj = self.selected_nodes
