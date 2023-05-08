@@ -13,7 +13,6 @@ class CreateRender(plugin.MaxCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Plugin entry point."""
-        from pymxs import runtime as rt  # noqa: WPS433,I001
         instance = super().create(
             subset_name,
             instance_data,
