@@ -55,7 +55,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
             subset_name=subset_name,
             fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
-            )
+        )
 
         parms = {
             # Render frame range
