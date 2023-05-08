@@ -51,11 +51,10 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         ipr_rop.parm("linked_rop").set(instance_node.path())
 
         ext = pre_create_data.get("image_format")
-        filepath ="{renders_dir}{subset_name}/{subset_name}.{fmt}".format(
-                renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
+        filepath = "{renders_dir}{subset_name}/{subset_name}.{fmt}".format(
+            renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
                 subset_name=subset_name,
-                fmt="${aov}.$F4.{ext}".format(aov="AOV",
-                                              ext=ext)
+                fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
             )
 
         parms = {
@@ -74,8 +73,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
                 if node.type().name() == "cam":
                     camera = node.path()
             parms.update({
-                "RS_renderCamera": camera or ""
-                })
+                "RS_renderCamera": camera or ""})
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
