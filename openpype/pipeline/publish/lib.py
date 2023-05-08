@@ -5,7 +5,6 @@ import inspect
 import copy
 import tempfile
 import xml.etree.ElementTree
-import importlib
 
 import six
 import pyblish.util
