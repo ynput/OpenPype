@@ -22,13 +22,9 @@ class CreateRender(plugin.MaxCreator):
         container = rt.GetNodeByName(container_name)
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
-        sel_obj = None
-        if self.selected_nodes:
-            sel_obj = list(self.selected_nodes)
-            for obj in sel_obj:
-                obj.parent = container
-
-        # set viewport camera for rendering(mandatory for deadline)
-        RenderSettings().set_render_camera(sel_obj)
+        sel_obj = self.selected_nodes
+        if sel_obj:
+            # set viewport camera for rendering(mandatory for deadline)
+            RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
