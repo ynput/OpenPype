@@ -205,18 +205,21 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 and resource_main_path != last_published_workfile_path
             ):
                 resource_basename = os.path.basename(resource_main_path)
-                resource_work_path = os.path.join(resources_dir, resource_basename)
+                resource_work_path = os.path.join(
+                    resources_dir, resource_basename
+                )
                 if os.path.exists(resource_work_path):
                     if filecmp.cmp(resource_main_path, resource_work_path):
                         self.log.warning(
-                            'Resource "{}" already exists.'.format(resource_basename)
+                            'Resource "{}" already exists.'
+                            .format(resource_basename)
                         )
                         continue
                     else:
                         resource_path_old = resource_work_path + '.old'
                         if os.path.exists(resource_work_path + '.old'):
                             for i in range(1, 100):
-                                p = resource_path_old + '%02d'%i
+                                p = resource_path_old + '%02d' %i
                                 if not os.path.exists(p):
                                     shutil.move(resource_work_path, p)
                                     break
@@ -225,7 +228,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                                     'There are a hundred old files for '
                                     'resource "{}". '
                                     'Perhaps is it time to clean up your '
-                                    'resources folder'.format(resource_basename)
+                                    'resources folder'
+                                    .format(resource_basename)
                                 )
                                 continue
                         else:
