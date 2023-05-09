@@ -20,7 +20,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         creator_attributes = instance.data["creator_attributes"]
         instance.data.update(creator_attributes)
 
-        group_node = instance.data["transientData"]["node"]
+        publish_node = instance.data["transientData"]["node"]
         render_target = instance.data["render_target"]
         family = instance.data["family"]
         families = instance.data["families"]
@@ -32,18 +32,22 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
-        child_nodes = napi.get_instance_group_node_childs(instance)
-        instance.data["transientData"]["childNodes"] = child_nodes
+        if publish_node.Class() == "Group":
+            child_nodes = napi.get_instance_group_node_childs(instance)
+            instance.data["transientData"]["childNodes"] = child_nodes
 
-        write_node = None
-        for x in child_nodes:
-            if x.Class() == "Write":
-                write_node = x
+            write_node = None
+            for x in child_nodes:
+                if x.Class() == "Write":
+                    write_node = x
+
+        elif publish_node.Class() == "Write":
+            write_node = publish_node
 
         if write_node is None:
             self.log.warning(
                 "Created node '{}' is missing write node!".format(
-                    group_node.name()
+                    publish_node.name()
                 )
             )
             return
