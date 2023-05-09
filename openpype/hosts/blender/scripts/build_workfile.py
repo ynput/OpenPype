@@ -363,14 +363,13 @@ def create_gdeformer_collection(parent_collection: bpy.types.Collection):
     # Create GDEFORMER collection
     gdeformer_col = bpy.data.collections.new("GDEFORMER")
     parent_collection.children.link(gdeformer_col)
-    for obj in bpy.context.scene.collection.all_objects:
+    for obj in bpy.context.scene.objects:
         if obj.name.startswith("GDEFORM"):
             gdeformer_col.objects.link(obj)
 
         # Assign collection to sol(s) object(s)
-        if obj.name.startswith("sol"):
-            if obj.modifiers.get("GroundDeform"):
-                obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
+        if obj.name.startswith("sol") and obj.modifiers.get("GroundDeform"):
+            obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
 
 
 def build_layout(project_name, asset_name):
@@ -421,7 +420,7 @@ def build_layout(project_name, asset_name):
 
         # Create GDEFORMER collection
         create_gdeformer_collection(
-            layout_instance.datablock_refs[0].datablock
+            bpy.context.scene.collection
         )
     except RuntimeError as err:
         errors.append(f"Load casting failed ! {err}")
@@ -656,12 +655,10 @@ def build_anim(project_name, asset_name):
         c.name: c
         for c in bpy.context.scene.collection.children_recursive
     }
-    gdeform_collection = scene_collections_by_name.get("GDEFORMER")
-    layout_collection = scene_collections_by_name.get(layout_collection_name)
-    if gdeform_collection and layout_collection:
+    if gdeform_collection := scene_collections_by_name.get("GDEFORMER"):
         gdeform_collection.name += ".old"
-        create_gdeformer_collection(layout_collection)
         bpy.data.collections.remove(gdeform_collection)
+    create_gdeformer_collection(bpy.context.scene.collection)
 
     # Load camera
     cam_container, _cam_datablocks = load_subset(
@@ -678,8 +675,26 @@ def build_anim(project_name, asset_name):
             cam_container.datablock_refs.remove(i)
 
     # Make cam container publishable
-    bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
-    cam_instance = bpy.context.scene.openpype_instances[-1]
+    if cam_container:
+        bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
+        cam_instance = bpy.context.scene.openpype_instances[-1]
+
+        if camera_collection := next(
+            (
+                d
+                for d in cam_instance.get_root_outliner_datablocks()
+                if isinstance(d, bpy.types.Collection)
+            ),
+            None,
+        ):
+            bpy.ops.scene.create_openpype_instance(
+                creator_name="CreateReview",
+                asset_name=asset_name,
+                subset_name="reviewMain",
+                datapath="collections",
+                datablock_name=camera_collection.name,
+                use_selection=False,
+            )
 
     for obj in bpy.context.scene.objects:
         if obj.type == "ARMATURE":
@@ -693,24 +708,6 @@ def build_anim(project_name, asset_name):
                 datablock_name=obj.name,
                 use_selection=False,
             )
-
-    # Create review
-    camera_collection = next(
-        (
-            d_ref.datablock
-            for d_ref in cam_instance.datablock_refs
-            if isinstance(d_ref.datablock, bpy.types.Collection)
-        ),
-        None,
-    )
-    bpy.ops.scene.create_openpype_instance(
-        creator_name="CreateReview",
-        asset_name=asset_name,
-        subset_name="reviewMain",
-        datapath="collections",
-        datablock_name=camera_collection.name,
-        use_selection=False,
-    )
 
     # load the board mov as image background linked into the camera
     load_subset(project_name, board_repre, "Background")
