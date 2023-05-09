@@ -107,7 +107,7 @@ class UAssetLoader(plugin.Loader):
 
         for asset in asset_content:
             obj = ar.get_asset_by_object_path(asset).get_asset()
-            if not obj.get_class().get_name() == 'AssetContainer':
+            if not obj.get_class().get_name() == 'AyonAssetContainer':
                 unreal.EditorAssetLibrary.delete_asset(asset)
 
         update_filepath = get_representation_path(representation)

@@ -50,7 +50,7 @@ class LayoutLoader(plugin.Loader):
         # Get all the asset containers
         for a in asset_content:
             obj = ar.get_asset_by_object_path(a)
-            if obj.get_asset().get_class().get_name() == 'AssetContainer':
+            if obj.get_asset().get_class().get_name() == 'AyonAssetContainer':
                 asset_containers.append(obj)
 
         return asset_containers
@@ -338,7 +338,7 @@ class LayoutLoader(plugin.Loader):
                             ).replace('\\', '/')
 
                             _filter = unreal.ARFilter(
-                                class_names=["AssetContainer"],
+                                class_names=["AyonAssetContainer"],
                                 package_paths=[anim_path],
                                 recursive_paths=False)
                             containers = ar.get_assets(_filter)
@@ -519,7 +519,7 @@ class LayoutLoader(plugin.Loader):
 
                 for asset in assets:
                     obj = ar.get_asset_by_object_path(asset).get_asset()
-                    if obj.get_class().get_name() == 'AssetContainer':
+                    if obj.get_class().get_name() == 'AyonAssetContainer':
                         container = obj
                     if obj.get_class().get_name() == 'Skeleton':
                         skeleton = obj
