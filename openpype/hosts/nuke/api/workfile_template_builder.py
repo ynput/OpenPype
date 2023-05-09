@@ -1,4 +1,5 @@
 import collections
+import os
 import nuke
 from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.workfile_template_builder import (
@@ -32,6 +33,30 @@ PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
 class NukeTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for nuke"""
+
+    def open_template(self):
+        """Open template in current scene.
+
+        Args:
+            path (str): A path to current template (usually given by
+            get_template_preset implementation)
+        """
+
+        template_preset = self.get_template_preset()
+        template_path = template_preset["path"]
+
+        if not os.path.exists(template_path):
+            nuke.message("Template doesn't exist: {}".format(template_path))
+            return
+
+        result = nuke.ask(
+            "This will replace current scene with template. Continue?"
+        )
+        if not result:
+            return
+
+        print("opening template {}".format(template_path))
+        nuke.scriptOpen(template_path)
 
     def import_template(self, path):
         """Import template into current scene.
@@ -958,6 +983,11 @@ def build_workfile_template(*args, **kwargs):
 def update_workfile_template(*args):
     builder = NukeTemplateBuilder(registered_host())
     builder.rebuild_template()
+
+
+def open_template(*args):
+    builder = NukeTemplateBuilder(registered_host())
+    builder.open_template()
 
 
 def create_placeholder(*args):
