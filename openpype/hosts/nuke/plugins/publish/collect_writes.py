@@ -20,7 +20,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         creator_attributes = instance.data["creator_attributes"]
         instance.data.update(creator_attributes)
 
+        ### Starts Alkemy-X Override ###
         publish_node = instance.data["transientData"]["node"]
+        ### Ends Alkemy-X Override ###
+
         render_target = instance.data["render_target"]
         family = instance.data["family"]
         families = instance.data["families"]
@@ -32,6 +35,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
+        ### Starts Alkemy-X Override ###
         if publish_node.Class() == "Group":
             child_nodes = napi.get_instance_group_node_childs(instance)
             instance.data["transientData"]["childNodes"] = child_nodes
@@ -43,11 +47,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         elif publish_node.Class() == "Write":
             write_node = publish_node
+        ### Ends Alkemy-X Override ###
 
         if write_node is None:
             self.log.warning(
                 "Created node '{}' is missing write node!".format(
+                    ### Starts Alkemy-X Override ###
                     publish_node.name()
+                    ### Ends Alkemy-X Override ###
                 )
             )
             return

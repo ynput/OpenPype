@@ -405,12 +405,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         """
         self.log.debug("_ path: `{}`".format(path))
         if "%" in path:
-            pattern = r"(%0{0,})(\d)(d)"
-            search_results = re.search(pattern, path).groups()
-            hashes = "#" * int(search_results[1])
-            hashes_path = re.sub(pattern, hashes, path)
+            ### Starts Alkemy-X Override ###
+            hashes_path = re.sub(r"%(\d*)d", lambda m: "#" * int(m.group(1)) if m.group(1) else "#", path)
 
             return hashes_path
+            ### Ends Alkemy-X Override ###
 
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
