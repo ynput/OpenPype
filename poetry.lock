@@ -2781,6 +2781,17 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "rpdb"
+version = "0.1.6"
+description = "pdb wrapper with remote access via tcp socket"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "rpdb-0.1.6.tar.gz", hash = "sha256:5d1a1cee34378ab075879dc30fa6328d448a9f680a66c4e84cac7382ad92f15f"},
+]
+
+[[package]]
 name = "rsa"
 version = "4.9"
 description = "Pure-Python RSA implementation"
