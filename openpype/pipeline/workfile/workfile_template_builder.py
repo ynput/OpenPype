@@ -1262,14 +1262,13 @@ class PlaceholderLoadMixin(object):
         ]
 
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
-        libraries_project_items = list()
-        for library in get_libraries_project_names():
-            libraries_project_items.append(
-                {
-                    "label": "From Library : {}".format(library),
-                    "value": library
-                }
-            )
+        libraries_project_items = [
+            {
+                "label": "From Library : {}".format(project_name),
+                "value": project_name
+            }
+            for project_name in get_library_project_names()
+        ]
 
         options = options or {}
 
@@ -1471,18 +1470,9 @@ class PlaceholderLoadMixin(object):
                 "representation": [placeholder.data["representation"]],
                 "family": [placeholder.data["family"]],
             }
-
-        elif builder_type == "all_assets":
-            context_filters = {
-                "asset": [re.compile(placeholder.data["asset"])],
-                "subset": [re.compile(placeholder.data["subset"])],
-                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
-                "representation": [placeholder.data["representation"]],
-                "family": [placeholder.data["family"]]
-            }
-
         else:
-            project_name = builder_type
+            if builder_type != "all_assets":
+                project_name = builder_type
             context_filters = {
                 "asset": [re.compile(placeholder.data["asset"])],
                 "subset": [re.compile(placeholder.data["subset"])],
@@ -1897,7 +1887,7 @@ class CreatePlaceholderItem(PlaceholderItem):
         self._failed_created_publish_instances.append(creator_data)
 
 
-def get_libraries_project_names():
+def get_library_project_names():
     libraries = list()
 
     for project in get_projects(fields=["name", "data.library_project"]):
