@@ -31,7 +31,7 @@ except Exception:
         print("Can't find any any python environment.")
 
     print("Assuming no Qt library is installed..")
-    print(f"Installing PySide2 for Python 3.6: {python_path}")
+    print(f"Installing PySide2 for Python: {python_path}")
 
     # Get full path to python executable
     exe = "python.exe" if os.name == "nt" else "python"
