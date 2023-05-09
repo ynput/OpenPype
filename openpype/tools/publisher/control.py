@@ -240,6 +240,7 @@ class PublishReportMaker:
             label = plugin.label
 
         return {
+            "id": plugin.id,
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
@@ -325,7 +326,7 @@ class PublishReportMaker:
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
-            "id": str(uuid.uuid4()),
+            "id": uuid.uuid4().hex,
             "report_version": "1.0.0"
         }
 
@@ -343,7 +344,9 @@ class PublishReportMaker:
             "label": instance.data.get("label"),
             "family": instance.data["family"],
             "families": instance.data.get("families") or [],
-            "exists": exists
+            "exists": exists,
+            "creator_identifier": instance.data.get("creator_identifier"),
+            "instance_id": instance.data.get("instance_id"),
         }
 
     def _extract_instance_log_items(self, result):
@@ -679,6 +682,7 @@ class PublishValidationErrorsReport:
             for title in titles:
                 grouped_error_items.append({
                     "id": uuid.uuid4().hex,
+                    "plugin_id": plugin_id,
                     "plugin_action_items": list(plugin_action_items),
                     "error_items": error_items_by_title[title],
                     "title": title

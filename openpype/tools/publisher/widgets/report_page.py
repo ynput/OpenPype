@@ -917,15 +917,7 @@ class LogIconFrame(QtWidgets.QFrame):
         painter.end()
 
 
-class LogsGridView(QtWidgets.QWidget):
-    """Show logs in a grid with 2 columns.
-
-    First column is for icon second is for message.
-
-    Todos:
-        Add filtering by type (exception, debug, info, etc.).
-    """
-
+class LogItemWidget(QtWidgets.QWidget):
     log_level_to_flag = {
         10: LOG_DEBUG_VISIBLE,
         20: LOG_INFO_VISIBLE,
@@ -934,45 +926,36 @@ class LogsGridView(QtWidgets.QWidget):
         50: LOG_CRITICAL_VISIBLE,
     }
 
-    def __init__(self, logs, parent):
-        super(LogsGridView, self).__init__(parent)
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+    def __init__(self, log, parent):
+        super(LogItemWidget, self).__init__(parent)
 
-        logs_layout = QtWidgets.QGridLayout(self)
-        logs_layout.setContentsMargins(0, 0, 0, 0)
-        logs_layout.setHorizontalSpacing(4)
-        logs_layout.setVerticalSpacing(2)
+        type_flag, level_n = self._get_log_info(log)
+        icon_label = LogIconFrame(self, log["type"], level_n)
+        message_label = QtWidgets.QLabel(log["msg"], self)
+        message_label.setObjectName("PublishLogMessage")
+        message_label.setTextInteractionFlags(
+            QtCore.Qt.TextBrowserInteraction)
+        message_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        message_label.setWordWrap(True)
 
-        widgets_by_flag = collections.defaultdict(list)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(4)
+        main_layout.addWidget(icon_label, 0)
+        main_layout.addWidget(message_label, 1)
 
-        for idx, log in enumerate(logs):
-            type_flag, level_n = self._get_log_info(log)
-            icon_label = LogIconFrame(self, log["type"], level_n)
-            message_label = QtWidgets.QLabel(log["msg"], self)
-            message_label.setObjectName("PublishLogMessage")
-            message_label.setTextInteractionFlags(
-                QtCore.Qt.TextBrowserInteraction)
-            message_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
-            message_label.setWordWrap(True)
-            logs_layout.addWidget(icon_label, idx, 0, 1, 1)
-            logs_layout.addWidget(message_label, idx, 1, 1, 1)
-            widgets_by_flag[type_flag].append(icon_label)
-            widgets_by_flag[type_flag].append(message_label)
+        self._type_flag = type_flag
+        self._plugin_id = log["plugin_id"]
+        self._log_type_filtered = False
+        self._plugin_filtered = False
 
-        logs_layout.setColumnStretch(0, 0)
-        logs_layout.setColumnStretch(1, 1)
+    @property
+    def type_flag(self):
+        return self._type_flag
 
-        self._widgets_by_flag = widgets_by_flag
-        self._visibility_by_flags = {
-            LOG_DEBUG_VISIBLE: True,
-            LOG_INFO_VISIBLE: True,
-            LOG_WARNING_VISIBLE: True,
-            LOG_ERROR_VISIBLE: True,
-            LOG_CRITICAL_VISIBLE: True,
-            ERROR_VISIBLE: True,
-            INFO_VISIBLE: True,
-        }
-        self._visibility = sum(self._visibility_by_flags.keys())
+    @property
+    def plugin_id(self):
+        return self._plugin_id
 
     def _get_log_info(self, log):
         log_type = log["type"]
@@ -991,7 +974,66 @@ class LogsGridView(QtWidgets.QWidget):
         flag = self.log_level_to_flag.get(level_n, LOG_CRITICAL_VISIBLE)
         return flag, level_n
 
-    def _update_visibility(self):
+    def _update_visiblity(self):
+        self.setVisible(
+            not (self._log_type_filtered or self._plugin_filtered)
+        )
+
+    def set_log_type_filtered(self, filtered):
+        if filtered is self._log_type_filtered:
+            return
+        self._log_type_filtered = filtered
+        self._update_visibility()
+
+    def set_plugin_filtered(self, filtered):
+        if self._plugin_filtered is filtered:
+            return
+        self._plugin_filtered = filtered
+        self._update_visiblity()
+
+
+class LogsWithIconsView(QtWidgets.QWidget):
+    """Show logs in a grid with 2 columns.
+
+    First column is for icon second is for message.
+
+    Todos:
+        Add filtering by type (exception, debug, info, etc.).
+    """
+
+    def __init__(self, logs, parent):
+        super(LogsWithIconsView, self).__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        logs_layout = QtWidgets.QVBoxLayout(self)
+        logs_layout.setContentsMargins(0, 0, 0, 0)
+        logs_layout.setSpacing(2)
+
+        widgets_by_flag = collections.defaultdict(list)
+        widgets_by_plugins_id = collections.defaultdict(list)
+
+        for log in logs:
+            widget = LogItemWidget(log, self)
+            widgets_by_flag[widget.type_flag].append(widget)
+            widgets_by_plugins_id[widget.plugin_id].append(widget)
+            logs_layout.addWidget(widget, 0)
+
+        self._widgets_by_flag = widgets_by_flag
+        self._widgets_by_plugins_id = widgets_by_plugins_id
+
+        self._visibility_by_flags = {
+            LOG_DEBUG_VISIBLE: True,
+            LOG_INFO_VISIBLE: True,
+            LOG_WARNING_VISIBLE: True,
+            LOG_ERROR_VISIBLE: True,
+            LOG_CRITICAL_VISIBLE: True,
+            ERROR_VISIBLE: True,
+            INFO_VISIBLE: True,
+        }
+        self._flags_filter = sum(self._visibility_by_flags.keys())
+        self._plugin_ids_filter = None
+
+    def _update_flags_filtering(self):
         for flag in (
             LOG_DEBUG_VISIBLE,
             LOG_INFO_VISIBLE,
@@ -1001,25 +1043,41 @@ class LogsGridView(QtWidgets.QWidget):
             ERROR_VISIBLE,
             INFO_VISIBLE,
         ):
-            visible = self._visibility & flag != 0
-            cur_visible = self._visibility_by_flags[flag]
-            if cur_visible != visible:
-                for widget in self._widgets_by_flag[flag]:
-                    widget.setVisible(visible)
+            visible = self._flags_filter & flag != 0
+            if visible is not self._visibility_by_flags[flag]:
                 self._visibility_by_flags[flag] = visible
+                for widget in self._widgets_by_flag[flag]:
+                    widget.set_log_type_filtered(visible)
 
-    def set_log_filters(self, visibility_filter):
-        if self._visibility == visibility_filter:
-            return
-        self._visibility = visibility_filter
-        self._update_visibility()
+    def _update_plugin_filtering(self):
+        if self._plugin_ids_filter is None:
+            for widgets in self._widgets_by_plugins_id.values():
+                for widget in widgets:
+                    widget.set_plugin_filtered(False)
+
+        else:
+            for plugin_id, widgets in self._widgets_by_plugins_id.items():
+                filtered = plugin_id not in self._plugin_ids_filter
+                for widget in widgets:
+                    widget.set_plugin_filtered(filtered)
+
+    def set_log_filters(self, visibility_filter, plugin_ids):
+        if self._flags_filter != visibility_filter:
+            self._flags_filter = visibility_filter
+            self._update_flags_filtering()
+
+        if self._plugin_ids_filter != plugin_ids:
+            if plugin_ids is not None:
+                plugin_ids = set(plugin_ids)
+            self._plugin_ids_filter = plugin_ids
+            self._update_plugin_filtering()
 
 
 class InstanceLogsWidget(QtWidgets.QWidget):
     """Widget showing logs of one publish instance.
 
     Args:
-        instane (_InstanceItem): Item of instance used as data source.
+        instance (_InstanceItem): Item of instance used as data source.
         parent (QtWidgets.QWidget): Parent widget.
     """
 
@@ -1030,7 +1088,7 @@ class InstanceLogsWidget(QtWidgets.QWidget):
 
         label_widget = QtWidgets.QLabel(instance.label, self)
         label_widget.setObjectName("PublishInstanceLogsLabel")
-        logs_grid = LogsGridView(instance.logs, self)
+        logs_grid = LogsWithIconsView(instance.logs, self)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1039,15 +1097,16 @@ class InstanceLogsWidget(QtWidgets.QWidget):
 
         self._logs_grid = logs_grid
 
-    def set_log_filters(self, visibility_filter):
+    def set_log_filters(self, visibility_filter, plugin_ids):
         """Change logs filter.
 
         Args:
             visibility_filter (int): Number contained of flags for each log
                 type and level.
+            plugin_ids (Iterable[str]): Plugin ids to which are logs filtered.
         """
 
-        self._logs_grid.set_log_filters(visibility_filter)
+        self._logs_grid.set_log_filters(visibility_filter, plugin_ids)
 
 
 class InstancesLogsView(QtWidgets.QFrame):
@@ -1103,6 +1162,7 @@ class InstancesLogsView(QtWidgets.QFrame):
         self._clear_needed = False
         self._update_needed = False
         self._instance_ids_filter = []
+        self._plugin_ids_filter = None
 
     def showEvent(self, event):
         super(InstancesLogsView, self).showEvent(event)
@@ -1141,11 +1201,13 @@ class InstancesLogsView(QtWidgets.QFrame):
             if widget is None:
                 instance = self._instances_by_id[instance_id]
                 widget = InstanceLogsWidget(instance, self._content_widget)
-                widget.set_log_filters(self._visible_filters)
                 self._views_by_instance_id[instance_id] = widget
                 self._content_layout.addWidget(widget, 0)
-            else:
-                widget.setVisible(True)
+
+            widget.setVisible(True)
+            widget.set_log_filters(
+                self._visible_filters, self._plugin_ids_filter
+            )
 
         for instance_id in to_hide:
             widget = self._views_by_instance_id.get(instance_id)
@@ -1178,11 +1240,12 @@ class InstancesLogsView(QtWidgets.QFrame):
             for instance in instances
         }
         self._instance_ids_filter = []
+        self._plugin_ids_filter = None
         self._clear_needed = True
         self._update_needed = True
         self._update_instances()
 
-    def set_instances(self, instance_ids=None):
+    def set_instances_filter(self, instance_ids=None):
         """Set instance filter.
 
         Args:
@@ -1191,6 +1254,13 @@ class InstancesLogsView(QtWidgets.QFrame):
         """
 
         self._instance_ids_filter = instance_ids
+        self._update_needed = True
+        self._update_instances()
+
+    def set_plugins_filter(self, plugin_ids=None):
+        if self._plugin_ids_filter == plugin_ids:
+            return
+        self._plugin_ids_filter = plugin_ids
         self._update_needed = True
         self._update_instances()
 
@@ -1359,10 +1429,12 @@ class ReportsWidget(QtWidgets.QWidget):
         plugins_info = report["plugins_data"]
         logs_by_instance_id = collections.defaultdict(list)
         for plugin_info in plugins_info:
+            plugin_id = plugin_info["id"]
             for instance_info in plugin_info["instances_data"]:
                 instance_id = instance_info["id"] or CONTEXT_ID
-                logs_by_instance_id[instance_id].extend(
-                    instance_info["logs"])
+                for log in instance_info["logs"]:
+                    log["plugin_id"] = plugin_id
+                logs_by_instance_id[instance_id].extend(instance_info["logs"])
 
         context_item = _InstanceItem.create_context_item(
             context_label, logs_by_instance_id[CONTEXT_ID])
@@ -1412,7 +1484,7 @@ class ReportsWidget(QtWidgets.QWidget):
 
     def _on_instance_selection(self):
         instance_ids = self._instances_view.get_selected_instance_ids()
-        self._logs_view.set_instances(instance_ids)
+        self._logs_view.set_instances_filter(instance_ids)
 
     def _prepare_description(self, error_item):
         """Prepare description text for detail intput.
@@ -1454,7 +1526,8 @@ class ReportsWidget(QtWidgets.QWidget):
             # TODO handle this case
             return
 
-        self._logs_view.set_instances(instance_ids)
+        self._logs_view.set_instances_filter(instance_ids)
+        self._logs_view.set_plugins_filter([error_info["plugin_id"]])
 
         match_error_item = None
         for error_item in error_info["error_items"]:
