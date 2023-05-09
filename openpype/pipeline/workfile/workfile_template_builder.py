@@ -792,7 +792,6 @@ class AbstractTemplateBuilder(object):
             "code": anatomy["attributes"]["code"]
         }
 
-
         result = StringTemplate.format_template(path, fill_data)
         if result.solved:
             path = result.normalized()
@@ -1262,12 +1261,15 @@ class PlaceholderLoadMixin(object):
 
         # Get representations for the default family,
         # or the first one if no default
+        attributes = ['representations', 'extensions', 'extension']
         for loader in all_loaders:
             for family in loader.families:
                 if family == (options.get('family') or families[0]):
-                    representations.update(loader.representations)
-        representations.discard("*")
+                    for attribute in attributes:
+                        if hasattr(loader, attribute):
+                            representations.update(getattr(loader, attribute))
 
+        representations.discard("*")
         representations = list(sorted(representations))
 
         return [
