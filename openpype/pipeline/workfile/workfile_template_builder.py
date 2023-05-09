@@ -159,14 +159,14 @@ class AbstractTemplateBuilder(object):
     @property
     def project_settings(self):
         if self._project_settings is None:
-            self._project_settings = get_project_settings(self.project_name)
+            self._project_settings = get_project_settings(self.current_project_name)
         return self._project_settings
 
     @property
     def current_asset_doc(self):
         if self._current_asset_doc is None:
             self._current_asset_doc = get_asset_by_name(
-                self.project_name, self.current_asset_name
+                self.current_project_name, self.current_asset_name
             )
         return self._current_asset_doc
 
@@ -174,7 +174,7 @@ class AbstractTemplateBuilder(object):
     def linked_asset_docs(self):
         if self._linked_asset_docs is None:
             self._linked_asset_docs = get_linked_assets(
-                self.project_name, self.current_asset_doc
+                self.current_project_name, self.current_asset_doc
             )
         return self._linked_asset_docs
 
@@ -1561,7 +1561,7 @@ class PlaceholderLoadMixin(object):
             return
 
         repre_load_contexts = get_contexts_for_repre_docs(
-            self.project_name, filtered_representations
+            self.current_project_name, filtered_representations
         )
         loaders_by_name = self.builder.get_loaders_by_name()
         for repre_load_context in repre_load_contexts.values():
