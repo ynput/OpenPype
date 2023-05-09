@@ -405,9 +405,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         """
         self.log.debug("_ path: `{}`".format(path))
         if "%" in path:
-            search_results = re.search(r"(%0)(\d)(d.)", path).groups()
-            self.log.debug("_ search_results: `{}`".format(search_results))
-            return int(search_results[1])
+            pattern = r"(%0{0,})(\d)(d)"
+            search_results = re.search(pattern, path).groups()
+            hashes = "#" * int(search_results[1])
+            hashes_path = re.sub(pattern, hashes, path)
+
+            return hashes_path
+
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
         return path
