@@ -759,7 +759,7 @@ class AbstractTemplateBuilder(object):
         """
 
         host_name = self.host_name
-        project_name = self.project_name
+        project_name = self.current_project_name
         task_name = self.current_task_name
         task_type = self.current_task_type
 
