@@ -22,7 +22,8 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
     rollout OPparams "OP Parameters"
     (
         listbox list_node "Node References" items:#()
-        button button_add "Add Selection"
+        button button_add "Add to Container"
+        button button_del "Delete from Container"
 
         fn node_to_name the_node =
         (
@@ -34,8 +35,8 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_add pressed do
         (
-            current_selection = selectByName title:"Select Objects To Add To
-            Container" buttontext:"Add"
+            current_selection = selectByName title:"Select Objects to add to
+            the Container" buttontext:"Add"
             temp_arr = #()
             i_node_arr = #()
             for c in current_selection do
@@ -45,8 +46,33 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 append temp_arr handle_name
                 append i_node_arr node_ref
             )
-            all_handles = i_node_arr
-            list_node.items = temp_arr
+            all_handles = join i_node_arr all_handles
+            list_node.items = join temp_arr list_node.items
+        )
+
+        on button_del pressed do
+        (
+            current_selection = selectByName title:"Select Objects to remove
+            from the Container" buttontext:"Remove"
+            temp_arr = #()
+            i_node_arr = #()
+            for c in current_selection do
+            (
+                node_ref = NodeTransformMonitor node:c
+                handle_name = node_to_name c
+                idx = finditem all_handles node_ref
+                if idx do
+                (
+                    DeleteItem all_nodes idx
+                )
+                idx = finditem list_node.items handle_name
+                if idx do
+                (
+                    DeleteItem list_node.items idx
+                )
+            )
+            all_handles = join i_node_arr all_handles
+            list_node.items = join temp_arr list_node.items
         )
 
         on OPparams open do
@@ -56,7 +82,6 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 temp_arr = #()
                 for x in all_handles do
                 (
-                    print(x.node)
                     handle_name = node_to_name x.node
                     append temp_arr handle_name
                 )
