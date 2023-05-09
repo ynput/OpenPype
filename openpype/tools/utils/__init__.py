@@ -1,3 +1,4 @@
+from .layouts import FlowLayout
 from .widgets import (
     FocusSpinBox,
     FocusDoubleSpinBox,
@@ -37,6 +38,8 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "FlowLayout",
+
     "FocusSpinBox",
     "FocusDoubleSpinBox",
     "ComboBox",
