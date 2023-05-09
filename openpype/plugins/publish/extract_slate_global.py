@@ -412,8 +412,8 @@ class ExtractSlateGlobal(publish.Extractor):
                 continue
 
             # check if repre is a sequence
-            is_sequence = isinstance(check_file, list)
-            check_file = repre["files"] if is_sequence else repre["files"]
+            is_sequence = isinstance(repre["files"], list)
+            check_file = repre["files"][0] if is_sequence else repre["files"]
 
             file_path = os.path.normpath(
                 os.path.join(repre["stagingDir"], check_file))
@@ -459,14 +459,17 @@ class ExtractSlateGlobal(publish.Extractor):
             }
             for profile in slate_data["slate_profiles"]:
                 if repre_match in profile["families"]:
+                    # use profile matching defaults
                     oiio_profile = profile
-                oiio_profile["oiio_args"]["output"].extend(
-                    [
-                        "--attrib:type=timecode",
-                        "smpte:TimeCode",
-                        '"{}"'.format(timecode),
-                    ]
-                )
+                    break
+
+            oiio_profile["oiio_args"]["output"].extend(
+                [
+                    "--attrib:type=timecode",
+                    "smpte:TimeCode",
+                    '"{}"'.format(timecode),
+                ]
+            )
             slate_creator.data.update(oiio_profile)
 
             # data Layout and preparation in instance
@@ -475,7 +478,9 @@ class ExtractSlateGlobal(publish.Extractor):
                 "family_match": repre_match or "",
                 "frameStart": int(repre["frameStart"]),
                 "frameEnd": frame_end,
-                "frameStartHandle": instance.data.get("frameStartHandle", None),
+                "frameStartHandle": instance.data.get(
+                    "frameStartHandle", None
+                ),
                 "frameEndHandle": instance.data.get("frameEndHandle", None),
                 "real_frameStart": frame_start,
                 "resolution_width": width,

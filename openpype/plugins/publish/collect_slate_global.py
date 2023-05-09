@@ -16,15 +16,13 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         context = instance.context
-        slate_settings = (
-            context.data["project_settings"]["global"]
-            ["publish].get("ExtractSlateGlobal")
-        )
+        slate_settings = context.data["project_settings"]["global"]\
+            ["publish"].get("ExtractSlateGlobal")
 
         if not slate_settings:
             self.log.warning("No slate settings found. Skipping.")
             return
-        
+
         if not slate_settings["enabled"]:
             self.log.warning("ExtractSlateGlobal is not active. Skipping.")
             return
