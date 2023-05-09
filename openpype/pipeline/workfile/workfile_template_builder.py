@@ -47,7 +47,6 @@ from openpype.pipeline.load import (
 
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
-    discover_creator_plugins,
     CreateContext,
 )
 
@@ -1250,16 +1249,15 @@ class PlaceholderLoadMixin(object):
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
 
-        # Get families and sort them alphabetically
+        # Get families from all loaders excluding "*"
         all_loaders = discover_loader_plugins()
-        families = []
+        families = set()
         for loader in all_loaders:
-            families.extend(loader.families)
+            families.update(loader.families)
+        families.discard("*")
 
-        families = list(set(families))
-        if "*" in families:
-            families.remove("*")
-        families.sort()
+        # Sort for readability
+        families = list(sorted(families))
 
         return [
             attribute_definitions.UISeparatorDef(),
