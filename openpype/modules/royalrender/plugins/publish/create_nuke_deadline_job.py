@@ -87,17 +87,6 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
         self.rr_api = None
 
     def process(self, instance):
-        # import json
-        # def _default_json(value):
-        #     return str(value)
-        # filepath = "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\tests\\unit\\openpype\\modules\\royalrender\\plugins\\publish\\resources\\instance.json"
-        # with open(filepath, "w") as f:
-        #     f.write(json.dumps(instance.data, indent=4, default=_default_json))
-        #
-        # filepath = "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\tests\\unit\\openpype\\modules\\royalrender\\plugins\\publish\\resources\\context.json"
-        # with open(filepath, "w") as f:
-        #     f.write(json.dumps(instance.context.data, indent=4, default=_default_json))
-
         if not instance.data.get("farm"):
             self.log.info("Skipping local instance.")
             return
