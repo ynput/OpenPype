@@ -55,9 +55,9 @@ class ResolvePrelaunch(PreLaunchHook):
         if not os.path.isdir(python3_home):
             raise ApplicationLaunchFailed(
                 "Python 3 is not installed at the provided path.\n"
-                "Make sure the environment in resolve settings has "
-                "'RESOLVE_PYTHON3_HOME' set correctly and make sure "
-                "Python 3 is installed in the given path."
+                "Make sure the Resolve application environment in OpenPype "
+                "studio settings has 'RESOLVE_PYTHON3_HOME' set correctly "
+                "and make sure Python 3 is installed in the given path."
                 f"\n\nRESOLVE_PYTHON3_HOME:\n{python3_home}"
             )
         self.launch_context.env["PYTHONHOME"] = python3_home
