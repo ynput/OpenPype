@@ -104,7 +104,7 @@ class ActionButton(BaseClickableFrame):
 
     Args:
         plugin_action_item (PublishPluginActionItem): Action item that can be
-            triggered by it's id.
+            triggered by its id.
     """
 
     action_clicked = QtCore.Signal(str, str)
@@ -1198,7 +1198,7 @@ class InstancesLogsView(QtWidgets.QFrame):
 class CrashWidget(QtWidgets.QWidget):
     """Widget shown when publishing crashes.
 
-    Contains only minimum information for artis with easy access to report
+    Contains only minimal information for artist with easy access to report
     actions.
     """
 
@@ -1212,7 +1212,7 @@ class CrashWidget(QtWidgets.QWidget):
         report_label = QtWidgets.QLabel(
             (
                 "Please report the error to your pipeline support"
-                " using one of the options below"
+                " using one of the options below."
             ),
             self
         )
@@ -1486,10 +1486,10 @@ class ReportPageWidget(QtWidgets.QFrame):
     4. Publishing crashed.                  ┘
     5. Crashed because of validation error.  > Errors with logs.
 
-    This widget is shown if validation error/s happened during validation part.
+    This widget is shown if validation errors happened during validation part.
 
-    Shows validation error titles with instances on which happened and
-    validation error detail with possible actions (repair).
+    Shows validation error titles with instances on which they happened
+    and validation error detail with possible actions (repair).
     """
 
     def __init__(self, controller, parent):

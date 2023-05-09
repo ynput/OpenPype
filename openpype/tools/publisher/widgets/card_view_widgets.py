@@ -93,7 +93,7 @@ class BaseGroupWidget(QtWidgets.QWidget):
         return self._group
 
     def get_widget_by_item_id(self, item_id):
-        """Get instance widget by it's id."""
+        """Get instance widget by its id."""
 
         return self._widgets_by_id.get(item_id)
 

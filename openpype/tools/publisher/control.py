@@ -462,7 +462,7 @@ class PublishPluginsProxy:
         return plugin.id
 
     def get_plugin_action_items(self, plugin_id):
-        """Get plugin action items for plugin by it's id.
+        """Get plugin action items for plugin by its id.
 
         Args:
             plugin_id (str): Publish plugin id.
