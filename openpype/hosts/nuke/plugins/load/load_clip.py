@@ -122,8 +122,9 @@ class LoadClip(plugin.NukeLoader):
 
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
-        first -= self.handle_start
-        last += self.handle_end
+	if self.handle_end and self.handle_start:
+        	first -= self.handle_start
+        	last += self.handle_end
 
         if not is_sequence:
             duration = last - first
