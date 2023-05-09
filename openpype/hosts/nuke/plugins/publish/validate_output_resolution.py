@@ -55,25 +55,33 @@ class ValidateOutputResolution(
 
     @classmethod
     def get_invalid(cls, instance):
-        def _check_resolution(instance, reformat):
+        ### Starts Alkemy-X Override ###
+        def _check_resolution(instance, reformat, write_width, write_height):
             root_width = instance.data["resolutionWidth"]
             root_height = instance.data["resolutionHeight"]
 
-            write_width = reformat.format().width()
-            write_height = reformat.format().height()
+            if not write_width:
+                write_width = reformat.format().width()
+            if not write_height:
+                write_height = reformat.format().height()
 
             if (root_width != write_width) or (root_height != write_height):
                 return None
             else:
                 return True
 
+        publish_node = instance.data.get("transientData", {}).get("node")
         # check if reformat is in render node
         reformat = cls.get_reformat(instance)
+        width = None
+        height = None
         if not reformat:
-            return cls.missing_msg
+            width = int(nuke.value(f'{publish_node.name()}.width'))
+            height = int(nuke.value(f'{publish_node.name()}.height'))
+        ### Ends Alkemy-X Override ###
 
         # check if reformat is set to correct root format
-        correct_format = _check_resolution(instance, reformat)
+        correct_format = _check_resolution(instance, reformat, width, height)
         if not correct_format:
             return cls.resolution_msg
 
