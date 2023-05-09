@@ -16,7 +16,8 @@ from openpype.modules.royalrender.rr_job import (
 from openpype.lib import (
     is_running_from_build,
     BoolDef,
-    NumberDef
+    NumberDef,
+    collect_frames
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -219,6 +220,10 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
         self._instance.data["expectedFiles"].extend(expected_files)
         first_file = next(iter_expected_files(expected_files))
 
+        file_name, file_ext = os.path.splitext(os.path.basename(first_file))
+        frame_pattern = ".{}".format(start_frame)
+        file_name = file_name.replace(frame_pattern, '.#')
+
         job = RRJob(
             Software="Nuke",
             Renderer="",
@@ -230,9 +235,9 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             SceneName=script_path,
             IsActive=True,
             ImageDir=render_dir.replace("\\", "/"),
-            ImageFilename="{}.".format(os.path.splitext(first_file)[0]),
-            ImageExtension=os.path.splitext(first_file)[1],
-            ImagePreNumberLetter=".",
+            ImageFilename="{}".format(file_name),
+            ImageExtension=file_ext,
+            ImagePreNumberLetter="",
             ImageSingleOutputFile=False,
             SceneOS=get_rr_platform(),
             Layer=node_name,
