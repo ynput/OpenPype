@@ -10,6 +10,7 @@ except Exception:
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
+from openpype.tools.utils.layouts import FlowLayout
 from .widgets import (
     IconValuePixmapLabel,
     get_pixmap,
@@ -153,7 +154,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         content_widget = QtWidgets.QWidget(self)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout = FlowLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -163,6 +164,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self._controller = controller
         self._content_widget = content_widget
         self._content_layout = content_layout
+
         self._actions_mapping = {}
 
     def _clear(self):
@@ -208,7 +210,6 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
         if self._content_layout.count() > 0:
             self.setVisible(True)
-            self._content_layout.addStretch(1)
         else:
             self.setVisible(False)
 
