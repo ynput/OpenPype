@@ -107,9 +107,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
             f"project [ {unreal_project_name} ]"
         ))
 
-        import openpype.hosts.unreal.lib as ue_lib
-        path = ue_lib.get_path_to_cmdlet_project(engine_version)
-
         q_thread = QtCore.QThread()
         ue_project_worker = UEProjectGenerationWorker()
         ue_project_worker.setup(

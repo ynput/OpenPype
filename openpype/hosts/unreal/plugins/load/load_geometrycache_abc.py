@@ -22,7 +22,8 @@ class PointCacheAlembicLoader(plugin.Loader):
     color = "orange"
 
     def get_task(
-        self, filename, asset_dir, asset_name, replace, frame_start=None, frame_end=None
+        self, filename, asset_dir, asset_name, replace,
+        frame_start=None, frame_end=None
     ):
         task = unreal.AssetImportTask()
         options = unreal.AbcImportSettings()
