@@ -96,8 +96,6 @@ class FusionSubmitDeadline(
         instance.data["suspend_publish"] = attribute_values[
             "suspend_publish"]
 
-        instance.data["toBeRenderedOn"] = "deadline"
-
         context = instance.context
 
         key = "__hasRun{}".format(self.__class__.__name__)
@@ -132,8 +130,7 @@ class FusionSubmitDeadline(
         if not saver_instances:
             raise RuntimeError("No instances found for Deadline submittion")
 
-        fusion_version = int(context.data["fusionVersion"])
-        comment = context.data.get("comment", "")
+        comment = instance.data.get("comment", "")
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
 
         script_path = context.data["currentFile"]
@@ -201,7 +198,7 @@ class FusionSubmitDeadline(
                 "FlowFile": script_path,
 
                 # Mandatory for Deadline
-                "Version": str(fusion_version),
+                "Version": str(instance.data["app_version"]),
 
                 # Render in high quality
                 "HighQuality": True,
@@ -225,7 +222,9 @@ class FusionSubmitDeadline(
 
         # Enable going to rendered frames from Deadline Monitor
         for index, instance in enumerate(saver_instances):
-            head, padding, tail = get_frame_path(instance.data["path"])
+            head, padding, tail = get_frame_path(
+                instance.data["expectedFiles"][0]
+            )
             path = "{}{}{}".format(head, "#" * padding, tail)
             folder, filename = os.path.split(path)
             payload["JobInfo"]["OutputDirectory%d" % index] = folder
