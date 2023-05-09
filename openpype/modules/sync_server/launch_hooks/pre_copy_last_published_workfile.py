@@ -219,7 +219,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                         resource_path_old = resource_work_path + '.old'
                         if os.path.exists(resource_work_path + '.old'):
                             for i in range(1, 100):
-                                p = resource_path_old + '%02d' %i
+                                p = resource_path_old + '%02d' % i
                                 if not os.path.exists(p):
                                     shutil.move(resource_work_path, p)
                                     break
