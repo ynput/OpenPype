@@ -1249,28 +1249,26 @@ class PlaceholderLoadMixin(object):
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
 
-        # Get families and sort them alphabetically
+        # Get families from all loaders excluding "*"
         all_loaders = discover_loader_plugins()
-        families = []
-        representations = []
-
+        families = set()
+        representations = set()
         for loader in all_loaders:
-            for family in loader.families:
-                if family == "*":
-                    continue
+            families.update(loader.families)
+        families.discard("*")
 
-                if family not in families:
-                    families.append(family)
+        # Sort for readability
+        families = list(sorted(families))
 
-        families.sort()
-
+        # Get representations for the default family,
+        # or the first one if no default
         for loader in all_loaders:
             for family in loader.families:
                 if family == (options.get('family') or families[0]):
-                    representations.extend(loader.representations)
+                    representations.update(loader.representations)
+        representations.discard("*")
 
-        representations = list(set(representations))
-        representations.sort()
+        representations = list(sorted(representations))
 
         return [
             attribute_definitions.UISeparatorDef(),
