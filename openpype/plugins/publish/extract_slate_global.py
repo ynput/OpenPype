@@ -50,8 +50,6 @@ class SlateCreator:
     ):
         self.data = data.copy() if data else {}
         self.log = logging.getLogger(self.__class__.__name__)
-
-
         self.set_template_paths(template_path, resources_path=resources_path)
         self.set_staging_dir(staging_dir, subfolder=staging_subfolder)
         self.read_template()
@@ -74,7 +72,8 @@ class SlateCreator:
             basedir = os.path.basename(self.template_path)
             self.resources_path = os.path.normpath(basedir)
             self.log.debug(
-                "No Slate resources path specified, using: '%s'", self.resources_path
+                "No Slate resources path specified, using: '%s'",
+                self.resources_path
             )
 
     def set_resolution(self, width, height):
@@ -103,10 +102,12 @@ class SlateCreator:
         The paths get expanded with the resources directory as base directory.
 
         Args:
-            template_path (str, optional): Path to the HTML template file. If not
-                provided, the default template path will be used. Defaults to None.
-            resources_path (str, optional): Path to the resources directory. If not
-                provided, the default resources path will be used. Defaults to None.
+            template_path (str, optional): Path to the HTML template file. If
+                not provided, the default template path will be used. Defaults
+                to None.
+            resources_path (str, optional): Path to the resources directory. If
+                not provided, the default resources path will be used. Defaults
+                to None.
 
         Raises:
             ValueError: If template_path or resources_path is not specified.
@@ -123,19 +124,23 @@ class SlateCreator:
         with open(template_path, "r") as template_file:
             html_template = template_file.read()
 
-        # Regular expression that finds all href/src paths that don't start with '{' as
-        # those will get expanded later on the `compute_template` function
+        # Regular expression that finds all href/src paths that don't start
+        # with '{' as those will get expanded later on the `compute_template`
+        # function
         src_pattern = r'(href|src)=(["\'])(?!{)(.*?)(["\'])'
 
         def _normalize_and_replace_path(match):
-            new_path = os.path.join(resources_path, os.path.basename(match.group(3)))
+            new_path = os.path.join(
+                resources_path,
+                os.path.basename(match.group(3))
+            )
             normalized_path = os.path.normpath(new_path)
             new_tag = "{}={}{}{}".format(
                 match.group(1), match.group(2), normalized_path, match.group(4)
             )
             return new_tag
 
-        # Replace all found paths with the resources path using regular expression
+        # Replace all found paths with the resources path using regex
         normalized_template = re.sub(
             src_pattern,
             _normalize_and_replace_path,
@@ -155,21 +160,23 @@ class SlateCreator:
             str: The computed HTML template.
 
         Notes:
-            - The keys in the template must be at the root of the data dictionary.
+            - The keys in the template must be at the root of the data
+                dictionary.
             - Nested dictionaries are not supported, only lists.
-            - Keys in the template with "_optional" suffix will be substituted with
-                "display:None" in the style property, allowing selective hiding of
-                corresponding blocks if the key is empty.
+            - Keys in the template with "_optional" suffix will be substituted
+                with "display:None" in the style property, allowing selective
+                hiding of corresponding blocks if the key is empty.
         """
 
         if not self._template_string:
             raise ValueError(
-                "Slate template HTML data is empty, please reread template or check source "
-                "file."
+                "Slate template HTML data is empty, please reread template or "
+                "check source file."
             )
 
         if process_optionals:
-            optional_matches = re.findall(r"{(.*?)_optional}", self._template_string)
+            optional_matches = re.findall(
+                r"{(.*?)_optional}", self._template_string)
             hidden_string = 'style="display:None;"'
             for match in optional_matches:
                 self.data["{}_optional".format(match)] = ""
@@ -177,33 +184,38 @@ class SlateCreator:
                     self.data["{}_optional".format(match)] = hidden_string
 
         try:
-            template_string_computed = self._template_string.format(**self.data)
-            self.log.debug("Computed Template string: '%s'", template_string_computed)
+            template_string_computed = self._template_string.format(
+                **self.data)
+            self.log.debug("Computed Template string: '%s'",
+                           template_string_computed)
             self.log.debug("Data: %s", self.data)
             return template_string_computed
 
         except KeyError as err:
-            self.log.error( "Missing %s key in instance data.\n"
-                "Template formatting cannot be completed successfully!", err
+            self.log.error(
+                "Missing %s key in instance data.\nTemplate formatting cannot "
+                "be completed successfully!", err
             )
             raise
 
     def render_slate(self, slate_path="", slate_specifier="", resolution=None):
-        """Render the slate image by replacing the tokens from the html template.
+        """Render the slate image by replacing the tokens from HTML template.
 
-        Slates are rendered using screen color space (usually Rec709 or sRGB) so
-        any HTML that needs to respect color needs to take that into account.
+        Slates are rendered using screen color space (usually Rec709 or sRGB)
+        so any HTML that needs to respect color needs to take that into
+        account.
 
         Args:
-            slate_path (str, optional): Path or filename where we want the slate file
-                to be saved as. If a path is provided we replace the staging dir with
-                the base directory, otherwise we reuse the existing staging dir and
-                simply set the name of the file. If arg not provided, defaults to
-                default name on the staging directory.
-            slate_specifier (str): String specifier to identify different generated
-                slates.
-            resolution (tuple): Tuple of (width, height) representing the resolution of
-                the generated slate.
+            slate_path (str, optional): Path or filename where we want the
+                slate file to be saved as. If a path is provided we replace the
+                staging dir with the base directory, otherwise we reuse the
+                existing staging dir and simply set the name of the file. If
+                arg not provided, defaults to default name on the staging
+                directory.
+            slate_specifier (str): String specifier to identify different
+                generated slates.
+            resolution (tuple): Tuple of (width, height) representing the
+                resolution of the generated slate.
 
         Returns:
             str: Path to the rendered slate image.
@@ -217,7 +229,8 @@ class SlateCreator:
             slate_name = "slate_staged{}.png".format(slate_specifier)
 
         if resolution:
-            self.data["resolution_width"], self.data["resolution_height"] = resolution
+            self.data["resolution_width"] = resolution[0]
+            self.data["resolution_height"] = resolution[1]
         else:
             data_width = self.data["resolution_width"] or 3840
             data_height = self.data["resolution_height"] or 2160
@@ -226,14 +239,15 @@ class SlateCreator:
         # Replace tokens from HTML template with instance data
         html_template = self.compute_template()
 
-        # Use Html2Image python module to read HTML template with headless Chrome and
-        # take a screenshot and generate an image of it
+        # Use Html2Image python module to read HTML template with headless
+        # Chrome and take a screenshot and generate an image of it
         chrome_path = get_chrome_tool_path()
         self.log.info(
             "Render slate using html2image at '%s' with resolution '%s'.",
             self.staging_dir, resolution
         )
-        hti = Html2Image(browser_executable=chrome_path, output_path=self.staging_dir)
+        hti = Html2Image(browser_executable=chrome_path,
+                         output_path=self.staging_dir)
         slate_rendered_paths = hti.screenshot(
             html_str=html_template,
             save_as=slate_name,
@@ -281,7 +295,9 @@ class SlateCreator:
             lower_line = line.lower()
             if "timecode" in lower_line:
                 timecode = lower_line.split("timecode:")[1].strip()
-                self.log.debug("%s: Found timecode on iinfo output: %s", name, timecode)
+                self.log.debug(
+                    "%s: Found timecode on iinfo output: %s", name, timecode
+                )
                 break
 
         timecode_frames = timecode_to_frames(timecode, self.data["fps"])
@@ -299,9 +315,8 @@ class SlateCreator:
             streams = get_ffprobe_streams(input, self.log)
         except Exception as exc:
             raise AssertionError(
-                "FFprobe couldn't read information about input file: '{}'.\n{}".format(
-                    input, str(exc)
-                )
+                "FFprobe couldn't read information about input file: '{}'.\n{}"
+                .format(input, str(exc))
             )
 
         # Try to find first stream with defined 'width' and 'height'
@@ -316,15 +331,15 @@ class SlateCreator:
         # Raise exception of any stream didn't define input resolution
         if width is None:
             raise AssertionError(
-                "FFprobe couldn't read resolution from input file: '{}'.".format(input)
+                "FFprobe couldn't read resolution from input file: '{}'."
+                .format(input)
             )
 
         return (width, height)
 
 
 class ExtractSlateGlobal(publish.Extractor):
-    """
-    Extractor that creates slate frames from an HTML template using OIIO.
+    """Extractor that creates slate frames from an HTML template using OIIO.
 
     Slate frames are based on an html template that gets rendered
     using headless chrome/chromium. They then get converted using oiio,
@@ -337,25 +352,7 @@ class ExtractSlateGlobal(publish.Extractor):
     label = "Extract Slate Global"
     order = pyblish.api.ExtractorOrder + 0.0305
     families = ["slate"]
-    hosts = [
-        "nuke",
-        "maya",
-        "blender",
-        "houdini",
-        "shell",
-        "hiero",
-        "premiere",
-        "harmony",
-        "traypublisher",
-        "standalonepublisher",
-        "fusion",
-        "tvpaint",
-        "resolve",
-        "webpublisher",
-        "aftereffects",
-        "flame",
-        "unreal"
-    ]
+    hosts = ["*"]
 
     _slate_data_name = "slateGlobal"
 
@@ -363,13 +360,16 @@ class ExtractSlateGlobal(publish.Extractor):
 
         if self._slate_data_name not in instance.data:
             self.log.warning(
-                "Slate Global workflow is not active, skipping slate extraction..."
+                "Slate Global workflow is not active, skipping slate "
+                "extraction..."
             )
             return
 
         if "representations" not in instance.data:
-            self.log.error("No representations to work on!")
-            raise ValueError("No items in list.")
+            self.log.warning(
+                "Instance doesn't have any representations, skipping slate."
+            )
+            return
 
         repre_ignore_list = ["thumbnail", "passing"]
 
@@ -407,20 +407,19 @@ class ExtractSlateGlobal(publish.Extractor):
         for repre in instance.data["representations"]:
             if repre["name"] in repre_ignore_list:
                 self.log.debug(
-                    "Representation '{}' was ignored.".format(repre["name"])
+                    "Representation '{}' is ignored.".format(repre["name"])
                 )
                 continue
 
             # check if repre is a sequence
-            is_sequence = False
-            check_file = repre["files"]
-            if isinstance(check_file, list):
-                check_file = check_file[0]
-                is_sequence = True
+            is_sequence = isinstance(repre["files"], list)
+            check_file = repre["files"][0] if is_sequence else repre["files"]
 
-            file_path = os.path.normpath(os.path.join(repre["stagingDir"], check_file))
+            file_path = os.path.normpath(
+                os.path.join(repre["stagingDir"], check_file))
 
-            # if representation is a sequence render out a slate before first frame
+            # if representation is a sequence render out a slate before first
+            # frame
             if is_sequence:
                 filename, _frame, ext = check_file.split(".")
                 frame_start = int(repre["frameStart"]) - 1
@@ -453,31 +452,35 @@ class ExtractSlateGlobal(publish.Extractor):
             timecode = slate_creator.get_timecode_oiio(
                 file_path, timecode_frame=int(repre["frameStart"])
             )
+            oiio_profile = {
+                "families": [],
+                "hosts": [],
+                "oiio_args": {"input": [], "output": []},
+            }
             for profile in slate_data["slate_profiles"]:
                 if repre_match in profile["families"]:
+                    # use profile matching defaults
                     oiio_profile = profile
-                else:
-                    oiio_profile = {
-                        "families": [],
-                        "hosts": [],
-                        "oiio_args": {"input": [], "output": []},
-                    }
-                oiio_profile["oiio_args"]["output"].extend(
-                    [
-                        "--attrib:type=timecode",
-                        "smpte:TimeCode",
-                        '"{}"'.format(timecode),
-                    ]
-                )
+                    break
+
+            oiio_profile["oiio_args"]["output"].extend(
+                [
+                    "--attrib:type=timecode",
+                    "smpte:TimeCode",
+                    '"{}"'.format(timecode),
+                ]
+            )
             slate_creator.data.update(oiio_profile)
 
-            # Data Layout and preparation in instance
+            # data Layout and preparation in instance
             width, height = slate_creator.get_resolution_ffprobe(file_path)
             slate_repre_data = {
                 "family_match": repre_match or "",
                 "frameStart": int(repre["frameStart"]),
                 "frameEnd": frame_end,
-                "frameStartHandle": instance.data.get("frameStartHandle", None),
+                "frameStartHandle": instance.data.get(
+                    "frameStartHandle", None
+                ),
                 "frameEndHandle": instance.data.get("frameEndHandle", None),
                 "real_frameStart": frame_start,
                 "resolution_width": width,
