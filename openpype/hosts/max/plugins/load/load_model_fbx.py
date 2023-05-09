@@ -37,6 +37,14 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         self.log.debug(f"Executing command: {fbx_import_cmd}")
         rt.execute(fbx_import_cmd)
 
+        # create "missing" container for obj import
+        container = rt.container()
+        container.name = f"{name}"
+
+        # get current selection
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
+
         asset = rt.getNodeByName(f"{name}")
 
         return containerise(

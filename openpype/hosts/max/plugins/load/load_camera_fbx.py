@@ -4,7 +4,7 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.hosts.max.api import lib, maintained_selection
 
 
 class FbxLoader(load.LoaderPlugin):
@@ -36,7 +36,13 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         self.log.debug(f"Executing command: {fbx_import_cmd}")
         rt.execute(fbx_import_cmd)
 
-        container_name = f"{name}_CON"
+        # create "missing" container for obj import
+        container = rt.container()
+        container.name = f"{name}"
+
+        # get current selection
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
 
         asset = rt.getNodeByName(f"{name}")
 
@@ -48,14 +54,29 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
+        rt.select(node.Children)
+        fbx_reimport_cmd = (
+            f"""
 
-        fbx_objects = self.get_container_children(node)
-        for fbx_object in fbx_objects:
-            fbx_object.source = path
+FBXImporterSetParam "Animation" true
+FBXImporterSetParam "Cameras" true
+FBXImporterSetParam "AxisConversionMethod" true
+FbxExporterSetParam "UpAxis" "Y"
+FbxExporterSetParam "Preserveinstances" true
+
+importFile @"{path}" #noPrompt using:FBXIMP
+        """)
+        rt.execute(fbx_reimport_cmd)
+
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         from pymxs import runtime as rt

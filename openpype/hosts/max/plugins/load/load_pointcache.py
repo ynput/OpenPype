@@ -9,7 +9,7 @@ from openpype.pipeline import (
     load, get_representation_path
 )
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.hosts.max.api import lib, maintained_selection
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -65,13 +65,25 @@ importFile @"{file_path}" #noPrompt
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
-
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+        rt.select(node.Children)
+
+        for alembic in rt.selection:
+            abc = rt.getNodeByName(alembic.name)
+            rt.select(abc.Children)
+            for abc_con in rt.selection:
+                container = rt.getNodeByName(abc_con.name)
+                container.source = path
+                rt.select(container.Children)
+                for abc_obj in rt.selection:
+                    alembic_obj = rt.getNodeByName(abc_obj.name)
+                    alembic_obj.source = path
+
+        with maintained_selection():
+            rt.select(node)
 
     def switch(self, container, representation):
         self.update(container, representation)

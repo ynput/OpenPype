@@ -3,7 +3,7 @@ from openpype.pipeline import (
     load, get_representation_path
 )
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.hosts.max.api import lib, maintained_selection
 
 
 class PointCloudLoader(load.LoaderPlugin):
@@ -34,14 +34,20 @@ class PointCloudLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
+        rt.select(node.Children)
+        for prt in rt.selection:
+            prt_object = rt.getNodeByName(prt.name)
+            prt_object.filename = path
 
-        prt_objects = self.get_container_children(node)
-        for prt_object in prt_objects:
-            prt_object.source = path
+        with maintained_selection():
+            rt.select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         """remove the container"""

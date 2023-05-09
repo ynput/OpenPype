@@ -61,6 +61,9 @@ class ObjLoader(load.LoaderPlugin):
             "representation": str(representation["_id"])
         })
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
         from pymxs import runtime as rt
 
