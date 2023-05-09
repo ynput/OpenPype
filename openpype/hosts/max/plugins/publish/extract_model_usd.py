@@ -44,6 +44,7 @@ class ExtractModelUSD(publish.Extractor,
         with maintained_selection():
             # select and export
             node_list = instance.data["members"]
+            rt.select(node_list)
             rt.USDExporter.ExportFile(asset_filepath,
                                       exportOptions=export_options,
                                       contentSource=rt.Name("selected"),
