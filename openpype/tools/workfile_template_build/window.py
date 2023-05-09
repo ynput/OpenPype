@@ -295,23 +295,26 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._attr_defs_widget = widget
 
     def get_representation_by_family(self, family):
-        representations_by_family = []
+        representations_by_family = set()
         representations = []
         all_loaders = discover_loader_plugins()
+        attributes = ['representations', 'extensions', 'extension']
 
         for loader in all_loaders:
             for loader_family in loader.families:
                 if loader_family == family:
-                    representations_by_family.extend(loader.representations)
+                    for attribute in attributes:
+                        if hasattr(loader, attribute):
+                            repre = getattr(loader, attribute)
+                            representations_by_family.update(repre)
 
-        representations_by_family = list(set(representations_by_family))
+        representations_by_family.discard("*")
+        representations_by_family = list(sorted(representations_by_family))
 
         for repre in representations_by_family:
             representations.append({
                 'label': repre,
                 'value': repre
             })
-
-        representations = sorted(representations, key=lambda x: x['label'])
 
         return representations
