@@ -19,6 +19,7 @@ from .workfile_template_builder import (
     update_placeholder,
     build_workfile_template,
     update_workfile_template,
+    open_template,
 )
 
 log = logging.getLogger(__name__)
@@ -159,16 +160,6 @@ def install():
             parent=MENU_NAME
         )
         cmds.menuItem(
-            "Create Placeholder",
-            parent=builder_menu,
-            command=create_placeholder
-        )
-        cmds.menuItem(
-            "Update Placeholder",
-            parent=builder_menu,
-            command=update_placeholder
-        )
-        cmds.menuItem(
             "Build Workfile from template",
             parent=builder_menu,
             command=build_workfile_template
@@ -177,6 +168,25 @@ def install():
             "Update Workfile from template",
             parent=builder_menu,
             command=update_workfile_template
+        )
+        cmds.menuItem(
+            divider=True,
+            parent=builder_menu
+        )
+        cmds.menuItem(
+            "Open Template",
+            parent=builder_menu,
+            command=open_template,
+        )
+        cmds.menuItem(
+            "Create Placeholder",
+            parent=builder_menu,
+            command=create_placeholder
+        )
+        cmds.menuItem(
+            "Update Placeholder",
+            parent=builder_menu,
+            command=update_placeholder
         )
 
         cmds.setParent(MENU_NAME, menu=True)

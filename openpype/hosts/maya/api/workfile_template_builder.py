@@ -1,4 +1,5 @@
 import json
+import os
 
 from maya import cmds
 
@@ -23,6 +24,36 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for maya"""
 
     use_legacy_creators = True
+
+    def open_template(self):
+        """Open template in current scene.
+        """
+        template_preset = self.get_template_preset()
+        template_path = template_preset["path"]
+
+        if not os.path.exists(template_path):
+            cmds.confirmDialog(
+                title="Warning",
+                message="Template doesn't exist: {}".format(template_path),
+                button=["OK"],
+                defaultButton="OK",
+            )
+            return
+
+        result = cmds.confirmDialog(
+            title="Warning",
+            message="Opening a template will clear the current scene.",
+            button=["OK", "Cancel"],
+            defaultButton="OK",
+            cancelButton="Cancel",
+            dismissString="Cancel",
+        )
+
+        if result != "OK":
+            return
+
+        print("opening template {}".format(template_path))
+        cmds.file(template_path, open=True, force=True)
 
     def import_template(self, path):
         """Import template into current scene.
@@ -298,6 +329,9 @@ def update_workfile_template(*args):
     builder = MayaTemplateBuilder(registered_host())
     builder.rebuild_template()
 
+def open_template(*args):
+    builder = MayaTemplateBuilder(registered_host())
+    builder.open_template()
 
 def create_placeholder(*args):
     host = registered_host()
