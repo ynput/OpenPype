@@ -49,31 +49,3 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         if instance.data.get("review", False):
             self.log.info("Adding review family..")
             instance.data["families"].append("review")
-
-        if instance.data["family"] == "render":
-            # TODO: This should probably move into a collector of
-            #       its own for the "render" family
-            from openpype.hosts.fusion.api.lib import get_frame_path
-            comp = context.data["currentComp"]
-
-            # This is only the case for savers currently but not
-            # for workfile instances. So we assume saver here.
-            tool = instance.data["transientData"]["tool"]
-            path = tool["Clip"][comp.TIME_UNDEFINED]
-
-            filename = os.path.basename(path)
-            head, padding, tail = get_frame_path(filename)
-            ext = os.path.splitext(path)[1]
-            assert tail == ext, ("Tail does not match %s" % ext)
-
-            instance.data.update({
-                "path": path,
-                "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant?
-
-                # Backwards compatibility: embed tool in instance.data
-                "tool": tool
-            })
-
-            # Add tool itself as member
-            instance.append(tool)
