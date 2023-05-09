@@ -43,7 +43,7 @@ class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
                     invalid.extend(instances)
 
         # Return tools for the invalid instances so they can be selected
-        invalid = [instance.data["tool"] for instance in invalid]
+        invalid = [instance.data["toolSaver"] for instance in invalid]
 
         return invalid
 

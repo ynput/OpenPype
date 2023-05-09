@@ -14,7 +14,7 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Expected Frames Exists"
-    families = ["render"]
+    families = ["render.frames"]
     hosts = ["fusion"]
     actions = [RepairAction, SelectInvalidAction]
 
@@ -23,25 +23,15 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
         if non_existing_frames is None:
             non_existing_frames = []
 
-        if instance.data.get("render_target") == "frames":
-            tool = instance[0]
+        if "render.frames" in instance.data.get("families", []):
+            tool = instance.data["toolSaver"]
 
-            frame_start = instance.data["frameStart"]
-            frame_end = instance.data["frameEnd"]
-            path = instance.data["path"]
-            output_dir = instance.data["outputDir"]
+            expected_files = instance.data["expectedFiles"]
 
-            basename = os.path.basename(path)
-            head, ext = os.path.splitext(basename)
-            files = [
-                f"{head}{str(frame).zfill(4)}{ext}"
-                for frame in range(frame_start, frame_end + 1)
-            ]
-
-            for file in files:
-                if not os.path.exists(os.path.join(output_dir, file)):
+            for file in expected_files:
+                if not os.path.exists(file):
                     cls.log.error(
-                        f"Missing file: {os.path.join(output_dir, file)}"
+                        f"Missing file: {file}"
                     )
                     non_existing_frames.append(file)
 
@@ -67,8 +57,7 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         if invalid:
-            tool = invalid[0]
-
+            tool = instance.data["toolSaver"]
             # Change render target to local to render locally
             tool.SetData("openpype.creator_attributes.render_target", "local")
 
