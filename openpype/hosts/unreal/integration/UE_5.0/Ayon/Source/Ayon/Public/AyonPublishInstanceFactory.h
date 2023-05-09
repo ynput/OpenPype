@@ -5,18 +5,18 @@
 
 #include "CoreMinimal.h"
 #include "Factories/Factory.h"
-#include "OpenPypePublishInstanceFactory.generated.h"
+#include "AyonPublishInstanceFactory.generated.h"
 
 /**
  *
  */
 UCLASS()
-class AYON_API UOpenPypePublishInstanceFactory : public UFactory
+class AYON_API UAyonPublishInstanceFactory : public UFactory
 {
 	GENERATED_BODY()
 
 public:
-	UOpenPypePublishInstanceFactory(const FObjectInitializer& ObjectInitializer);
+	UAyonPublishInstanceFactory(const FObjectInitializer& ObjectInitializer);
 	virtual UObject* FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 	virtual bool ShouldShowInNewMenu() const override;
 };
