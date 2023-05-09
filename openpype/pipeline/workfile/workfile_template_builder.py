@@ -159,7 +159,9 @@ class AbstractTemplateBuilder(object):
     @property
     def project_settings(self):
         if self._project_settings is None:
-            self._project_settings = get_project_settings(self.current_project_name)
+            self._project_settings = get_project_settings(
+                self.current_project_name
+            )
         return self._project_settings
 
     @property
