@@ -1,6 +1,6 @@
 import os
 import platform
-from openpype.lib import PreLaunchHook
+from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.resolve.utils import setup
 
 
@@ -52,12 +52,14 @@ class ResolvePrelaunch(PreLaunchHook):
         python3_home = os.path.normpath(
             self.launch_context.env.get("RESOLVE_PYTHON3_HOME", ""))
 
-        assert os.path.isdir(python3_home), (
-            "Python 3 is not installed at the provided folder path. Either "
-            "make sure the `environments\resolve.json` is having correctly "
-            "set `RESOLVE_PYTHON3_HOME` or make sure Python 3 is installed "
-            f"in given path. \nRESOLVE_PYTHON3_HOME: `{python3_home}`"
-        )
+        if not os.path.isdir(python3_home):
+            raise ApplicationLaunchFailed(
+                "Python 3 is not installed at the provided path.\n"
+                "Make sure the environment in resolve settings has "
+                "'RESOLVE_PYTHON3_HOME' set correctly and make sure "
+                "Python 3 is installed in the given path."
+                f"\n\nRESOLVE_PYTHON3_HOME:\n{python3_home}"
+            )
         self.launch_context.env["PYTHONHOME"] = python3_home
         self.log.info(f"Path to Resolve Python folder: `{python3_home}`...")
 
