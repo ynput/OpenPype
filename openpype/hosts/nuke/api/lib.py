@@ -23,6 +23,9 @@ from openpype.client import (
 
 from openpype.host import HostDirmap
 from openpype.tools.utils import host_tools
+from openpype.pipeline.workfile.workfile_template_builder import (
+    TemplateProfileNotFound
+)
 from openpype.lib import (
     env_value_to_bool,
     Logger,
@@ -492,17 +495,17 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
         data (dict)
     """
 
+    data = {}
+    if AVALON_TAB not in node.knobs():
+        return data
+
     # check if lists
     if not isinstance(prefix, list):
-        prefix = list([prefix])
-
-    data = dict()
+        prefix = [prefix]
 
     # loop prefix
     for p in prefix:
         # check if the node is avalon tracked
-        if AVALON_TAB not in node.knobs():
-            continue
         try:
             # check if data available on the node
             test = node[AVALON_DATA_GROUP].value()
@@ -513,8 +516,7 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
             if create:
                 node = set_avalon_knob_data(node)
                 return get_avalon_knob_data(node)
-            else:
-                return {}
+            return {}
 
         # get data from filtered knobs
         data.update({k.replace(p, ''): node[k].value()
@@ -2684,7 +2686,10 @@ def start_workfile_template_builder():
 
     # to avoid looping of the callback, remove it!
     log.info("Starting workfile template builder...")
-    build_workfile_template(workfile_creation_enabled=True)
+    try:
+        build_workfile_template(workfile_creation_enabled=True)
+    except TemplateProfileNotFound:
+        log.warning("Template profile not found. Skipping...")
 
     # remove callback since it would be duplicating the workfile
     nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")

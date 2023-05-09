@@ -27,11 +27,12 @@ class ExtractWorkfileUrl(pyblish.api.ContextPlugin):
                 rep_name = instance.data.get("representations")[0].get("name")
                 template_data["representation"] = rep_name
                 template_data["ext"] = rep_name
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
+                template_obj = anatomy.templates_obj["publish"]["path"]
+                template_filled = template_obj.format_strict(template_data)
                 filepath = os.path.normpath(template_filled)
                 self.log.info("Using published scene for render {}".format(
                     filepath))
+                break
 
         if not filepath:
             self.log.info("Texture batch doesn't contain workfile.")
