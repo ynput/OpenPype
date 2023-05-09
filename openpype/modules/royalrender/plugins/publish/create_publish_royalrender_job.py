@@ -66,7 +66,6 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
     priority = 50
 
     def process(self, instance):
-        # data = instance.data.copy()
         context = instance.context
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
@@ -150,7 +149,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job, so they use the same environment
-        metadata_path, roothless_metadata_path = \
+        metadata_path, rootless_metadata_path = \
             create_metadata_path(instance, self.anatomy)
 
         anatomy_data = instance.context.data["anatomyData"]
@@ -194,10 +193,13 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         priority = self.priority or instance.data.get("priority", 50)
 
+        ## rr requires absolut path or all jobs won't show up in rControl
+        abs_metadata_path = self.anatomy.fill_root(rootless_metadata_path)
+
         args = [
             "--headless",
             'publish',
-            roothless_metadata_path,
+            abs_metadata_path,
             "--targets", "deadline",
             "--targets", "farm"
         ]
@@ -212,7 +214,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             SeqFileOffset=0,
             Version=os.environ.get("OPENPYPE_VERSION"),
             # executable
-            SceneName=roothless_metadata_path,
+            SceneName=abs_metadata_path,
             # command line arguments
             CustomAddCmdFlags=" ".join(args),
             IsActive=True,
