@@ -38,8 +38,9 @@ class ExtractSlateFrame(publish.Extractor):
 
         # skip this plugin if the slate global one is active
         if "slateGlobal" in instance.data:
-            self.log.info("Slate Global workflow is active, skipping Nuke Slate "
-                          "extraction..."
+            self.log.info(
+                "Slate Global workflow is active, skipping Nuke Slate "
+                "extraction..."
             )
             return
 

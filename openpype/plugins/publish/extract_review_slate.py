@@ -28,25 +28,7 @@ class ExtractReviewSlate(publish.Extractor):
 
     SUFFIX = "_slate"
 
-    hosts = [
-        "nuke",
-        "maya",
-        "blender",
-        "houdini",
-        "shell",
-        "hiero",
-        "premiere",
-        "harmony",
-        "traypublisher",
-        "standalonepublisher",
-        "fusion",
-        "tvpaint",
-        "resolve",
-        "webpublisher",
-        "aftereffects",
-        "flame",
-        "unreal"
-    ]
+    hosts = ["*"]
 
     optional = True
 
