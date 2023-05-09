@@ -13,22 +13,16 @@ class CreateRender(plugin.MaxCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Plugin entry point."""
-        from pymxs import runtime as rt  # noqa: WPS433,I001
         instance = super().create(
             subset_name,
             instance_data,
             pre_create_data)
         container_name = instance.data.get("instance_node")
-        container = rt.GetNodeByName(container_name)
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
-        sel_obj = None
-        if self.selected_nodes:
-            sel_obj = list(self.selected_nodes)
-            for obj in sel_obj:
-                obj.parent = container
-
-        # set viewport camera for rendering(mandatory for deadline)
-        RenderSettings().set_render_camera(sel_obj)
+        sel_obj = self.selected_nodes
+        if sel_obj:
+            # set viewport camera for rendering(mandatory for deadline)
+            RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
