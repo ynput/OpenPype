@@ -534,6 +534,17 @@ class AbstractTemplateBuilder(object):
         self.clear_shared_populate_data()
 
     @abstractmethod
+    def open_template(self, template_path):
+        """Open template file in default application.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+
+        pass
+
+    @abstractmethod
     def import_template(self, template_path):
         """
         Import template in current host.
