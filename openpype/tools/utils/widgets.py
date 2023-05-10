@@ -101,6 +101,46 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
             self.setPalette(filter_palette)
 
 
+class ExpandingTextEdit(QtWidgets.QTextEdit):
+    """QTextEdit which does not have sroll area but expands height."""
+
+    def __init__(self, parent=None):
+        super(ExpandingTextEdit, self).__init__(parent)
+
+        size_policy = self.sizePolicy()
+        size_policy.setHeightForWidth(True)
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(size_policy)
+
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        doc = self.document()
+        doc.contentsChanged.connect(self._on_doc_change)
+
+    def _on_doc_change(self):
+        self.updateGeometry()
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        margins = self.contentsMargins()
+
+        document_width = 0
+        if width >= margins.left() + margins.right():
+            document_width = width - margins.left() - margins.right()
+
+        document = self.document().clone()
+        document.setTextWidth(document_width)
+
+        return margins.top() + document.size().height() + margins.bottom()
+
+    def sizeHint(self):
+        width = super(ExpandingTextEdit, self).sizeHint().width()
+        return QtCore.QSize(width, self.heightForWidth(width))
+
+
 class BaseClickableFrame(QtWidgets.QFrame):
     """Widget that catch left mouse click and can trigger a callback.
 
