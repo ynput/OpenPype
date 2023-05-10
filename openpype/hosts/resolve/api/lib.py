@@ -313,6 +313,9 @@ def get_current_timeline_items(
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
     timeline = get_current_timeline()
+    if timeline is None:
+        return []
+
     selected_clips = []
 
     # get all tracks count filtered by track type
