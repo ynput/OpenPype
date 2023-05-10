@@ -10,8 +10,9 @@ import qargparse
 
 from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
+from openpype.client import get_asset_by_name
 from openpype.pipeline import LoaderPlugin, LegacyCreator
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import get_current_project_asset, get_current_project_name
 from . import lib
 
 log = Logger.get_logger(__name__)
@@ -146,6 +147,8 @@ class CreatorWidget(QtWidgets.QDialog):
         return " ".join([str(m.group(0)).capitalize() for m in matches])
 
     def create_row(self, layout, type, text, **kwargs):
+        value_keys = ["setText", "setCheckState", "setValue", "setChecked"]
+
         # get type attribute from qwidgets
         attr = getattr(QtWidgets, type)
 
@@ -175,13 +178,25 @@ class CreatorWidget(QtWidgets.QDialog):
             item.setMinimum(0)
         ### Ends Alkemy-X Override ###
 
+        # set attributes to item which are not values
         for func, val in kwargs.items():
+            if func in value_keys:
+                continue
+
             if getattr(item, func):
+                log.debug("Setting {} to {}".format(func, val))
                 func_attr = getattr(item, func)
                 if isinstance(val, tuple):
                     func_attr(*val)
                 else:
                     func_attr(val)
+
+        # set values to item
+        for value_item in value_keys:
+            if value_item not in kwargs:
+                continue
+            if getattr(item, value_item):
+                getattr(item, value_item)(kwargs[value_item])
 
         # add to layout
         layout.addRow(label, item)
@@ -284,8 +299,11 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMinimum=0,
+                    setValue=v["value"],
+                    setDisplayIntegerBase=10000,
+                    setRange=(0, 99999), setMinimum=0,
                     setMaximum=100000, setToolTip=tool_tip)
+
         return data
 
 
@@ -401,7 +419,7 @@ class ClipLoader:
         self.with_handles = options.get("handles") or bool(
             options.get("handles") is True)
         # try to get value from options or evaluate key value for `load_how`
-        self.sequencial_load = options.get("sequencially") or bool(
+        self.sequencial_load = options.get("sequentially") or bool(
             "Sequentially in order" in options.get("load_how", ""))
         # try to get value from options or evaluate key value for `load_to`
         self.new_sequence = options.get("newSequence") or bool(
@@ -650,6 +668,9 @@ class PublishClip:
     tag_data = dict()
     types = {
         "shot": "shot",
+        ### Starts Alkemy-X Override ###
+        "path": "path",
+        ### Ends Alkemy-X Override ###
         "folder": "folder",
         "episode": "episode",
         "sequence": "sequence",
@@ -701,9 +722,14 @@ class PublishClip:
 
         ### Starts Alkemy-X Override ###
         # If shot path token found, update hierarchy data to respect those values
+        hierarchy_data_value = self.ui_inputs.get("hierarchy", {}).get("value")
         hierarchy_value = self.ui_inputs.get("hierarchy", {}).get("value")
-        if hierarchy_value:
-            self.update_path_token_hierarchy()
+        if hierarchy_data_value:
+            # Only update episode, sequence, shot values if they are being used for path token
+            # If path token is being used UI values will be ignored
+            # Meaning episode, sequence, and shot will not react as expected when using path
+            if "{path}" in hierarchy_value:
+                self.update_path_token_hierarchy()
         ### Ends Alkemy-X Override ###
 
         # populate default data before we get other attributes
@@ -758,29 +784,58 @@ class PublishClip:
         return self.track_item
 
     ### Starts Alkemy-X Override ###
+    def get_asset_parents(self):
+        """Return parents from asset stored on the Avalon database."""
+
+        project_name = get_current_project_name()
+        asset_name = self.ti_name
+        asset_item = get_asset_by_name(project_name, asset_name)
+        if asset_item:
+            parents = asset_item["data"]["parents"]
+        else:
+            QtWidgets.QMessageBox.warning(
+                hiero.ui.mainWindow(),
+                "Info",
+                "Asset/Shot does not exist in Database. Make sure asset/shot is in Shotgrid. If made recently it can take time for initial Sync",
+            )
+            raise Exception("Asset/Shot does not exist in Database")
+
+        return parents
+
     def update_path_token_hierarchy(self):
-        """Update UI inputs from clip name to avoid typing values for episode/sequence."""
+        """Update UI inputs from clip name to avoid typing values for episode/sequence.
+        Need to recreate the entity relationship that would be seen in Shotgrid
+        There is an assumption that the hierarchy is build for a shot/asset
+        """
         episode = ""
         sequence = ""
-        shot = ""
-        if self.ti_name.count("_") == 0:
-            shot = self.ti_name
-        elif self.ti_name.count("_") == 1:
-            sequence, shot = self.ti_name.split("_")
-        elif self.ti_name.count("_") >= 2:
-            episode, sequence, shot = self.ti_name.split("_")[-3:]
+        parents = self.get_asset_parents()
+        # Parents will always start with shots or assets
+        folder = parents[0]
+        shot = self.ti_name
+        if folder == "shots":
+            if len(parents) > 1:
+                sequence = parents[-1]
+            if len(parents) > 2:
+                episode = parents[-2]
+            if len(parents) == 4:
+                season = parents[-3]
 
-        self.shot_path_tokens = {"episode": episode, "sequence": sequence, "shot": shot}
+        self.shot_path_tokens = {"folder": folder, "episode": episode, "sequence": sequence, "shot": shot}
         for key in self.shot_path_tokens:
             self.ui_inputs["hierarchyData"]["value"][key]["value"] = self.shot_path_tokens[key]
 
     def solve_path_token_hierarchy(self):
         """Override self.hierarchy with new inferred path tokens."""
         # Don't change ui_inputs - this is needed for next iterations
-        if self.shot_path_tokens.get("episode"):
-            new_subpath = "{episode}/{sequence}"
+        if self.shot_path_tokens.get("season"):
+            new_subpath = "{folder}/{season}/{episode}/{sequence}"
+        elif self.shot_path_tokens.get("episode"):
+            new_subpath = "{folder}/{episode}/{sequence}"
+        elif self.shot_path_tokens.get("sequence"):
+            new_subpath = "{folder}/{sequence}"
         else:
-            new_subpath = "{sequence}"
+            new_subpath = "{folder}"
 
         self.hierarchy = self.hierarchy.replace("{path}", new_subpath)
     ### Ends Alkemy-X Override ###
@@ -867,7 +922,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = {}
+        hierarchy_formatting_data = {}
         hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.track_item_default_data.copy()
         if self.ui_inputs:
@@ -902,13 +957,13 @@ class PublishClip:
 
             # fill up pythonic expresisons in hierarchy data
             for k, _v in hierarchy_data.items():
-                hierarchy_formating_data[k] = _v["value"].format(**_data)
+                hierarchy_formatting_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = hierarchy_data
+            hierarchy_formatting_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
-            hierarchy_formating_data
+            hierarchy_formatting_data
         )
 
         tag_hierarchy_data.update({"heroTrack": True})
@@ -936,20 +991,20 @@ class PublishClip:
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
 
-    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+    def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
-        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
-        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formatting_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formatting_data)
 
         # remove shot from hierarchy data: is not needed anymore
-        hierarchy_formating_data.pop("shot")
+        hierarchy_formatting_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
             "parents": self.parents,
-            "hierarchyData": hierarchy_formating_data,
+            "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
             "families": [self.data["family"]]
@@ -965,16 +1020,16 @@ class PublishClip:
         )
 
         # first collect formatting data to use for formatting template
-        formating_data = {}
+        formatting_data = {}
         for _k, _v in self.hierarchy_data.items():
             value = _v["value"].format(
                 **self.track_item_default_data)
-            formating_data[_k] = value
+            formatting_data[_k] = value
 
         return {
             "entity_type": entity_type,
             "entity_name": template.format(
-                **formating_data
+                **formatting_data
             )
         }
 

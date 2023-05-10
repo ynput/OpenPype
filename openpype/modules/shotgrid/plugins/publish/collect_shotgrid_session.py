@@ -75,7 +75,10 @@ class CollectShotgridSession(pyblish.api.ContextPlugin):
                 "script name and script key in OpenPype settings"
             )
 
-        login = get_login() or os.getenv("OPENPYPE_SG_USER")
+        ### Starts Alkemy-X Override ###
+        # login = get_login() or os.getenv("OPENPYPE_SG_USER")
+        login = get_login() or os.getenv("OPENPYPE_SG_USER") or os.getenv("USER")
+        ### Ends Alkemy-X Override ###
 
         if not login:
             self.log.error(

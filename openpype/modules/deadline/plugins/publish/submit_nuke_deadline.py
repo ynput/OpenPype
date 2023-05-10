@@ -32,7 +32,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     label = "Submit Nuke to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke"]
-    families = ["render", "prerender.farm"]
+    families = ["render", "prerender"]
     optional = True
     targets = ["local"]
 
@@ -66,7 +66,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             NumberDef(
                 "concurrency",
-                label="Concurency",
+                label="Concurrency",
                 default=cls.concurrent_tasks,
                 decimals=0,
                 minimum=1,
@@ -76,12 +76,25 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "use_gpu",
                 default=cls.use_gpu,
                 label="Use GPU"
+            ),
+            BoolDef(
+                "suspend_publish",
+                default=False,
+                label="Suspend publish"
             )
         ]
 
     def process(self, instance):
+        if not instance.data.get("farm"):
+            self.log.info("Skipping local instance.")
+            return
+
         instance.data["attributeValues"] = self.get_attr_values_from_data(
             instance.data)
+
+        # add suspend_publish attributeValue to instance data
+        instance.data["suspend_publish"] = instance.data["attributeValues"][
+            "suspend_publish"]
 
         instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
@@ -168,10 +181,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                     resp.json()["_id"])
 
         # redefinition of families
-        if "render.farm" in families:
+        if "render" in instance.data["family"]:
             instance.data['family'] = 'write'
             families.insert(0, "render2d")
-        elif "prerender.farm" in families:
+        elif "prerender" in instance.data["family"]:
             instance.data['family'] = 'write'
             families.insert(0, "prerender")
         instance.data["families"] = families
@@ -392,9 +405,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         """
         self.log.debug("_ path: `{}`".format(path))
         if "%" in path:
-            search_results = re.search(r"(%0)(\d)(d.)", path).groups()
-            self.log.debug("_ search_results: `{}`".format(search_results))
-            return int(search_results[1])
+            ### Starts Alkemy-X Override ###
+            hashes_path = re.sub(r"%(\d*)d", lambda m: "#" * int(m.group(1)) if m.group(1) else "#", path)
+
+            return hashes_path
+            ### Ends Alkemy-X Override ###
+
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
         return path

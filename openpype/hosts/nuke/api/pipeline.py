@@ -524,6 +524,14 @@ def list_instances(creator_id=None):
         if node.Class() in ["Viewer", "Dot"]:
             continue
 
+        ### Starts Alkemy-X Override ###
+        # If child has instance and parent has instance ignore inside instance
+        # Write node will never be inside OP instance group
+        if not node.parent() is nuke.root():
+            if node.parent().knobs().get(INSTANCE_DATA_KNOB) and node.knobs().get(INSTANCE_DATA_KNOB):
+                continue
+        ## Ends Alkemy-X Override ###
+
         try:
             if node["disable"].value():
                 continue

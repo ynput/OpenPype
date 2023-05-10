@@ -20,7 +20,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         creator_attributes = instance.data["creator_attributes"]
         instance.data.update(creator_attributes)
 
-        group_node = instance.data["transientData"]["node"]
+        ### Starts Alkemy-X Override ###
+        publish_node = instance.data["transientData"]["node"]
+        ### Ends Alkemy-X Override ###
+
         render_target = instance.data["render_target"]
         family = instance.data["family"]
         families = instance.data["families"]
@@ -32,18 +35,26 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
-        child_nodes = napi.get_instance_group_node_childs(instance)
-        instance.data["transientData"]["childNodes"] = child_nodes
+        ### Starts Alkemy-X Override ###
+        if publish_node.Class() == "Group":
+            child_nodes = napi.get_instance_group_node_childs(instance)
+            instance.data["transientData"]["childNodes"] = child_nodes
 
-        write_node = None
-        for x in child_nodes:
-            if x.Class() == "Write":
-                write_node = x
+            write_node = None
+            for x in child_nodes:
+                if x.Class() == "Write":
+                    write_node = x
+
+        elif publish_node.Class() == "Write":
+            write_node = publish_node
+        ### Ends Alkemy-X Override ###
 
         if write_node is None:
             self.log.warning(
                 "Created node '{}' is missing write node!".format(
-                    group_node.name()
+                    ### Starts Alkemy-X Override ###
+                    publish_node.name()
+                    ### Ends Alkemy-X Override ###
                 )
             )
             return
@@ -189,8 +200,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             })
 
         # make sure rendered sequence on farm will
-        # be used for exctract review
-        if not instance.data["review"]:
+        # be used for extract review
+        if not instance.data.get("review"):
             instance.data["useSequenceForReview"] = False
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))

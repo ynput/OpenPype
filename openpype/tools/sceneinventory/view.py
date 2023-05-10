@@ -80,9 +80,16 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setStyleSheet("QTreeView {}")
 
     def _build_item_menu_for_selection(self, items, menu):
+
+        # Exclude items that are "NOT FOUND" since setting versions, updating
+        # and removal won't work for those items.
+        items = [item for item in items if not item.get("isNotFound")]
+
         if not items:
             return
 
+        # An item might not have a representation, for example when an item
+        # is listed as "NOT FOUND"
         repre_ids = {
             item["representation"]
             for item in items
@@ -784,7 +791,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         else:
             version_str = version
 
-        dialog = QtWidgets.QMessageBox()
+        dialog = QtWidgets.QMessageBox(self)
         dialog.setIcon(QtWidgets.QMessageBox.Warning)
         dialog.setStyleSheet(style.load_stylesheet())
         dialog.setWindowTitle("Update failed")

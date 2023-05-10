@@ -84,6 +84,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_applications"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_max"
                 },
                 {
@@ -117,6 +121,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_photoshop"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_substancepainter"
                 },
                 {
                     "type": "schema",
