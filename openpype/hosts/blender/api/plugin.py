@@ -22,6 +22,7 @@ from openpype.hosts.blender.api.utils import (
     BL_TYPE_ICON,
     build_op_basename,
     ensure_unique_name,
+    get_all_datablocks,
     get_children_recursive,
     get_parent_collection,
     get_root_datablocks,
@@ -691,6 +692,9 @@ class AssetLoader(Loader):
             Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
                 (Created scene container, Loaded datablocks)
         """
+        # Get current datablocks
+        file_current_datablocks = get_all_datablocks()
+
         # Load datablocks from libpath library.
         loaded_data_collections = set()
         with bpy.data.libraries.load(
@@ -714,10 +718,8 @@ class AssetLoader(Loader):
                 loaded_data_collections.add(data_collection_name)
 
         # Convert datablocks names to datablocks references
-        datablocks = []
+        datablocks = get_all_datablocks() - file_current_datablocks
         for collection_name in loaded_data_collections:
-            datablocks.extend(getattr(data_to, collection_name))
-
             # Remove fake user from loaded datablocks
             datacol = getattr(bpy.data, collection_name)
             seq = [
@@ -735,28 +737,37 @@ class AssetLoader(Loader):
 
         # Override datablocks if needed
         if link and do_override:
+            override_datablocks = set()
             for d in datablocks_to_override:
-                override_datablock = d.override_hierarchy_create(
+                # Override datablock and its children
+                d = d.override_hierarchy_create(
                     bpy.context.scene,
                     bpy.context.view_layer
                     # NOTE After BL3.4: do_fully_editable=True
                 )
 
                 # Update datablocks because could have been renamed
-                datablocks.append(override_datablock)
-                if isinstance(override_datablock, tuple(BL_OUTLINER_TYPES)):
-                    datablocks.extend(override_datablock.children_recursive)
-                    if isinstance(override_datablock, bpy.types.Collection):
-                        datablocks.extend(override_datablock.all_objects)
+                override_datablocks.add(d)
+                if isinstance(d, tuple(BL_OUTLINER_TYPES)):
+                    override_datablocks.update(d.children_recursive)
+                    if isinstance(d, bpy.types.Collection):
+                        override_datablocks.update(d.all_objects)
 
             # Ensure user override NOTE: will be unecessary after BL3.4
-            for d in datablocks:
-                if hasattr(d.override_library, "is_system_override"):
+            for d in override_datablocks:
+                if d and hasattr(d.override_library, "is_system_override"):
                     d.override_library.is_system_override = False
 
+            # Add override datablocks to datablocks
+            datablocks.update(override_datablocks)
+
         # Add meshes to datablocks
-        datablocks.extend(
-            d.data for d in datablocks if d and isinstance(d, bpy.types.Object)
+        datablocks.update(
+            {
+                d.data
+                for d in datablocks
+                if d and isinstance(d, bpy.types.Object)
+            }
         )
 
         # Put into container

@@ -399,3 +399,20 @@ def get_root_datablocks(
         if (types is None or isinstance(d, tuple(types)))
         and not users & set(datablocks)
     }
+
+
+def get_all_datablocks():
+    """Get all datablocks from the current blend file.
+
+    Returns:
+        Set[bpy.types.ID]: All datablocks
+    """
+    all_datablocks = set()
+    for bl_type in dir(bpy.data):
+        if not bl_type.startswith("_"):
+            datacol = getattr(bpy.data, bl_type)
+            if isinstance(datacol, bpy.types.bpy_prop_collection) and len(
+                bl_type
+            ):
+                all_datablocks.update(getattr(bpy.data, bl_type))
+    return all_datablocks
