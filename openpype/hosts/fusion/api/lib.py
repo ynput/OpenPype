@@ -51,6 +51,12 @@ def update_frame_range(start, end, comp=None, set_render_range=True,
         "COMPN_GlobalStart": start - handle_start,
         "COMPN_GlobalEnd": end + handle_end
     }
+    frame_data = {
+        "frameStart": start,
+        "frameEnd": end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
 
     # set frame range
     if set_render_range:
@@ -61,6 +67,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True,
 
     with comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
+        comp.SetData("openpype_instance", frame_data)
 
 
 def set_asset_framerange():
