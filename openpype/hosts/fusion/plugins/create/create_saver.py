@@ -5,7 +5,6 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
 )
-from openpype.hosts.fusion.api.lib import get_frame_path
 
 from openpype.lib import (
     BoolDef,
@@ -16,9 +15,6 @@ from openpype.pipeline import (
     Creator as NewCreator,
     CreatedInstance,
     Anatomy
-)
-from openpype.client import (
-    get_asset_by_name,
 )
 
 
@@ -173,14 +169,11 @@ class CreateSaver(NewCreator):
             tool.SetAttrs({"TOOLS_Name": subset})
 
     def _collect_saver(self, tool):
-        print("Collecting saver..")
+        self.log.info("Collecting saver..")
         attrs = tool.GetAttrs()
 
-        ctx_data = {}
         keys = ["id", "asset", "subset", "task", "variant"]
-        for key in keys:
-            ctx_data[key] = tool.GetData(f"openpype.{key}")
-
+        ctx_data = {key: tool.GetData(f"openpype.{key}") for key in keys}
         passthrough = attrs["TOOLB_PassThrough"]
         return {
             # Required data
