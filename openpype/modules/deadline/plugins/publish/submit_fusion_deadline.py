@@ -128,7 +128,7 @@ class FusionSubmitDeadline(
             saver_instances.append(instance)
 
         if not saver_instances:
-            raise RuntimeError("No instances found for Deadline submittion")
+            raise RuntimeError("No instances found for Deadline submission")
 
         comment = instance.data.get("comment", "")
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
@@ -187,8 +187,8 @@ class FusionSubmitDeadline(
 
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
-                    start=int(context.data["frameStart"]),
-                    end=int(context.data["frameEnd"])
+                    start=int(instance.data["frameStartHandle"]),
+                    end=int(instance.data["frameEndHandle"])
                 ),
 
                 "Comment": comment,
