@@ -1,6 +1,5 @@
 from copy import deepcopy
 import os
-from pprint import pformat
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
@@ -15,9 +14,7 @@ from openpype.pipeline import (
     legacy_io,
     Creator as NewCreator,
     CreatedInstance,
-)
-from openpype.client import (
-    get_asset_by_name,
+    Anatomy
 )
 
 
@@ -37,10 +34,17 @@ class CreateSaver(NewCreator):
         "Main",
         "Mask"
     ]
+
+    # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
-        "{workdir}/renders/fusion/{subset}/{subset}..{ext}")
+        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
+        instance_data.update({
+            "id": "pyblish.avalon.instance",
+            "subset": subset_name
+        })
+
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
 
@@ -49,7 +53,6 @@ class CreateSaver(NewCreator):
             args = (-32768, -32768)  # Magical position numbers
             saver = comp.AddTool("Saver", *args)
 
-            instance_data["subset"] = subset_name
             self._update_tool_with_data(saver, data=instance_data)
 
             saver["OutputFormat"] = file_format
@@ -88,7 +91,7 @@ class CreateSaver(NewCreator):
         for tool in tools:
             data = self.get_managed_tool_data(tool)
             if not data:
-                data = self._collect_unmanaged_saver(tool)
+                data = self._collect_saver(tool)
 
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
@@ -139,12 +142,18 @@ class CreateSaver(NewCreator):
 
     def _configure_saver_tool(self, data, tool, subset):
         formatting_data = deepcopy(data)
-        self.log.warning(pformat(formatting_data))
+
+        # get frame padding from anatomy templates
+        anatomy = Anatomy()
+        frame_padding = int(
+            anatomy.templates["render"].get("frame_padding", 4)
+        )
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
         formatting_data.update({
-            "workdir": workdir.replace("\\", "/"),
+            "workdir": workdir,
+            "frame": "0" * frame_padding,
             "ext": "exr"
         })
 
@@ -152,58 +161,31 @@ class CreateSaver(NewCreator):
         filepath = self.temp_rendering_path_template.format(
             **formatting_data)
 
-        # create directory
-        if not os.path.isdir(os.path.dirname(filepath)):
-            self.log.warning("Path does not exist! I am creating it.")
-            os.makedirs(os.path.dirname(filepath))
-
-        tool["Clip"] = filepath
+        tool["Clip"] = os.path.normpath(filepath)
 
         # Rename tool
         if tool.Name != subset:
             print(f"Renaming {tool.Name} -> {subset}")
             tool.SetAttrs({"TOOLS_Name": subset})
 
-    def _collect_unmanaged_saver(self, tool):
-        # TODO: this should not be done this way - this should actually
-        #       get the data as stored on the tool explicitly (however)
-        #       that would disallow any 'regular saver' to be collected
-        #       unless the instance data is stored on it to begin with
-
-        print("Collecting unmanaged saver..")
-        comp = tool.Comp()
-
-        # Allow regular non-managed savers to also be picked up
-        project = legacy_io.Session["AVALON_PROJECT"]
-        asset = legacy_io.Session["AVALON_ASSET"]
-        task = legacy_io.Session["AVALON_TASK"]
-
-        asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
-
-        path = tool["Clip"][comp.TIME_UNDEFINED]
-        fname = os.path.basename(path)
-        fname, _ext = os.path.splitext(fname)
-        variant = fname.rstrip(".")
-        subset = self.get_subset_name(
-            variant=variant,
-            task_name=task,
-            asset_doc=asset_doc,
-            project_name=project,
-        )
-
+    def _collect_saver(self, tool):
+        self.log.info("Collecting saver..")
         attrs = tool.GetAttrs()
+
+        keys = ["id", "asset", "subset", "task", "variant"]
+        ctx_data = {key: tool.GetData(f"openpype.{key}") for key in keys}
         passthrough = attrs["TOOLB_PassThrough"]
         return {
             # Required data
-            "project": project,
-            "asset": asset,
-            "subset": subset,
-            "task": task,
-            "variant": variant,
+            "project": self.project_name,
+            "asset": ctx_data["asset"],
+            "subset": ctx_data["subset"],
+            "task": ctx_data["task"],
+            "variant": ctx_data["variant"],
             "active": not passthrough,
             "family": self.family,
             # Unique identifier for instance and this creator
-            "id": "pyblish.avalon.instance",
+            "id": ctx_data["id"],
             "creator_identifier": self.identifier,
         }
 
@@ -274,7 +256,9 @@ class CreateSaver(NewCreator):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
-        plugin_settings = self._get_creator_settings(project_settings)
+        plugin_settings = (
+            project_settings["fusion"]["create"][self.__class__.__name__]
+        )
 
         # individual attributes
         self.instance_attributes = plugin_settings.get(
@@ -285,8 +269,3 @@ class CreateSaver(NewCreator):
             plugin_settings.get("temp_rendering_path_template")
             or self.temp_rendering_path_template
         )
-
-    def _get_creator_settings(self, project_settings, settings_key=None):
-        if not settings_key:
-            settings_key = self.__class__.__name__
-        return project_settings["fusion"]["create"][settings_key]

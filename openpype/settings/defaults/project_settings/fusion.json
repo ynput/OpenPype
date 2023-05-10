@@ -24,7 +24,7 @@
     },
     "create": {
         "CreateSaver": {
-            "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}..{ext}",
+            "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}",
             "default_variants": [
                 "Main",
                 "Mask"
