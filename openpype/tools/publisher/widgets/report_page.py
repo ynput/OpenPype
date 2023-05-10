@@ -9,8 +9,13 @@ except Exception:
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.tools.utils import BaseClickableFrame, ClickableFrame
-from openpype.tools.utils.layouts import FlowLayout
+from openpype.tools.utils import (
+    BaseClickableFrame,
+    ClickableFrame,
+    ExpandingTextEdit,
+    FlowLayout,
+    ExpandBtn,
+)
 from .widgets import (
     IconValuePixmapLabel,
     get_pixmap,
@@ -1366,26 +1371,74 @@ class ReportsWidget(QtWidgets.QWidget):
 
         views_layout.setCurrentWidget(instances_view)
 
-        # Details -> right side of page
+        # Error description with actions and optional detail
         details_widget = QtWidgets.QFrame(self)
         details_widget.setObjectName("PublishInstancesDetails")
 
         # Validation details
-        error_details_input = QtWidgets.QTextEdit(details_widget)
+        validation_info_widget = QtWidgets.QWidget(details_widget)
+
+        # Actions widget
+        actions_widget = ValidateActionsWidget(
+            controller, validation_info_widget)
+
+        # Description and details inputs are in scroll
+        # - single scroll for both inputs, they are forced to not use theirs
+        detail_input_scroll = QtWidgets.QScrollArea(validation_info_widget)
+        detail_input_scroll.setObjectName("InfoTextWrap")
+
+        detail_inputs_widget = QtWidgets.QWidget(detail_input_scroll)
+        detail_inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        detail_input_scroll.setWidget(detail_inputs_widget)
+        detail_input_scroll.setWidgetResizable(True)
+
+        # Error 'Description' input
+        error_description_input = ExpandingTextEdit(detail_inputs_widget)
+        error_description_input.setObjectName("InfoText")
+        error_description_input.setTextInteractionFlags(
+            QtCore.Qt.TextBrowserInteraction
+        )
+
+        # Error 'Details' widget -> Collapsible
+        error_details_widget = QtWidgets.QWidget(detail_inputs_widget)
+
+        error_details_top = ClickableFrame(error_details_widget)
+
+        error_details_expand_btn = ExpandBtn(error_details_top)
+        error_details_expand_label = QtWidgets.QLabel(
+            "Details", error_details_top)
+
+        error_details_top_l = QtWidgets.QHBoxLayout(error_details_top)
+        error_details_top_l.setContentsMargins(10, 0, 0, 0)
+        error_details_top_l.addWidget(error_details_expand_btn, 0)
+        error_details_top_l.addWidget(error_details_expand_label, 0)
+        error_details_top_l.addStretch(1)
+
+        error_details_input = ExpandingTextEdit(error_details_widget)
         error_details_input.setObjectName("InfoText")
         error_details_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
-        validation_info_widget = QtWidgets.QWidget(details_widget)
+        error_details_input.setVisible(not error_details_expand_btn.collapsed)
 
-        actions_widget = ValidateActionsWidget(
-            controller, validation_info_widget)
+        error_details_layout = QtWidgets.QVBoxLayout(error_details_widget)
+        error_details_layout.setContentsMargins(0, 0, 0, 0)
+        error_details_layout.addWidget(error_details_top, 0)
+        error_details_layout.addWidget(error_details_input, 0)
+        error_details_layout.addStretch(1)
+
+        # Description and Details layout
+        detail_inputs_layout = QtWidgets.QVBoxLayout(detail_inputs_widget)
+        detail_inputs_layout.setContentsMargins(0, 0, 0, 0)
+        detail_inputs_layout.addWidget(error_description_input, 0)
+        detail_inputs_layout.addWidget(error_details_widget, 1)
 
         validation_info_layout = QtWidgets.QVBoxLayout(
             validation_info_widget)
         validation_info_layout.setContentsMargins(0, 0, 0, 0)
         validation_info_layout.addWidget(actions_widget, 0)
-        validation_info_layout.addWidget(error_details_input, 1)
+        validation_info_layout.addWidget(detail_input_scroll, 1)
 
         logs_view = InstancesLogsView(validation_info_widget)
 
@@ -1406,12 +1459,17 @@ class ReportsWidget(QtWidgets.QWidget):
         validation_error_view.selection_changed.connect(
             self._on_error_selection)
 
+        error_details_top.clicked.connect(self._on_detail_toggle)
+
         self._views_layout = views_layout
         self._instances_view = instances_view
         self._validation_error_view = validation_error_view
 
         self._validation_info_widget = validation_info_widget
         self._actions_widget = actions_widget
+        self._error_details_widget = error_details_widget
+        self._error_description_input = error_description_input
+        self._error_details_expand_btn = error_details_expand_btn
         self._error_details_input = error_details_input
 
         self._crash_widget = crash_widget
@@ -1421,7 +1479,6 @@ class ReportsWidget(QtWidgets.QWidget):
         self._controller = controller
 
         self._validation_errors_by_id = {}
-        self._validation_descriptions_by_id = collections.defaultdict(dict)
 
     def _get_instance_items(self):
         report = self._controller.get_publish_report()
@@ -1479,45 +1536,12 @@ class ReportsWidget(QtWidgets.QWidget):
             for title_item in grouped_error_items
         }
 
-        self._validation_descriptions_by_id = collections.defaultdict(dict)
         self._validation_errors_by_id = validation_errors_by_id
         self._validation_error_view.set_errors(grouped_error_items)
 
     def _on_instance_selection(self):
         instance_ids = self._instances_view.get_selected_instance_ids()
         self._logs_view.set_instances_filter(instance_ids)
-
-    def _prepare_description(self, error_item):
-        """Prepare description text for detail intput.
-
-        Args:
-            error_item (ValidationErrorItem): Item which hold information about
-                validation error.
-
-        Returns:
-            str: Prepared detailed description.
-        """
-
-        dsc = error_item.description
-        detail = error_item.detail
-        if detail:
-            dsc += "<br/><br/>{}".format(detail)
-
-        description = dsc
-        if commonmark:
-            description = commonmark.commonmark(dsc)
-        return description
-
-    def _get_validation_error_description(self, title_id, error_item):
-        if error_item is None:
-            return ""
-        instance_id = error_item.instance_id or CONTEXT_ID
-        descriptions = self._validation_descriptions_by_id[title_id]
-        description = descriptions.get(instance_id)
-        if description is None:
-            description = self._prepare_description(error_item)
-            descriptions[instance_id] = description
-        return description
 
     def _on_error_selection(self):
         title_id, instance_ids = (
@@ -1539,15 +1563,34 @@ class ReportsWidget(QtWidgets.QWidget):
 
         self._actions_widget.set_error_item(error_info)
 
-        description = self._get_validation_error_description(
-            title_id, match_error_item)
+        detail = ""
+        description = ""
+        if match_error_item:
+            description = match_error_item.description or description
+            detail = match_error_item.detail or detail
+
         if commonmark:
-            html = commonmark.commonmark(description)
-            self._error_details_input.setHtml(html)
+            self._error_description_input.setHtml(
+                commonmark.commonmark(description)
+            )
+            self._error_details_input.setHtml(
+                commonmark.commonmark(detail)
+            )
+
         elif hasattr(self._error_details_input, "setMarkdown"):
-            self._error_details_input.setMarkdown(description)
+            self._error_description_input.setMarkdown(description)
+            self._error_details_input.setMarkdown(detail)
+
         else:
-            self._error_details_input.setText(description)
+            self._error_description_input.setText(description)
+            self._error_details_input.setText(detail)
+
+        self._error_details_widget.setVisible(bool(detail))
+
+    def _on_detail_toggle(self):
+        self._error_details_expand_btn.set_collapsed()
+        self._error_details_input.setVisible(
+            not self._error_details_expand_btn.collapsed)
 
 
 class ReportPageWidget(QtWidgets.QFrame):
