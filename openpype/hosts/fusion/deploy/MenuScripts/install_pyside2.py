@@ -1,20 +1,9 @@
 # This is just a quick hack for users running Py3 locally but having no
 # Qt library installed
 import os
+import sys
 import subprocess
 import importlib
-
-
-def get_python_path():
-    fusion_py_envs = [
-        "FUSION_PYTHON36_HOME",
-        "FUSION16_PYTHON36_HOME",
-        "FUSION_PYTHON3_HOME",
-    ]
-
-    for env in fusion_py_envs:
-        if os.environ.get(env) is not None:
-            return os.environ.get(env)
 
 
 try:
@@ -26,7 +15,7 @@ try:
     print("Qt library found, nothing to do..")
 
 except Exception:
-    python_path = get_python_path()
+    python_path = sys.base_prefix
     if python_path is None:
         print("Can't find any any python environment.")
 
