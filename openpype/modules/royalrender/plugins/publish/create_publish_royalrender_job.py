@@ -2,7 +2,6 @@
 """Create publishing job on RoyalRender."""
 import os
 import attr
-from copy import deepcopy
 import json
 
 from pyblish.api import InstancePlugin, IntegratorOrder, Instance
