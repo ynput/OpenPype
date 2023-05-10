@@ -159,11 +159,6 @@ class CreateSaver(NewCreator):
         filepath = self.temp_rendering_path_template.format(
             **formatting_data)
 
-        # create directory
-        if not os.path.isdir(os.path.dirname(filepath)):
-            self.log.warning("Path does not exist! I am creating it.")
-            os.makedirs(os.path.dirname(filepath))
-
         tool["Clip"] = filepath
 
         # Rename tool
