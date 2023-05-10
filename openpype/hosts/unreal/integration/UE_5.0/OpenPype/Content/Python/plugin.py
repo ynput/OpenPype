@@ -6,6 +6,7 @@ from helpers import (
     get_params,
     format_string,
     get_asset,
+    get_subsequences
 )
 from pipeline import (
     UNREAL_VERSION,
@@ -51,6 +52,98 @@ def create_look(params):
         unreal.EditorAssetLibrary.save_asset(object_path)
 
     return {"return": members}
+
+
+def create_render(params):
+    """
+    Args:
+        params (str): string containing a dictionary with parameters:
+            path (str): path to the instance
+            selected_asset (str): path to the selected asset
+    """
+    selected_asset_path = get_params(params, 'path', 'selected_asset')
+
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    selected_asset = ar.get_asset_by_object_path(
+        selected_asset_path).get_asset()
+
+    if selected_asset.get_class().get_name() != "LevelSequence":
+        unreal.log_error(
+            f"Skipping {selected_asset.get_name()}. It isn't a Level "
+            "Sequence.")
+
+    # Check if the selected asset is a level sequence asset.
+    if selected_asset.get_class().get_name() != "LevelSequence":
+        unreal.log_warning(
+            f"Skipping {selected_asset.get_name()}. It isn't a Level "
+            "Sequence.")
+
+    # The asset name is the third element of the path which
+    # contains the map.
+    # To take the asset name, we remove from the path the prefix
+    # "/Game/OpenPype/" and then we split the path by "/".
+    sel_path = selected_asset_path
+    asset_name = sel_path.replace("/Game/OpenPype/", "").split("/")[0]
+
+    # Get the master sequence and the master level.
+    # There should be only one sequence and one level in the directory.
+    ar_filter = unreal.ARFilter(
+        class_names=["LevelSequence"],
+        package_paths=[f"/Game/OpenPype/{asset_name}"],
+        recursive_paths=False)
+    sequences = ar.get_assets(ar_filter)
+    master_seq = sequences[0].get_asset().get_path_name()
+    master_seq_obj = sequences[0].get_asset()
+    ar_filter = unreal.ARFilter(
+        class_names=["World"],
+        package_paths=[f"/Game/OpenPype/{asset_name}"],
+        recursive_paths=False)
+    levels = ar.get_assets(ar_filter)
+    master_lvl = levels[0].get_asset().get_path_name()
+
+    # If the selected asset is the master sequence, we get its data
+    # and then we create the instance for the master sequence.
+    # Otherwise, we cycle from the master sequence to find the selected
+    # sequence and we get its data. This data will be used to create
+    # the instance for the selected sequence. In particular,
+    # we get the frame range of the selected sequence and its final
+    # output path.
+    master_seq_data = {
+        "sequence": master_seq_obj,
+        "output": f"{master_seq_obj.get_name()}",
+        "frame_range": (
+            master_seq_obj.get_playback_start(),
+            master_seq_obj.get_playback_end())}
+
+    if selected_asset_path == master_seq:
+        return master_seq, master_lvl, master_seq_data
+
+    seq_data_list = [master_seq_data]
+
+    for seq in seq_data_list:
+        subscenes = get_subsequences(seq.get('sequence'))
+
+        for sub_seq in subscenes:
+            sub_seq_obj = sub_seq.get_sequence()
+            curr_data = {
+                "sequence": sub_seq_obj,
+                "output": (f"{seq.get('output')}/"
+                           f"{sub_seq_obj.get_name()}"),
+                "frame_range": (
+                    sub_seq.get_start_frame(),
+                    sub_seq.get_end_frame() - 1)}
+
+            # If the selected asset is the current sub-sequence,
+            # we get its data and we break the loop.
+            # Otherwise, we add the current sub-sequence data to
+            # the list of sequences to check.
+            if sub_seq_obj.get_path_name() == selected_asset_path:
+                return master_seq, master_lvl, master_seq_data
+
+            seq_data_list.append(curr_data)
+
+    return None, None, None
 
 
 def create_unique_asset_name(params):
@@ -114,8 +207,8 @@ def list_assets(params):
     directory_path, recursive, include_folder = get_params(
         params, 'directory_path', 'recursive', 'include_folder')
 
-    return {"return": unreal.EditorAssetLibrary.list_assets(
-        directory_path, recursive, include_folder)}
+    return {"return": list(unreal.EditorAssetLibrary.list_assets(
+        directory_path, recursive, include_folder))}
 
 
 def get_assets_of_class(params):

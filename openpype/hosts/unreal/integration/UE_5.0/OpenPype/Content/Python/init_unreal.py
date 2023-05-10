@@ -29,6 +29,7 @@ from pipeline import (
 
 from plugin import (
     create_look,
+    create_render,
     create_unique_asset_name,
     add_level_to_world,
     list_assets,
@@ -85,6 +86,7 @@ __all__ = [
     "containerise",
     "instantiate",
     "create_look",
+    "create_render",
     "create_unique_asset_name",
     "add_level_to_world",
     "list_assets",
