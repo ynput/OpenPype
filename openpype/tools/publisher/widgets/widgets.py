@@ -704,6 +704,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         style.drawControl(
             QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, self
         )
+        painter.end()
 
     def is_valid(self):
         """Are all selected items valid."""
