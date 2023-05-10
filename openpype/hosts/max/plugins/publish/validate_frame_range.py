@@ -47,8 +47,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         errors = []
         if frame_start != inst_frame_start:
             errors.append(
-                f"Start frame ({inst_frame_start}) on instance does not match "
-                f"with the start frame ({frame_start}) set on the asset data. ")
+                f"Start frame ({inst_frame_start}) on instance does not match " # noqa
+                f"with the start frame ({frame_start}) set on the asset data. ")    # noqa
         if frame_end != inst_frame_end:
             errors.append(
                 f"End frame ({inst_frame_end}) on instance does not match "
