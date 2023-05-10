@@ -203,17 +203,24 @@ class ExpandBtnLabel(QtWidgets.QLabel):
     """Label showing expand icon meant for ExpandBtn."""
     state_changed = QtCore.Signal()
 
+
     def __init__(self, parent):
         super(ExpandBtnLabel, self).__init__(parent)
-        self._source_collapsed_pix = QtGui.QPixmap(
-            get_style_image_path("branch_closed")
-        )
-        self._source_expanded_pix = QtGui.QPixmap(
-            get_style_image_path("branch_open")
-        )
+        self._source_collapsed_pix = self._create_collapsed_pixmap()
+        self._source_expanded_pix = self._create_expanded_pixmap()
 
         self._current_image = self._source_collapsed_pix
         self._collapsed = True
+
+    def _create_collapsed_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("branch_closed")
+        )
+
+    def _create_expanded_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("branch_open")
+        )
 
     @property
     def collapsed(self):
@@ -257,7 +264,7 @@ class ExpandBtn(ClickableFrame):
     def __init__(self, parent=None):
         super(ExpandBtn, self).__init__(parent)
 
-        pixmap_label = ExpandBtnLabel(self)
+        pixmap_label = self._create_pix_widget(self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -267,12 +274,38 @@ class ExpandBtn(ClickableFrame):
 
         self._pixmap_label = pixmap_label
 
+    def _create_pix_widget(self, parent=None):
+        if parent is None:
+            parent = self
+        return ExpandBtnLabel(parent)
+
     @property
     def collapsed(self):
         return self._pixmap_label.collapsed
 
     def set_collapsed(self, collapsed=None):
         self._pixmap_label.set_collapsed(collapsed)
+
+
+class ClassicExpandBtnLabel(ExpandBtnLabel):
+    def _create_collapsed_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("right_arrow")
+        )
+
+    def _create_expanded_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("down_arrow")
+        )
+
+
+class ClassicExpandBtn(ExpandBtn):
+    """Same as 'ExpandBtn' but with arrow images."""
+
+    def _create_pix_widget(self, parent=None):
+        if parent is None:
+            parent = self
+        return ClassicExpandBtnLabel(parent)
 
 
 class ImageButton(QtWidgets.QPushButton):
