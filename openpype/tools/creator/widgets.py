@@ -99,7 +99,7 @@ class SubsetNameValidator(RegularExpressionValidatorClass):
 
     def validate(self, text, pos):
         results = super(SubsetNameValidator, self).validate(text, pos)
-        if results[0] == self.Invalid:
+        if results[0] == RegularExpressionValidatorClass.Invalid:
             self.invalid.emit(self.invalid_chars(text))
         return results
 
