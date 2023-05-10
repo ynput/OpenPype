@@ -9,16 +9,19 @@ except Exception:
 
 from qtpy import QtWidgets, QtCore, QtGui
 
+from openpype.style import get_objected_colors
 from openpype.tools.utils import (
     BaseClickableFrame,
     ClickableFrame,
     ExpandingTextEdit,
     FlowLayout,
     ExpandBtn,
+    paint_image_with_color,
 )
-from .widgets import (
-    IconValuePixmapLabel,
+from .widgets import IconValuePixmapLabel
+from .icons import (
     get_pixmap,
+    get_image,
 )
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -573,15 +576,26 @@ class _InstanceItem:
     """
 
     _attrs = (
+        "creator_identifier",
         "family",
         "label",
         "name",
     )
 
     def __init__(
-        self, instance_id, family, name, label, exists, logs, errored, warned
+        self,
+        instance_id,
+        creator_identifier,
+        family,
+        name,
+        label,
+        exists,
+        logs,
+        errored,
+        warned
     ):
         self.id = instance_id
+        self.creator_identifier = creator_identifier
         self.family = family
         self.name = name
         self.label = label
@@ -637,6 +651,7 @@ class _InstanceItem:
 
         return cls(
             instance_id,
+            instance_data["creator_identifier"],
             instance_data["family"],
             instance_data["name"],
             instance_data["label"],
@@ -651,6 +666,7 @@ class _InstanceItem:
         errored, warned = cls.extract_basic_log_info(logs)
         return cls(
             CONTEXT_ID,
+            None,
             "",
             CONTEXT_LABEL,
             context_label,
@@ -680,17 +696,37 @@ class _InstanceItem:
 class PublishInstanceCardWidget(BaseClickableFrame):
     selection_requested = QtCore.Signal(str)
 
-    def __init__(self, instance, parent):
+    _warning_pix = None
+    _error_pix = None
+    _success_pix = None
+    _in_progress_pix = None
+
+    def __init__(self, instance, icon, publish_finished, parent):
         super(PublishInstanceCardWidget, self).__init__(parent)
 
         self.setObjectName("CardViewWidget")
 
-        icon_widget = QtWidgets.QLabel(self)
+        icon_widget = IconValuePixmapLabel(icon, self)
+        icon_widget.setObjectName("FamilyIconLabel")
+
         label_widget = QtWidgets.QLabel(instance.label, self)
 
+        if instance.errored:
+            state_pix = self.get_error_pix()
+        elif instance.warned:
+            state_pix = self.get_warning_pix()
+        elif publish_finished:
+            state_pix = self.get_success_pix()
+        else:
+            state_pix = self.get_in_progress_pix()
+
+        state_label = IconValuePixmapLabel(state_pix, self)
+
         layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(10, 5, 10, 5)
         layout.addWidget(icon_widget, 0)
         layout.addWidget(label_widget, 1)
+        layout.addWidget(state_label, 0)
 
         # Change direction -> parent is scroll area where scrolls are on
         #   left side
@@ -701,6 +737,50 @@ class PublishInstanceCardWidget(BaseClickableFrame):
         self._selected = False
 
         self._update_style_state()
+
+    @classmethod
+    def _prepare_pixes(cls):
+        publisher_colors = get_objected_colors("publisher")
+        cls._warning_pix = paint_image_with_color(
+            get_image("warning"),
+            publisher_colors["warning"].get_qcolor()
+        )
+        cls._error_pix = paint_image_with_color(
+            get_image("error"),
+            publisher_colors["error"].get_qcolor()
+        )
+        cls._success_pix = paint_image_with_color(
+            get_image("success"),
+            publisher_colors["success"].get_qcolor()
+        )
+        cls._in_progress_pix = paint_image_with_color(
+            get_image("success"),
+            publisher_colors["progress"].get_qcolor()
+        )
+
+    @classmethod
+    def get_warning_pix(cls):
+        if cls._warning_pix is None:
+            cls._prepare_pixes()
+        return cls._warning_pix
+
+    @classmethod
+    def get_error_pix(cls):
+        if cls._error_pix is None:
+            cls._prepare_pixes()
+        return cls._error_pix
+
+    @classmethod
+    def get_success_pix(cls):
+        if cls._success_pix is None:
+            cls._prepare_pixes()
+        return cls._success_pix
+
+    @classmethod
+    def get_in_progress_pix(cls):
+        if cls._in_progress_pix is None:
+            cls._prepare_pixes()
+        return cls._in_progress_pix
 
     @property
     def id(self):
@@ -753,7 +833,7 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
     _min_width_measure_string = 24 * "O"
     selection_changed = QtCore.Signal()
 
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(PublishInstancesViewWidget, self).__init__(parent)
 
         scroll_area = VerticalScrollArea(self)
@@ -777,6 +857,7 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(scroll_area, 1)
 
+        self._controller = controller
         self._scroll_area = scroll_area
         self._instance_view = instance_view
         self._instance_layout = instance_layout
@@ -834,14 +915,35 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
 
     def update_instances(self, instance_items):
         self.clear()
-        widgets = [
-            PublishInstanceCardWidget(instance_item, self._instance_view)
+        identifiers = {
+            instance_item.creator_identifier
             for instance_item in instance_items
-        ]
-        for widget in widgets:
+        }
+        identifier_icons = {
+            identifier: self._controller.get_creator_icon(identifier)
+            for identifier in identifiers
+        }
+
+        widgets = []
+
+        publish_finished = (
+            self._controller.publish_has_crashed
+            or self._controller.publish_has_validation_errors
+            or self._controller.publish_has_finished
+        )
+        for instance_item in instance_items:
+            if not instance_item.exists:
+                continue
+            icon = identifier_icons[instance_item.creator_identifier]
+
+            widget = PublishInstanceCardWidget(
+                instance_item, icon, publish_finished, self._instance_view
+            )
             widget.selection_requested.connect(self._on_selection_request)
-            self._widgets_by_instance_id[widget.id] = widget
             self._instance_layout.addWidget(widget, 0)
+
+            widgets.append(widget)
+            self._widgets_by_instance_id[widget.id] = widget
         self._instance_layout.addStretch(1)
         self._ordered_widgets = widgets
 
