@@ -702,8 +702,8 @@ class InstanceCardView(AbstractInstanceView):
 
         for group_name in sorted_group_names:
             group_icons = {
-                idenfier: self._controller.get_creator_icon(idenfier)
-                for idenfier in identifiers_by_group[group_name]
+                identifier: self._controller.get_creator_icon(identifier)
+                for identifier in identifiers_by_group[group_name]
             }
             if group_name in self._widgets_by_group:
                 group_widget = self._widgets_by_group[group_name]
