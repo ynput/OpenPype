@@ -8,7 +8,7 @@ from unreal import EditorLevelLibrary
 from unreal import EditorLevelUtils
 from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
 from openpype.hosts.unreal.api import plugin
@@ -100,9 +100,9 @@ class CameraLoader(plugin.Loader):
             list(str): list of container content
         """
 
-        # Create directory for asset and avalon container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         hierarchy_dir = root
         hierarchy_dir_list = []
         for h in hierarchy:
@@ -291,8 +291,8 @@ class CameraLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -320,7 +320,7 @@ class CameraLoader(plugin.Loader):
     def update(self, container, representation):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        root = "/Game/OpenPype"
+        root = "/Game/ayon"
 
         asset_dir = container.get('namespace')
 
@@ -378,7 +378,7 @@ class CameraLoader(plugin.Loader):
         # Remove the Level Sequence from the parent.
         # We need to traverse the hierarchy from the master sequence to find
         # the level sequence.
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
         filter = unreal.ARFilter(
@@ -511,7 +511,7 @@ class CameraLoader(plugin.Loader):
         # Remove the Level Sequence from the parent.
         # We need to traverse the hierarchy from the master sequence to find
         # the level sequence.
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
         filter = unreal.ARFilter(
