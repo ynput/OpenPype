@@ -38,6 +38,9 @@ __all__ = (
 
     "VARIANT_TOOLTIP",
 
+    "INPUTS_LAYOUT_HSPACING",
+    "INPUTS_LAYOUT_VSPACING",
+
     "INSTANCE_ID_ROLE",
     "SORT_VALUE_ROLE",
     "IS_GROUP_ROLE",
@@ -47,4 +50,6 @@ __all__ = (
     "FAMILY_ROLE",
     "GROUP_ROLE",
     "CONVERTER_IDENTIFIER_ROLE",
+
+    "ResetKeySequence",
 )
