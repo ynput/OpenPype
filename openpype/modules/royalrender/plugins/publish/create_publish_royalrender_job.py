@@ -212,12 +212,12 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         ## rr requires absolut path or all jobs won't show up in rControl
         abs_metadata_path = self.anatomy.fill_root(rootless_metadata_path)
 
+        # command line set in E01__OpenPype__PublishJob.cfg, here only
+        # additional logging
         args = [
-            "--headless",
-            'publish',
-            abs_metadata_path,
-            "--targets", "deadline",
-            "--targets", "farm"
+            ">", os.path.join(os.path.dirname(abs_metadata_path),
+                              "rr_out.log"),
+            "2>&1"
         ]
 
         job = RRJob(
