@@ -1,6 +1,6 @@
-"""Import workfiles into your current comp
-As all imported nodes are freefloating and will probably be changed there
-is no update or realod function added for this plugin
+"""Import workfiles into your current comp.
+As all imported nodes are free floating and will probably be changed there
+is no update or reload function added for this plugin
 """
 
 from openpype.pipeline import load
