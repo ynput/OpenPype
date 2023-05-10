@@ -9,7 +9,7 @@ except Exception:
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.style import get_objected_colors, get_style_image_path
+from openpype.style import get_objected_colors
 from openpype.tools.utils import (
     BaseClickableFrame,
     ClickableFrame,
