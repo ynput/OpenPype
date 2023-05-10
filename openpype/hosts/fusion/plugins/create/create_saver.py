@@ -1,6 +1,5 @@
 from copy import deepcopy
 import os
-from pprint import pformat
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
@@ -139,7 +138,6 @@ class CreateSaver(NewCreator):
 
     def _configure_saver_tool(self, data, tool, subset):
         formatting_data = deepcopy(data)
-        self.log.warning(pformat(formatting_data))
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
@@ -274,7 +272,9 @@ class CreateSaver(NewCreator):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
-        plugin_settings = self._get_creator_settings(project_settings)
+        plugin_settings = (
+            project_settings["fusion"]["create"][self.__class__.__name__]
+        )
 
         # individual attributes
         self.instance_attributes = plugin_settings.get(
@@ -285,8 +285,3 @@ class CreateSaver(NewCreator):
             plugin_settings.get("temp_rendering_path_template")
             or self.temp_rendering_path_template
         )
-
-    def _get_creator_settings(self, project_settings, settings_key=None):
-        if not settings_key:
-            settings_key = self.__class__.__name__
-        return project_settings["fusion"]["create"][settings_key]
