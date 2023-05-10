@@ -5,6 +5,7 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
 )
+from openpype.hosts.fusion.api.lib import get_frame_path
 
 from openpype.lib import (
     BoolDef,
@@ -14,6 +15,7 @@ from openpype.pipeline import (
     legacy_io,
     Creator as NewCreator,
     CreatedInstance,
+    Anatomy
 )
 from openpype.client import (
     get_asset_by_name,
@@ -37,7 +39,7 @@ class CreateSaver(NewCreator):
         "Mask"
     ]
     temp_rendering_path_template = (
-        "{workdir}/renders/fusion/{subset}/{subset}..{ext}")
+        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
         # TODO: Add pre_create attributes to choose file format?
@@ -139,10 +141,17 @@ class CreateSaver(NewCreator):
     def _configure_saver_tool(self, data, tool, subset):
         formatting_data = deepcopy(data)
 
+        # get frame padding from anatomy templates
+        anatomy = Anatomy()
+        frame_padding = int(
+            anatomy.templates["render"].get("frame_padding", 4)
+        )
+
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
         formatting_data.update({
             "workdir": workdir.replace("\\", "/"),
+            "frame": "0" * frame_padding,
             "ext": "exr"
         })
 
@@ -180,8 +189,9 @@ class CreateSaver(NewCreator):
 
         path = tool["Clip"][comp.TIME_UNDEFINED]
         fname = os.path.basename(path)
-        fname, _ext = os.path.splitext(fname)
-        variant = fname.rstrip(".")
+        head, _, _ = get_frame_path(fname)
+
+        variant = head.rstrip(".")
         subset = self.get_subset_name(
             variant=variant,
             task_name=task,
