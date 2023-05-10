@@ -223,6 +223,10 @@ void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 		str = std::regex_replace(str, true_regex, "True");
 		str = std::regex_replace(str, false_regex, "False");
 
+		// Fix null for python
+		std::regex null_regex("\\bnull\\b");
+		str = std::regex_replace(str, null_regex, "None");
+
 		// We also need to remove the new line characters from the string, because
 		// they will cause an error in the python command.
 		std::string FormattedParamsStr;
@@ -271,3 +275,36 @@ void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 
 	Socket->Send(StringResponse);
 }
+
+// void HandleJsonRpcRequest(const FString& JsonRpcRequest)
+// {
+//     TSharedPtr<FJsonObject> JsonObject;
+//     TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonRpcRequest);
+
+//     if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
+//     {
+//         FString MethodName;
+//         if (JsonObject->TryGetStringField("method", MethodName))
+//         {
+//             if (MethodName == "subtract")
+//             {
+//                 TSharedPtr<FJsonObject> ParamsObject = JsonObject->GetObjectField("params");
+//                 int32 Minuend = ParamsObject->GetIntegerField("minuend");
+//                 int32 Subtrahend = ParamsObject->GetIntegerField("subtrahend");
+
+//                 int32 Difference = Minuend - Subtrahend;
+
+//                 TSharedPtr<FJsonObject> ResponseObject = MakeShareable(new FJsonObject);
+//                 ResponseObject->SetStringField("jsonrpc", "2.0");
+//                 ResponseObject->SetObjectField("result", MakeShareable(new FJsonValueNumber(Difference)));
+//                 ResponseObject->SetNumberField("id", JsonObject->GetNumberField("id"));
+
+//                 FString JsonRpcResponse;
+//                 TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&JsonRpcResponse);
+//                 FJsonSerializer::Serialize(ResponseObject.ToSharedRef(), JsonWriter);
+
+//                 // Send the JSON-RPC 2.0 response back to the client
+//             }
+//         }
+//     }
+// }
