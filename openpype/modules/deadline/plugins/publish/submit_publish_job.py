@@ -336,9 +336,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             return
 
         instance_skeleton_data = create_skeleton_instance(
-                                 instance,
-                                 families_transfer=self.families_transfer,
-                                 instance_transfer=self.instance_transfer)
+            instance, families_transfer=self.families_transfer,
+            instance_transfer=self.instance_transfer)
         """
         if content of `expectedFiles` list are dictionaries, we will handle
         it as list of AOVs, creating instance for every one of them.
@@ -447,8 +446,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 render_job["Props"]["Batch"] = instance.data.get(
                     "jobBatchName")
             else:
-                render_job["Props"]["Batch"] = os.path.splitext(
-                    os.path.basename(instance.context.data.get("currentFile")))[0]
+                batch = os.path.splitext(os.path.basename(
+                    instance.context.data.get("currentFile")))[0]
+                render_job["Props"]["Batch"] = batch
             # User is deadline user
             render_job["Props"]["User"] = instance.context.data.get(
                 "deadlineUser", getpass.getuser())
