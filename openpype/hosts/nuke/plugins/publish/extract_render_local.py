@@ -26,15 +26,9 @@ class NukeRenderLocal(publish.Extractor,
     families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
-        child_nodes = (
-            instance.data.get("transientData", {}).get("childNodes")
-            or instance
-        )
-
-        node = None
-        for x in child_nodes:
-            if x.Class() == "Write":
-                node = x
+        ### Starts Alkemy-X Override ###
+        write_node = instance.data["writeNode"]
+        ### Ends Alkemy-X Override ###
 
         self.log.debug("instance collected: {}".format(instance.data))
 
@@ -44,7 +38,9 @@ class NukeRenderLocal(publish.Extractor,
         last_frame = instance.data.get("frameEndHandle", None)
 
         filenames = []
-        node_file = node["file"]
+        ### Starts Alkemy-X Override ###
+        node_file = write_node["file"]
+        ### Ends Alkemy-X Override ###
         # Collect expected filepaths for each frame
         # - for cases that output is still image is first created set of
         #   paths which is then sorted and converted to list
@@ -80,13 +76,17 @@ class NukeRenderLocal(publish.Extractor,
 
             # Render frames
             nuke.execute(
-                str(node_subset_name),
+                ### Starts Alkemy-X Override ###
+                write_node.fullName(),
+                ### Ends Alkemy-X Override ###
                 int(render_first_frame),
                 int(render_last_frame)
             )
 
-        ext = node["file_type"].value()
-        colorspace = napi.get_colorspace_from_node(node)
+        ### Starts Alkemy-X Override ###
+        ext = write_node["file_type"].value()
+        colorspace = napi.get_colorspace_from_node(write_node)
+        ### Ends Alkemy-X Override ###
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
