@@ -12,7 +12,7 @@
 			]
 		},
 		{
-			"Name": "OpenPype",
+			"Name": "Ayon",
 			"Enabled": true,
 			"Type": "Editor"
 		}

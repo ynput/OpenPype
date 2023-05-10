@@ -1,0 +1,1 @@
+cmd /k "BuildPlugin_4-27.bat"
