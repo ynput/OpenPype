@@ -47,8 +47,6 @@ class CollectRender(pyblish.api.InstancePlugin):
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int
-        pattern = r"^(?P<start>-?[0-9]+)(?:(?:-)(?P<end>-?[0-9]+))?$"
-        match = re.match(pattern, rt.rendPickupFrames)
         # setup the plugin as 3dsmax for the internal renderer
         data = {
             "subset": instance.name,
@@ -61,8 +59,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             "source": filepath,
             "expectedFiles": render_layer_files,
             "plugin": "3dsmax",
-            "frameStart": int(match.group("start")),
-            "frameEnd": int(match.group("end")),
+            "frameStart": int(rt.rendStart),
+            "frameEnd": int(rt.rendEnd),
             "version": version_int,
             "farm": True
         }

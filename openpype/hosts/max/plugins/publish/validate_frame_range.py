@@ -60,7 +60,5 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        start = instance.context.data.get("frameStart")
-        end = instance.context.data.get("frameEnd")
-        frame_range = "{0}-{1}".format(start, end)
-        rt.rendPickupFrames = frame_range
+        rt.rendStart = instance.context.data.get("frameStart")
+        rt.rendEnd = instance.context.data.get("frameEnd")
