@@ -3928,7 +3928,7 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     }
 
     plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
-    if plugin_settings["profiles"]:
+    if plugin_settings.get("profiles", []):
         profile = filter_profiles(
             plugin_settings["profiles"],
             filtering_criteria,
@@ -3981,7 +3981,7 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
+    asset = get_current_asset_name()  # remove legacy_io call
     dependency = str(context["representation"]["_id"])
 
     if log:
