@@ -25,7 +25,8 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
             python_script_path = Path(python_script_path)
             if not python_script_path.exists():
                 raise self.log.warning(
-                    f"Python script {python_script_path} doesn't exist. Skipped..."
+                    f"Python script {python_script_path} doesn't exist. "
+                    "Skipped..."
                 )
 
             if "--" in self.launch_context.launch_args:
