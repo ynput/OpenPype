@@ -44,6 +44,11 @@ class CreateSaver(NewCreator):
         "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
+        instance_data.update({
+            "id": "pyblish.avalon.instance",
+            "subset": subset_name
+        })
+
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
 
@@ -52,7 +57,6 @@ class CreateSaver(NewCreator):
             args = (-32768, -32768)  # Magical position numbers
             saver = comp.AddTool("Saver", *args)
 
-            instance_data["subset"] = subset_name
             self._update_tool_with_data(saver, data=instance_data)
 
             saver["OutputFormat"] = file_format
@@ -173,7 +177,7 @@ class CreateSaver(NewCreator):
         attrs = tool.GetAttrs()
 
         ctx_data = {}
-        keys = ["asset", "subset", "task", "variant"]
+        keys = ["id", "asset", "subset", "task", "variant"]
         for key in keys:
             ctx_data[key] = tool.GetData(f"openpype.{key}")
 
@@ -188,7 +192,7 @@ class CreateSaver(NewCreator):
             "active": not passthrough,
             "family": self.family,
             # Unique identifier for instance and this creator
-            "id": "pyblish.avalon.instance",
+            "id": ctx_data["id"],
             "creator_identifier": self.identifier,
         }
 
