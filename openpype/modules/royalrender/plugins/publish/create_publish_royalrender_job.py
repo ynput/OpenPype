@@ -240,7 +240,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             ImagePreNumberLetter="",
             SceneOS=get_rr_platform(),
             rrEnvList=environment.serialize(),
-            Priority=priority
+            Priority=priority,
+            CompanyProjectName=instance.context.data["projectName"]
         )
 
         # add assembly jobs as dependencies
