@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Submitting render job to RoyalRender."""
-import copy
 import os
 import re
 import platform
@@ -17,13 +16,12 @@ from openpype.lib import (
     is_running_from_build,
     BoolDef,
     NumberDef,
-    collect_frames
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
-from openpype.pipeline.farm.tools import iter_expected_files
 
 
 class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
+    """Creates separate rendering job for Royal Render"""
     label = "Create Nuke Render job in RR"
     order = IntegratorOrder + 0.1
     hosts = ["nuke"]
@@ -202,6 +200,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         output_filename_0 = self.preview_fname(render_path)
+        _, file_ext = os.path.splitext(os.path.basename(render_path))
 
         custom_attributes = []
         if is_running_from_build():
@@ -218,11 +217,6 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
         expected_files = self.expected_files(
             render_path, start_frame, end_frame)
         self._instance.data["expectedFiles"].extend(expected_files)
-        first_file = next(iter_expected_files(expected_files))
-
-        file_name, file_ext = os.path.splitext(os.path.basename(first_file))
-        frame_pattern = ".{}".format(start_frame)
-        file_name = file_name.replace(frame_pattern, '.#')
 
         job = RRJob(
             Software="Nuke",
@@ -235,14 +229,14 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             SceneName=script_path,
             IsActive=True,
             ImageDir=render_dir.replace("\\", "/"),
-            ImageFilename="{}".format(file_name),
+            ImageFilename="{}".format(output_filename_0),
             ImageExtension=file_ext,
             ImagePreNumberLetter="",
             ImageSingleOutputFile=False,
             SceneOS=get_rr_platform(),
             Layer=node_name,
             SceneDatabaseDir=script_path,
-            CustomSHotName=self._instance.context.data["asset"],
+            CustomSHotName=jobname,
             CompanyProjectName=self._instance.context.data["projectName"],
             ImageWidth=self._instance.data["resolutionWidth"],
             ImageHeight=self._instance.data["resolutionHeight"],
