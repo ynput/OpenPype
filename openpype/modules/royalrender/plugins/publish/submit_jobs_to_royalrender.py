@@ -4,7 +4,11 @@ import tempfile
 import platform
 
 from pyblish.api import IntegratorOrder, ContextPlugin, Context
-from openpype.modules.royalrender.api import RRJob, Api as rrApi
+from openpype.modules.royalrender.api import (
+    RRJob,
+    Api as rrApi,
+    SubmitterParameter
+)
 from openpype.pipeline.publish import KnownPublishError
 
 
@@ -95,7 +99,7 @@ class SubmitJobsToRoyalRender(ContextPlugin):
         return temp.name
 
     def get_submission_parameters(self):
-        return []
+        return [SubmitterParameter("RequiredMemory", "0")]
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
