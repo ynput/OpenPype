@@ -45,6 +45,17 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         new_nodes = cmds.file(path, i=True, returnNewNodes=True)
 
+        # make default cameras non-renderable
+        default_cameras = [cam for cam in cmds.ls(cameras=True)
+                           if cmds.camera(cam, query=True, startupCamera=True)]
+        for cam in default_cameras:
+            if not cmds.attributeQuery("renderable", node=cam, exists=True):
+                self.log.debug(
+                    "Camera {} has no attribute 'renderable'".format(cam)
+                )
+                continue
+            cmds.setAttr("{}.renderable".format(cam), 0)
+
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
 
         imported_sets = cmds.ls(new_nodes, set=True)
