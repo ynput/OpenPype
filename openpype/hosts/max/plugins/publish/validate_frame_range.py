@@ -44,19 +44,23 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         inst_frame_start = int(instance.data.get("frameStart"))
         inst_frame_end = int(instance.data.get("frameEnd"))
 
+        errors = []
         if frame_start != inst_frame_start:
-            raise PublishValidationError(
-                "startFrame on instance does not match"
-                " with startFrame from the context data."
-                " You can use repair action to fix it")
-
+            errors.append(
+                f"Start frame ({inst_frame_start}) on instance does not match "
+                f"with the start frame ({frame_start}) set on the asset data. ")
         if frame_end != inst_frame_end:
-            raise PublishValidationError(
-                "endFrame on instance does not match"
-                " with endFrame from the context data."
-                " You can use repair action to fix it")
+            errors.append(
+                f"End frame ({inst_frame_end}) on instance does not match "
+                f"with the end frame ({frame_start}) from the asset data. ")
+
+        if errors:
+            errors.append("You can use repair action to fix it.")
+            raise PublishValidationError("\n".join(errors))
 
     @classmethod
     def repair(cls, instance):
-        rt.rendStart = instance.context.data.get("frameStart")
-        rt.rendEnd = instance.context.data.get("frameEnd")
+        start = instance.context.data.get("frameStart")
+        end = instance.context.data.get("frameEnd")
+        frame_range = "{0}-{1}".format(start, end)
+        rt.rendPickupFrames = frame_range

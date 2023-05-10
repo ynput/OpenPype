@@ -150,10 +150,10 @@ def set_render_frame_range(start_frame, end_frame):
     Todo:
         Current type is hard-coded, there should be a custom setting for this.
     """
-    rt.rendTimeType = 3
+    rt.rendTimeType = 4
     if start_frame is not None and end_frame is not None:
-        rt.rendStart = int(start_frame)
-        rt.rendEnd = int(end_frame)
+        frame_range = "{0}-{1}".format(start_frame, end_frame)
+        rt.rendPickupFrames = frame_range
 
 
 def get_multipass_setting(project_setting=None):
