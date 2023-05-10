@@ -38,6 +38,8 @@ class CreateSaver(NewCreator):
         "Main",
         "Mask"
     ]
+
+    # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
         "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
