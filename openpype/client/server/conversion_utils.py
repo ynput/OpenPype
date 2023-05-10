@@ -584,7 +584,9 @@ def representation_fields_v3_to_v4(fields, con):
     representation_attributes = con.get_attributes_for_type("representation")
 
     output = set()
-    for field in fields:
+    fields = set(fields)
+    iterfields = fields.copy()
+    for field in iterfields:
         if field in ("type", "schema"):
             continue
 
