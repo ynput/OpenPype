@@ -268,8 +268,8 @@ class CameraLoader(plugin.Loader):
         data = get_asset_by_name(project_name, asset)["data"]
         cam_seq.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
-        cam_seq.set_playback_start(0)
-        cam_seq.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
+        cam_seq.set_playback_start(data.get('clipIn'))
+        cam_seq.set_playback_end(data.get('clipOut') + 1)
         self._set_sequence_hierarchy(
             sequences[-1], cam_seq,
             data.get('clipIn'), data.get('clipOut'))
