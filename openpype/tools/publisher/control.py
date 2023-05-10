@@ -430,13 +430,15 @@ class PublishPluginsProxy:
             plugin_id = plugin.id
             plugins_by_id[plugin_id] = plugin
 
-            action_ids = set()
+            action_ids = []
             action_ids_by_plugin_id[plugin_id] = action_ids
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
                 action_id = action.id
-                action_ids.add(action_id)
+                if action_id in actions_by_id:
+                    continue
+                action_ids.append(action_id)
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
