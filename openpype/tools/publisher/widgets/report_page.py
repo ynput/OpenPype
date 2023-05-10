@@ -9,14 +9,15 @@ except Exception:
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.style import get_objected_colors
+from openpype.style import get_objected_colors, get_style_image_path
 from openpype.tools.utils import (
     BaseClickableFrame,
     ClickableFrame,
     ExpandingTextEdit,
     FlowLayout,
-    ExpandBtn,
+    ClassicExpandBtn,
     paint_image_with_color,
+    SeparatorWidget,
 )
 from .widgets import IconValuePixmapLabel
 from .icons import (
@@ -1452,15 +1453,17 @@ class ErrorDetailsWidget(QtWidgets.QWidget):
 
         error_details_top = ClickableFrame(error_details_widget)
 
-        error_details_expand_btn = ExpandBtn(error_details_top)
+        error_details_expand_btn = ClassicExpandBtn(error_details_top)
         error_details_expand_label = QtWidgets.QLabel(
             "Details", error_details_top)
 
+        line_widget = SeparatorWidget(1, parent=error_details_top)
+
         error_details_top_l = QtWidgets.QHBoxLayout(error_details_top)
-        error_details_top_l.setContentsMargins(10, 0, 0, 0)
+        error_details_top_l.setContentsMargins(0, 0, 10, 0)
         error_details_top_l.addWidget(error_details_expand_btn, 0)
         error_details_top_l.addWidget(error_details_expand_label, 0)
-        error_details_top_l.addStretch(1)
+        error_details_top_l.addWidget(line_widget, 1)
 
         error_details_input = ExpandingTextEdit(error_details_widget)
         error_details_input.setObjectName("InfoText")
