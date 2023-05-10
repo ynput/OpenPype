@@ -25,6 +25,14 @@ from openpype.pipeline.farm.pyblish_functions import (
 
 
 class CreatePublishRoyalRenderJob(InstancePlugin):
+    """Creates job which publishes rendered files to publish area.
+
+    Job waits until all rendering jobs are finished, triggers `publish` command
+    where it reads from prepared .json file with metadata about what should
+    be published, renames prepared images and publishes them.
+
+    When triggered it produces .log file next to .json file in work area.
+    """
     label = "Create publish job in RR"
     order = IntegratorOrder + 0.2
     icon = "tractor"
@@ -62,6 +70,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
+        "OPENPYPE_MONGO"
     ]
     priority = 50
 
@@ -112,7 +121,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             self.log.error(("There is no prior RoyalRender "
                             "job on the instance."))
             raise KnownPublishError(
-                "Can't create publish job without prior ppducing jobs first")
+                "Can't create publish job without prior rendering jobs first")
 
         rr_job = self.get_job(instance, instances)
         instance.data["rrJobs"].append(rr_job)
@@ -125,7 +134,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "fps": instance_skeleton_data["fps"],
             "source": instance_skeleton_data["source"],
             "user": instance.context.data["user"],
-            "version": instance.context.data["version"],  # this is workfile version
+            "version": instance.context.data["version"],   # workfile version
             "intent": instance.context.data.get("intent"),
             "comment": instance.context.data.get("comment"),
             "job": attr.asdict(rr_job),
@@ -157,7 +166,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         """
         data = instance.data.copy()
         subset = data["subset"]
-        job_name = "Publish - {subset}".format(subset=subset)
+        jobname = "Publish - {subset}".format(subset=subset)
 
         instance_version = instance.data.get("version")  # take this if exists
         override_version = instance_version if instance_version != 1 else None
@@ -173,11 +182,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "AVALON_PROJECT": anatomy_data["project"]["name"],
             "AVALON_ASSET": anatomy_data["asset"],
             "AVALON_TASK": anatomy_data["task"]["name"],
-            "OPENPYPE_USERNAME": anatomy_data["user"],
-            "OPENPYPE_PUBLISH_JOB": "1",
-            "OPENPYPE_RENDER_JOB": "0",
-            "OPENPYPE_REMOTE_JOB": "0",
-            "OPENPYPE_LOG_NO_COLORS": "1"
+            "OPENPYPE_USERNAME": anatomy_data["user"]
         })
 
         # add environments from self.environ_keys
@@ -200,12 +205,6 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             if job_environ.get(env_j_key):
                 environment[env_j_key] = job_environ[env_j_key]
 
-        # Add mongo url if it's enabled
-        if instance.context.data.get("deadlinePassMongoUrl"):
-            mongo_url = os.environ.get("OPENPYPE_MONGO")
-            if mongo_url:
-                environment["OPENPYPE_MONGO"] = mongo_url
-
         priority = self.priority or instance.data.get("priority", 50)
 
         ## rr requires absolut path or all jobs won't show up in rControl
@@ -222,13 +221,11 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         job = RRJob(
             Software="OpenPype",
             Renderer="Once",
-            # path to OpenPype
             SeqStart=1,
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
             Version=os.environ.get("OPENPYPE_VERSION"),
-            # executable
             SceneName=abs_metadata_path,
             # command line arguments
             CustomAddCmdFlags=" ".join(args),
@@ -240,6 +237,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             SceneOS=get_rr_platform(),
             rrEnvList=environment.serialize(),
             Priority=priority,
+            CustomSHotName=jobname,
             CompanyProjectName=instance.context.data["projectName"]
         )
 
