@@ -1241,6 +1241,7 @@ class InstancesLogsView(QtWidgets.QFrame):
         content_widget = QtWidgets.QWidget(content_wrap_widget)
         content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)
 
         scroll_area.setWidget(content_wrap_widget)
 
@@ -1481,11 +1482,14 @@ class ErrorDetailsWidget(QtWidgets.QWidget):
         # Description and Details layout
         inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
         inputs_layout.setContentsMargins(0, 0, 0, 0)
+        inputs_layout.setSpacing(10)
         inputs_layout.addWidget(error_description_input, 0)
         inputs_layout.addWidget(error_details_widget, 1)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
+        # Make an offset from logs view
+        # - maybe should not be added here?
         main_layout.addSpacing(30)
         main_layout.addWidget(inputs_widget, 1)
 

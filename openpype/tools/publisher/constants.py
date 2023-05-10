@@ -35,6 +35,7 @@ ResetKeySequence = QtGui.QKeySequence(
 
 __all__ = (
     "CONTEXT_ID",
+    "CONTEXT_LABEL",
 
     "VARIANT_TOOLTIP",
 
