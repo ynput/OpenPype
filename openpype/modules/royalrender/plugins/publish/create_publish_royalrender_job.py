@@ -13,8 +13,9 @@ from openpype.modules.royalrender.rr_job import (
     get_rr_platform
 )
 from openpype.pipeline.publish import KnownPublishError
-from openpype.lib.openpype_version import (
-    get_OpenPypeVersion, get_openpype_version)
+from openpype.pipeline import (
+    legacy_io,
+)
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
     create_instances_for_aov,
@@ -114,16 +115,31 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             raise KnownPublishError(
                 "Can't create publish job without prior ppducing jobs first")
 
-        publish_job = self.get_job(instance, instances)
+        rr_job = self.get_job(instance, instances)
+        instance.data["rrJobs"].append(rr_job)
 
-        instance.data["rrJobs"].append(publish_job)
+        # publish job file
+        publish_job = {
+            "asset": instance_skeleton_data["asset"],
+            "frameStart": instance_skeleton_data["frameStart"],
+            "frameEnd": instance_skeleton_data["frameEnd"],
+            "fps": instance_skeleton_data["fps"],
+            "source": instance_skeleton_data["source"],
+            "user": instance.context.data["user"],
+            "version": instance.context.data["version"],  # this is workfile version
+            "intent": instance.context.data.get("intent"),
+            "comment": instance.context.data.get("comment"),
+            "job": attr.asdict(rr_job),
+            "session": legacy_io.Session.copy(),
+            "instances": instances
+        }
 
         metadata_path, rootless_metadata_path = \
             create_metadata_path(instance, self.anatomy)
 
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
-            json.dump(attr.asdict(publish_job), f, indent=4, sort_keys=True)
+            json.dump(publish_job, f, indent=4, sort_keys=True)
 
     def get_job(self, instance, instances):
         """Create RR publishing job.
