@@ -329,16 +329,8 @@ def transfer_stack(
                 a
                 for a in dir(stack_datablock)
                 if not a.startswith("_")
-                and a
-                not in {
-                    "type",
-                    "error_location",
-                    "rna_type",
-                    "error_rotation",
-                    "bl_rna",
-                    "is_valid",
-                    "is_override_data",
-                }
+                and a != "bl_rna"
+                and not stack_datablock.is_property_readonly(a)
             }
             for attr in attributes:
                 setattr(target_data, attr, getattr(stack_datablock, attr))
