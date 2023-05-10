@@ -1,5 +1,8 @@
 import os
-from openpype.modules import OpenPypeModule, IHostAddon
+from pathlib import Path
+
+from openpype.modules import IHostAddon, OpenPypeModule
+from .lib import get_compatible_integration
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -19,9 +22,15 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         unreal_plugin_path = os.path.join(
             UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
         )
+        if not Path(unreal_plugin_path).exists():
+            if compatible_versions := get_compatible_integration(
+                ue_version, Path(UNREAL_ROOT_DIR) / "integration"
+            ):
+                unreal_plugin_path = compatible_versions[-1] / "Ayon"
+                unreal_plugin_path = unreal_plugin_path.as_posix()
 
         if not env.get("AYON_UNREAL_PLUGIN") or \
-                env.get("AYON_UNREAL_PLUGIN") != unreal_plugin_path:
+                    env.get("AYON_UNREAL_PLUGIN") != unreal_plugin_path:
             env["AYON_UNREAL_PLUGIN"] = unreal_plugin_path
 
         # Set default environments if are not set via settings

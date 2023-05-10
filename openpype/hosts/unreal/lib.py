@@ -321,6 +321,47 @@ def get_path_to_uat(engine_path: Path) -> Path:
         return engine_path / "Engine/Build/BatchFiles/RunUAT.sh"
 
 
+def get_compatible_integration(
+        ue_version: str, integration_root: Path) -> List[Path]:
+    """Get path to compatible version of integration plugin.
+
+    This will try to get the closest compatible versions to the one
+    specified in sorted list.
+
+    Args:
+        ue_version (str): version of the current Unreal Engine.
+        integration_root (Path): path to built-in integration plugins.
+
+    Returns:
+        list of Path: Sorted list of paths closest to the specified
+            version.
+
+    """
+    major, minor = ue_version.split(".")
+    integration_paths = [p for p in integration_root.iterdir()
+                         if p.is_dir()]
+
+    compatible_versions = []
+    for i in integration_paths:
+        # parse version from path
+        try:
+            i_major, i_minor = re.search(
+                r"(?P<major>\d+).(?P<minor>\d+)$", i.name).groups()
+        except AttributeError:
+            # in case there is no match, just skip to next
+            continue
+
+        # consider versions with different major so different that they
+        # are incompatible
+        if int(major) != int(i_major):
+            continue
+
+        compatible_versions.append(i)
+
+    sorted(set(compatible_versions))
+    return compatible_versions
+
+
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
     cmd_project = Path(
         os.path.abspath(os.getenv("OPENPYPE_ROOT")))
@@ -334,31 +375,15 @@ def get_path_to_cmdlet_project(ue_version: str) -> Path:
     if cmd_project.exists():
         return cmd_project / "CommandletProject/CommandletProject.uproject"
 
-    major, minor = ue_version.split(".")
-    integration_paths = [p for p in cmd_project.parent.iterdir()
-                         if p.is_dir()]
-
-    compatible_versions = [cmd_project]
-    for i in integration_paths:
-
-        # parse version from path
-        i_major, i_minor = re.search(
-            r"(?P<major>\d+).(?P<minor>\d+)$", i.name).groups()
-
-        # consider versions with different major so different that they
-        # are incompatible
-        if int(major) != int(i_major):
-            continue
-
-        compatible_versions.append(i)
-
-    sorted(set(compatible_versions))
-
-
-
-
-
-    return cmd_project / "CommandletProject/CommandletProject.uproject"
+    if compatible_versions := get_compatible_integration(
+        ue_version, cmd_project.parent
+    ):
+        return compatible_versions[-1] / "CommandletProject/CommandletProject.uproject"  # noqa: E501
+    else:
+        raise RuntimeError(
+            ("There are no compatible versions of Unreal "
+             "integration plugin compatible with running version "
+             f"of Unreal Engine {ue_version}"))
 
 
 def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
