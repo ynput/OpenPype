@@ -43,9 +43,11 @@ Task status can be automatically set during publish thanks to `Integrate Kitsu N
 
 `Admin -> Studio Settings -> Project Settings -> Kitsu -> Integrate Kitsu Note`.
 
-There are four settings available:
+There are six settings available:
 - `Set status on note` -> Turns on and off this integrator.
 - `Note shortname` -> Which status shortname should be set automatically (Case sensitive).
+- `Families` -> List of families for which this integrator will be run.
+- `Publish note even without review` -> If true, publishing a review is not required to publish a kitsu note.
 - `Status change conditions - Status conditions` -> Conditions that need to be met for kitsu status to be changed. You can add as many conditions as you like. There are two fields to each conditions: `Condition` (Whether current status should be equal or not equal to the condition status) and `Short name` (Kitsu Shortname of the condition status).
 - `Status change conditions - Family requirements` -> With this option you can add requirements to which families must be pushed or not in order to have the task status set by this integrator. There are two fields for each requirements: `Condition` (Same as the above) and `Family` (name of the family concerned by this requirement). For instance, adding one item set to `Not equal` and `workfile`, would mean the task status would change if a subset from another family than workfile is published (workfile can still be included), but not if you publish the workfile subset only.
 

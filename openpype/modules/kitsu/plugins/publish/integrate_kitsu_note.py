@@ -55,7 +55,11 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             # Allow a match to primary family or any of families
             families = set([instance.data["family"]] +
                            instance.data.get("families", []))
-            if not self.always_publish_note and "review" not in families:
+            if (
+                not self.always_publish_note
+                and "review" not in families
+                or not instance.data.get('publish')
+            ):
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")

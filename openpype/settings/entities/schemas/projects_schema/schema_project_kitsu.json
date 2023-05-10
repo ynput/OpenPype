@@ -54,6 +54,14 @@
                             "label": "Note shortname"
                         },
                         {
+                            "type": "list",
+                            "key": "families",
+                            "label": "Families",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
                             "type": "boolean",
                             "key": "always_publish_note",
                             "label": "Publish note even without review"
