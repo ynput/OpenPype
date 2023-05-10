@@ -49,7 +49,7 @@ class CollectFusionRender(
                 continue
 
             family = inst.data["family"]
-            if family not in ["render"]:
+            if family != "render":
                 continue
 
             task_name = inst.data.get("task")  # legacy
@@ -80,10 +80,11 @@ class CollectFusionRender(
                 tilesX=0,
                 tilesY=0,
                 review="review" in instance_families,
-                frameStart=context.data["frameStart"],
-                frameEnd=context.data["frameEnd"],
-                handleStart=context.data["handleStart"],
-                handleEnd=context.data["handleEnd"],
+                frameStart=inst.data["frameStart"],
+                frameEnd=inst.data["frameEnd"],
+                handleStart=inst.data["handleStart"],
+                handleEnd=inst.data["handleEnd"],
+                ignoreFrameHandleCheck=True,
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,
