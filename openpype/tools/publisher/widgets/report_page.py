@@ -26,12 +26,12 @@ from ..constants import (
     CONTEXT_LABEL,
 )
 
-LOG_DEBUG_VISIBLE = 1 << 1
-LOG_INFO_VISIBLE = 1 << 2
-LOG_WARNING_VISIBLE = 1 << 3
-LOG_ERROR_VISIBLE = 1 << 4
-LOG_CRITICAL_VISIBLE = 1 << 5
-ERROR_VISIBLE = 1 << 6
+LOG_DEBUG_VISIBLE = 1 << 0
+LOG_INFO_VISIBLE = 1 << 1
+LOG_WARNING_VISIBLE = 1 << 2
+LOG_ERROR_VISIBLE = 1 << 3
+LOG_CRITICAL_VISIBLE = 1 << 4
+ERROR_VISIBLE = 1 << 5
 INFO_VISIBLE = 1 << 6
 
 
@@ -980,9 +980,10 @@ class LogItemWidget(QtWidgets.QWidget):
         flag = self.log_level_to_flag.get(level_n, LOG_CRITICAL_VISIBLE)
         return flag, level_n
 
-    def _update_visiblity(self):
+    def _update_visibility(self):
         self.setVisible(
-            not (self._log_type_filtered or self._plugin_filtered)
+            not self._log_type_filtered
+            and not self._plugin_filtered
         )
 
     def set_log_type_filtered(self, filtered):
@@ -992,10 +993,10 @@ class LogItemWidget(QtWidgets.QWidget):
         self._update_visibility()
 
     def set_plugin_filtered(self, filtered):
-        if self._plugin_filtered is filtered:
+        if filtered is self._plugin_filtered:
             return
         self._plugin_filtered = filtered
-        self._update_visiblity()
+        self._update_visibility()
 
 
 class LogsWithIconsView(QtWidgets.QWidget):
@@ -1049,11 +1050,11 @@ class LogsWithIconsView(QtWidgets.QWidget):
             ERROR_VISIBLE,
             INFO_VISIBLE,
         ):
-            visible = self._flags_filter & flag != 0
+            visible = (self._flags_filter & flag) != 0
             if visible is not self._visibility_by_flags[flag]:
                 self._visibility_by_flags[flag] = visible
                 for widget in self._widgets_by_flag[flag]:
-                    widget.set_log_type_filtered(visible)
+                    widget.set_log_type_filtered(not visible)
 
     def _update_plugin_filtering(self):
         if self._plugin_ids_filter is None:
