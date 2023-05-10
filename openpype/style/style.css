@@ -756,10 +756,11 @@ OverlayMessageWidget QWidget {
 }
 
 #InfoText {
-    padding-left: 30px;
-    padding-top: 20px;
+    padding-left: 0px;
+    padding-top: 0px;
+    padding-right: 20px;
     background: transparent;
-    border: 1px solid {color:border};
+    border: none;
 }
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
@@ -1039,7 +1040,7 @@ PixmapButton:disabled {
 }
 
 #PublishInfoFrame[state="3"], #PublishInfoFrame[state="4"] {
-    background: rgb(194, 226, 236);
+    background: {color:publisher:progress};
 }
 
 #PublishInfoFrame QLabel {

@@ -96,6 +96,7 @@
             "crash": "#FF6432",
             "success": "#458056",
             "warning": "#ffc671",
+            "progress": "rgb(194, 226, 236)",
             "tab-bg": "#16191d",
             "list-view-group": {
                 "bg": "#434a56",
