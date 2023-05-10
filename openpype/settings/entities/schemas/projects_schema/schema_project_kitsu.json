@@ -54,6 +54,11 @@
                             "label": "Note shortname"
                         },
                         {
+                            "type": "boolean",
+                            "key": "always_publish_note",
+                            "label": "Publish note even without review"
+                        },
+                        {
                             "type": "dict",
                             "collapsible": true,
                             "key": "status_change_conditions",

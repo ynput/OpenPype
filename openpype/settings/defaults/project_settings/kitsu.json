@@ -8,6 +8,7 @@
         "IntegrateKitsuNote": {
             "set_status_note": false,
             "note_status_shortname": "wfa",
+            "always_publish_note": true,
             "status_change_conditions": {
                 "status_conditions": [],
                 "family_requirements": []

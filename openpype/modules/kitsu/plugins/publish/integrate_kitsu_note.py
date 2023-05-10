@@ -14,6 +14,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # status settings
     set_status_note = False
     note_status_shortname = "wfa"
+    always_publish_note = False
     status_change_conditions = {
         "status_conditions": [],
         "family_requirements": [],
@@ -54,7 +55,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             # Allow a match to primary family or any of families
             families = set([instance.data["family"]] +
                            instance.data.get("families", []))
-            if "review" not in families:
+            if not self.always_publish_note and "review" not in families:
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
