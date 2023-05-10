@@ -91,7 +91,7 @@ class CreateSaver(NewCreator):
         for tool in tools:
             data = self.get_managed_tool_data(tool)
             if not data:
-                data = self._collect_unmanaged_saver(tool)
+                data = self._collect_saver(tool)
 
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
@@ -168,43 +168,23 @@ class CreateSaver(NewCreator):
             print(f"Renaming {tool.Name} -> {subset}")
             tool.SetAttrs({"TOOLS_Name": subset})
 
-    def _collect_unmanaged_saver(self, tool):
-        # TODO: this should not be done this way - this should actually
-        #       get the data as stored on the tool explicitly (however)
-        #       that would disallow any 'regular saver' to be collected
-        #       unless the instance data is stored on it to begin with
-
-        print("Collecting unmanaged saver..")
-        comp = tool.Comp()
-
-        # Allow regular non-managed savers to also be picked up
-        project = legacy_io.Session["AVALON_PROJECT"]
-        asset = legacy_io.Session["AVALON_ASSET"]
-        task = legacy_io.Session["AVALON_TASK"]
-
-        asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
-
-        path = tool["Clip"][comp.TIME_UNDEFINED]
-        fname = os.path.basename(path)
-        head, _, _ = get_frame_path(fname)
-
-        variant = head.rstrip(".")
-        subset = self.get_subset_name(
-            variant=variant,
-            task_name=task,
-            asset_doc=asset_doc,
-            project_name=project,
-        )
-
+    def _collect_saver(self, tool):
+        print("Collecting saver..")
         attrs = tool.GetAttrs()
+
+        ctx_data = {}
+        keys = ["asset", "subset", "task", "variant"]
+        for key in keys:
+            ctx_data[key] = tool.GetData(f"openpype.{key}")
+
         passthrough = attrs["TOOLB_PassThrough"]
         return {
             # Required data
-            "project": project,
-            "asset": asset,
-            "subset": subset,
-            "task": task,
-            "variant": variant,
+            "project": self.project_name,
+            "asset": ctx_data["asset"],
+            "subset": ctx_data["subset"],
+            "task": ctx_data["task"],
+            "variant": ctx_data["variant"],
             "active": not passthrough,
             "family": self.family,
             # Unique identifier for instance and this creator
