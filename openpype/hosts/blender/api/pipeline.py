@@ -184,11 +184,6 @@ def on_new():
 
 def on_open():
     set_start_end_frames()
-    if hasattr(
-        bpy.types, bpy.ops.wm.check_workfile_up_to_date.idname()
-    ):
-        bpy.ops.wm.check_workfile_up_to_date("INVOKE_DEFAULT")
-
 
     project = os.environ.get("AVALON_PROJECT")
     settings = get_project_settings(project)
