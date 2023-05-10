@@ -61,6 +61,14 @@ class SubmitJobsToRoyalRender(ContextPlugin):
 
     def process_submission(self, jobs):
         # type: ([RRJob]) -> None
+
+        idx_pre_id = 0
+        for job in jobs:
+            job.PreID = idx_pre_id
+            if idx_pre_id > 0:
+                job.WaitForPreIDs.append(idx_pre_id - 1)
+            idx_pre_id += 1
+
         submission = rrApi.create_submission(
             jobs,
             self._submission_parameters)
