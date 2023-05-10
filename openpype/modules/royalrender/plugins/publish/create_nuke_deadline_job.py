@@ -200,7 +200,8 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         output_filename_0 = self.preview_fname(render_path)
-        _, file_ext = os.path.splitext(os.path.basename(render_path))
+        file_name, file_ext = os.path.splitext(
+            os.path.basename(output_filename_0))
 
         custom_attributes = []
         if is_running_from_build():
@@ -229,7 +230,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
             SceneName=script_path,
             IsActive=True,
             ImageDir=render_dir.replace("\\", "/"),
-            ImageFilename="{}".format(output_filename_0),
+            ImageFilename=file_name,
             ImageExtension=file_ext,
             ImagePreNumberLetter="",
             ImageSingleOutputFile=False,

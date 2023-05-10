@@ -4,7 +4,7 @@ import os
 import attr
 import json
 
-from pyblish.api import InstancePlugin, IntegratorOrder, Instance
+from pyblish.api import InstancePlugin, IntegratorOrder
 
 from openpype.modules.royalrender.rr_job import (
     RRJob,
@@ -168,9 +168,6 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         subset = data["subset"]
         jobname = "Publish - {subset}".format(subset=subset)
 
-        instance_version = instance.data.get("version")  # take this if exists
-        override_version = instance_version if instance_version != 1 else None
-
         # Transfer the environment from the original job to this dependent
         # job, so they use the same environment
         metadata_path, rootless_metadata_path = \
@@ -207,7 +204,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
 
         priority = self.priority or instance.data.get("priority", 50)
 
-        ## rr requires absolut path or all jobs won't show up in rControl
+        # rr requires absolut path or all jobs won't show up in rControl
         abs_metadata_path = self.anatomy.fill_root(rootless_metadata_path)
 
         # command line set in E01__OpenPype__PublishJob.cfg, here only

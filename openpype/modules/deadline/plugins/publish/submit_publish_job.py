@@ -336,12 +336,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             return
 
         instance_skeleton_data = create_skeleton_instance(
-                                    instance,
-                                    families_transfer=self.families_transfer,
-                                    instance_transfer=self.instance_transfer)
-
-        instances = None
-
+                                 instance,
+                                 families_transfer=self.families_transfer,
+                                 instance_transfer=self.instance_transfer)
         """
         if content of `expectedFiles` list are dictionaries, we will handle
         it as list of AOVs, creating instance for every one of them.
@@ -481,7 +478,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "fps": instance_skeleton_data["fps"],
             "source": instance_skeleton_data["source"],
             "user": instance.context.data["user"],
-            "version": instance.context.data["version"],  # this is workfile version
+            "version": instance.context.data["version"],  # workfile version
             "intent": instance.context.data.get("intent"),
             "comment": instance.context.data.get("comment"),
             "job": render_job or None,

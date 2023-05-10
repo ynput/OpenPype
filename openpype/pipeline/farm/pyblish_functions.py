@@ -92,7 +92,6 @@ def extend_frames(asset, subset, start, end):
     updated_start = min(start, prev_start)
     updated_end = max(end, prev_end)
 
-
     return updated_start, updated_end
 
 
@@ -217,9 +216,11 @@ def create_skeleton_instance(
         log = Logger.get_logger("farm_publishing")
         log.warning(("Could not find root path for remapping \"{}\". "
                      "This may cause issues.").format(source))
-
+    family = ("render"
+              if "prerender" not in instance.data["families"]
+              else "prerender")
     instance_skeleton_data = {
-        "family": "render" if "prerender" not in instance.data["families"] else "prerender",  # noqa: E401
+        "family": family,
         "subset": data["subset"],
         "families": families,
         "asset": data["asset"],
