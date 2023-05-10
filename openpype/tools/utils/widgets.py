@@ -201,6 +201,8 @@ class ClickableLabel(QtWidgets.QLabel):
 
 class ExpandBtnLabel(QtWidgets.QLabel):
     """Label showing expand icon meant for ExpandBtn."""
+    state_changed = QtCore.Signal()
+
     def __init__(self, parent):
         super(ExpandBtnLabel, self).__init__(parent)
         self._source_collapsed_pix = QtGui.QPixmap(
@@ -213,7 +215,13 @@ class ExpandBtnLabel(QtWidgets.QLabel):
         self._current_image = self._source_collapsed_pix
         self._collapsed = True
 
-    def set_collapsed(self, collapsed):
+    @property
+    def collapsed(self):
+        return self._collapsed
+
+    def set_collapsed(self, collapsed=None):
+        if collapsed is None:
+            collapsed = not self._collapsed
         if self._collapsed == collapsed:
             return
         self._collapsed = collapsed
@@ -222,6 +230,7 @@ class ExpandBtnLabel(QtWidgets.QLabel):
         else:
             self._current_image = self._source_expanded_pix
         self._set_resized_pix()
+        self.state_changed.emit()
 
     def resizeEvent(self, event):
         self._set_resized_pix()
@@ -243,6 +252,8 @@ class ExpandBtnLabel(QtWidgets.QLabel):
 
 
 class ExpandBtn(ClickableFrame):
+    state_changed = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(ExpandBtn, self).__init__(parent)
 
@@ -252,9 +263,15 @@ class ExpandBtn(ClickableFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(pixmap_label)
 
+        pixmap_label.state_changed.connect(self.state_changed)
+
         self._pixmap_label = pixmap_label
 
-    def set_collapsed(self, collapsed):
+    @property
+    def collapsed(self):
+        return self._pixmap_label.collapsed
+
+    def set_collapsed(self, collapsed=None):
         self._pixmap_label.set_collapsed(collapsed)
 
 
