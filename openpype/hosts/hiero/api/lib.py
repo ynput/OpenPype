@@ -15,6 +15,7 @@ import secrets
 import shutil
 import hiero
 
+import opentimelineio as otio
 from qtpy import QtWidgets, QtCore
 try:
     from PySide import QtXml
@@ -1301,3 +1302,165 @@ def get_main_window():
                            widget.metaObject().className() == name)
         self._parent = main_window
     return self._parent
+
+
+def parse_edl_events(path, color_edits_only=False):
+    """EDL is parsed using OTIO and then placed into a dictionary
+    Data is stored under the understanding that it will be used for identifying plate names which are linked to CDLs
+
+    EDL LOC metadata is parsed with OTIO under markers and then regexed to find the main bit of information which
+    will link it to a plate name further down the line
+
+    Underscores are not counted ({0,}) but are left greedy incase naming doesn't follow normal shot convention
+    but instead follows plate pull naming convention.
+
+    Plate pull naming convention:
+    Example: abc_101_010_010
+    Example: abc_101_010_010_element
+    Example: abc_101_010_010_element_fire
+
+    Examples of targeted matches:
+    abc_101_010_010_element
+    abc_101_010_010
+    abc_101_010
+    101_010_010
+
+    Examples of what does not match:
+    abc_101
+    101_001
+    _abc_101_010
+    abc_101_010_
+
+    Args:
+        path (str): The path of the EDL file.
+        color_edits_only (bool, optional): Whether to include only color edits. Defaults to False.
+
+    Returns:
+        dict: A dictionary containing information about the events in the EDL file.
+            - "events" (dict): where the key is the event number and the value is a dictionary containing information about the event.
+                - "clip_name" (str): clip name
+                - "tape" (str): tape name,
+                - "LOC" (str): metadata,
+
+                CDL information (if applicable)
+                - "slope" (tuple): CDL Slope.
+                - "offset (tuple): CDL Offset.
+                - "power" (tuple): CDL Power.
+                - "sat" (float): CDL Saturation.
+
+            - "first_entry" (int): The number of the first event in the EDL.
+            - "last_entry" (int): The number of the last event in the EDL.
+
+    Raises:
+        Exception: If the EDL file contains more than one track.
+    """
+    shot_pattern = r"(?<!_)(?P<LOC>[a-zA-Z0-9]{3,4}_((?<=_)[a-zA-Z0-9]{3,4}_){1,2}[a-zA-Z0-9]{3,4}(?<!_)(_[a-zA-Z0-9]{1,}){0,})\b"
+
+    # ignore_timecode_mismatch is set to True to ensure that OTIO doesn't get confused by
+    # TO CLIP NAME and FROM CLIP NAME timecode ranges
+    timeline = otio.adapters.read_from_file(path, ignore_timecode_mismatch=True)
+
+    if len(timeline.tracks) > 1:
+        raise Exception("EDL can not contain more than one track. Something went wrong")
+
+    edl = {"events": {}}
+
+    # There is a possibility that the entry count doesn't start at 1.
+    # However it's extremely rare and it's purpose is to keep track of order
+    entry_count = 0
+    for clip in timeline.tracks[0].each_child():
+        if not isinstance(clip, otio.schema.Clip):
+            continue
+
+        entry_count += 1
+        loc_value = ""
+        tape_value = ""
+        entry = {"clip_name": clip.name}
+        cdl = clip.metadata["cdl"]
+        if cdl:
+            entry.update(
+                {
+                    "slope": tuple(cdl["asc_sop"]["slope"]),
+                    "offset": tuple(cdl["asc_sop"]["offset"]),
+                    "power": tuple(cdl["asc_sop"]["power"]),
+                    "sat": cdl.get("asc_sat") or 1.0,
+                }
+            )
+        elif color_edits_only:
+            continue
+
+        if clip.markers:
+            # Join markers (*LOC). The data is strictly being stored to parse shot name
+            # Space is added to make parsing much easier and predictable
+            full_clip_loc = " ".join([" "] + [m.name for m in clip.markers])
+            loc_match = re.search(shot_pattern, full_clip_loc)
+            loc_value = loc_match.group("LOC") if loc_match else ""
+
+        # Capture tape and source name
+        cmx_3600 = clip.metadata.get("cmx_3600")
+        if cmx_3600:
+            tape_value = cmx_3600.get("reel", "")
+
+        entry.update(
+            {
+                "tape": tape_value,
+                "LOC": loc_value,
+            }
+        )
+        edl["events"][entry_count] = entry
+
+    # Finish EDL info
+    edl["first_entry"] = 1
+    edl["last_entry"] = entry_count
+
+    return edl
+
+
+def parse_cdl(path):
+    """Parses cdl formatted xml using regex to find Slope, Offset, Power, and Saturation.
+
+    Args:
+        path (str): The path to a grade file that follows ASC xml formatting.
+
+    Returns:
+        dict: A dictionary containing the parsed slope, offset, power, and saturation values, as well as the path to the file.
+    """
+
+    with open(path, "r") as f:
+        cdl_data = f.read().lower()
+
+    slope_pattern = r"<slope>(?P<sR>[-,\d,.]*)[ ]{1}(?P<sG>[-,\d,.]+)[ ]{1}(?P<sB>[-,\d,.]*)</slope>"
+    offset_pattern = r"<offset>(?P<oR>[-,\d,.]*)[ ]{1}(?P<oG>[-,\d,.]+)[ ]{1}(?P<oB>[-,\d,.]*)</offset>"
+    power_pattern = r"<power>(?P<pR>[-,\d,.]*)[ ]{1}(?P<pG>[-,\d,.]+)[ ]{1}(?P<pB>[-,\d,.]*)</power>"
+    sat_pattern = r"<saturation\>(?P<sat>[-,\d,.]+)</saturation\>"
+
+    slope_match = re.search(slope_pattern, cdl_data)
+    if slope_match:
+        slope = tuple(map(float, slope_match.groups()))
+    else:
+        slope = None
+
+    offset_match = re.search(offset_pattern, cdl_data)
+    if offset_match:
+        offset = tuple(map(float, offset_match.groups()))
+    else:
+        offset = None
+
+    power_match = re.search(power_pattern, cdl_data)
+    if power_match:
+        power = tuple(map(float, power_match.groups()))
+    else:
+        power = None
+
+    sat_match = re.search(sat_pattern, cdl_data)
+    sat = float(sat_match.group("sat")) if sat_match else None
+
+    cdl = {
+        "slope": slope,
+        "offset": offset,
+        "power": power,
+        "sat": sat,
+        "file": path,
+    }
+
+    return cdl
