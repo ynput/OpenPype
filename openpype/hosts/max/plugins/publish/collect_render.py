@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Collect Render"""
 import os
-import re
 import pyblish.api
 
 from pymxs import runtime as rt
