@@ -299,7 +299,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         deadline_publish_job_id = response.json()["_id"]
 
         return deadline_publish_job_id
- 
+
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
 
@@ -379,19 +379,24 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         This will result in one instance with two representations:
         `foo` and `xxx`
         """
-
+        do_not_add_review = False
+        if instance.data.get("review") is False:
+            self.log.debug("Instance has review explicitly disabled.")
+            do_not_add_review = True
 
         if isinstance(instance.data.get("expectedFiles")[0], dict):
             instances = create_instances_for_aov(
                 instance, instance_skeleton_data,
-                self.aov_filter, self.skip_integration_repre_list)
+                self.aov_filter, self.skip_integration_repre_list,
+                do_not_add_review)
         else:
             representations = prepare_representations(
                 instance_skeleton_data,
                 instance.data.get("expectedFiles"),
                 self.anatomy,
                 self.aov_filter,
-                self.skip_integration_repre_list
+                self.skip_integration_repre_list,
+                do_not_add_review
             )
 
             if "representations" not in instance_skeleton_data.keys():

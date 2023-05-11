@@ -286,7 +286,8 @@ def _solve_families(families):
 
 
 def prepare_representations(instance, exp_files, anatomy, aov_filter,
-                            skip_integration_repre_list):
+                            skip_integration_repre_list,
+                            do_not_add_review):
     """Create representations for file sequences.
 
     This will return representations of expected files if they are not
@@ -299,7 +300,8 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         exp_files (list): list of expected files
         anatomy (Anatomy):
         aov_filter (dict): add review for specific aov names
-        skip_integration_repre_list (list): exclude specific extensions
+        skip_integration_repre_list (list): exclude specific extensions,
+        do_not_add_review (bool): explicitly skip review
 
     Returns:
         list of representations
@@ -351,6 +353,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         if instance.get("slate"):
             frame_start -= 1
 
+        preview = preview and not do_not_add_review
         rep = {
             "name": ext,
             "ext": ext,
@@ -406,6 +409,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         preview = match_aov_pattern(
             host_name, aov_filter, remainder
         )
+        preview = preview and not do_not_add_review
         if preview:
             rep.update({
                 "fps": instance.get("fps"),
@@ -428,7 +432,8 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
 
 
 def create_instances_for_aov(instance, skeleton, aov_filter,
-                             skip_integration_repre_list):
+                             skip_integration_repre_list,
+                             do_not_add_review):
     """Create instances from AOVs.
 
     This will create new pyblish.api.Instances by going over expected
@@ -437,6 +442,7 @@ def create_instances_for_aov(instance, skeleton, aov_filter,
     Args:
         instance (pyblish.api.Instance): Original instance.
         skeleton (dict): Skeleton instance data.
+        skip_integration_repre_list (list): skip
 
     Returns:
         list of pyblish.api.Instance: Instances created from
@@ -481,12 +487,13 @@ def create_instances_for_aov(instance, skeleton, aov_filter,
         skeleton,
         aov_filter,
         additional_color_data,
-        skip_integration_repre_list
+        skip_integration_repre_list,
+        do_not_add_review
     )
 
 
 def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
-                              skip_integration_repre_list):
+                              skip_integration_repre_list, do_not_add_review):
     """Create instance for each AOV found.
 
     This will create new instance for every AOV it can detect in expected
@@ -496,7 +503,10 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         instance (pyblish.api.Instance): Original instance.
         skeleton (dict): Skeleton data for instance (those needed) later
             by collector.
-        additional_data (dict): ...
+        additional_data (dict): ..
+        skip_integration_repre_list (list): list of extensions that shouldn't
+            be published
+        do_not_addbe _review (bool): explicitly disable review
 
 
     Returns:
@@ -631,7 +641,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         if ext in skip_integration_repre_list:
             rep["tags"].append("delete")
 
-        if preview:
+        if preview and not do_not_add_review:
             new_instance["families"] = _solve_families(new_instance)
 
         new_instance["representations"] = [rep]

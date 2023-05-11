@@ -88,10 +88,16 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             families_transfer=self.families_transfer,
             instance_transfer=self.instance_transfer)
 
+        do_not_add_review = False
+        if instance.data.get("review") is False:
+            self.log.debug("Instance has review explicitly disabled.")
+            do_not_add_review = True
+
         if isinstance(instance.data.get("expectedFiles")[0], dict):
             instances = create_instances_for_aov(
                 instance, instance_skeleton_data,
-                self.aov_filter, self.skip_integration_repre_list)
+                self.aov_filter, self.skip_integration_repre_list,
+                do_not_add_review)
 
         else:
             representations = prepare_representations(
@@ -99,7 +105,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
                 instance.data.get("expectedFiles"),
                 self.anatomy,
                 self.aov_filter,
-                self.skip_integration_repre_list
+                self.skip_integration_repre_list,
+                do_not_add_review
             )
 
             if "representations" not in instance_skeleton_data.keys():
