@@ -188,12 +188,6 @@ def create_skeleton_instance(
     data = instance.data.copy()
     anatomy = instance.context.data["anatomy"]  # type: Anatomy
 
-    families = [data["family"]]
-
-    # pass review to families if marked as review
-    if data.get("review"):
-        families.append("review")
-
     # get time related data from instance (or context)
     time_data = get_time_data_from_instance_or_context(instance)
 
@@ -219,6 +213,12 @@ def create_skeleton_instance(
     family = ("render"
               if "prerender" not in instance.data["families"]
               else "prerender")
+    families = [family]
+
+    # pass review to families if marked as review
+    if data.get("review"):
+        families.append("review")
+
     instance_skeleton_data = {
         "family": family,
         "subset": data["subset"],
