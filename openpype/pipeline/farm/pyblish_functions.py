@@ -353,6 +353,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         if instance.get("slate"):
             frame_start -= 1
 
+        # explicitly disable review by user
         preview = preview and not do_not_add_review
         rep = {
             "name": ext,
@@ -544,14 +545,14 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             if len(cols) != 1:
                 raise ValueError("Only one image sequence type is expected.")  # noqa: E501
             ext = cols[0].tail.lstrip(".")
-            col = list(cols[0])
+            col = cols[0].head
 
         # create subset name `familyTaskSubset_AOV`
         group_name = 'render{}{}{}{}'.format(
             task[0].upper(), task[1:],
             subset[0].upper(), subset[1:])
 
-        cam = [c for c in cameras if c in col.head]
+        cam = [c for c in cameras if c in col]
         if cam:
             if aov:
                 subset_name = '{}_{}_{}'.format(group_name, cam, aov)
@@ -577,8 +578,6 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
 
         app = os.environ.get("AVALON_APP", "")
 
-        preview = False
-
         if isinstance(col, list):
             render_file_name = os.path.basename(col[0])
         else:
@@ -587,10 +586,12 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
 
         preview = match_aov_pattern(app, aov_patterns, render_file_name)
         # toggle preview on if multipart is on
-
         if instance.data.get("multipartExr"):
             log.debug("Adding preview tag because its multipartExr")
             preview = True
+
+        # explicitly disable review by user
+        preview = preview and not do_not_add_review
 
         new_instance = deepcopy(skeleton)
         new_instance["subsetGroup"] = group_name
@@ -641,7 +642,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         if ext in skip_integration_repre_list:
             rep["tags"].append("delete")
 
-        if preview and not do_not_add_review:
+        if preview:
             new_instance["families"] = _solve_families(new_instance)
 
         new_instance["representations"] = [rep]
