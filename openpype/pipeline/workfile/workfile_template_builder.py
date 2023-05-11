@@ -1555,7 +1555,7 @@ class PlaceholderLoadMixin(object):
             else:
                 failed = False
                 self.load_succeed(placeholder, container)
-            self.post_representation_load(placeholder, failed)
+            self.post_placeholder_process(placeholder, failed)
 
         if failed:
             self.log.debug(
@@ -1574,7 +1574,7 @@ class PlaceholderLoadMixin(object):
         if hasattr(placeholder, "load_succeed"):
             placeholder.load_succeed(container)
 
-    def post_representation_load(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is
@@ -1751,7 +1751,7 @@ class PlaceholderCreateMixin(object):
             failed = False
             self.create_succeed(placeholder, creator_instance)
 
-        self.post_representation_load(placeholder, failed)
+        self.post_placeholder_process(placeholder, failed)
 
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
@@ -1761,7 +1761,7 @@ class PlaceholderCreateMixin(object):
         if hasattr(placeholder, "create_succeed"):
             placeholder.create_succeed(creator_instance)
 
-    def post_representation_load(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is
