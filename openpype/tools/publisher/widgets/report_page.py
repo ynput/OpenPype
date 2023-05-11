@@ -1502,9 +1502,6 @@ class ErrorDetailsWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        # Make an offset from logs view
-        # - maybe should not be added here?
-        main_layout.addSpacing(30)
         main_layout.addWidget(inputs_widget, 1)
 
         error_details_top.clicked.connect(self._on_detail_toggle)
@@ -1600,6 +1597,10 @@ class ReportsWidget(QtWidgets.QWidget):
         # Validation details
         # Description and details inputs are in scroll
         # - single scroll for both inputs, they are forced to not use theirs
+        detail_inputs_spacer = QtWidgets.QWidget(pages_widget)
+        detail_inputs_spacer.setMinimumWidth(30)
+        detail_inputs_spacer.setMaximumWidth(30)
+
         detail_input_scroll = QtWidgets.QScrollArea(pages_widget)
 
         detail_inputs_widget = ErrorDetailsWidget(detail_input_scroll)
@@ -1616,6 +1617,7 @@ class ReportsWidget(QtWidgets.QWidget):
         pages_layout = QtWidgets.QHBoxLayout(pages_widget)
         pages_layout.setContentsMargins(0, 0, 0, 0)
         pages_layout.addWidget(logs_view, 1)
+        pages_layout.addWidget(detail_inputs_spacer, 0)
         pages_layout.addWidget(detail_input_scroll, 1)
         pages_layout.addWidget(crash_widget, 1)
 
@@ -1644,6 +1646,7 @@ class ReportsWidget(QtWidgets.QWidget):
         self._actions_widget = actions_widget
         self._detail_inputs_widget = detail_inputs_widget
         self._logs_view = logs_view
+        self._detail_inputs_spacer = detail_inputs_spacer
         self._detail_input_scroll = detail_input_scroll
         self._crash_widget = crash_widget
 
@@ -1679,18 +1682,18 @@ class ReportsWidget(QtWidgets.QWidget):
         return instance_items
 
     def update_data(self):
+        view = self._instances_view
+        action_n_details_visible = False
         if (
             not self._controller.publish_has_crashed
             and self._controller.publish_has_validation_errors
         ):
-            self._views_layout.setCurrentWidget(self._validation_error_view)
-            self._actions_widget.setVisible(True)
-            self._detail_input_scroll.setVisible(True)
-
-        else:
-            self._views_layout.setCurrentWidget(self._instances_view)
-            self._actions_widget.setVisible(False)
-            self._detail_input_scroll.setVisible(False)
+            view = self._validation_error_view
+            action_n_details_visible = True
+        self._views_layout.setCurrentWidget(view)
+        self._actions_widget.setVisible(action_n_details_visible)
+        self._detail_inputs_spacer.setVisible(action_n_details_visible)
+        self._detail_input_scroll.setVisible(action_n_details_visible)
 
         self._crash_widget.setVisible(self._controller.publish_has_crashed)
         self._logs_view.setVisible(not self._controller.publish_has_crashed)
