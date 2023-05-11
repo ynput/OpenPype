@@ -629,7 +629,9 @@ class Choice(QArgument):
                     )
 
             qindex = model.index(index, 0, QtCore.QModelIndex())
-            smodel.setCurrentIndex(qindex, smodel.ClearAndSelect)
+            smodel.setCurrentIndex(
+                qindex, QtCore.QItemSelectionModel.ClearAndSelect
+            )
             self["current"] = options[index]
 
         def reset(items, default=None):
