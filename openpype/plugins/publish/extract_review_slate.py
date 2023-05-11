@@ -28,7 +28,8 @@ class ExtractReviewSlate(publish.Extractor):
 
     SUFFIX = "_slate"
 
-    hosts = ["nuke", "shell"]
+    hosts = ["*"]
+
     optional = True
 
     def process(self, instance):

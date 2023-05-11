@@ -390,6 +390,76 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     return tool_executable_path
 
 
+def _chrome_executable_validation(filepath):
+    """Validate chrome tool executable if can be executed.
+
+    Validation has 2 steps. First is using 'find_executable' to fill possible
+    missing extension or fill directory then launch executable and validate
+    that it can be executed. For that is used '-version' argument which is fast
+    and does not need any other inputs.
+
+    Any possible crash of missing libraries or invalid build should be caught.
+
+    Main reason is to validate if executable can be executed on OS just running
+    which can be issue ob linux machines.
+
+    Note:
+        It does not validate if the executable is really a chrome tool.
+
+    Args:
+        filepath (str): Path to executable.
+
+    Returns:
+        bool: Filepath is valid executable.
+    """
+
+    filepath = find_executable(filepath)
+    if not filepath:
+        return False
+
+    return _check_args_returncode([filepath, "-version"])
+
+
+def get_chrome_tool_path(tool="chrome"):
+    """Path to vendorized FFmpeg executable.
+
+    Args:
+        tool (string): Tool name (ffmpeg, ffprobe, ...).
+            Default is "ffmpeg".
+
+    Returns:
+        str: Full path to ffmpeg executable.
+    """
+
+    if CachedToolPaths.is_tool_cached(tool):
+        return CachedToolPaths.get_executable_path(tool)
+
+    custom_paths_str = os.environ.get("OPENPYPE_CHROME_PATHS") or ""
+    tool_executable_path = find_tool_in_custom_paths(
+        custom_paths_str.split(os.pathsep),
+        tool,
+        _chrome_executable_validation
+    )
+
+    # TODO: Add chrome to vendor tools?
+    # if not tool_executable_path:
+    #     chrome_dir = get_vendor_bin_path("chrome")
+    #     if platform.system().lower() == "windows":
+    #         chrome_dir = os.path.join(chrome_dir, "bin")
+    #     tool_path = find_executable(os.path.join(chrome_dir, tool))
+    #     if tool_path and _chrome_executable_validation(tool_path):
+    #         tool_executable_path = tool_path
+
+    # Look to PATH for the tool
+    if not tool_executable_path:
+        from_path = find_executable(tool)
+        if from_path and _chrome_executable_validation(from_path):
+            tool_executable_path = from_path
+
+    CachedToolPaths.cache_executable_path(tool, tool_executable_path)
+    return tool_executable_path
+
+
 def is_oiio_supported():
     """Checks if oiiotool is configured for this platform.
 

@@ -72,6 +72,42 @@
             "enabled": true,
             "profiles": []
         },
+        "ExtractSlateGlobal": {
+            "enabled": false,
+            "optional": true,
+            "slate_template_path": "",
+            "slate_resources_path": "",
+            "integrate_task_types": [
+                "Paint",
+                "Compositing"
+            ],
+            "profiles": [
+                {
+                    "families": [
+                        "review"
+                    ],
+                    "hosts": [],
+                    "oiio_args": {
+                        "input": [],
+                        "output": []
+                    }
+                },
+                {
+                    "families": [
+                        "render"
+                    ],
+                    "hosts": [],
+                    "oiio_args": {
+                        "input": [
+                            "--colorconvert",
+                            "Rec709",
+                            "linear"
+                        ],
+                        "output": []
+                    }
+                }
+            ]
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [

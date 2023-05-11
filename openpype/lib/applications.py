@@ -1679,7 +1679,7 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     }
 
     ### Starts Alkemy-X Override ###
-    # Get hierarchy environment variables (i.e., SEASON, SHOW, SEQUENCE...)
+    # Get hierarchy environment variables (i.e., SEASON, SHOW, SEQ...)
     context_env.update(get_hierarchy_env(project_doc, asset_doc))
     ### Ends Alkemy-X Override ###
 
