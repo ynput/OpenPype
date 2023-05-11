@@ -1,5 +1,4 @@
 import json
-import os
 
 from maya import cmds
 
@@ -10,6 +9,9 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     PlaceholderPlugin,
     LoadPlaceholderItem,
     PlaceholderLoadMixin,
+    TemplateLoadFailed,
+    TemplateNotFound,
+    TemplateProfileNotFound,
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
@@ -28,13 +30,19 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
     def open_template(self):
         """Open template in current scene.
         """
-        template_preset = self.get_template_preset()
-        template_path = template_preset["path"]
 
-        if not os.path.exists(template_path):
+        try:
+            template_preset = self.get_template_preset()
+            template_path = template_preset["path"]
+
+        except (
+                    TemplateNotFound,
+                    TemplateProfileNotFound,
+                    TemplateLoadFailed
+                ) as e:
             cmds.confirmDialog(
-                title="Warning",
-                message="Template doesn't exist: {}".format(template_path),
+                title="Error",
+                message="An error has occurred:\n{}".format(e),
                 button=["OK"],
                 defaultButton="OK",
             )
