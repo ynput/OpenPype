@@ -4,7 +4,6 @@ from openpype.client import (
     get_version_by_id,
     get_last_version_by_subset_id,
 )
-# from openpype.hosts import resolve
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -18,6 +17,7 @@ from openpype.lib.transcoding import (
     VIDEO_EXTENSIONS,
     IMAGE_EXTENSIONS
 )
+
 
 class LoadClip(plugin.TimelineItemLoader):
     """Load a subset to timeline as clip
@@ -54,8 +54,7 @@ class LoadClip(plugin.TimelineItemLoader):
             })
 
         # load clip to timeline and get main variables
-        timeline_item = plugin.ClipLoader(
-            self, context, **options).load()
+        timeline_item = plugin.ClipLoader(self, context, **options).load()
         namespace = namespace or timeline_item.GetName()
         version = context['version']
         version_data = version.get("data", {})
