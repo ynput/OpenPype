@@ -176,6 +176,20 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
         self._actions_mapping = {}
 
+        self._visible_mode = True
+
+    def _update_visibility(self):
+        self.setVisible(
+            self._visible_mode
+            and self._content_layout.count() > 0
+        )
+
+    def set_visible_mode(self, visible):
+        if self._visible_mode is visible:
+            return
+        self._visible_mode = visible
+        self._update_visibility()
+
     def _clear(self):
         """Remove actions from widget."""
         while self._content_layout.count():
@@ -217,10 +231,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
             action_btn.action_clicked.connect(self._on_action_click)
             self._content_layout.addWidget(action_btn)
 
-        if self._content_layout.count() > 0:
-            self.setVisible(True)
-        else:
-            self.setVisible(False)
+        self._update_visibility()
 
     def _on_action_click(self, plugin_id, action_id):
         self._controller.run_action(plugin_id, action_id)
@@ -1683,17 +1694,18 @@ class ReportsWidget(QtWidgets.QWidget):
 
     def update_data(self):
         view = self._instances_view
-        action_n_details_visible = False
+        validation_error_mode = False
         if (
             not self._controller.publish_has_crashed
             and self._controller.publish_has_validation_errors
         ):
             view = self._validation_error_view
-            action_n_details_visible = True
+            validation_error_mode = True
+
+        self._actions_widget.set_visible_mode(validation_error_mode)
+        self._detail_inputs_spacer.setVisible(validation_error_mode)
+        self._detail_input_scroll.setVisible(validation_error_mode)
         self._views_layout.setCurrentWidget(view)
-        self._actions_widget.setVisible(action_n_details_visible)
-        self._detail_inputs_spacer.setVisible(action_n_details_visible)
-        self._detail_input_scroll.setVisible(action_n_details_visible)
 
         self._crash_widget.setVisible(self._controller.publish_has_crashed)
         self._logs_view.setVisible(not self._controller.publish_has_crashed)
@@ -1724,7 +1736,8 @@ class ReportsWidget(QtWidgets.QWidget):
             self._validation_error_view.get_selected_items())
         error_info = self._validation_errors_by_id.get(title_id)
         if error_info is None:
-            # TODO handle this case
+            self._actions_widget.set_error_info(None)
+            self._detail_inputs_widget.set_error_item(None)
             return
 
         self._logs_view.set_instances_filter(instance_ids)
