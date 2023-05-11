@@ -472,6 +472,7 @@ def create_instances_for_aov(instance, skeleton, aov_filter,
             colorspace_template, anatomy)
     except ValueError as e:
         log.warning(e)
+        additional_color_data["colorspaceTemplate"] = colorspace_template
 
     # if there are subset to attach to and more than one AOV,
     # we cannot proceed.
