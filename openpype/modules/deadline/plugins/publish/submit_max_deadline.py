@@ -158,7 +158,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
     def from_published_scene(self, replace_in_path=True):
         instance = self._instance
-        if instance.data["renderer"]== "Redshift_renderer":
+        if instance.data["renderer"] == "Redshift_renderer":
             file_path = self.scene_path
             return file_path
 
