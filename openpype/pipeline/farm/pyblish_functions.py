@@ -269,8 +269,11 @@ def create_skeleton_instance(
     return instance_skeleton_data
 
 
-def _solve_families(families):
-    """Solve families.
+def _add_review_families(families):
+    """Adds review flag to families.
+
+    Handles situation when new instances are created which should have review
+    in families. In that case they should have 'ftrack' too.
 
     TODO: This is ugly and needs to be refactored. Ftrack family should be
           added in different way (based on if the module is enabled?)
@@ -382,7 +385,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         representations.append(rep)
 
         if preview:
-            instance["families"] = _solve_families(instance["families"])
+            instance["families"] = _add_review_families(instance["families"])
 
     # add remainders as representations
     for remainder in remainders:
@@ -416,7 +419,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
                 "fps": instance.get("fps"),
                 "tags": ["review"]
             })
-            instance["families"] = _solve_families(instance["families"])
+            instance["families"] = _add_review_families(instance["families"])
 
         already_there = False
         for repre in instance.get("representations", []):
@@ -643,7 +646,8 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             rep["tags"].append("delete")
 
         if preview:
-            new_instance["families"] = _solve_families(new_instance)
+            new_instance["families"] = _add_review_families(
+                new_instance["families"])
 
         new_instance["representations"] = [rep]
 
