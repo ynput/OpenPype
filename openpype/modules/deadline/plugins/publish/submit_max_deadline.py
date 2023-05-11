@@ -14,7 +14,6 @@ from openpype.pipeline import (
 )
 from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
-    get_current_renderer,
     get_multipass_setting
 )
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
@@ -157,6 +156,12 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         return plugin_payload
 
+    def from_published_scene(self, replace_in_path=True):
+        instance = self._instance
+        if instance.data["renderer"]== "Redshift_renderer":
+            file_path = self.scene_path
+            return file_path
+
     def process_submission(self):
 
         instance = self._instance
@@ -185,6 +190,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
+        if instance.data["renderer"] == "Redshift_Renderer":
+            self.log.debug("Using Redshift...published scene wont be used..")
         plugin_data = {}
         project_setting = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"]
@@ -202,7 +209,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         old_output_dir = os.path.dirname(expected_files[0])
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
-        filepath = self.from_published_scene()
+        filepath = self.scene_path
 
         def _clean_name(path):
             return os.path.splitext(os.path.basename(path))[0]
@@ -214,9 +221,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         output_beauty = output_beauty.replace("\\", "/")
         plugin_data["RenderOutput"] = output_beauty
 
-        renderer_class = get_current_renderer()
-        renderer = str(renderer_class).split(":")[0]
-        if renderer in [
+        if instance.data["renderer"] in [
             "ART_Renderer",
             "Redshift_Renderer",
             "V_Ray_6_Hotfix_3",
@@ -227,6 +232,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             render_elem_list = RenderSettings().get_render_element()
             for i, element in enumerate(render_elem_list):
                 element = element.replace(orig_scene, new_scene)
+                element = element.replace("\\", "/")
                 plugin_data["RenderElementOutputFilename%d" % i] = element   # noqa
 
         self.log.debug("plugin data:{}".format(plugin_data))

@@ -5,7 +5,7 @@ import pyblish.api
 
 from pymxs import runtime as rt
 from openpype.pipeline import get_current_asset_name
-from openpype.hosts.max.api.lib import get_max_version
+from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
@@ -38,7 +38,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         version_doc = get_last_version_by_subset_name(project_name,
                                                       instance.name,
                                                       asset_id)
-
+        renderer_class = get_current_renderer()
+        renderer = str(renderer_class).split(":")[0]
         self.log.debug("version_doc: {0}".format(version_doc))
         version_int = 1
         if version_doc:
@@ -59,6 +60,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             "source": filepath,
             "expectedFiles": render_layer_files,
             "plugin": "3dsmax",
+            "renderer": renderer,
             "frameStart": context.data['frameStart'],
             "frameEnd": context.data['frameEnd'],
             "version": version_int,
