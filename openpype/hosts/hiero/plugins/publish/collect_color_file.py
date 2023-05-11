@@ -12,21 +12,26 @@ from openpype.hosts.hiero import api as phiero
 LUTS_3D = ["cube", "3dl", "csp", "lut"]
 LUTS_2D = ["ccc", "cc", "cdl"]
 
-# EDL is not by nature a color file nor a LUT. For this reason it's seperated from previous categories
+# EDL is not by nature a color file nor a LUT. For this reason it's seperated
+# from previous categories
 COLOR_FILE_EXTS = LUTS_2D + LUTS_3D + ["edl"]
 
 
 class MissingColorFile(QtWidgets.QDialog):
-    """Constructs a dialog that allows user to locate a grade file on disk using any of the valid extensions in the
-    global variable COLOR_FILE_EXTS. If the path leads to an edl file the user can select which event in the edl they
-    would like to target.
+    """Constructs a dialog that allows user to locate a grade file on disk
+    using any of the valid extensions in the global variable COLOR_FILE_EXTS.
+    If the path leads to an edl file the user can select which event in the edl
+    they would like to target.
 
-    Caveat: No ability to select CDL ID from CCC file. What happens if CCC is found and has more than one ID.
+    Caveat: No ability to select CDL ID from CCC file. What happens if CCC is
+    found and has more than one ID.
 
     Parameters:
         - shot_name (str): The name of the shot to locate the color file for.
-        - source_name (str): The name of the source to locate the color file for.
-        - main_grade (dict): A dictionary containing the SOPS values for the main grade.
+        - source_name (str): The name of the source to locate the color file
+            for.
+        - main_grade (dict): A dictionary containing the SOPS values for the
+            main grade.
 
     Attributes:
         - data (dict): Is utilized to store information gathered from UI.
@@ -36,7 +41,8 @@ class MissingColorFile(QtWidgets.QDialog):
                 - "power" (tuple): CDL Power.
                 - "sat" (float): CDL Saturation.
             - "path" (str): Path to file that user selected.
-            - "ignore" (bool): Stores whether the grade will be ignored during color file integration.
+            - "ignore" (bool): Stores whether the grade will be ignored during
+                color file integration.
             - "type" (str): File type that was selected by user.
         - default_browser_path (str): The default path for the file browser.
         - prev_file_path_input (str): The previous file path input.
@@ -70,7 +76,8 @@ class MissingColorFile(QtWidgets.QDialog):
         header_font = QtGui.QFont()
         header_font.setPointSize(20)
 
-        # All layouts are added to widgets. This allows all content to be added as widgets
+        # All layouts are added to widgets. This allows all content to be added
+        # as widgets
         self.content_widget = [QtWidgets.QWidget(self)]
 
         # Info Layout
@@ -80,9 +87,14 @@ class MissingColorFile(QtWidgets.QDialog):
         self.information_label_1 = QtWidgets.QLabel(info_msg_1)
         self.information_label_1.setFont(header_font)
         info_layout.addWidget(self.information_label_1)
-        info_layout.setAlignment(self.information_label_1, QtCore.Qt.AlignCenter)
-        info_msg_2 = """Shot: {0}\nPlate: {1}\n\nPlease locate Grade File and determine if it's the shot Main Grade""".format(
-            self.shot_name, self.source_name
+        info_layout.setAlignment(
+            self.information_label_1, QtCore.Qt.AlignCenter
+        )
+        info_msg_2 = (
+            "Shot: {0}\nPlate: {1}\n\nPlease locate Grade File and "
+            "determine if it's the shot Main Grade".format(
+                self.shot_name, self.source_name
+            )
         )
         self.information_label_2 = QtWidgets.QLabel(info_msg_2)
         info_layout.addWidget(self.information_label_2)
@@ -321,7 +333,9 @@ class MissingColorFile(QtWidgets.QDialog):
         """
         file_path = self.file_path_input.text()
         file_extension = file_path.lower().rsplit(".", 1)[-1]
-        if file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
+        if file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(
+            file_path
+        ):
             cdl = phiero.parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
@@ -356,7 +370,9 @@ class MissingColorFile(QtWidgets.QDialog):
             # Right after parse update edl info
             self.set_edl_info()
 
-        elif file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(file_path):
+        elif file_extension in ["ccc", "cc", "cdl"] and os.path.isfile(
+            file_path
+        ):
             cdl = phiero.parse_cdl(file_path)
             self.set_sops_widgets(
                 cdl.get("slope"),
@@ -365,7 +381,10 @@ class MissingColorFile(QtWidgets.QDialog):
                 cdl.get("sat"),
             )
 
-        if not (file_extension in ["ccc", "cc", "cdl", "edl"] and os.path.isfile(file_path)):
+        if not (
+            file_extension in ["ccc", "cc", "cdl", "edl"]
+            and os.path.isfile(file_path)
+        ):
             self.set_sops_widgets(None, None, None, None)
         else:
             self.prev_file_path_input = color_file_path
@@ -485,7 +504,8 @@ class MissingColorFile(QtWidgets.QDialog):
         self.data = data
 
     def check_and_accept(self):
-        # Test whether or not the new file path gives the proper result and if not then warn user
+        # Test whether or not the new file path gives the proper result and if
+        # not then warn user
         color_file_path = self.file_path_input.text()
         color_file_path_ext = color_file_path.rsplit(".", 1)[-1]
 
@@ -514,19 +534,22 @@ class MissingColorFile(QtWidgets.QDialog):
             QtWidgets.QMessageBox.information(
                 hiero.ui.mainWindow(),
                 "Info",
-                "Please make sure the file you selected is a color file type\n\n'{0}'".format(
-                    ", ".join(COLOR_FILE_EXTS)
-                ),
+                "Please make sure the file you selected is a color file type\n"
+                "\n'{0}'".format(", ".join(COLOR_FILE_EXTS)),
             )
             return
 
         self.set_data()
         if self.data["type"] == "edl":
-            if self.data["cdl"]["slope"][0] == "NA" and color_file_path_ext == "edl":
+            if (
+                self.data["cdl"]["slope"][0] == "NA"
+                and color_file_path_ext == "edl"
+            ):
                 QtWidgets.QMessageBox.information(
                     hiero.ui.mainWindow(),
                     "Info",
-                    "No color data found!\n\nIf this shot needs a blank grade press 'Blank Grade'",
+                    "No color data found!\n\nIf this shot needs a blank grade "
+                    "press 'Blank Grade'",
                 )
                 return
 
@@ -542,88 +565,102 @@ def get_files(package_path, filters):
     files = {}
     for path in Path(package_path).glob("**/*"):
         # path.suffix has a prefixed . that needs to be matched
-        if path.suffix in [f'.{f}' for f in filters]:
+        if path.suffix in [f".{f}" for f in filters]:
             files.setdefault(
-                path.suffix.replace(".", ""),
-                [path.resolve().__str__()]).append(path.resolve().__str__()
-            )
+                path.suffix.replace(".", ""), [path.resolve().__str__()]
+            ).append(path.resolve().__str__())
 
     return files
 
 
 def priority_color_file(color_files, item_name, source_name):
-    """Returns the closest matching file from a list of color files given an item and a source name.
+    """Returns the closest matching file from a list of color files given an
+    item and a source name.
 
-    Priority is given to the closest match of source_name then item_name as well as found file type.
-    The function searches for non-EDL files first, followed by EDL files.
+    Priority is given to the closest match of source_name then item_name as
+    well as found file type. The function searches for non-EDL files first,
+    followed by EDL files.
 
     Args:
-        color_files (dict): A dictionary containing color files organized by type.
+        color_files (dict): A dictionary containing color files organized by
+            type.
         item_name (str): The name of the item to match.
         source_name (str): The name of the source to match.
 
     Returns:
-        tuple or None: A tuple containing the priority level, CDL information, and path of the matching color file,
-        or None if no matches are found. Priority level is determined based on the match between the item and source names
-        as well as the file type. CDL information is extracted from the matching file if it's not an EDL file.
+        tuple or None: A tuple containing the priority level, CDL information,
+            and path of the matching color file, or None if no matches are
+            found. Priority level is determined based on the match between the
+            item and source names as well as the file type. CDL information is
+            extracted from the matching file if it's not an EDL file.
     """
 
     source_name = source_name.lower()
     matches = []
     for color_ext in COLOR_FILE_EXTS:
         ext_color_files = color_files.get(color_ext)
-        if ext_color_files:
-            for color_file in ext_color_files:
-                # Check non edls first. Sometimes edls don't carry ground truth SOPS
-                if color_ext != "edl":
-                    # Name match priority
+        if not ext_color_files:
+            continue
+
+        for color_file in ext_color_files:
+            # Check non edls first. Sometimes edls don't carry ground truth
+            # SOPS
+            if color_ext != "edl":
+                # Name match priority
+                priority = None
+                # Remove extension and ignore case
+                color_file_name = os.path.splitext(
+                    os.path.basename(color_file)
+                )[0].lower()
+                # Incase file name is wack
+                if (
+                    color_file_name.endswith("_ccc")
+                    or color_file_name.endswith("_cc")
+                    or color_file_name.endswith("_cdl")
+                ):
+                    color_file_name = (
+                        color_file_name.replace("_ccc", "")
+                        .replace("_cc", "")
+                        .replace("_cdl", "")
+                    )
+
+                if source_name == color_file_name:
+                    priority = 0
+                elif item_name == color_file_name:
+                    priority = 8
+
+                if priority:
+                    # Distinguish type priority
+                    if color_ext == "cc":
+                        priority += 0
+                    elif color_ext == "ccc":
+                        priority += 1
+                    # EDL is priority += 2
+                    elif color_ext == "cdl":
+                        priority += 3
+
+                    cdl = phiero.parse_cdl(color_file)
+                    matches.append((priority, cdl, color_file))
+            else:
+                edits = phiero.parse_edl_events(
+                    color_file, color_edits_only=True
+                )
+                for edit, edl_event in edits["events"].items():
                     priority = None
-                    # Remove extension and ignore case
-                    color_file_name = os.path.splitext(os.path.basename(color_file))[0].lower()
-                    # Incase file name is wack
-                    if (
-                        color_file_name.endswith("_ccc")
-                        or color_file_name.endswith("_cc")
-                        or color_file_name.endswith("_cdl")
-                    ):
-                        color_file_name = (
-                            color_file_name.replace("_ccc", "")
-                            .replace("_cc", "")
-                            .replace("_cdl", "")
-                        )
+                    edl_event = edits["events"][edit]
+                    cdl = {
+                        "slope": edl_event["slope"],
+                        "offset": edl_event["offset"],
+                        "power": edl_event["power"],
+                        "sat": edl_event["sat"],
+                    }
+                    loc_name = edl_event["LOC"].lower()
+                    if source_name == loc_name:
+                        priority = 2
+                    elif item_name == loc_name:
+                        priority = 10
 
-                    if source_name == color_file_name:
-                        priority = 0
-                    elif item_name == color_file_name:
-                        priority = 8
-
-                    if priority is not None:
-                        # Distinguish type priority
-                        if color_ext == "cc":
-                            priority += 0
-                        elif color_ext == "ccc":
-                            priority += 1
-                        # EDL is priority += 2
-                        elif color_ext == "cdl":
-                            priority += 3
-
-                        cdl = phiero.parse_cdl(color_file)
-                        matches.append((priority, cdl, color_file))
-                else:
-                    edits = phiero.parse_edl_events(color_file, color_edits_only=True)
-                    for edit, edl_event in edits["events"].items():
-                        edl_event = edits["events"][edit]
-                        cdl = {
-                            "slope": edl_event["slope"],
-                            "offset": edl_event["offset"],
-                            "power": edl_event["power"],
-                            "sat": edl_event["sat"],
-                        }
-                        loc_name = edl_event["LOC"].lower()
-                        if source_name == loc_name:
-                            priority = 2
-                        elif item_name == loc_name:
-                            priority = 10
+                    if priority:
                         matches.append((priority, cdl, color_file))
 
     if matches:
@@ -643,7 +680,9 @@ def get_color_file(source_path, item_name, source_name):
     )
 
     incoming_path = os.path.dirname(source_path.split("/" + package_name)[0])
-    incoming_packages = [d for d in sorted(glob(incoming_path + "/*")) if os.path.isdir(d)]
+    incoming_packages = [
+        d for d in sorted(glob(incoming_path + "/*")) if os.path.isdir(d)
+    ]
 
     # Create Package list
     sorted_incoming = sorted(
@@ -667,7 +706,9 @@ def get_color_file(source_path, item_name, source_name):
         color_files = get_files(path, COLOR_FILE_EXTS)
 
         # Prioritize which color files will be used
-        priority, cdl, color_file = priority_color_file(color_files, item_name, source_name)
+        priority, cdl, color_file = priority_color_file(
+            color_files, item_name, source_name
+        )
         if color_file:
             break
 
@@ -696,7 +737,9 @@ class CollectColorFile(pyblish.api.InstancePlugin):
         incoming_match = re.match(incoming_pattern, source_path)
         color_info = {}
         if incoming_match:
-            priority, cdl, color_file = get_color_file(source_path, item_name, source_name)
+            priority, cdl, color_file = get_color_file(
+                source_path, item_name, source_name
+            )
             if color_file:
                 color_ext = color_file.rsplit(".", 1)[-1]
 

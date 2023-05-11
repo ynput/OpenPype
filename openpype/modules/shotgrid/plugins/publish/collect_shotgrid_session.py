@@ -76,7 +76,9 @@ class CollectShotgridSession(pyblish.api.ContextPlugin):
 
         ### Starts Alkemy-X Override ###
         # login = get_login() or os.getenv("OPENPYPE_SG_USER")
-        login = get_login() or os.getenv("OPENPYPE_SG_USER") or os.getenv("USER")
+        login = (
+            get_login() or os.getenv("OPENPYPE_SG_USER") or os.getenv("USER")
+        )
         ### Ends Alkemy-X Override ###
 
         if not login:
