@@ -21,7 +21,10 @@ from openpype.pipeline.publish import (
     AbstractMetaInstancePlugin,
     KnownPublishError
 )
-from openpype.pipeline.publish.lib import replace_published_scene
+from openpype.pipeline.publish.lib import (
+    replace_published_scene,
+    get_published_workfile_instance
+)
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
