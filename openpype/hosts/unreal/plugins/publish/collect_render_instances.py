@@ -3,6 +3,7 @@ from pathlib import Path
 
 import unreal
 
+from openpype.pipeline import get_current_project_name
 from openpype.pipeline import Anatomy
 from openpype.hosts.unreal.api import pipeline
 import pyblish.api
@@ -81,12 +82,13 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                     self.log.debug(f"new instance data: {new_data}")
 
                     try:
-                        project = os.environ.get("AVALON_PROJECT")
+                        project = get_current_project_name()
                         anatomy = Anatomy(project)
                         root = anatomy.roots['renders']
-                    except Exception:
-                        raise Exception(
-                            "Could not find render root in anatomy settings.")
+                    except Exception as e:
+                        raise Exception((
+                            "Could not find render root "
+                            "in anatomy settings.")) from e
 
                     render_dir = f"{root}/{project}/{s.get('output')}"
                     render_path = Path(render_dir)
