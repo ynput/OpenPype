@@ -51,10 +51,10 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
             template_path = template_preset["path"]
 
         except (
-                    TemplateNotFound,
-                    TemplateProfileNotFound,
-                    TemplateLoadFailed
-                ) as e:
+            TemplateNotFound,
+            TemplateProfileNotFound,
+            TemplateLoadFailed
+        ) as e:
             nuke.critical("An error has occurred:\n{}".format(e))
             return
 

@@ -36,10 +36,10 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             template_path = template_preset["path"]
 
         except (
-                    TemplateNotFound,
-                    TemplateProfileNotFound,
-                    TemplateLoadFailed
-                ) as e:
+            TemplateNotFound,
+            TemplateProfileNotFound,
+            TemplateLoadFailed
+        ) as e:
             cmds.confirmDialog(
                 title="Error",
                 message="An error has occurred:\n{}".format(e),
