@@ -394,6 +394,7 @@ class PublishReportMaker:
             fname, line_no, func, exc = exception.traceback
             output.append({
                 "type": "error",
+                "is_validation_error": result["is_validation_error"],
                 "msg": str(exception),
                 "filename": str(fname),
                 "lineno": str(line_no),
@@ -2469,14 +2470,14 @@ class PublisherController(BasePublisherController):
             plugin, self._publish_context, instance
         )
 
-        self._publish_report.add_result(result)
-
         exception = result.get("error")
         if exception:
+            has_validation_error = False
             if (
                 isinstance(exception, PublishValidationError)
                 and not self.publish_has_validated
             ):
+                has_validation_error = True
                 self._add_validation_error(result)
 
             else:
@@ -2489,6 +2490,10 @@ class PublisherController(BasePublisherController):
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True
+
+            result["is_validation_error"] = has_validation_error
+
+        self._publish_report.add_result(result)
 
         self._publish_next_process()
 
