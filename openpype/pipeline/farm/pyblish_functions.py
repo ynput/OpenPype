@@ -210,6 +210,7 @@ def create_skeleton_instance(
         log = Logger.get_logger("farm_publishing")
         log.warning(("Could not find root path for remapping \"{}\". "
                      "This may cause issues.").format(source))
+
     family = ("render"
               if "prerender" not in instance.data["families"]
               else "prerender")
@@ -594,11 +595,12 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             log.debug("Adding preview tag because its multipartExr")
             preview = True
 
+        new_instance = deepcopy(skeleton)
+        new_instance["subset"] = subset_name
+        new_instance["subsetGroup"] = group_name
+
         # explicitly disable review by user
         preview = preview and not do_not_add_review
-
-        new_instance = deepcopy(skeleton)
-        new_instance["subsetGroup"] = group_name
         if preview:
             new_instance["review"] = True
 
