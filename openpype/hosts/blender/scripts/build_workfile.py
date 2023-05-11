@@ -866,7 +866,6 @@ def build_lipsync(project_name: str, shot_name: str):
             load_subset(
                 project_name,
                 representation,
-                "rigMain",
                 "LinkRigLoader",
             )
         else:
