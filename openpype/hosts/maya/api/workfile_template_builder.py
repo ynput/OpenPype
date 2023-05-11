@@ -268,11 +268,13 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             if ref_node:
                 ref_root = cmds.referenceQuery(root, nodes=True)[0]
                 ref_root = (
-                    cmds.listRelatives(ref_root, parent=True) or [ref_root]
+                    cmds.listRelatives(ref_root, parent=True, path=True) or
+                    [ref_root]
                 )
                 nodes_to_parent.extend(ref_root)
                 continue
             if root.endswith("_RN"):
+                # Backwards compatibility for hardcoded reference names.
                 refRoot = cmds.referenceQuery(root, n=True)[0]
                 refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
                 nodes_to_parent.extend(refRoot)
