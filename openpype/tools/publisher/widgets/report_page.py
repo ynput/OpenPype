@@ -978,20 +978,28 @@ class LogIconFrame(QtWidgets.QFrame):
         (50, QtGui.QColor("#ff4f75")),
     ))
     _error_pix = None
+    _validation_error_pix = None
 
-    def __init__(self, parent, log_type, log_level=None):
+    def __init__(self, parent, log_type, log_level, is_validation_error):
         super(LogIconFrame, self).__init__(parent)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self._is_record = log_type == "record"
         self._is_error = log_type == "error"
+        self._is_validation_error = bool(is_validation_error)
         self._log_color = self.level_to_color.get(log_level)
+
+    @classmethod
+    def get_validation_error_icon(cls):
+        if cls._validation_error_pix is None:
+            cls._validation_error_pix = get_pixmap("warning")
+        return cls._validation_error_pix
 
     @classmethod
     def get_error_icon(cls):
         if cls._error_pix is None:
-            cls._error_pix = get_pixmap("warning")
+            cls._error_pix = get_pixmap("error")
         return cls._error_pix
 
     def minimumSizeHint(self):
@@ -1009,19 +1017,24 @@ class LogIconFrame(QtWidgets.QFrame):
         rect = self.rect()
         new_size = min(rect.width(), rect.height())
         new_rect = QtCore.QRect(1, 1, new_size - 2, new_size - 2)
-        if self._is_record:
-            painter.setBrush(self._log_color)
-            painter.drawEllipse(new_rect)
-        elif self._is_error:
-            error_icon = self.get_error_icon()
+        if self._is_error:
+            if self._is_validation_error:
+                error_icon = self.get_validation_error_icon()
+            else:
+                error_icon = self.get_error_icon()
             scaled_error_icon = error_icon.scaled(
                 new_rect.size(),
                 QtCore.Qt.KeepAspectRatio,
                 QtCore.Qt.SmoothTransformation
             )
             painter.drawPixmap(new_rect, scaled_error_icon)
+
         else:
-            painter.setBrush(QtGui.QColor(255, 255, 255))
+            if self._is_record:
+                color = self._log_color
+            else:
+                color = QtGui.QColor(255, 255, 255)
+            painter.setBrush(color)
             painter.drawEllipse(new_rect)
         painter.end()
 
@@ -1039,7 +1052,8 @@ class LogItemWidget(QtWidgets.QWidget):
         super(LogItemWidget, self).__init__(parent)
 
         type_flag, level_n = self._get_log_info(log)
-        icon_label = LogIconFrame(self, log["type"], level_n)
+        icon_label = LogIconFrame(
+            self, log["type"], level_n, log.get("is_validation_error"))
         message_label = QtWidgets.QLabel(log["msg"], self)
         message_label.setObjectName("PublishLogMessage")
         message_label.setTextInteractionFlags(
