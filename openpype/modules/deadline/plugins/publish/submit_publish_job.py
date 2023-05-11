@@ -165,6 +165,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
+        anatomy = instance.context.data['anatomy']
+
         # instance.data.get("subset") != instances[0]["subset"]
         # 'Main' vs 'renderMain'
         override_version = None
@@ -172,7 +174,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if instance_version != 1:
             override_version = instance_version
         output_dir = self._get_publish_folder(
-            instance.context.data['anatomy'],
+            anatomy,
             deepcopy(instance.data["anatomyData"]),
             instance.data.get("asset"),
             instances[0]["subset"],
@@ -183,7 +185,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, rootless_metadata_path = \
-            create_metadata_path(instance, self.anatomy)
+            create_metadata_path(instance, anatomy)
 
         environment = {
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
@@ -263,13 +265,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.info("Adding tile assembly jobs as dependencies...")
             job_index = 0
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
-                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                payload["JobInfo"]["JobDependency{}".format(
+                    job_index)] = assembly_id  # noqa: E501
                 job_index += 1
         elif instance.data.get("bakingSubmissionJobs"):
             self.log.info("Adding baking submission jobs as dependencies...")
             job_index = 0
             for assembly_id in instance.data["bakingSubmissionJobs"]:
-                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                payload["JobInfo"]["JobDependency{}".format(
+                    job_index)] = assembly_id  # noqa: E501
                 job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
@@ -300,25 +304,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         return deadline_publish_job_id
 
-    def _solve_families(self, instance, preview=False):
-        families = instance.get("families")
-
-        # if we have one representation with preview tag
-        # flag whole instance for review and for ftrack
-        if preview:
-            if "ftrack" not in families:
-                if os.environ.get("FTRACK_SERVER"):
-                    self.log.debug(
-                        "Adding \"ftrack\" to families because of preview tag."
-                    )
-                    families.append("ftrack")
-            if "review" not in families:
-                self.log.debug(
-                    "Adding \"review\" to families because of preview tag."
-                )
-                families.append("review")
-            instance["families"] = families
-
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
         """Process plugin.
@@ -334,6 +319,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if not instance.data.get("farm"):
             self.log.info("Skipping local instance.")
             return
+
+        anatomy = instance.context.data["anatomy"]
 
         instance_skeleton_data = create_skeleton_instance(
             instance, families_transfer=self.families_transfer,
@@ -393,7 +380,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             representations = prepare_representations(
                 instance_skeleton_data,
                 instance.data.get("expectedFiles"),
-                self.anatomy,
+                anatomy,
                 self.aov_filter,
                 self.skip_integration_repre_list,
                 do_not_add_review
@@ -509,9 +496,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             publish_job.update({"ftrack": ftrack})
 
         metadata_path, rootless_metadata_path = \
-            create_metadata_path(instance, self.anatomy)
+            create_metadata_path(instance, anatomy)
 
-        self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
             json.dump(publish_job, f, indent=4, sort_keys=True)
 
