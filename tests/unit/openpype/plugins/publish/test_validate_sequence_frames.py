@@ -180,5 +180,23 @@ class TestValidateSequenceFrames(BaseTest):
             plugin.process(instance)
         assert ("Missing frames: [1002]" in str(excinfo.value))
 
+    def test_validate_sequence_frames_slate(self, instance, plugin):
+        representations = [
+            {
+                "ext": "exr",
+                "files": [
+                    "Main_beauty.1000.exr",
+                    "Main_beauty.1001.exr",
+                    "Main_beauty.1002.exr",
+                    "Main_beauty.1003.exr"
+                ]
+            }
+        ]
+        instance.data["slate"] = True
+        instance.data["representations"] = representations
+        instance.data["frameEnd"] = 1003
+
+        plugin.process(instance)
+
 
 test_case = TestValidateSequenceFrames()

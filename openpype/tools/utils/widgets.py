@@ -41,7 +41,28 @@ class FocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
             super(FocusDoubleSpinBox, self).wheelEvent(event)
 
 
-class CustomTextComboBox(QtWidgets.QComboBox):
+class ComboBox(QtWidgets.QComboBox):
+    """Base of combobox with pre-implement changes used in tools.
+
+    Combobox is using styled delegate by default so stylesheets are propagated.
+
+    Items are not changed on scroll until the combobox is in focus.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return super(ComboBox, self).wheelEvent(event)
+
+
+class CustomTextComboBox(ComboBox):
     """Combobox which can have different text showed."""
 
     def __init__(self, *args, **kwargs):
@@ -253,6 +274,9 @@ class PixmapLabel(QtWidgets.QLabel):
         self._empty_pixmap = QtGui.QPixmap(0, 0)
         self._source_pixmap = pixmap
 
+        self._last_width = 0
+        self._last_height = 0
+
     def set_source_pixmap(self, pixmap):
         """Change source image."""
         self._source_pixmap = pixmap
@@ -262,6 +286,12 @@ class PixmapLabel(QtWidgets.QLabel):
         size = self.fontMetrics().height()
         size += size % 2
         return size, size
+
+    def minimumSizeHint(self):
+        width, height = self._get_pix_size()
+        if width != self._last_width or height != self._last_height:
+            self._set_resized_pix()
+        return QtCore.QSize(width, height)
 
     def _set_resized_pix(self):
         if self._source_pixmap is None:
@@ -276,6 +306,8 @@ class PixmapLabel(QtWidgets.QLabel):
                 QtCore.Qt.SmoothTransformation
             )
         )
+        self._last_width = width
+        self._last_height = height
 
     def resizeEvent(self, event):
         self._set_resized_pix()
