@@ -90,6 +90,8 @@ class CreateSaver(NewCreator):
         tools = comp.GetToolList(False, "Saver").values()
         for tool in tools:
             data = self.get_managed_tool_data(tool)
+            if not data:
+                continue
 
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
