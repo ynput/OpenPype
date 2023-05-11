@@ -17,7 +17,7 @@ try:
 except Exception:
     python_path = sys.base_prefix
     if python_path is None:
-        print("Can't find any any python environment.")
+        print("Can't find any python environment.")
 
     print("Assuming no Qt library is installed..")
     print(f"Installing PySide2 for Python: {python_path}")
