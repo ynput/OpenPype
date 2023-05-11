@@ -221,7 +221,12 @@ class PublishReportMaker:
 
     def _add_plugin_data_item(self, plugin):
         if plugin in self._stored_plugins:
-            raise ValueError("Plugin is already stored")
+            # A plugin would be processed more than once. What can cause it:
+            #   - there is a bug in controller
+            #   - plugin class is imported into multiple files
+            #       - this can happen even with base classes from 'pyblish'
+            raise ValueError(
+                "Plugin '{}' is already stored".format(str(plugin)))
 
         self._stored_plugins.append(plugin)
 
