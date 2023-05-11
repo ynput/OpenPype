@@ -515,47 +515,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         with open(metadata_path, "w") as f:
             json.dump(publish_job, f, indent=4, sort_keys=True)
 
-    def _extend_frames(self, asset, subset, start, end):
-        """Get latest version of asset nad update frame range.
-
-        Based on minimum and maximuma values.
-
-        Arguments:
-            asset (str): asset name
-            subset (str): subset name
-            start (int): start frame
-            end (int): end frame
-
-        Returns:
-            (int, int): upddate frame start/end
-
-        """
-        # Frame comparison
-        prev_start = None
-        prev_end = None
-
-        project_name = legacy_io.active_project()
-        version = get_last_version_by_subset_name(
-            project_name,
-            subset,
-            asset_name=asset
-        )
-
-        # Set prev start / end frames for comparison
-        if not prev_start and not prev_end:
-            prev_start = version["data"]["frameStart"]
-            prev_end = version["data"]["frameEnd"]
-
-        updated_start = min(start, prev_start)
-        updated_end = max(end, prev_end)
-
-        self.log.info(
-            "Updating start / end frame : "
-            "{} - {}".format(updated_start, updated_end)
-        )
-
-        return updated_start, updated_end
-
     def _get_publish_folder(self, anatomy, template_data,
                             asset, subset,
                             family='render', version=None):
