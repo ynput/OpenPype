@@ -3937,7 +3937,7 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     return capture_preset or {}
 
 
-def create_rig_animation_instance(nodes, context, namespace, log=None):
+def create_rig_animation_instance(nodes, context, namespace, options, log=None):
     """Create an animation publish instance for loaded rigs.
 
     See the RecreateRigAnimationInstance inventory action on how to use this
@@ -3982,6 +3982,6 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
             creator_plugin,
             name=namespace,
             asset=asset,
-            options={"useSelection": True},
+            options=options.update({"useSelection": True}),
             data={"dependencies": dependency}
         )
