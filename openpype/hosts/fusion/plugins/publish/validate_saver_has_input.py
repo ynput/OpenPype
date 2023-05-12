@@ -20,7 +20,7 @@ class ValidateSaverHasInput(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        saver = instance.data["toolSaver"]
+        saver = instance.data["tool"]
         if not saver.Input.GetConnectedOutput():
             return [saver]
 

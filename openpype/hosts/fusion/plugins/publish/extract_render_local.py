@@ -79,7 +79,7 @@ class FusionRenderLocal(
 
         savers_to_render = [
             # Get the saver tool from the instance
-            instance.data["toolSaver"] for instance in context if
+            instance.data["tool"] for instance in context if
             # Only active instances
             instance.data.get("publish", True) and
             # Only render.local instances

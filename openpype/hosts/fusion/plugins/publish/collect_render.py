@@ -14,7 +14,7 @@ class FusionRenderInstance(RenderInstance):
     projectEntity = attr.ib(default=None)
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
-    toolSaver = attr.ib(default=None)
+    tool = attr.ib(default=None)
     workfileComp = attr.ib(default=None)
     publish_attributes = attr.ib(default={})
 
@@ -58,7 +58,7 @@ class CollectFusionRender(
             subset_name = inst.data["subset"]
             instance = FusionRenderInstance(
                 family="render",
-                toolSaver=tool,
+                tool=tool,
                 workfileComp=comp,
                 families=instance_families,
                 version=version,
@@ -111,6 +111,8 @@ class CollectFusionRender(
                     # to skip ExtractReview locally
                     instance.families.remove("review")
 
+            # add new instance to the list and remove the original
+            # instance since it is not needed anymore
             instances.append(instance)
             instances_to_remove.append(inst)
 
@@ -141,7 +143,7 @@ class CollectFusionRender(
         end = render_instance.frameEnd + render_instance.handleEnd
 
         path = (
-            render_instance.toolSaver["Clip"]
+            render_instance.tool["Clip"]
             [render_instance.workfileComp.TIME_UNDEFINED]
         )
         output_dir = os.path.dirname(path)
@@ -163,7 +165,11 @@ class CollectFusionRender(
         return expected_files
 
     def _update_for_frames(self, instance):
-        """Update old saved instances to current publishing format"""
+        """Updating instance for render.frames family
+
+        Adding representation data to the instance. Also setting
+        colorspaceData to the representation based on file rules.
+        """
 
         expected_files = instance.data["expectedFiles"]
 

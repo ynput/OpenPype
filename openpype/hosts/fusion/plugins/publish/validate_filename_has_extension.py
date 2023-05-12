@@ -34,7 +34,7 @@ class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
         fname, ext = os.path.splitext(path)
 
         if not ext:
-            tool = instance.data["toolSaver"]
+            tool = instance.data["tool"]
             cls.log.error("%s has no extension specified" % tool.Name)
             return [tool]
 

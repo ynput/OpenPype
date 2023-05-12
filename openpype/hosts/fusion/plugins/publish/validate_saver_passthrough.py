@@ -37,7 +37,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
 
     def is_invalid(self, instance):
 
-        saver = instance.data["toolSaver"]
+        saver = instance.data["tool"]
         attr = saver.GetAttrs()
         active = not attr["TOOLB_PassThrough"]
 

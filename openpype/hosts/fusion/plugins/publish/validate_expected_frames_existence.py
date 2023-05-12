@@ -23,7 +23,7 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
         if non_existing_frames is None:
             non_existing_frames = []
 
-        tool = instance.data["toolSaver"]
+        tool = instance.data["tool"]
 
         expected_files = instance.data["expectedFiles"]
 
@@ -56,7 +56,7 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         if invalid:
-            tool = instance.data["toolSaver"]
+            tool = instance.data["tool"]
             # Change render target to local to render locally
             tool.SetData("openpype.creator_attributes.render_target", "local")
 
