@@ -3143,7 +3143,8 @@ def update_instances_frame_range():
 
     for instance in collected_instances:
         family_attr = "{}.family".format(instance)
-        if family_attr == "render":
+        if (cmds.attributeQuery('family', node=instance, exists=True) and
+                cmds.getAttr(family_attr) == "render"):
             continue
 
         id_attr = "{}.id".format(instance)
