@@ -3,6 +3,7 @@
 import os
 import attr
 import json
+import re
 
 import pyblish.api
 
@@ -229,7 +230,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
             SeqEnd=1,
             SeqStep=1,
             SeqFileOffset=0,
-            Version=os.environ.get("OPENPYPE_VERSION"),
+            Version=self._sanitize_version(os.environ.get("OPENPYPE_VERSION")),
             SceneName=abs_metadata_path,
             # command line arguments
             CustomAddCmdFlags=" ".join(args),
@@ -256,3 +257,26 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
             job.WaitForPreIDs += jobs_pre_ids
 
         return job
+
+    def _sanitize_version(self, version):
+        """Returns version in format MAJOR.MINORPATCH
+
+        3.15.7-nightly.2 >> 3.157
+        """
+        VERSION_REGEX = re.compile(
+            r"(?P<major>0|[1-9]\d*)"
+            r"\.(?P<minor>0|[1-9]\d*)"
+            r"\.(?P<patch>0|[1-9]\d*)"
+            r"(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?"
+            r"(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?"
+        )
+
+        valid_parts = VERSION_REGEX.findall(version)
+        if len(valid_parts) != 1:
+            # Return invalid version with filled 'origin' attribute
+            return version
+
+        # Unpack found version
+        major, minor, patch, pre, post = valid_parts[0]
+
+        return "{}.{}{}".format(major, minor, patch)
