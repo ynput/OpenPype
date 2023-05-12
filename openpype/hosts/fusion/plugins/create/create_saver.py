@@ -227,26 +227,15 @@ class CreateSaver(NewCreator):
 
     def get_instance_attr_defs(self):
         """Settings for publish page"""
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool(),
-            BoolDef(
-                "custom_range", label="Custom range", default=False,
-            )
-        ]
-        return attr_defs
+        return self.get_pre_create_attr_defs()
 
     def pass_pre_attributes_to_instance(
         self,
         instance_data,
-        pre_create_data,
-        keys=None
+        pre_create_data
     ):
-        if not keys:
-            keys = pre_create_data.keys()
-
         creator_attrs = instance_data["creator_attributes"] = {}
-        for pass_key in keys:
+        for pass_key in pre_create_data.keys():
             creator_attrs[pass_key] = pre_create_data[pass_key]
 
     # These functions below should be moved to another file
