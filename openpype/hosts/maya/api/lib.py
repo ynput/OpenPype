@@ -2287,7 +2287,7 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         project_name = get_current_project_name()
         settings = get_project_settings(project_name)
         if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-            update_assets_frame_range()
+            update_instances_frame_range()
 
 
 def reset_scene_resolution():
@@ -3118,7 +3118,10 @@ def remove_render_layer_observer():
         pass
 
 
-def update_assets_frame_range():
+def update_instances_frame_range():
+    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'asset'
+    attributes of sets that got one, execpt if instance family is 'render'
+    """
     collected_instances = cmds.ls(
         "*.id",
         long=True,
@@ -3160,6 +3163,7 @@ def update_assets_frame_range():
                         "{}.{}".format(instance, key),
                         value
                     )
+
 
 def show_message(title, msg):
     from qtpy import QtWidgets
