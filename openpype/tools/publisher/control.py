@@ -2392,8 +2392,18 @@ class PublisherController(BasePublisherController):
             ):
                 yield MainThreadItem(self.stop_publish)
 
+            # Ignore base plugin classes
+            # - 'pyblish' does not ignore them on discovery
+            if plugin in (
+                pyblish.api.Plugin,
+                pyblish.api.ContextPlugin,
+                pyblish.api.InstancePlugin,
+            ):
+                continue
+
             # Add plugin to publish report
-            self._publish_report.add_plugin_iter(plugin, self._publish_context)
+            self._publish_report.add_plugin_iter(
+                plugin, self._publish_context)
 
             # WARNING This is hack fix for optional plugins
             if not self._is_publish_plugin_active(plugin):
