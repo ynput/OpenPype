@@ -1,7 +1,3 @@
-from math import e
-import os
-from turtle import st
-
 import pyblish.api
 
 
