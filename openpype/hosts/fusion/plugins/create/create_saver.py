@@ -174,7 +174,6 @@ class CreateSaver(NewCreator):
             tool.SetAttrs({"TOOLS_Name": subset})
 
     def _collect_saver(self, tool):
-        self.log.info("Collecting saver..")
         attrs = tool.GetAttrs()
 
         keys = ["id", "asset", "subset", "task", "variant"]
