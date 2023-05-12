@@ -1254,7 +1254,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             container_version_id = container_repre["parent"]
             container_version = self.content_versions[container_version_id]
-            container_version_name = container_version["name"]
 
             container_subset_id = container_version["parent"]
             container_subset = self.content_subsets[container_subset_id]
@@ -1303,7 +1302,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 ):
                     version_name = max(version_docs_by_name)
                 else:
-                    version_name = container_version_name
+                    version_name = container_version["name"]
 
                 version_doc = version_docs_by_name[version_name]
                 version_id = version_doc["_id"]
