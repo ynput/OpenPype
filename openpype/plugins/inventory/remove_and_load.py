@@ -17,10 +17,10 @@ class RemoveAndLoad(InventoryAction):
 
     def process(self, containers):
         project_name = get_current_project_name()
+        loaders = discover_loader_plugins(project_name=project_name)
         for container in containers:
             # Get loader
             loader_name = container["loader"]
-            loaders = discover_loader_plugins(project_name=project_name)
             for plugin in loaders:
                 if get_loader_identifier(plugin) == loader_name:
                     loader = plugin
