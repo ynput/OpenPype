@@ -71,7 +71,6 @@ pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 ayon-python-api = "^0.1"
-opencolorio = "^2.2.0"
 Unidecode = "^1.2"
 
 [tool.poetry.dev-dependencies]
@@ -130,6 +129,11 @@ version = "6.4.3"
 [openpype.qtbinding.linux]
 package = "PySide2"
 version = "5.15.2"
+
+# DCC packages supply their own opencolorio, lets not interfere with theirs
+[openpype.opencolorio]
+package = "opencolorio"
+version = "2.2.1"
 
 # TODO: we will need to handle different linux flavours here and
 #       also different macos versions too.
