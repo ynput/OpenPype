@@ -49,7 +49,12 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
             collection = collections[0]
             frames = list(collection.indexes)
 
+            if instance.data.get("slate"):
+                # Slate is not part of the frame range
+                frames = frames[1:]
+
             current_range = (frames[0], frames[-1])
+
             required_range = (instance.data["frameStart"],
                               instance.data["frameEnd"])
 
