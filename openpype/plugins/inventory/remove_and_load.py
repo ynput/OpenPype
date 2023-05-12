@@ -17,17 +17,18 @@ class RemoveAndLoad(InventoryAction):
 
     def process(self, containers):
         project_name = get_current_project_name()
-        loaders = discover_loader_plugins(project_name=project_name)
+        loaders_by_name = {
+            get_loader_identifier(plugin): plugin
+            for plugin in discover_loader_plugins(project_name=project_name)
+        }
         for container in containers:
             # Get loader
             loader_name = container["loader"]
-            for plugin in loaders:
-                if get_loader_identifier(plugin) == loader_name:
-                    loader = plugin
-                    break
-            else:
+            loader = loaders_by_name.get(loader_name, None)
+            if not loader:
                 raise RuntimeError(
-                    "Failed to get loader, can't remove and load container"
+                    "Failed to get loader '{}', can't remove "
+                    "and load container".format(loader_name)
                 )
 
             # Get representation
