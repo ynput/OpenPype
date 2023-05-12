@@ -83,7 +83,7 @@ class CollectFusionRender(
                 frameEnd=inst.data["frameEnd"],
                 handleStart=inst.data["handleStart"],
                 handleEnd=inst.data["handleEnd"],
-                ignoreFrameHandleCheck=True,
+                ignoreFrameHandleCheck=(not inst.data.get("custom_range")),
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,

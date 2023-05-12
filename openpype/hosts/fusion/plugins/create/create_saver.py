@@ -40,6 +40,11 @@ class CreateSaver(NewCreator):
         "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
+        self.pass_pre_attributes_to_instance(
+            instance_data,
+            pre_create_data
+        )
+
         instance_data.update({
             "id": "pyblish.avalon.instance",
             "subset": subset_name
@@ -215,6 +220,9 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
+            BoolDef(
+                "custom_range", label="Custom range", default=False,
+            )
         ]
         return attr_defs
 
@@ -228,6 +236,19 @@ class CreateSaver(NewCreator):
             )
         ]
         return attr_defs
+
+    def pass_pre_attributes_to_instance(
+        self,
+        instance_data,
+        pre_create_data,
+        keys=None
+    ):
+        if not keys:
+            keys = pre_create_data.keys()
+
+        creator_attrs = instance_data["creator_attributes"] = {}
+        for pass_key in keys:
+            creator_attrs[pass_key] = pre_create_data[pass_key]
 
     # These functions below should be moved to another file
     # so it can be used by other plugins. plugin.py ?
