@@ -2,6 +2,7 @@
 Basic avalon integration
 """
 import os
+import json
 import contextlib
 from collections import OrderedDict
 
@@ -134,6 +135,26 @@ def ls():
     and the Maya equivalent, which is in `avalon.maya.pipeline`
     """
 
+    # Media Pool instances
+    metadata_key = lib.pype_tag_name
+    for clip in lib.iter_all_clips():
+        data = clip.GetMetadata(metadata_key)
+        if not data:
+            continue
+        data = json.loads(data)
+
+        # If not all required data return the empty container
+        required = ['schema', 'id', 'name',
+                    'namespace', 'loader', 'representation']
+        if not all(key in data for key in required):
+            return
+
+        container = {key: data[key] for key in required}
+        container["objectName"] = clip.GetName()
+        container["_item"] = clip
+        yield container
+
+    # Timeline instances
     # get all track items from current timeline
     all_timeline_items = lib.get_current_timeline_items(filter=False)
 

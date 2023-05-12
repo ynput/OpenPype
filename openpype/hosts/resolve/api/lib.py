@@ -864,3 +864,13 @@ def get_reformated_path(path, padded=False, first=False):
         else:
             path = re.sub(num_pattern, "%d", path)
     return path
+
+
+def iter_all_clips():
+    """Recursively iterate all media pool clips in current project"""
+    root = get_current_project().GetMediaPool().GetRootFolder()
+    queue = [root]
+    for folder in queue:
+        for clip in folder.GetClipList():
+            yield clip
+        queue.extend(folder.GetSubFolderList())
