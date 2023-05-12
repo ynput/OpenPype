@@ -809,5 +809,4 @@ def add_repre_files_for_cleanup(instance, repre):
 
     for file_name in files:
         expected_file = os.path.join(staging_dir, file_name)
-        print("Explicitly marking {} for cleanup".format(expected_file))
         instance.context.data["cleanupFullPaths"].append(expected_file)
