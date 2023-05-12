@@ -161,6 +161,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     os.environ.update(session_data)
                     session_is_set = True
                 self._process_path(data, anatomy)
+                context.data["cleanupFullPaths"].append(path)
+                context.data["cleanupEmptyDirs"].append(os.path.dirname(path))
         except Exception as e:
             self.log.error(e, exc_info=True)
             raise Exception("Error") from e
