@@ -3,7 +3,7 @@
 import tempfile
 import platform
 
-from pyblish.api import IntegratorOrder, ContextPlugin, Context
+import pyblish.api
 from openpype.modules.royalrender.api import (
     RRJob,
     Api as rrApi,
@@ -12,10 +12,10 @@ from openpype.modules.royalrender.api import (
 from openpype.pipeline.publish import KnownPublishError
 
 
-class SubmitJobsToRoyalRender(ContextPlugin):
+class SubmitJobsToRoyalRender(pyblish.api.ContextPlugin):
     """Find all jobs, create submission XML and submit it to RoyalRender."""
     label = "Submit jobs to RoyalRender"
-    order = IntegratorOrder + 0.3
+    order = pyblish.api.IntegratorOrder + 0.3
     targets = ["local"]
 
     def __init__(self):
@@ -103,7 +103,7 @@ class SubmitJobsToRoyalRender(ContextPlugin):
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
-        # type: (Context, str) -> str
+        # type: (pyblish.api.Context, str) -> str
         rr_settings = (
             context.data
             ["system_settings"]

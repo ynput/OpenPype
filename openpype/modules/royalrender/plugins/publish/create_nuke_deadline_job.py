@@ -5,7 +5,7 @@ import re
 import platform
 from datetime import datetime
 
-from pyblish.api import InstancePlugin, IntegratorOrder, Context
+import pyblish.api
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
@@ -20,10 +20,11 @@ from openpype.lib import (
 from openpype.pipeline import OpenPypePyblishPluginMixin
 
 
-class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
+class CreateNukeRoyalRenderJob(pyblish.api.InstancePlugin,
+                               OpenPypePyblishPluginMixin):
     """Creates separate rendering job for Royal Render"""
     label = "Create Nuke Render job in RR"
-    order = IntegratorOrder + 0.1
+    order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke"]
     families = ["render", "prerender"]
     targets = ["local"]
@@ -248,7 +249,7 @@ class CreateNukeRoyalRenderJob(InstancePlugin, OpenPypePyblishPluginMixin):
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
-        # type: (Context, str) -> str
+        # type: (pyblish.api.Context, str) -> str
         rr_settings = (
             context.data
             ["system_settings"]

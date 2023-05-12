@@ -5,7 +5,7 @@ import sys
 import platform
 
 from maya.OpenMaya import MGlobal  # noqa
-from pyblish.api import InstancePlugin, IntegratorOrder, Context
+import pyblish.api
 from openpype.lib import is_running_from_build
 from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
@@ -14,9 +14,9 @@ from openpype.modules.royalrender.rr_job import RRJob, CustomAttribute
 from openpype.pipeline.farm.tools import iter_expected_files
 
 
-class CreateMayaRoyalRenderJob(InstancePlugin):
+class CreateMayaRoyalRenderJob(pyblish.api.InstancePlugin):
     label = "Create Maya Render job in RR"
-    order = IntegratorOrder + 0.1
+    order = pyblish.api.IntegratorOrder + 0.1
     families = ["renderlayer"]
     targets = ["local"]
     use_published = True
@@ -128,7 +128,7 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
-        # type: (Context, str) -> str
+        # type: (pyblish.api.Context, str) -> str
         rr_settings = (
             context.data
             ["system_settings"]

@@ -4,7 +4,7 @@ import os
 import attr
 import json
 
-from pyblish.api import InstancePlugin, IntegratorOrder
+import pyblish.api
 
 from openpype.modules.royalrender.rr_job import (
     RRJob,
@@ -24,7 +24,7 @@ from openpype.pipeline.farm.pyblish_functions import (
 )
 
 
-class CreatePublishRoyalRenderJob(InstancePlugin):
+class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
     """Creates job which publishes rendered files to publish area.
 
     Job waits until all rendering jobs are finished, triggers `publish` command
@@ -34,7 +34,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
     When triggered it produces .log file next to .json file in work area.
     """
     label = "Create publish job in RR"
-    order = IntegratorOrder + 0.2
+    order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     targets = ["local"]
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
