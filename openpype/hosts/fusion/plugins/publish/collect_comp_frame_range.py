@@ -9,20 +9,14 @@ def get_comp_render_range(comp):
     global_start = comp_attrs["COMPN_GlobalStart"]
     global_end = comp_attrs["COMPN_GlobalEnd"]
 
-    frame_data = comp.GetData("openpype_instance")
-    handle_start = frame_data.get("handleStart", 0)
-    handle_end = frame_data.get("handleEnd", 0)
-    frame_start = frame_data.get("frameStart", 0)
-    frame_end = frame_data.get("frameEnd", 0)
-
     # Whenever render ranges are undefined fall back
     # to the comp's global start and end
     if start == -1000000000:
-        start = frame_start
+        start = global_start
     if end == -1000000000:
-        end = frame_end
+        end = global_end
 
-    return start, end, global_start, global_end, handle_start, handle_end
+    return start, end, global_start, global_end
 
 
 class CollectFusionCompFrameRanges(pyblish.api.ContextPlugin):
@@ -44,18 +38,12 @@ class CollectFusionCompFrameRanges(pyblish.api.ContextPlugin):
             start, end,
             global_start,
             global_end,
-            handle_start,
-            handle_end
         ) = get_comp_render_range(comp)
 
         data = {}
-        data["frameStart"] = int(start)
-        data["frameEnd"] = int(end)
-        data["frameStartHandle"] = int(global_start)
-        data["frameEndHandle"] = int(global_end)
-        data["handleStart"] = int(handle_start)
-        data["handleEnd"] = int(handle_end)
-
-        self.log.debug("_ data: {}".format(data))
+        data["compFrameStart"] = int(start)
+        data["compFrameEnd"] = int(end)
+        data["compFrameStartHandle"] = int(global_start)
+        data["compFrameEndHandle"] = int(global_end)
 
         context.data.update(data)

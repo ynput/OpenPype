@@ -1,4 +1,6 @@
+from math import e
 import os
+from turtle import st
 
 import pyblish.api
 
@@ -24,6 +26,23 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         creator_attributes = instance.data["creator_attributes"]
         instance.data.update(creator_attributes)
 
+        # get asset frame ranges
+        start = context.data["frameStart"]
+        end = context.data["frameEnd"]
+        handle_start = context.data["handleStart"]
+        handle_end = context.data["handleEnd"]
+        start_handle = start - handle_start
+        end_handle = end + handle_end
+
+        if creator_attributes["custom_range"]:
+            # get comp frame ranges
+            start = context.data["compFrameStart"]
+            end = context.data["compFrameEnd"]
+            handle_start = 0
+            handle_end = 0
+            start_handle = context.data["compFrameStartHandle"]
+            end_handle = context.data["compFrameEndHandle"]
+
         # Include start and end render frame in label
         subset = instance.data["subset"]
         start = context.data["frameStart"]
@@ -31,16 +50,17 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         label = "{subset} ({start}-{end})".format(subset=subset,
                                                   start=int(start),
                                                   end=int(end))
+
         instance.data.update({
             "label": label,
 
             # todo: Allow custom frame range per instance
-            "frameStart": context.data["frameStart"],
-            "frameEnd": context.data["frameEnd"],
-            "frameStartHandle": context.data["frameStartHandle"],
-            "frameEndHandle": context.data["frameStartHandle"],
-            "handleStart": context.data["handleStart"],
-            "handleEnd": context.data["handleEnd"],
+            "frameStart": start,
+            "frameEnd": end,
+            "frameStartHandle": start_handle,
+            "frameEndHandle": end_handle,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "fps": context.data["fps"],
         })
 

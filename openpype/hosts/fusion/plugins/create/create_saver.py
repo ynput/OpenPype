@@ -223,6 +223,9 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
+            BoolDef(
+                "custom_range", label="Custom range", default=False,
+            )
         ]
         return attr_defs
 
