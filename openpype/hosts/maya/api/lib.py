@@ -3937,7 +3937,9 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     return capture_preset or {}
 
 
-def create_rig_animation_instance(nodes, context, namespace, options, log=None):
+def create_rig_animation_instance(
+    nodes, context, namespace, options, log=None
+):
     """Create an animation publish instance for loaded rigs.
 
     See the RecreateRigAnimationInstance inventory action on how to use this
@@ -3971,6 +3973,12 @@ def create_rig_animation_instance(nodes, context, namespace, options, log=None):
     asset = legacy_io.Session["AVALON_ASSET"]
     dependency = str(context["representation"]["_id"])
 
+    custom_subset = options.get("animationSubsetName")
+
+    if custom_subset:
+        rig_subset = context['subset']['name']
+        namespace = namespace.replace(rig_subset, custom_subset)
+
     if log:
         log.info("Creating subset: {}".format(namespace))
 
@@ -3982,6 +3990,6 @@ def create_rig_animation_instance(nodes, context, namespace, options, log=None):
             creator_plugin,
             name=namespace,
             asset=asset,
-            options=options.update({"useSelection": True}),
+            options={"useSelection": True},
             data={"dependencies": dependency}
         )
