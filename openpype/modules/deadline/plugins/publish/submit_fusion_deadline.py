@@ -40,7 +40,6 @@ class FusionSubmitDeadline(
     group = ""
     department = ""
     limit_groups = {}
-    use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
 
@@ -68,11 +67,6 @@ class FusionSubmitDeadline(
                 decimals=0,
                 minimum=1,
                 maximum=10
-            ),
-            BoolDef(
-                "use_gpu",
-                default=cls.use_gpu,
-                label="Use GPU"
             ),
             BoolDef(
                 "suspend_publish",
@@ -206,11 +200,7 @@ class FusionSubmitDeadline(
 
                 # Proxy: higher numbers smaller images for faster test renders
                 # 1 = no proxy quality
-                "Proxy": 1,
-
-                # using GPU by default
-                "UseGpu": attribute_values.get(
-                    "use_gpu", self.use_gpu)
+                "Proxy": 1
             },
 
             # Mandatory for Deadline, may be empty
