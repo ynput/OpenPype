@@ -166,16 +166,13 @@ def _convert_kitsu_system_settings(ayon_settings, output):
     }
 
 
-def _convert_ftrack_system_settings(ayon_settings, output):
-    ayon_ftrack = ayon_settings["ftrack"]
-    # Ignore if new ftrack addon is used
-    if "service_settings" in ayon_ftrack:
-        output["ftrack"] = ayon_ftrack
-        return
-
-    output["modules"]["ftrack"] = {
-        "ftrack_server": ayon_ftrack["ftrack_server"]
-    }
+def _convert_ftrack_system_settings(ayon_settings, output, defaults):
+    # Ftrack contains few keys that are needed for initialization in OpenPype
+    #   mode and some are used on different places
+    ftrack_settings = defaults["modules"]["ftrack"]
+    ftrack_settings["ftrack_server"] = (
+        ayon_settings["ftrack"]["ftrack_server"])
+    output["modules"]["ftrack"] = ftrack_settings
 
 
 def _convert_shotgrid_system_settings(ayon_settings, output):
@@ -257,7 +254,6 @@ def _convert_modules_system(
     # TODO add 'enabled' values
     for key, func in (
         ("kitsu", _convert_kitsu_system_settings),
-        ("ftrack", _convert_ftrack_system_settings),
         ("shotgrid", _convert_shotgrid_system_settings),
         ("timers_manager", _convert_timers_manager_system_settings),
         ("clockify", _convert_clockify_system_settings),
@@ -267,6 +263,10 @@ def _convert_modules_system(
     ):
         if key in ayon_settings:
             func(ayon_settings, output)
+
+    if "ftrack" in ayon_settings:
+        _convert_ftrack_system_settings(
+            ayon_settings, output, default_settings)
 
     output_modules = output["modules"]
     # TODO remove when not needed
