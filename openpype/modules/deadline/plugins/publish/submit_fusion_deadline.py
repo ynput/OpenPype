@@ -1,7 +1,6 @@
 import os
 import json
 import getpass
-from pprint import pformat
 
 import requests
 
@@ -89,8 +88,6 @@ class FusionSubmitDeadline(
 
         attribute_values = self.get_attr_values_from_data(
             instance.data)
-
-        self.log.debug(pformat(attribute_values))
 
         # add suspend_publish attributeValue to instance data
         instance.data["suspend_publish"] = attribute_values[

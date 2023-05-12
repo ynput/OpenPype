@@ -23,21 +23,20 @@ class ValidateLocalFramesExistence(pyblish.api.InstancePlugin):
         if non_existing_frames is None:
             non_existing_frames = []
 
-        if "render.frames" in instance.data.get("families", []):
-            tool = instance.data["toolSaver"]
+        tool = instance.data["toolSaver"]
 
-            expected_files = instance.data["expectedFiles"]
+        expected_files = instance.data["expectedFiles"]
 
-            for file in expected_files:
-                if not os.path.exists(file):
-                    cls.log.error(
-                        f"Missing file: {file}"
-                    )
-                    non_existing_frames.append(file)
+        for file in expected_files:
+            if not os.path.exists(file):
+                cls.log.error(
+                    f"Missing file: {file}"
+                )
+                non_existing_frames.append(file)
 
-            if len(non_existing_frames) > 0:
-                cls.log.error(f"Some of {tool.Name}'s files does not exist")
-                return [tool]
+        if len(non_existing_frames) > 0:
+            cls.log.error(f"Some of {tool.Name}'s files does not exist")
+            return [tool]
 
     def process(self, instance):
         non_existing_frames = []

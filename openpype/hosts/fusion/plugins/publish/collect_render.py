@@ -1,5 +1,4 @@
 import os
-from pprint import pformat
 import attr
 import pyblish.api
 
@@ -92,7 +91,6 @@ class CollectFusionRender(
             )
 
             render_target = inst.data["creator_attributes"]["render_target"]
-            self.log.debug("render_target: '{}'".format(render_target))
 
             if render_target == "local":
                 # for local renders
@@ -125,7 +123,6 @@ class CollectFusionRender(
         for instance in self._context:
             if "render.frames" in instance.data.get("families", []):
                 self._update_for_frames(instance)
-            self.log.debug(pformat(instance.data))
 
     def get_expected_files(self, render_instance):
         """
