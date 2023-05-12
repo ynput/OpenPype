@@ -322,10 +322,10 @@ def publish_plugins_discover(paths=None):
             for plugin in pyblish.plugin.plugins_from_module(module):
                 # Ignore base plugin classes
                 # NOTE 'pyblish.api.discover' does not ignore them!
-                if plugin in (
-                    pyblish.api.Plugin,
-                    pyblish.api.ContextPlugin,
-                    pyblish.api.InstancePlugin,
+                if (
+                    plugin is pyblish.api.Plugin
+                    or plugin is pyblish.api.ContextPlugin
+                    or plugin is pyblish.api.InstancePlugin
                 ):
                     continue
                 if not allow_duplicates and plugin.__name__ in plugin_names:
