@@ -11,7 +11,7 @@ deploy-patch:
 
 deploy-minor:
   tags:
-    - cw-pvc
+    - dind
   stage: deploy
   script:
     - ./tools/docker_build.sh centos7
