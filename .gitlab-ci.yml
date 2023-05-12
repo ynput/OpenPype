@@ -17,19 +17,20 @@ deploy-patch:
     - ./tools/create_zip.sh --path /pipe/openpype/versions/
   when: manual
 
-deploy-minor:
+build-centos7-tarball:
   tags:
     - dind
   stage: deploy
   script:
     - apk add --no-cache bash
     - apk add --no-cache python3
-    - ./tools/docker_build.sh centos7
-    - >-
-      version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);" &&
-      openpype_version="$(python3 <<< ${version_command})" &&
-      tar -czvf ./build/openpype-${BUILD_VERSION}.tar.gz ./build/${BUILD_VERSION} &&
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${BUILD_VERSION}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${BUILD_VERSION}.tar.gz"
+#    - ./tools/docker_build.sh centos7
+    - version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
+    - openpype_version="$(python3 <<< ${version_command})"
+    - mkdir -p ./build/${BUILD_VERSION}
+    - touch ./build/${BUILD_VERSION}/test
+    - tar -czvf ./build/openpype-${BUILD_VERSION}.tar.gz ./build/${BUILD_VERSION}
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${BUILD_VERSION}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${BUILD_VERSION}.tar.gz"'
   when: manual
 
 deploy-to-deadline-repo:
