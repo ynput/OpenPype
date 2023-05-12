@@ -23,7 +23,7 @@ build-centos7-tarball:
   stage: deploy
   script:
     - apk add --no-cache bash
-#    - apk add --no-cache python3
+    - apk add --no-cache python3
 #    - ./tools/docker_build.sh centos7
     - version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
     - openpype_version="$(python3 -c "${version_command}")"
