@@ -96,7 +96,7 @@ class CreateSaver(NewCreator):
         for tool in tools:
             data = self.get_managed_tool_data(tool)
             if not data:
-                data = self._collect_saver(tool)
+                continue
 
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
@@ -172,26 +172,6 @@ class CreateSaver(NewCreator):
         if tool.Name != subset:
             print(f"Renaming {tool.Name} -> {subset}")
             tool.SetAttrs({"TOOLS_Name": subset})
-
-    def _collect_saver(self, tool):
-        attrs = tool.GetAttrs()
-
-        keys = ["id", "asset", "subset", "task", "variant"]
-        ctx_data = {key: tool.GetData(f"openpype.{key}") for key in keys}
-        passthrough = attrs["TOOLB_PassThrough"]
-        return {
-            # Required data
-            "project": self.project_name,
-            "asset": ctx_data["asset"],
-            "subset": ctx_data["subset"],
-            "task": ctx_data["task"],
-            "variant": ctx_data["variant"],
-            "active": not passthrough,
-            "family": self.family,
-            # Unique identifier for instance and this creator
-            "id": ctx_data["id"],
-            "creator_identifier": self.identifier,
-        }
 
     def get_managed_tool_data(self, tool):
         """Return data of the tool if it matches creator identifier"""
