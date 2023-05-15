@@ -72,7 +72,7 @@ main () {
   pushd "$ayon_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Running AYON Tray with debug option ..."
-  "$POETRY_HOME/bin/poetry" run python3 "$ayon_root/start.py" tray --debug
+  "$POETRY_HOME/bin/poetry" run python3 "$ayon_root/ayon_start.py" tray --debug
 }
 
 main
