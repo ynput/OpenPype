@@ -6,7 +6,11 @@ public class OpenPype : ModuleRules
 {
 	public OpenPype(ReadOnlyTargetRules Target) : base(Target)
 	{
+	    DefaultBuildSettings = BuildSettingsVersion.V2;
+	    bLegacyPublicIncludePaths = false;
+	    ShadowVariableWarningLevel = WarningLevel.Error;
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_0;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -44,6 +48,7 @@ public class OpenPype : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"AssetTools"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

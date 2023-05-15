@@ -390,6 +390,56 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CelactionSubmitDeadline",
+                    "label": "Celaction Submit Deadline",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline apartment"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool_secondary",
+                            "label": "Deadline pool (secondary)"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_job_delay",
+                            "label": "Delay job (timecode dd:hh:mm:ss)"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ProcessSubmittedJobOnFarm",
                     "label": "ProcessSubmittedJobOnFarm",
                     "checkbox_key": "enabled",

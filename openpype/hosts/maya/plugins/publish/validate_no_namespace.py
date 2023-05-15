@@ -2,7 +2,6 @@ import pymel.core as pm
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,

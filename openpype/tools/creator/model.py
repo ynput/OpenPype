@@ -36,7 +36,7 @@ class CreatorsModel(QtGui.QStandardItemModel):
         if not items:
             item = QtGui.QStandardItem("No registered families")
             item.setEnabled(False)
-            item.setData(QtCore.Qt.ItemIsEnabled, False)
+            item.setData(False, QtCore.Qt.ItemIsEnabled)
             items.append(item)
 
         self.invisibleRootItem().appendRows(items)

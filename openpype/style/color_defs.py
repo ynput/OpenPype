@@ -296,7 +296,7 @@ class HSLColor:
         if "%" in sat_str:
             sat = float(sat_str.rstrip("%")) / 100
         else:
-            sat = float(sat)
+            sat = float(sat_str)
 
         if "%" in light_str:
             light = float(light_str.rstrip("%")) / 100
@@ -337,8 +337,8 @@ class HSLAColor:
     as float (0-1 range).
 
     Examples:
-        "hsl(27, 0.7, 0.3)"
-        "hsl(27, 70%, 30%)"
+        "hsla(27, 0.7, 0.3, 0.5)"
+        "hsla(27, 70%, 30%, 0.5)"
     """
     def __init__(self, value):
         modified_color = value.lower().strip()
@@ -350,7 +350,7 @@ class HSLAColor:
         if "%" in sat_str:
             sat = float(sat_str.rstrip("%")) / 100
         else:
-            sat = float(sat)
+            sat = float(sat_str)
 
         if "%" in light_str:
             light = float(light_str.rstrip("%")) / 100

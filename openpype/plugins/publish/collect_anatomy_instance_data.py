@@ -188,7 +188,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         for subset_doc in subset_docs:
             subset_id = subset_doc["_id"]
             last_version_doc = last_version_docs_by_subset_id.get(subset_id)
-            if last_version_docs_by_subset_id is None:
+            if last_version_doc is None:
                 continue
 
             asset_id = subset_doc["parent"]

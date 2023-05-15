@@ -8,8 +8,8 @@ from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
     ApplicationNotFound,
-    get_workfile_template_key
 )
+from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
 
 
@@ -150,6 +150,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 engine_path=Path(engine_path)
             )
 
+        self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")

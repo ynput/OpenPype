@@ -1,7 +1,7 @@
 import os
 import nuke
 
-from openpype.api import resources
+from openpype import resources
 from .lib import maintained_selection
 
 

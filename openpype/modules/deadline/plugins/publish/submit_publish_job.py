@@ -126,22 +126,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
-    enviro_filter = [
+    environ_job_filter = [
+        "OPENPYPE_METADATA_FILE"
+    ]
+
+    environ_keys = [
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "OPENPYPE_METADATA_FILE",
-        "AVALON_PROJECT",
-        "AVALON_ASSET",
-        "AVALON_TASK",
         "AVALON_APP_NAME",
-        "OPENPYPE_PUBLISH_JOB"
-
-        "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_MONGO",
         "OPENPYPE_VERSION"
     ]
 
@@ -223,28 +217,42 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
-        output_dir = self._get_publish_folder(instance.context.data['anatomy'],
-                                              deepcopy(
-                                                instance.data["anatomyData"]),
-                                              instance.data.get("asset"),
-                                              instances[0]["subset"],
-                                              'render',
-                                              override_version)
+        output_dir = self._get_publish_folder(
+            instance.context.data['anatomy'],
+            deepcopy(instance.data["anatomyData"]),
+            instance.data.get("asset"),
+            instances[0]["subset"],
+            'render',
+            override_version
+        )
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, roothless_metadata_path = \
             self._create_metadata_path(instance)
 
-        environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
-        environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
-        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-        environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
-        environment["OPENPYPE_PUBLISH_JOB"] = "1"
-        environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment = {
+            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
+            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
+            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
+            "OPENPYPE_USERNAME": instance.context.data["user"],
+            "OPENPYPE_PUBLISH_JOB": "1",
+            "OPENPYPE_RENDER_JOB": "0",
+            "OPENPYPE_REMOTE_JOB": "0",
+            "OPENPYPE_LOG_NO_COLORS": "1"
+        }
+
+        # add environments from self.environ_keys
+        for env_key in self.environ_keys:
+            if os.getenv(env_key):
+                environment[env_key] = os.environ[env_key]
+
+        # pass environment keys from self.environ_job_filter
+        job_environ = job["Props"].get("Env", {})
+        for env_j_key in self.environ_job_filter:
+            if job_environ.get(env_j_key):
+                environment[env_j_key] = job_environ[env_j_key]
+
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
@@ -308,19 +316,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if instance.data.get("suspend_publish"):
             payload["JobInfo"]["InitialStatus"] = "Suspended"
 
-        index = 0
-        for key in environment:
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update(
-                    {
-                        "EnvironmentKeyValue%d"
-                        % index: "{key}={value}".format(
-                            key=key, value=environment[key]
-                        )
-                    }
-                )
-                index += 1
-
+        for index, (key_, value_) in enumerate(environment.items()):
+            payload["JobInfo"].update(
+                {
+                    "EnvironmentKeyValue%d"
+                    % index: "{key}={value}".format(
+                        key=key_, value=value_
+                    )
+                }
+            )
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
@@ -457,9 +461,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             cam = [c for c in cameras if c in col.head]
             if cam:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov:
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
             else:
-                subset_name = '{}_{}'.format(group_name, aov)
+                if aov:
+                    subset_name = '{}_{}'.format(group_name, aov)
+                else:
+                    subset_name = '{}'.format(group_name)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])
@@ -488,12 +498,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter
-            preview = match_aov_pattern(app, aov_patterns, render_file_name)
 
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
             # toggle preview on if multipart is on
+
             if instance_data.get("multipartExr"):
                 preview = True
-
+            self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
@@ -536,7 +547,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
             instances.append(new_instance)
-
+            self.log.debug("instances:{}".format(instances))
         return instances
 
     def _get_representations(self, instance, exp_files):
@@ -769,6 +780,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStartHandle": start - handle_start,
             "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
             "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),

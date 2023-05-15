@@ -17,7 +17,7 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder + 0.1
     families = ["workfile"]
     label = "Validatte script attributes"
-    hosts = ["nuke"]
+    hosts = []
     optional = True
     actions = [RepairAction]
 

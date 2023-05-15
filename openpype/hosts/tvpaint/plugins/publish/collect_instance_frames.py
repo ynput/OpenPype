@@ -6,7 +6,7 @@ class CollectOutputFrameRange(pyblish.api.ContextPlugin):
 
     When instances are collected context does not contain `frameStart` and
     `frameEnd` keys yet. They are collected in global plugin
-    `CollectAvalonEntities`.
+    `CollectContextEntities`.
     """
     label = "Collect output frame range"
     order = pyblish.api.CollectorOrder

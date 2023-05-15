@@ -44,7 +44,7 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     families = ["render"]
     label = "Write Node"
     actions = [RepairNukeWriteNodeAction]
-    hosts = ["nuke"]
+    hosts = []
 
     def process(self, instance):
         write_group_node = instance[0]
@@ -77,11 +77,14 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
             # fix type differences
             if type(node_value) in (int, float):
-                if isinstance(value, list):
-                    value = color_gui_to_int(value)
-                else:
-                    value = float(value)
-                    node_value = float(node_value)
+                try:
+                    if isinstance(value, list):
+                        value = color_gui_to_int(value)
+                    else:
+                        value = float(value)
+                        node_value = float(node_value)
+                except ValueError:
+                    value = str(value)
             else:
                 value = str(value)
                 node_value = str(node_value)

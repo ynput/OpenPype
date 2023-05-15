@@ -3,7 +3,7 @@ import sys
 import contextlib
 import traceback
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.lib import env_value_to_bool, Logger
 from openpype.modules import ModulesManager

@@ -157,12 +157,12 @@ class ExtractThumbnail(publish.Extractor):
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead[:-1] + output_name + ".jpg"
+        file = fhead[:-1] + output_name + ".jpeg"
         name = "thumbnail"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["thumbnail"] = path
         write_node["file"].setValue(path)
-        write_node["file_type"].setValue("jpg")
+        write_node["file_type"].setValue("jpeg")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
@@ -170,7 +170,7 @@ class ExtractThumbnail(publish.Extractor):
 
         repre = {
             'name': name,
-            'ext': "jpg",
+            'ext': "jpeg",
             "outputName": "thumb",
             'files': file,
             "stagingDir": staging_dir,

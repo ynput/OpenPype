@@ -5,8 +5,8 @@ import platform
 
 import click
 
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import (
+from openpype.modules import (
+    OpenPypeModule,
     ITrayModule,
     IPluginPaths,
     ISettingsChangeListener
@@ -195,7 +195,7 @@ class FtrackModule(
             app_definitions_from_app_manager,
             tool_definitions_from_app_manager
         )
-        from openpype.api import ApplicationManager
+        from openpype.lib import ApplicationManager
         query_keys = [
             "id",
             "key",

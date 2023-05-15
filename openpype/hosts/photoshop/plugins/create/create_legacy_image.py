@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
 
@@ -29,7 +29,8 @@ class CreateImage(create.LegacyCreator):
             if len(selection) > 1:
                 # Ask user whether to create one image or image per selected
                 # item.
-                msg_box = QtWidgets.QMessageBox()
+                active_window = QtWidgets.QApplication.activeWindow()
+                msg_box = QtWidgets.QMessageBox(parent=active_window)
                 msg_box.setIcon(QtWidgets.QMessageBox.Warning)
                 msg_box.setText(
                     "Multiple layers selected."
@@ -102,7 +103,7 @@ class CreateImage(create.LegacyCreator):
             if group.long_name:
                 for directory in group.long_name[::-1]:
                     name = directory.replace(stub.PUBLISH_ICON, '').\
-                                      replace(stub.LOADED_ICON, '')
+                        replace(stub.LOADED_ICON, '')
                     long_names.append(name)
 
             self.data.update({"subset": subset_name})

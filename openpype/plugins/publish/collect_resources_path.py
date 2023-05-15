@@ -21,6 +21,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.495
     families = ["workfile",
                 "pointcache",
+                "proxyAbc",
                 "camera",
                 "animation",
                 "model",
@@ -50,6 +51,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "source",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "background",

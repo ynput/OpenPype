@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mainMenu>
     <menuBar>
-        <subMenu id="avalon_menu">
+        <subMenu id="openpype_menu">
             <label>OpenPype</label>
 
-            <scriptItem id="avalon_create">
+            <scriptItem id="openpype_create">
                 <label>Create...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -14,7 +14,7 @@ host_tools.show_creator(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="avalon_load">
+            <scriptItem id="openpype_load">
                 <label>Load...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -30,11 +30,11 @@ host_tools.show_loader(parent=parent, use_context=True)
 import hou
 from openpype.tools.utils import host_tools
 parent = hou.qt.mainWindow()
-host_tools.show_publish(parent)
+host_tools.show_publisher(parent)
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="avalon_manage">
+            <scriptItem id="openpype_manage">
                 <label>Manage...</label>
                 <scriptCode><![CDATA[
 import hou

@@ -14,6 +14,8 @@ public:
 
 private:
 	void RegisterMenus();
+	void RegisterSettings();
+	bool HandleSettingsSaved();
 
 	void MenuPopup();
 	void MenuDialog();

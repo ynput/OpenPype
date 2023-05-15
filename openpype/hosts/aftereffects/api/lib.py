@@ -7,7 +7,7 @@ import traceback
 import logging
 from functools import partial
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.pipeline import install_host
 from openpype.modules import ModulesManager

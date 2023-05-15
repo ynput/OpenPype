@@ -2,8 +2,9 @@
 
 from maya import cmds
 import pyblish.api
-import openpype.api
+
 from openpype.pipeline.publish import ValidateMeshOrder
+import openpype.hosts.maya.api.action
 
 
 class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):

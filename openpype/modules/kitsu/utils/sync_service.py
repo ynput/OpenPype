@@ -1,12 +1,9 @@
 import os
+import threading
 
 import gazu
 
-from openpype.client import (
-    get_project,
-    get_assets,
-    get_asset_by_name
-)
+from openpype.client import get_project, get_assets, get_asset_by_name
 from openpype.pipeline import AvalonMongoDB
 from .credentials import validate_credentials
 from .update_op_with_zou import (
@@ -397,6 +394,13 @@ def start_listeners(login: str, password: str):
         login (str): Kitsu user login
         password (str): Kitsu user password
     """
+    # Refresh token every week
+    def refresh_token_every_week():
+        print("Refreshing token...")
+        gazu.refresh_token()
+        threading.Timer(7 * 3600 * 24, refresh_token_every_week).start()
+
+    refresh_token_every_week()
 
     # Connect to server
     listener = Listener(login, password)

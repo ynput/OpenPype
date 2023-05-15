@@ -1,7 +1,7 @@
 """Host API required Work Files tool"""
 
 import os
-from openpype.api import Logger
+from openpype.lib import Logger
 from .lib import (
     get_project_manager,
     get_current_project,

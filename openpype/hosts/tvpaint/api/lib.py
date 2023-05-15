@@ -2,7 +2,7 @@ import os
 import logging
 import tempfile
 
-from . import CommunicationWrapper
+from .communication_server import CommunicationWrapper
 
 log = logging.getLogger(__name__)
 

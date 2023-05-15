@@ -2,7 +2,7 @@
 import sys
 import os
 
-from .pipeline import get_current_comp
+from .lib import get_current_comp
 
 
 def file_extensions():

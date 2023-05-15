@@ -5,6 +5,7 @@ import json
 import types
 import logging
 import platform
+import uuid
 
 import pyblish.api
 from pyblish.lib import MessageHandler
@@ -30,13 +31,14 @@ from .workfile import (
 from . import (
     legacy_io,
     register_loader_plugin_path,
-    register_inventory_action,
+    register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
 )
 
 
 _is_installed = False
+_process_id = None
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
@@ -156,17 +158,24 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = _get_modules_manager()
-    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
-    for path in publish_plugin_dirs:
-        pyblish.api.register_plugin_path(path)
-
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
 
-    creator_paths = modules_manager.collect_creator_plugin_paths(host_name)
-    for creator_path in creator_paths:
-        register_creator_plugin_path(creator_path)
+    modules_manager = _get_modules_manager()
+    publish_plugin_dirs = modules_manager.collect_publish_plugin_paths(
+        host_name)
+    for path in publish_plugin_dirs:
+        pyblish.api.register_plugin_path(path)
+
+    create_plugin_paths = modules_manager.collect_create_plugin_paths(
+        host_name)
+    for path in create_plugin_paths:
+        register_creator_plugin_path(path)
+
+    load_plugin_paths = modules_manager.collect_load_plugin_paths(
+        host_name)
+    for path in load_plugin_paths:
+        register_loader_plugin_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -197,7 +206,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
-            register_inventory_action(path)
+            register_inventory_action_path(path)
 
 
 def uninstall_host():
@@ -546,3 +555,18 @@ def change_current_context(asset_doc, task_name, template_key=None):
     emit_event("taskChanged", data)
 
     return changes
+
+
+def get_process_id():
+    """Fake process id created on demand using uuid.
+
+    Can be used to create process specific folders in temp directory.
+
+    Returns:
+        str: Process id.
+    """
+
+    global _process_id
+    if _process_id is None:
+        _process_id = str(uuid.uuid4())
+    return _process_id

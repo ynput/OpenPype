@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 
 ContainersFilterResult = collections.namedtuple(
     "ContainersFilterResult",
-    ["latest", "outdated", "not_foud", "invalid"]
+    ["latest", "outdated", "not_found", "invalid"]
 )
 
 
@@ -87,12 +87,19 @@ def get_repres_contexts(representation_ids, dbcon=None):
     if not dbcon:
         dbcon = legacy_io
 
-    contexts = {}
     if not representation_ids:
-        return contexts
+        return {}
 
     project_name = dbcon.active_project()
     repre_docs = get_representations(project_name, representation_ids)
+
+    return get_contexts_for_repre_docs(project_name, repre_docs)
+
+
+def get_contexts_for_repre_docs(project_name, repre_docs):
+    contexts = {}
+    if not repre_docs:
+        return contexts
 
     repre_docs_by_id = {}
     version_ids = set()
@@ -808,7 +815,7 @@ def filter_containers(containers, project_name):
 
     Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
     The 'lastest' containers are from last version, 'outdated' are not,
-    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    'invalid' are invalid containers (invalid content) and 'not_found' has
     some missing entity in database.
 
     Args:

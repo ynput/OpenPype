@@ -66,8 +66,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if cls._checked_bg_color is not None:
             return
 
-        colors_data = get_objected_colors()
-        colors_info = colors_data["nice-checkbox"]
+        colors_info = get_objected_colors("nice-checkbox")
 
         cls._checked_bg_color = colors_info["bg-checked"].get_qcolor()
         cls._unchecked_bg_color = colors_info["bg-unchecked"].get_qcolor()
@@ -111,14 +110,14 @@ class NiceCheckbox(QtWidgets.QFrame):
         return QtCore.QSize(width, height)
 
     def get_width_hint_by_height(self, height):
-        return (
-            height / self._base_size.height()
-        ) * self._base_size.width()
+        return int((
+            float(height) / self._base_size.height()
+        ) * self._base_size.width())
 
     def get_height_hint_by_width(self, width):
-        return (
-            width / self._base_size.width()
-        ) * self._base_size.height()
+        return int((
+            float(width) / self._base_size.width()
+        ) * self._base_size.height())
 
     def setFixedHeight(self, *args, **kwargs):
         self._fixed_height_set = True
@@ -321,7 +320,7 @@ class NiceCheckbox(QtWidgets.QFrame):
             bg_color = self.unchecked_bg_color
 
         else:
-            offset_ratio = self._current_step / self._steps
+            offset_ratio = float(self._current_step) / self._steps
             # Animation bg
             bg_color = self.steped_color(
                 self.checked_bg_color,
@@ -329,10 +328,11 @@ class NiceCheckbox(QtWidgets.QFrame):
                 offset_ratio
             )
 
-        margins_ratio = self._checker_margins_divider
+        margins_ratio = float(self._checker_margins_divider)
         if margins_ratio > 0:
             size_without_margins = int(
-                (frame_rect.height() / margins_ratio) * (margins_ratio - 2)
+                (float(frame_rect.height()) / margins_ratio)
+                * (margins_ratio - 2)
             )
             size_without_margins -= size_without_margins % 2
             margin_size_c = ceil(
@@ -351,9 +351,9 @@ class NiceCheckbox(QtWidgets.QFrame):
         )
 
         if checkbox_rect.width() > checkbox_rect.height():
-            radius = floor(checkbox_rect.height() / 2)
+            radius = floor(checkbox_rect.height() * 0.5)
         else:
-            radius = floor(checkbox_rect.width() / 2)
+            radius = floor(checkbox_rect.width() * 0.5)
 
         painter.setPen(QtCore.Qt.transparent)
         painter.setBrush(bg_color)
@@ -369,7 +369,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if self._current_step == 0:
             x_offset = 0
         else:
-            x_offset = (area_width / self._steps) * self._current_step
+            x_offset = (float(area_width) / self._steps) * self._current_step
 
         pos_x = checkbox_rect.x() + x_offset + margin_size_c
         pos_y = checkbox_rect.y() + margin_size_c
@@ -434,21 +434,21 @@ class NiceCheckbox(QtWidgets.QFrame):
     def _get_enabled_icon_path(
         self, painter, checker_rect, step=None, half_steps=None
     ):
-        fifteenth = checker_rect.height() / 15
+        fifteenth = float(checker_rect.height()) / 15
         # Left point
         p1 = QtCore.QPoint(
-            checker_rect.x() + (5 * fifteenth),
-            checker_rect.y() + (9 * fifteenth)
+            int(checker_rect.x() + (5 * fifteenth)),
+            int(checker_rect.y() + (9 * fifteenth))
         )
         # Middle bottom point
         p2 = QtCore.QPoint(
             checker_rect.center().x(),
-            checker_rect.y() + (11 * fifteenth)
+            int(checker_rect.y() + (11 * fifteenth))
         )
         # Top right point
         p3 = QtCore.QPoint(
-            checker_rect.x() + (10 * fifteenth),
-            checker_rect.y() + (5 * fifteenth)
+            int(checker_rect.x() + (10 * fifteenth)),
+            int(checker_rect.y() + (5 * fifteenth))
         )
         if step is not None:
             multiplier = (half_steps - step)
@@ -458,16 +458,16 @@ class NiceCheckbox(QtWidgets.QFrame):
             p3c = p3 - checker_rect.center()
 
             p1o = QtCore.QPoint(
-                (p1c.x() / half_steps) * multiplier,
-                (p1c.y() / half_steps) * multiplier
+                int((float(p1c.x()) / half_steps) * multiplier),
+                int((float(p1c.y()) / half_steps) * multiplier)
             )
             p2o = QtCore.QPoint(
-                (p2c.x() / half_steps) * multiplier,
-                (p2c.y() / half_steps) * multiplier
+                int((float(p2c.x()) / half_steps) * multiplier),
+                int((float(p2c.y()) / half_steps) * multiplier)
             )
             p3o = QtCore.QPoint(
-                (p3c.x() / half_steps) * multiplier,
-                (p3c.y() / half_steps) * multiplier
+                int((float(p3c.x()) / half_steps) * multiplier),
+                int((float(p3c.y()) / half_steps) * multiplier)
             )
 
             p1 -= p1o
@@ -484,11 +484,12 @@ class NiceCheckbox(QtWidgets.QFrame):
         self, painter, checker_rect, step=None, half_steps=None
     ):
         center_point = QtCore.QPointF(
-            checker_rect.width() / 2, checker_rect.height() / 2
+            float(checker_rect.width()) / 2,
+            float(checker_rect.height()) / 2
         )
-        offset = (
+        offset = float((
             (center_point + QtCore.QPointF(0, 0)) / 2
-        ).x() / 4 * 5
+        ).x()) / 4 * 5
         if step is not None:
             diff = center_point.x() - offset
             diff_offset = (diff / half_steps) * (half_steps - step)

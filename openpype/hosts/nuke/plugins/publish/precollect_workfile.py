@@ -3,7 +3,8 @@ import os
 import nuke
 
 import pyblish.api
-import openpype.api as pype
+
+from openpype.lib import get_version_from_path
 from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
@@ -74,7 +75,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "fps": root['fps'].value(),
 
             "currentFile": current_file,
-            "version": int(pype.get_version_from_path(current_file)),
+            "version": int(get_version_from_path(current_file)),
 
             "host": pyblish.api.current_host(),
             "hostVersion": nuke.NUKE_VERSION_STRING

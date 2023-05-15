@@ -164,9 +164,9 @@ class ExperimentalTools:
 
     def _show_publisher(self):
         if self._publisher_tool is None:
-            from openpype.tools import publisher
+            from openpype.tools.publisher.window import PublisherWindow
 
-            self._publisher_tool = publisher.PublisherWindow(
+            self._publisher_tool = PublisherWindow(
                 parent=self._parent_widget
             )
 

@@ -1,11 +1,10 @@
 import os
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 import pyblish.api
 
-from openpype import lib
-from openpype.api import Logger
+from openpype.lib import Logger, register_event_callback
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -16,9 +15,8 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
-from openpype.lib import register_event_callback
 
-from .launch_logic import get_stub
+from .launch_logic import get_stub, ConnectionNotEstablishedYet
 
 log = Logger.get_logger(__name__)
 
@@ -111,7 +109,7 @@ def ls():
     """
     try:
         stub = get_stub()  # only after AfterEffects is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 
@@ -284,7 +282,7 @@ def _get_stub():
     """
     try:
         stub = get_stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 

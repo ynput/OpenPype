@@ -118,9 +118,8 @@ class DBHandler:
                                    "Run with overwrite=True")
             else:
                 if collection:
-                    coll = self.client[db_name_out].get(collection)
-                    if coll:
-                        coll.drop()
+                    if collection in self.client[db_name_out].list_collection_names():  # noqa
+                        self.client[db_name_out][collection].drop()
                 else:
                     self.teardown(db_name_out)
 
@@ -133,7 +132,11 @@ class DBHandler:
                                     db_name=db_name, db_name_out=db_name_out,
                                     collection=collection)
         print("mongorestore query:: {}".format(query))
-        subprocess.run(query)
+        try:
+            subprocess.run(query)
+        except FileNotFoundError:
+            raise RuntimeError("'mongorestore' utility must be on path."
+                               "Please install it.")
 
     def teardown(self, db_name):
         """Drops 'db_name' if exists."""
@@ -231,13 +234,15 @@ class DBHandler:
 # Examples
 # handler = DBHandler(uri="mongodb://localhost:27017")
 # #
-# backup_dir = "c:\\projects\\test_nuke_publish\\input\\dumps"
+# backup_dir = "c:\\projects\\test_zips\\test_nuke_deadline_publish\\input\\dumps"  # noqa
 # # #
-# handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
-# handler.setup_from_dump("test_db", backup_dir, True, db_name_out="avalon", collection="test_project")
-# handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
+# handler.backup_to_dump("avalon_tests", backup_dir, True, collection="test_project")  # noqa
+#handler.backup_to_dump("openpype_tests", backup_dir, True, collection="settings")  # noqa
+
+# handler.setup_from_dump("avalon_tests", backup_dir, True, db_name_out="avalon_tests", collection="test_project")  # noqa
+# handler.setup_from_sql_file("avalon_tests", "c:\\projects\\sql\\item.sql",
 #                             collection="test_project",
 #                             drop=False, mode="upsert")
-# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+# handler.setup_from_sql("avalon_tests", "c:\\projects\\sql",
 #                        collection="test_project",
 #                        drop=False, mode="upsert")

@@ -1,3 +1,4 @@
+import inspect
 from abc import ABCMeta
 
 import pyblish.api
@@ -132,6 +133,25 @@ class OpenPypePyblishPluginMixin:
                 )
         return attribute_values
 
+    @staticmethod
+    def get_attr_values_from_data_for_plugin(plugin, data):
+        """Get attribute values for attribute definitions from data.
+
+        Args:
+            plugin (Union[publish.api.Plugin, Type[publish.api.Plugin]]): The
+                plugin for which attributes are extracted.
+            data(dict): Data from instance or context.
+        """
+
+        if not inspect.isclass(plugin):
+            plugin = plugin.__class__
+
+        return (
+            data
+            .get("publish_attributes", {})
+            .get(plugin.__name__, {})
+        )
+
     def get_attr_values_from_data(self, data):
         """Get attribute values for attribute definitions from data.
 
@@ -139,11 +159,7 @@ class OpenPypePyblishPluginMixin:
             data(dict): Data from instance or context.
         """
 
-        return (
-            data
-            .get("publish_attributes", {})
-            .get(self.__class__.__name__, {})
-        )
+        return self.get_attr_values_from_data_for_plugin(self.__class__, data)
 
 
 class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):

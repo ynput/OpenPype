@@ -51,7 +51,9 @@ development tools like [CMake](https://cmake.org/) and [Visual Studio](https://v
 
 #### Run from source
 
-For development purposes it is possible to run OpenPype directly from the source. We provide a simple launcher script for this. 
+For development purposes it is possible to run OpenPype directly from the source. We provide a simple launcher script for this. To run the powershell scripts you may have to enable unrestricted execution as administrator:
+
+`Set-ExecutionPolicy -ExecutionPolicy unrestricted`
 
 To start OpenPype from source you need to 
 

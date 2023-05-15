@@ -1,5 +1,5 @@
 import six
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 from . import FamilyRole, PluginRole
 

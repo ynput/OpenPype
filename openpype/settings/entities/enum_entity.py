@@ -152,6 +152,7 @@ class HostsEnumEntity(BaseEnumEntity):
 
     schema_types = ["hosts-enum"]
     all_host_names = [
+        "max",
         "aftereffects",
         "blender",
         "celaction",

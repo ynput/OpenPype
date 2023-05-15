@@ -1,11 +1,15 @@
-from openpype.pipeline import CreatorError
 from openpype.lib import prepare_template_data
+from openpype.pipeline import CreatorError
 from openpype.hosts.tvpaint.api import (
     plugin,
-    pipeline,
-    lib,
     CommunicationWrapper
 )
+from openpype.hosts.tvpaint.api.lib import (
+    get_layers_data,
+    get_groups_data,
+    execute_george_through_file,
+)
+from openpype.hosts.tvpaint.api.pipeline import list_instances
 
 
 class CreateRenderlayer(plugin.Creator):
@@ -63,7 +67,7 @@ class CreateRenderlayer(plugin.Creator):
         # Validate that communication is initialized
         if CommunicationWrapper.communicator:
             # Get currently selected layers
-            layers_data = lib.get_layers_data()
+            layers_data = get_layers_data()
 
             selected_layers = [
                 layer
@@ -81,8 +85,8 @@ class CreateRenderlayer(plugin.Creator):
 
     def process(self):
         self.log.debug("Query data from workfile.")
-        instances = pipeline.list_instances()
-        layers_data = lib.get_layers_data()
+        instances = list_instances()
+        layers_data = get_layers_data()
 
         self.log.debug("Checking for selection groups.")
         # Collect group ids from selection
@@ -109,7 +113,7 @@ class CreateRenderlayer(plugin.Creator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
-        group_data = lib.get_groups_data()
+        group_data = get_groups_data()
         group_name = None
         for group in group_data:
             if group["group_id"] == group_id:
@@ -176,7 +180,7 @@ class CreateRenderlayer(plugin.Creator):
             return
 
         self.log.debug("Querying groups data from workfile.")
-        groups_data = lib.get_groups_data()
+        groups_data = get_groups_data()
 
         self.log.debug("Changing name of the group.")
         selected_group = None
@@ -195,7 +199,7 @@ class CreateRenderlayer(plugin.Creator):
             b=selected_group["blue"],
             name=new_group_name
         )
-        lib.execute_george_through_file(rename_script)
+        execute_george_through_file(rename_script)
 
         self.log.info(
             f"Name of group with index {group_id}"
@@ -203,8 +207,8 @@ class CreateRenderlayer(plugin.Creator):
         )
 
     def _ask_user_subset_override(self, instance):
-        from Qt import QtCore
-        from Qt.QtWidgets import QMessageBox
+        from qtpy import QtCore
+        from qtpy.QtWidgets import QMessageBox
 
         title = "Subset \"{}\" already exist".format(instance["subset"])
         text = (

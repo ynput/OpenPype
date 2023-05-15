@@ -63,6 +63,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "collect_comment_per_instance",
+            "label": "Collect comment per instance",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
@@ -295,6 +316,29 @@
                                                     "label": "Subsets",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "custom_tags",
+                                                    "label": "Custom Tags",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "label",
+                                                    "label": "Use output <b>always</b> / only if input <b>is 1 frame</b> image / only if has <b>2+ frames</b> or <b>is video</b>"
+                                                },
+                                                {
+                                                    "type": "enum",
+                                                    "key": "single_frame_filter",
+                                                    "default": "everytime",
+                                                    "enum_items": [
+                                                        {"everytime": "Always"},
+                                                        {"single_frame": "Only if input has 1 image frame"},
+                                                        {"multi_frame": "Only if input is video or sequence of frames"}
+                                                    ]
                                                 }
                                             ]
                                         },
@@ -482,10 +526,27 @@
                                 "object_type": "text"
                             },
                             {
-                                "type": "hosts-enum",
                                 "key": "hosts",
-                                "label": "Hosts",
+                                "label": "Host names",
+                                "type": "hosts-enum",
                                 "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "subsets",
+                                "label": "Subset names",
+                                "type": "list",
+                                "object_type": "text"
                             },
                             {
                                 "type": "splitter"
@@ -549,6 +610,73 @@
                                         }
                                     ]
                                 }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "PreIntegrateThumbnails",
+            "label": "Override Integrate Thumbnail Representations",
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Explicitly set if Thumbnail representation should be integrated into DB.<br> If no matching profile set, existing state from Host implementation is kept."
+                },
+                {
+                    "type": "list",
+                    "key": "integrate_profiles",
+                    "label": "Integrate profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "task_names",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "subsets",
+                                "label": "Subset names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "integrate_thumbnail",
+                                "label": "Integrate thumbnail"
                             }
                         ]
                     }

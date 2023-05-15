@@ -1,7 +1,7 @@
 import re
 import collections
 
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 
 ENTITY_LABEL_ROLE = QtCore.Qt.UserRole + 1
 ENTITY_PATH_ROLE = QtCore.Qt.UserRole + 2

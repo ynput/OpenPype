@@ -21,6 +21,9 @@ from openpype.pipeline import AvalonMongoDB
 from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
+from openpype.lib import Logger
+
+log = Logger.get_logger(__name__)
 
 # Accepted namin pattern for OP
 naming_pattern = re.compile("^[a-zA-Z0-9_.]*$")
@@ -112,7 +115,9 @@ def update_op_assets(
         item_data["frameStart"] = frame_in
         # Frames duration, fallback on 0
         try:
-            frames_duration = int(item_data.pop("nb_frames", 0))
+            # NOTE nb_frames is stored directly in item
+            # because of zou's legacy design
+            frames_duration = int(item.get("nb_frames", 0))
         except (TypeError, ValueError):
             frames_duration = 0
         # Frame out, fallback on frame_in + duration or project's value or 1001
@@ -167,7 +172,7 @@ def update_op_assets(
         # Substitute item type for general classification (assets or shots)
         if item_type in ["Asset", "AssetType"]:
             entity_root_asset_name = "Assets"
-        elif item_type in ["Episode", "Sequence"]:
+        elif item_type in ["Episode", "Sequence", "Shot"]:
             entity_root_asset_name = "Shots"
 
         # Root parent folder if exist
@@ -230,7 +235,6 @@ def update_op_assets(
                     },
                 )
             )
-
     return assets_with_update
 
 
@@ -248,7 +252,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_doc = get_project(project_name)
     if not project_doc:
-        print(f"Creating project '{project_name}'")
+        log.info(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
@@ -268,11 +272,19 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         {
             "code": project_code,
             "fps": float(project["fps"]),
-            "resolutionWidth": int(project["resolution"].split("x")[0]),
-            "resolutionHeight": int(project["resolution"].split("x")[1]),
             "zou_id": project["id"],
         }
     )
+
+    match_res = re.match(r"(\d+)x(\d+)", project["resolution"])
+    if match_res:
+        project_data["resolutionWidth"] = int(match_res.group(1))
+        project_data["resolutionHeight"] = int(match_res.group(2))
+    else:
+        log.warning(
+            f"'{project['resolution']}' does not match the expected"
+            " format for the resolution, for example: 1920x1080"
+        )
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
@@ -334,7 +346,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    print(f"Synchronizing {project['name']}...")
+    log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)

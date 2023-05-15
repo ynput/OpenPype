@@ -9,7 +9,9 @@ import os
 import logging
 import collections
 
-from openpype.lib import get_subset_name
+from openpype.client import get_asset_by_id
+
+from .subset_name import get_subset_name
 
 
 class LegacyCreator(object):
@@ -147,11 +149,15 @@ class LegacyCreator(object):
             variant, task_name, asset_id, project_name, host_name
         )
 
+        asset_doc = get_asset_by_id(
+            project_name, asset_id, fields=["data.tasks"]
+        )
+
         return get_subset_name(
             cls.family,
             variant,
             task_name,
-            asset_id,
+            asset_doc,
             project_name,
             host_name,
             dynamic_data=dynamic_data

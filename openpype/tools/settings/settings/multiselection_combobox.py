@@ -1,4 +1,4 @@
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 
 class ComboItemDelegate(QtWidgets.QStyledItemDelegate):

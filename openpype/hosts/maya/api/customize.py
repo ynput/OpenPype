@@ -8,7 +8,7 @@ from functools import partial
 import maya.cmds as cmds
 import maya.mel as mel
 
-from openpype.api import resources
+from openpype import resources
 from openpype.tools.utils import host_tools
 from .lib import get_main_window
 

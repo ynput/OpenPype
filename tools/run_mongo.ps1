@@ -112,4 +112,6 @@ $mongoPath = Find-Mongo $preferred_version
 Write-Color -Text ">>> ", "Using DB path: ", "[ ", "$($dbpath)", " ]" -Color Green, Gray, Cyan, White, Cyan
 Write-Color -Text ">>> ", "Port: ", "[ ", "$($port)", " ]" -Color Green, Gray, Cyan, White, Cyan
 
+New-Item -ItemType Directory -Force -Path $($dbpath)
+
 Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null

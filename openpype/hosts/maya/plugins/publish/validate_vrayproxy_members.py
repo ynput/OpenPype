@@ -1,5 +1,4 @@
 import pyblish.api
-import openpype.api
 
 from maya import cmds
 

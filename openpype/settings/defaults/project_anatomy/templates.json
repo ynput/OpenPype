@@ -29,7 +29,7 @@
     "delivery": {},
     "unreal": {
         "folder": "{root[work]}/{project[name]}/unreal/{task[name]}",
-        "file": "{project[code]}_{asset}",
+        "file": "{project[code]}_{asset}.{ext}",
         "path": "{@folder}/{@file}"
     },
     "others": {
@@ -48,10 +48,16 @@
             "file": "{originalBasename}_{@version}.{ext}",
             "path": "{@folder}/{@file}"
         },
+        "online": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+            "file": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
+            "path": "{@folder}/{@file}"
+        },
         "__dynamic_keys_labels__": {
             "maya2unreal": "Maya to Unreal",
             "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
-            "simpleUnrealTexture": "Simple Unreal Texture"
+            "simpleUnrealTexture": "Simple Unreal Texture",
+            "online": "online"
         }
     }
 }

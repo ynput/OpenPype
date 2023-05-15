@@ -90,6 +90,9 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             "Group",
             "name {}_1".format(object_name))
 
+        # hide property panel
+        GN.hideControlPanel()
+
         # adding content to the group node
         with GN:
             pre_node = nuke.createNode("Input")

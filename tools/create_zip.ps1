@@ -76,7 +76,7 @@ Write-Host $art -ForegroundColor DarkGreen
 # Show-PSWarning
 
 $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)(?<hornet>-h\d{4})"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
   Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray

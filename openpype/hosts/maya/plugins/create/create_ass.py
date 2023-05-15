@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -9,12 +7,26 @@ from maya import cmds
 
 
 class CreateAss(plugin.Creator):
-    """Arnold Archive"""
+    """Arnold Scene Source"""
 
     name = "ass"
-    label = "Ass StandIn"
+    label = "Arnold Scene Source"
     family = "ass"
     icon = "cube"
+    expandProcedurals = False
+    motionBlur = True
+    motionBlurKeys = 2
+    motionBlurLength = 0.5
+    maskOptions = False
+    maskCamera = False
+    maskLight = False
+    maskShape = False
+    maskShader = False
+    maskOverride = False
+    maskDriver = False
+    maskFilter = False
+    maskColor_manager = False
+    maskOperator = False
 
     def __init__(self, *args, **kwargs):
         super(CreateAss, self).__init__(*args, **kwargs)
@@ -22,17 +34,27 @@ class CreateAss(plugin.Creator):
         # Add animation data
         self.data.update(lib.collect_animation_data())
 
-        # Vertex colors with the geometry
-        self.data["exportSequence"] = False
+        self.data["expandProcedurals"] = self.expandProcedurals
+        self.data["motionBlur"] = self.motionBlur
+        self.data["motionBlurKeys"] = self.motionBlurKeys
+        self.data["motionBlurLength"] = self.motionBlurLength
+
+        # Masks
+        self.data["maskOptions"] = self.maskOptions
+        self.data["maskCamera"] = self.maskCamera
+        self.data["maskLight"] = self.maskLight
+        self.data["maskShape"] = self.maskShape
+        self.data["maskShader"] = self.maskShader
+        self.data["maskOverride"] = self.maskOverride
+        self.data["maskDriver"] = self.maskDriver
+        self.data["maskFilter"] = self.maskFilter
+        self.data["maskColor_manager"] = self.maskColor_manager
+        self.data["maskOperator"] = self.maskOperator
 
     def process(self):
         instance = super(CreateAss, self).process()
 
-        # data = OrderedDict(**self.data)
-
-
-
-        nodes = list()
+        nodes = []
 
         if (self.options or {}).get("useSelection"):
             nodes = cmds.ls(selection=True)
@@ -42,7 +64,3 @@ class CreateAss(plugin.Creator):
         assContent = cmds.sets(name="content_SET")
         assProxy = cmds.sets(name="proxy_SET", empty=True)
         cmds.sets([assContent, assProxy], forceElement=instance)
-
-        # self.log.info(data)
-        #
-        # self.data = data

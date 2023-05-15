@@ -123,13 +123,21 @@ if (-not (Test-Path 'env:POETRY_HOME')) {
 Set-Location -Path $openpype_root
 
 $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)(?<hornet>-h\d{4})"')
 $openpype_version = $result[0].Groups['version'].Value
+$hornet_version = $result[0].Groups['hornet'].Value
+$hornet_version_number = [int]$hornet_version.trim('-').trim('h')
 if (-not $openpype_version) {
   Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
   Exit-WithCode 1
 }
-
+if ($hornet_version){
+    $version_file -replace ('{0:d4}' -f $hornet_version_number), ('{0:d4}' -f($hornet_version_number + 1)) | 
+        Set-Content -Path "$($openpype_root)\openpype\version.py"
+    $hornet_version_number = $hornet_version_number + 1
+}
+Write-Color -Text "Hornet Version", "set to", $('{0:d4}' -f $hornet_version_number) -Color Blue, Gray, Yellow
+pause
 # Create build directory if not exist
 if (-not (Test-Path -PathType Container -Path "$($openpype_root)\build")) {
     New-Item -ItemType Directory -Force -Path "$($openpype_root)\build"

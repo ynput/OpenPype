@@ -3,7 +3,7 @@
 import re
 
 import pyblish.api
-import openpype.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline import legacy_io
 from openpype.settings import get_project_settings

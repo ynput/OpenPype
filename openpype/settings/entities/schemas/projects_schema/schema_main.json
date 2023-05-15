@@ -92,6 +92,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_fusion"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_hiero"
                 },
                 {

@@ -1,6 +1,6 @@
 from __future__ import print_function
 import sys
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from pprint import pformat
 import atexit
 

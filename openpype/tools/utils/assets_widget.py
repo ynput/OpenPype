@@ -114,7 +114,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
     def __init__(self, *args, **kwargs):
         super(UnderlinesAssetDelegate, self).__init__(*args, **kwargs)
-        asset_view_colors = get_objected_colors()["loader"]["asset-view"]
+        asset_view_colors = get_objected_colors("loader", "asset-view")
         self._selected_color = (
             asset_view_colors["selected"].get_qcolor()
         )

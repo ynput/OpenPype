@@ -16,6 +16,9 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
         review_track_index = instance.context.data.get("reviewTrackIndex")
         item = instance.data["item"]
 
+        if "audio" in instance.data["family"]:
+            return
+
         # frame range
         self.handle_start = instance.data["handleStart"]
         self.handle_end = instance.data["handleEnd"]

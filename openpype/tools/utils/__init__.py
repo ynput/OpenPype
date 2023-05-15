@@ -7,6 +7,8 @@ from .widgets import (
     ExpandBtn,
     PixmapLabel,
     IconButton,
+    PixmapButton,
+    SeparatorWidget,
 )
 from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
@@ -37,6 +39,8 @@ __all__ = (
     "ExpandBtn",
     "PixmapLabel",
     "IconButton",
+    "PixmapButton",
+    "SeparatorWidget",
 
     "DeselectableTreeView",
 

@@ -47,10 +47,14 @@ Context discovers creator and publish plugins. Trigger collections of existing i
 
 Creator plugins can call **creator_adds_instance** or **creator_removed_instance** to add/remove instances but these methods are not meant to be called directly out of the creator. The reason is that it is the creator's responsibility to remove metadata or decide if it should remove the instance.
 
-#### Required functions in host implementation
-Host implementation **must** implement **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now only data about enabled/disabled optional publish plugins is stored there. When data is not stored and loaded properly, reset of publishing will cause that they will be set to default value. Context data also parsed to json string similarly as instance data.
+During reset are re-cached Creator plugins, re-collected instances, refreshed host context and more. Object of `CreateContext` supply shared data during the reset. They can be used by creators to share same data needed during collection phase or during creation for autocreators.
 
-There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return a string shown in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
+#### Required functions in host implementation
+It is recommended to use `HostBase` class (`from openpype.host import HostBase`) as base for host implementation with combination of `IPublishHost` interface (`from openpype.host import IPublishHost`). These abstract classes should guide you to fill missing attributes and methods.
+
+To sum them and in case host implementation is inheriting `HostBase` the implementation **must** implement **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now only data about enabled/disabled optional publish plugins is stored there. When data is not stored and loaded properly, reset of publishing will cause that they will be set to default value. Context data also parsed to json string similarly as instance data.
+
+There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return a string shown in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"` (this is default implementation in `HostBase`).
 
 Another optional function is **get_current_context**. This function is handy in hosts where it is possible to open multiple workfiles in one process so using global context variables is not relevant because artists can switch between opened workfiles without being acknowledged. When a function is not implemented or won't return the right keys the global context is used.
 ```json
@@ -67,6 +71,9 @@ Main responsibility of create plugin is to create, update, collect and remove in
 
 #### *BaseCreator*
 Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **HiddenCreator**, **AutoCreator** and **Creator** variants.
+
+**Access to shared data**
+Functions to work with "Collection shared data" can be used during reset phase of `CreateContext`. Creators can cache there data that are common for them. For example list of nodes in scene. Methods are implemented on `CreateContext` but their usage is primarily for Create plugins as nothing else should use it. Each creator can access `collection_shared_data` attribute which is a dictionary where shared data can be stored.
 
 **Abstractions**
 - **`family`** (class attr) - Tells what kind of instance will be created.
@@ -197,6 +204,37 @@ class RenderLayerCreator(Creator):
 - **`get_subset_name`** (method) - Calculate subset name based on passed data. Data can be extended using the `get_dynamic_data` method. Default implementation is using `get_subset_name` from `openpype.lib` which is recommended.
 
 - **`get_dynamic_data`** (method) - Can be used to extend data for subset templates which may be required in some cases.
+
+Methods are used before instance creation and on instance subset name update. Update may require to have access to existing instance because dynamic data should be filled from there. Because of that is instance passed to `get_subset_name` and `get_dynamic_data` so the creator can handle that cases.
+
+This is one example where subset name template may contain `"{layer}"` which is filled during creation because the value is taken from selection. In that case `get_dynamic_data` returns value for `"layer"` -> `"{layer}"` so it can be filled in creation. But when subset name of already existing instance is updated it should return already existing value. Note: Creator must make sure the value is available on instance.
+
+```python
+from openpype.lib import prepare_template_data
+from my_host import get_selected_layer
+
+
+class SomeCreator(Creator):
+    def get_dynamic_data(
+        self, variant, task_name, asset_doc, project_name, host_name, instance
+    ):
+        # Before instance is created return unfilled key
+        # - the key will be filled during creation
+        if instance is None:
+            return {"layer": "{layer}"}
+        # Take value from existing instance
+        # - creator must know where to look for the value
+        return {"layer": instance.data["layer"]}
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # Fill the layer name in
+        layer = get_selected_layer()
+        layer_name = layer["name"]
+        layer_fill_data = prepare_template_data({"layer": layer_name})
+        subset_name = subset_name.format(**layer_fill_data)
+        instance_data["layer"] = layer_name
+        ...
+```
 
 
 #### *HiddenCreator*

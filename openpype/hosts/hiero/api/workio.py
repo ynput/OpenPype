@@ -1,7 +1,7 @@
 import os
 import hiero
 
-from openpype.api import Logger
+from openpype.lib import Logger
 
 log = Logger.get_logger(__name__)
 

@@ -217,7 +217,7 @@ class ReferenceLoader(Loader):
 
         # Need to save alembic settings and reapply, cause referencing resets
         # them to incoming data.
-        alembic_attrs = ["speed", "offset", "cycleType"]
+        alembic_attrs = ["speed", "offset", "cycleType", "time"]
         alembic_data = {}
         if representation["name"] == "abc":
             alembic_nodes = cmds.ls(
@@ -226,7 +226,12 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    alembic_data[attr] = cmds.getAttr(node_attr)
+                    data = {
+                        "input": lib.get_attribute_input(node_attr),
+                        "value": cmds.getAttr(node_attr)
+                    }
+
+                    alembic_data[attr] = data
             else:
                 self.log.debug("No alembic nodes found in {}".format(members))
 
@@ -263,8 +268,19 @@ class ReferenceLoader(Loader):
                 "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
-                for attr, value in alembic_data.items():
-                    cmds.setAttr("{}.{}".format(alembic_nodes[0], attr), value)
+                alembic_node = alembic_nodes[0]  # assume single AlembicNode
+                for attr, data in alembic_data.items():
+                    node_attr = "{}.{}".format(alembic_node, attr)
+                    input = lib.get_attribute_input(node_attr)
+                    if data["input"]:
+                        if data["input"] != input:
+                            cmds.connectAttr(
+                                data["input"], node_attr, force=True
+                            )
+                    else:
+                        if input:
+                            cmds.disconnectAttr(input, node_attr)
+                        cmds.setAttr(node_attr, data["value"])
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.

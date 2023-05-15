@@ -1,9 +1,12 @@
 import nuke
 import os
 
+
 import DeadlineNukeClient
 
-from openpype.api import Logger
+
+from openpype.lib import Logger
+
 from openpype.pipeline import install_host
 from openpype.hosts.nuke import api
 from openpype.hosts.nuke.api.lib import (
@@ -137,7 +140,8 @@ def switchExtension():
 knobMatrix = { 'exr': ['colorspace','raw', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
 		'png': ['colorspace', 'raw','datatype'],
 		'tiff': ['colorspace','raw','datatype', 'compression'],
-		'mov': ['colorspace','raw','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
+		'mov': ['colorspace','raw','mov64_codec', 'mov64_fps', 'mov64_encoder' ],
+        'dpx': ['colorspace', 'datatype', 'transfer', 'bigEndian']
 }
 def embedOptions():
     nde = nuke.thisNode() 

@@ -16,22 +16,26 @@
         {
             "type": "number",
             "key": "frameStart",
-            "label": "Frame Start"
+            "label": "Frame Start",
+            "maximum": 999999999
         },
         {
             "type": "number",
             "key": "frameEnd",
-            "label": "Frame End"
+            "label": "Frame End",
+            "maximum": 999999999
         },
         {
             "type": "number",
             "key": "clipIn",
-            "label": "Clip In"
+            "label": "Clip In",
+            "maximum": 999999999
         },
         {
             "type": "number",
             "key": "clipOut",
-            "label": "Clip Out"
+            "label": "Clip Out",
+            "maximum": 999999999
         },
         {
             "type": "number",

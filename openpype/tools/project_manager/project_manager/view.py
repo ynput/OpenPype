@@ -1,7 +1,7 @@
 import collections
 from queue import Queue
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_project
 from .delegates import (
@@ -28,7 +28,7 @@ class NameDef:
 class NumberDef:
     def __init__(self, minimum=None, maximum=None, decimals=None):
         self.minimum = 0 if minimum is None else minimum
-        self.maximum = 999999 if maximum is None else maximum
+        self.maximum = 999999999 if maximum is None else maximum
         self.decimals = 0 if decimals is None else decimals
 
 

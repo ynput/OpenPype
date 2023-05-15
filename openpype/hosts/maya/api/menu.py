@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
@@ -9,16 +9,17 @@ import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.pipeline.workfile import BuildWorkfile
-from openpype.pipeline.workfile.build_template import (
-    build_workfile_template,
-    update_workfile_template
-)
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
-from .lib_template_builder import create_placeholder, update_placeholder
 
+from .workfile_template_builder import (
+    create_placeholder,
+    update_placeholder,
+    build_workfile_template,
+    update_workfile_template,
+)
 
 log = logging.getLogger(__name__)
 
@@ -161,12 +162,12 @@ def install():
         cmds.menuItem(
             "Create Placeholder",
             parent=builder_menu,
-            command=lambda *args: create_placeholder()
+            command=create_placeholder
         )
         cmds.menuItem(
             "Update Placeholder",
             parent=builder_menu,
-            command=lambda *args: update_placeholder()
+            command=update_placeholder
         )
         cmds.menuItem(
             "Build Workfile from template",

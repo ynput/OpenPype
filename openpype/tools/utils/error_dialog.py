@@ -1,9 +1,9 @@
 from Qt import QtWidgets, QtCore
 
-from .widgets import ClickableFrame, ExpandBtn
+from .widgets import ClickableFrame, ExpandBtn, SeparatorWidget
 
 
-def convert_text_for_html(text):
+def escape_text_for_html(text):
     return (
         text
         .replace("<", "&#60;")
@@ -19,7 +19,7 @@ class TracebackWidget(QtWidgets.QWidget):
 
         # Modify text to match html
         # - add more replacements when needed
-        tb_text = convert_text_for_html(tb_text)
+        tb_text = escape_text_for_html(tb_text)
         expand_btn = ExpandBtn(self)
 
         clickable_frame = ClickableFrame(self)
@@ -85,17 +85,20 @@ class ErrorMessageBox(QtWidgets.QDialog):
         copy_report_btn = QtWidgets.QPushButton("Copy report", self)
         ok_btn = QtWidgets.QPushButton("OK", self)
 
-        footer_layout = QtWidgets.QHBoxLayout()
+        footer_widget = QtWidgets.QWidget(self)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(copy_report_btn, 0)
         footer_layout.addStretch(1)
         footer_layout.addWidget(ok_btn, 0)
 
         bottom_line = self._create_line()
-        body_layout = QtWidgets.QVBoxLayout(self)
-        body_layout.addWidget(top_widget, 0)
-        body_layout.addWidget(content_scroll, 1)
-        body_layout.addWidget(bottom_line, 0)
-        body_layout.addLayout(footer_layout, 0)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        if top_widget is not None:
+            main_layout.addWidget(top_widget, 0)
+        main_layout.addWidget(content_scroll, 1)
+        main_layout.addWidget(bottom_line, 0)
+        main_layout.addWidget(footer_widget, 0)
 
         copy_report_btn.clicked.connect(self._on_copy_report)
         ok_btn.clicked.connect(self._on_ok_clicked)
@@ -106,11 +109,13 @@ class ErrorMessageBox(QtWidgets.QDialog):
         if not report_data:
             copy_report_btn.setVisible(False)
 
+        self._content_scroll = content_scroll
+        self._footer_widget = footer_widget
         self._report_data = report_data
 
     @staticmethod
     def convert_text_for_html(text):
-        return convert_text_for_html(text)
+        return escape_text_for_html(text)
 
     def _create_top_widget(self, parent_widget):
         label_widget = QtWidgets.QLabel(parent_widget)
@@ -131,7 +136,8 @@ class ErrorMessageBox(QtWidgets.QDialog):
         self.close()
 
     def _on_copy_report(self):
-        report_text = (10 * "*").join(self._report_data)
+        sep = "\n{}\n".format(10 * "*")
+        report_text = sep.join(self._report_data)
 
         mime_data = QtCore.QMimeData()
         mime_data.setText(report_text)
@@ -139,12 +145,10 @@ class ErrorMessageBox(QtWidgets.QDialog):
             mime_data
         )
 
-    def _create_line(self):
-        line = QtWidgets.QFrame(self)
-        line.setObjectName("Separator")
-        line.setMinimumHeight(2)
-        line.setMaximumHeight(2)
-        return line
+    def _create_line(self, parent=None):
+        if parent is None:
+            parent = self
+        return SeparatorWidget(2, parent=parent)
 
     def _create_traceback_widget(self, traceback_text, parent=None):
         if parent is None:

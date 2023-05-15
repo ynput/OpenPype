@@ -2,10 +2,13 @@ import os
 import pytest
 import shutil
 
-from tests.lib.testing_classes import HostFixtures
+from tests.lib.testing_classes import (
+    HostFixtures,
+    PublishTest,
+)
 
 
-class MayaTestClass(HostFixtures):
+class MayaHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
@@ -15,7 +18,7 @@ class MayaTestClass(HostFixtures):
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",
-                                "test_project_test_asset_TestTask_v001.mb")
+                                "test_project_test_asset_test_task_v001.mb")
         dest_folder = os.path.join(output_folder_url,
                                    self.PROJECT,
                                    self.ASSET,
@@ -23,7 +26,7 @@ class MayaTestClass(HostFixtures):
                                    self.TASK)
         os.makedirs(dest_folder)
         dest_path = os.path.join(dest_folder,
-                                 "test_project_test_asset_TestTask_v001.mb")
+                                 "test_project_test_asset_test_task_v001.mb")
         shutil.copy(src_path, dest_path)
 
         yield dest_path
@@ -39,3 +42,11 @@ class MayaTestClass(HostFixtures):
                                    "{}{}{}".format(startup_path,
                                                    os.pathsep,
                                                    original_pythonpath))
+
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        yield []
+
+
+class MayaLocalPublishTestClass(MayaHostFixtures, PublishTest):
+    """Testing class for local publishes."""

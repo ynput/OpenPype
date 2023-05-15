@@ -1,7 +1,6 @@
 import os
 
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule
 
 
 class AvalonModule(OpenPypeModule, ITrayModule):
@@ -58,7 +57,7 @@ class AvalonModule(OpenPypeModule, ITrayModule):
         if not self._library_loader_imported:
             return
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         # Actions
         action_library_loader = QtWidgets.QAction(
             "Loader", tray_menu
@@ -76,7 +75,7 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
     def show_library_loader(self):
         if self._library_loader_window is None:
-            from Qt import QtCore
+            from qtpy import QtCore
             from openpype.tools.libraryloader import LibraryLoaderWindow
             from openpype.pipeline import install_openpype_plugins
 

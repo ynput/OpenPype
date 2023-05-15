@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/AssetUserData.h"
-#include "AssetData.h"
+#include "AssetRegistry/AssetData.h"
 #include "AssetContainer.generated.h"
 
 /**

@@ -50,7 +50,10 @@ def get_engine_versions(env=None):
         # environment variable not set
         pass
     except OSError:
-        # specified directory doesn't exists
+        # specified directory doesn't exist
+        pass
+    except StopIteration:
+        # specified directory doesn't exist
         pass
 
     # if we've got something, terminate auto-detection process

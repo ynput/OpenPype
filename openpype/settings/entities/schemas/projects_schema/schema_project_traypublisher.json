@@ -311,6 +311,24 @@
                     "object_type": "text"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_validate_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateFrameRange",
+                            "label": "Validate frame range"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

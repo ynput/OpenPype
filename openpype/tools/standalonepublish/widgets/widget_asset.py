@@ -1,5 +1,5 @@
 import contextlib
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype.client import (

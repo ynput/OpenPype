@@ -56,7 +56,7 @@ def convert_value_by_type_name(value_type, value):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type == "vec2f":
+    if value_type in ("vec2f", "float2"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
@@ -127,7 +127,7 @@ def convert_value_by_type_name(value_type, value):
         return output
 
     print((
-        "MISSING IMPLEMENTATION:"
+        "Dev note (missing implementation):"
         " Unknown attrib type \"{}\". Value: {}"
     ).format(value_type, value))
     return value
@@ -183,7 +183,7 @@ def parse_oiio_xml_output(xml_string):
         else:
             value = child.text
             print((
-                "MISSING IMPLEMENTATION:"
+                "Dev note (missing implementation):"
                 " Unknown tag \"{}\". Value \"{}\""
             ).format(tag_name, value))
 

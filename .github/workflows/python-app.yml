@@ -1,0 +1,53 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v3
+    - name: Set up Python 3.7.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.7.9"
+    - name: Install Venv
+      run: |
+        .\tools\create_env.ps1
+    - name: Install Libs
+      run: |
+        .\tools\fetch_thirdparty_libs.ps1
+    - name: Build
+      run: |
+        .\tools\build.ps1
+    - name: Rename & Export Build
+      run: |
+        net use T: /delete
+        $net = new-object -ComObject WScript.Network
+        $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, $(cat C:\user.txt), $(cat C:\pass.txt))
+        cd build
+        $platform = "amd64"
+        $date = Get-Date -Format "M-d-yy"
+        $commitmsg = git log -1 --pretty=format:"%s"
+        $commitmsg -match "\[(.*)\]"
+        $commitmsg = $matches[1]
+        $buildname = ($commitmsg + "-" + $date + "-" + $platform)
+        mv exe.win-amd64-3.7 $buildname
+        cp $buildname T:\dev\_builds -R
+    - name: Cleanup local build folder
+      run: |
+        cd build
+        rm -R *

@@ -1,10 +1,10 @@
 import os
 import pyblish.api
-import openpype.api
 import opentimelineio as otio
+from openpype.pipeline import publish
 
 
-class ExtractOTIOFile(openpype.api.Extractor):
+class ExtractOTIOFile(publish.Extractor):
     """
     Extractor export OTIO file
     """

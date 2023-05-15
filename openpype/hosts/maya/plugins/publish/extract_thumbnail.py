@@ -1,5 +1,6 @@
 import os
 import glob
+import tempfile
 
 import capture
 
@@ -81,9 +82,17 @@ class ExtractThumbnail(publish.Extractor):
         elif asset_width and asset_height:
             preset['width'] = asset_width
             preset['height'] = asset_height
-        stagingDir = self.staging_dir(instance)
+
+        # Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            "Create temp directory {} for thumbnail".format(dst_staging)
+        )
+        # Store new staging to cleanup paths
+        instance.context.data["cleanupFullPaths"].append(dst_staging)
         filename = "{0}".format(instance.name)
-        path = os.path.join(stagingDir, filename)
+        path = os.path.join(dst_staging, filename)
 
         self.log.info("Outputting images to %s" % path)
 
@@ -96,6 +105,11 @@ class ExtractThumbnail(publish.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
@@ -107,6 +121,10 @@ class ExtractThumbnail(publish.Extractor):
             preset["viewport_options"]["imagePlane"] = image_plane
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
+
+        # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
 
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
@@ -127,6 +145,7 @@ class ExtractThumbnail(publish.Extractor):
 
         _, thumbnail = os.path.split(playblast)
 
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.info("file list  {}".format(thumbnail))
 
@@ -137,7 +156,7 @@ class ExtractThumbnail(publish.Extractor):
             'name': 'thumbnail',
             'ext': 'jpg',
             'files': thumbnail,
-            "stagingDir": stagingDir,
+            "stagingDir": dst_staging,
             "thumbnail": True
         }
         instance.data["representations"].append(representation)

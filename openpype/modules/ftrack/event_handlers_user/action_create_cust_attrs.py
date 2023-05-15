@@ -18,7 +18,7 @@ from openpype_modules.ftrack.lib import (
     tool_definitions_from_app_manager
 )
 
-from openpype.api import get_system_settings
+from openpype.settings import get_system_settings
 from openpype.lib import ApplicationManager
 
 """

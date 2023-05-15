@@ -3,9 +3,9 @@ from aiohttp import web
 import json
 import logging
 from concurrent.futures import CancelledError
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
-from openpype_interfaces import ITrayService
+from openpype.modules import ITrayService
 
 log = logging.getLogger(__name__)
 

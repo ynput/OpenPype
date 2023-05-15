@@ -9,26 +9,18 @@ import requests
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-from openpype.api import (
+from openpype.settings import (
     get_system_settings,
     get_project_settings,
 )
+from openpype.lib import requests_get
+from openpype.modules import ModulesManager
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import (
     lib,
     lib_rendersettings,
     plugin
 )
-from openpype.lib import requests_get
-from openpype.api import (
-    get_system_settings,
-    get_project_settings)
-from openpype.modules import ModulesManager
-from openpype.pipeline import legacy_io
-from openpype.pipeline import (
-    CreatorError,
-    legacy_io,
-)
-from openpype.pipeline.context_tools import get_current_project_asset
 
 
 class CreateRender(plugin.Creator):
@@ -209,6 +201,8 @@ class CreateRender(plugin.Creator):
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
         self.data["priority"] = default_priority
+        self.data["renderPreviewFrames"] = True     #hornet
+        self.data["previewPriorityOffset"] = 10     #hornet
         self.data["tile_priority"] = default_priority
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
@@ -217,6 +211,7 @@ class CreateRender(plugin.Creator):
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
+        # Hornet: edits below
         #self.data["convertToScanline"] = False
         #self.data["useReferencedAovs"] = False
         #self.data["renderSetupIncludeLights"] = (

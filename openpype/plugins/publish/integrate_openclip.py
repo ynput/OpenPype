@@ -2,8 +2,8 @@
 
 import os
 import pyblish.api
-import requests
 import re
+import xml.etree.ElementTree as xmlt
 class IntegrateOpenclip(pyblish.api.InstancePlugin):
     """
     Automatically create an openclip based on our existing image sequence
@@ -13,6 +13,19 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.91
     families = ['render', 'plate']
     hosts = ['nuke', 'standalonepublisher', 'traypublisher']
+# the pattern based clips are very compact and can reasonably fit here to avoid referencing non python files in the publish steps
+    template = r"""<?xml version="1.0"?>
+<clip type="clip" version="6">
+	<handler>
+		<name>MIO Clip</name>
+		<version>2</version>
+		<options type="dict">
+			<ScanPattern type="string"></ScanPattern>
+		</options>
+	</handler>
+</clip>
+"""
+
 
     def process(self, instance):
         supported_exts = ['jpg', 'exr', 'hdr', 'raw', 'dpx', 'png', 'jpeg']
@@ -48,7 +61,12 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
         versions = regex.sub(lambda m: m.group().replace(m.group()[1:-1], 'v{version}'),wildcard)
         #versions = re.sub('/v[0-9]+', '/v{version}',wildcard)
         self.log.info(versions)
-        res = requests.post('http://pype-db.local:4040', json={'output': clipPathPosix,'pattern':versions + '.' + ext})
-        self.log.info(res)
-        if not res.ok or not os.path.exists(clipPathWin):
+        #res = requests.post('http://pype-db.local:4040', json={'output': clipPathPosix,'pattern':versions + '.' + ext})
+        tree = xmlt.fromstring(self.template)
+        patternTag = tree.find('.//ScanPattern')
+        patternTag.text = versions + '.' + ext
+        with open(clipPathWin, 'wb') as fout:
+            fout.write(xmlt.tostring(tree))
+            self.log.info("clip file successfully written")
+        if not os.path.exists(clipPathWin):
             raise Exception('clip file generation failed')

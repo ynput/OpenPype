@@ -25,6 +25,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     families = ["animation",
                 "pointcache",
                 "camera",
+                "proxyAbc",
                 "renderlayer",
                 "review",
                 "yeticache"]

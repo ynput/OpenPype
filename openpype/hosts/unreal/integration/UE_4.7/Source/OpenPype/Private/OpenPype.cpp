@@ -1,6 +1,11 @@
 #include "OpenPype.h"
+
+#include "ISettingsContainer.h"
+#include "ISettingsModule.h"
+#include "ISettingsSection.h"
 #include "LevelEditor.h"
 #include "OpenPypePythonBridge.h"
+#include "OpenPypeSettings.h"
 #include "OpenPypeStyle.h"
 
 
@@ -11,13 +16,12 @@ static const FName OpenPypeTabName("OpenPype");
 // This function is triggered when the plugin is staring up
 void FOpenPypeModule::StartupModule()
 {
-
 	FOpenPypeStyle::Initialize();
 	FOpenPypeStyle::SetIcon("Logo", "openpype40");
 
 	// Create the Extender that will add content to the menu
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	
+
 	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender());
 
@@ -37,6 +41,7 @@ void FOpenPypeModule::StartupModule()
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 	LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 
+	RegisterSettings();
 }
 
 void FOpenPypeModule::ShutdownModule()
@@ -64,7 +69,6 @@ void FOpenPypeModule::AddMenuEntry(FMenuBuilder& MenuBuilder)
 			FSlateIcon(FOpenPypeStyle::GetStyleSetName(), "OpenPype.Logo"),
 			FUIAction(FExecuteAction::CreateRaw(this, &FOpenPypeModule::MenuDialog))
 		);
-
 	}
 	MenuBuilder.EndSection();
 }
@@ -89,13 +93,58 @@ void FOpenPypeModule::AddToobarEntry(FToolBarBuilder& ToolbarBuilder)
 	ToolbarBuilder.EndSection();
 }
 
+void FOpenPypeModule::RegisterSettings()
+{
+	ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
 
-void FOpenPypeModule::MenuPopup() {
+	// Create the new category
+	// TODO: After the movement of the plugin from the game to editor, it might be necessary to move this!
+	ISettingsContainerPtr SettingsContainer = SettingsModule.GetContainer("Project");
+
+	UOpenPypeSettings* Settings = GetMutableDefault<UOpenPypeSettings>();
+
+	// Register the settings
+	ISettingsSectionPtr SettingsSection = SettingsModule.RegisterSettings("Project", "OpenPype", "General",
+	                                                                      LOCTEXT("RuntimeGeneralSettingsName",
+		                                                                      "General"),
+	                                                                      LOCTEXT("RuntimeGeneralSettingsDescription",
+		                                                                      "Base configuration for Open Pype Module"),
+	                                                                      Settings
+	);
+
+	// Register the save handler to your settings, you might want to use it to
+	// validate those or just act to settings changes.
+	if (SettingsSection.IsValid())
+	{
+		SettingsSection->OnModified().BindRaw(this, &FOpenPypeModule::HandleSettingsSaved);
+	}
+}
+
+bool FOpenPypeModule::HandleSettingsSaved()
+{
+	UOpenPypeSettings* Settings = GetMutableDefault<UOpenPypeSettings>();
+	bool ResaveSettings = false;
+
+	// You can put any validation code in here and resave the settings in case an invalid
+	// value has been entered
+
+	if (ResaveSettings)
+	{
+		Settings->SaveConfig();
+	}
+
+	return true;
+}
+
+
+void FOpenPypeModule::MenuPopup()
+{
 	UOpenPypePythonBridge* bridge = UOpenPypePythonBridge::Get();
 	bridge->RunInPython_Popup();
 }
 
-void FOpenPypeModule::MenuDialog() {
+void FOpenPypeModule::MenuDialog()
+{
 	UOpenPypePythonBridge* bridge = UOpenPypePythonBridge::Get();
 	bridge->RunInPython_Dialog();
 }

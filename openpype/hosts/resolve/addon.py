@@ -1,7 +1,6 @@
 import os
 
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostAddon
+from openpype.modules import OpenPypeModule, IHostAddon
 
 from .utils import RESOLVE_ROOT_DIR
 

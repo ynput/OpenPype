@@ -7,32 +7,72 @@ import os
 import re
 import sys
 import platform
+import functools
+import warnings
+import json
 import ast
+import secrets
 import shutil
 import hiero
 
-from Qt import QtWidgets
+from qtpy import QtWidgets, QtCore
+try:
+    from PySide import QtXml
+except ImportError:
+    from PySide2 import QtXml
 
-from openpype.client import (
-    get_project,
-    get_versions,
-    get_last_versions,
-    get_representations,
-)
-from openpype.settings import get_anatomy_settings
+from openpype.client import get_project
+from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
 
-try:
-    from PySide.QtCore import QFile, QTextStream
-    from PySide.QtXml import QDomDocument
-except ImportError:
-    from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtXml import QDomDocument
 
-# from opentimelineio import opentime
-# from pprint import pformat
+class DeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
+
 
 log = Logger.get_logger(__name__)
 
@@ -305,7 +345,124 @@ def get_track_item_tags(track_item):
     return returning_tag_data
 
 
+def _get_tag_unique_hash():
+    # sourcery skip: avoid-builtin-shadow
+    return secrets.token_hex(nbytes=4)
+
+
+def set_track_openpype_tag(track, data=None):
+    """
+    Set openpype track tag to input track object.
+
+    Attributes:
+        track (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        hiero.core.Tag
+    """
+    data = data or {}
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "OpenPype data container",
+        "icon": "openpype_icon.png",
+        "metadata": dict(data.items())
+    }
+    # get available pype tag if any
+    _tag = get_track_openpype_tag(track)
+
+    if _tag:
+        # it not tag then create one
+        tag = tags.update_tag(_tag, tag_data)
+    else:
+        # if pype tag available then update with input data
+        tag = tags.create_tag(
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
+            tag_data
+        )
+        # add it to the input track item
+        track.addTag(tag)
+
+    return tag
+
+
+def get_track_openpype_tag(track):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track.tags()
+    if not _tags:
+        return None
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if self.pype_tag_name in tag.name():
+            return tag
+
+
+def get_track_openpype_data(track, container_name=None):
+    """
+    Get track's openpype tag data.
+
+    Attributes:
+        trackItem (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        dict: data found on pype tag
+    """
+    return_data = {}
+    # get pype data tag from track item
+    tag = get_track_openpype_tag(track)
+
+    if not tag:
+        return None
+
+    # get tag metadata attribute
+    tag_data = deepcopy(dict(tag.metadata()))
+
+    for obj_name, obj_data in tag_data.items():
+        obj_name = obj_name.replace("tag.", "")
+
+        if obj_name in ["applieswhole", "note", "label"]:
+            continue
+        return_data[obj_name] = json.loads(obj_data)
+
+    return (
+        return_data[container_name]
+        if container_name
+        else return_data
+    )
+
+
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_tag")
 def get_track_item_pype_tag(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_tag(track_item)
+
+
+@deprecated("openpype.hosts.hiero.api.lib.set_trackitem_openpype_tag")
+def set_track_item_pype_tag(track_item, data=None):
+    # backward compatibility alias
+    return set_trackitem_openpype_tag(track_item, data)
+
+
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_data")
+def get_track_item_pype_data(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_data(track_item)
+
+
+def get_trackitem_openpype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin.
 
@@ -321,16 +478,16 @@ def get_track_item_pype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if tag.name() == self.pype_tag_name:
+        if self.pype_tag_name in tag.name():
             return tag
 
 
-def set_track_item_pype_tag(track_item, data=None):
+def set_trackitem_openpype_tag(track_item, data=None):
     """
-    Set pype track item tag to input track_item.
+    Set openpype track tag to input track object.
 
     Attributes:
-        trackItem (hiero.core.TrackItem): hiero object
+        track (hiero.core.VideoTrack): hiero object
 
     Returns:
         hiero.core.Tag
@@ -345,21 +502,26 @@ def set_track_item_pype_tag(track_item, data=None):
         "metadata": dict(data.items())
     }
     # get available pype tag if any
-    _tag = get_track_item_pype_tag(track_item)
-
+    _tag = get_trackitem_openpype_tag(track_item)
     if _tag:
         # it not tag then create one
         tag = tags.update_tag(_tag, tag_data)
     else:
         # if pype tag available then update with input data
-        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        tag = tags.create_tag(
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
+            tag_data
+        )
         # add it to the input track item
         track_item.addTag(tag)
 
     return tag
 
 
-def get_track_item_pype_data(track_item):
+def get_trackitem_openpype_data(track_item):
     """
     Get track item's pype tag data.
 
@@ -371,7 +533,7 @@ def get_track_item_pype_data(track_item):
     """
     data = {}
     # get pype data tag from track item
-    tag = get_track_item_pype_tag(track_item)
+    tag = get_trackitem_openpype_tag(track_item)
 
     if not tag:
         return None
@@ -424,7 +586,7 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    tag = set_track_item_pype_tag(track_item, data)
+    tag = set_trackitem_openpype_tag(track_item, data)
 
     # add publish attribute
     set_publish_attribute(tag, True)
@@ -836,22 +998,22 @@ def set_selected_track_items(track_items_list, sequence=None):
 
 
 def _read_doc_from_path(path):
-    # reading QDomDocument from HROX path
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.ReadOnly):
+    # reading QtXml.QDomDocument from HROX path
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.ReadOnly):
         raise RuntimeError("Failed to open file for reading")
-    doc = QDomDocument()
+    doc = QtXml.QDomDocument()
     doc.setContent(hrox_file)
     hrox_file.close()
     return doc
 
 
 def _write_doc_to_path(doc, path):
-    # write QDomDocument to path as HROX
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.WriteOnly):
+    # write QtXml.QDomDocument to path as HROX
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.WriteOnly):
         raise RuntimeError("Failed to open file for writing")
-    stream = QTextStream(hrox_file)
+    stream = QtCore.QTextStream(hrox_file)
     doc.save(stream, 1)
     hrox_file.close()
 
@@ -882,8 +1044,7 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
@@ -936,8 +1097,7 @@ def apply_colorspace_clips():
     clips = project.clips()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     from pprint import pprint
 
     presets = imageio.get("regexInputs", {}).get("inputs", {})
@@ -1036,7 +1196,7 @@ def sync_clip_name_to_data_asset(track_items_list):
 
         # get name and data
         ti_name = track_item.name()
-        data = get_track_item_pype_data(track_item)
+        data = get_trackitem_openpype_data(track_item)
 
         # ignore if no data on the clip or not publish instance
         if not data:
@@ -1048,11 +1208,15 @@ def sync_clip_name_to_data_asset(track_items_list):
         if data["asset"] != ti_name:
             data["asset"] = ti_name
             # remove the original tag
-            tag = get_track_item_pype_tag(track_item)
+            tag = get_trackitem_openpype_tag(track_item)
             track_item.removeTag(tag)
             # create new tag with updated data
-            set_track_item_pype_tag(track_item, data)
+            set_trackitem_openpype_tag(track_item, data)
             print("asset was changed in clip: {}".format(ti_name))
+
+
+def set_track_color(track_item, color):
+    track_item.source().binItem().setColor(color)
 
 
 def check_inventory_versions(track_items=None):
@@ -1066,68 +1230,29 @@ def check_inventory_versions(track_items=None):
     """
     from . import parse_container
 
-    track_item = track_items or get_track_items()
+    track_items = track_items or get_track_items()
     # presets
     clip_color_last = "green"
     clip_color = "red"
 
-    item_with_repre_id = []
-    repre_ids = set()
+    containers = []
     # Find all containers and collect it's node and representation ids
-    for track_item in track_item:
+    for track_item in track_items:
         container = parse_container(track_item)
         if container:
-            repre_id = container["representation"]
-            repre_ids.add(repre_id)
-            item_with_repre_id.append((track_item, repre_id))
+            containers.append(container)
 
     # Skip if nothing was found
-    if not repre_ids:
+    if not containers:
         return
 
     project_name = legacy_io.active_project()
-    # Find representations based on found containers
-    repre_docs = get_representations(
-        project_name,
-        repre_ids=repre_ids,
-        fields=["_id", "parent"]
-    )
-    # Store representations by id and collect version ids
-    repre_docs_by_id = {}
-    version_ids = set()
-    for repre_doc in repre_docs:
-        # Use stringed representation id to match value in containers
-        repre_id = str(repre_doc["_id"])
-        repre_docs_by_id[repre_id] = repre_doc
-        version_ids.add(repre_doc["parent"])
+    filter_result = filter_containers(containers, project_name)
+    for container in filter_result.latest:
+        set_track_color(container["_item"], clip_color)
 
-    version_docs = get_versions(
-        project_name, version_ids, fields=["_id", "name", "parent"]
-    )
-    # Store versions by id and collect subset ids
-    version_docs_by_id = {}
-    subset_ids = set()
-    for version_doc in version_docs:
-        version_docs_by_id[version_doc["_id"]] = version_doc
-        subset_ids.add(version_doc["parent"])
-
-    # Query last versions based on subset ids
-    last_versions_by_subset_id = get_last_versions(
-        project_name, subset_ids=subset_ids, fields=["_id", "parent"]
-    )
-
-    for item in item_with_repre_id:
-        # Some python versions of nuke can't unfold tuple in for loop
-        track_item, repre_id = item
-
-        repre_doc = repre_docs_by_id[repre_id]
-        version_doc = version_docs_by_id[repre_doc["parent"]]
-        last_version_doc = last_versions_by_subset_id[version_doc["parent"]]
-        # Check if last version is same as current version
-        if version_doc["_id"] == last_version_doc["_id"]:
-            track_item.source().binItem().setColor(clip_color_last)
-        else:
-            track_item.source().binItem().setColor(clip_color)
+    for container in filter_result.outdated:
+        set_track_color(container["_item"], clip_color_last)
 
 
 def selection_changed_timeline(event):
