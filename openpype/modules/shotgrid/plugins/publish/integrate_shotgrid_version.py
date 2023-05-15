@@ -8,11 +8,14 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.497
     label = "Shotgrid Version"
+    ### Starts Alkemy-X Override ###
     fields_to_add = {
         "frameStart": "sg_first_frame",
         "frameEnd": "sg_last_frame",
-        "comment": "sg_submission_notes"
+        "comment": "sg_submission_notes",
+        "family": "sg_version_type",
     }
+    ### Ends Alkemy-X Override ###
 
     sg = None
 
@@ -24,35 +27,11 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         # TODO: Use path template solver to build version code from settings
         anatomy = instance.data.get("anatomyData", {})
         ### Starts Alkemy-X Override ###
-        # code = "_".join(
-        #     [
-        #         anatomy["project"]["code"],
-        #         anatomy["parent"],
-        #         anatomy["asset"],
-        #         anatomy["task"]["name"],
-        #         "v{:03}".format(int(anatomy["version"])),
-        #     ]
-        # )
-        # Initial editorial Shotgrid versions don't need task in name
-        if 'hiero' == anatomy['app']:
-            code = "_".join(
-                [
-                    anatomy["project"]["code"],
-                    anatomy["parent"],
-                    anatomy["asset"],
-                    "v{:03}".format(int(anatomy["version"])),
-                ]
-            )
-        else:
-            code = "_".join(
-                [
-                    anatomy["project"]["code"],
-                    anatomy["parent"],
-                    anatomy["asset"],
-                    anatomy["task"]["name"],
-                    "v{:03}".format(int(anatomy["version"])),
-                ]
-            )
+        code = "{}_{}_{}".format(
+            anatomy["asset"],
+            instance.data["subset"],
+            "v{:03}".format(int(anatomy["version"]))
+        )
         ### Ends Alkemy-X Override ###
 
         version = self._find_existing_version(code, context)
@@ -68,39 +47,45 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         if intent:
             data_to_update["sg_status_list"] = intent["value"]
 
+        ### Starts Alkemy-X Override ###
+        # Add a few extra fields from OP to SG version
         for op_field, sg_field in self.fields_to_add.items():
-            field_value = context.data.get(op_field)
+            field_value = context.data.get(op_field) or instance.data.get(op_field)
             if field_value:
                 self.log.info("Adding field '{}' to SG as '{}':'{}'".format(
                     op_field, sg_field, field_value)
                 )
                 data_to_update[sg_field] = field_value
+        ### Ends Alkemy-X Override ###
 
         for representation in instance.data.get("representations", []):
             local_path = get_publish_repre_path(
                 instance, representation, False
             )
-
-            if "shotgridreview" in representation.get("tags", []):
-
-                if representation["ext"] in ["mov", "avi"]:
-                    self.log.info(
-                        "Upload review: {} for version shotgrid {}".format(
-                            local_path, version.get("id")
-                        )
+            ### Starts Alkemy-X Override ###
+            # Remove if condition that was only publishing SG versions if tag
+            # 'shotgridreview' is present. For now we have decided to publish
+            # everything getting to this plugin
+            # if "shotgridreview" in representation.get("tags", []):
+            ### Ends Alkemy-X Override ###
+            if representation["ext"] in ["mov", "avi"]:
+                self.log.info(
+                    "Upload review: {} for version shotgrid {}".format(
+                        local_path, version.get("id")
                     )
-                    self.sg.upload(
-                        "Version",
-                        version.get("id"),
-                        local_path,
-                        field_name="sg_uploaded_movie",
-                    )
+                )
+                self.sg.upload(
+                    "Version",
+                    version.get("id"),
+                    local_path,
+                    field_name="sg_uploaded_movie",
+                )
 
-                    data_to_update["sg_path_to_movie"] = local_path
+                data_to_update["sg_path_to_movie"] = local_path
 
-                elif representation["ext"] in ["jpg", "png", "exr", "tga"]:
-                    path_to_frame = local_path.replace("0000", "#")
-                    data_to_update["sg_path_to_frames"] = path_to_frame
+            elif representation["ext"] in ["jpg", "png", "exr", "tga"]:
+                path_to_frame = local_path.replace("0000", "#")
+                data_to_update["sg_path_to_frames"] = path_to_frame
 
         self.log.info("Update Shotgrid version with {}".format(data_to_update))
         self.sg.update("Version", version["id"], data_to_update)
@@ -125,5 +110,4 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             "entity": context.data.get("shotgridEntity"),
             "code": code,
         }
-
         return self.sg.create("Version", version_data)
