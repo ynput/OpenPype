@@ -3987,6 +3987,7 @@ def create_rig_animation_instance(
         nodes (list): Member nodes of the rig instance.
         context (dict): Representation context of the rig container
         namespace (str): Namespace of the rig container
+        options (dict): Additional loader data
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
