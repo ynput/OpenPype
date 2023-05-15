@@ -173,9 +173,15 @@ def set_scene_resolution(width: int, height: int):
         None
 
     """
+    # make sure the render dialog is closed
+    # for the update of resolution
+    # Changing the Render Setup dialog settingsshould be done
+    # with the actual Render Setup dialog in a closed state.
+    if rt.renderSceneDialog.isOpen():
+        rt.renderSceneDialog.close()
+
     rt.renderWidth = width
     rt.renderHeight = height
-
 
 def reset_scene_resolution():
     """Apply the scene resolution from the project definition
