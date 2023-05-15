@@ -424,7 +424,7 @@ def build_layout(project_name, asset_name):
         )
     except RuntimeError as err:
         errors.append(f"Load casting failed ! {err}")
-    
+
     # Wait for download
     wait_for_download(project_name, [board_repre, audio_repre])
 
@@ -594,10 +594,12 @@ def build_anim(project_name, asset_name):
         container_name=layout_container.name
     )
 
-    # Switch hero containers to versioned
+    # Switch hero containers to versioned and linked setdress to appended
     errors = []
     for container in bpy.context.scene.openpype_containers:
         container_metadata = container["avalon"]
+        is_setdress = container_metadata.get("family") == "setdress"
+
         # Get version representation
         current_version = get_version_by_id(
             project_name,
@@ -621,32 +623,50 @@ def build_anim(project_name, asset_name):
             if not current_version:
                 continue
 
-        # Skip if current version representation is not hero
-        if current_version["type"] != "hero_version":
+        version_id = current_version["_id"] if is_setdress else None
+
+        # if current version representation is hero get last version
+        if current_version["type"] == "hero_version":
+            last_version = get_last_version_by_subset_id(
+                project_name, current_version["parent"], fields=["_id"]
+            )
+            if last_version:
+                version_id = last_version["_id"]
+
+        if not version_id:
             continue
 
-        # Get last version representation
-        last_version = get_last_version_by_subset_id(
-            project_name, current_version["parent"], fields=["_id"]
-        )
         version_representation = get_representation_by_name(
-            project_name, "blend", last_version["_id"]
+            project_name, "blend", version_id
         )
 
-        # Switch container to versioned
-        loader_name = container_metadata.get("loader")
+        # get loader
+        if is_setdress:
+            loader_name = "AppendWoollySetdressLoader"
+        else:
+            loader_name = container_metadata.get("loader")
+
         if not loader_name or not isinstance(loader_name, str):
             continue
-        loader = get_loader(project_name, version_representation, loader_name)
 
-        if loader:
+        # Switch container to versioned
+        if (
+            current_version["_id"] != version_id
+            or container_metadata.get("loader") != loader_name
+        ):
             try:
                 switch_container(
-                    container_metadata, version_representation, loader
+                    container_metadata,
+                    version_representation,
+                    get_loader(
+                        project_name,
+                        version_representation,
+                        loader_name,
+                    ),
                 )
             except RuntimeError as err:
                 errors.append(
-                    f"Switch versioned failed for {container.name}: {err}"
+                    f"Switch failed for {container.name}: {err}"
                 )
                 continue
 
