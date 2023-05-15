@@ -24,7 +24,6 @@ from openpype.client import (
     get_linked_assets,
     get_representations,
 )
-from openpype.pipeline.load.plugins import discover_loader_plugins
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -1250,9 +1249,8 @@ class PlaceholderLoadMixin(object):
         options = options or {}
 
         # Get families from all loaders excluding "*"
-        all_loaders = discover_loader_plugins()
         families = set()
-        for loader in all_loaders:
+        for loader in loaders_by_name.values():
             families.update(loader.families)
         families.discard("*")
 
