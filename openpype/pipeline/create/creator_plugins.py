@@ -231,9 +231,23 @@ class BaseCreator:
 
     @property
     def project_name(self):
-        """Family that plugin represents."""
+        """Current project name.
+
+        Returns:
+            str: Name of a project.
+        """
 
         return self.create_context.project_name
+
+    @property
+    def project_anatomy(self):
+        """Current project anatomy.
+
+        Returns:
+            Anatomy: Project anatomy object.
+        """
+
+        return self.create_context.project_anatomy
 
     @property
     def host(self):
