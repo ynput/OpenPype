@@ -3123,25 +3123,26 @@ def update_instances_frame_range():
         objectsOnly=True
     )
     asset_doc = get_current_project_asset()
-    new_asset = asset_doc["name"]
-    new_data = asset_doc["data"]
+    asset_name = asset_doc["name"]
+    asset_data = asset_doc["data"]
 
     frames_attributes = {
-        'frameStart': new_data["frameStart"],
-        'frameEnd': new_data["frameEnd"],
-        'handleStart': new_data["handleStart"],
-        'handleEnd': new_data["handleEnd"],
-        'asset': new_asset
+        'frameStart': asset_data["frameStart"],
+        'frameEnd': asset_data["frameEnd"],
+        'handleStart': asset_data["handleStart"],
+        'handleEnd': asset_data["handleEnd"],
+        'asset': asset_name
     }
 
     for instance in collected_instances:
-        family_attr = "{}.family".format(instance)
-        if (cmds.attributeQuery('family', node=instance, exists=True) and
-                cmds.getAttr(family_attr) == "render"):
-            continue
-
         id_attr = "{}.id".format(instance)
         if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+            continue
+
+        if (
+            cmds.attributeQuery('family', node=instance, exists=True) and
+            cmds.getAttr("{}.family".format(instance)) == "render"
+        ):
             continue
 
         for key, value in frames_attributes.items():
