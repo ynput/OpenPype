@@ -6,7 +6,7 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.context_tools import get_current_project_asset
 
 from openpype.hosts.max.api.lib import (
-    set_framerange,
+    set_render_frame_range,
     get_current_renderer,
     get_default_render_folder
 )
@@ -68,7 +68,7 @@ class RenderSettings(object):
         # Set Frame Range
         frame_start = context["data"].get("frame_start")
         frame_end = context["data"].get("frame_end")
-        set_framerange(frame_start, frame_end)
+        set_render_frame_range(frame_start, frame_end)
         # get the production render
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]

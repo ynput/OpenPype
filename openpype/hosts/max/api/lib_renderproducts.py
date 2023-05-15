@@ -36,8 +36,9 @@ class RenderProducts(object):
                                    container)
 
         context = get_current_project_asset()
-        startFrame = context["data"].get("frameStart")
-        endFrame = context["data"].get("frameEnd") + 1
+        # TODO: change the frame range follows the current render setting
+        startFrame = int(rt.rendStart)
+        endFrame = int(rt.rendEnd) + 1
 
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
         full_render_list = self.beauty_render_product(output_file,
