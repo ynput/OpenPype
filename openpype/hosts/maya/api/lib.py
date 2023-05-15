@@ -3130,15 +3130,14 @@ def update_instances_frame_range():
         objectsOnly=True
     )
     asset_doc = get_current_project_asset()
-    asset_name = asset_doc["name"]
-    asset_data = asset_doc["data"]
 
+    asset_data = asset_doc["data"]
     frames_attributes = {
         'frameStart': asset_data["frameStart"],
         'frameEnd': asset_data["frameEnd"],
         'handleStart': asset_data["handleStart"],
         'handleEnd': asset_data["handleEnd"],
-        'asset': asset_name
+        'asset': asset_doc['name']
     }
 
     for instance in collected_instances:
