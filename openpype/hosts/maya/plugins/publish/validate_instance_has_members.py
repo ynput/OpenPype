@@ -14,6 +14,11 @@ class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
+        # Allow renderlayer and workfile to be empty
+        skip_families = ["workfile", "renderlayer", "rendersetup"]
+        if instance.data.get("family") in skip_families:
+            return
+
         invalid = list()
         if not instance.data["setMembers"]:
             objectset_name = instance.data['name']
