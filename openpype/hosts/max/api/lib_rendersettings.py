@@ -105,6 +105,9 @@ class RenderSettings(object):
 
         rt.rendSaveFile = True
 
+        if rt.renderSceneDialog.isOpen():
+            rt.renderSceneDialog.close()
+
     def arnold_setup(self):
         # get Arnold RenderView run in the background
         # for setting up renderable camera
