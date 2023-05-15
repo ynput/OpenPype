@@ -32,8 +32,8 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
         if creator_attributes.get("custom_range"):
             # get comp frame ranges
-            start = context.data["compFrameStart"]
-            end = context.data["compFrameEnd"]
+            start = context.data["renderFrameStart"]
+            end = context.data["renderFrameEnd"]
             handle_start = 0
             handle_end = 0
             start_handle = start

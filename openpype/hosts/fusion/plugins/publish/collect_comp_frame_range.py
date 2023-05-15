@@ -41,9 +41,9 @@ class CollectFusionCompFrameRanges(pyblish.api.ContextPlugin):
         ) = get_comp_render_range(comp)
 
         data = {}
-        data["compFrameStart"] = int(start)
-        data["compFrameEnd"] = int(end)
-        data["compFrameStartHandle"] = int(global_start)
-        data["compFrameEndHandle"] = int(global_end)
+        data["renderFrameStart"] = int(start)
+        data["renderFrameEnd"] = int(end)
+        data["compFrameStart"] = int(global_start)
+        data["compFrameEnd"] = int(global_end)
 
         context.data.update(data)
