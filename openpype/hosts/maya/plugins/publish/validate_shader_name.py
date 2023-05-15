@@ -61,7 +61,7 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
             )
 
             for shader in shaders:
-                m = re.match(cls.regex, shader)
+                m = regex_compile.match(shader)
                 if m is None:
                     invalid.append(shape)
                     cls.log.error(error_message.format(shape, shader))
