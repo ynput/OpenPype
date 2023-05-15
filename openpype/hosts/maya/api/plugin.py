@@ -178,7 +178,7 @@ class ReferenceLoader(Loader):
         count = options.get("count") or 1
 
         for c in range(0, count):
-            namespace = get_custom_namespace(custom_namespace)
+            namespace = lib.get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name
