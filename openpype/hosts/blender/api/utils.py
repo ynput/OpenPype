@@ -343,27 +343,46 @@ def make_paths_absolute(source_filepath: Path = None):
         source_filepath (Path, optional): Filepath to remap paths from,
             in case file copy has been executed without paths remapping.
             Defaults to None.
-    """
-    # In case no source filepath try naive system
-    if not source_filepath:
-        bpy.ops.file.make_paths_absolute()
-        return
 
-    for datablock in list(bpy.data.libraries) + list(bpy.data.images):
-        try:
-            if datablock and datablock.filepath.startswith("//"):
+    Returns:
+        Set[bpy.types.ID]: Remapped datablocks.
+    """
+
+    relative_datablocks = set()
+    for data_name in dir(bpy.data):
+        data_collection = getattr(bpy.data, data_name)
+        if not isinstance(data_collection, bpy.types.bpy_prop_collection):
+            continue
+        for datablock in data_collection.values():
+            if (
+                hasattr(datablock, "filepath")
+                and not datablock.is_property_readonly("filepath")
+                and isinstance(datablock.filepath, str)
+                and datablock.filepath.startswith("//")
+            ):
+                relative_datablocks.add((datablock, datablock.filepath))
+
+    if source_filepath:
+        for datablock, filepath in relative_datablocks:
+            try:
                 datablock.filepath = str(
                     Path(
                         bpy.path.abspath(
-                            datablock.filepath,
+                            filepath,
                             start=source_filepath.parent,
                         )
                     ).resolve()
                 )
-        except (RuntimeError, ReferenceError, OSError) as e:
-            print(e)
+            except (RuntimeError, ReferenceError, OSError) as err:
+                print(err)
 
     bpy.ops.file.make_paths_absolute()
+
+    return {
+        datablock
+        for datablock, filepath in relative_datablocks
+        if datablock.filepath != filepath
+    }
 
 
 def get_root_datablocks(

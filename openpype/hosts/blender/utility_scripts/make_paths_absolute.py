@@ -25,11 +25,11 @@ if __name__ == "__main__":
         nargs="?",
         help="source filepath",
     )
-    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
+    args = parser.parse_known_args(sys.argv[sys.argv.index("--") + 1:])[0]
 
     if args.source_filepath.is_file():
-        make_paths_absolute(args.source_filepath)
+        remapped_datablocks = make_paths_absolute(args.source_filepath)
 
-    if bpy.data.filepath:
+    if bpy.data.filepath and remapped_datablocks:
         bpy.ops.wm.save_mainfile()
         bpy.ops.wm.revert_mainfile()
