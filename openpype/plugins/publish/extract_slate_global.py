@@ -256,12 +256,12 @@ class SlateCreator:
 
         return slate_rendered_paths[0]
 
-    def render_image_oiio(self, input, output, in_args=None, out_args=None):
+    def render_image_oiio(self, src_path, output, in_args=None, out_args=None):
         """Call oiiotool to convert one image to another."""
-        name = os.path.basename(input)
+        name = os.path.basename(src_path)
         cmd = [get_oiio_tools_path()]
         cmd.extend(in_args or [])
-        cmd.extend(["-i", input])
+        cmd.extend(["-i", src_path])
         cmd.extend(out_args or [])
         cmd.extend(["-o", output])
         try:
@@ -271,20 +271,20 @@ class SlateCreator:
                 "%s: Error creating '%s' due to: %s", name, output, error
             )
 
-    def get_timecode_oiio(self, input, timecode_frame=1001):
+    def get_timecode_oiio(self, src_path, timecode_frame=1001):
         """Find timecode using OpenImageIO iinfo tool.
 
         Only images with timecode supported, not videos.
 
         """
-        name = os.path.basename(input)
-        cmd = [get_oiio_tools_path(tool="iinfo"), "-v", input]
+        name = os.path.basename(src_path)
+        cmd = [get_oiio_tools_path(tool="iinfo"), "-v", src_path]
         try:
             output = run_subprocess(cmd, logger=self.log)
         except TypeError as error:
             raise TypeError(
                 "%s: Error finding timecode of '%s' due to: %s",
-                name, input, error
+                name, src_path, error
             )
 
         timecode = frames_to_timecode(int(timecode_frame), self.data["fps"])
@@ -309,14 +309,14 @@ class SlateCreator:
 
         return timecode
 
-    def get_resolution_ffprobe(self, input):
+    def get_resolution_ffprobe(self, src_path):
         """Find input resolution using ffprobe."""
         try:
-            streams = get_ffprobe_streams(input, self.log)
+            streams = get_ffprobe_streams(src_path, self.log)
         except Exception as exc:
             raise AssertionError(
                 "FFprobe couldn't read information about input file: '{}'.\n{}"
-                .format(input, str(exc))
+                .format(src_path, str(exc))
             )
 
         # Try to find first stream with defined 'width' and 'height'
@@ -332,7 +332,7 @@ class SlateCreator:
         if width is None:
             raise AssertionError(
                 "FFprobe couldn't read resolution from input file: '{}'."
-                .format(input)
+                .format(src_path)
             )
 
         return (width, height)
