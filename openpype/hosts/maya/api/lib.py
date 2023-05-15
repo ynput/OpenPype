@@ -3976,7 +3976,7 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
 
 
 def create_rig_animation_instance(
-    nodes, context, namespace, options, log=None
+    nodes, context, namespace, options=None, log=None
 ):
     """Create an animation publish instance for loaded rigs.
 
@@ -3987,13 +3987,16 @@ def create_rig_animation_instance(
         nodes (list): Member nodes of the rig instance.
         context (dict): Representation context of the rig container
         namespace (str): Namespace of the rig container
-        options (dict): Additional loader data
+        options (dict, optional): Additional loader data
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
         None
 
     """
+    if options is None:
+        options = {}
+
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
