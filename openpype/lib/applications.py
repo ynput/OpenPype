@@ -1516,7 +1516,7 @@ def prepare_app_environments(
     tool_by_group_name = collections.defaultdict(dict)
     if asset_doc:
         # Make sure each tool group can be added only once
-        for key in asset_doc["data"].get("tools") or []:
+        for key in asset_doc["data"].get("tools_env") or []:
             tool = app.manager.tools.get(key)
             if not tool or not tool.is_valid_for_app(app):
                 continue
