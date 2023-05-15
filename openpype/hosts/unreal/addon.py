@@ -23,9 +23,10 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
             UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
         )
         if not Path(unreal_plugin_path).exists():
-            if compatible_versions := get_compatible_integration(
+            compatible_versions = get_compatible_integration(
                 ue_version, Path(UNREAL_ROOT_DIR) / "integration"
-            ):
+            )
+            if compatible_versions:
                 unreal_plugin_path = compatible_versions[-1] / "Ayon"
                 unreal_plugin_path = unreal_plugin_path.as_posix()
 

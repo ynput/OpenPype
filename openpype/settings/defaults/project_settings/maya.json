@@ -734,6 +734,7 @@
         "ValidateShaderName": {
             "enabled": false,
             "optional": true,
+            "active": true,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {

@@ -35,6 +35,7 @@ from . import (
     register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_inventory_action_path,
 )
 
 
@@ -54,6 +55,7 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def _get_modules_manager():
@@ -158,6 +160,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
@@ -223,6 +226,7 @@ def uninstall_host():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     pyblish.api.deregister_discovery_filter(filter_pyblish_plugins)
     deregister_loader_plugin_path(LOAD_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
     log.info("Global plug-ins unregistred")
 
     deregister_host()
