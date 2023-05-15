@@ -3981,7 +3981,7 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = get_current_asset_name()  # remove legacy_io call
+    asset = get_current_asset_name()
     dependency = str(context["representation"]["_id"])
 
     if log:
