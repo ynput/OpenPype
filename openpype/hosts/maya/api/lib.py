@@ -3928,7 +3928,7 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     }
 
     plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
-    if plugin_settings.get("profiles", []):
+    if plugin_settings["profiles"]:
         profile = filter_profiles(
             plugin_settings["profiles"],
             filtering_criteria,
