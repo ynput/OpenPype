@@ -13,10 +13,14 @@
         "RenderCreator": {
             "defaults": [
                 "Main"
-            ]
+            ],
+            "mark_for_review": true
         }
     },
     "publish": {
+        "CollectReview": {
+            "enabled": true
+        },
         "ValidateSceneSettings": {
             "enabled": true,
             "optional": true,
