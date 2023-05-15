@@ -120,9 +120,9 @@ class ExistingLayoutLoader(plugin.Loader):
         transform = lasset.get('transform_matrix')
         basis = lasset.get('basis')
 
-        t = self._transform_from_basis(transform, basis)
+        computed_transform = self._transform_from_basis(transform, basis)
 
-        actor.set_actor_transform(t, False, True)
+        actor.set_actor_transform(computed_transform, False, True)
 
     @staticmethod
     def _get_fbx_loader(loaders, family):
@@ -296,8 +296,9 @@ class ExistingLayoutLoader(plugin.Loader):
                 transform = lasset.get('transform_matrix')
                 basis = lasset.get('basis')
 
-                t = self._transform_from_basis(transform, basis)
-                actor.set_actor_transform(t, False, True)
+                computed_transform = self._transform_from_basis(
+                    transform, basis)
+                actor.set_actor_transform(computed_transform, False, True)
 
                 actors_matched.append(actor)
                 found = True
