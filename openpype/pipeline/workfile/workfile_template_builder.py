@@ -547,7 +547,9 @@ class AbstractTemplateBuilder(object):
         """
         from openpype.widgets import message_window
 
-        module_name = 'openpype.hosts.{}.api.lib'.format(get_current_host_name())
+        module_name = 'openpype.hosts.{}.api.lib'.format(
+            get_current_host_name()
+        )
         api_lib = __import__(module_name, fromlist=['get_main_window'])
         main_window = api_lib.get_main_window()
 
@@ -561,19 +563,19 @@ class AbstractTemplateBuilder(object):
             TemplateLoadFailed
         ) as e:
             message_window.message(
-                title="Template Load Failed",
-                message=str(e),
-                parent= main_window,
-                level="critical"
+                title = "Template Load Failed",
+                message = str(e),
+                parent = main_window,
+                level = "critical"
             )
             return
 
         result = message_window.message(
-            title="Opening template",
-            message="Caution! This will overwrite your current scene.\n"\
+            title = "Opening template",
+            message = "Caution! This will overwrite your current scene.\n"\
                 "Do you want to continue?",
-            parent= main_window,
-            level="ask",
+            parent = main_window,
+            level = "ask",
         )
 
         if result:
