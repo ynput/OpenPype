@@ -316,18 +316,18 @@ def collect_animation_data(fps=False):
     # get scene values as defaults
     frame_start = cmds.playbackOptions(query=True, minTime=True)
     frame_end = cmds.playbackOptions(query=True, maxTime=True)
-    handle_start = cmds.playbackOptions(query=True, animationStartTime=True)
-    handle_end = cmds.playbackOptions(query=True, animationEndTime=True)
+    frame_start_handle = cmds.playbackOptions(query=True, animationStartTime=True)
+    frame_end_handle = cmds.playbackOptions(query=True, animationEndTime=True)
 
-    frame_start_handle = frame_start - handle_start
-    frame_end_handle = handle_end - frame_end
+    handle_start = frame_start - frame_start_handle
+    handle_end = frame_end_handle - frame_end
 
     # build attributes
     data = OrderedDict()
     data["frameStart"] = frame_start
     data["frameEnd"] = frame_end
-    data["handleStart"] = frame_start_handle
-    data["handleEnd"] = frame_end_handle
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
     data["step"] = 1.0
 
     if fps:
