@@ -52,7 +52,7 @@ class CreateReview(plugin.MayaCreator):
             task_name,
             asset_doc["data"]["tasks"][task_name]["type"],
             subset_name,
-            get_project_settings(project_name),
+            self.project_settings,
             self.log
         )
         self.log.debug(
