@@ -45,7 +45,7 @@ class CreateReview(plugin.MayaCreator):
         if pre_create_data.get("use_selection"):
             members = cmds.ls(selection=True)
 
-        project_name = get_current_project_name()
+        project_name = self.project_name
         asset_doc = get_asset_by_name(project_name, instance_data["asset"])
         task_name = instance_data["task"]
         preset = lib.get_capture_preset(
