@@ -539,6 +539,10 @@ def _convert_maya_project_settings(ayon_settings, output):
 
     _convert_host_imageio(ayon_maya)
 
+    load_colors = ayon_maya["load"]["colors"]
+    for key, color in tuple(load_colors.items()):
+        load_colors[key] = _convert_color(color)
+
     output["maya"] = ayon_maya
 
 
