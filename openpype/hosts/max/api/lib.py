@@ -245,9 +245,13 @@ def reset_frame_range(fps: bool = True):
         fps_number = float(data_fps["data"]["fps"])
         rt.frameRate = fps_number
     frame_range = get_frame_range()
-    frame_start_handle = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_start_handle = frame_range["frameStart"] - int(
+        frame_range["handleStart"]
+    )
     frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    frange_cmd = f"animationRange = interval {frame_start_handle} {frame_end_handle}"
+    frange_cmd = (
+        f"animationRange = interval {frame_start_handle} {frame_end_handle}"
+    )
     rt.execute(frange_cmd)
     set_render_frame_range(frame_start_handle, frame_end_handle)
 
