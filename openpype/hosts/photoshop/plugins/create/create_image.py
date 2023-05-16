@@ -23,6 +23,11 @@ class ImageCreator(Creator):
     family = "image"
     description = "Image creator"
 
+    # Settings
+    default_variants = ""
+    mark_for_review = False
+    active_on_create = True
+
     def create(self, subset_name_from_ui, data, pre_create_data):
         groups_to_create = []
         top_layers_to_wrap = []
@@ -94,6 +99,12 @@ class ImageCreator(Creator):
             data.update({"layer_name": layer_name})
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
+            creator_attributes = {"mark_for_review": self.mark_for_review}
+            data.update({"creator_attributes": creator_attributes})
+
+            if not self.active_on_create:
+                data["active"] = False
+
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
 
@@ -134,11 +145,6 @@ class ImageCreator(Creator):
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
-    def get_default_variants(self):
-        return [
-            "Main"
-        ]
-
     def get_pre_create_attr_defs(self):
         output = [
             BoolDef("use_selection", default=True,
@@ -148,9 +154,33 @@ class ImageCreator(Creator):
                     label="Create separate instance for each selected"),
             BoolDef("use_layer_name",
                     default=False,
-                    label="Use layer name in subset")
+                    label="Use layer name in subset"),
+            BoolDef(
+                "mark_for_review",
+                label="Create separate review",
+                default=False
+            )
         ]
         return output
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef(
+                "mark_for_review",
+                label="Review"
+            )
+        ]
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["photoshop"]["create"]["ImageCreator"]
+        )
+
+        self.active_on_create = plugin_settings["active_on_create"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings["enabled"]
+
 
     def get_detail_description(self):
         return """Creator for Image instances
@@ -180,6 +210,11 @@ class ImageCreator(Creator):
         but layer name should be used (set explicitly in UI or implicitly if
         multiple images should be created), it is added in capitalized form
         as a suffix to subset name.
+
+        Each image could have its separate review created if necessary via
+        `Create separate review` toggle.
+        But more use case is to use separate `review` instance to create review
+        from all published items.
         """
 
     def _handle_legacy(self, instance_data):

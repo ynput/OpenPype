@@ -46,7 +46,6 @@ class CollectRender(pyblish.api.InstancePlugin):
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int
-
         # setup the plugin as 3dsmax for the internal renderer
         data = {
             "subset": instance.name,
@@ -59,8 +58,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             "source": filepath,
             "expectedFiles": render_layer_files,
             "plugin": "3dsmax",
-            "frameStart": context.data['frameStart'],
-            "frameEnd": context.data['frameEnd'],
+            "frameStart": int(rt.rendStart),
+            "frameEnd": int(rt.rendEnd),
             "version": version_int,
             "farm": True
         }
