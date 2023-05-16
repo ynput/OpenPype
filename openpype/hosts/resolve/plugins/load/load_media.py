@@ -162,7 +162,7 @@ class LoadMedia(LoaderPlugin):
         version = get_version_by_id(
             project_name,
             representation["parent"],
-            fields=["name"]
+            fields=["name", "parent"]
         )
         last_version = get_last_version_by_subset_id(
             project_name,
