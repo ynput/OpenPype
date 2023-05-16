@@ -542,45 +542,10 @@
         "create_first_version": false,
         "custom_templates": [],
         "builder_on_start": false,
-        "profiles": [
-            {
-                "task_types": [],
-                "tasks": [],
-                "current_context": [
-                    {
-                        "subset_name_filters": [],
-                        "families": [
-                            "render",
-                            "plate"
-                        ],
-                        "repre_names": [
-                            "exr",
-                            "dpx",
-                            "mov",
-                            "mp4",
-                            "h264"
-                        ],
-                        "loaders": [
-                            "LoadClip"
-                        ]
-                    }
-                ],
-                "linked_assets": []
-            }
-        ]
+        "profiles": []
     },
     "templated_workfile_build": {
-        "profiles": [
-            {
-                "task_types": [
-                    "Compositing"
-                ],
-                "task_names": [],
-                "path": "{project[name]}/templates/comp.nk",
-                "keep_placeholder": true,
-                "create_first_version": true
-            }
-        ]
+        "profiles": []
     },
     "filters": {}
 }

@@ -52,6 +52,7 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
 
         def context_setting():
             return lib.set_context_setting()
+
         rt.callbacks.addScript(rt.Name('systemPostNew'),
                                context_setting)
 

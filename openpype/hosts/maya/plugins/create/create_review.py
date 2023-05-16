@@ -1,3 +1,7 @@
+import json
+
+from maya import cmds
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -7,6 +11,11 @@ from openpype.lib import (
     NumberDef,
     EnumDef
 )
+from openpype.settings import get_project_settings
+from openpype.pipeline import (
+    get_current_project_name, get_current_task_name, CreatedInstance
+)
+from openpype.client import get_asset_by_name
 
 TRANSPARENCIES = [
     "preset",
@@ -28,6 +37,43 @@ class CreateReview(plugin.MayaCreator):
 
     useMayaTimeline = True
     panZoom = False
+
+    # Overriding "create" method to prefill values from settings.
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        members = list()
+        if pre_create_data.get("use_selection"):
+            members = cmds.ls(selection=True)
+
+        project_name = get_current_project_name()
+        asset_doc = get_asset_by_name(project_name, instance_data["asset"])
+        task_name = get_current_task_name()
+        preset = lib.get_capture_preset(
+            task_name,
+            asset_doc["data"]["tasks"][task_name]["type"],
+            subset_name,
+            get_project_settings(project_name),
+            self.log
+        )
+        self.log.debug(
+            "Using preset: {}".format(
+                json.dumps(preset, indent=4, sort_keys=True)
+            )
+        )
+
+        with lib.undo_chunk():
+            instance_node = cmds.sets(members, name=subset_name)
+            instance_data["instance_node"] = instance_node
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
+            self._add_instance_to_context(instance)
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+            return instance
 
     def get_instance_attr_defs(self):
 
@@ -77,6 +123,9 @@ class CreateReview(plugin.MayaCreator):
             BoolDef("panZoom",
                     label="Enable camera pan/zoom",
                     default=True),
+            EnumDef("displayLights",
+                    label="Display Lights",
+                    items=lib.DISPLAY_LIGHTS_LABELS),
         ])
 
         return defs
