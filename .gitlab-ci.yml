@@ -7,20 +7,13 @@ variables:
   DOCKER_TLS_CERTDIR: "/certs"
 
 stages:
+  - build
   - deploy
 
-deploy-patch:
-  tags:
-    - cw-pvc
-  stage: deploy
-  script:
-    - ./tools/create_zip.sh --path /pipe/openpype/versions/
-  when: manual
-
-build-centos7-tarball:
+build-centos7:
   tags:
     - dind
-  stage: deploy
+  stage: build
   script:
     - apk add --no-cache bash
     - apk add --no-cache curl
@@ -31,6 +24,32 @@ build-centos7-tarball:
     - tar -czvf ./build/openpype-${openpype_version}.tar.gz ./build
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/centos7/openpype-${openpype_version}-.tar.gz"'
   when: manual
+
+
+build-debian:
+  tags:
+    - dind
+  stage: build
+  script:
+    - apk add --no-cache bash
+    - apk add --no-cache curl
+    - apk add --no-cache python3
+    - ./tools/docker_build.sh debian
+    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print('.'.join(__version__.split('.')[:2]));"
+    - openpype_version="$(python3 -c "${version_command}")"
+    - tar -czvf ./build/openpype-${openpype_version}.tar.gz ./build
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/debian/openpype-${openpype_version}-.tar.gz"'
+  when: manual
+
+
+deploy-patch:
+  tags:
+    - cw-pvc
+  stage: deploy
+  script:
+    - ./tools/create_zip.sh --path /pipe/openpype/versions/
+  when: manual
+
 
 deploy-to-deadline-repo:
   stage: deploy
