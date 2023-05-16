@@ -30,6 +30,6 @@ if __name__ == "__main__":
     if args.source_filepath.is_file():
         remapped_datablocks = make_paths_absolute(args.source_filepath)
 
-    if bpy.data.filepath and remapped_datablocks:
-        bpy.ops.wm.save_mainfile()
-        bpy.ops.wm.revert_mainfile()
+        if bpy.data.filepath and remapped_datablocks:
+            bpy.ops.wm.save_mainfile()
+            bpy.ops.wm.revert_mainfile()
