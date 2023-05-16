@@ -199,11 +199,7 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
-            BoolDef(
-                "viewer_render_range",
-                label="Viewer render in/out",
-                default=False,
-            )
+            self._get_frame_range_enum()
         ]
         return attr_defs
 
@@ -222,7 +218,6 @@ class CreateSaver(NewCreator):
 
     # These functions below should be moved to another file
     # so it can be used by other plugins. plugin.py ?
-
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
@@ -233,6 +228,18 @@ class CreateSaver(NewCreator):
 
         return EnumDef(
             "render_target", items=rendering_targets, label="Render target"
+        )
+
+    def _get_frame_range_enum(self):
+        frame_range_options = {
+            "asset_db": "From asset database",
+            "viewer_render_range": "From viewer render in/out"
+        }
+
+        return EnumDef(
+            "frame_range_source",
+            items=frame_range_options,
+            label="Frame range source"
         )
 
     def _get_reviewable_bool(self):

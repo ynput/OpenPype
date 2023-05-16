@@ -20,6 +20,7 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
         # Include creator attributes directly as instance data
         creator_attributes = instance.data["creator_attributes"]
+        frame_range_source = creator_attributes.get("frame_range_source")
         instance.data.update(creator_attributes)
 
         # get asset frame ranges
@@ -30,8 +31,8 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         start_handle = start - handle_start
         end_handle = end + handle_end
 
-        if creator_attributes.get("viewer_render_range"):
-            # get comp frame ranges
+        if frame_range_source == "viewer_render_range":
+            # set comp render frame ranges
             start = context.data["renderFrameStart"]
             end = context.data["renderFrameEnd"]
             handle_start = 0
