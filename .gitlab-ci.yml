@@ -23,10 +23,10 @@ build-centos7:
     - ./tools/docker_build.sh $BUILD_OS
     - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print('.'.join(__version__.split('.')[:2]));"
     - openpype_version="$(python3 -c "${version_command}")"
-    - tar -czvf ./build/openpype-${openpype_version}.tar.gz ./build
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
+    - "tar -czvf ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz ./build"
+    - "la -la ./build"
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
   when: manual
-
 
 build-debian:
   tags:
@@ -41,8 +41,8 @@ build-debian:
     - ./tools/docker_build.sh $BUILD_OS
     - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print('.'.join(__version__.split('.')[:2]));"
     - openpype_version="$(python3 -c "${version_command}")"
-    - tar -czvf ./build/openpype-${openpype_version}.tar.gz ./build
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
+    - "tar -czvf ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz ./build"
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
   when: manual
 
 
