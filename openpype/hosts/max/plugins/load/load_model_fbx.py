@@ -36,11 +36,16 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
 
         self.log.debug(f"Executing command: {fbx_import_cmd}")
         rt.execute(fbx_import_cmd)
+        container = rt.getNodeByName(f"{name}")
+        if not container:
+            container = rt.container()
+            container.name = f"{name}"
 
-        asset = rt.getNodeByName(f"{name}")
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [container], context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
