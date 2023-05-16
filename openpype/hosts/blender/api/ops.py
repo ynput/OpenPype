@@ -448,6 +448,7 @@ class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
                 context.scene.is_workfile_up_to_date = True
 
                 bpy.ops.wm.save_mainfile()
+                bpy.ops.wm.revert_mainfile()
                 return {"FINISHED"}
             else:
                 self.report({"ERROR"}, "Failed to download last workfile.")
