@@ -9,9 +9,6 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     PlaceholderPlugin,
     LoadPlaceholderItem,
     PlaceholderLoadMixin,
-    TemplateLoadFailed,
-    TemplateNotFound,
-    TemplateProfileNotFound,
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
@@ -26,42 +23,6 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for maya"""
 
     use_legacy_creators = True
-
-    def open_template(self):
-        """Open template in current scene.
-        """
-
-        try:
-            template_preset = self.get_template_preset()
-            template_path = template_preset["path"]
-
-        except (
-            TemplateNotFound,
-            TemplateProfileNotFound,
-            TemplateLoadFailed
-        ) as e:
-            cmds.confirmDialog(
-                title="Error",
-                message="An error has occurred:\n{}".format(e),
-                button=["OK"],
-                defaultButton="OK",
-            )
-            return
-
-        result = cmds.confirmDialog(
-            title="Warning",
-            message="Opening a template will clear the current scene.",
-            button=["OK", "Cancel"],
-            defaultButton="OK",
-            cancelButton="Cancel",
-            dismissString="Cancel",
-        )
-
-        if result != "OK":
-            return
-
-        print("opening template {}".format(template_path))
-        cmds.file(template_path, open=True, force=True)
 
     def import_template(self, path):
         """Import template into current scene.
