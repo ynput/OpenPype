@@ -1,0 +1,33 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "publish",
+    "label": "Publish plugins",
+    "children": [
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ValidateFrameRange",
+        "label": "Validate Frame Range",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      }
+    ]
+  }
