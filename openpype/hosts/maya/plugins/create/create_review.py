@@ -11,10 +11,7 @@ from openpype.lib import (
     NumberDef,
     EnumDef
 )
-from openpype.settings import get_project_settings
-from openpype.pipeline import (
-    get_current_project_name, get_current_task_name, CreatedInstance
-)
+from openpype.pipeline import CreatedInstance
 from openpype.client import get_asset_by_name
 
 TRANSPARENCIES = [
@@ -69,6 +66,20 @@ class CreateReview(plugin.MayaCreator):
                 subset_name,
                 instance_data,
                 self)
+
+            creator_attribute_defs_by_key = {
+                x.key: x for x in instance.creator_attribute_defs
+            }
+            mapping = {
+                "review_width": preset["Resolution"]["width"],
+                "review_height": preset["Resolution"]["height"],
+                "isolate": preset["Generic"]["isolate_view"],
+                "imagePlane": preset["Viewport Options"]["imagePlane"],
+                "panZoom": preset["Generic"]["pan_zoom"]
+            }
+            for key, value in mapping.items():
+                creator_attribute_defs_by_key[key].default = value
+
             self._add_instance_to_context(instance)
 
             self.imprint_instance_node(instance_node,
