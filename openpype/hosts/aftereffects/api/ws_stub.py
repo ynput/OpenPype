@@ -24,8 +24,8 @@ class AEItem(object):
     # all imported elements, single for
     # regular image, array for Backgrounds
     members = attr.ib(factory=list)
-    workAreaStart = attr.ib(default=None)
-    workAreaDuration = attr.ib(default=None)
+    frameStart = attr.ib(default=None)
+    framesDuration = attr.ib(default=None)
     frameRate = attr.ib(default=None)
     file_name = attr.ib(default=None)
     instance_id = attr.ib(default=None)  # New Publisher
@@ -355,25 +355,29 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def get_work_area(self, item_id):
-        """ Get work are information for render purposes
+    def get_comp_properties(self, comp_id):
+        """ Get composition information for render purposes
+
+            Returns startFrame, frameDuration, fps, width, height.
+
             Args:
-                item_id (int):
+                comp_id (int):
 
             Returns:
                 (AEItem)
 
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.get_work_area',
-                                         item_id=item_id
+                                        ('AfterEffects.get_comp_properties',
+                                         item_id=comp_id
                                          ))
 
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
 
-    def set_work_area(self, item, start, duration, frame_rate):
+    def set_comp_properties(self, item, start, duration, frame_rate,
+                            width, height):
         """
             Set work area to predefined values (from Ftrack).
             Work area directs what gets rendered.
@@ -381,16 +385,20 @@ class AfterEffectsServerStub():
 
         Args:
             item (dict):
-            start (float): workAreaStart in seconds
-            duration (float): in seconds
+            start (int): workAreaStart in frames
+            duration (int): in frames
             frame_rate (float): frames in seconds
+            width (int): resolution width
+            height (int): resolution height
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.set_work_area',
+                                        ('AfterEffects.set_comp_properties',
                                          item_id=item.id,
                                          start=start,
                                          duration=duration,
-                                         frame_rate=frame_rate))
+                                         frame_rate=frame_rate,
+                                         width=width,
+                                         height=height))
         return self._handle_return(res)
 
     def save(self):
@@ -553,6 +561,11 @@ class AfterEffectsServerStub():
         res = self.websocketserver.call(self.client.call('AfterEffects.close'))
 
         return self._handle_return(res)
+
+    def print_msg(self, msg):
+        rself.websocketserver.call(self.client.call
+                                    ('AfterEffects.print_msg',
+                                    msg=msg))
 
     def _handle_return(self, res):
         """Wraps return, throws ValueError if 'error' key is present."""

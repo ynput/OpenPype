@@ -164,3 +164,30 @@ def get_asset_settings(asset_doc):
         "resolutionHeight": resolution_height,
         "duration": duration
     }
+
+
+def set_settings(frames, resolution):
+    frame_start = frames_duration = fps = width = height = None
+    current_context = get_current_context()
+
+    asset_doc = get_asset_by_name(current_context["project_name"],
+                                  current_context["asset_name"])
+    settings = get_asset_settings(asset_doc)
+    if frames:
+        frame_start = settings["frameStart"] - settings["handleStart"]
+        frames_duration = settings["duration"]
+        fps = settings["fps"]
+    if resolution:
+        width = settings["resolutionWidth"]
+        height = settings["resolutionHeight"]
+
+    stub = get_stub()
+    comps = stub.get_selected_items(True, False, False)
+    if not comps:
+        stub.print_msg("Select at least one composition to apply settings.")
+        return
+
+    for comp in comps:
+        comp_id = comp.id
+        stub.set_comp_properties(comp_id, frame_start, frames_duration,
+                                 fps, width, height)

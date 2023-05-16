@@ -13,11 +13,12 @@ from wsrpc_aiohttp import (
 from qtpy import QtCore
 
 from openpype.lib import Logger
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_name
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import AfterEffectsServerStub
+from .lib import set_settings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -296,6 +297,15 @@ class AfterEffectsRoute(WebSocketRoute):
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
 
+    async def setresolution_route(self):
+        self._settings_route(False, True)
+
+    async def setframes_route(self):
+        self._settings_route(True, False)
+
+    async def setall_route(self):
+        self._settings_route(True, True)
+
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
 
@@ -304,6 +314,16 @@ class AfterEffectsRoute(WebSocketRoute):
 
         partial_method = functools.partial(show_tool_by_name,
                                            _tool_name)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def _settings_route(self, frames, resolution):
+        partial_method = functools.partial(set_settings,
+                                           frames,
+                                           resolution)
 
         ProcessLauncher.execute_in_main_thread(partial_method)
 
