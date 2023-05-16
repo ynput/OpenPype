@@ -8,9 +8,6 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     CreatePlaceholderItem,
     PlaceholderLoadMixin,
     PlaceholderCreateMixin,
-    TemplateNotFound,
-    TemplateLoadFailed,
-    TemplateProfileNotFound,
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
@@ -29,43 +26,12 @@ from .lib import (
     duplicate_node,
     node_tempfile,
 )
-from .workio import (
-    open_file,
-)
+
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
 
 class NukeTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for nuke"""
-
-    def open_template(self):
-        """Open template in current scene.
-
-        Args:
-            path (str): A path to current template (usually given by
-            get_template_preset implementation)
-        """
-
-        try:
-            template_preset = self.get_template_preset()
-            template_path = template_preset["path"]
-
-        except (
-            TemplateNotFound,
-            TemplateProfileNotFound,
-            TemplateLoadFailed
-        ) as e:
-            nuke.critical("An error has occurred:\n{}".format(e))
-            return
-
-        result = nuke.ask(
-            "This will replace current scene with template. Continue?"
-        )
-        if not result:
-            return
-
-        print("opening template {}".format(template_path))
-        open_file(template_path)
 
     def import_template(self, path):
         """Import template into current scene.
