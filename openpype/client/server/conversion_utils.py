@@ -600,7 +600,7 @@ def representation_fields_v3_to_v4(fields, con):
             output |= REPRESENTATION_FILES_FIELDS
 
         elif field.startswith("data"):
-            fields |= {
+            output |= {
                 "attrib.{}".format(attr)
                 for attr in representation_attributes
             }
