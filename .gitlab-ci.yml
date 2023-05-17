@@ -73,7 +73,7 @@ build-patch:
     - mv /tmp/build/op ./build
   artifacts:
     paths:
-      - ./tmp/build
+      - ./build
   when: manual
   allow_failure: false
 
