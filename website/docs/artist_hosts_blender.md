@@ -13,6 +13,7 @@ sidebar_label: Blender
 -   [Manage (Inventory)](artist_tools_inventory)
 -   [Publish](artist_tools_publisher)
 -   [Library Loader](artist_tools_library_loader)
+-   [Workfile Out Of Date Handling](artist_hosts_blender_workfile_out_of_date_handling)
 
 ## Working with OpenPype in Blender
 
@@ -27,7 +28,7 @@ it with few examples.
 ## Setting scene data
 
 Blender settings concerning framerate, resolution and frame range are handled
-by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
+by OpenPype. If set correctly in Ftrack, Blender will automatically set the
 values for you.
 
 
@@ -72,7 +73,7 @@ name of the group you have selected.
 `Use selection` checkbox will use whatever you have selected in Outliner to be
 wrapped in Model instance. This is usually what you want. Click on **Create** button.
 
-You'll notice then after you've created new Model instance, there is a new 
+You'll notice then after you've created new Model instance, there is a new
 collection in Outliner called after your asset and subset, in our case it is
 `character1_modelDefault`. The assets selected when creating the Model instance
 are linked in the new collection.
@@ -84,7 +85,7 @@ in Save dialog is already set to place where scenes related to modeling task on
 your asset should reside. As in our case we are working on asset called
 **character1** and on task **modeling**, path relative to your project directory will be
 `project_XY/assets/character1/work/modeling`. The default name for the file will
-be `project_XY_asset_task_version`, so in our case 
+be `project_XY_asset_task_version`, so in our case
 `simonetest_character1_modeling_v001.blend`. Let's save it.
 
 ![Model create instance](assets/blender-save_modelling_file.jpg)
@@ -104,7 +105,7 @@ publishing, red means something went wrong either during collection phase
 or publishing phase. Empty one with gray text is disabled.
 
 See that in this case we are publishing from the scene file
-`simonetest_character1_modeling_v001.blend` the Blender model named 
+`simonetest_character1_modeling_v001.blend` the Blender model named
 `character1_modelDefault`.
 
 Right column lists all tasks that are run during collection, validation,
@@ -130,7 +131,7 @@ You can click on arrow next to it to see more details:
 ![Failed Model Validator details](assets/blender-model_error_details.jpg)
 
 From there you can see in **Records** entry that there is problem with the
-object `Suzanne`. Some validators have option to fix problem for you or just 
+object `Suzanne`. Some validators have option to fix problem for you or just
 select objects that cause trouble. This is the case with our failed validator.
 
 In main overview you can notice little A in a circle next to validator
@@ -175,7 +176,7 @@ demonstration, I'll create a simple model for a robotic arm made of simple boxes
 I have now created the armature `RIG_RobotArm`. While the naming is not important,
 you can just adhere to your naming conventions, the hierarchy is. Once the models
 are skinned to the armature, the geometry must be organized in a separate Collection.
-In this case, I have the armature in the main Collection, and the geometry in 
+In this case, I have the armature in the main Collection, and the geometry in
 the `Geometry` Collection.
 
 ![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
