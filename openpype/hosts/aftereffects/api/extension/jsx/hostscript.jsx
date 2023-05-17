@@ -361,14 +361,16 @@ function getCompProperties(comp_id){
     }
 
     return JSON.stringify({
-        "frameStart": item.displayStartFrame,
-        "framesDuration": item.duration * item.frameRate,
-        "frameRate": item.frameRate,
-        "width": item.width,
-        "height": item.height});
+        "id": comp.id,
+        "name": comp.name,
+        "frameStart": comp.displayStartFrame,
+        "framesDuration": comp.duration * comp.frameRate,
+        "frameRate": comp.frameRate,
+        "width": comp.width,
+        "height": comp.height});
 }
 
-function setCompProperties(comp_id, frameStart, framesDuration, frameRate,
+function setCompProperties(comp_id, frameStart, framesCount, frameRate,
                            width, height){
     /**
      * Sets work area info from outside (from Ftrack via OpenPype)
@@ -379,9 +381,9 @@ function setCompProperties(comp_id, frameStart, framesDuration, frameRate,
     }
 
     app.beginUndoGroup('change comp properties');
-        if (frameStart && framesDuration && frameRate){
+        if (frameStart && framesCount && frameRate){
             comp.displayStartFrame = frameStart;
-            comp.workAreaDuration = framesDuration / frameRate;
+            comp.duration = framesCount / frameRate;
             comp.frameRate = frameRate;
         }
         if (width && height){
@@ -815,13 +817,13 @@ function getAppVersion(){
     return _prepareSingleValue(app.version);
 }
 
+function printMsg(msg){
+    alert(msg);
+}
+
 function _prepareSingleValue(value){
     return JSON.stringify({"result": value})
 }
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
-
-setCompProperties(1, 1000, 50, 25, null, null);
-var foo = getCompProperties(1);
-$.writeln(foo);

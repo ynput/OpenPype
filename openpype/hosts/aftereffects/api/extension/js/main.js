@@ -316,6 +316,16 @@ function main(websocket_url){
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");
     });
+
+    RPC.addRoute('AfterEffects.print_msg', function (data) {
+        log.warn('Server called client route "print_msg":', data);
+        var escaped_msg = EscapeStringForJSX(data.msg);
+        return runEvalScript("printMsg('" + escaped_msg +"')")
+            .then(function(result){
+                log.warn("print_msg: " + result);
+                return result;
+            });
+    });
 }
 
 /** main entry point **/
