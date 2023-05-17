@@ -376,7 +376,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-    def set_comp_properties(self, item, start, duration, frame_rate,
+    def set_comp_properties(self, comp_id, start, duration, frame_rate,
                             width, height):
         """
             Set work area to predefined values (from Ftrack).
@@ -384,7 +384,7 @@ class AfterEffectsServerStub():
             Beware of rounding, AE expects seconds, not frames directly.
 
         Args:
-            item (dict):
+            comp_id (int):
             start (int): workAreaStart in frames
             duration (int): in frames
             frame_rate (float): frames in seconds
@@ -393,7 +393,7 @@ class AfterEffectsServerStub():
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.set_comp_properties',
-                                         item_id=item.id,
+                                         item_id=comp_id,
                                          start=start,
                                          duration=duration,
                                          frame_rate=frame_rate,
@@ -563,9 +563,10 @@ class AfterEffectsServerStub():
         return self._handle_return(res)
 
     def print_msg(self, msg):
-        rself.websocketserver.call(self.client.call
-                                    ('AfterEffects.print_msg',
-                                    msg=msg))
+        """Triggers Javascript alert dialog."""
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.print_msg',
+                                   msg=msg))
 
     def _handle_return(self, res):
         """Wraps return, throws ValueError if 'error' key is present."""
@@ -621,8 +622,8 @@ class AfterEffectsServerStub():
                           d.get('name'),
                           d.get('type'),
                           d.get('members'),
-                          d.get('workAreaStart'),
-                          d.get('workAreaDuration'),
+                          d.get('frameStart'),
+                          d.get('framesDuration'),
                           d.get('frameRate'),
                           d.get('file_name'),
                           d.get("instance_id"),
@@ -631,3 +632,18 @@ class AfterEffectsServerStub():
 
             ret.append(item)
         return ret
+
+
+def get_stub():
+    """
+        Convenience function to get server RPC stub to call methods directed
+        for host (Photoshop).
+        It expects already created connection, started from client.
+        Currently created when panel is opened (PS: Window>Extensions>Avalon)
+    :return: <PhotoshopClientStub> where functions could be called from
+    """
+    ae_stub = AfterEffectsServerStub()
+    if not ae_stub.client:
+        raise ConnectionNotEstablishedYet("Connection is not created yet")
+
+    return ae_stub

@@ -1,23 +1,28 @@
 import os
+import sys
 import subprocess
 import collections
 import logging
 import asyncio
 import functools
+import traceback
+
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
     WebSocketAsync
 )
 
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 
 from openpype.lib import Logger
-from openpype.client import get_asset_by_name
 from openpype.tools.utils import host_tools
+from openpype.tests.lib import is_in_tests
+from openpype.pipeline import install_host, legacy_io
+from openpype.modules import ModulesManager
 from openpype.tools.adobe_webserver.app import WebServerTool
 
-from .ws_stub import AfterEffectsServerStub
+from .ws_stub import get_stub
 from .lib import set_settings
 
 log = logging.getLogger(__name__)
@@ -28,23 +33,49 @@ class ConnectionNotEstablishedYet(Exception):
     pass
 
 
-def get_stub():
-    """
-        Convenience function to get server RPC stub to call methods directed
-        for host (Photoshop).
-        It expects already created connection, started from client.
-        Currently created when panel is opened (PS: Window>Extensions>Avalon)
-    :return: <PhotoshopClientStub> where functions could be called from
-    """
-    ae_stub = AfterEffectsServerStub()
-    if not ae_stub.client:
-        raise ConnectionNotEstablishedYet("Connection is not created yet")
-
-    return ae_stub
+def safe_excepthook(*args):
+    traceback.print_exception(*args)
 
 
-def stub():
-    return get_stub()
+def main(*subprocess_args):
+    """Main entrypoint to AE launching, called from pre hook."""
+    sys.excepthook = safe_excepthook
+
+    from openpype.hosts.aftereffects.api import AfterEffectsHost
+
+    host = AfterEffectsHost()
+    install_host(host)
+
+    os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
+    app = QtWidgets.QApplication([])
+    app.setQuitOnLastWindowClosed(False)
+
+    launcher = ProcessLauncher(subprocess_args)
+    launcher.start()
+
+    if os.environ.get("HEADLESS_PUBLISH"):
+        manager = ModulesManager()
+        webpublisher_addon = manager["webpublisher"]
+
+        launcher.execute_in_main_thread(
+            functools.partial(
+                webpublisher_addon.headless_publish,
+                log,
+                "CloseAE",
+                is_in_tests()
+            )
+        )
+
+    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
+        save = False
+        if os.getenv("WORKFILES_SAVE_AS"):
+            save = True
+
+        launcher.execute_in_main_thread(
+            lambda: host_tools.show_tool_by_name("workfiles", save=save)
+        )
+
+    sys.exit(app.exec_())
 
 
 def show_tool_by_name(tool_name):
@@ -56,6 +87,7 @@ def show_tool_by_name(tool_name):
 
 
 class ProcessLauncher(QtCore.QObject):
+    """Launches webserver, connects to it, runs main thread."""
     route_name = "AfterEffects"
     _main_thread_callbacks = collections.deque()
 

@@ -1,67 +1,15 @@
 import os
-import sys
 import re
 import json
 import contextlib
-import traceback
 import logging
-from functools import partial
 
-from qtpy import QtWidgets
-
-from openpype.pipeline import install_host
-from openpype.modules import ModulesManager
-
-from openpype.tools.utils import host_tools
-from openpype.tests.lib import is_in_tests
-from .launch_logic import ProcessLauncher, get_stub
+from openpype.pipeline.context_tools import get_current_context
+from openpype.client import get_asset_by_name
+from .ws_stub import get_stub
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-def safe_excepthook(*args):
-    traceback.print_exception(*args)
-
-
-def main(*subprocess_args):
-    sys.excepthook = safe_excepthook
-
-    from openpype.hosts.aftereffects.api import AfterEffectsHost
-
-    host = AfterEffectsHost()
-    install_host(host)
-
-    os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
-    app = QtWidgets.QApplication([])
-    app.setQuitOnLastWindowClosed(False)
-
-    launcher = ProcessLauncher(subprocess_args)
-    launcher.start()
-
-    if os.environ.get("HEADLESS_PUBLISH"):
-        manager = ModulesManager()
-        webpublisher_addon = manager["webpublisher"]
-
-        launcher.execute_in_main_thread(
-            partial(
-                webpublisher_addon.headless_publish,
-                log,
-                "CloseAE",
-                is_in_tests()
-            )
-        )
-
-    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
-        save = False
-        if os.getenv("WORKFILES_SAVE_AS"):
-            save = True
-
-        launcher.execute_in_main_thread(
-            lambda: host_tools.show_tool_by_name("workfiles", save=save)
-        )
-
-    sys.exit(app.exec_())
 
 
 @contextlib.contextmanager
@@ -166,7 +114,15 @@ def get_asset_settings(asset_doc):
     }
 
 
-def set_settings(frames, resolution):
+def set_settings(frames, resolution, comp_ids=[]):
+    """Sets number of frames and resolution to selected comps.
+
+    Args:
+        frames (bool): True if set frame info
+        resolution (bool): True if set resolution
+        comp_ids (list): specific compositin ids, if empty
+            it tries to look for currently selected
+    """
     frame_start = frames_duration = fps = width = height = None
     current_context = get_current_context()
 
@@ -182,12 +138,17 @@ def set_settings(frames, resolution):
         height = settings["resolutionHeight"]
 
     stub = get_stub()
-    comps = stub.get_selected_items(True, False, False)
-    if not comps:
+    if not comp_ids:
+        comps = stub.get_selected_items(True, False, False)
+        comp_ids = [comp.id for comp in comps]
+    if not comp_ids:
         stub.print_msg("Select at least one composition to apply settings.")
         return
 
-    for comp in comps:
-        comp_id = comp.id
+    for comp_id in comp_ids:
+        msg = f"Setting for comp {comp_id} frame start {frame_start}, "\
+              f"duration {frames_duration}, fps {fps}, width {width} and "\
+              f"height {height}"
+        log.debug(msg)
         stub.set_comp_properties(comp_id, frame_start, frames_duration,
                                  fps, width, height)
