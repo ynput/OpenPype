@@ -83,7 +83,7 @@ class FusionRenderLocal(
             # Only active instances
             instance.data.get("publish", True) and
             # Only render.local instances
-            "render.local" in instance.data.get("families")
+            "render.local" in instance.data.get("families", [])
         ]
 
         if key not in context.data:
