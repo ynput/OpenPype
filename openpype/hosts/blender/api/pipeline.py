@@ -26,6 +26,8 @@ from openpype.lib import (
     emit_event
 )
 import openpype.hosts.blender
+from openpype.settings import get_project_settings
+
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -122,12 +124,23 @@ def set_start_end_frames():
     scene.render.resolution_y = resolution_y
 
 
+def set_base_file_unit_scale():
+    project = os.environ.get("AVALON_PROJECT")
+    settings = get_project_settings(project)
+
+    unit_scale = settings.get("blender").get("base_file_unit_scale")
+
+    bpy.context.scene.unit_settings.scale_length = unit_scale
+
+
 def on_new():
     set_start_end_frames()
+    set_base_file_unit_scale()
 
 
 def on_open():
     set_start_end_frames()
+    set_base_file_unit_scale()
 
 
 @bpy.app.handlers.persistent
