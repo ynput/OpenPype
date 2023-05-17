@@ -16,7 +16,7 @@ project_name = get_current_project_name()
 settings = get_project_settings(project_name)
 
 # Loading plugins explicitly.
-explicit_plugins_loading = project_settings["maya"]["explicit_plugins_loading"]
+explicit_plugins_loading = settings["maya"]["explicit_plugins_loading"]
 if explicit_plugins_loading["enabled"]:
     def _explicit_load_plugins():
         for plugin in explicit_plugins_loading["plugins_to_load"]:
