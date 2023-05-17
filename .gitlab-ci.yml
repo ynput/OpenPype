@@ -69,7 +69,7 @@ build-patch:
   image: python:3.9
   script:
     - mkdir -p $CI_PROJECT_DIR/artifact/build
-    # Proc dies after creating the poerty env on first run. Just run it twice
+    # Proc dies after creating the poetry env on first run. Just run it twice
     - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
     - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
   artifacts:
@@ -83,11 +83,8 @@ deploy-patch:
     - cw-pvc
   stage: deploy
   script:
-    - ls -la ./artifact/build
-    - cp -R ./artifact/build/* /pipe/test/
-    - chown -R 1000:776523089 /pipe/test/
-#    - cp -R ./artifact/build/* /pipe/openpype/versions/build/
-#    - chown -R 1000:776523089 /pipe/openpype/versions/build
+    - cp -R ./artifact/build/* /pipe/openpype/versions/build/
+    - chown -R 1000:776523089 /pipe/openpype/versions/build
   dependencies:
     - build-patch
   needs:
@@ -104,15 +101,15 @@ deploy-to-deadline:
       changes:
         - openpype/modules/deadline/repository/custom/plugins/**/*
 
-#patch-release:
-#  tags:
-#    - dind
-#  stage: release
-#  image: registry.gitlab.com/gitlab-org/release-cli:latest
-#  script:
-#    - apk add --no-cache python3
-#    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print(__version__);"
-#    - openpype_version="$(python3 -c "${version_command}")"
-#    - release-cli create --description "Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID" --tag-name "test-${openpype_version}"
-#  needs:
-#    - deploy-patch
+patch-release:
+  tags:
+    - dind
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - apk add --no-cache python3
+    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print(__version__);"
+    - openpype_version="$(python3 -c "${version_command}")"
+    - release-cli create --description "Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID" --tag-name "${openpype_version}"
+  needs:
+    - deploy-patch
