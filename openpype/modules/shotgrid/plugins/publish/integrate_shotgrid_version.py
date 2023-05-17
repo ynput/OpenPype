@@ -14,6 +14,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         "frameEnd": "sg_last_frame",
         "comment": "sg_submission_notes",
         "family": "sg_version_type",
+        "instance_id": "sg_op_instance_id",
     }
     ### Ends Alkemy-X Override ###
 
