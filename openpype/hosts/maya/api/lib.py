@@ -3981,7 +3981,7 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
+    asset = get_current_asset_name()
     dependency = str(context["representation"]["_id"])
 
     if log:
