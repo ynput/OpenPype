@@ -69,15 +69,13 @@ build-patch:
   image: python:3.9
   script:
     - mkdir -p /builds/coreweave/pipeline/OpenPype/build
-    - ./tools/create_zip.sh --path /builds/coreweave/pipeline/OpenPype/build && ls -la /builds/coreweave/pipeline/OpenPype/build
-    - pwd
-    - ls -la /builds/coreweave/pipeline/OpenPype/build
-    - ls -la ./build
-#    - mv /tmp/build/op ./build
-#    - ls -la ./build
+    - echo $CI_PROJECT_DIR
+    - mkdir $CI_PROJECT_DIR/artifact/build
+    - touch $CI_PROJECT_DIR/artifact/test.txt
+#    - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
   artifacts:
     paths:
-      - ./build
+      - artifact
   when: manual
   allow_failure: false
 #
