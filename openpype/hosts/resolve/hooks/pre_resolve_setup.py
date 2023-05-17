@@ -33,6 +33,9 @@ class ResolvePrelaunch(PreLaunchHook):
         resolve_script_api = Path(
             resolve_script_api_locations[current_platform]
         )
+        self.log.info(
+            f"setting RESOLVE_SCRIPT_API variable to {resolve_script_api}"
+        )
         self.launch_context.env[
             "RESOLVE_SCRIPT_API"
         ] = resolve_script_api.as_posix()
@@ -52,6 +55,9 @@ class ResolvePrelaunch(PreLaunchHook):
         self.launch_context.env[
             "RESOLVE_SCRIPT_LIB"
         ] = resolve_script_lib.as_posix()
+        self.log.info(
+            f"setting RESOLVE_SCRIPT_LIB variable to {resolve_script_lib}"
+        )
 
         # TODO: add OTIO installation from `openpype/requirements.py`
         # making sure python <3.9.* is installed at provided path
@@ -68,14 +74,6 @@ class ResolvePrelaunch(PreLaunchHook):
         python3_home_str = python3_home.as_posix()
         self.launch_context.env["PYTHONHOME"] = python3_home_str
         self.log.info(f"Path to Resolve Python folder: `{python3_home_str}`")
-
-        # add to the python path to PATH
-        env_path = self.launch_context.env["PATH"]
-        self.launch_context.env[
-            "PATH"
-        ] = f"{python3_home_str}{os.pathsep}{env_path}"
-
-        self.log.debug(f"PATH: {self.launch_context.env['PATH']}")
 
         # add to the PYTHONPATH
         env_pythonpath = self.launch_context.env["PYTHONPATH"]

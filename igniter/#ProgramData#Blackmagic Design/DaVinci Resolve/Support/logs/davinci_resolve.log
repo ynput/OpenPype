@@ -1,0 +1,443 @@
+[0x00004fe8] | Undefined            | INFO  | 2023-05-17 09:46:08,249 | --------------------------------------------------------------------------------
+[0x00004fe8] | Undefined            | INFO  | 2023-05-17 09:46:08,250 | Loaded log config from C:\Users\videopro\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Preferences\log-conf.xml
+[0x00004fe8] | Undefined            | INFO  | 2023-05-17 09:46:08,250 | --------------------------------------------------------------------------------
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,251 | Running DaVinci Resolve Studio v18.1.2.0006 (Windows/MSVC x86_64)
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,251 | BMD_BUILD_UUID 3ff36663-26c9-45d9-8506-101676c881e0
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,251 | BMD_GIT_COMMIT a3be29d0542aeafcb1b0933bb5ace426aa7d047d
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,259 | Starting GPUDetect 1.2_3-a1
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 | Done in 161 ms.
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 | Detected System:
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - OS: Windows 10 Pro (Build 19045)
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - Model: ASUSTeK ROG STRIX B550-F GAMING (WI-FI)
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - System ID: 838d5045-58b0-44ed-854c-19be5b814d6f
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - CPU: AMD Ryzen 7 3700X, 16 threads, x86-64
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - RAM: 16.6 GiB used of 63.9 GiB
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 |   - NVIDIA GPU Driver: 527.56, supports CUDA 12.0
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,421 | Detected 1 GPUs:
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 |   - "NVIDIA GeForce RTX 2060 SUPER" (gpu:a24a3d50.83f1fdb7) <- Main Display GPU
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 |     Discrete, 2.0 GiB used of 7.6 GiB VRAM, PCI:8:0 (x16)
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 |     Matches: CUDA, DirectX, NVAPI, NVML, OpenCL, Win32
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 | Detected 1 monitors:
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 |   - "Generic PnP Monitor" <- Main Monitor
+[0x00004fe8] | GPUDetect            | INFO  | 2023-05-17 09:46:08,423 |     3840x2160, connected to "NVIDIA GeForce RTX 2060 SUPER" (gpu:a24a3d50.83f1fdb7)
+[0x00004fe8] | Main.GPUConfig       | INFO  | 2023-05-17 09:46:08,424 | Selected compute API: CUDA
+[0x00004fe8] | Main.GPUConfig       | INFO  | 2023-05-17 09:46:08,424 | Automatic GPU Selection:
+[0x00004fe8] | Main.GPUConfig       | INFO  | 2023-05-17 09:46:08,424 |   - "NVIDIA GeForce RTX 2060 SUPER" (gpu:a24a3d50.83f1fdb7)
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:08,438 | RED InitializeSdk with library path at C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Libraries
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:08,642 | R3DAPI 8.3.1-52407 (20220725 Wx64S) R3DSDK 8.3.1-52407 (20220725 Wx64D C3B3) RED CUDA 8.3.1-52408 (20220725) [C:\ProgramData\Blackmagic Design\DaVinci Resolve\Support\Libraries\] init is successful
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,642 | 0 RED rocket cards available
+[0x00004fe8] | SyManager.DeckLink   | ERROR | 2023-05-17 09:46:08,645 | Failed to create instance.
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,645 | Decklink model name: '', version: ''
+[0x00004fe8] | DVIP                 | INFO  | 2023-05-17 09:46:08,645 | DVIP release/18.1.2 build 2 (86acfdf407856b6cd8daf2517ab0b44f1efc332f). Release, version 18.1.2.
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:08,645 | Resolve Module Handle 00007FF6A4B50000
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:08,646 | Using DNxHR library v2.7.3.27r
+[0x00002044] | Fusion               | INFO  | 2023-05-17 09:46:09,093 | Fusion Build: 008b13c7_0004 (Dec  7 2022 15:23:40)
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,114 | fusionsystem: = "C:\Program Files\Blackmagic Design\DaVinci Resolve\fusionsystem.dll"
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,117 | NVDEC is using upto (1023) MB
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,119 | NVDEC decodes H264, chroma 4:2:0, bitdepth 8, upto 4096 x 4096
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,121 | NVDEC decodes HEVC, chroma 4:2:0, bitdepth 8, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,123 | NVDEC decodes HEVC, chroma 4:2:0, bitdepth 10, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,127 | NVDEC decodes HEVC, chroma 4:2:0, bitdepth 12, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,128 | NVDEC decodes HEVC, chroma 4:4:4, bitdepth 8, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,130 | NVDEC decodes HEVC, chroma 4:4:4, bitdepth 10, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,131 | NVDEC decodes HEVC, chroma 4:4:4, bitdepth 12, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,133 | NVDEC decodes VP9, chroma 4:2:0, bitdepth 8, upto 8192 x 8192
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,134 | NVDEC decodes VP9, chroma 4:2:0, bitdepth 10, upto 8192 x 8192
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,148 | FusionLibs: = "C:\Program Files\Blackmagic Design\DaVinci Resolve\"
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,148 | UserData:   = "C:\Users\videopro\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Support\Fusion"
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,148 | Profiles:   = "UserData:Profiles\"
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,148 | Nvidia GPU (0) is initialised as decoding and encoding device.
+[0x00001238] | IO                   | INFO  | 2023-05-17 09:46:09,182 | IO codec library load completed in 536 ms.
+[0x00005cbc] | SyManager            | ERROR | 2023-05-17 09:46:09,202 | BlackmagicIDHelper::GetProjectLibraries() - Access token is empty
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:09,268 | Loading dblist file: C:\Users\videopro\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Preferences\dblist.conf
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:09,314 | Finished loading Application style sheet
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:09,396 | Show splash screen
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:09,396 | Show splash screen message: Starting Up
+[0x00004fe8] | Fusion               | INFO  | 2023-05-17 09:46:09,398 | Module Handle 0000023A5FC80000 fusionsystem
+[0x0000204c] | Fusion               | INFO  | 2023-05-17 09:46:09,410 | Module Handle 0000023A6C160000 C:\Program Files\Blackmagic Design\DaVinci Resolve\fusiongraphics.dll
+[0x00004f28] | Fusion               | INFO  | 2023-05-17 09:46:09,437 | Module Handle 0000023A6FB90000 fusionoperators.dll
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,462 | Module Handle 0000023A70490000 fusioncontrols.dll
+[0x00007b34] | Fusion               | INFO  | 2023-05-17 09:46:09,488 | Module Handle 0000023A70870000 3d.plugin
+[0x0000772c] | Fusion               | INFO  | 2023-05-17 09:46:09,510 | Module Handle 0000023A70B50000 dimension.plugin
+[0x00003934] | Fusion               | INFO  | 2023-05-17 09:46:09,528 | Module Handle 0000023A70F70000 alembic.plugin
+[0x0000204c] | Fusion               | INFO  | 2023-05-17 09:46:09,551 | Module Handle 0000023A71320000 fbx.plugin
+[0x000078cc] | Fusion               | INFO  | 2023-05-17 09:46:09,566 | Module Handle 0000023A464C0000 fuses.plugin
+[0x00004f28] | Fusion               | INFO  | 2023-05-17 09:46:09,582 | Module Handle 0000023A71A70000 opencolorio.plugin
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,599 | Module Handle 0000023A6ADF0000 openfx.plugin
+[0x00007b34] | Fusion               | INFO  | 2023-05-17 09:46:09,615 | Module Handle 0000023A68DA0000 openvr.plugin
+[0x0000772c] | Fusion               | INFO  | 2023-05-17 09:46:09,632 | Module Handle 0000023A6AE60000 paint.plugin
+[0x00003934] | Fusion               | INFO  | 2023-05-17 09:46:09,653 | Module Handle 0000023A6AED0000 particles.plugin
+[0x0000204c] | Fusion               | INFO  | 2023-05-17 09:46:09,673 | Module Handle 0000023A720D0000 text.plugin
+[0x000078cc] | Fusion               | INFO  | 2023-05-17 09:46:09,690 | Module Handle 0000023A6CB80000 utilities.plugin
+[0x00004f28] | Fusion               | INFO  | 2023-05-17 09:46:09,715 | Module Handle 00007FF89F590000 KrokodoveFu16.plugin
+[0x00005f70] | Fusion               | INFO  | 2023-05-17 09:46:09,717 | Module Handle 00007FF89F330000 KrokodoveFu17.plugin
+[0x00004f28] | OpenFX               | INFO  | 2023-05-17 09:46:09,817 | No context is available for com.absoft.NeatVideo5
+[0x00007fc8] | Main                 | INFO  | 2023-05-17 09:46:09,828 | Started listener socket at port 15000
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,308 | Show splash screen message: Checking Licenses
+[0x00004fe8] | BtCommon             | INFO  | 2023-05-17 09:46:10,532 | Memory config: reserved=12270M pinned=8000M log=0
+[0x00004fe8] | BtCommon             | INFO  | 2023-05-17 09:46:10,532 | Using default pooled memory manager
+[0x00003798] | LeManager            | INFO  | 2023-05-17 09:46:10,533 | 521, 29
+[0x00008180] | BtCommon             | INFO  | 2023-05-17 09:46:10,533 | BtResourceManager Process Thread Started
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:10,609 | WMF encoder cnt for SW (hvc1) is (0)
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:10,624 | WMF encoder cnt for HW (hvc1) is (1)
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:10,624 | Setting codec capacity (0)
+[0x00004fe8] | SyManager            | INFO  | 2023-05-17 09:46:10,625 | Total: 20, NumDtThreads: 8, NumComms: 0, NumSites: 1
+
+[0x00004fe8] | SyManager            | INFO  | 2023-05-17 09:46:10,625 | Lookaheads -> playback = 20, record = 20, stop = 2
+
+[0x00004fe8] | DtManager            | INFO  | 2023-05-17 09:46:10,626 | Using 8 generic IO threads
+[0x00004fe8] | DtManager            | INFO  | 2023-05-17 09:46:10,626 | Total of 16 IO threads (including 8 generic and 8 Red decode threads)
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,627 | Show splash screen message: Loading Project Libraries
+[0x00001a20] | DtManager            | INFO  | 2023-05-17 09:46:10,627 | Dt Worker Thread Started
+[0x00007da0] | GsManager            | INFO  | 2023-05-17 09:46:10,628 | Gs Processor Thread ----- (32160)
+
+[0x00004474] | DtManager            | INFO  | 2023-05-17 09:46:10,628 | Dt Worker Thread Started
+[0x00002b7c] | DtManager            | INFO  | 2023-05-17 09:46:10,628 | Dt Worker Thread Started
+[0x00002d64] | DtManager            | INFO  | 2023-05-17 09:46:10,628 | Dt Worker Thread Started
+[0x00007bbc] | DtManager            | INFO  | 2023-05-17 09:46:10,628 | Dt Data Handler Thread Started
+[0x00002ad0] | DtManager            | INFO  | 2023-05-17 09:46:10,628 | Dt Worker Thread Started
+[0x00004a48] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00005084] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00003050] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00003e88] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00006550] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00007950] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x000059a8] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00007de4] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00007a24] | DtManager            | INFO  | 2023-05-17 09:46:10,629 | Dt Worker Thread Started
+[0x00001eec] | DtManager            | INFO  | 2023-05-17 09:46:10,630 | Dt Worker Thread Started
+[0x00001f5c] | DtManager            | INFO  | 2023-05-17 09:46:10,630 | Dt Worker Thread Started
+[0x00007a50] | DtManager            | INFO  | 2023-05-17 09:46:10,630 | Dt Worker Thread Started
+[0x000009c4] | DtManager            | INFO  | 2023-05-17 09:46:10,630 | Dt Worker Thread Started
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,633 | Show splash screen message: Initializing system components
+[0x00001190] | GPU.MultiBoardMgr    | INFO  | 2023-05-17 09:46:10,635 | Let There Be CUDA Light!
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,639 | Show splash screen message: Loading video codecs
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,644 | Show splash screen message: Loading video plugins
+[0x00004fe8] | UI.GLContext         | INFO  | 2023-05-17 09:46:10,680 | Creating shared OpenGL context for this thread (1 total).
+[0x00004fe8] | UI.GLContext         | INFO  | 2023-05-17 09:46:10,708 | Initialized OpenGL 4.6 (requested 2.0) on device 'NVIDIA Corporation NVIDIA GeForce RTX 2060 SUPER/PCIe/SSE2'
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:10,708 | Show splash screen message: Loading Fairlight Engine
+[0x00001190] | GPU.MultiBoardMgr    | INFO  | 2023-05-17 09:46:10,708 | Initializing CUDA board manager for Main Display GPU gpu:a24a3d50.83f1fdb7.
+[0x00001968] | IO                   | INFO  | 2023-05-17 09:46:10,788 | IO codec initialization completed in 143 ms.
+[0x000065b4] | GPU.SingleBoardMgr   | INFO  | 2023-05-17 09:46:10,811 | Board manager thread for "NVIDIA GeForce RTX 2060 SUPER" (gpu:a24a3d50.83f1fdb7) is ready.
+[0x00001190] | UI.GLInterop         | INFO  | 2023-05-17 09:46:10,811 | OpenGL interop was initialized.
+[0x00001190] | UI.GLInterop         | INFO  | 2023-05-17 09:46:10,811 | OpenGL interop was initialized.
+[0x00001190] | GPU.MultiBoardMgr    | INFO  | 2023-05-17 09:46:10,811 | Enabled CUDA pinned memory.
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.122(003): WASAPI: Scanning Speakers (Steam Streaming Microphone) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.128(000): WASAPI: Device: Speakers (Steam Streaming Microphone). Scan time 6. Formats = 1 15 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.128(000): WASAPI: Scanning Speakers (High Definition Audio Device) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.190(000): WASAPI: Device: Speakers (High Definition Audio Device). Scan time 61. Formats = 1 15 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.190(000): WASAPI: Scanning Mi 27 NU (NVIDIA High Definition Audio) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.236(000): WASAPI: Device: Mi 27 NU (NVIDIA High Definition Audio). Scan time 45. Formats = 1 15 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.236(000): WASAPI: Scanning Speakers (Steam Streaming Speakers) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.242(000): WASAPI: Device: Speakers (Steam Streaming Speakers). Scan time 6. Formats = 1 15 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,011 | 00.00.00.243(001): WASAPI: Scanning Digital Audio (S/PDIF) (High Definition Audio Device) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,212 | 00.00.00.286(000): WASAPI: Device: Digital Audio (S/PDIF) (High Definition Audio Device). Scan time 42. Formats = 1 15 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,212 | 00.00.00.287(001): WASAPI: Scanning Microphone (Steam Streaming Microphone) for formats
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,212 | 00.00.00.294(000): WASAPI: Device: Microphone (Steam Streaming Microphone). Scan time 7. Formats = 0 16 formats scanned
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:11,212 | 00.00.00.390(002): WASAPI: switching to AUTO because exclusive mode not allowed
+[0x00004f94] | DbCommon2            | ERROR | 2023-05-17 09:46:11,307 | Cannot connect to soundfx192.168.100.31 database: could not connect to server: Connection refused (0x0000274D/10061)
+	Is the server running on host "192.168.100.31" and accepting
+	TCP/IP connections on port 5432?
+QPSQL: Unable to connect
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,339 | postgres project library homepc at 127.0.0.1 version 9.5.22
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,347 | Project library [homepc127.0.0.1] current version <18.1.0.004> updated on <2022-11-22T16:16:24.518>, remark: <patched with 18.1.0.004 database upgrade>
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,347 | Connect to postgres project library homepc127.0.0.1
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,396 | postgres project library barney at 192.168.100.30 version 9.5.25
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,422 | Project library [barney192.168.100.30] current version <18.1.0.004> updated on <2022-11-17T08:47:18.322>, remark: <patched with 18.1.0.004 database upgrade>
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,422 | Connect to postgres project library barney192.168.100.30
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,475 | postgres project library shtv_barney at 192.168.100.30 version 9.5.25
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,501 | Project library [shtv_barney192.168.100.30] current version <18.1.0.004> updated on <2022-11-15T13:16:50.006>, remark: <patched with 18.1.0.004 database upgrade>
+[0x00004f94] | DbCommon2            | INFO  | 2023-05-17 09:46:11,501 | Connect to postgres project library shtv_barney192.168.100.30
+[0x00005850] | Fusion               | INFO  | 2023-05-17 09:46:11,704 | 260 templates scanned in 0.12 secs
+[0x00004fe8] | Fairlight            | INFO  | 2023-05-17 09:46:12,310 | 00.00.01.565(000): Running Fairlight (939d5c56aa8d66c1f392ff963f9b9c349ef4d9fb)
+[0x00004fe8] | FairlightLoader      | INFO  | 2023-05-17 09:46:12,310 | Fairlight lib initialized in 1598 ms.
+[0x00006a7c] | UI.GLContext         | INFO  | 2023-05-17 09:46:12,405 | Creating shared OpenGL context for this thread (2 total).
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:46:12,417 | 00.00.01.501(002): WASAPI: switching to AUTO because exclusive mode not allowed
+[0x00006a7c] | UI.GLIO              | INFO  | 2023-05-17 09:46:12,454 | Initialized MainPlayer OpenGL I/O on CUDA device 'NVIDIA GeForce RTX 2060 SUPER'
+[0x00004fe8] | UI.GLIO              | INFO  | 2023-05-17 09:46:12,454 | MainPlayer: OpenGL I/O setup done.
+[0x000076bc] | UI.GLContext         | INFO  | 2023-05-17 09:46:12,455 | Creating shared OpenGL context for this thread (3 total).
+[0x000076bc] | UI.GLIO              | INFO  | 2023-05-17 09:46:12,505 | Initialized AuxPlayer OpenGL I/O on CUDA device 'NVIDIA GeForce RTX 2060 SUPER'
+[0x00004fe8] | UI.GLIO              | INFO  | 2023-05-17 09:46:12,505 | AuxPlayer: OpenGL I/O setup done.
+[0x00008190] | UI.GLContext         | INFO  | 2023-05-17 09:46:12,506 | Creating shared OpenGL context for this thread (4 total).
+[0x00008190] | UI.Scopes            | INFO  | 2023-05-17 09:46:12,565 | Initialized GPU Scopes Manager on CUDA device 'NVIDIA GeForce RTX 2060 SUPER'
+[0x00004fe8] | UI.MenuBar           | WARN  | 2023-05-17 09:46:12,649 | Main menu action [workspaceLayoutFusion_sub001Default]'s slot is not defined: workspaceLayoutFusion_sub001Default_triggered()
+[0x00004fe8] | UI.MenuBar           | WARN  | 2023-05-17 09:46:12,649 | Main menu action [workspaceWIPlugins_placeholder]'s slot is not defined: workspaceWIPlugins_placeholder_triggered()
+[0x00006e14] | SyManager            | WARN  | 2023-05-17 09:46:12,656 | socket failed to connect to server, error: 10061
+
+[0x00006e14] | SyManager            | ERROR | 2023-05-17 09:46:12,656 | DRIVER: panel connection failed
+[0x00004fe8] | FusionUtils          | WARN  | 2023-05-17 09:46:12,657 | Fusion DoAction ACTION_SET_FUSION_HOTKEY ignored, init not completed
+[0x000052e4] | BtCommon             | INFO  | 2023-05-17 09:46:12,661 | Starting Daemon: C:/Program Files/Blackmagic Design/DaVinci Resolve/DaVinciPanelDaemon.exe
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:12,686 | Show splash screen message: Loading Project Settings
+[0x00006e14] | SyManager            | INFO  | 2023-05-17 09:46:12,757 | Connection to the panel server has been re-established
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:12,899 | Failed to find value '0' in combo-box
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:19,055 | Show splash screen message: Loading Media Page
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:46:19,145 | Action [fairlightBusStructure] is not a global action
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:46:19,145 | Action [fairlightBusStructure] is not a valid global action
+[0x00004fe8] | UI.FairlightInterface | WARN  | 2023-05-17 09:46:19,269 | SetActionEnabled: Failed to find action [viewTimelineScrollingFixed]'s action connector for handler Id [1]
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:19,424 | Show splash screen message: Loading Cut Page
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:19,698 | Show splash screen message: Loading Edit Page
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:19,951 | Show splash screen message: Loading Fusion Page
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:20,038 | Show splash screen message: Loading Fairlight Page
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:20,227 | Show splash screen message: Loading Color Page
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:46:20,296 | Not creating special GL widget for screen 0
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:21,003 | Failed to find value '8192' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:21,284 | Failed to find value '100' in combo-box
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:22,006 | Show splash screen message: Loading Waveform Monitor
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:22,433 | Show splash screen message: Loading Audio Plugins
+[0x00004fe8] | SyManager            | INFO  | 2023-05-17 09:46:22,528 | Collaboration IP 127.0.0.1 Port 0
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:22,674 | Show splash screen message: Loading Projects
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:46:22,739 | Current user pointer is changed
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:22,755 | UI Persistence - SecondaryScreenIdx not read
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:22,755 | UI Persistence - UseDisplayNameForClips not read
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:22,755 | UI Persistence - DefaultTransitionKey not read
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:22,755 | UI Persistence - DefaultAudioTransitionKey not read
+[0x00004fe8] | IO                   | INFO  | 2023-05-17 09:46:22,767 | RED rocket decode has been disabled in the config file
+[0x00004fe8] | LeManager            | ERROR | 2023-05-17 09:46:22,820 | 444, 139, 0
+[0x00004fe8] | SyManager.DeckLink   | ERROR | 2023-05-17 09:46:22,922 | Failed to create instance.
+[0x00004fe8] | SyManager            | INFO  | 2023-05-17 09:46:22,973 | Search Parameter (-2) or Search Operation (0) not supported, and hence disabling the condition.
+[0x00004fe8] | SyManager            | INFO  | 2023-05-17 09:46:22,973 | Search Parameter (-1) or Search Operation (-1) not supported, and hence disabling the condition.
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:23,077 | Failed to find value '0' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:23,080 | Failed to find value '0' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:23,098 | Failed to find value '0' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:46:23,099 | Failed to find value '4' in combo-box
+[0x00004fe8] | SyManager.Gallery    | INFO  | 2023-05-17 09:46:23,119 | Start purging still caches
+[0x00004fe8] | SyManager.Gallery    | INFO  | 2023-05-17 09:46:23,119 | Finish purging still caches
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:46:23,149 | Media pool relink status changed to 0
+[0x00004fe8] | FusionUtils          | WARN  | 2023-05-17 09:46:23,167 | Fusion DoAction ACTION_SET_FUSION_HOTKEY ignored, init not completed
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:46:23,179 | Launching project manager
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:46:23,182 | Main view page is changed to 12
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:23,209 | Show splash screen message: Ready
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:46:23,214 | Gallery pointer is changed, refreshing color gallery
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:46:23,223 | Gallery pointer is changed, refreshing gallery browser
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:23,312 | Close splash screen
+[0x00004fe8] | Main                 | INFO  | 2023-05-17 09:46:23,314 | Launching main loop
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:46:24,215 | Fusion templates changed
+[0x00004fe8] | Fusion               | INFO  | 2023-05-17 09:46:24,758 | Started script server: 32648
+
+[0x00004fe8] | SyManager.ActionExecutor | INFO  | 2023-05-17 09:48:41,800 | Database transaction is ongoing, user initiated action Sync Asset Map is postponed
+[0x00004fe8] | SyManager.ActionExecutor | INFO  | 2023-05-17 09:48:41,800 | Database transaction completed, enqueueing 1 postponed actions
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:48:41,842 | Loading project (gazprom_screens_06_R_Home_Painter_Lookdev_v002) from project library (homepc127.0.0.1) took 291 ms
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:42,159 | Action [fairlightBusStructure] is not a global action
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:48:42,390 | 00.02.31.644(002): WASAPI: switching to AUTO because exclusive mode not allowed
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:48:43,528 | Failed to find value '0' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:48:43,531 | Failed to find value '0' in combo-box
+[0x00004fe8] | SyManager.Gallery    | INFO  | 2023-05-17 09:48:43,539 | Start purging still caches
+[0x00004fe8] | SyManager.Gallery    | INFO  | 2023-05-17 09:48:43,539 | Finish purging still caches
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:43,557 | Media pool relink status changed to 0
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:48:43,596 | 00.02.32.735(002): WASAPI: switching to AUTO because exclusive mode not allowed
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:43,862 | Current project pointer (gazprom_screens_06_R_Home_Painter_Lookdev_v002) is changed
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:43,862 | Current timeline pointer () is changed
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:48:43,868 | Lock project 513e336f-59c3-4fa8-b9e9-814cf2b797a3
+[0x00004fe8] | Undefined            | INFO  | 2023-05-17 09:48:43,868 | The buttonId [7] is not found for [0] in [0]
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:48:43,876 | UiGPU::UploadWipeData called before UiGPU has been initialized. Returning false
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:48:43,877 | Gallery pointer is changed, refreshing color gallery
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:48:43,891 | Gallery pointer is changed, refreshing gallery browser
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:43,921 | Main view page is changed to 1
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:48:43,921 | Failed to get auto update information.
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:43,930 | Main view page is changed to 1
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:48:44,566 | UI Persistence - MediaPoolFloatingWindowGeometry not read
+[0x00004fe8] | Undefined            | INFO  | 2023-05-17 09:48:44,583 | The buttonId [7] is not found for [0] in [0]
+[0x000038ec] | Fairlight            | INFO  | 2023-05-17 09:48:44,602 | 00.02.33.795(001): WASAPI: switching to AUTO because exclusive mode not allowed
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:48:44,912 | Main view page is changed to 1
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:48:45,076 | Launching main window
+[0x00004fe8] | SyManager            | WARN  | 2023-05-17 09:48:45,094 | No reply received from file system, assume successfully deleted folder D:\SYNC\BACKUP\Resolve Project Backups\64d8dbe8-256e-46b1-81da-671a6a8fc423.
+[0x00004fe8] | SyManager            | WARN  | 2023-05-17 09:48:45,105 | No reply received from file system, assume successfully deleted folder C:\Users\videopro\Videos\CacheClip\64d8dbe8-256e-46b1-81da-671a6a8fc423.
+[0x00004fe8] | SyManager            | WARN  | 2023-05-17 09:48:45,116 | No reply received from file system, assume successfully deleted folder C:\Users\videopro\Videos\.gallery\64d8dbe8-256e-46b1-81da-671a6a8fc423.
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_newProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_newFolder] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_openProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_openProjectInReadOnlyMode] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_Close] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_Rename] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_saveProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,122 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_saveProjectAs] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_importProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_importProjectPlus] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_exportProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_exportProjectWithStillsAndLuts] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_restoreProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_restoreProjectPlus] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_archiveProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_unlockProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [editDelete] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [editCut] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [editCopy] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [editPaste] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_loadProjectSettingsToCurrentProject] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_projectBackups] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_projectSettings] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_dynamicProjectSwitching] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_closeProjectsInMemory] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_updateThumbnails] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_otherProjectBackups] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_refresh] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:45,123 | Action owner [ProjectManager] is not active when refreshing shortcut [Context_resetUiLayout] due to [Owner is invisible]
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:48:51,277 | Action owner [MediaPool] is not active when refreshing shortcut [editDuplicateTimelineOrClips] due to [No focused widget is set yet]
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,060 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,060 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,061 | AttributeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,061 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,061 | module 'sys' has no attribute '__path__'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:01,061 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,715 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,715 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,715 | AttributeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,716 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,716 | module 're' has no attribute '__path__'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:08,716 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,531 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,531 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,532 | TypeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,532 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,532 | split() missing 2 required positional arguments: 'pattern' and 'string'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:21,532 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,443 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,443 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,444 | NameError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,444 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,444 | name 're__path__' is not defined
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:29,444 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,563 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,563 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,564 | AttributeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,564 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,564 | module 're' has no attribute '__path__'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:33,564 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 | AttributeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 | module 'sys' has no attribute 'info'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:39,740 | 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 | Traceback (most recent call last):
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 |   File "<nofile>", line 1, in <module>
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 | AttributeError
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 | : 
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 | module 'sys' has no attribute 'info'
+[0x00000114] | Fusion               | ERROR | 2023-05-17 09:49:41,372 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:50:52,078 | >>> [ openpype.hosts.resolve installed ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:50:52,083 | >>> [ Registering DaVinci Resovle plug-ins.. ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:50:52,100 | >>> [ Assigning resolve module to `pype.hosts.resolve.api.bmdvr`: Resolve (0x00007FF6BB5340D0) [App: 'Resolve' on 127.0.0.1, UUID: f0d29a26-23ed-495a-9eb5-f264f7187252] ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:50:52,105 | >>> [ Assigning resolve module to `pype.hosts.resolve.api.bmdvf`: FusionUI (0x0000023A629E7040) [App: 'Resolve' on 127.0.0.1, UUID: f0d29a26-23ed-495a-9eb5-f264f7187252] ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:50:52,110 |   - { timers_manager }: [ Installing task changed callback ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:51:12,816 |   - { openpype.pipeline.anatomy }: [ Looking for matching root in path "D:/SYNC/OPENPYPE/gazprom_screens/06_R_Home_Painter/work/Lookdev". ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:51:12,821 | >>> [ Found match in root "work". ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,952 | Traceback (most recent call last):
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\subsetmanager\window.py", line 190, in showEvent
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 | self.refresh()
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\subsetmanager\window.py", line 176, in refresh
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,953 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 | self._model.refresh()
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\subsetmanager\model.py", line 27, in refresh
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 | instances = list_instances()
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,954 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\pipeline.py", line 285, in list_instances
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 | selected_timeline_items = lib.get_current_timeline_items(
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\lib.py", line 319, in get_current_timeline_items
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 | selected_track_count = timeline.GetTrackCount(track_type)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,955 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,956 | AttributeError
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,956 | : 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,956 | 'NoneType' object has no attribute 'GetTrackCount'
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:12,956 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,000 | Traceback (most recent call last):
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,000 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\libraryloader\app.py", line 376, in _assetschanged
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,000 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,000 | subsets_model.set_assets(asset_ids)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 259, in set_assets
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 | self.refresh()
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 577, in refresh
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,001 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 | repre_ids = {con.get("representation") for con in containers}
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 577, in <setcomp>
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 | repre_ids = {con.get("representation") for con in containers}
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,002 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\pipeline.py", line 138, in ls
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 | all_timeline_items = lib.get_current_timeline_items(filter=False)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\lib.py", line 319, in get_current_timeline_items
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 | selected_track_count = timeline.GetTrackCount(track_type)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,003 | AttributeError
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,004 | : 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,004 | 'NoneType' object has no attribute 'GetTrackCount'
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:52:21,004 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,731 | Traceback (most recent call last):
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\libraryloader\app.py", line 376, in _assetschanged
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 | subsets_model.set_assets(asset_ids)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 259, in set_assets
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,732 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 | self.refresh()
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 577, in refresh
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 | repre_ids = {con.get("representation") for con in containers}
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,733 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\tools\loader\model.py", line 577, in <setcomp>
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 | repre_ids = {con.get("representation") for con in containers}
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\pipeline.py", line 138, in ls
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,734 | all_timeline_items = lib.get_current_timeline_items(filter=False)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 |   File "C:\Users\videopro\Documents\github\OpenPype\openpype\hosts\resolve\api\lib.py", line 319, in get_current_timeline_items
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 |     
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | selected_track_count = timeline.GetTrackCount(track_type)
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | AttributeError
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | : 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,735 | 'NoneType' object has no attribute 'GetTrackCount'
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:53:21,736 | 
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:53:56,329 | UI Persistence - MediaPoolFloatingWindowGeometry not read
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:53:56,329 | UI Persistence - ConformEdlEffectsLibrary not read
+[0x000065b4] | GPU.SingleBoardMgr   | INFO  | 2023-05-17 09:53:56,766 | Flushing GPU memory...
+[0x000065b4] | UI.GLContext         | INFO  | 2023-05-17 09:53:56,766 | Creating shared OpenGL context for this thread (5 total).
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:53:56,782 | Main view page is changed to 2
+[0x000065b4] | UI.GLTexPool         | INFO  | 2023-05-17 09:53:56,884 | Released 0 MiB in 0 unused textures.
+[0x00004fe8] | UI                   | INFO  | 2023-05-17 09:53:56,944 | PBO is initialized with size [1920x1080], bitDepth=[8], hasAlpha=[1].
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:53:59,491 | Failed to find value '1' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:53:59,491 | Failed to find value '2' in combo-box
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:53:59,491 | Failed to find value '2' in combo-box
+[0x00004fe8] | UI.ActionManager     | WARN  | 2023-05-17 09:53:59,548 | Action owner [MediaPool] is not active when refreshing shortcut [editDuplicateTimelineOrClips] due to [No focused widget is set yet]
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:54:01,297 | Current timeline pointer (Timeline 1) is changed
+[0x00004fe8] | UI                   | ERROR | 2023-05-17 09:54:01,405 | No marker found at frame -90000 to delete.
+[0x00004fe8] | UI                   | ERROR | 2023-05-17 09:54:01,405 | No marker found at frame -90000 to delete.
+[0x00004fe8] | UI                   | ERROR | 2023-05-17 09:54:01,405 | No marker found at frame -90000 to delete.
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:01,495 | Start saving project gazprom_screens_06_R_Home_Painter_Lookdev_v002
+[0x000083dc] | SyManager.ActionExecutor | INFO  | 2023-05-17 09:54:01,526 | Database transaction is ongoing, user initiated action SmActIOCPSigInvoker is postponed
+[0x000083dc] | SyManager.ActionExecutor | INFO  | 2023-05-17 09:54:01,550 | Database transaction is ongoing, user initiated action SmActIOCPSigInvoker is postponed
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:01,592 | Saving project took 97 ms
+[0x00004fe8] | SyManager.ActionExecutor | INFO  | 2023-05-17 09:54:01,619 | Database transaction completed, enqueueing 2 postponed actions
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:54:23,357 | >>> [ openpype.hosts.resolve installed ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:54:23,363 | >>> [ Registering DaVinci Resovle plug-ins.. ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:54:23,375 | >>> [ Assigning resolve module to `pype.hosts.resolve.api.bmdvr`: Resolve (0x00007FF6BB5340D0) [App: 'Resolve' on 127.0.0.1, UUID: f0d29a26-23ed-495a-9eb5-f264f7187252] ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:54:23,380 | >>> [ Assigning resolve module to `pype.hosts.resolve.api.bmdvf`: FusionUI (0x0000023A629E7040) [App: 'Resolve' on 127.0.0.1, UUID: f0d29a26-23ed-495a-9eb5-f264f7187252] ] 
+[0x00004fe8] | Fusion               | ERROR | 2023-05-17 09:54:23,386 |   - { timers_manager }: [ Installing task changed callback ] 
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:39,823 | Start saving project gazprom_screens_06_R_Home_Painter_Lookdev_v002
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:39,826 | Saving project took 2 ms
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:39,920 | Start saving project gazprom_screens_06_R_Home_Painter_Lookdev_v002
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:39,923 | Saving project took 3 ms
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:40,137 | Start saving project gazprom_screens_06_R_Home_Painter_Lookdev_v002
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:40,321 | Saving project took 183 ms
+[0x00004fe8] | SyManager.Signals    | INFO  | 2023-05-17 09:54:40,326 | Main view page is changed to 2
+[0x00004fe8] | BtCommon             | WARN  | 2023-05-17 09:54:40,570 | Negative duration
+[0x00004fe8] | UI                   | WARN  | 2023-05-17 09:54:40,638 | Unable to submit frame to GPU scopes, legacy OpenGL uploads not supported (Player Model).
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:42,497 | Start saving project gazprom_screens_06_R_Home_Painter_Lookdev_v002
+[0x00004fe8] | SyManager.ProjectManager | INFO  | 2023-05-17 09:54:42,555 | Saving project took 59 ms
