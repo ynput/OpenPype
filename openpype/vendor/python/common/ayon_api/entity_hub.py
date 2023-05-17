@@ -589,11 +589,14 @@ class EntityHub(object):
             parent_id = task["folderId"]
             tasks_by_parent_id[parent_id].append(task)
 
+        lock_queue = collections.deque()
         hierarchy_queue = collections.deque()
         hierarchy_queue.append((None, project_entity))
         while hierarchy_queue:
             item = hierarchy_queue.popleft()
             parent_id, parent_entity = item
+
+            lock_queue.append(parent_entity)
 
             children_ids = set()
             for folder in folders_by_parent_id[parent_id]:
@@ -604,10 +607,16 @@ class EntityHub(object):
 
             for task in tasks_by_parent_id[parent_id]:
                 task_entity = self.add_task(task)
+                lock_queue.append(task_entity)
                 children_ids.add(task_entity.id)
 
             parent_entity.fill_children_ids(children_ids)
-        self.lock()
+
+        # Lock entities when all are added to hub
+        # - lock only entities added in this method
+        while lock_queue:
+            entity = lock_queue.popleft()
+            entity.lock()
 
     def lock(self):
         if self._project_entity is None:
@@ -1198,6 +1207,7 @@ class BaseEntity(object):
         self._attribs.lock()
 
         self._immutable_for_hierarchy_cache = None
+        self._created = False
 
     def _get_entity_by_id(self, entity_id):
         return self._entity_hub.get_entity_by_id(entity_id)

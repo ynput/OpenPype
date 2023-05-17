@@ -314,7 +314,6 @@ def representations_graphql_query(fields):
 def representations_parents_qraphql_query(
     version_fields, subset_fields, folder_fields
 ):
-
     query = GraphQlQuery("RepresentationsParentsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
@@ -388,7 +387,7 @@ def workfiles_info_graphql_query(fields):
 
 
 def events_graphql_query(fields):
-    query = GraphQlQuery("WorkfilesInfo")
+    query = GraphQlQuery("Events")
     topics_var = query.add_variable("eventTopics", "[String!]")
     projects_var = query.add_variable("projectNames", "[String!]")
     states_var = query.add_variable("eventStates", "[String!]")

@@ -14,6 +14,7 @@ except ImportError:
     HTTPStatus = None
 
 import requests
+from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 
 from .constants import (
     DEFAULT_PROJECT_FIELDS,
@@ -112,9 +113,9 @@ class RestApiResponse(object):
     @property
     def data(self):
         if self._data is None:
-            if self.status != 204:
+            try:
                 self._data = self.orig_response.json()
-            else:
+            except RequestsJSONDecodeError:
                 self._data = {}
         return self._data
 
@@ -128,7 +129,10 @@ class RestApiResponse(object):
 
     @property
     def detail(self):
-        return self.get("detail", _get_description(self))
+        detail = self.get("detail")
+        if detail:
+            return detail
+        return _get_description(self)
 
     @property
     def status_code(self):
@@ -298,14 +302,6 @@ class ServerAPI(object):
             default if a method for settings won't get any (by default is
             'production').
     """
-
-    _entity_types_link_mapping = {
-        "folder": ("folderIds", "folders"),
-        "task": ("taskIds", "tasks"),
-        "subset": ("subsetIds", "subsets"),
-        "version": ("versionIds", "versions"),
-        "representation": ("representationIds", "representations"),
-    }
 
     def __init__(
         self,
@@ -916,7 +912,7 @@ class ServerAPI(object):
             project_names = set(project_names)
             if not project_names:
                 return
-            filters["projectName"] = list(project_names)
+            filters["projectNames"] = list(project_names)
 
         if states is not None:
             states = set(states)
