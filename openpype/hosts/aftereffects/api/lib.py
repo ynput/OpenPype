@@ -114,7 +114,7 @@ def get_asset_settings(asset_doc):
     }
 
 
-def set_settings(frames, resolution, comp_ids=None):
+def set_settings(frames, resolution, comp_ids=None, print_msg=True):
     """Sets number of frames and resolution to selected comps.
 
     Args:
@@ -122,6 +122,7 @@ def set_settings(frames, resolution, comp_ids=None):
         resolution (bool): True if set resolution
         comp_ids (list): specific composition ids, if empty
             it tries to look for currently selected
+        print_msg (bool): True throw JS alert with msg
     """
     frame_start = frames_duration = fps = width = height = None
     current_context = get_current_context()
@@ -152,3 +153,5 @@ def set_settings(frames, resolution, comp_ids=None):
         log.debug(msg)
         stub.set_comp_properties(comp_id, frame_start, frames_duration,
                                  fps, width, height)
+        if print_msg:
+            stub.print_msg(msg)

@@ -88,7 +88,7 @@ class RenderCreator(Creator):
             self._add_instance_to_context(new_instance)
 
             stub.rename_item(comp.id, subset_name)
-            set_settings(True, True, [comp.id])
+            set_settings(True, True, [comp.id], print_msg=False)
 
     def get_pre_create_attr_defs(self):
         output = [
