@@ -9,6 +9,7 @@ from openpype.pipeline import (
     CreatorError
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
+from openpype.hosts.aftereffects.api.lib import set_settings
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
@@ -87,6 +88,7 @@ class RenderCreator(Creator):
             self._add_instance_to_context(new_instance)
 
             stub.rename_item(comp.id, subset_name)
+            set_settings(True, True, [comp.id])
 
     def get_pre_create_attr_defs(self):
         output = [
