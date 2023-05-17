@@ -130,13 +130,18 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
     asset_doc = get_asset_by_name(current_context["project_name"],
                                   current_context["asset_name"])
     settings = get_asset_settings(asset_doc)
+
+    msg = ''
     if frames:
         frame_start = settings["frameStart"] - settings["handleStart"]
         frames_duration = settings["duration"]
         fps = settings["fps"]
+        msg += f"frame start:{frame_start}, duration:{frames_duration}, "\
+               f"fps:{fps}"
     if resolution:
         width = settings["resolutionWidth"]
         height = settings["resolutionHeight"]
+        msg += f"width:{width} and height:{height}"
 
     stub = get_stub()
     if not comp_ids:
@@ -147,9 +152,7 @@ def set_settings(frames, resolution, comp_ids=None, print_msg=True):
         return
 
     for comp_id in comp_ids:
-        msg = f"Setting for comp {comp_id} frame start {frame_start}, "\
-              f"duration {frames_duration}, fps {fps}, width {width} and "\
-              f"height {height}"
+        msg = f"Setting for comp {comp_id} " + msg
         log.debug(msg)
         stub.set_comp_properties(comp_id, frame_start, frames_duration,
                                  fps, width, height)
