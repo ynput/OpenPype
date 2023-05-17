@@ -114,13 +114,13 @@ def get_asset_settings(asset_doc):
     }
 
 
-def set_settings(frames, resolution, comp_ids=[]):
+def set_settings(frames, resolution, comp_ids=None):
     """Sets number of frames and resolution to selected comps.
 
     Args:
         frames (bool): True if set frame info
         resolution (bool): True if set resolution
-        comp_ids (list): specific compositin ids, if empty
+        comp_ids (list): specific composition ids, if empty
             it tries to look for currently selected
     """
     frame_start = frames_duration = fps = width = height = None
