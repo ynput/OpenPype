@@ -28,16 +28,17 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
         filepath = os.path.join(stagingdir, filename)
         self.log.info("Writing fbx file '%s' to '%s'" % (filename, filepath))
 
-        rt.FBXExporterSetParam("Animation", True)
-        rt.FBXExporterSetParam("Cameras", True)
-        rt.FBXExporterSetParam("AxisConversionMethod", "Animation")
-        rt.FBXExporterSetParam("UpAxis", "Y")
-        rt.FBXExporterSetParam("Preserveinstances", True)
-
         with maintained_selection():
+            rt.FBXExporterSetParam("Animation", True)
+            rt.FBXExporterSetParam("Cameras", True)
+            rt.FBXExporterSetParam("AxisConversionMethod", "Animation")
+            rt.FBXExporterSetParam("UpAxis", "Y")
+            rt.FBXExporterSetParam("Preserveinstances", True)
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.exportFile(filepath, selectedOnly=True, using="FBXEXP", noPrompt=True)
+            rt.exportFile(
+                filepath, rt.name("noPrompt"), selectedOnly=True, using=rt.FBXEXP
+            )
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
