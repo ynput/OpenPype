@@ -374,9 +374,9 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
     """
 
     # Plugin can define settings category by class attribute
-    #   - do not try to set the key using settings!
-    #   - if attribute is available it won't try other ways how to get
-    #       the settings
+    #   - it's impossible to set `settings_category` via settings because 
+    #       obviously settings are not applied before it.
+    #   - if `settings_category` is set the fallback category method is ignored
     settings_category = getattr(plugin, "settings_category", None)
     if settings_category:
         try:
