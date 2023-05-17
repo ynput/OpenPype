@@ -397,10 +397,11 @@ class PublishReportMaker:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+            # Action result does not have 'is_validation_error'
+            is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
-                # Action result does not have 'is_validation_error'
-                "is_validation_error": result.get("is_validation_error", False),
+                "is_validation_error": is_validation_error,
                 "msg": str(exception),
                 "filename": str(fname),
                 "lineno": str(line_no),
