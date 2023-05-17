@@ -26,7 +26,7 @@ class ResolvePrelaunch(PreLaunchHook):
     - `RESOLVE_UTILITY_SCRIPTS_DIR`: Destination directory for OpenPype
         Fusion scripts to be copied to for Resolve to pick them up.
     - `OPENPYPE_LOG_NO_COLORS` to True to ensure OP doesn't try to
-	use logging with terminal colors as it fails in Resolve.
+        use logging with terminal colors as it fails in Resolve.
 
     """
 
