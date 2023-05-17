@@ -10,7 +10,9 @@ class MaxSceneLoader(load.LoaderPlugin):
     """Max Scene Loader"""
 
     families = ["camera",
-                "maxScene"]
+                "maxScene",
+                "model"]
+
     representations = ["max"]
     order = -8
     icon = "code-fork"

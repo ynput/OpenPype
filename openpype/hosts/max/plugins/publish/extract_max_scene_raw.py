@@ -21,7 +21,8 @@ class ExtractMaxSceneRaw(publish.Extractor,
     label = "Extract Max Scene (Raw)"
     hosts = ["max"]
     families = ["camera",
-                "maxScene"]
+                "maxScene",
+                "model"]
     optional = True
 
     def process(self, instance):
