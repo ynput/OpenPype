@@ -1,4 +1,5 @@
 {
+    "base_file_unit_scale": 0.01,
     "imageio": {
         "ocio_config": {
             "enabled": false,

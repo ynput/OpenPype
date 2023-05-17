@@ -6,6 +6,12 @@
     "is_file": true,
     "children": [
         {
+            "key": "base_file_unit_scale",
+            "type": "number",
+            "label": "Base File Unit Scale",
+            "decimal": 2
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (ImageIO)",
