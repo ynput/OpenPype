@@ -177,6 +177,9 @@ def convert_v4_project_to_v3(project):
         for app_name in apps_attr
     ]
     data.update(attribs)
+    if "tools" in data:
+        data["tools_env"] = data.pop("tools")
+
     data["entityType"] = "Project"
 
     config = {}
@@ -356,6 +359,9 @@ def convert_v4_folder_to_v3(folder, project_name):
 
     if "attrib" in folder:
         output_data.update(folder["attrib"])
+
+    if "tools" in output_data:
+        output_data["tools_env"] = output_data.pop("tools")
 
     if "tasks" in folder:
         output_data["tasks"] = convert_v4_tasks_to_v3(folder["tasks"])
@@ -600,7 +606,7 @@ def representation_fields_v3_to_v4(fields, con):
             output |= REPRESENTATION_FILES_FIELDS
 
         elif field.startswith("data"):
-            fields |= {
+            output |= {
                 "attrib.{}".format(attr)
                 for attr in representation_attributes
             }
