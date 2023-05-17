@@ -355,29 +355,35 @@ def publish_plugins_discover(paths=None):
     return result
 
 
-def _get_plugin_settings(host_name, project_settings, plugin, log):
+def get_plugin_settings(plugin, project_settings, log, category=None):
     """Get plugin settings based on host name and plugin name.
 
+    Note:
+        Default implementation of automated settings is passing host name
+            into 'category'.
+
     Args:
-        host_name (str): Name of host.
+        plugin (pyblish.Plugin): Plugin where settings are applied.
         project_settings (dict[str, Any]): Project settings.
-        plugin (pyliblish.Plugin): Plugin where settings are applied.
         log (logging.Logger): Logger to log messages.
+        category (Optional[str]): Settings category key where to look
+            for plugin settings.
 
     Returns:
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
 
-    # Use project settings from host name category when available
-    try:
-        return (
-            project_settings
-            [host_name]
-            ["publish"]
-            [plugin.__name__]
-        )
-    except KeyError:
-        pass
+    # Use project settings based on a category name
+    if category:
+        try:
+            return (
+                project_settings
+                [category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            pass
 
     # Settings category determined from path
     # - usually path is './<category>/plugins/publish/<plugin file>'
@@ -386,9 +392,10 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
 
     split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
-        log.warning(
-            'plugin path too short to extract host {}'.format(filepath)
-        )
+        log.debug((
+            "Plugin path is too short to automatically"
+            " extract settings category. {}"
+        ).format(filepath))
         return {}
 
     category_from_file = split_path[-4]
@@ -408,6 +415,28 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
     except KeyError:
         pass
     return {}
+
+
+def apply_plugin_settings_automatically(plugin, settings, logger=None):
+    """Automatically apply plugin settings to a plugin object.
+
+    Note:
+        This function was created to be able to use it in custom overrides of
+            'apply_settings' class method.
+
+    Args:
+        plugin (type[pyblish.api.Plugin]): Class of a plugin.
+        settings (dict[str, Any]): Plugin specific settings.
+        logger (Optional[logging.Logger]): Logger to log debug messages about
+            applied settings values.
+    """
+
+    for option, value in settings.items():
+        if logger:
+            logger.debug("Plugin {} - Attr: {} -> {}".format(
+                option, value, plugin.__name__
+            ))
+        setattr(plugin, option, value)
 
 
 def filter_pyblish_plugins(plugins):
@@ -453,13 +482,10 @@ def filter_pyblish_plugins(plugins):
                 )
         else:
             # Automated
-            plugin_settins = _get_plugin_settings(
-                host_name, project_settings, plugin, log
+            plugin_settins = get_plugin_settings(
+                plugin, project_settings, log, host_name
             )
-            for option, value in plugin_settins.items():
-                log.info("setting {}:{} on plugin {}".format(
-                    option, value, plugin.__name__))
-                setattr(plugin, option, value)
+            apply_plugin_settings_automatically(plugin, plugin_settins, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:
