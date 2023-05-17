@@ -125,6 +125,7 @@ class CollectFusionRender(
     def post_collecting_action(self):
         for instance in self._context:
             if "render.frames" in instance.data.get("families", []):
+                # adding representation data to the instance
                 self._update_for_frames(instance)
 
     def get_expected_files(self, render_instance):
