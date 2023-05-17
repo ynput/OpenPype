@@ -359,8 +359,7 @@ def prepare_hero_version_update_data(old_doc, new_doc, replace=True):
     """
 
     changes = _prepare_update_data(old_doc, new_doc, replace)
-    if "version_id" in changes:
-        changes.pop("version_id")
+    changes.pop("version_id", None)
     return changes
 
 
