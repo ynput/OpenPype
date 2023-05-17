@@ -664,10 +664,12 @@ def convert_v4_representation_to_v3(representation):
                 file_info["_id"] = file_id
                 new_files.append(file_info)
 
-        if not new_files:
-            new_files.append({
-                "name": "studio"
-            })
+        for file_info in new_files:
+            if not file_info.get("sites"):
+                file_info["sites"] = [{
+                    "name": "studio"
+                }]
+
         output["files"] = new_files
 
     if representation.get("active") is False:
