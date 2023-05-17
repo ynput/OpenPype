@@ -373,6 +373,26 @@ def get_plugin_settings(plugin, project_settings, log, category=None):
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
 
+    # Plugin can define settings category by class attribute
+    #   - do not try to set the key using settings!
+    #   - if attribute is available it won't try other ways how to get
+    #       the settings
+    settings_category = getattr(plugin, "settings_category", None)
+    if settings_category:
+        try:
+            return (
+                project_settings
+                [settings_category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            log.warning((
+                "Couldn't find plugin '{}' settings"
+                " under settings category '{}'"
+            ).format(plugin.__name__, settings_category))
+            return {}
+
     # Use project settings based on a category name
     if category:
         try:
