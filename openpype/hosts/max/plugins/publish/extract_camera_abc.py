@@ -43,7 +43,10 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(
-                path, rt.name("noPrompt"), selectedOnly=True, using=rt.AlembicExport
+                path,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.AlembicExport,
             )
 
         self.log.info("Performing Extraction ...")

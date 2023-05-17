@@ -45,4 +45,6 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, max_path))
+        self.log.info(
+            "Extracted instance '%s' to: %s" % (instance.name, max_path)
+        )

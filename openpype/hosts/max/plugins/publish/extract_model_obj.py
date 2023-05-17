@@ -33,7 +33,10 @@ class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(
-                filepath, rt.name("noPrompt"), selectedOnly=True, using=rt.ObjExp
+                filepath,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.ObjExp,
             )
 
         self.log.info("Performing Extraction ...")
@@ -48,4 +51,6 @@ class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
         }
 
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, filepath))
+        self.log.info(
+            "Extracted instance '%s' to: %s" % (instance.name, filepath)
+        )

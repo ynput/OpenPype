@@ -74,7 +74,10 @@ class ExtractAlembic(publish.Extractor):
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(
-                path, rt.name("noPrompt"), selectedOnly=True, using=rt.AlembicExport
+                path,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.AlembicExport,
             )
 
         if "representations" not in instance.data:
