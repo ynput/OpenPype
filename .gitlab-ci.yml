@@ -62,20 +62,34 @@ build-ubuntu:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
   when: manual
 
+build-patch:
+  tags:
+    - dind
+  stage: deploy
+  image: python:alpine3.18
+  script:
+    - apk add --no-cache python3
+    - apk add --no-cache curl
+    - mkdir -p ./build/zip
+    - ./tools/create_zip.sh --path ./build/zip
+    - ls -la ./build/zip
+  when: manual
+  allow_failure: false
+
 # TODO: This should be two steps, one for creating the .zip artifact and another for deploying to the filesystem
 deploy-patch:
   tags:
     - cw-pvc
   stage: deploy
   script:
-    - ./tools/create_zip.sh --path /pipe/test/
+    - ./tools/create_zip.sh
   when: manual
   allow_failure: false
 
 deploy-to-deadline-repo:
-  stage: deploy
   tags:
     - cw-pvc
+  stage: deploy
   script:
     - >
       rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
