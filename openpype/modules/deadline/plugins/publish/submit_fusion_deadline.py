@@ -38,10 +38,6 @@ class FusionSubmitDeadline(
     chunk_size = 1
     concurrent_tasks = 1
     group = ""
-    department = ""
-    limit_groups = {}
-    env_allowed_keys = []
-    env_search_replace_values = {}
 
     @classmethod
     def get_attribute_defs(cls):
@@ -173,8 +169,9 @@ class FusionSubmitDeadline(
                 # User, as seen in Monitor
                 "UserName": deadline_user,
 
-                # Use a default submission pool for Fusion
-                "Pool": "fusion",
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
+                "Group": self.group,
 
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
