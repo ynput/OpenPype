@@ -84,6 +84,15 @@ class ResolvePrelaunch(PreLaunchHook):
 
         self.log.debug(f"PYTHONPATH: {self.launch_context.env['PYTHONPATH']}")
 
+        # add to the python path to PATH
+        env_path = self.launch_context.env["PATH"]
+        self.log.info(f"Adding `{python3_home_str}` to the PATH variable")
+        self.launch_context.env[
+            "PATH"
+        ] = f"{python3_home_str}{os.pathsep}{env_path}"
+
+        self.log.debug(f"PATH: {self.launch_context.env['PATH']}")
+
         resolve_utility_scripts_dirs = {
             "windows": (
                 f"{programdata}/Blackmagic Design"
