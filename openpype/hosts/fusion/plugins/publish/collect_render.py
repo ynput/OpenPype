@@ -32,8 +32,8 @@ class CollectFusionRender(
 
         comp = context.data.get("currentComp")
         comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
-        aspect_x = comp_frame_format_prefs.get("AspectX")
-        aspect_y = comp_frame_format_prefs.get("AspectY")
+        aspect_x = comp_frame_format_prefs["AspectX"]
+        aspect_y = comp_frame_format_prefs["AspectY"]
 
         instances = []
         instances_to_remove = []
@@ -93,14 +93,14 @@ class CollectFusionRender(
 
             render_target = inst.data["creator_attributes"]["render_target"]
 
-            if render_target == "local":
-                # for local renders
-                self._instance_data_local_update(
-                    project_entity, instance, f"render.{render_target}")
+            # Add render target family
+            render_target_family = f"render.{render_target}"
+            if render_target_family not in instance.families:
+                instance.families.append(render_target_family)
 
-            if render_target == "frames":
-                self._instance_data_local_update(
-                    project_entity, instance, f"render.{render_target}")
+            # Add render target specific data
+            if render_target in {"local", "frames"}:
+                instance.projectEntity = project_entity
 
             if render_target == "farm":
                 fam = "render.farm"
@@ -205,8 +205,3 @@ class CollectFusionRender(
         instance.data["representations"].append(repre)
 
         return instance
-
-    def _instance_data_local_update(self, project_entity, instance, family):
-        instance.projectEntity = project_entity
-        if family not in instance.families:
-            instance.families.append(family)
