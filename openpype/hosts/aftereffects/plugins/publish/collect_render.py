@@ -71,7 +71,7 @@ class CollectAERender(publish.AbstractCollectRender):
 
             if not comp_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                inst_id = inst.get("instance_id") or str(comp_id)
+                inst_id = inst.data.get("instance_id") or str(comp_id)
                 CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
