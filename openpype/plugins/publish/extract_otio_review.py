@@ -68,7 +68,12 @@ class ExtractOTIOReview(publish.Extractor):
         # TODO: what if handles are different in `versionData`?
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
-        otio_review_clips = instance.data["otioReviewClips"]
+        ### Starts Alkemy-X Override ###
+        otio_review_clips = instance.data.get("otioReviewClips")
+        if not otio_review_clips:
+            self.log.debug("No otio review clips found. Skipping extract_otio_review plugin")
+            return
+        ### Ends Alkemy-X Override ###
 
         # add plugin wide attributes
         self.representation_files = list()
