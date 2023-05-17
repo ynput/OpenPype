@@ -68,11 +68,11 @@ build-patch:
   stage: build
   image: python:3.9
   script:
-    - mkdir -p /tmp/build/op
-    - ./tools/create_zip.sh --path /tmp/build/op
+    - mkdir -p ./tmp/build/op
+    - ./tools/create_zip.sh --path ./tmp/build/op
   artifacts:
     paths:
-      - /tmp/build
+      - ./tmp/build
   when: manual
   allow_failure: false
 
