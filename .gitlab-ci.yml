@@ -66,18 +66,13 @@ build-patch:
   tags:
     - dind
   stage: build
-  image: python:3.9-alpine
+  image: python:3.9
   script:
-    - apk add --no-cache python3
-    - apk add --no-cache curl
-    - apk add --no-cache bash
-    - apk add --no-cache alpine-sdk linux-lts-dev linux-headers
-    - mkdir -p ./build/zip
-    - ./tools/create_zip.sh --path ./build/zip
-    - ls -la ./build/zip
+    - mkdir -p /tmp/build/op
+    - ./tools/create_zip.sh --path /tmp/build/op
   artifacts:
     paths:
-      - ./build/zip
+      - /tmp/build
   when: manual
   allow_failure: false
 
@@ -86,8 +81,13 @@ deploy-patch:
     - cw-pvc
   stage: deploy
   script:
-    - cp ./build/zip/openpype.zip /pipe/openpype/versions/
+    - ls -la ./op
+    - ls -la ./op/build
+    - cp -R ./op/build /pipe/test/
+#    - chown -R 1000:776523089 /pipe/openpype/versions/build
   dependencies:
+    - build-patch
+  needs:
     - build-patch
 
 deploy-to-deadline:
