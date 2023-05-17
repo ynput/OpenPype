@@ -68,9 +68,8 @@ build-patch:
   stage: build
   image: python:3.9
   script:
-    - mkdir -p /builds/coreweave/pipeline/OpenPype/build
     - echo $CI_PROJECT_DIR
-    - mkdir $CI_PROJECT_DIR/artifact/build
+    - mkdir -p $CI_PROJECT_DIR/artifact/build
     - touch $CI_PROJECT_DIR/artifact/test.txt
 #    - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
   artifacts:
