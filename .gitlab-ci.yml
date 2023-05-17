@@ -71,9 +71,13 @@ build-patch:
     - apk add --no-cache python3
     - apk add --no-cache curl
     - apk add --no-cache bash
+    - apk add --no-cache alpine-sdk linux-lts-dev linux-headers
     - mkdir -p ./build/zip
     - ./tools/create_zip.sh --path ./build/zip
     - ls -la ./build/zip
+  artifacts:
+    paths:
+      - ./build/zip
   when: manual
   allow_failure: false
 
@@ -86,17 +90,16 @@ deploy-patch:
   dependencies:
     - build-patch
 
-deploy-to-deadline-repo:
+deploy-to-deadline:
   tags:
     - cw-pvc
   stage: deploy
   script:
-    - >
-      rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
+    - rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
   rules:
-      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-        changes:
-          - openpype/modules/deadline/repository/custom/plugins/**/*
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - openpype/modules/deadline/repository/custom/plugins/**/*
 
 patch-release:
   tags:
