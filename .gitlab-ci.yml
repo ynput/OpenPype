@@ -94,6 +94,7 @@ patch-release:
   release:
     tag_name: '${openpype_version}'
     description: 'Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID'
-  when: on_success
-  dependencies:
-    - deploy-patch
+#  when: on_success
+#  dependencies:
+#    - deploy-patch
+  when: manual
