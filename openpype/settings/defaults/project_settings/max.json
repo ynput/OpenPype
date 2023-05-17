@@ -19,5 +19,12 @@
             "custFloats": "custFloats",
             "custVecs": "custVecs"
         }
+    },
+    "publish": {
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
     }
 }
