@@ -62,13 +62,15 @@ build-ubuntu:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${openpype_version}-${BUILD_OS}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${openpype_version}-${BUILD_OS}.tar.gz"'
   when: manual
 
+# TODO: This should be two steps, one for creating the .zip artifact and another for deploying to the filesystem
 deploy-patch:
   tags:
     - cw-pvc
   stage: deploy
   script:
-    - ./tools/create_zip.sh --path /pipe/openpype/versions/
+    - ./tools/create_zip.sh --path /pipe/test/
   when: manual
+  allow_failure: false
 
 deploy-to-deadline-repo:
   stage: deploy
@@ -91,8 +93,6 @@ patch-release:
     - apk add --no-cache python3
     - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print(__version__);"
     - openpype_version="$(python3 -c "${version_command}")"
-    - release-cli create --description "Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID" --tag-name "${openpype_version}"
-#  when: on_success
-#  dependencies:
-#    - deploy-patch
-  when: manual
+    - release-cli create --description "Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID" --tag-name "test-${openpype_version}"
+  needs:
+    - deploy-patch
