@@ -31,6 +31,9 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]
         workfile_source_duration = instance.data.get("shotDurationFromSource")
+        ### Starts Alkemy-X Override ###
+        handle_start = instance.data["handleStart"]
+        ### Ends Alkemy-X Override ###
 
         # get ranges
         otio_tl_range = otio_clip.range_in_parent()
@@ -52,7 +55,11 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         tl_start_h, tl_end_h = range_convert(otio_tl_range_handles)
         src_start, src_end = range_convert(otio_src_range)
         src_start_h, src_end_h = range_convert(otio_src_range_handles)
-        frame_start = workfile_start
+        ### Starts Alkemy-X Override ###
+        # If there is a retime handle_start must be the retimed value
+        # Clip duration does not include handles
+        frame_start = workfile_start + handle_start
+        ### Ends Alkemy-X Override ###
         frame_end = frame_start + otio.opentime.to_frames(
             otio_tl_range.duration, otio_tl_range.duration.rate) - 1
 
