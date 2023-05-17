@@ -82,9 +82,8 @@ deploy-patch:
     - cw-pvc
   stage: deploy
   script:
-    - ls -la ./op
-    - ls -la ./op/build
-    - cp -R ./op/build /pipe/test/
+    - ls -la ./build
+    - cp -R ./build /pipe/test/
 #    - chown -R 1000:776523089 /pipe/openpype/versions/build
   dependencies:
     - build-patch
