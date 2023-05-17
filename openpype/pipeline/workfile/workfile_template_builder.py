@@ -563,19 +563,19 @@ class AbstractTemplateBuilder(object):
             TemplateLoadFailed
         ) as e:
             message_window.message(
-                title = "Template Load Failed",
-                message = str(e),
-                parent = main_window,
-                level = "critical"
+                title="Template Load Failed",
+                message=str(e),
+                parent=main_window,
+                level="critical"
             )
             return
 
         result = message_window.message(
-            title = "Opening template",
-            message = "Caution! This will overwrite your current scene.\n"\
-                "Do you want to continue?",
-            parent = main_window,
-            level = "ask",
+            title="Opening template",
+            message="Caution! This will overwrite your current scene.\n"
+            "Do you want to continue?",
+            parent=main_window,
+            level="ask",
         )
 
         if result:
