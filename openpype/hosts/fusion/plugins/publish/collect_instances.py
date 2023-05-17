@@ -58,10 +58,14 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
         # Include start and end render frame in label
         subset = instance.data["subset"]
-        label = "{subset} ({start}-{end})".format(
+        label = (
+            "{subset} ({start}-{end}) [{handle_start}-{handle_end}]"
+        ).format(
             subset=subset,
             start=int(start),
-            end=int(end)
+            end=int(end),
+            handle_start=int(handle_start),
+            handle_end=int(handle_end)
         )
 
         instance.data.update({

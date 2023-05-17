@@ -64,7 +64,7 @@ class CollectFusionRender(
                 version=version,
                 time="",
                 source=current_file,
-                label="{} - {}".format(subset_name, family),
+                label=inst.data["label"],
                 subset=subset_name,
                 asset=inst.data["asset"],
                 task=task_name,
