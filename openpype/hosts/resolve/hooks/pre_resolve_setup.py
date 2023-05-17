@@ -7,10 +7,27 @@ from openpype.hosts.resolve.utils import setup
 
 class ResolvePrelaunch(PreLaunchHook):
     """
-    This hook will check if current workfile path has Resolve
-    project inside. IF not, it initialize it and finally it pass
-    path to the project by environment variable to Premiere launcher
-    shell script.
+    This hook will set up the Resolve scripting environment as described in
+    Resolve's documentation found with the installed application at
+    {resolve}/Support/Developer/Scripting/README.txt
+
+    Prepares the following environment variables:
+    - `RESOLVE_SCRIPT_API`
+    - `RESOLVE_SCRIPT_LIB`
+
+    It adds $RESOLVE_SCRIPT_API/Modules to PYTHONPATH.
+
+    Additionally it sets up the Python home for Python 3 based on the
+    RESOLVE_PYTHON3_HOME in the environment (usually defined in OpenPype's
+    Application environment for Resolve by the admin). For this it sets
+    PYTHONHOME and PATH variables.
+
+    It also defines:
+    - `RESOLVE_UTILITY_SCRIPTS_DIR`: Destination directory for OpenPype
+        Fusion scripts to be copied to for Resolve to pick them up.
+    - `OPENPYPE_LOG_NO_COLORS` to True to ensure OP doesn't try to
+	use logging with terminal colors as it fails in Resolve.
+
     """
 
     app_groups = ["resolve"]
