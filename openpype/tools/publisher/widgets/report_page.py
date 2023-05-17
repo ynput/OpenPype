@@ -642,6 +642,10 @@ class _InstanceItem:
             other_value = getattr(other, attr)
             if self_value == other_value:
                 continue
+            if self_value is None:
+                return False
+            if other_value is None:
+                return True
             values = [self_value, other_value]
             values.sort()
             return values[0] == self_value
