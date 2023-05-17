@@ -151,5 +151,10 @@ class TranscodeFrames(publish.Extractor):
                 if len(files) == 1
                 else [os.path.basename(x) for x in files],
                 "stagingDir": output_dir,
+                ### Starts Alkemy-X Override ###
+                # After EXRs are processed - review needs be added to the new
+                # representation
+                "tags": ["review"],
+                ### Ends Alkemy-X Override ###
             }
         )
