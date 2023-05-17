@@ -908,20 +908,24 @@ def convert_create_representation_to_v4(representation, con):
     if representation.get("type") == "archived_representation":
         converted_representation["active"] = False
 
-    new_files = {}
+    new_files = []
     for file_item in representation["files"]:
         new_file_item = {
             key: value
             for key, value in file_item.items()
             if key != "_id"
         }
-        file_item_id = create_entity_id()
-        new_files[file_item_id] = new_file_item
+        new_file_item.update({
+            "id": create_entity_id(),
+            "hash_type": "op3",
+            "name": os.path.basename(new_file_item["path"])
+        })
+        new_files.append(new_file_item)
 
+    converted_representation["files"] = new_files
     attribs = {}
     data = {
-        "files": new_files,
-        "context": representation["context"]
+        "context": representation["context"],
     }
 
     representation_data = representation["data"]
@@ -1223,18 +1227,17 @@ def convert_update_representation_to_v4(
 
     if "files" in update_data:
         new_files = update_data["files"]
-        if isinstance(new_files, list):
-            _new_files = {}
-            for file_item in new_files:
-                _file_item = {
-                    key: value
-                    for key, value in file_item.items()
-                    if key != "_id"
-                }
-                file_item_id = create_entity_id()
-                _new_files[file_item_id] = _file_item
-            new_files = _new_files
-        new_data["files"] = new_files
+        if isinstance(new_files, dict):
+            new_files = list(new_files.values())
+
+        for item in new_files:
+            item.pop("_id")
+            item.update({
+                "id": create_entity_id(),
+                "name": os.path.basename(item["path"]),
+                "hash_type": "op3",
+            })
+        new_update_data["files"] = new_files
 
     flat_data = _to_flat_dict(new_update_data)
     if new_data:
