@@ -69,7 +69,7 @@ build-patch:
   image: python:3.9
   script:
     - mkdir -p $CI_PROJECT_DIR/artifact/build
-    # YOU GOTTA RUN IT TWICE
+    # Proc dies after creating the poerty env on first run. Just run it twice
     - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
     - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
   artifacts:
@@ -77,31 +77,33 @@ build-patch:
       - artifact
   when: manual
   allow_failure: false
-#
-#deploy-patch:
-#  tags:
-#    - cw-pvc
-#  stage: deploy
-#  script:
-#    - ls -la ./build
-#    - cp -R ./build /pipe/test/
-##    - chown -R 1000:776523089 /pipe/openpype/versions/build
-#  dependencies:
-#    - build-patch
-#  needs:
-#    - build-patch
-#
-#deploy-to-deadline:
-#  tags:
-#    - cw-pvc
-#  stage: deploy
-#  script:
-#    - rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
-#  rules:
-#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-#      changes:
-#        - openpype/modules/deadline/repository/custom/plugins/**/*
-#
+
+deploy-patch:
+  tags:
+    - cw-pvc
+  stage: deploy
+  script:
+    - ls -la ./artifact/build
+    - cp -R ./artifact/build/* /pipe/test/
+    - chown -R 1000:776523089 /pipe/test/
+#    - cp -R ./artifact/build/* /pipe/openpype/versions/build/
+#    - chown -R 1000:776523089 /pipe/openpype/versions/build
+  dependencies:
+    - build-patch
+  needs:
+    - build-patch
+
+deploy-to-deadline:
+  tags:
+    - cw-pvc
+  stage: deploy
+  script:
+    - rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - openpype/modules/deadline/repository/custom/plugins/**/*
+
 #patch-release:
 #  tags:
 #    - dind
