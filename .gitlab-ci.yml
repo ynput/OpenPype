@@ -9,6 +9,7 @@ variables:
 stages:
   - build
   - deploy
+  - release
 
 build-centos7:
   tags:
@@ -80,3 +81,19 @@ deploy-to-deadline-repo:
       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
         changes:
           - openpype/modules/deadline/repository/custom/plugins/**/*
+
+patch-release:
+  tags:
+    - dind
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - apk add --no-cache python3
+    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print('.'.join(__version__.split('.')[:2]));"
+    - openpype_version="$(python3 -c "${version_command}")"
+  release:
+    tag_name: '${openpype_version}'
+    description: 'Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID'
+  when: on_success
+  dependencies:
+    - deploy-patch
