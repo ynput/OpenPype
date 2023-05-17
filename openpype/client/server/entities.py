@@ -391,8 +391,8 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
         fields=fields
     )
     if not versions:
-        return versions[0]
-    return None
+        return None
+    return versions[0]
 
 
 def get_last_version_by_subset_name(
