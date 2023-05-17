@@ -68,8 +68,11 @@ build-patch:
   stage: build
   image: python:3.9
   script:
-    - mkdir -p /tmp/build/op
-    - ./tools/create_zip.sh --path /tmp/build/op && ls -la /tmp/build/op
+    - mkdir -p /builds/coreweave/pipeline/OpenPype/build
+    - ./tools/create_zip.sh --path /builds/coreweave/pipeline/OpenPype/build && ls -la /builds/coreweave/pipeline/OpenPype/build
+    - pwd
+    - ls -la /builds/coreweave/pipeline/OpenPype/build
+    - ls -la ./build
 #    - mv /tmp/build/op ./build
 #    - ls -la ./build
   artifacts:
