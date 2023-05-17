@@ -39,8 +39,8 @@ class ExtractModelFbx(publish.Extractor, OptionalPyblishPluginMixin):
             rt.FBXExporterSetParam("Preserveinstances", True)
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(
-                f'exportFile @"{filepath}" #noPrompt selectedOnly:true using:FBXEXP'
+            rt.exportFile(
+                filepath, rt.name("noPrompt"), selectedOnly=True, using=rt.FBXEXP
             )
 
         self.log.info("Performing Extraction ...")
