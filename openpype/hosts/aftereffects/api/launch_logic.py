@@ -29,10 +29,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ConnectionNotEstablishedYet(Exception):
-    pass
-
-
 def safe_excepthook(*args):
     traceback.print_exception(*args)
 

@@ -11,6 +11,10 @@ from wsrpc_aiohttp import WebSocketAsync
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 
+class ConnectionNotEstablishedYet(Exception):
+    pass
+
+
 @attr.s
 class AEItem(object):
     """
