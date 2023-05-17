@@ -68,9 +68,9 @@ build-patch:
   stage: build
   image: python:3.9
   script:
-    - echo $CI_PROJECT_DIR
     - mkdir -p $CI_PROJECT_DIR/artifact/build
-    - touch $CI_PROJECT_DIR/artifact/test.txt
+    # YOU GOTTA RUN IT TWICE
+    - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
     - ./tools/create_zip.sh --path $CI_PROJECT_DIR/artifact/build
   artifacts:
     paths:
