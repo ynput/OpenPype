@@ -65,11 +65,12 @@ class ExtractAlembic(publish.Extractor):
         # We run the render
         self.log.info("Writing alembic '%s' to '%s'" % (file_name, parent_dir))
 
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.StartFrame = start
+        rt.AlembicExport.EndFrame = end
+
         with maintained_selection():
-            rt.AlembicExport.ArchiveType = rt.name("ogawa")
-            rt.AlembicExport.CoordinateSystem = rt.name("maya")
-            rt.AlembicExport.StartFrame = start
-            rt.AlembicExport.EndFrame = end
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(

@@ -31,13 +31,14 @@ class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
         # We run the render
         self.log.info("Writing alembic '%s' to '%s'" % (filename, stagingdir))
 
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.CustomAttributes = True
+        rt.AlembicExport.UVs = True
+        rt.AlembicExport.VertexColors = True
+        rt.AlembicExport.PreserveInstances = True
+
         with maintained_selection():
-            rt.AlembicExport.ArchiveType = rt.name("ogawa")
-            rt.AlembicExport.CoordinateSystem = rt.name("maya")
-            rt.AlembicExport.CustomAttributes = True
-            rt.AlembicExport.UVs = True
-            rt.AlembicExport.VertexColors = True
-            rt.AlembicExport.PreserveInstances = True
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(

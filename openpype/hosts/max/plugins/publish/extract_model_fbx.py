@@ -29,14 +29,15 @@ class ExtractModelFbx(publish.Extractor, OptionalPyblishPluginMixin):
         filepath = os.path.join(stagingdir, filename)
         self.log.info("Writing FBX '%s' to '%s'" % (filepath, stagingdir))
 
+        rt.FBXExporterSetParam("Animation", False)
+        rt.FBXExporterSetParam("Cameras", False)
+        rt.FBXExporterSetParam("Lights", False)
+        rt.FBXExporterSetParam("PointCache", False)
+        rt.FBXExporterSetParam("AxisConversionMethod", "Animation")
+        rt.FBXExporterSetParam("UpAxis", "Y")
+        rt.FBXExporterSetParam("Preserveinstances", True)
+
         with maintained_selection():
-            rt.FBXExporterSetParam("Animation", False)
-            rt.FBXExporterSetParam("Cameras", False)
-            rt.FBXExporterSetParam("Lights", False)
-            rt.FBXExporterSetParam("PointCache", False)
-            rt.FBXExporterSetParam("AxisConversionMethod", "Animation")
-            rt.FBXExporterSetParam("UpAxis", "Y")
-            rt.FBXExporterSetParam("Preserveinstances", True)
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
             rt.exportFile(
