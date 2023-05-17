@@ -13,8 +13,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         "frameStart": "sg_first_frame",
         "frameEnd": "sg_last_frame",
         "comment": "sg_submission_notes",
-        "family": "sg_version_type",
-        "instance_id": "sg_op_instance_id",
+        "family": "sg_version_type"
     }
     ### Ends Alkemy-X Override ###
 
@@ -57,6 +56,10 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
                     op_field, sg_field, field_value)
                 )
                 data_to_update[sg_field] = field_value
+
+        # Add version objectId to "sg_op_instance_id" so we can keep a link between both
+        data_to_update["sg_op_instance_id"] = str(instance.data["versionEntity"]["_id"])
+
         ### Ends Alkemy-X Override ###
 
         for representation in instance.data.get("representations", []):
