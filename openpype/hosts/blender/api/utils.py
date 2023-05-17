@@ -330,6 +330,7 @@ def transfer_stack(
                 for a in dir(stack_datablock)
                 if not a.startswith("_")
                 and a != "bl_rna"
+                and not callable(getattr(stack_datablock, a))
                 and not stack_datablock.is_property_readonly(a)
             }
             for attr in attributes:
