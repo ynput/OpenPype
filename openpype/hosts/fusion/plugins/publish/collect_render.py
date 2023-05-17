@@ -51,7 +51,7 @@ class CollectFusionRender(
             if family != "render":
                 continue
 
-            task_name = inst.data.get("task")  # legacy
+            task_name = context.data["task"]
             tool = inst.data["transientData"]["tool"]
 
             instance_families = inst.data.get("families", [])
