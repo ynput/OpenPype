@@ -89,7 +89,7 @@ patch-release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   script:
     - apk add --no-cache python3
-    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print('__version__');"
+    - version_command="import os;exec(open(os.path.join('./', 'openpype', 'version.py')).read());print(__version__);"
     - openpype_version="$(python3 -c "${version_command}")"
     - release-cli create --description "Release ${openpype_version} using CI pipeline $CI_PIPELINE_ID" --tag-name "${openpype_version}"
 #  when: on_success
