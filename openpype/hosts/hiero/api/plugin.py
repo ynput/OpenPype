@@ -1000,6 +1000,15 @@ class PublishClip:
         # remove shot from hierarchy data: is not needed anymore
         hierarchy_formatting_data.pop("shot")
 
+        ### Starts Alkemy-X Override ###
+        # Add review to plate or take publishes
+        # reference family will already be in review form
+        # What if reference family media is not playable in SG
+        families = [self.data["family"]]
+        if self.subset_family != "reference":
+            families.append("review")
+        ### Ends Alkemy-X Override ###
+
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
@@ -1007,7 +1016,9 @@ class PublishClip:
             "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
-            "families": [self.data["family"]]
+            ### Starts Alkemy-X Override ###
+            "families": families,
+            ### Ends Alkemy-X Override ###
         }
 
     def _convert_to_entity(self, type, template):
