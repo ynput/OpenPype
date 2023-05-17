@@ -70,7 +70,9 @@ build-patch:
   script:
     - mkdir -p /tmp/build/op
     - ./tools/create_zip.sh --path /tmp/build/op
+    - ls -la /tmp/build/op
     - mv /tmp/build/op ./build
+    - ls -la ./build
   artifacts:
     paths:
       - ./build
