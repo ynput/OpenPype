@@ -65,26 +65,26 @@ build-ubuntu:
 build-patch:
   tags:
     - dind
-  stage: deploy
-  image: python:alpine3.18
+  stage: build
+  image: python:3.9-alpine
   script:
     - apk add --no-cache python3
-    - apk add --no-cache curl
+    - apk add --no-cache python3
+    - apk add --no-cache bash
     - mkdir -p ./build/zip
     - ./tools/create_zip.sh --path ./build/zip
     - ls -la ./build/zip
   when: manual
   allow_failure: false
 
-# TODO: This should be two steps, one for creating the .zip artifact and another for deploying to the filesystem
 deploy-patch:
   tags:
     - cw-pvc
   stage: deploy
   script:
     - ./tools/create_zip.sh
-  when: manual
-  allow_failure: false
+  dependencies:
+    - build-patch
 
 deploy-to-deadline-repo:
   tags:
