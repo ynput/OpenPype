@@ -45,7 +45,7 @@ from .lib import (
     add_datablocks_to_container,
     create_container,
     imprint,
-    get_selection
+    get_selection,
 )
 from .pipeline import metadata_update, AVALON_PROPERTY
 
@@ -1121,176 +1121,112 @@ class AssetLoader(Loader):
         """
         load_func = self.get_load_function()
 
-        # Update the asset group with maintained contexts.
-        container_metadata = container.get(AVALON_PROPERTY, {})
+        # Unlink from parent collection if existing
+        parent_collections = {}
+        for outliner_datablock in container.get_root_outliner_datablocks():
+            if parent_collection := get_parent_collection(outliner_datablock):
+                unlink_from_collection(outliner_datablock, parent_collection)
 
-        # Check is same loader than the previous load
-        same_loader = self.__class__.__name__ == container_metadata.get(
-            "loader"
-        )
-
-        # In case several containers share same library
-        library_multireferenced = any(
-            [
-                c
-                for c in bpy.context.scene.openpype_containers
-                if c != container and c.library is container.library
-            ]
-        )
-
-        # In special configuration, optimization by changing the library
-        if (
-            same_loader
-            and self.load_type in ("INSTANCE", "LINK")
-            and container.library
-            and not library_multireferenced
-        ):
-            # Keep current datablocks
-            old_datablocks = {
-                d_ref.datablock for d_ref in container.datablock_refs
-            }
-
-            # Relink library
-            container.library.filepath = new_libpath.as_posix()
-            container.library.reload()
-            container.library.name = new_libpath.name
-
-            # Substitute library to keep reference
-            # if purged because duplicate references
-            outliner_datablocks = container.get_root_outliner_datablocks()
-            if outliner_datablocks:
-                outliner_datablock = list(outliner_datablocks)[0]
-                container.library = (
-                    outliner_datablock.override_library.reference.library
-                    if self.load_type == "LINK"
-                    else outliner_datablock.instance_collection.library
+                # Store parent collection by name
+                parent_collections.setdefault(parent_collection, []).append(
+                    outliner_datablock.name
                 )
 
-            datablocks = [
-                d_ref.datablock for d_ref in container.datablock_refs
-            ]
-        else:
-            # Default behaviour to wipe and reload everything
-            # but keeping same container
-            parent_collections = {}
-            for outliner_datablock in container.get_root_outliner_datablocks():
-                if parent_collection := get_parent_collection(
-                    outliner_datablock
-                ):
-                    unlink_from_collection(
-                        outliner_datablock, parent_collection
-                    )
+        # Keep current datablocks
+        old_datablocks = container.get_datablocks(only_local=False)
 
-                    # Store parent collection by name
-                    parent_collections.setdefault(
-                        parent_collection, []
-                    ).append(outliner_datablock.name)
+        # Rename old datablocks
+        for old_datablock in old_datablocks:
+            old_datablock["original_name"] = old_datablock.name
+            old_datablock.name += ".old"
+            old_datablock.use_fake_user = False
+        
+        # Clear container datablocks
+        container.datablock_refs.clear()
 
-            # Keep current datablocks
-            old_datablocks = container.get_datablocks(only_local=False)
+        # Load new into same container
+        container, datablocks = load_func(
+            new_libpath,
+            new_container_name,
+            container=container,
+        )
 
-            # Clear container datablocks
-            container.datablock_refs.clear()
-
-            # Rename old datablocks
-            for old_datablock in old_datablocks:
-                old_datablock["original_name"] = old_datablock.name
-                old_datablock.name += ".old"
-                old_datablock.use_fake_user = False
-
-            # Load new into same container
-            container, datablocks = load_func(
-                new_libpath,
-                new_container_name,
-                container=container,
-            )
-
-            # Old datablocks remap
-            for old_datablock in old_datablocks:
-                # Skip linked datablocks
-                if old_datablock.library:
-                    continue
-
-                # Find matching new datablock by name without .###
-                new_datablock = next(
-                    (
-                        d
-                        for d in datablocks
-                        if type(d) is type(old_datablock)
-                        and old_datablock["original_name"].rsplit(".", 1)[0]
-                        == d.name.rsplit(".", 1)[0]
-                    ),
-                    None,
-                )
-
-                # Replace old by new datablock and keep the original name.
-                if new_datablock:
-                    new_datablock.name = old_datablock["original_name"]
-                    old_datablock.user_remap(new_datablock)
-
-                    # Ensure action relink
-                    if (
-                        hasattr(old_datablock, "animation_data")
-                        and old_datablock.animation_data
-                    ):
-                        if not new_datablock.animation_data:
-                            new_datablock.animation_data_create()
-                        new_datablock.animation_data.action = (
-                            old_datablock.animation_data.action
-                        )
-
-                    # Ensure modifiers reassignation
-                    if hasattr(old_datablock, "modifiers"):
-                        transfer_stack(
-                            old_datablock, "modifiers", new_datablock
-                        )
-
-                    # Ensure constraints reassignation
-                    if hasattr(old_datablock, "constraints"):
-                        transfer_stack(
-                            old_datablock, "constraints", new_datablock
-                        )
-
-                    # Ensure bones constraints reassignation
-                    if hasattr(old_datablock, "pose") and old_datablock.pose:
-                        for bone in old_datablock.pose.bones:
-                            new_bone = new_datablock.pose.bones.get(bone.name)
-                            if new_bone:
-                                transfer_stack(bone, "constraints", new_bone)
-
-                    # Ensure drivers reassignation
-                    if (
-                        isinstance(old_datablock, bpy.types.Object)
-                        and hasattr(new_datablock.data, "shape_keys")
-                        and new_datablock.data.shape_keys
-                    ):
-                        for i, driver in enumerate(
-                            new_datablock.data.shape_keys.animation_data.drivers
-                        ):
-                            for j, var in enumerate(driver.driver.variables):
-                                for k, target in enumerate(var.targets):
-                                    target.id = (
-                                        old_datablock.data.shape_keys.animation_data.drivers[
-                                            i
-                                        ]
-                                        .driver.variables[j]
-                                        .targets[k]
-                                        .id
-                                    )
-
-            # Restore parent collection if existing
-            for (
-                parent_collection,
-                datablock_names,
-            ) in parent_collections.items():
-                datablocks_to_change_parent = {
+        # Old datablocks remap
+        for old_datablock in old_datablocks:
+            # Find matching new datablock by name without .###
+            # but with same type and library or override library state
+            if new_datablock := next(
+                (
                     d
                     for d in datablocks
-                    if d and not d.library and d.name in datablock_names
-                }
-                link_to_collection(
-                    datablocks_to_change_parent, parent_collection
-                )
+                    if type(d) is type(old_datablock)
+                    and bool(old_datablock.library) == bool(d.library)
+                    and bool(old_datablock.override_library)
+                    == bool(d.override_library)
+                    and old_datablock["original_name"].rsplit(".", 1)[0]
+                    == d.name.rsplit(".", 1)[0]
+                ),
+                None,
+            ):
+                new_datablock.name = old_datablock["original_name"]
+                old_datablock.user_remap(new_datablock)
+
+                # Ensure action relink
+                if (
+                    hasattr(old_datablock, "animation_data")
+                    and old_datablock.animation_data
+                ):
+                    if not new_datablock.animation_data:
+                        new_datablock.animation_data_create()
+                    new_datablock.animation_data.action = (
+                        old_datablock.animation_data.action
+                    )
+
+                # Ensure modifiers reassignation
+                if hasattr(old_datablock, "modifiers"):
+                    transfer_stack(old_datablock, "modifiers", new_datablock)
+
+                # Ensure constraints reassignation
+                if hasattr(old_datablock, "constraints"):
+                    transfer_stack(old_datablock, "constraints", new_datablock)
+
+                # Ensure bones constraints reassignation
+                if hasattr(old_datablock, "pose") and old_datablock.pose:
+                    for bone in old_datablock.pose.bones:
+                        if new_bone := new_datablock.pose.bones.get(bone.name):
+                            transfer_stack(bone, "constraints", new_bone)
+
+                # Ensure drivers reassignation
+                if (
+                    isinstance(old_datablock, bpy.types.Object)
+                    and hasattr(new_datablock.data, "shape_keys")
+                    and new_datablock.data.shape_keys
+                ):
+                    for i, driver in enumerate(
+                        new_datablock.data.shape_keys.animation_data.drivers
+                    ):
+                        for j, var in enumerate(driver.driver.variables):
+                            for k, target in enumerate(var.targets):
+                                target.id = (
+                                    old_datablock.data.shape_keys.animation_data.drivers[
+                                        i
+                                    ]
+                                    .driver.variables[j]
+                                    .targets[k]
+                                    .id
+                                )
+
+        # Restore parent collection if existing
+        for (
+            parent_collection,
+            datablock_names,
+        ) in parent_collections.items():
+            datablocks_to_change_parent = {
+                d
+                for d in datablocks
+                if d and not d.library and d.name in datablock_names
+            }
+            link_to_collection(datablocks_to_change_parent, parent_collection)
 
         # Update override library operations from asset objects if available.
         for obj in container.get_datablocks(bpy.types.Object):
