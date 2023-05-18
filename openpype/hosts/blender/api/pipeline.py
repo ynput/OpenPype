@@ -85,6 +85,31 @@ def uninstall():
         ops.unregister()
 
 
+def show_message(title, message):
+    from openpype.widgets.message_window import Window
+    from .ops import BlenderApplication
+
+    BlenderApplication.get_app()
+
+    Window(
+        parent=None,
+        title=title,
+        message=message,
+        level="warning")
+
+
+def message_window(title, message):
+    from .ops import (
+        MainThreadItem,
+        execute_in_main_thread,
+        _process_app_events
+    )
+
+    mti = MainThreadItem(show_message, title, message)
+    execute_in_main_thread(mti)
+    _process_app_events()
+
+
 def set_start_end_frames():
     project_name = legacy_io.active_project()
     asset_name = legacy_io.Session["AVALON_ASSET"]
@@ -153,9 +178,9 @@ def on_open():
         if unit_scale != prev_unit_scale:
             bpy.context.scene.unit_settings.scale_length = unit_scale
 
-def on_open():
-    set_start_end_frames()
-    set_base_file_unit_scale()
+            message_window(
+                "Base file unit scale changed",
+                "Base file unit scale changed to match the project settings.")
 
 
 @bpy.app.handlers.persistent
