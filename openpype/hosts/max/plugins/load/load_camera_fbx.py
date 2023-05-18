@@ -23,7 +23,6 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
         rt.FBXImporterSetParam("AxisConversionMethod", True)
-        rt.FBXImporterSetParam("UpAxis", "Y")
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(
             filepath,

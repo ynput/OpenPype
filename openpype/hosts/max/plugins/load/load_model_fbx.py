@@ -23,7 +23,6 @@ class FbxModelLoader(load.LoaderPlugin):
         filepath = os.path.normpath(self.fname)
         rt.FBXImporterSetParam("Animation", False)
         rt.FBXImporterSetParam("Cameras", False)
-        rt.FBXImporterSetParam("UpAxis", "Y")
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(
             filepath,
