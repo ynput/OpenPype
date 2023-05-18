@@ -2010,56 +2010,60 @@ class WorkfileSettings(object):
             nuke_colorspace (dict): adjustmensts from presets
 
         '''
-        workfile_settings = nuke_colorspace["workfile"]
+        ### Starts Alkemy-x Override ###
+        self._root_node["colorManagement"].setValue("OCIO")
 
-        # resolve config data if they are enabled in host
-        config_data = None
-        if nuke_colorspace.get("ocio_config", {}).get("enabled"):
-            # switch ocio config to custom config
-            workfile_settings["OCIO_config"] = "custom"
-            workfile_settings["colorManagement"] = "OCIO"
 
-            # get resolved ocio config path
-            config_data = get_imageio_config(
-                legacy_io.active_project(), "nuke"
-            )
-
-        # first set OCIO
-        if self._root_node["colorManagement"].value() \
-                not in str(workfile_settings["colorManagement"]):
-            self._root_node["colorManagement"].setValue(
-                str(workfile_settings["colorManagement"]))
-
-            # we dont need the key anymore
-            workfile_settings.pop("colorManagement")
-
-        # second set ocio version
-        if self._root_node["OCIO_config"].value() \
-                not in str(workfile_settings["OCIO_config"]):
-            self._root_node["OCIO_config"].setValue(
-                str(workfile_settings["OCIO_config"]))
-
-            # we dont need the key anymore
-            workfile_settings.pop("OCIO_config")
-
-        # third set ocio custom path
-        if config_data:
-            self._root_node["customOCIOConfigPath"].setValue(
-                str(config_data["path"]).replace("\\", "/")
-            )
-            # backward compatibility, remove in case it exists
-            workfile_settings.pop("customOCIOConfigPath")
+        # workfile_settings = nuke_colorspace["workfile"]
+        #
+        # # resolve config data if they are enabled in host
+        # config_data = None
+        # if nuke_colorspace.get("ocio_config", {}).get("enabled"):
+        #     # switch ocio config to custom config
+        #     workfile_settings["OCIO_config"] = "custom"
+        #     workfile_settings["colorManagement"] = "OCIO"
+        #
+        #     # get resolved ocio config path
+        #     config_data = get_imageio_config(
+        #         legacy_io.active_project(), "nuke"
+        #     )
+        #
+        # # first set OCIO
+        # if self._root_node["colorManagement"].value() \
+        #         not in str(workfile_settings["colorManagement"]):
+        #     self._root_node["colorManagement"].setValue(
+        #         str(workfile_settings["colorManagement"]))
+        #
+        #     # we dont need the key anymore
+        #     workfile_settings.pop("colorManagement")
+        #
+        # # second set ocio version
+        # if self._root_node["OCIO_config"].value() \
+        #         not in str(workfile_settings["OCIO_config"]):
+        #     self._root_node["OCIO_config"].setValue(
+        #         str(workfile_settings["OCIO_config"]))
+        #
+        #     # we dont need the key anymore
+        #     workfile_settings.pop("OCIO_config")
+        #
+        # # third set ocio custom path
+        # if config_data:
+        #     self._root_node["customOCIOConfigPath"].setValue(
+        #         str(config_data["path"]).replace("\\", "/")
+        #     )
+        #     # backward compatibility, remove in case it exists
+        #     workfile_settings.pop("customOCIOConfigPath")
 
         # then set the rest
-        for knob, value in workfile_settings.items():
-            # skip unfilled ocio config path
-            # it will be dict in value
-            if isinstance(value, dict):
-                continue
-            if self._root_node[knob].value() not in value:
-                self._root_node[knob].setValue(str(value))
-                log.debug("nuke.root()['{}'] changed to: {}".format(
-                    knob, value))
+        # for knob, value in workfile_settings.items():
+        #     # skip unfilled ocio config path
+        #     # it will be dict in value
+        #     if isinstance(value, dict):
+        #         continue
+        #     if self._root_node[knob].value() not in value:
+        #         self._root_node[knob].setValue(str(value))
+        #         log.debug("nuke.root()['{}'] changed to: {}".format(
+        #             knob, value))
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
