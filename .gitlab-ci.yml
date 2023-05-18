@@ -83,8 +83,8 @@ deploy-patch:
     - cw-pvc
   stage: deploy
   script:
-    - cp -R ./artifact/build/* /pipe/openpype/versions/build/
-    - chown -R 1000:776523089 /pipe/openpype/versions/build
+    - cp -R ./artifact/build/* /pipe/openpype/versions/
+    - chown -R 1000:776523089 /pipe/openpype/versions
   dependencies:
     - build-patch
   needs:
