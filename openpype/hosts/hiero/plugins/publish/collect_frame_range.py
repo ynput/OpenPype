@@ -39,7 +39,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
         # handleStart and handleEnd are overriden to reflect media range and not absolute handles
         # Solution is to take the handle values directly from the tag instead of instance data
         handle_start, handle_end = self.get_tag_handles()
-        first_frame = instance.data["frameStart"]
+        first_frame = instance.data["frameStart"] - handle_start
         end_frame = instance.data["frameEnd"] + handle_end
 
         # Need clip source in and original clip source media in and out to calculate matching input frame
@@ -47,7 +47,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
         source_start = self.track_item.source().sourceIn()
         source_end = self.track_item.source().sourceOut()
 
-        frames = range(first_frame, end_frame + handle_start + 1)
+        frames = range(first_frame, end_frame + 1)
         self.log.info("Transcoding frame range %d - %d" % (frames[0], frames[-1]))
 
         frame_range = []
