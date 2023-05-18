@@ -33,6 +33,14 @@ class RenderCreator(Creator):
 
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
+
+        try:
+            _ = stub.get_active_document_full_name()
+        except ValueError:
+            raise CreatorError(
+                "Please save workfile via Workfile app first!"
+            )
+
         if pre_create_data.get("use_selection"):
             comps = stub.get_selected_items(
                 comps=True, folders=False, footages=False
