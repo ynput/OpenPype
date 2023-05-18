@@ -27,7 +27,7 @@
                     "key": "base_file_unit_scale",
                     "type": "number",
                     "label": "Base File Unit Scale",
-                    "decimal": 2
+                    "decimal": 10
                 }
             ]
         },
