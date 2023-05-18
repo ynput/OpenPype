@@ -138,10 +138,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 }
             })
 
-            # create shot instance for shot attributes create/update
-            self.create_shot_instance(context, **data)
-
-            self.log.info("Creating instance: {}".format(instance))
+            ### Starts Alkemy-X Override ###
+            # # create shot instance for shot attributes create/update
+            # self.create_shot_instance(context, **data)
+            # self.log.info("Creating instance: {}".format(instance))
+            ### Eds Alkemy-X Override ###
             self.log.info(
                 "_ instance.data: {}".format(pformat(instance.data)))
 
