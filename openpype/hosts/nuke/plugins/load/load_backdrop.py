@@ -25,10 +25,11 @@ from openpype.hosts.nuke.api import containerise, update_container
 class LoadBackdropNodes(load.LoaderPlugin):
     """Loading Published Backdrop nodes (workfile, nukenodes)"""
 
-    representations = ["nk"]
     families = ["workfile", "nukenodes"]
+    representations = ["*"]
+    extension = {"nk"}
 
-    label = "Iport Nuke Nodes"
+    label = "Import Nuke Nodes"
     order = 0
     icon = "eye"
     color = "white"
@@ -53,22 +54,19 @@ class LoadBackdropNodes(load.LoaderPlugin):
         version = context['version']
         version_data = version.get("data", {})
         vname = version.get("name", None)
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
         namespace = namespace or context['asset']['name']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
 
         # prepare data for imprinting
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
-                    "source", "author", "fps"]
+        add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "version": vname,
+            "colorspaceInput": colorspace,
+            "objectName": object_name
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -203,18 +201,13 @@ class LoadBackdropNodes(load.LoaderPlugin):
         name = container['name']
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
         namespace = container['namespace']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
 
-        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
-                    "source", "author", "fps"]
+        add_keys = ["source", "author", "fps"]
 
         data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
                         "version": vname,
                         "colorspaceInput": colorspace,
                         "objectName": object_name}

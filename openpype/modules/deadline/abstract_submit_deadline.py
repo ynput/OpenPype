@@ -400,6 +400,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
+    import_reference = False
     use_published = True
     asset_dependencies = False
 
@@ -424,7 +425,11 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         file_path = None
         if self.use_published:
-            file_path = self.from_published_scene()
+            if not self.import_reference:
+                file_path = self.from_published_scene()
+            else:
+                self.log.info("use the scene with imported reference for rendering") # noqa
+                file_path = context.data["currentFile"]
 
         # fallback if nothing was set
         if not file_path:
@@ -516,7 +521,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             published.
 
         """
-
         instance = self._instance
         workfile_instance = self._get_workfile_instance(instance.context)
         if workfile_instance is None:
@@ -524,14 +528,14 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         # determine published path from Anatomy.
         template_data = workfile_instance.data.get("anatomyData")
-        rep = workfile_instance.data.get("representations")[0]
+        rep = workfile_instance.data["representations"][0]
         template_data["representation"] = rep.get("name")
         template_data["ext"] = rep.get("ext")
         template_data["comment"] = None
 
         anatomy = instance.context.data['anatomy']
-        anatomy_filled = anatomy.format(template_data)
-        template_filled = anatomy_filled["publish"]["path"]
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        template_filled = template_obj.format_strict(template_data)
         file_path = os.path.normpath(template_filled)
 
         self.log.info("Using published scene for render {}".format(file_path))

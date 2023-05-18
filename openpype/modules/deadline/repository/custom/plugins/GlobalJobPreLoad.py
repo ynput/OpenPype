@@ -1,3 +1,4 @@
+# /usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
 import tempfile
@@ -35,7 +36,7 @@ class OpenPypeVersion:
         self.prerelease = prerelease
 
         is_valid = True
-        if not major or not minor or not patch:
+        if major is None or minor is None or patch is None:
             is_valid = False
         self.is_valid = is_valid
 
@@ -157,7 +158,7 @@ def get_openpype_version_from_path(path, build=True):
 
     # fix path for application bundle on macos
     if platform.system().lower() == "darwin":
-        path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+        path = os.path.join(path, "MacOS")
 
     version_file = os.path.join(path, "openpype", "version.py")
     if not os.path.isfile(version_file):
@@ -189,6 +190,11 @@ def get_openpype_executable():
     exe_list = config.GetConfigEntryWithDefault("OpenPypeExecutable", "")
     dir_list = config.GetConfigEntryWithDefault(
         "OpenPypeInstallationDirs", "")
+
+    # clean '\ ' for MacOS pasting
+    if platform.system().lower() == "darwin":
+        exe_list = exe_list.replace("\\ ", " ")
+        dir_list = dir_list.replace("\\ ", " ")
     return exe_list, dir_list
 
 
@@ -196,19 +202,21 @@ def get_openpype_versions(dir_list):
     print(">>> Getting OpenPype executable ...")
     openpype_versions = []
 
-    install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-    if install_dir:
-        print("--- Looking for OpenPype at: {}".format(install_dir))
-        sub_dirs = [
-            f.path for f in os.scandir(install_dir)
-            if f.is_dir()
-        ]
-        for subdir in sub_dirs:
-            version = get_openpype_version_from_path(subdir)
-            if not version:
-                continue
-            print("  - found: {} - {}".format(version, subdir))
-            openpype_versions.append((version, subdir))
+    # special case of multiple install dirs
+    for dir_list in dir_list.split(","):
+        install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
+        if install_dir:
+            print("--- Looking for OpenPype at: {}".format(install_dir))
+            sub_dirs = [
+                f.path for f in os.scandir(install_dir)
+                if f.is_dir()
+            ]
+            for subdir in sub_dirs:
+                version = get_openpype_version_from_path(subdir)
+                if not version:
+                    continue
+                print("  - found: {} - {}".format(version, subdir))
+                openpype_versions.append((version, subdir))
     return openpype_versions
 
 
@@ -218,8 +226,8 @@ def get_requested_openpype_executable(
     requested_version_obj = OpenPypeVersion.from_string(requested_version)
     if not requested_version_obj:
         print((
-            ">>> Requested version does not match version regex \"{}\""
-        ).format(VERSION_REGEX))
+            ">>> Requested version '{}' does not match version regex '{}'"
+        ).format(requested_version, VERSION_REGEX))
         return None
 
     print((
@@ -272,7 +280,8 @@ def get_requested_openpype_executable(
     # Deadline decide.
     exe_list = [
         os.path.join(version_dir, "openpype_console.exe"),
-        os.path.join(version_dir, "openpype_console")
+        os.path.join(version_dir, "openpype_console"),
+        os.path.join(version_dir, "MacOS", "openpype_console")
     ]
     return FileUtils.SearchFileList(";".join(exe_list))
 
@@ -333,10 +342,13 @@ def inject_openpype_environment(deadlinePlugin):
             "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
             "envgroup": "farm"
         }
+
+        if job.GetJobEnvironmentKeyValue('IS_TEST'):
+            args.append("--automatic-tests")
+
         if all(add_kwargs.values()):
             for key, value in add_kwargs.items():
                 args.extend(["--{}".format(key), value])
-
         else:
             raise RuntimeError((
                 "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
@@ -350,11 +362,11 @@ def inject_openpype_environment(deadlinePlugin):
 
         args_str = subprocess.list2cmdline(args)
         print(">>> Executing: {} {}".format(exe, args_str))
-        process = ProcessUtils.SpawnProcess(
-            exe, args_str, os.path.dirname(exe)
+        process_exitcode = deadlinePlugin.RunProcess(
+            exe, args_str, os.path.dirname(exe), -1
         )
-        ProcessUtils.WaitForExit(process, -1)
-        if process.ExitCode != 0:
+
+        if process_exitcode != 0:
             raise RuntimeError(
                 "Failed to run OpenPype process to extract environments."
             )

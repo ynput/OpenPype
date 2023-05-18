@@ -4,18 +4,15 @@ from pathlib import Path
 import unreal
 from unreal import EditorLevelLibrary
 
-from bson.objectid import ObjectId
-
-from openpype import pipeline
+from openpype.client import get_representations
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
     get_representation_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
-from openpype.api import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as upipeline
 
@@ -31,7 +28,18 @@ class ExistingLayoutLoader(plugin.Loader):
     label = "Load Layout on Existing Scene"
     icon = "code-fork"
     color = "orange"
-    ASSET_ROOT = "/Game/OpenPype"
+    ASSET_ROOT = "/Game/Ayon"
+
+    delete_unmatched_assets = True
+
+    @classmethod
+    def apply_settings(cls, project_settings, *args, **kwargs):
+        super(ExistingLayoutLoader, cls).apply_settings(
+            project_settings, *args, **kwargs
+        )
+        cls.delete_unmatched_assets = (
+            project_settings["unreal"]["delete_unmatched_assets"]
+        )
 
     @staticmethod
     def _create_container(
@@ -51,8 +59,8 @@ class ExistingLayoutLoader(plugin.Loader):
             container = obj.get_asset()
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -81,50 +89,26 @@ class ExistingLayoutLoader(plugin.Loader):
         raise NotImplementedError(
             f"Unreal version {ue_major} not supported")
 
-    def _get_transform(self, ext, import_data, lasset):
-        conversion = unreal.Matrix.IDENTITY.transform()
-        fbx_tuning = unreal.Matrix.IDENTITY.transform()
+    def _transform_from_basis(self, transform, basis):
+        """Transform a transform from a basis to a new basis."""
+        # Get the basis matrix
+        basis_matrix = unreal.Matrix(
+            basis[0],
+            basis[1],
+            basis[2],
+            basis[3]
+        )
+        transform_matrix = unreal.Matrix(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3]
+        )
 
-        basis = unreal.Matrix(
-            lasset.get('basis')[0],
-            lasset.get('basis')[1],
-            lasset.get('basis')[2],
-            lasset.get('basis')[3]
-        ).transform()
-        transform = unreal.Matrix(
-            lasset.get('transform_matrix')[0],
-            lasset.get('transform_matrix')[1],
-            lasset.get('transform_matrix')[2],
-            lasset.get('transform_matrix')[3]
-        ).transform()
+        new_transform = (
+            basis_matrix.get_inverse() * transform_matrix * basis_matrix)
 
-        # Check for the conversion settings. We cannot access
-        # the alembic conversion settings, so we assume that
-        # the maya ones have been applied.
-        if ext == '.fbx':
-            loc = import_data.import_translation
-            rot = import_data.import_rotation.to_vector()
-            scale = import_data.import_uniform_scale
-            conversion = unreal.Transform(
-                location=[loc.x, loc.y, loc.z],
-                rotation=[rot.x, rot.y, rot.z],
-                scale=[-scale, scale, scale]
-            )
-            fbx_tuning = unreal.Transform(
-                rotation=[180.0, 0.0, 90.0],
-                scale=[1.0, 1.0, 1.0]
-            )
-        elif ext == '.abc':
-            # This is the standard conversion settings for
-            # alembic files from Maya.
-            conversion = unreal.Transform(
-                location=[0.0, 0.0, 0.0],
-                rotation=[0.0, 0.0, 0.0],
-                scale=[1.0, -1.0, 1.0]
-            )
-
-        new_transform = (basis.inverse() * transform * basis)
-        return fbx_tuning * conversion.inverse() * new_transform
+        return new_transform.transform()
 
     def _spawn_actor(self, obj, lasset):
         actor = EditorLevelLibrary.spawn_actor_from_object(
@@ -132,16 +116,13 @@ class ExistingLayoutLoader(plugin.Loader):
         )
 
         actor.set_actor_label(lasset.get('instance_name'))
-        smc = actor.get_editor_property('static_mesh_component')
-        mesh = smc.get_editor_property('static_mesh')
-        import_data = mesh.get_editor_property('asset_import_data')
-        filename = import_data.get_first_filename()
-        path = Path(filename)
 
-        transform = self._get_transform(
-            path.suffix, import_data, lasset)
+        transform = lasset.get('transform_matrix')
+        basis = lasset.get('basis')
 
-        actor.set_actor_transform(transform, False, True)
+        computed_transform = self._transform_from_basis(transform, basis)
+
+        actor.set_actor_transform(computed_transform, False, True)
 
     @staticmethod
     def _get_fbx_loader(loaders, family):
@@ -179,14 +160,7 @@ class ExistingLayoutLoader(plugin.Loader):
 
         return None
 
-    def _load_asset(self, representation, version, instance_name, family):
-        valid_formats = ['fbx', 'abc']
-
-        repr_data = legacy_io.find_one({
-            "type": "representation",
-            "parent": ObjectId(version),
-            "name": {"$in": valid_formats}
-        })
+    def _load_asset(self, repr_data, representation, instance_name, family):
         repr_format = repr_data.get('name')
 
         all_loaders = discover_loader_plugins()
@@ -221,10 +195,21 @@ class ExistingLayoutLoader(plugin.Loader):
 
         return assets
 
-    def _process(self, lib_path):
-        data = get_current_project_settings()
-        delete_unmatched = data["unreal"]["delete_unmatched_assets"]
+    def _get_valid_repre_docs(self, project_name, version_ids):
+        valid_formats = ['fbx', 'abc']
 
+        repre_docs = list(get_representations(
+            project_name,
+            representation_names=valid_formats,
+            version_ids=version_ids
+        ))
+        repre_doc_by_version_id = {}
+        for repre_doc in repre_docs:
+            version_id = str(repre_doc["parent"])
+            repre_doc_by_version_id[version_id] = repre_doc
+        return repre_doc_by_version_id
+
+    def _process(self, lib_path, project_name):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = EditorLevelLibrary.get_all_level_actors()
@@ -232,30 +217,44 @@ class ExistingLayoutLoader(plugin.Loader):
         with open(lib_path, "r") as fp:
             data = json.load(fp)
 
-        layout_data = []
-
+        elements = []
+        repre_ids = set()
         # Get all the representations in the JSON from the database.
         for element in data:
-            if element.get('representation'):
-                layout_data.append((
-                    pipeline.legacy_io.find_one({
-                        "_id": ObjectId(element.get('representation'))
-                    }),
-                    element
-                ))
+            repre_id = element.get('representation')
+            if repre_id:
+                repre_ids.add(repre_id)
+                elements.append(element)
 
+        repre_docs = get_representations(
+            project_name, representation_ids=repre_ids
+        )
+        repre_docs_by_id = {
+            str(repre_doc["_id"]): repre_doc
+            for repre_doc in repre_docs
+        }
+        layout_data = []
+        version_ids = set()
+        for element in elements:
+            repre_id = element.get("representation")
+            repre_doc = repre_docs_by_id.get(repre_id)
+            if not repre_doc:
+                raise AssertionError("Representation not found")
+            if not (repre_doc.get('data') or repre_doc['data'].get('path')):
+                raise AssertionError("Representation does not have path")
+            if not repre_doc.get('context'):
+                raise AssertionError("Representation does not have context")
+
+            layout_data.append((repre_doc, element))
+            version_ids.add(repre_doc["parent"])
+
+        # Prequery valid repre documents for all elements at once
+        valid_repre_doc_by_version_id = self._get_valid_repre_docs(
+            project_name, version_ids)
         containers = []
         actors_matched = []
 
         for (repr_data, lasset) in layout_data:
-            if not repr_data:
-                raise AssertionError("Representation not found")
-            if not (repr_data.get('data') or
-                    repr_data.get('data').get('path')):
-                raise AssertionError("Representation does not have path")
-            if not repr_data.get('context'):
-                raise AssertionError("Representation does not have context")
-
             # For every actor in the scene, check if it has a representation in
             # those we got from the JSON. If so, create a container for it.
             # Otherwise, remove it from the scene.
@@ -294,9 +293,12 @@ class ExistingLayoutLoader(plugin.Loader):
                 containers.append(container)
 
                 # Set the transform for the actor.
-                transform = self._get_transform(
-                    path.suffix, import_data, lasset)
-                actor.set_actor_transform(transform, False, True)
+                transform = lasset.get('transform_matrix')
+                basis = lasset.get('basis')
+
+                computed_transform = self._transform_from_basis(
+                    transform, basis)
+                actor.set_actor_transform(computed_transform, False, True)
 
                 actors_matched.append(actor)
                 found = True
@@ -339,8 +341,8 @@ class ExistingLayoutLoader(plugin.Loader):
                 continue
 
             assets = self._load_asset(
+                valid_repre_doc_by_version_id.get(lasset.get('version')),
                 lasset.get('representation'),
-                lasset.get('version'),
                 lasset.get('instance_name'),
                 lasset.get('family')
             )
@@ -360,7 +362,7 @@ class ExistingLayoutLoader(plugin.Loader):
                 continue
             if actor not in actors_matched:
                 self.log.warning(f"Actor {actor.get_name()} not matched.")
-                if delete_unmatched:
+                if self.delete_unmatched_assets:
                     EditorLevelLibrary.destroy_actor(actor)
 
         return containers
@@ -377,7 +379,8 @@ class ExistingLayoutLoader(plugin.Loader):
         if not curr_level:
             raise AssertionError("Current level not saved")
 
-        containers = self._process(self.fname)
+        project_name = context["project"]["name"]
+        containers = self._process(self.fname, project_name)
 
         curr_level_path = Path(
             curr_level.get_outer().get_path_name()).parent.as_posix()
@@ -389,8 +392,8 @@ class ExistingLayoutLoader(plugin.Loader):
                 container=container_name, path=curr_level_path)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": curr_level_path,
             "container_name": container_name,
@@ -407,7 +410,8 @@ class ExistingLayoutLoader(plugin.Loader):
         asset_dir = container.get('namespace')
 
         source_path = get_representation_path(representation)
-        containers = self._process(source_path)
+        project_name = legacy_io.active_project()
+        containers = self._process(source_path, project_name)
 
         data = {
             "representation": str(representation["_id"]),

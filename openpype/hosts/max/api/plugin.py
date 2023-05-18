@@ -78,12 +78,12 @@ class MaxCreator(Creator, MaxCreatorBase):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.get("instance_node")
 
             new_values = {
-                key: new_value
-                for key, (_old_value, new_value) in _changes.items()
+                key: changes[key].new_value
+                for key in changes.changed_keys
             }
             imprint(
                 instance_node,
@@ -101,7 +101,9 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.getNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                rt.delete(rt.getNodeByName(instance_node))
+                rt.select(instance_node)
+                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
+                rt.delete(instance_node)
 
             self._remove_instance_from_context(instance)
 

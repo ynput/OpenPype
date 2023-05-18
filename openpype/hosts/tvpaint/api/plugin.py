@@ -1,80 +1,142 @@
 import re
-import uuid
 
-from openpype.pipeline import (
-    LegacyCreator,
-    LoaderPlugin,
-    registered_host,
+from openpype.pipeline import LoaderPlugin
+from openpype.pipeline.create import (
+    CreatedInstance,
+    get_subset_name,
+    AutoCreator,
+    Creator,
 )
+from openpype.pipeline.create.creator_plugins import cache_and_get_instances
 
 from .lib import get_layers_data
-from .pipeline import get_current_workfile_context
 
 
-class Creator(LegacyCreator):
-    def __init__(self, *args, **kwargs):
-        super(Creator, self).__init__(*args, **kwargs)
-        # Add unified identifier created with `uuid` module
-        self.data["uuid"] = str(uuid.uuid4())
+SHARED_DATA_KEY = "openpype.tvpaint.instances"
 
-    @classmethod
-    def get_dynamic_data(cls, *args, **kwargs):
-        dynamic_data = super(Creator, cls).get_dynamic_data(*args, **kwargs)
 
-        # Change asset and name by current workfile context
-        workfile_context = get_current_workfile_context()
-        asset_name = workfile_context.get("asset")
-        task_name = workfile_context.get("task")
-        if "asset" not in dynamic_data and asset_name:
-            dynamic_data["asset"] = asset_name
+class TVPaintCreatorCommon:
+    @property
+    def subset_template_family_filter(self):
+        return self.family
 
-        if "task" not in dynamic_data and task_name:
-            dynamic_data["task"] = task_name
-        return dynamic_data
-
-    @staticmethod
-    def are_instances_same(instance_1, instance_2):
-        """Compare instances but skip keys with unique values.
-
-        During compare are skipped keys that will be 100% sure
-        different on new instance, like "id".
-
-        Returns:
-            bool: True if instances are same.
-        """
-        if (
-            not isinstance(instance_1, dict)
-            or not isinstance(instance_2, dict)
-        ):
-            return instance_1 == instance_2
-
-        checked_keys = set()
-        checked_keys.add("id")
-        for key, value in instance_1.items():
-            if key not in checked_keys:
-                if key not in instance_2:
-                    return False
-                if value != instance_2[key]:
-                    return False
-                checked_keys.add(key)
-
-        for key in instance_2.keys():
-            if key not in checked_keys:
-                return False
-        return True
-
-    def write_instances(self, data):
-        self.log.debug(
-            "Storing instance data to workfile. {}".format(str(data))
+    def _cache_and_get_instances(self):
+        return cache_and_get_instances(
+            self, SHARED_DATA_KEY, self.host.list_instances
         )
-        host = registered_host()
-        return host.write_instances(data)
 
-    def process(self):
-        host = registered_host()
-        data = host.list_instances()
-        data.append(self.data)
-        self.write_instances(data)
+    def _collect_create_instances(self):
+        instances_by_identifier = self._cache_and_get_instances()
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
+            self._add_instance_to_context(instance)
+
+    def _update_create_instances(self, update_list):
+        if not update_list:
+            return
+
+        cur_instances = self.host.list_instances()
+        cur_instances_by_id = {}
+        for instance_data in cur_instances:
+            instance_id = instance_data.get("instance_id")
+            if instance_id:
+                cur_instances_by_id[instance_id] = instance_data
+
+        for instance, changes in update_list:
+            instance_data = changes.new_value
+            cur_instance_data = cur_instances_by_id.get(instance.id)
+            if cur_instance_data is None:
+                cur_instances.append(instance_data)
+                continue
+            for key in set(cur_instance_data) - set(instance_data):
+                cur_instance_data.pop(key)
+            cur_instance_data.update(instance_data)
+        self.host.write_instances(cur_instances)
+
+    def _custom_get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        dynamic_data = self.get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
+        )
+
+        return get_subset_name(
+            self.family,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings,
+            family_filter=self.subset_template_family_filter
+        )
+
+
+class TVPaintCreator(Creator, TVPaintCreatorCommon):
+    def collect_instances(self):
+        self._collect_create_instances()
+
+    def update_instances(self, update_list):
+        self._update_create_instances(update_list)
+
+    def remove_instances(self, instances):
+        ids_to_remove = {
+            instance.id
+            for instance in instances
+        }
+        cur_instances = self.host.list_instances()
+        changed = False
+        new_instances = []
+        for instance_data in cur_instances:
+            if instance_data.get("instance_id") in ids_to_remove:
+                changed = True
+            else:
+                new_instances.append(instance_data)
+
+        if changed:
+            self.host.write_instances(new_instances)
+
+        for instance in instances:
+            self._remove_instance_from_context(instance)
+
+    def get_dynamic_data(self, *args, **kwargs):
+        # Change asset and name by current workfile context
+        create_context = self.create_context
+        asset_name = create_context.get_current_asset_name()
+        task_name = create_context.get_current_task_name()
+        output = {}
+        if asset_name:
+            output["asset"] = asset_name
+            if task_name:
+                output["task"] = task_name
+        return output
+
+    def get_subset_name(self, *args, **kwargs):
+        return self._custom_get_subset_name(*args, **kwargs)
+
+    def _store_new_instance(self, new_instance):
+        instances_data = self.host.list_instances()
+        instances_data.append(new_instance.data_to_store())
+        self.host.write_instances(instances_data)
+        self._add_instance_to_context(new_instance)
+
+
+class TVPaintAutoCreator(AutoCreator, TVPaintCreatorCommon):
+    def collect_instances(self):
+        self._collect_create_instances()
+
+    def update_instances(self, update_list):
+        self._update_create_instances(update_list)
+
+    def get_subset_name(self, *args, **kwargs):
+        return self._custom_get_subset_name(*args, **kwargs)
 
 
 class Loader(LoaderPlugin):

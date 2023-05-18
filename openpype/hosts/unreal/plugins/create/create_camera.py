@@ -1,41 +1,38 @@
+# -*- coding: utf-8 -*-
 import unreal
-from unreal import EditorAssetLibrary as eal
-from unreal import EditorLevelLibrary as ell
 
-from openpype.hosts.unreal.api.pipeline import instantiate
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import CreatorError
+from openpype.hosts.unreal.api.pipeline import UNREAL_VERSION
+from openpype.hosts.unreal.api.plugin import (
+    UnrealAssetCreator,
+)
 
 
-class CreateCamera(LegacyCreator):
-    """Layout output for character rigs"""
+class CreateCamera(UnrealAssetCreator):
+    """Create Camera."""
 
-    name = "layoutMain"
+    identifier = "io.ayon.creators.unreal.camera"
     label = "Camera"
     family = "camera"
-    icon = "cubes"
+    icon = "fa.camera"
 
-    root = "/Game/OpenPype/Instances"
-    suffix = "_INS"
+    def create(self, subset_name, instance_data, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+            selection = [a.get_path_name() for a in sel_objects]
 
-    def __init__(self, *args, **kwargs):
-        super(CreateCamera, self).__init__(*args, **kwargs)
+            if len(selection) != 1:
+                raise CreatorError("Please select only one object.")
 
-    def process(self):
-        data = self.data
+        # Add the current level path to the metadata
+        if UNREAL_VERSION.major == 5:
+            world = unreal.UnrealEditorSubsystem().get_editor_world()
+        else:
+            world = unreal.EditorLevelLibrary.get_editor_world()
 
-        name = data["subset"]
+        instance_data["level"] = world.get_path_name()
 
-        data["level"] = ell.get_editor_world().get_path_name()
-
-        if not eal.does_directory_exist(self.root):
-            eal.make_directory(self.root)
-
-        factory = unreal.LevelSequenceFactoryNew()
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-        tools.create_asset(name, f"{self.root}/{name}", None, factory)
-
-        asset_name = f"{self.root}/{name}/{name}.{name}"
-
-        data["members"] = [asset_name]
-
-        instantiate(f"{self.root}", name, data, None, self.suffix)
+        super(CreateCamera, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)

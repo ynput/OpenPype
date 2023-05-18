@@ -1,6 +1,6 @@
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import (
     PlaceholderLineEdit,
@@ -86,9 +86,9 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    """Assets hiearrchy model.
+    """Assets hierarchy model.
 
-    For selecting asset for which should beinstance created.
+    For selecting asset for which an instance should be created.
 
     Uses controller to load asset hierarchy. All asset documents are stored by
     their parents.
@@ -193,7 +193,7 @@ class AssetsDialog(QtWidgets.QDialog):
         asset_view.setModel(proxy_model)
         asset_view.setHeaderHidden(True)
         asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        asset_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         asset_view.setAlternatingRowColors(True)
         asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
         asset_view.setAllColumnsShowFocus(True)
@@ -210,6 +210,10 @@ class AssetsDialog(QtWidgets.QDialog):
         layout.addWidget(filter_input, 0)
         layout.addWidget(asset_view, 1)
         layout.addLayout(btns_layout, 0)
+
+        controller.event_system.add_callback(
+            "controller.reset.finished", self._on_controller_reset
+        )
 
         asset_view.double_clicked.connect(self._on_ok_clicked)
         filter_input.textChanged.connect(self._on_filter_change)
@@ -244,6 +248,10 @@ class AssetsDialog(QtWidgets.QDialog):
         new_pos.setX(new_pos.x() - int(self.width() / 2))
         new_pos.setY(new_pos.y() - int(self.height() / 2))
         self.move(new_pos)
+
+    def _on_controller_reset(self):
+        # Change reset enabled so model is reset on show event
+        self._soft_reset_enabled = True
 
     def showEvent(self, event):
         """Refresh asset model on show."""

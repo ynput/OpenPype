@@ -60,7 +60,7 @@ class Creator(LegacyCreator):
 
             def process(self):
                 instance =  super(CreateEpicNode, self, process()
-                # Set paramaters for Alembic node
+                # Set parameters for Alembic node
                 instance.setParms(
                     {"sop_path": "$HIP/%s.abc" % self.nodes[0]}
                 )
@@ -103,9 +103,8 @@ class HoudiniCreatorBase(object):
         fill it with all collected instances from the scene under its
         respective creator identifiers.
 
-        If legacy instances are detected in the scene, create
-        `houdini_cached_legacy_subsets` there and fill it with
-        all legacy subsets under family as a key.
+        Create `houdini_cached_legacy_subsets` key for any legacy instances
+        detected in the scene as instances per family.
 
         Args:
             Dict[str, Any]: Shared data.
@@ -115,29 +114,30 @@ class HoudiniCreatorBase(object):
 
         """
         if shared_data.get("houdini_cached_subsets") is None:
-            shared_data["houdini_cached_subsets"] = {}
-            if shared_data.get("houdini_cached_legacy_subsets") is None:
-                shared_data["houdini_cached_legacy_subsets"] = {}
-            cached_instances = lsattr("id", "pyblish.avalon.instance")
-            for i in cached_instances:
-                if not i.parm("creator_identifier"):
-                    # we have legacy instance
-                    family = i.parm("family").eval()
-                    if family not in shared_data[
-                            "houdini_cached_legacy_subsets"]:
-                        shared_data["houdini_cached_legacy_subsets"][
-                            family] = [i]
-                    else:
-                        shared_data[
-                            "houdini_cached_legacy_subsets"][family].append(i)
-                    continue
+            cache = dict()
+            cache_legacy = dict()
 
-                creator_id = i.parm("creator_identifier").eval()
-                if creator_id not in shared_data["houdini_cached_subsets"]:
-                    shared_data["houdini_cached_subsets"][creator_id] = [i]
+            for node in lsattr("id", "pyblish.avalon.instance"):
+
+                creator_identifier_parm = node.parm("creator_identifier")
+                if creator_identifier_parm:
+                    # creator instance
+                    creator_id = creator_identifier_parm.eval()
+                    cache.setdefault(creator_id, []).append(node)
+
                 else:
-                    shared_data[
-                        "houdini_cached_subsets"][creator_id].append(i)  # noqa
+                    # legacy instance
+                    family_parm = node.parm("family")
+                    if not family_parm:
+                        # must be a broken instance
+                        continue
+
+                    family = family_parm.eval()
+                    cache_legacy.setdefault(family, []).append(node)
+
+            shared_data["houdini_cached_subsets"] = cache
+            shared_data["houdini_cached_legacy_subsets"] = cache_legacy
+
         return shared_data
 
     @staticmethod
@@ -225,12 +225,12 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = hou.node(created_inst.get("instance_node"))
 
             new_values = {
-                key: new_value
-                for key, (_old_value, new_value) in _changes.items()
+                key: changes[key].new_value
+                for key in changes.changed_keys
             }
             imprint(
                 instance_node,
@@ -276,3 +276,19 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             color = hou.Color((0.616, 0.871, 0.769))
         node.setUserData('nodeshape', shape)
         node.setColor(color)
+
+    def get_network_categories(self):
+        """Return in which network view type this creator should show.
+
+        The node type categories returned here will be used to define where
+        the creator will show up in the TAB search for nodes in Houdini's
+        Network View.
+
+        This can be overridden in inherited classes to define where that
+        particular Creator should be visible in the TAB search.
+
+        Returns:
+            list: List of houdini node type categories
+
+        """
+        return [hou.ropNodeTypeCategory()]

@@ -11,7 +11,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 - Backspace - disable selection
 
 ```
-|- Options
+|- Context
 |- <Group 1> [x]
 |  |- <Instance 1> [x]
 |  |- <Instance 2> [x]
@@ -24,11 +24,11 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 """
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from openpype.tools.utils.lib import html_escape
+from openpype.tools.utils.lib import html_escape, checkstate_int_to_enum
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -86,9 +86,9 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         painter.save()
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.TextAntialiasing
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+            | QtGui.QPainter.TextAntialiasing
         )
 
         # Draw backgrounds
@@ -198,6 +198,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.instance["active"] = new_value
         self.active_changed.emit(self.instance.id, new_value)
 
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
 
 class ListContextWidget(QtWidgets.QFrame):
     """Context (or global attributes) widget."""
@@ -272,6 +275,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             state(QtCore.Qt.CheckState): Checkstate of checkbox. Have 3
                 variants Unchecked, Checked and PartiallyChecked.
         """
+
         if self.checkstate() == state:
             return
         self._ignore_state_change = True
@@ -279,7 +283,8 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self._ignore_state_change = False
 
     def checkstate(self):
-        """CUrrent checkstate of "active" checkbox."""
+        """Current checkstate of "active" checkbox."""
+
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
@@ -299,6 +304,9 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             self.expand_btn.setArrowType(QtCore.Qt.DownArrow)
         else:
             self.expand_btn.setArrowType(QtCore.Qt.RightArrow)
+
+    def set_active_toggle_enabled(self, enabled):
+        self.toggle_checkbox.setEnabled(enabled)
 
 
 class InstanceTreeView(QtWidgets.QTreeView):
@@ -459,6 +467,8 @@ class InstanceListView(AbstractInstanceView):
         self._instance_model = instance_model
         self._proxy_model = proxy_model
 
+        self._active_toggle_enabled = True
+
     def _on_expand(self, index):
         self._update_widget_expand_state(index, True)
 
@@ -476,6 +486,9 @@ class InstanceListView(AbstractInstanceView):
             group_widget.set_expanded(expanded)
 
     def _on_toggle_request(self, toggle):
+        if not self._active_toggle_enabled:
+            return
+
         selected_instance_ids = self._instance_view.get_selected_instance_ids()
         if toggle == -1:
             active = None
@@ -665,6 +678,9 @@ class InstanceListView(AbstractInstanceView):
                     widget = InstanceListItemWidget(
                         instance, self._instance_view
                     )
+                    widget.set_active_toggle_enabled(
+                        self._active_toggle_enabled
+                    )
                     widget.active_changed.connect(self._on_active_changed)
                     self._instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.id] = widget
@@ -800,6 +816,9 @@ class InstanceListView(AbstractInstanceView):
             proxy_index = self._proxy_model.mapFromSource(index)
             group_name = group_item.data(GROUP_ROLE)
             widget = InstanceListGroupWidget(group_name, self._instance_view)
+            widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
+            )
             widget.expand_changed.connect(self._on_group_expand_request)
             widget.toggle_requested.connect(self._on_group_toggle_request)
             self._group_widgets[group_name] = widget
@@ -887,6 +906,7 @@ class InstanceListView(AbstractInstanceView):
         self._instance_view.setExpanded(proxy_index, expanded)
 
     def _on_group_toggle_request(self, group_name, state):
+        state = checkstate_int_to_enum(state)
         if state == QtCore.Qt.PartiallyChecked:
             return
 
@@ -1022,7 +1042,8 @@ class InstanceListView(AbstractInstanceView):
             proxy_index = proxy_model.mapFromSource(select_indexes[0])
             selection_model.setCurrentIndex(
                 proxy_index,
-                selection_model.ClearAndSelect | selection_model.Rows
+                QtCore.QItemSelectionModel.ClearAndSelect
+                | QtCore.QItemSelectionModel.Rows
             )
             return
 
@@ -1031,17 +1052,33 @@ class InstanceListView(AbstractInstanceView):
 
         selection_model.setCurrentIndex(
             first_index,
-            selection_model.ClearAndSelect | selection_model.Rows
+            QtCore.QItemSelectionModel.ClearAndSelect
+            | QtCore.QItemSelectionModel.Rows
         )
 
         for index in select_indexes:
             proxy_index = proxy_model.mapFromSource(index)
             selection_model.select(
                 proxy_index,
-                selection_model.Select | selection_model.Rows
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
             )
 
         selection_model.setCurrentIndex(
             last_index,
-            selection_model.Select | selection_model.Rows
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
         )
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+
+        self._active_toggle_enabled = enabled
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceListItemWidget):
+                widget.set_active_toggle_enabled(enabled)
+
+        for widget in self._group_widgets.values():
+            if isinstance(widget, InstanceListGroupWidget):
+                widget.set_active_toggle_enabled(enabled)

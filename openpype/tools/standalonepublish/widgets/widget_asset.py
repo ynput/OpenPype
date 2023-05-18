@@ -86,7 +86,10 @@ def preserve_selection(tree_view,
 
     model = tree_view.model()
     selection_model = tree_view.selectionModel()
-    flags = selection_model.Select | selection_model.Rows
+    flags = (
+        QtCore.QItemSelectionModel.Select
+        | QtCore.QItemSelectionModel.Rows
+    )
 
     if current_index:
         current_index_value = tree_view.currentIndex().data(role)
@@ -410,7 +413,10 @@ class AssetWidget(QtWidgets.QWidget):
         selection_model.clearSelection()
 
         # Select
-        mode = selection_model.Select | selection_model.Rows
+        mode = (
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
+        )
         for index in _iter_model_rows(
             self.proxy, column=0, include_root=False
         ):

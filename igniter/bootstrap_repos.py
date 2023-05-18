@@ -57,11 +57,9 @@ class OpenPypeVersion(semver.VersionInfo):
     """Class for storing information about OpenPype version.
 
     Attributes:
-        staging (bool): True if it is staging version
         path (str): path to OpenPype
 
     """
-    staging = False
     path = None
     # this should match any string complying with https://semver.org/
     _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?")  # noqa: E501
@@ -83,12 +81,10 @@ class OpenPypeVersion(semver.VersionInfo):
             build (str): an optional build string
             version (str): if set, it will be parsed and will override
                 parameters like `major`, `minor` and so on.
-            staging (bool): set to True if version is staging.
             path (Path): path to version location.
 
         """
         self.path = None
-        self.staging = False
 
         if "version" in kwargs.keys():
             if not kwargs.get("version"):
@@ -113,28 +109,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if "path" in kwargs.keys():
             kwargs.pop("path")
 
-        if kwargs.get("staging"):
-            self.staging = kwargs.get("staging", False)
-            kwargs.pop("staging")
-
-        if "staging" in kwargs.keys():
-            kwargs.pop("staging")
-
-        if self.staging:
-            if kwargs.get("build"):
-                if "staging" not in kwargs.get("build"):
-                    kwargs["build"] = f"{kwargs.get('build')}-staging"
-            else:
-                kwargs["build"] = "staging"
-
-        if kwargs.get("build") and "staging" in kwargs.get("build", ""):
-            self.staging = True
-
         super().__init__(*args, **kwargs)
-
-    def __eq__(self, other):
-        result = super().__eq__(other)
-        return bool(result and self.staging == other.staging)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}: {str(self)} - path={self.path}>"
@@ -150,42 +125,10 @@ class OpenPypeVersion(semver.VersionInfo):
             return True
 
         if self.finalize_version() == other.finalize_version() and \
-                self.prerelease == other.prerelease and \
-                self.is_staging() and not other.is_staging():
+                self.prerelease == other.prerelease:
             return True
 
         return result
-
-    def set_staging(self) -> OpenPypeVersion:
-        """Set version as staging and return it.
-
-        This will preserve current one.
-
-        Returns:
-            OpenPypeVersion: Set as staging.
-
-        """
-        if self.staging:
-            return self
-        return self.replace(parts={"build": f"{self.build}-staging"})
-
-    def set_production(self) -> OpenPypeVersion:
-        """Set version as production and return it.
-
-        This will preserve current one.
-
-        Returns:
-            OpenPypeVersion: Set as production.
-
-        """
-        if not self.staging:
-            return self
-        return self.replace(
-            parts={"build": self.build.replace("-staging", "")})
-
-    def is_staging(self) -> bool:
-        """Test if current version is staging one."""
-        return self.staging
 
     def get_main_version(self) -> str:
         """Return main version component.
@@ -218,20 +161,7 @@ class OpenPypeVersion(semver.VersionInfo):
         if not m:
             return None
         version = OpenPypeVersion.parse(string[m.start():m.end()])
-        if "staging" in string[m.start():m.end()]:
-            version.staging = True
         return version
-
-    @classmethod
-    def parse(cls, version):
-        """Extends parse to handle ta handle staging variant."""
-        v = super().parse(version)
-        openpype_version = cls(major=v.major, minor=v.minor,
-                               patch=v.patch, prerelease=v.prerelease,
-                               build=v.build)
-        if v.build and "staging" in v.build:
-            openpype_version.staging = True
-        return openpype_version
 
     def __hash__(self):
         return hash(self.path) if self.path else hash(str(self))
@@ -382,80 +312,28 @@ class OpenPypeVersion(semver.VersionInfo):
         return False
 
     @classmethod
-    def get_local_versions(
-        cls, production: bool = None,
-        staging: bool = None
-    ) -> List:
+    def get_local_versions(cls) -> List:
         """Get all versions available on this machine.
-
-        Arguments give ability to specify if filtering is needed. If both
-        arguments are set to None all found versions are returned.
-
-        Args:
-            production (bool): Return production versions.
-            staging (bool): Return staging versions.
 
         Returns:
             list: of compatible versions available on the machine.
 
         """
-        # Return all local versions if arguments are set to None
-        if production is None and staging is None:
-            production = True
-            staging = True
-
-        elif production is None and not staging:
-            production = True
-
-        elif staging is None and not production:
-            staging = True
-
-        # Just return empty output if both are disabled
-        if not production and not staging:
-            return []
-
         # DEPRECATED: backwards compatible way to look for versions in root
         dir_to_search = Path(user_data_dir("openpype", "pypeclub"))
         versions = OpenPypeVersion.get_versions_from_directory(dir_to_search)
 
-        filtered_versions = []
-        for version in versions:
-            if version.is_staging():
-                if staging:
-                    filtered_versions.append(version)
-            elif production:
-                filtered_versions.append(version)
-        return list(sorted(set(filtered_versions)))
+        return list(sorted(set(versions)))
 
     @classmethod
-    def get_remote_versions(
-        cls, production: bool = None,
-        staging: bool = None
-    ) -> List:
+    def get_remote_versions(cls) -> List:
         """Get all versions available in OpenPype Path.
 
-        Arguments give ability to specify if filtering is needed. If both
-        arguments are set to None all found versions are returned.
-
-        Args:
-            production (bool): Return production versions.
-            staging (bool): Return staging versions.
+        Returns:
+            list of OpenPypeVersions: Versions found in OpenPype path.
 
         """
         # Return all local versions if arguments are set to None
-        if production is None and staging is None:
-            production = True
-            staging = True
-
-        elif production is None and not staging:
-            production = True
-
-        elif staging is None and not production:
-            staging = True
-
-        # Just return empty output if both are disabled
-        if not production and not staging:
-            return []
 
         dir_to_search = None
         if cls.openpype_path_is_accessible():
@@ -476,14 +354,7 @@ class OpenPypeVersion(semver.VersionInfo):
 
         versions = cls.get_versions_from_directory(dir_to_search)
 
-        filtered_versions = []
-        for version in versions:
-            if version.is_staging():
-                if staging:
-                    filtered_versions.append(version)
-            elif production:
-                filtered_versions.append(version)
-        return list(sorted(set(filtered_versions)))
+        return list(sorted(set(versions)))
 
     @staticmethod
     def get_versions_from_directory(
@@ -562,7 +433,6 @@ class OpenPypeVersion(semver.VersionInfo):
 
     @staticmethod
     def get_latest_version(
-        staging: bool = False,
         local: bool = None,
         remote: bool = None
     ) -> Union[OpenPypeVersion, None]:
@@ -571,7 +441,6 @@ class OpenPypeVersion(semver.VersionInfo):
         The version does not contain information about path and source.
 
         This is utility version to get the latest version from all found.
-        Build version is not listed if staging is enabled.
 
         Arguments 'local' and 'remote' define if local and remote repository
         versions are used. All versions are used if both are not set (or set
@@ -580,7 +449,6 @@ class OpenPypeVersion(semver.VersionInfo):
         'False' in that case only build version can be used.
 
         Args:
-            staging (bool, optional): List staging versions if True.
             local (bool, optional): List local versions if True.
             remote (bool, optional): List remote versions if True.
 
@@ -599,22 +467,9 @@ class OpenPypeVersion(semver.VersionInfo):
             remote = True
 
         installed_version = OpenPypeVersion.get_installed_version()
-        local_versions = []
-        remote_versions = []
-        if local:
-            local_versions = OpenPypeVersion.get_local_versions(
-                staging=staging
-            )
-        if remote:
-            remote_versions = OpenPypeVersion.get_remote_versions(
-                staging=staging
-            )
-        all_versions = local_versions + remote_versions
-        if not staging:
-            all_versions.append(installed_version)
-
-        if not all_versions:
-            return None
+        local_versions = OpenPypeVersion.get_local_versions() if local else []
+        remote_versions = OpenPypeVersion.get_remote_versions() if remote else []  # noqa: E501
+        all_versions = local_versions + remote_versions + [installed_version]
 
         all_versions.sort()
         return all_versions[-1]
@@ -705,7 +560,7 @@ class BootstrapRepos:
         """Get path for specific version in list of OpenPype versions.
 
         Args:
-            version (str): Version string to look for (1.2.4+staging)
+            version (str): Version string to look for (1.2.4-nightly.1+test)
             version_list (list of OpenPypeVersion): list of version to search.
 
         Returns:
@@ -807,6 +662,8 @@ class BootstrapRepos:
         """
         version = OpenPypeVersion.version_in_str(zip_file.name)
         destination_dir = self.data_dir / f"{version.major}.{version.minor}"
+        if not destination_dir.exists():
+            destination_dir.mkdir(parents=True)
         destination = destination_dir / zip_file.name
 
         if destination.exists():
@@ -1131,14 +988,12 @@ class BootstrapRepos:
 
     @staticmethod
     def find_openpype_version(
-            version: Union[str, OpenPypeVersion],
-            staging: bool
+            version: Union[str, OpenPypeVersion]
     ) -> Union[OpenPypeVersion, None]:
         """Find location of specified OpenPype version.
 
         Args:
             version (Union[str, OpenPypeVersion): Version to find.
-            staging (bool): Filter staging versions.
 
         Returns:
             requested OpenPypeVersion.
@@ -1151,9 +1006,7 @@ class BootstrapRepos:
         if installed_version == version:
             return installed_version
 
-        local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging, production=not staging
-        )
+        local_versions = OpenPypeVersion.get_local_versions()
         zip_version = None
         for local_version in local_versions:
             if local_version == version:
@@ -1165,37 +1018,25 @@ class BootstrapRepos:
         if zip_version is not None:
             return zip_version
 
-        remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging, production=not staging
-        )
-        for remote_version in remote_versions:
-            if remote_version == version:
-                return remote_version
-        return None
+        remote_versions = OpenPypeVersion.get_remote_versions()
+        return next(
+            (
+                remote_version for remote_version in remote_versions
+                if remote_version == version
+            ), None)
 
     @staticmethod
-    def find_latest_openpype_version(
-            staging: bool
-    ) -> Union[OpenPypeVersion, None]:
+    def find_latest_openpype_version() -> Union[OpenPypeVersion, None]:
         """Find the latest available OpenPype version in all location.
-
-        Args:
-            staging (bool): True to look for staging versions.
 
         Returns:
             Latest OpenPype version on None if nothing was found.
 
         """
         installed_version = OpenPypeVersion.get_installed_version()
-        local_versions = OpenPypeVersion.get_local_versions(
-            staging=staging
-        )
-        remote_versions = OpenPypeVersion.get_remote_versions(
-            staging=staging
-        )
-        all_versions = local_versions + remote_versions
-        if not staging:
-            all_versions.append(installed_version)
+        local_versions = OpenPypeVersion.get_local_versions()
+        remote_versions = OpenPypeVersion.get_remote_versions()
+        all_versions = local_versions + remote_versions + [installed_version]
 
         if not all_versions:
             return None
@@ -1215,7 +1056,6 @@ class BootstrapRepos:
     def find_openpype(
             self,
             openpype_path: Union[Path, str] = None,
-            staging: bool = False,
             include_zips: bool = False
     ) -> Union[List[OpenPypeVersion], None]:
         """Get ordered dict of detected OpenPype version.
@@ -1229,8 +1069,6 @@ class BootstrapRepos:
         Args:
             openpype_path (Path or str, optional): Try to find OpenPype on
                 the given path or url.
-            staging (bool, optional): Filter only staging version, skip them
-                otherwise.
             include_zips (bool, optional): If set True it will try to find
                 OpenPype in zip files in given directory.
 
@@ -1278,7 +1116,7 @@ class BootstrapRepos:
         for dir_to_search in dirs_to_search:
             try:
                 openpype_versions += self.get_openpype_versions(
-                    dir_to_search, staging)
+                    dir_to_search)
             except ValueError:
                 # location is invalid, skip it
                 pass
@@ -1643,15 +1481,11 @@ class BootstrapRepos:
             return False
         return True
 
-    def get_openpype_versions(
-            self,
-            openpype_dir: Path,
-            staging: bool = False) -> list:
+    def get_openpype_versions(self, openpype_dir: Path) -> list:
         """Get all detected OpenPype versions in directory.
 
         Args:
             openpype_dir (Path): Directory to scan.
-            staging (bool, optional): Find staging versions if True.
 
         Returns:
             list of OpenPypeVersion
@@ -1669,8 +1503,7 @@ class BootstrapRepos:
         for item in openpype_dir.iterdir():
             # if the item is directory with major.minor version, dive deeper
             if item.is_dir() and re.match(r"^\d+\.\d+$", item.name):
-                _versions = self.get_openpype_versions(
-                    item, staging=staging)
+                _versions = self.get_openpype_versions(item)
                 if _versions:
                     openpype_versions += _versions
 
@@ -1693,11 +1526,7 @@ class BootstrapRepos:
                     continue
 
                 detected_version.path = item
-                if staging and detected_version.is_staging():
-                    openpype_versions.append(detected_version)
-
-                if not staging and not detected_version.is_staging():
-                    openpype_versions.append(detected_version)
+                openpype_versions.append(detected_version)
 
         return sorted(openpype_versions)
 

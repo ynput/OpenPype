@@ -43,14 +43,15 @@ def parse_layers_data(data):
             layer_id, group_id, visible, position, opacity, name,
             layer_type,
             frame_start, frame_end, prelighttable, postlighttable,
-            selected, editable, sencil_state
+            selected, editable, sencil_state, is_current
         ) = layer_raw.split("|")
         layer = {
             "layer_id": int(layer_id),
             "group_id": int(group_id),
             "visible": visible == "ON",
             "position": int(position),
-            "opacity": int(opacity),
+            # Opacity from 'tv_layerinfo' is always set to '0' so it's unusable
+            # "opacity": int(opacity),
             "name": name,
             "type": layer_type,
             "frame_start": int(frame_start),
@@ -59,7 +60,8 @@ def parse_layers_data(data):
             "postlighttable": postlighttable == "1",
             "selected": selected == "1",
             "editable": editable == "1",
-            "sencil_state": sencil_state
+            "sencil_state": sencil_state,
+            "is_current": is_current == "1"
         }
         layers.append(layer)
     return layers
@@ -87,15 +89,17 @@ def get_layers_data_george_script(output_filepath, layer_ids=None):
             " selected editable sencilState"
         ),
         # Check if layer ID match `tv_LayerCurrentID`
+        "is_current=0",
         "IF CMP(current_layer_id, layer_id)==1",
         # - mark layer as selected if layer id match to current layer id
+        "is_current=1",
         "selected=1",
         "END",
         # Prepare line with data separated by "|"
         (
             "line = layer_id'|'group_id'|'visible'|'position'|'opacity'|'"
             "name'|'type'|'startFrame'|'endFrame'|'prelighttable'|'"
-            "postlighttable'|'selected'|'editable'|'sencilState"
+            "postlighttable'|'selected'|'editable'|'sencilState'|'is_current"
         ),
         # Write data to output file
         "tv_writetextfile \"strict\" \"append\" '\"'output_path'\"' line",
@@ -202,8 +206,9 @@ def get_groups_data(communicator=None):
         # Variable containing full path to output file
         "output_path = \"{}\"".format(output_filepath),
         "empty = 0",
-        # Loop over 100 groups
-        "FOR idx = 1 TO 100",
+        # Loop over 26 groups which is ATM maximum possible (in 11.7)
+        # - ref: https://www.tvpaint.com/forum/viewtopic.php?t=13880
+        "FOR idx = 1 TO 26",
         # Receive information about groups
         "tv_layercolor \"getcolor\" 0 idx",
         "PARSE result clip_id group_index c_red c_green c_blue group_name",

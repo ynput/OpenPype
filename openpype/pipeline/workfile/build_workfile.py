@@ -120,6 +120,8 @@ class BuildWorkfile:
         # Prepare available loaders
         loaders_by_name = {}
         for loader in discover_loader_plugins():
+            if not loader.enabled:
+                continue
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(
@@ -184,7 +186,7 @@ class BuildWorkfile:
 
         if link_context_profiles:
             # Find and append linked assets if preset has set linked mapping
-            link_assets = get_linked_assets(current_asset_entity)
+            link_assets = get_linked_assets(project_name, current_asset_entity)
             if link_assets:
                 assets.extend(link_assets)
 

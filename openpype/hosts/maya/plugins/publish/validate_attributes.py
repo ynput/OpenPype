@@ -1,13 +1,17 @@
-import pymel.core as pm
+from collections import defaultdict
+
+from maya import cmds
 
 import pyblish.api
+
+from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
-    RepairContextAction,
+    RepairAction,
     ValidateContentsOrder,
 )
 
 
-class ValidateAttributes(pyblish.api.ContextPlugin):
+class ValidateAttributes(pyblish.api.InstancePlugin):
     """Ensure attributes are consistent.
 
     Attributes to validate and their values comes from the
@@ -22,91 +26,85 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
     order = ValidateContentsOrder
     label = "Attributes"
     hosts = ["maya"]
-    actions = [RepairContextAction]
+    actions = [RepairAction]
     optional = True
 
     attributes = None
 
-    def process(self, context):
+    def process(self, instance):
         # Check for preset existence.
-
         if not self.attributes:
             return
 
-        invalid = self.get_invalid(context, compute=True)
+        invalid = self.get_invalid(instance, compute=True)
         if invalid:
             raise RuntimeError(
                 "Found attributes with invalid values: {}".format(invalid)
             )
 
     @classmethod
-    def get_invalid(cls, context, compute=False):
-        invalid = context.data.get("invalid_attributes", [])
+    def get_invalid(cls, instance, compute=False):
         if compute:
-            invalid = cls.get_invalid_attributes(context)
-
-        return invalid
+            return cls.get_invalid_attributes(instance)
+        else:
+            return instance.data.get("invalid_attributes", [])
 
     @classmethod
-    def get_invalid_attributes(cls, context):
+    def get_invalid_attributes(cls, instance):
         invalid_attributes = []
-        for instance in context:
-            # Filter publisable instances.
-            if not instance.data["publish"]:
+
+        # Filter families.
+        families = [instance.data["family"]]
+        families += instance.data.get("families", [])
+        families = set(families) & set(cls.attributes.keys())
+        if not families:
+            return []
+
+        # Get all attributes to validate.
+        attributes = defaultdict(dict)
+        for family in families:
+            if family not in cls.attributes:
+                # No attributes to validate for family
                 continue
 
-            # Filter families.
-            families = [instance.data["family"]]
-            families += instance.data.get("families", [])
-            families = list(set(families) & set(self.attributes.keys()))
-            if not families:
+            for preset_attr, preset_value in cls.attributes[family].items():
+                node_name, attribute_name = preset_attr.split(".", 1)
+                attributes[node_name][attribute_name] = preset_value
+
+        if not attributes:
+            return []
+
+        # Get invalid attributes.
+        nodes = cmds.ls(long=True)
+        for node in nodes:
+            node_name = node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
+            if node_name not in attributes:
                 continue
 
-            # Get all attributes to validate.
-            attributes = {}
-            for family in families:
-                for preset in self.attributes[family]:
-                    [node_name, attribute_name] = preset.split(".")
-                    try:
-                        attributes[node_name].update(
-                            {attribute_name: self.attributes[family][preset]}
-                        )
-                    except KeyError:
-                        attributes.update({
-                            node_name: {
-                                attribute_name: self.attributes[family][preset]
-                            }
-                        })
+            for attr_name, expected in attributes[node_name].items():
 
-            # Get invalid attributes.
-            nodes = pm.ls()
-            for node in nodes:
-                name = node.name(stripNamespace=True)
-                if name not in attributes.keys():
+                # Skip if attribute does not exist
+                if not cmds.attributeQuery(attr_name, node=node, exists=True):
                     continue
 
-                presets_to_validate = attributes[name]
-                for attribute in node.listAttr():
-                    names = [attribute.shortName(), attribute.longName()]
-                    attribute_name = list(
-                        set(names) & set(presets_to_validate.keys())
+                plug = "{}.{}".format(node, attr_name)
+                value = cmds.getAttr(plug)
+                if value != expected:
+                    invalid_attributes.append(
+                        {
+                            "attribute": plug,
+                            "expected": expected,
+                            "current": value
+                        }
                     )
-                    if attribute_name:
-                        expected = presets_to_validate[attribute_name[0]]
-                        if attribute.get() != expected:
-                            invalid_attributes.append(
-                                {
-                                    "attribute": attribute,
-                                    "expected": expected,
-                                    "current": attribute.get()
-                                }
-                            )
 
-        context.data["invalid_attributes"] = invalid_attributes
+        instance.data["invalid_attributes"] = invalid_attributes
         return invalid_attributes
 
     @classmethod
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         for data in invalid:
-            data["attribute"].set(data["expected"])
+            node, attr = data["attribute"].split(".", 1)
+            value = data["expected"]
+            set_attribute(node=node, attribute=attr, value=value)

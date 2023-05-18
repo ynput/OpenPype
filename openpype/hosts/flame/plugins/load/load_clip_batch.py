@@ -4,7 +4,10 @@ import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
-
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 class LoadClipBatch(opfapi.ClipLoader):
     """Load a subset to timeline as clip
@@ -14,7 +17,10 @@ class LoadClipBatch(opfapi.ClipLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip to current batch"
     order = -10
@@ -52,11 +58,11 @@ class LoadClipBatch(opfapi.ClipLoader):
             self.layer_rename_template = self.layer_rename_template.replace(
                 "output", "representation")
 
-        formating_data = deepcopy(context["representation"]["context"])
-        formating_data["batch"] = self.batch.name.get_value()
+        formatting_data = deepcopy(context["representation"]["context"])
+        formatting_data["batch"] = self.batch.name.get_value()
 
         clip_name = StringTemplate(self.clip_name_template).format(
-            formating_data)
+            formatting_data)
 
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
@@ -82,7 +88,7 @@ class LoadClipBatch(opfapi.ClipLoader):
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,
             "layer_rename_patterns": self.layer_rename_patterns,
-            "context_data": formating_data
+            "context_data": formatting_data
         }
         self.log.debug(pformat(
             loading_context

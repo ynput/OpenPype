@@ -8,10 +8,13 @@ import tempfile
 import shutil
 import glob
 import platform
+import requests
 import re
 
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from openpype.modules import ModulesManager
+from openpype.settings import get_project_settings
 
 
 class BaseTest:
@@ -26,6 +29,7 @@ class ModuleUnitTest(BaseTest):
 
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
+            project_settings - fixture for project settings with session scope
             download_test_data - tmp folder with extracted data from GDrive
             env_var - sets env vars from input file
             db_setup - prepares avalon AND openpype DBs for testing from
@@ -57,6 +61,12 @@ class ModuleUnitTest(BaseTest):
         yield m
         m.undo()
 
+    @pytest.fixture(scope='module')
+    def project_settings(self):
+        yield get_project_settings(
+            self.PROJECT
+        )
+
     @pytest.fixture(scope="module")
     def download_test_data(self, test_data_folder, persist, request):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
@@ -65,6 +75,7 @@ class ModuleUnitTest(BaseTest):
             yield test_data_folder
         else:
             tmpdir = tempfile.mkdtemp()
+            print("Temporary folder created:: {}".format(tmpdir))
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
@@ -76,7 +87,6 @@ class ModuleUnitTest(BaseTest):
 
                 if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-                print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
@@ -84,6 +94,15 @@ class ModuleUnitTest(BaseTest):
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
+
+    @pytest.fixture(scope="module")
+    def output_folder_url(self, download_test_data):
+        """Returns location of published data, cleans it first if exists."""
+        path = os.path.join(download_test_data, "output")
+        if os.path.exists(path):
+            print("Purging {}".format(path))
+            shutil.rmtree(path)
+        yield path
 
     @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):
@@ -150,14 +169,27 @@ class ModuleUnitTest(BaseTest):
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, db_setup):
+    def dbcon(self, db_setup, output_folder_url):
         """Provide test database connection.
 
             Database prepared from dumps with 'db_setup' fixture.
         """
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
+        dbcon.Session["AVALON_PROJECT"] = self.PROJECT
+        dbcon.Session["AVALON_ASSET"] = self.ASSET
+        dbcon.Session["AVALON_TASK"] = self.TASK
+
+        # set project root to temp folder
+        platform_str = platform.system().lower()
+        root_key = "config.roots.work.{}".format(platform_str)
+        dbcon.update_one(
+            {"type": "project"},
+            {"$set":
+                {
+                    root_key: output_folder_url
+                }}
+        )
         yield dbcon
 
     @pytest.fixture(scope="module")
@@ -211,6 +243,8 @@ class PublishTest(ModuleUnitTest):
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
     TEST_DATA_FOLDER = None  # use specific folder of unzipped test file
 
+    SETUP_ONLY = False
+
     @pytest.fixture(scope="module")
     def app_name(self, app_variant):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
@@ -225,15 +259,6 @@ class PublishTest(ModuleUnitTest):
             app_variant = variant.name
 
         yield "{}/{}".format(self.APP_GROUP, app_variant)
-
-    @pytest.fixture(scope="module")
-    def output_folder_url(self, download_test_data):
-        """Returns location of published data, cleans it first if exists."""
-        path = os.path.join(download_test_data, "output")
-        if os.path.exists(path):
-            print("Purging {}".format(path))
-            shutil.rmtree(path)
-        yield path
 
     @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
@@ -263,19 +288,13 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts, app_args, app_name, output_folder_url):
+                     startup_scripts, app_args, app_name, output_folder_url,
+                     setup_only):
         """Launch host app"""
-        # set publishing folders
-        platform_str = platform.system().lower()
-        root_key = "config.roots.work.{}".format(platform_str)
-        dbcon.update_one(
-            {"type": "project"},
-            {"$set":
-                {
-                    root_key: output_folder_url
-                }}
-        )
-
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            yield
+            return
         # set schema - for integrate_new
         from openpype import PACKAGE_DIR
         # Path to OpenPype's schema
@@ -304,8 +323,12 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout):
+                         timeout, setup_only):
         """Dummy fixture waiting for publish to finish"""
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            yield False
+            return
         import time
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
@@ -322,11 +345,16 @@ class PublishTest(ModuleUnitTest):
 
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,
-                                   skip_compare_folders):
+                                   skip_compare_folders,
+                                   setup_only):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
+        if setup_only or self.SETUP_ONLY:
+            print("Creating only setup for test, not launching app")
+            return
+
         published_dir_base = output_folder_url
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
@@ -364,6 +392,69 @@ class PublishTest(ModuleUnitTest):
                 filtered.add(file_path)
 
         return filtered
+
+
+class DeadlinePublishTest(PublishTest):
+    @pytest.fixture(scope="module")
+    def publish_finished(self, dbcon, launched_app, download_test_data,
+                         timeout):
+        """Dummy fixture waiting for publish to finish"""
+        import time
+        time_start = time.time()
+        timeout = timeout or self.TIMEOUT
+        timeout = float(timeout)
+        while launched_app.poll() is None:
+            time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                raise ValueError("Timeout reached")
+
+        metadata_json = glob.glob(os.path.join(download_test_data,
+                                               "output",
+                                               "**/*_metadata.json"),
+                                  recursive=True)
+        if not metadata_json:
+            raise RuntimeError("No metadata file found. No job id.")
+
+        if len(metadata_json) > 1:
+            # depends on creation order of published jobs
+            metadata_json.sort(key=os.path.getmtime, reverse=True)
+
+        with open(metadata_json[0]) as fp:
+            job_info = json.load(fp)
+
+        deadline_job_id = job_info["deadline_publish_job_id"]
+
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+
+        if not deadline_url:
+            raise ValueError("Must have default deadline url.")
+
+        url = "{}/api/jobs?JobId={}".format(deadline_url, deadline_job_id)
+        valid_date_finished = None
+
+        time_start = time.time()
+        while not valid_date_finished:
+            time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                raise ValueError("Timeout for DL finish reached")
+
+            response = requests.get(url, timeout=10)
+            if not response.ok:
+                msg = "Couldn't connect to {}".format(deadline_url)
+                raise RuntimeError(msg)
+
+            if not response.json():
+                raise ValueError("Couldn't find {}".format(deadline_job_id))
+
+            # '0001-...' returned until job is finished
+            valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
+
+        # some clean exit test possible?
+        print("Publish finished")
+        yield True
 
 
 class HostFixtures():

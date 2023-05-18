@@ -1,5 +1,5 @@
 from math import floor, sqrt, ceil
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 
@@ -166,7 +166,27 @@ class NiceCheckbox(QtWidgets.QFrame):
     def isChecked(self):
         return self._checked
 
+    def _checkstate_int_to_enum(self, state):
+        if not isinstance(state, int):
+            return state
+
+        if state == 2:
+            return QtCore.Qt.Checked
+        if state == 1:
+            return QtCore.Qt.PartiallyChecked
+        return QtCore.Qt.Unchecked
+
+    def _checkstate_enum_to_int(self, state):
+        if isinstance(state, int):
+            return state
+        if state == QtCore.Qt.Checked:
+            return 2
+        if state == QtCore.Qt.PartiallyChecked:
+            return 1
+        return 0
+
     def setCheckState(self, state):
+        state = self._checkstate_int_to_enum(state)
         if self._checkstate == state:
             return
 
@@ -176,7 +196,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         elif state == QtCore.Qt.Unchecked:
             self._checked = False
 
-        self.stateChanged.emit(self.checkState())
+        self.stateChanged.emit(self._checkstate_enum_to_int(self.checkState()))
 
         if self._animation_timer.isActive():
             self._animation_timer.stop()

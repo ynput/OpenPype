@@ -9,7 +9,6 @@ import six
 import time
 
 from openpype.settings.lib import (
-    get_project_settings,
     get_local_settings,
 )
 from openpype.settings.constants import (
@@ -20,11 +19,12 @@ from openpype.client import get_project
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
+    StringTemplate,
     TemplatesDict,
     FormatObject,
 )
 from openpype.lib.log import Logger
-from openpype.lib import get_local_site_id
+from openpype.modules import ModulesManager
 
 log = Logger.get_logger(__name__)
 
@@ -57,19 +57,13 @@ class BaseAnatomy(object):
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_doc, local_settings, site_name):
+    def __init__(self, project_doc, root_overrides=None):
         project_name = project_doc["name"]
         self.project_name = project_name
-
-        if (site_name and
-                site_name not in ["studio", "local", get_local_site_id()]):
-            raise RuntimeError("Anatomy could be created only for default "
-                               "local sites not for {}".format(site_name))
-
-        self._site_name = site_name
+        self.project_code = project_doc["data"]["code"]
 
         self._data = self._prepare_anatomy_data(
-            project_doc, local_settings, site_name
+            project_doc, root_overrides
         )
         self._templates_obj = AnatomyTemplates(self)
         self._roots_obj = Roots(self)
@@ -91,28 +85,18 @@ class BaseAnatomy(object):
     def items(self):
         return copy.deepcopy(self._data).items()
 
-    def _prepare_anatomy_data(self, project_doc, local_settings, site_name):
+    def _prepare_anatomy_data(self, project_doc, root_overrides):
         """Prepare anatomy data for further processing.
 
         Method added to replace `{task}` with `{task[name]}` in templates.
         """
-        project_name = project_doc["name"]
+
         anatomy_data = self._project_doc_to_anatomy_data(project_doc)
 
-        templates_data = anatomy_data.get("templates")
-        if templates_data:
-            # Replace `{task}` with `{task[name]}` in templates
-            value_queue = collections.deque()
-            value_queue.append(templates_data)
-            while value_queue:
-                item = value_queue.popleft()
-                if not isinstance(item, dict):
-                    continue
-
-        self._apply_local_settings_on_anatomy_data(anatomy_data,
-                                                   local_settings,
-                                                   project_name,
-                                                   site_name)
+        self._apply_local_settings_on_anatomy_data(
+            anatomy_data,
+            root_overrides
+        )
 
         return anatomy_data
 
@@ -346,7 +330,7 @@ class BaseAnatomy(object):
         return output
 
     def _apply_local_settings_on_anatomy_data(
-        self, anatomy_data, local_settings, project_name, site_name
+        self, anatomy_data, root_overrides
     ):
         """Apply local settings on anatomy data.
 
@@ -365,13 +349,138 @@ class BaseAnatomy(object):
 
         Args:
             anatomy_data (dict): Data for anatomy.
-            local_settings (dict): Data of local settings.
-            project_name (str): Name of project for which anatomy data are.
+            root_overrides (dict): Data of local settings.
         """
-        if not local_settings:
+
+        # Skip processing if roots for current active site are not available in
+        #   local settings
+        if not root_overrides:
             return
 
+        current_platform = platform.system().lower()
+
+        root_data = anatomy_data["roots"]
+        for root_name, path in root_overrides.items():
+            if root_name not in root_data:
+                continue
+            anatomy_data["roots"][root_name][current_platform] = (
+                path
+            )
+
+
+class CacheItem:
+    """Helper to cache data.
+
+    Helper does not handle refresh of data and does not mark data as outdated.
+    Who uses the object should check of outdated state on his own will.
+    """
+
+    default_lifetime = 10
+
+    def __init__(self, lifetime=None):
+        self._data = None
+        self._cached = None
+        self._lifetime = lifetime or self.default_lifetime
+
+    @property
+    def data(self):
+        """Cached data/object.
+
+        Returns:
+            Any: Whatever was cached.
+        """
+
+        return self._data
+
+    @property
+    def is_outdated(self):
+        """Item has outdated cache.
+
+        Lifetime of cache item expired or was not yet set.
+
+        Returns:
+            bool: Item is outdated.
+        """
+
+        if self._cached is None:
+            return True
+        return (time.time() - self._cached) > self._lifetime
+
+    def update_data(self, data):
+        """Update cache of data.
+
+        Args:
+            data (Any): Data to cache.
+        """
+
+        self._data = data
+        self._cached = time.time()
+
+
+class Anatomy(BaseAnatomy):
+    _sync_server_addon_cache = CacheItem()
+    _project_cache = collections.defaultdict(CacheItem)
+    _default_site_id_cache = collections.defaultdict(CacheItem)
+    _root_overrides_cache = collections.defaultdict(
+        lambda: collections.defaultdict(CacheItem)
+    )
+
+    def __init__(self, project_name=None, site_name=None):
+        if not project_name:
+            project_name = os.environ.get("AVALON_PROJECT")
+
+        if not project_name:
+            raise ProjectNotSet((
+                "Implementation bug: Project name is not set. Anatomy requires"
+                " to load data for specific project."
+            ))
+
+        project_doc = self.get_project_doc_from_cache(project_name)
+        root_overrides = self._get_site_root_overrides(project_name, site_name)
+
+        super(Anatomy, self).__init__(project_doc, root_overrides)
+
+    @classmethod
+    def get_project_doc_from_cache(cls, project_name):
+        project_cache = cls._project_cache[project_name]
+        if project_cache.is_outdated:
+            project_cache.update_data(get_project(project_name))
+        return copy.deepcopy(project_cache.data)
+
+    @classmethod
+    def get_sync_server_addon(cls):
+        if cls._sync_server_addon_cache.is_outdated:
+            manager = ModulesManager()
+            cls._sync_server_addon_cache.update_data(
+                manager.get_enabled_module("sync_server")
+            )
+        return cls._sync_server_addon_cache.data
+
+    @classmethod
+    def _get_studio_roots_overrides(cls, project_name, local_settings=None):
+        """This would return 'studio' site override by local settings.
+
+        Notes:
+            This logic handles local overrides of studio site which may be
+                available even when sync server is not enabled.
+            Handling of 'studio' and 'local' site was separated as preparation
+                for AYON development where that will be received from
+                separated sources.
+
+        Args:
+            project_name (str): Name of project.
+            local_settings (Optional[dict[str, Any]]): Prepared local settings.
+
+        Returns:
+            Union[Dict[str, str], None]): Local root overrides.
+        """
+
+        if local_settings is None:
+            local_settings = get_local_settings()
+
         local_project_settings = local_settings.get("projects") or {}
+        if not local_project_settings:
+            return None
 
         # Check for roots existence in local settings first
         roots_project_locals = (
@@ -388,106 +497,59 @@ class BaseAnatomy(object):
             return
 
         # Combine roots from local settings
-        roots_locals = roots_default_locals.get(site_name) or {}
-        roots_locals.update(roots_project_locals.get(site_name) or {})
-        # Skip processing if roots for current active site are not available in
-        #   local settings
-        if not roots_locals:
-            return
-
-        current_platform = platform.system().lower()
-
-        root_data = anatomy_data["roots"]
-        for root_name, path in roots_locals.items():
-            if root_name not in root_data:
-                continue
-            anatomy_data["roots"][root_name][current_platform] = (
-                path
-            )
-
-
-class Anatomy(BaseAnatomy):
-    _project_cache = {}
-    _site_cache = {}
-
-    def __init__(self, project_name=None, site_name=None):
-        if not project_name:
-            project_name = os.environ.get("AVALON_PROJECT")
-
-        if not project_name:
-            raise ProjectNotSet((
-                "Implementation bug: Project name is not set. Anatomy requires"
-                " to load data for specific project."
-            ))
-
-        project_doc = self.get_project_doc_from_cache(project_name)
-        local_settings = get_local_settings()
-        if not site_name:
-            site_name = self.get_site_name_from_cache(
-                project_name, local_settings
-            )
-
-        super(Anatomy, self).__init__(
-            project_doc,
-            local_settings,
-            site_name
-        )
+        roots_locals = roots_default_locals.get("studio") or {}
+        roots_locals.update(roots_project_locals.get("studio") or {})
+        return roots_locals
 
     @classmethod
-    def get_project_doc_from_cache(cls, project_name):
-        project_cache = cls._project_cache.get(project_name)
-        if project_cache is not None:
-            if time.time() - project_cache["start"] > 10:
-                cls._project_cache.pop(project_name)
-                project_cache = None
+    def _get_site_root_overrides(cls, project_name, site_name):
+        """Get root overrides for site.
 
-        if project_cache is None:
-            project_cache = {
-                "project_doc": get_project(project_name),
-                "start": time.time()
-            }
-            cls._project_cache[project_name] = project_cache
+        Args:
+            project_name (str): Project name for which root overrides should be
+                received.
+            site_name (Union[str, None]): Name of site for which root overrides
+                should be returned.
+        """
 
-        return copy.deepcopy(
-            cls._project_cache[project_name]["project_doc"]
-        )
+        # Local settings may be used more than once or may not be used at all
+        # - to avoid slowdowns 'get_local_settings' is not called until it's
+        #   really needed
+        local_settings = None
 
-    @classmethod
-    def get_site_name_from_cache(cls, project_name, local_settings):
-        site_cache = cls._site_cache.get(project_name)
-        if site_cache is not None:
-            if time.time() - site_cache["start"] > 10:
-                cls._site_cache.pop(project_name)
-                site_cache = None
+        # First check if sync server is available and enabled
+        sync_server = cls.get_sync_server_addon()
+        if sync_server is None or not sync_server.enabled:
+            # QUESTION is ok to force 'studio' when site sync is not enabled?
+            site_name = "studio"
 
-        if site_cache:
-            return site_cache["site_name"]
+        elif not site_name:
+            # Use sync server to receive active site name
+            project_cache = cls._default_site_id_cache[project_name]
+            if project_cache.is_outdated:
+                local_settings = get_local_settings()
+                project_cache.update_data(
+                    sync_server.get_active_site_type(
+                        project_name, local_settings
+                    )
+                )
+            site_name = project_cache.data
 
-        local_project_settings = local_settings.get("projects")
-        if not local_project_settings:
-            return
-
-        project_locals = local_project_settings.get(project_name) or {}
-        default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
-        active_site = (
-            project_locals.get("active_site")
-            or default_locals.get("active_site")
-        )
-        if not active_site:
-            project_settings = get_project_settings(project_name)
-            active_site = (
-                project_settings
-                ["global"]
-                ["sync_server"]
-                ["config"]
-                ["active_site"]
-            )
-
-        cls._site_cache[project_name] = {
-            "site_name": active_site,
-            "start": time.time()
-        }
-        return active_site
+        site_cache = cls._root_overrides_cache[project_name][site_name]
+        if site_cache.is_outdated:
+            if site_name == "studio":
+                # Handle studio root overrides without sync server
+                # - studio root overrides can be done even without sync server
+                roots_overrides = cls._get_studio_roots_overrides(
+                    project_name, local_settings
+                )
+            else:
+                # Ask sync server to get roots overrides
+                roots_overrides = sync_server.get_site_root_overrides(
+                    project_name, site_name, local_settings
+                )
+            site_cache.update_data(roots_overrides)
+        return site_cache.data
 
 
 class AnatomyTemplateUnsolved(TemplateUnsolved):
@@ -545,6 +607,32 @@ class AnatomyTemplateResult(TemplateResult):
         return self.__class__(tmp, self.rootless)
 
 
+class AnatomyStringTemplate(StringTemplate):
+    """String template which has access to anatomy."""
+
+    def __init__(self, anatomy_templates, template):
+        self.anatomy_templates = anatomy_templates
+        super(AnatomyStringTemplate, self).__init__(template)
+
+    def format(self, data):
+        """Format template and add 'root' key to data if not available.
+
+        Args:
+            data (dict[str, Any]): Formatting data for template.
+
+        Returns:
+            AnatomyTemplateResult: Formatting result.
+        """
+
+        anatomy_templates = self.anatomy_templates
+        if not data.get("root"):
+            data = copy.deepcopy(data)
+            data["root"] = anatomy_templates.anatomy.roots
+        result = StringTemplate.format(self, data)
+        rootless_path = anatomy_templates.rootless_path_from_result(result)
+        return AnatomyTemplateResult(result, rootless_path)
+
+
 class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
@@ -553,12 +641,6 @@ class AnatomyTemplates(TemplatesDict):
         super(AnatomyTemplates, self).__init__()
         self.anatomy = anatomy
         self.loaded_project = None
-
-    def __getitem__(self, key):
-        return self.templates[key]
-
-    def get(self, key, default=None):
-        return self.templates.get(key, default)
 
     def reset(self):
         self._raw_templates = None
@@ -594,12 +676,7 @@ class AnatomyTemplates(TemplatesDict):
     def _format_value(self, value, data):
         if isinstance(value, RootItem):
             return self._solve_dict(value, data)
-
-        result = super(AnatomyTemplates, self)._format_value(value, data)
-        if isinstance(result, TemplateResult):
-            rootless_path = self._rootless_path(result, data)
-            result = AnatomyTemplateResult(result, rootless_path)
-        return result
+        return super(AnatomyTemplates, self)._format_value(value, data)
 
     def set_templates(self, templates):
         if not templates:
@@ -628,9 +705,12 @@ class AnatomyTemplates(TemplatesDict):
 
         solved_templates = self.solve_template_inner_links(templates)
         self._templates = solved_templates
-        self._objected_templates = self.create_ojected_templates(
+        self._objected_templates = self.create_objected_templates(
             solved_templates
         )
+
+    def _create_template_object(self, template):
+        return AnatomyStringTemplate(self, template)
 
     def default_templates(self):
         """Return default templates data with solved inner keys."""
@@ -825,7 +905,8 @@ class AnatomyTemplates(TemplatesDict):
 
         return keys_by_subkey
 
-    def _dict_to_subkeys_list(self, subdict, pre_keys=None):
+    @classmethod
+    def _dict_to_subkeys_list(cls, subdict, pre_keys=None):
         if pre_keys is None:
             pre_keys = []
         output = []
@@ -834,7 +915,7 @@ class AnatomyTemplates(TemplatesDict):
             result = list(pre_keys)
             result.append(key)
             if isinstance(value, dict):
-                for item in self._dict_to_subkeys_list(value, result):
+                for item in cls._dict_to_subkeys_list(value, result):
                     output.append(item)
             else:
                 output.append(result)
@@ -847,7 +928,17 @@ class AnatomyTemplates(TemplatesDict):
             return {key_list[0]: value}
         return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
 
-    def _rootless_path(self, result, final_data):
+    @classmethod
+    def rootless_path_from_result(cls, result):
+        """Calculate rootless path from formatting result.
+
+        Args:
+            result (TemplateResult): Result of StringTemplate formatting.
+
+        Returns:
+            str: Rootless path if result contains one of anatomy roots.
+        """
+
         used_values = result.used_values
         missing_keys = result.missing_keys
         template = result.template
@@ -863,7 +954,7 @@ class AnatomyTemplates(TemplatesDict):
             if "root" in invalid_type:
                 return
 
-        root_keys = self._dict_to_subkeys_list({"root": used_values["root"]})
+        root_keys = cls._dict_to_subkeys_list({"root": used_values["root"]})
         if not root_keys:
             return
 
@@ -1112,14 +1203,18 @@ class RootItem(FormatObject):
         result = False
         output = str(path)
 
-        root_paths = list(self.cleaned_data.values())
         mod_path = self.clean_path(path)
-        for root_path in root_paths:
+        for root_os, root_path in self.cleaned_data.items():
             # Skip empty paths
             if not root_path:
                 continue
 
-            if mod_path.startswith(root_path):
+            _mod_path = mod_path  # reset to original cleaned value
+            if root_os == "windows":
+                root_path = root_path.lower()
+                _mod_path = _mod_path.lower()
+
+            if _mod_path.startswith(root_path):
                 result = True
                 replacement = "{" + self.full_key() + "}"
                 output = replacement + mod_path[len(root_path):]

@@ -20,6 +20,8 @@ class ValidateOnlineFile(OptionalPyblishPluginMixin,
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         project_name = instance.context.data["projectName"]
         asset_id = instance.data["assetEntity"]["_id"]
         subset = get_subset_by_name(

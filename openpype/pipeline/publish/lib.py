@@ -7,19 +7,30 @@ import tempfile
 import xml.etree.ElementTree
 
 import six
+import pyblish.util
 import pyblish.plugin
 import pyblish.api
 import pyblish.util
 
-from openpype.lib import Logger, filter_profiles
+from openpype.lib import (
+    Logger,
+    import_filepath,
+    filter_profiles
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.pipeline import (
+    tempdir,
+    Anatomy
+)
+from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .contants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
+    TRANSIENT_DIR_TEMPLATE
 )
 
 
@@ -197,28 +208,6 @@ def get_publish_template_name(
     return template or default_template
 
 
-class DiscoverResult:
-    """Hold result of publish plugins discovery.
-
-    Stores discovered plugins duplicated plugins and file paths which
-    crashed on execution of file.
-    """
-    def __init__(self):
-        self.plugins = []
-        self.crashed_file_paths = {}
-        self.duplicated_plugins = []
-
-    def __iter__(self):
-        for plugin in self.plugins:
-            yield plugin
-
-    def __getitem__(self, item):
-        return self.plugins[item]
-
-    def __setitem__(self, item, value):
-        self.plugins[item] = value
-
-
 class HelpContent:
     def __init__(self, title, description, detail=None):
         self.title = title
@@ -286,7 +275,7 @@ def publish_plugins_discover(paths=None):
     """
 
     # The only difference with `pyblish.api.discover`
-    result = DiscoverResult()
+    result = DiscoverResult(pyblish.api.Plugin)
 
     plugins = dict()
     plugin_names = []
@@ -317,12 +306,8 @@ def publish_plugins_discover(paths=None):
             if not mod_ext == ".py":
                 continue
 
-            module = types.ModuleType(mod_name)
-            module.__file__ = abspath
-
             try:
-                with open(abspath, "rb") as f:
-                    six.exec_(f.read(), module.__dict__)
+                module = import_filepath(abspath, mod_name)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
@@ -371,6 +356,61 @@ def publish_plugins_discover(paths=None):
     return result
 
 
+def _get_plugin_settings(host_name, project_settings, plugin, log):
+    """Get plugin settings based on host name and plugin name.
+
+    Args:
+        host_name (str): Name of host.
+        project_settings (dict[str, Any]): Project settings.
+        plugin (pyliblish.Plugin): Plugin where settings are applied.
+        log (logging.Logger): Logger to log messages.
+
+    Returns:
+        dict[str, Any]: Plugin settings {'attribute': 'value'}.
+    """
+
+    # Use project settings from host name category when available
+    try:
+        return (
+            project_settings
+            [host_name]
+            ["publish"]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+
+    # Settings category determined from path
+    # - usually path is './<category>/plugins/publish/<plugin file>'
+    # - category can be host name of addon name ('maya', 'deadline', ...)
+    filepath = os.path.normpath(inspect.getsourcefile(plugin))
+
+    split_path = filepath.rsplit(os.path.sep, 5)
+    if len(split_path) < 4:
+        log.warning(
+            'plugin path too short to extract host {}'.format(filepath)
+        )
+        return {}
+
+    category_from_file = split_path[-4]
+    plugin_kind = split_path[-2]
+
+    # TODO: change after all plugins are moved one level up
+    if category_from_file == "openpype":
+        category_from_file = "global"
+
+    try:
+        return (
+            project_settings
+            [category_from_file]
+            [plugin_kind]
+            [plugin.__name__]
+        )
+    except KeyError:
+        pass
+    return {}
+
+
 def filter_pyblish_plugins(plugins):
     """Pyblish plugin filter which applies OpenPype settings.
 
@@ -389,21 +429,21 @@ def filter_pyblish_plugins(plugins):
     # TODO: Don't use host from 'pyblish.api' but from defined host by us.
     #   - kept becau on farm is probably used host 'shell' which propably
     #       affect how settings are applied there
-    host = pyblish.api.current_host()
+    host_name = pyblish.api.current_host()
     project_name = os.environ.get("AVALON_PROJECT")
 
-    project_setting = get_project_settings(project_name)
+    project_settings = get_project_settings(project_name)
     system_settings = get_system_settings()
 
     # iterate over plugins
     for plugin in plugins[:]:
+        # Apply settings to plugins
         if hasattr(plugin, "apply_settings"):
+            # Use classmethod 'apply_settings'
+            # - can be used to target settings from custom settings place
+            # - skip default behavior when successful
             try:
-                # Use classmethod 'apply_settings'
-                # - can be used to target settings from custom settings place
-                # - skip default behavior when successful
-                plugin.apply_settings(project_setting, system_settings)
-                continue
+                plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -412,52 +452,19 @@ def filter_pyblish_plugins(plugins):
                     ).format(plugin.__name__),
                     exc_info=True
                 )
-
-        try:
-            config_data = (
-                project_setting
-                [host]
-                ["publish"]
-                [plugin.__name__]
+        else:
+            # Automated
+            plugin_settins = _get_plugin_settings(
+                host_name, project_settings, plugin, log
             )
-        except KeyError:
-            # host determined from path
-            file = os.path.normpath(inspect.getsourcefile(plugin))
-            file = os.path.normpath(file)
-
-            split_path = file.split(os.path.sep)
-            if len(split_path) < 4:
-                log.warning(
-                    'plugin path too short to extract host {}'.format(file)
-                )
-                continue
-
-            host_from_file = split_path[-4]
-            plugin_kind = split_path[-2]
-
-            # TODO: change after all plugins are moved one level up
-            if host_from_file == "openpype":
-                host_from_file = "global"
-
-            try:
-                config_data = (
-                    project_setting
-                    [host_from_file]
-                    [plugin_kind]
-                    [plugin.__name__]
-                )
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
+            for option, value in plugin_settins.items():
+                log.info("setting {}:{} on plugin {}".format(
                     option, value, plugin.__name__))
-
                 setattr(plugin, option, value)
+
+        # Remove disabled plugins
+        if getattr(plugin, "enabled", True) is False:
+            plugins.remove(plugin)
 
 
 def find_close_plugin(close_plugin_name, log):
@@ -596,7 +603,7 @@ def context_plugin_should_run(plugin, context):
 
     Args:
         plugin (pyblish.api.Plugin): Plugin with filters.
-        context (pyblish.api.Context): Pyblish context with insances.
+        context (pyblish.api.Context): Pyblish context with instances.
 
     Returns:
         bool: Context plugin should run based on valid instances.
@@ -610,12 +617,21 @@ def context_plugin_should_run(plugin, context):
 def get_instance_staging_dir(instance):
     """Unified way how staging dir is stored and created on instances.
 
-    First check if 'stagingDir' is already set in instance data. If there is
-    not create new in tempdir.
+    First check if 'stagingDir' is already set in instance data.
+    In case there already is new tempdir will not be created.
+
+    It also supports `OPENPYPE_TMPDIR`, so studio can define own temp
+    shared repository per project or even per more granular context.
+    Template formatting is supported also with optional keys. Folder is
+    created in case it doesn't exists.
+
+    Available anatomy formatting keys:
+        - root[work | <root name key>]
+        - project[name | code]
 
     Note:
-        Staging dir does not have to be necessarily in tempdir so be carefull
-            about it's usage.
+        Staging dir does not have to be necessarily in tempdir so be careful
+        about its usage.
 
     Args:
         instance (pyblish.lib.Instance): Instance for which we want to get
@@ -624,12 +640,155 @@ def get_instance_staging_dir(instance):
     Returns:
         str: Path to staging dir of instance.
     """
+    staging_dir = instance.data.get('stagingDir')
+    if staging_dir:
+        return staging_dir
 
-    staging_dir = instance.data.get("stagingDir")
-    if not staging_dir:
+    anatomy = instance.context.data.get("anatomy")
+
+    # get customized tempdir path from `OPENPYPE_TMPDIR` env var
+    custom_temp_dir = tempdir.create_custom_tempdir(
+        anatomy.project_name, anatomy)
+
+    if custom_temp_dir:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(
+                prefix="pyblish_tmp_",
+                dir=custom_temp_dir
+            )
+        )
+    else:
         staging_dir = os.path.normpath(
             tempfile.mkdtemp(prefix="pyblish_tmp_")
         )
-        instance.data["stagingDir"] = staging_dir
+    instance.data['stagingDir'] = staging_dir
 
     return staging_dir
+
+
+def get_publish_repre_path(instance, repre, only_published=False):
+    """Get representation path that can be used for integration.
+
+    When 'only_published' is set to true the validation of path is not
+    relevant. In that case we just need what is set in 'published_path'
+    as "reference". The reference is not used to get or upload the file but
+    for reference where the file was published.
+
+    Args:
+        instance (pyblish.Instance): Processed instance object. Used
+            for source of staging dir if representation does not have
+            filled it.
+        repre (dict): Representation on instance which could be and
+            could not be integrated with main integrator.
+        only_published (bool): Care only about published paths and
+            ignore if filepath is not existing anymore.
+
+    Returns:
+        str: Path to representation file.
+        None: Path is not filled or does not exists.
+    """
+
+    published_path = repre.get("published_path")
+    if published_path:
+        published_path = os.path.normpath(published_path)
+        if os.path.exists(published_path):
+            return published_path
+
+    if only_published:
+        return published_path
+
+    comp_files = repre["files"]
+    if isinstance(comp_files, (tuple, list, set)):
+        filename = comp_files[0]
+    else:
+        filename = comp_files
+
+    staging_dir = repre.get("stagingDir")
+    if not staging_dir:
+        staging_dir = get_instance_staging_dir(instance)
+
+    # Expand the staging dir path in case it's been stored with the root
+    # template syntax
+    anatomy = instance.context.data["anatomy"]
+    staging_dir = anatomy.fill_root(staging_dir)
+
+    src_path = os.path.normpath(os.path.join(staging_dir, filename))
+    if os.path.exists(src_path):
+        return src_path
+    return None
+
+
+def get_custom_staging_dir_info(project_name, host_name, family, task_name,
+                                task_type, subset_name,
+                                project_settings=None,
+                                anatomy=None, log=None):
+    """Checks profiles if context should use special custom dir as staging.
+
+    Args:
+        project_name (str)
+        host_name (str)
+        family (str)
+        task_name (str)
+        task_type (str)
+        subset_name (str)
+        project_settings(Dict[str, Any]): Prepared project settings.
+        anatomy (Dict[str, Any])
+        log (Logger) (optional)
+
+    Returns:
+        (tuple)
+    Raises:
+        ValueError - if misconfigured template should be used
+    """
+    settings = project_settings or get_project_settings(project_name)
+    custom_staging_dir_profiles = (settings["global"]
+                                           ["tools"]
+                                           ["publish"]
+                                           ["custom_staging_dir_profiles"])
+    if not custom_staging_dir_profiles:
+        return None, None
+
+    if not log:
+        log = Logger.get_logger("get_custom_staging_dir_info")
+
+    filtering_criteria = {
+        "hosts": host_name,
+        "families": family,
+        "task_names": task_name,
+        "task_types": task_type,
+        "subsets": subset_name
+    }
+    profile = filter_profiles(custom_staging_dir_profiles,
+                              filtering_criteria,
+                              logger=log)
+
+    if not profile or not profile["active"]:
+        return None, None
+
+    if not anatomy:
+        anatomy = Anatomy(project_name)
+
+    template_name = profile["template_name"] or TRANSIENT_DIR_TEMPLATE
+    _validate_transient_template(project_name, template_name, anatomy)
+
+    custom_staging_dir = anatomy.templates[template_name]["folder"]
+    is_persistent = profile["custom_staging_dir_persistent"]
+
+    return custom_staging_dir, is_persistent
+
+
+def _validate_transient_template(project_name, template_name, anatomy):
+    """Check that transient template is correctly configured.
+
+    Raises:
+        ValueError - if misconfigured template
+    """
+    if template_name not in anatomy.templates:
+        raise ValueError(("Anatomy of project \"{}\" does not have set"
+                          " \"{}\" template key!"
+                          ).format(project_name, template_name))
+
+    if "folder" not in anatomy.templates[template_name]:
+        raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
+                             " for project \"{}\"."
+                         ).format(template_name, project_name))

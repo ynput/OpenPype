@@ -1,4 +1,21 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
+    "workfile": {
+        "submission_overrides": [
+            "render_chunk",
+            "frame_range",
+            "resolution"
+        ]
+    },
     "publish": {
         "CollectRenderPath": {
             "output_extension": "png",

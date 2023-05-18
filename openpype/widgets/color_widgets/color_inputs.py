@@ -1,5 +1,5 @@
 import re
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from .color_view import draw_checkerboard_tile
 

@@ -79,7 +79,7 @@ main () {
   echo -e "${BIGreen}>>>${RST} Copying build from container ..."
   create_container
   echo -e "${BIYellow}---${RST} Copying ..."
-  docker cp "$cid:/opt/openpype/build/exe.linux-x86_64-3.7" "$openpype_root/build"
+  docker cp "$cid:/opt/openpype/build/exe.linux-x86_64-3.9" "$openpype_root/build"
   docker cp "$cid:/opt/openpype/build/build.log" "$openpype_root/build"
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Copying failed."

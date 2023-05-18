@@ -4,7 +4,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (
@@ -26,7 +26,7 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
         self.setObjectName("ValidationErrorInstanceList")
 
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     def minimumSizeHint(self):
         return self.sizeHint()
@@ -191,7 +191,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         self.set_selected(True)
 
-    def current_desctiption_text(self):
+    def current_description_text(self):
         if self._context_validation:
             return self._help_text_by_instance_id[None]
         index = self._instances_view.currentIndex()
@@ -705,7 +705,7 @@ class ValidationsWidget(QtWidgets.QFrame):
             self._update_description()
 
     def _update_description(self):
-        description = self._previous_select.current_desctiption_text()
+        description = self._previous_select.current_description_text()
         if commonmark:
             html = commonmark.commonmark(description)
             self._error_details_input.setHtml(html)

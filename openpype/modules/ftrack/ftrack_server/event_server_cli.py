@@ -26,13 +26,14 @@ from openpype_modules.ftrack import (
 )
 from openpype_modules.ftrack.lib import credentials
 from openpype_modules.ftrack.ftrack_server import socket_thread
+from openpype_modules.ftrack.ftrack_server.lib import get_host_ip
 
 
 class MongoPermissionsError(Exception):
     """Is used when is created multiple objects of same RestApi class."""
     def __init__(self, message=None):
         if not message:
-            message = "Exiting because have issue with acces to MongoDB"
+            message = "Exiting because have issue with access to MongoDB"
         super().__init__(message)
 
 
@@ -245,11 +246,13 @@ def main_loop(ftrack_url):
     )
 
     host_name = socket.gethostname()
+    host_ip = get_host_ip()
+
     main_info = [
         ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
-        ["Host IP", socket.gethostbyname(host_name)],
+        ["Host IP", host_ip or "N/A"],
         ["OpenPype executable", get_openpype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
@@ -313,7 +316,7 @@ def main_loop(ftrack_url):
                 statuser_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not statuser_thread.isAlive():
+        elif not statuser_thread.is_alive():
             statuser_thread.join()
             statuser_thread = None
             ftrack_accessible = False
@@ -337,7 +340,7 @@ def main_loop(ftrack_url):
             return 1
 
         # ====== STORER =======
-        # Run backup thread which does not requeire mongo to work
+        # Run backup thread which does not require mongo to work
         if storer_thread is None:
             if storer_failed_count < max_fail_count:
                 storer_thread = socket_thread.SocketThread(
@@ -356,7 +359,7 @@ def main_loop(ftrack_url):
                 storer_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not storer_thread.isAlive():
+        elif not storer_thread.is_alive():
             if storer_thread.mongo_error:
                 raise MongoPermissionsError()
             storer_thread.join()
@@ -393,10 +396,10 @@ def main_loop(ftrack_url):
                 processor_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not processor_thread.isAlive():
+        elif not processor_thread.is_alive():
             if processor_thread.mongo_error:
                 raise Exception(
-                    "Exiting because have issue with acces to MongoDB"
+                    "Exiting because have issue with access to MongoDB"
                 )
             processor_thread.join()
             processor_thread = None

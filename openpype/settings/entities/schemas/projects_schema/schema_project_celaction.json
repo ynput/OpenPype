@@ -6,6 +6,48 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "workfile",
+            "label": "Workfile",
+            "children": [
+                {
+                    "key": "submission_overrides",
+                    "label": "Submission workfile overrides",
+                    "type": "enum",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "render_chunk": "Pass chunk size"
+                        },
+                        {
+                            "frame_range": "Pass frame range"
+                        },
+                        {
+                            "resolution": "Pass resolution"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

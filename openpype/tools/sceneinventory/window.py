@@ -1,7 +1,7 @@
 import os
 import sys
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype import style
@@ -107,8 +107,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.hierarchy_view_changed.connect(
             self._on_hierarchy_view_change
         )
-        view.data_changed.connect(self.refresh)
-        refresh_button.clicked.connect(self.refresh)
+        view.data_changed.connect(self._on_refresh_request)
+        refresh_button.clicked.connect(self._on_refresh_request)
         update_all_button.clicked.connect(self._on_update_all)
 
         self._update_all_button = update_all_button
@@ -139,6 +139,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         """
 
+    def _on_refresh_request(self):
+        """Signal callback to trigger 'refresh' without any arguments."""
+
+        self.refresh()
+
     def refresh(self, items=None):
         with preserve_expanded_rows(
             tree_view=self._view,
@@ -160,7 +165,10 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._model.set_hierarchy_view(enabled)
 
     def _on_text_filter_change(self, text_filter):
-        self._proxy.setFilterRegExp(text_filter)
+        if hasattr(self._proxy, "setFilterRegExp"):
+            self._proxy.setFilterRegExp(text_filter)
+        else:
+            self._proxy.setFilterRegularExpression(text_filter)
 
     def _on_outdated_state_change(self):
         self._proxy.set_filter_outdated(

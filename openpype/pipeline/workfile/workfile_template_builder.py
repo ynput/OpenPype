@@ -28,6 +28,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.host import IWorkfileHost
 from openpype.host import HostBase
 from openpype.lib import (
     Logger,
@@ -42,7 +43,10 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
-from openpype.pipeline.create import get_legacy_creator_by_name
+from openpype.pipeline.create import (
+    discover_legacy_creator_plugins,
+    CreateContext,
+)
 
 
 class TemplateNotFound(Exception):
@@ -89,6 +93,7 @@ class AbstractTemplateBuilder(object):
     """
 
     _log = None
+    use_legacy_creators = False
 
     def __init__(self, host):
         # Get host name
@@ -108,6 +113,7 @@ class AbstractTemplateBuilder(object):
         self._placeholder_plugins = None
         self._loaders_by_name = None
         self._creators_by_name = None
+        self._create_context = None
 
         self._system_settings = None
         self._project_settings = None
@@ -152,7 +158,7 @@ class AbstractTemplateBuilder(object):
     def linked_asset_docs(self):
         if self._linked_asset_docs is None:
             self._linked_asset_docs = get_linked_assets(
-                self.current_asset_doc
+                self.project_name, self.current_asset_doc
             )
         return self._linked_asset_docs
 
@@ -168,6 +174,16 @@ class AbstractTemplateBuilder(object):
             .get(self.current_task_name, {})
             .get("type")
         )
+
+    @property
+    def create_context(self):
+        if self._create_context is None:
+            self._create_context = CreateContext(
+                self.host,
+                discover_publish_plugins=False,
+                headless=True
+            )
+        return self._create_context
 
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
@@ -233,9 +249,29 @@ class AbstractTemplateBuilder(object):
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
 
+    def _collect_legacy_creators(self):
+        creators_by_name = {}
+        for creator in discover_legacy_creator_plugins():
+            if not creator.enabled:
+                continue
+            creator_name = creator.__name__
+            if creator_name in creators_by_name:
+                raise KeyError(
+                    "Duplicated creator name {} !".format(creator_name)
+                )
+            creators_by_name[creator_name] = creator
+        self._creators_by_name = creators_by_name
+
+    def _collect_creators(self):
+        self._creators_by_name = dict(self.create_context.creators)
+
     def get_creators_by_name(self):
         if self._creators_by_name is None:
-            self._creators_by_name = get_legacy_creator_by_name()
+            if self.use_legacy_creators:
+                self._collect_legacy_creators()
+            else:
+                self._collect_creators()
+
         return self._creators_by_name
 
     def get_shared_data(self, key):
@@ -401,7 +437,14 @@ class AbstractTemplateBuilder(object):
             key=lambda i: i.order
         ))
 
-    def build_template(self, template_path=None, level_limit=None):
+    def build_template(
+        self,
+        template_path=None,
+        level_limit=None,
+        keep_placeholders=None,
+        create_first_version=None,
+        workfile_creation_enabled=False
+    ):
         """Main callback for building workfile from template path.
 
         Todo:
@@ -410,16 +453,54 @@ class AbstractTemplateBuilder(object):
 
         Args:
             template_path (str): Path to a template file with placeholders.
-                Template from settings 'get_template_path' used when not
+                Template from settings 'get_template_preset' used when not
                 passed.
             level_limit (int): Limit of populate loops. Related to
                 'populate_scene_placeholders' method.
+            keep_placeholders (bool): Add flag to placeholder data for
+                hosts to decide if they want to remove
+                placeholder after it is used.
+            create_first_version (bool): create first version of a workfile
+            workfile_creation_enabled (bool): If True, it might create
+                                              first version but ignore
+                                              process if version is created
+
         """
+        template_preset = self.get_template_preset()
 
         if template_path is None:
-            template_path = self.get_template_path()
+            template_path = template_preset["path"]
+
+        if keep_placeholders is None:
+            keep_placeholders = template_preset["keep_placeholder"]
+        if create_first_version is None:
+            create_first_version = template_preset["create_first_version"]
+
+        # check if first version is created
+        created_version_workfile = self.create_first_workfile_version()
+
+        # if first version is created, import template
+        # and populate placeholders
+        if (
+            create_first_version
+            and workfile_creation_enabled
+            and created_version_workfile
+        ):
+            self.import_template(template_path)
+            self.populate_scene_placeholders(
+                level_limit, keep_placeholders)
+
+            # save workfile after template is populated
+            self.save_workfile(created_version_workfile)
+
+        # ignore process if first workfile is enabled
+        # but a version is already created
+        if workfile_creation_enabled:
+            return
+
         self.import_template(template_path)
-        self.populate_scene_placeholders(level_limit)
+        self.populate_scene_placeholders(
+            level_limit, keep_placeholders)
 
     def rebuild_template(self):
         """Go through existing placeholders in scene and update them.
@@ -467,6 +548,39 @@ class AbstractTemplateBuilder(object):
 
         pass
 
+    def create_first_workfile_version(self):
+        """
+        Create first version of workfile.
+
+        Should load the content of template into scene so
+        'populate_scene_placeholders' can be started.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
+        if os.path.exists(last_workfile_path):
+            # ignore in case workfile existence
+            self.log.info("Workfile already exists, skipping creation.")
+            return False
+
+        # Create first version
+        self.log.info("Creating first version of workfile.")
+        self.save_workfile(last_workfile_path)
+
+        # Confirm creation of first version
+        return last_workfile_path
+
+    def save_workfile(self, workfile_path):
+        """Save workfile in current host."""
+        # Save current scene, continue to open file
+        if isinstance(self.host, IWorkfileHost):
+            self.host.save_workfile(workfile_path)
+        else:
+            self.host.save_file(workfile_path)
+
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.
 
@@ -489,7 +603,9 @@ class AbstractTemplateBuilder(object):
             plugin = plugins_by_identifier[identifier]
             plugin.prepare_placeholders(placeholders)
 
-    def populate_scene_placeholders(self, level_limit=None):
+    def populate_scene_placeholders(
+        self, level_limit=None, keep_placeholders=None
+    ):
         """Find placeholders in scene using plugins and process them.
 
         This should happen after 'import_template'.
@@ -505,6 +621,9 @@ class AbstractTemplateBuilder(object):
 
         Args:
             level_limit (int): Level of loops that can happen. Default is 1000.
+            keep_placeholders (bool): Add flag to placeholder data for
+                hosts to decide if they want to remove
+                placeholder after it is used.
         """
 
         if not self.placeholder_plugins:
@@ -541,6 +660,11 @@ class AbstractTemplateBuilder(object):
                         " is already in progress."
                     ))
                     continue
+
+                # add flag for keeping placeholders in scene
+                # after they are processed
+                placeholder.data["keep_placeholder"] = keep_placeholders
+
                 filtered_placeholders.append(placeholder)
 
             self._prepare_placeholders(filtered_placeholders)
@@ -599,8 +723,8 @@ class AbstractTemplateBuilder(object):
             ["profiles"]
         )
 
-    def get_template_path(self):
-        """Unified way how template path is received usign settings.
+    def get_template_preset(self):
+        """Unified way how template preset is received usign settings.
 
         Method is dependent on '_get_build_profiles' which should return filter
         profiles to resolve path to a template. Default implementation looks
@@ -637,6 +761,15 @@ class AbstractTemplateBuilder(object):
             ).format(task_name, task_type, host_name))
 
         path = profile["path"]
+
+        # switch to remove placeholders after they are used
+        keep_placeholder = profile.get("keep_placeholder")
+        create_first_version = profile.get("create_first_version")
+
+        # backward compatibility, since default is True
+        if keep_placeholder is None:
+            keep_placeholder = True
+
         if not path:
             raise TemplateLoadFailed((
                 "Template path is not set.\n"
@@ -650,14 +783,25 @@ class AbstractTemplateBuilder(object):
             key: value
             for key, value in os.environ.items()
         }
+
         fill_data["root"] = anatomy.roots
+        fill_data["project"] = {
+            "name": project_name,
+            "code": anatomy["attributes"]["code"]
+        }
+
+
         result = StringTemplate.format_template(path, fill_data)
         if result.solved:
             path = result.normalized()
 
         if path and os.path.exists(path):
             self.log.info("Found template at: '{}'".format(path))
-            return path
+            return {
+                "path": path,
+                "keep_placeholder": keep_placeholder,
+                "create_first_version": create_first_version
+            }
 
         solved_path = None
         while True:
@@ -683,7 +827,11 @@ class AbstractTemplateBuilder(object):
 
         self.log.info("Found template at: '{}'".format(solved_path))
 
-        return solved_path
+        return {
+            "path": solved_path,
+            "keep_placeholder": keep_placeholder,
+            "create_first_version": create_first_version
+        }
 
 
 @six.add_metaclass(ABCMeta)
@@ -787,7 +935,8 @@ class PlaceholderPlugin(object):
         """Placeholder options for data showed.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions of placeholder options.
+            List[AbstractAttrDef]: Attribute definitions of
+                placeholder options.
         """
 
         return []
@@ -1002,7 +1151,10 @@ class PlaceholderItem(object):
         return self._log
 
     def __repr__(self):
-        return "< {} {} >".format(self.__class__.__name__, self.name)
+        return "< {} {} >".format(
+            self.__class__.__name__,
+            self._scene_identifier
+        )
 
     @property
     def order(self):
@@ -1082,17 +1234,17 @@ class PlaceholderLoadMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for load
+            List[AbstractAttrDef]: Attribute definitions common for load
                 plugins.
         """
 
         loaders_by_name = self.builder.get_loaders_by_name()
         loader_items = [
-            (loader_name, loader.label or loader_name)
+            {"value": loader_name, "label": loader.label or loader_name}
             for loader_name, loader in loaders_by_name.items()
         ]
 
-        loader_items = list(sorted(loader_items, key=lambda i: i[1]))
+        loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
         return [
             attribute_definitions.UISeparatorDef(),
@@ -1104,9 +1256,9 @@ class PlaceholderLoadMixin(object):
                 label="Asset Builder Type",
                 default=options.get("builder_type"),
                 items=[
-                    ("context_asset", "Current asset"),
-                    ("linked_asset", "Linked assets"),
-                    ("all_assets", "All assets")
+                    {"label": "Current asset", "value": "context_asset"},
+                    {"label": "Linked assets", "value": "linked_asset"},
+                    {"label": "All assets", "value": "all_assets"},
                 ],
                 tooltip=(
                     "Asset Builder Type\n"
@@ -1264,16 +1416,7 @@ class PlaceholderLoadMixin(object):
                 "family": [placeholder.data["family"]]
             }
 
-        elif builder_type != "linked_asset":
-            context_filters = {
-                "asset": [re.compile(placeholder.data["asset"])],
-                "subset": [re.compile(placeholder.data["subset"])],
-                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
-                "representation": [placeholder.data["representation"]],
-                "family": [placeholder.data["family"]]
-            }
-
-        else:
+        elif builder_type == "linked_asset":
             asset_regex = re.compile(placeholder.data["asset"])
             linked_asset_names = []
             for asset_doc in linked_asset_docs:
@@ -1287,6 +1430,15 @@ class PlaceholderLoadMixin(object):
                 "hierarchy": [re.compile(placeholder.data["hierarchy"])],
                 "representation": [placeholder.data["representation"]],
                 "family": [placeholder.data["family"]],
+            }
+
+        else:
+            context_filters = {
+                "asset": [re.compile(placeholder.data["asset"])],
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representation": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]]
             }
 
         return list(get_representations(
@@ -1426,6 +1578,194 @@ class PlaceholderLoadMixin(object):
         pass
 
 
+class PlaceholderCreateMixin(object):
+    """Mixin prepared for creating placeholder plugins.
+
+    Implementation prepares options for placeholders with
+    'get_create_plugin_options'.
+
+    For placeholder population is implemented 'populate_create_placeholder'.
+
+    PlaceholderItem can have implemented methods:
+    - 'create_failed' - called when creating of an instance failed
+    - 'create_succeed' - called when creating of an instance succeeded
+    """
+
+    def get_create_plugin_options(self, options=None):
+        """Unified attribute definitions for create placeholder.
+
+        Common function for placeholder plugins used for creating of
+        publishable instances. Use it with 'get_placeholder_options'.
+
+        Args:
+            plugin (PlaceholderPlugin): Plugin used for creating of
+                publish instances.
+            options (Dict[str, Any]): Already available options which are used
+                as defaults for attributes.
+
+        Returns:
+            List[AbstractAttrDef]: Attribute definitions common for create
+                plugins.
+        """
+
+        creators_by_name = self.builder.get_creators_by_name()
+
+        creator_items = [
+            (creator_name, creator.label or creator_name)
+            for creator_name, creator in creators_by_name.items()
+        ]
+
+        creator_items.sort(key=lambda i: i[1])
+        options = options or {}
+        return [
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Main attributes"),
+            attribute_definitions.UISeparatorDef(),
+
+            attribute_definitions.EnumDef(
+                "creator",
+                label="Creator",
+                default=options.get("creator"),
+                items=creator_items,
+                tooltip=(
+                    "Creator"
+                    "\nDefines what OpenPype creator will be used to"
+                    " create publishable instance."
+                    "\nUseable creator depends on current host's creator list."
+                    "\nField is case sensitive."
+                )
+            ),
+            attribute_definitions.TextDef(
+                "create_variant",
+                label="Variant",
+                default=options.get("create_variant"),
+                placeholder='Main',
+                tooltip=(
+                    "Creator"
+                    "\nDefines variant name which will be use for "
+                    "\ncompiling of subset name."
+                )
+            ),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.NumberDef(
+                "order",
+                label="Order",
+                default=options.get("order") or 0,
+                decimals=0,
+                minimum=0,
+                maximum=999,
+                tooltip=(
+                    "Order"
+                    "\nOrder defines creating instance priority (0 to 999)"
+                    "\nPriority rule is : \"lowest is first to load\"."
+                )
+            )
+        ]
+
+    def populate_create_placeholder(self, placeholder):
+        """Create placeholder is going to create matching publishabe instance.
+
+        Args:
+            placeholder (PlaceholderItem): Placeholder item with information
+                about requested publishable instance.
+        """
+
+        legacy_create = self.builder.use_legacy_creators
+        creator_name = placeholder.data["creator"]
+        create_variant = placeholder.data["create_variant"]
+
+        creator_plugin = self.builder.get_creators_by_name()[creator_name]
+
+        # create subset name
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+
+        if legacy_create:
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
+            )
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc["_id"],
+                project_name
+            )
+
+        else:
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc,
+                project_name,
+                self.builder.host_name
+            )
+
+        creator_data = {
+            "creator_name": creator_name,
+            "create_variant": create_variant,
+            "subset_name": subset_name,
+            "creator_plugin": creator_plugin
+        }
+
+        self._before_instance_create(placeholder)
+
+        # compile subset name from variant
+        try:
+            if legacy_create:
+                creator_instance = creator_plugin(
+                    subset_name,
+                    asset_name
+                ).process()
+            else:
+                creator_instance = self.builder.create_context.create(
+                    creator_plugin.identifier,
+                    create_variant,
+                    asset_doc,
+                    task_name=task_name
+                )
+
+        except:  # noqa: E722
+            failed = True
+            self.create_failed(placeholder, creator_data)
+
+        else:
+            failed = False
+            self.create_succeed(placeholder, creator_instance)
+
+        self.cleanup_placeholder(placeholder, failed)
+
+    def create_failed(self, placeholder, creator_data):
+        if hasattr(placeholder, "create_failed"):
+            placeholder.create_failed(creator_data)
+
+    def create_succeed(self, placeholder, creator_instance):
+        if hasattr(placeholder, "create_succeed"):
+            placeholder.create_succeed(creator_instance)
+
+    def cleanup_placeholder(self, placeholder, failed):
+        """Cleanup placeholder after load of single representation.
+
+        Can be called multiple times during placeholder item populating and is
+        called even if loading failed.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
+
+        pass
+
+    def _before_instance_create(self, placeholder):
+        """Can be overriden. Is called before instance is created."""
+
+        pass
+
+
 class LoadPlaceholderItem(PlaceholderItem):
     """PlaceholderItem for plugin which is loading representations.
 
@@ -1449,3 +1789,28 @@ class LoadPlaceholderItem(PlaceholderItem):
 
     def load_failed(self, representation):
         self._failed_representations.append(representation)
+
+
+class CreatePlaceholderItem(PlaceholderItem):
+    """PlaceholderItem for plugin which is creating publish instance.
+
+    Connected to 'PlaceholderCreateMixin'.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(CreatePlaceholderItem, self).__init__(*args, **kwargs)
+        self._failed_created_publish_instances = []
+
+    def get_errors(self):
+        if not self._failed_representations:
+            return []
+        message = (
+            "Failed to create {} instance using Creator {}"
+        ).format(
+            len(self._failed_created_publish_instances),
+            self.data["creator"]
+        )
+        return [message]
+
+    def create_failed(self, creator_data):
+        self._failed_created_publish_instances.append(creator_data)

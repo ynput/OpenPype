@@ -37,6 +37,10 @@
                         {
                             "key": "ValidateTransformZero",
                             "label": "Validate Transform Zero"
+                        },
+                        {
+                            "key": "ValidateNoColonsInName",
+                            "label": "Validate No Colons In Name"
                         }
                     ]
                 }
@@ -106,6 +110,66 @@
                 {
                     "key": "ExtractLayout",
                     "label": "Extract Layout as JSON"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractThumbnail",
+            "label": "ExtractThumbnail",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "presets",
+                    "label": "Presets"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractPlayblast",
+            "label": "ExtractPlayblast",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "presets",
+                    "label": "Presets"
                 }
             ]
         }

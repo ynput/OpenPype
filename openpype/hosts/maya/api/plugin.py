@@ -1,4 +1,5 @@
 import os
+import re
 
 from maya import cmds
 
@@ -12,6 +13,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     Anatomy,
 )
+from openpype.pipeline.load import LoadError
 from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
@@ -82,6 +84,44 @@ def get_reference_node_parents(ref):
     return parents
 
 
+def get_custom_namespace(custom_namespace):
+    """Return unique namespace.
+
+    The input namespace can contain a single group
+    of '#' number tokens to indicate where the namespace's
+    unique index should go. The amount of tokens defines
+    the zero padding of the number, e.g ### turns into 001.
+
+    Warning: Note that a namespace will always be
+        prefixed with a _ if it starts with a digit
+
+    Example:
+        >>> get_custom_namespace("myspace_##_")
+        # myspace_01_
+        >>> get_custom_namespace("##_myspace")
+        # _01_myspace
+        >>> get_custom_namespace("myspace##")
+        # myspace01
+
+    """
+    split = re.split("([#]+)", custom_namespace, 1)
+
+    if len(split) == 3:
+        base, padding, suffix = split
+        padding = "%0{}d".format(len(padding))
+    else:
+        base = split[0]
+        padding = "%02d"  # default padding
+        suffix = ""
+
+    return lib.unique_namespace(
+        base,
+        format=padding,
+        prefix="_" if not base or base[0].isdigit() else "",
+        suffix=suffix
+    )
+
+
 class Creator(LegacyCreator):
     defaults = ['Main']
 
@@ -143,15 +183,46 @@ class ReferenceLoader(Loader):
         assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load']['reference_loader']
         loaded_containers = []
 
-        count = options.get("count") or 1
-        for c in range(0, count):
-            namespace = namespace or lib.unique_namespace(
-                "{}_{}_".format(asset["name"], context["subset"]["name"]),
-                prefix="_" if asset["name"][0].isdigit() else "",
-                suffix="_",
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            raise LoadError("No group name specified in "
+                            "Maya ReferenceLoader settings")
+
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "subset": subset['name'],
+            "family": (
+                subset['data'].get('family') or
+                subset['data']['families'][0]
             )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+
+        count = options.get("count") or 1
+
+        for c in range(0, count):
+            namespace = get_custom_namespace(custom_namespace)
+            group_name = "{}:{}".format(
+                namespace,
+                custom_group_name
+            )
+
+            options['group_name'] = group_name
 
             # Offset loaded subset
             if "offset" in options:
@@ -187,7 +258,7 @@ class ReferenceLoader(Loader):
 
         return loaded_containers
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
@@ -299,6 +370,39 @@ class ReferenceLoader(Loader):
         cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
+
+        # When an animation or pointcache gets connected to an Xgen container,
+        # the compound attribute "xgenContainers" gets created. When animation
+        # containers gets updated we also need to update the cacheFileName on
+        # the Xgen collection.
+        compound_name = "xgenContainers"
+        if cmds.objExists("{}.{}".format(node, compound_name)):
+            import xgenm
+            container_amount = cmds.getAttr(
+                "{}.{}".format(node, compound_name), size=True
+            )
+            # loop through all compound children
+            for i in range(container_amount):
+                attr = "{}.{}[{}].container".format(node, compound_name, i)
+                objectset = cmds.listConnections(attr)[0]
+                reference_node = cmds.sets(objectset, query=True)[0]
+                palettes = cmds.ls(
+                    cmds.referenceQuery(reference_node, nodes=True),
+                    type="xgmPalette"
+                )
+                for palette in palettes:
+                    for description in xgenm.descriptions(palette):
+                        xgenm.setAttr(
+                            "cacheFileName",
+                            path.replace("\\", "/"),
+                            palette,
+                            description,
+                            "SplinePrimitive"
+                        )
+
+            # Refresh UI and viewport.
+            de = xgenm.xgGlobal.DescriptionEditor
+            de.refresh("Full")
 
     def remove(self, container):
         """Remove an existing `container` from Maya scene

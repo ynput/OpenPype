@@ -103,7 +103,7 @@ if (-not $openpype_version) {
 
 $env:BUILD_VERSION = $openpype_version
 
-iscc 
+iscc
 
 Write-Color ">>> ", "Detecting host Python ... " -Color Green, White -NoNewline
 $python = "python"
@@ -131,15 +131,15 @@ if(-not $m) {
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
-# We are supporting python 3.7 only
-if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+# We are supporting python 3.9
+if (($matches[1] -lt 3) -or ($matches[2] -lt 9)) {
     Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
     Set-Location -Path $current_dir
     Exit-WithCode 1
-} elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
+} elseif (($matches[1] -eq 3) -and ($matches[2] -gt 9)) {
     Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
     Write-Host "*** " -NoNewline -ForegroundColor yellow
-    Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
+    Write-Host "OpenPype supports only Python 3.9" -ForegroundColor white
 } else {
     Write-Host "OK [ $p ]" -ForegroundColor green
 }

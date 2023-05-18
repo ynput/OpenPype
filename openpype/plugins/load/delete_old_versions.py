@@ -5,7 +5,7 @@ import uuid
 import clique
 from pymongo import UpdateOne
 import qargparse
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype import style
 from openpype.client import get_versions, get_representations

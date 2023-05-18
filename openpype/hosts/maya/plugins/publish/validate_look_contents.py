@@ -1,6 +1,7 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
+from maya import cmds  # noqa
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -85,6 +86,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                 invalid.add(instance.name)
 
         return list(invalid)
+
     @classmethod
     def validate_looks(cls, instance):
 
@@ -113,3 +115,23 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                 invalid.append(node)
 
         return invalid
+
+    @classmethod
+    def validate_renderer(cls, instance):
+        # TODO: Rewrite this to be more specific and configurable
+        renderer = cmds.getAttr(
+            'defaultRenderGlobals.currentRenderer').lower()
+        do_maketx = instance.data.get("maketx", False)
+        do_rstex = instance.data.get("rstex", False)
+        processors = []
+
+        if do_maketx:
+            processors.append('arnold')
+        if do_rstex:
+            processors.append('redshift')
+
+        for processor in processors:
+            if processor == renderer:
+                continue
+            else:
+                cls.log.error("Converted texture does not match current renderer.") # noqa

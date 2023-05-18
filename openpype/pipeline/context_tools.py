@@ -11,6 +11,7 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
@@ -34,6 +35,7 @@ from . import (
     register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_inventory_action_path,
 )
 
 
@@ -53,6 +55,7 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def _get_modules_manager():
@@ -157,6 +160,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
@@ -222,6 +226,7 @@ def uninstall_host():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     pyblish.api.deregister_discovery_filter(filter_pyblish_plugins)
     deregister_loader_plugin_path(LOAD_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
     log.info("Global plug-ins unregistred")
 
     deregister_host()
@@ -306,6 +311,58 @@ def debug_host():
     return host
 
 
+def get_current_host_name():
+    """Current host name.
+
+    Function is based on currently registered host integration or environment
+    variant 'AVALON_APP'.
+
+    Returns:
+        Union[str, None]: Name of host integration in current process or None.
+    """
+
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.name
+    return os.environ.get("AVALON_APP")
+
+
+def get_global_context():
+    return {
+        "project_name": os.environ.get("AVALON_PROJECT"),
+        "asset_name": os.environ.get("AVALON_ASSET"),
+        "task_name": os.environ.get("AVALON_TASK"),
+    }
+
+
+def get_current_context():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_context()
+    return get_global_context()
+
+
+def get_current_project_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_project_name()
+    return get_global_context()["project_name"]
+
+
+def get_current_asset_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_asset_name()
+    return get_global_context()["asset_name"]
+
+
+def get_current_task_name():
+    host = registered_host()
+    if isinstance(host, HostBase):
+        return host.get_current_task_name()
+    return get_global_context()["task_name"]
+
+
 def get_current_project(fields=None):
     """Helper function to get project document based on global Session.
 
@@ -316,7 +373,7 @@ def get_current_project(fields=None):
         None: Project is not set.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return get_project(project_name, fields=fields)
 
 
@@ -341,12 +398,12 @@ def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
         None: Asset is not set or not exist.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     if asset_id:
         return get_asset_by_id(project_name, asset_id, fields=fields)
 
     if not asset_name:
-        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        asset_name = get_current_asset_name()
         # Skip if is not set even on context
         if not asset_name:
             return None
@@ -363,7 +420,7 @@ def is_representation_from_latest(representation):
         bool: Whether the representation is of latest version.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return version_is_latest(project_name, representation["parent"])
 
 
@@ -410,9 +467,7 @@ def get_workdir_from_session(session=None, template_key=None):
         session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
-    anatomy = Anatomy(project_name)
     template_data = get_template_data_from_session(session)
-    anatomy_filled = anatomy.format(template_data)
 
     if not template_key:
         task_type = template_data["task"]["type"]
@@ -421,7 +476,10 @@ def get_workdir_from_session(session=None, template_key=None):
             host_name,
             project_name=project_name
         )
-    path = anatomy_filled[template_key]["folder"]
+
+    anatomy = Anatomy(project_name)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
+    path = template_obj.format_strict(template_data)
     if path:
         path = os.path.normpath(path)
     return path

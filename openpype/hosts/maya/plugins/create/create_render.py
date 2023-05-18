@@ -54,6 +54,7 @@ class CreateRender(plugin.Creator):
         tileRendering (bool): Instance is set to tile rendering mode. We
             won't submit actual render, but we'll make publish job to wait
             for Tile Assembly job done and then publish.
+        strict_error_checking (bool): Enable/disable error checking on DL
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -72,15 +73,19 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
-        deadline_settings = get_system_settings()["modules"]["deadline"]
-        if not deadline_settings["enabled"]:
-            self.deadline_servers = {}
-            return
+
+        # Defaults
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
         if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]: # noqa
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
+
+        # Deadline-only
         manager = ModulesManager()
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        if not deadline_settings["enabled"]:
+            self.deadline_servers = {}
+            return
         self.deadline_module = manager.modules_by_name["deadline"]
         try:
             default_servers = deadline_settings["deadline_urls"]
@@ -193,8 +198,6 @@ class CreateRender(plugin.Creator):
         pool_names = []
         default_priority = 50
 
-        self.server_aliases = list(self.deadline_servers.keys())
-        self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = False
         self.data["extendFrames"] = False
@@ -236,6 +239,9 @@ class CreateRender(plugin.Creator):
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_enabled:
+            self.server_aliases = list(self.deadline_servers.keys())
+            self.data["deadlineServers"] = self.server_aliases
+
             try:
                 deadline_url = self.deadline_servers["default"]
             except KeyError:
@@ -257,6 +263,22 @@ class CreateRender(plugin.Creator):
                                                default_priority)
             self.data["tile_priority"] = tile_priority
 
+            pool_setting = (self._project_settings["deadline"]
+                                                  ["publish"]
+                                                  ["CollectDeadlinePools"])
+            primary_pool = pool_setting["primary_pool"]
+            self.data["primaryPool"] = self._set_default_pool(pool_names,
+                                                              primary_pool)
+            # We add a string "-" to allow the user to not
+            # set any secondary pools
+            pool_names = ["-"] + pool_names
+            secondary_pool = pool_setting["secondary_pool"]
+            self.data["secondaryPool"] = self._set_default_pool(pool_names,
+                                                                secondary_pool)
+            strict_error_checking = maya_submit_dl.get("strict_error_checking",
+                                                       True)
+            self.data["strict_error_checking"] = strict_error_checking
+
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
@@ -276,18 +298,6 @@ class CreateRender(plugin.Creator):
                 self.log.info("  - pool: {}".format(pool["name"]))
                 pool_names.append(pool["name"])
 
-        pool_setting = (self._project_settings["deadline"]
-                                              ["publish"]
-                                              ["CollectDeadlinePools"])
-        primary_pool = pool_setting["primary_pool"]
-        self.data["primaryPool"] = self._set_default_pool(pool_names,
-                                                          primary_pool)
-        # We add a string "-" to allow the user to not
-        # set any secondary pools
-        pool_names = ["-"] + pool_names
-        secondary_pool = pool_setting["secondary_pool"]
-        self.data["secondaryPool"] = self._set_default_pool(pool_names,
-                                                            secondary_pool)
         self.options = {"useSelection": False}  # Force no content
 
     def _set_default_pool(self, pool_names, pool_value):

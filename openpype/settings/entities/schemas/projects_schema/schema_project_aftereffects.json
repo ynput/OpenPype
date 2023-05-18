@@ -6,6 +6,23 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -23,7 +40,13 @@
                             "label": "Default Variants",
                             "object_type": "text",
                             "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
-                        }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "mark_for_review",
+                            "label": "Review",
+                            "default": true
+                         }
                     ]
                 }
             ]
@@ -34,6 +57,21 @@
             "key": "publish",
             "label": "Publish plugins",
             "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        }
+                    ]
+                },
                 {
                     "type": "dict",
                     "collapsible": true,
