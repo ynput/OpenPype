@@ -913,7 +913,7 @@ def convert_create_representation_to_v4(representation, con):
         new_file_item = {
             key: value
             for key, value in file_item.items()
-            if key != "_id"
+            if key in ("hash", "path", "size")
         }
         new_file_item.update({
             "id": create_entity_id(),
@@ -1231,7 +1231,9 @@ def convert_update_representation_to_v4(
             new_files = list(new_files.values())
 
         for item in new_files:
-            item.pop("_id")
+            for key in tuple(item.keys()):
+                if key not in ("hash", "path", "size"):
+                    item.pop(key)
             item.update({
                 "id": create_entity_id(),
                 "name": os.path.basename(item["path"]),
