@@ -1003,7 +1003,7 @@ class PublishClip:
         ### Starts Alkemy-X Override ###
         # Add review to plate or take publishes
         # reference family will already be in review form
-        # What if reference family media is not playable in SG
+        # NOTE: What if reference family media is not playable in SG?
         families = [self.data["family"]]
         if self.subset_family != "reference":
             families.append("review")
