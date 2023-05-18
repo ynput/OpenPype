@@ -40,7 +40,6 @@ For more information [see here](admin_use.md#run-openpype).
 | module | Run command line arguments for modules. |  |
 | repack-version | Tool to re-create version zip. | [📑](#repack-version-arguments) |
 | tray | Launch OpenPype Tray. | [📑](#tray-arguments)
-| launch | Launch application in Pype environment. | [📑](#launch-arguments) |
 | publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
 | extractenvironments | Extract environment variables for entered context to a json file. | [📑](#extractenvironments-arguments) |
 | run | Execute given python script within OpenPype environment. | [📑](#run-arguments) |
@@ -53,26 +52,6 @@ For more information [see here](admin_use.md#run-openpype).
 
 ```shell
 openpype_console tray
-```
----
-
-### `launch` arguments {#launch-arguments}
-
-| Argument | Description |
-| --- | --- |
-| `--app` | Application name - this should be the key for application from Settings. |
-| `--project` | Project name (default taken from `AVALON_PROJECT` if set) |
-| `--asset` | Asset name (default taken from `AVALON_ASSET` if set) |
-| `--task` | Task name (default taken from `AVALON_TASK` is set) |
-| `--tools` | *Optional: Additional tools to add* |
-| `--user` | *Optional: User on behalf to run* |
-| `--ftrack-server` / `-fs` | *Optional: Ftrack server URL* |
-| `--ftrack-user` / `-fu` | *Optional: Ftrack user* |
-| `--ftrack-key` / `-fk` | *Optional: Ftrack API key* |
-
-For example to run Python interactive console in Pype context:
-```shell
-pype launch --app python --project my_project --asset my_asset --task my_task
 ```
 
 ---
