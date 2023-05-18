@@ -7,7 +7,6 @@ import click
 
 # import sys
 from .pype_commands import PypeCommands
-from openpype.lib.applications import get_app_environments_for_context
 
 @click.group(invoke_without_command=True)
 @click.pass_context
@@ -278,16 +277,6 @@ def launch(app, project, asset, task,
         print("Please use format: launch --app @name/@version --project abc --asset 101_010_010 --task comp @optional_args")
         ### Ends Alkemy-X Override ###
         return
-
-    # must have for proper launch of app
-    env = get_app_environments_for_context(
-        project,
-        asset,
-        task,
-        app
-    )
-    print("Setting contextual app environment")
-    os.environ.update(env)
 
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
 
