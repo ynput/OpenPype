@@ -21,21 +21,15 @@ class FbxModelLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         filepath = os.path.normpath(self.fname)
+        rt.FBXImporterSetParam("Animation", False)
+        rt.FBXImporterSetParam("Cameras", False)
+        rt.FBXImporterSetParam("UpAxis", "Y")
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.importFile(
+            filepath,
+            rt.name("noPrompt"),
+            using=rt.FBXIMP)
 
-        fbx_import_cmd = (
-            f"""
-
-FBXImporterSetParam "Animation" false
-FBXImporterSetParam "Cameras" false
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-importFile @"{filepath}" #noPrompt using:FBXIMP
-        """)
-
-        self.log.debug(f"Executing command: {fbx_import_cmd}")
-        rt.execute(fbx_import_cmd)
         container = rt.getNodeByName(f"{name}")
         if not container:
             container = rt.container()
