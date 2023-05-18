@@ -265,12 +265,6 @@ class PypeCommands:
 
         main(output_path, project_name, asset_name, strict)
 
-    def texture_copy(self, project, asset, path):
-        pass
-
-    def run_application(self, app, project, asset, task, tools, arguments):
-        pass
-
     def validate_jsons(self):
         pass
 
