@@ -13,6 +13,12 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
 
     The integration must make sure the attribute is available for the version
     entity otherwise an error would be raised.
+
+    Example of 'versionAttributes':
+        {
+            "ftrack_id": "0123456789-101112-131415",
+            "syncsketch_id": "987654321-012345-678910"
+        }
     """
 
     label = "Integrate Version Attributes"
