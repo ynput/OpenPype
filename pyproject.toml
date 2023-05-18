@@ -71,7 +71,7 @@ pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 opencolorio = "^2.2.0"
-openassetio = "^1.0"
+openassetio = "*"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
@@ -155,7 +155,6 @@ hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
 include = [
     "igniter",
     "openpype",
-    "repos",
     "vendor"
 ]
 exclude = [
