@@ -124,19 +124,34 @@ def set_start_end_frames():
     scene.render.resolution_y = resolution_y
 
 
-def set_base_file_unit_scale():
+def on_new():
+    set_start_end_frames()
+
     project = os.environ.get("AVALON_PROJECT")
     settings = get_project_settings(project)
 
-    unit_scale = settings.get("blender").get("base_file_unit_scale")
+    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    unit_scale_enabled = unit_scale_settings.get("enabled")
+    if unit_scale_enabled:
+        unit_scale = unit_scale_settings.get("base_file_unit_scale")
+        bpy.context.scene.unit_settings.scale_length = unit_scale
 
-    bpy.context.scene.unit_settings.scale_length = unit_scale
 
-
-def on_new():
+def on_open():
     set_start_end_frames()
-    set_base_file_unit_scale()
 
+    project = os.environ.get("AVALON_PROJECT")
+    settings = get_project_settings(project)
+
+    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    unit_scale_enabled = unit_scale_settings.get("enabled")
+    apply_on_opening = unit_scale_settings.get("apply_on_opening")
+    if unit_scale_enabled and apply_on_opening:
+        unit_scale = unit_scale_settings.get("base_file_unit_scale")
+        prev_unit_scale = bpy.context.scene.unit_settings.scale_length
+
+        if unit_scale != prev_unit_scale:
+            bpy.context.scene.unit_settings.scale_length = unit_scale
 
 def on_open():
     set_start_end_frames()
