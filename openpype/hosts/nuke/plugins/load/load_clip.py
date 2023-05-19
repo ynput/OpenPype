@@ -38,6 +38,7 @@ class LoadClip(plugin.NukeLoader):
     families = [
         "source",
         "plate",
+        "reference",
         "render",
         "prerender",
         "review"
@@ -200,12 +201,12 @@ class LoadClip(plugin.NukeLoader):
                 context=context,
                 loader=self.__class__.__name__,
                 data=data_imprint)
-
+        print(read_node['before'].value(), "2read_node['before'].value()")
         if add_retime and version_data.get("retime", None):
             self._make_retimes(read_node, version_data)
 
         self.set_as_member(read_node)
-
+        print(read_node['before'].value(), "3read_node['before'].value()")
         return container
 
     def switch(self, container, representation):
