@@ -93,13 +93,13 @@ def get_asset_settings(asset_doc):
 
     """
     asset_data = asset_doc["data"]
-    fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
-    resolution_width = asset_data.get("resolutionWidth")
-    resolution_height = asset_data.get("resolutionHeight")
+    fps = asset_data.get("fps", 0)
+    frame_start = asset_data.get("frameStart", 0)
+    frame_end = asset_data.get("frameEnd", 0)
+    handle_start = asset_data.get("handleStart", 0)
+    handle_end = asset_data.get("handleEnd", 0)
+    resolution_width = asset_data.get("resolutionWidth", 0)
+    resolution_height = asset_data.get("resolutionHeight", 0)
     duration = (frame_end - frame_start + 1) + handle_start + handle_end
 
     return {
