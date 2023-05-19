@@ -50,8 +50,8 @@ class RenderCreator(Creator):
 
         if not comps:
             raise CreatorError(
-                "Nothing to create. Select composition "
-                "if 'useSelection' or create at least "
+                "Nothing to create. Select composition in Project Bin if "
+                "'Use selection' is toggled or create at least "
                 "one composition."
             )
         use_composition_name = (pre_create_data.get("use_composition_name") or
@@ -100,7 +100,10 @@ class RenderCreator(Creator):
 
     def get_pre_create_attr_defs(self):
         output = [
-            BoolDef("use_selection", default=True, label="Use selection"),
+            BoolDef("use_selection",
+                    tooltip="Composition for publishable instance should be "
+                            "selected by default.",
+                    default=True, label="Use selection"),
             BoolDef("use_composition_name",
                     label="Use composition name in subset"),
             UISeparatorDef(),
