@@ -358,7 +358,9 @@ def prepare_hero_version_update_data(old_doc, new_doc, replace=True):
         Dict[str, Any]: Changes between old and new document.
     """
 
-    return _prepare_update_data(old_doc, new_doc, replace)
+    changes = _prepare_update_data(old_doc, new_doc, replace)
+    changes.pop("version_id", None)
+    return changes
 
 
 def prepare_representation_update_data(old_doc, new_doc, replace=True):

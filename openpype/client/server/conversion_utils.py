@@ -125,7 +125,7 @@ def _get_default_template_name(templates):
             return "default"
 
         if default_template is None:
-            default_template = template["name"]
+            default_template = name
 
     return default_template
 
@@ -664,10 +664,12 @@ def convert_v4_representation_to_v3(representation):
                 file_info["_id"] = file_id
                 new_files.append(file_info)
 
-        if not new_files:
-            new_files.append({
-                "name": "studio"
-            })
+        for file_info in new_files:
+            if not file_info.get("sites"):
+                file_info["sites"] = [{
+                    "name": "studio"
+                }]
+
         output["files"] = new_files
 
     if representation.get("active") is False:
@@ -906,20 +908,24 @@ def convert_create_representation_to_v4(representation, con):
     if representation.get("type") == "archived_representation":
         converted_representation["active"] = False
 
-    new_files = {}
+    new_files = []
     for file_item in representation["files"]:
         new_file_item = {
             key: value
             for key, value in file_item.items()
-            if key != "_id"
+            if key in ("hash", "path", "size")
         }
-        file_item_id = create_entity_id()
-        new_files[file_item_id] = new_file_item
+        new_file_item.update({
+            "id": create_entity_id(),
+            "hash_type": "op3",
+            "name": os.path.basename(new_file_item["path"])
+        })
+        new_files.append(new_file_item)
 
+    converted_representation["files"] = new_files
     attribs = {}
     data = {
-        "files": new_files,
-        "context": representation["context"]
+        "context": representation["context"],
     }
 
     representation_data = representation["data"]
@@ -1221,18 +1227,19 @@ def convert_update_representation_to_v4(
 
     if "files" in update_data:
         new_files = update_data["files"]
-        if isinstance(new_files, list):
-            _new_files = {}
-            for file_item in new_files:
-                _file_item = {
-                    key: value
-                    for key, value in file_item.items()
-                    if key != "_id"
-                }
-                file_item_id = create_entity_id()
-                _new_files[file_item_id] = _file_item
-            new_files = _new_files
-        new_data["files"] = new_files
+        if isinstance(new_files, dict):
+            new_files = list(new_files.values())
+
+        for item in new_files:
+            for key in tuple(item.keys()):
+                if key not in ("hash", "path", "size"):
+                    item.pop(key)
+            item.update({
+                "id": create_entity_id(),
+                "name": os.path.basename(item["path"]),
+                "hash_type": "op3",
+            })
+        new_update_data["files"] = new_files
 
     flat_data = _to_flat_dict(new_update_data)
     if new_data:
