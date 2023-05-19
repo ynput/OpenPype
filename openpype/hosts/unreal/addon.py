@@ -14,6 +14,7 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
+        # Imports are in this method for Python 2 compatiblity of an addon
         from pathlib import Path
 
         from .lib import get_compatible_integration
