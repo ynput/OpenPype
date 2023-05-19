@@ -125,7 +125,7 @@ def _get_default_template_name(templates):
             return "default"
 
         if default_template is None:
-            default_template = template["name"]
+            default_template = name
 
     return default_template
 
