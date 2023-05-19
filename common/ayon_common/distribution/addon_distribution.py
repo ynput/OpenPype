@@ -322,22 +322,6 @@ class AyonServerDownloader(SourceDownloader):
             os.remove(filepath)
 
 
-def get_addons_info():
-    """Returns list of addon information from Server
-
-    Returns:
-        List[AddonInfo]: List of metadata for addons sent from server,
-            parsed in AddonInfo objects
-    """
-
-    addons_info = []
-    for addon in ayon_api.get_addons_info(details=True)["addons"]:
-        addon_info = AddonInfo.from_dict(addon)
-        if addon_info is not None:
-            addons_info.append(addon_info)
-    return addons_info
-
-
 def get_dependency_package(package_name=None):
     """Returns info about currently used dependency package.
 
