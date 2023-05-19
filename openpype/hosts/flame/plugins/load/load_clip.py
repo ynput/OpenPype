@@ -17,7 +17,7 @@ class LoadClip(opfapi.ClipLoader):
     during conforming to project
     """
 
-    families = ["render2d", "source", "plate", "render", "review"]
+    families = ["render2d", "source", "plate", "reference", "render", "review"]
     representations = ["*"]
     extensions = set(
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
