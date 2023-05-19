@@ -1057,6 +1057,9 @@ def convert_project_settings(ayon_settings, default_settings):
         if key not in output:
             output[key] = value
 
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
     return output
 
 
