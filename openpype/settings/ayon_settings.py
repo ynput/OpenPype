@@ -20,6 +20,7 @@ import time
 
 import six
 import ayon_api
+from openpype.lib.openpype_version import is_staging_enabled
 
 
 def _convert_color(color_value):
@@ -1089,7 +1090,9 @@ class AyonSettingsCache:
             cls._production_settings is None
             or cls._production_settings.is_outdated
         ):
-            value = ayon_api.get_addons_settings(only_values=False)
+            variant = "staging" if is_staging_enabled() else "production"
+            value = ayon_api.get_addons_settings(
+                only_values=False, variant=variant)
             if cls._production_settings is None:
                 cls._production_settings = CacheItem(value)
             else:
