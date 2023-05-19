@@ -13,14 +13,13 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         "frameStart": "sg_first_frame",
         "frameEnd": "sg_last_frame",
         "comment": "sg_submission_notes",
-        "family": "sg_version_type"
+        "family": "sg_version_type",
     }
     ### Ends Alkemy-X Override ###
 
     sg = None
 
     def process(self, instance):
-
         context = instance.context
         self.sg = context.data.get("shotgridSession")
 
@@ -30,7 +29,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         code = "{}_{}_{}".format(
             anatomy["asset"],
             instance.data["subset"],
-            "v{:03}".format(int(anatomy["version"]))
+            "v{:03}".format(int(anatomy["version"])),
         )
         ### Ends Alkemy-X Override ###
 
@@ -50,15 +49,26 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         ### Starts Alkemy-X Override ###
         # Add a few extra fields from OP to SG version
         for op_field, sg_field in self.fields_to_add.items():
-            field_value = context.data.get(op_field) or instance.data.get(op_field)
+            field_value = instance.data.get(op_field) or context.data.get(
+                op_field
+            )
             if field_value:
-                self.log.info("Adding field '{}' to SG as '{}':'{}'".format(
-                    op_field, sg_field, field_value)
+                self.log.info(
+                    "Adding field '{}' to SG as '{}':'{}'".format(
+                        op_field, sg_field, field_value
+                    )
                 )
                 data_to_update[sg_field] = field_value
 
-        # Add version objectId to "sg_op_instance_id" so we can keep a link between both
-        data_to_update["sg_op_instance_id"] = str(instance.data["versionEntity"]["_id"])
+        # Add version objectId to "sg_op_instance_id" so we can keep a link
+        # between both
+        version_entity = instance.data.get("versionEntity", {}).get("_id")
+        if not version_entity:
+            self.log.warning(
+                "Instance doesn't have a 'versionEntity' to extract the id."
+            )
+            version_entity = "-"
+        data_to_update["sg_op_instance_id"] = str(version_entity)
 
         ### Ends Alkemy-X Override ###
 
@@ -97,7 +107,6 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         instance.data["shotgridVersion"] = version
 
     def _find_existing_version(self, code, context):
-
         filters = [
             ["project", "is", context.data.get("shotgridProject")],
             ["sg_task", "is", context.data.get("shotgridTask")],
@@ -107,7 +116,6 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         return self.sg.find_one("Version", filters, [])
 
     def _create_version(self, code, context):
-
         version_data = {
             "project": context.data.get("shotgridProject"),
             "sg_task": context.data.get("shotgridTask"),
