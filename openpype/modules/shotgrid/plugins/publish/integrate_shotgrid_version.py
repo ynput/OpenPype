@@ -13,14 +13,13 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         "frameStart": "sg_first_frame",
         "frameEnd": "sg_last_frame",
         "comment": "sg_submission_notes",
-        "family": "sg_version_type"
+        "family": "sg_version_type",
     }
     ### Ends Alkemy-X Override ###
 
     sg = None
 
     def process(self, instance):
-
         context = instance.context
         self.sg = context.data.get("shotgridSession")
 
