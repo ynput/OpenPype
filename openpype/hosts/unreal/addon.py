@@ -1,8 +1,5 @@
 import os
-from pathlib import Path
-
 from openpype.modules import IHostAddon, OpenPypeModule
-from .lib import get_compatible_integration
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -17,10 +14,14 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
+        # Imports are in this method for Python 2 compatiblity of an addon
+        from pathlib import Path
+
+        from .lib import get_compatible_integration
 
         ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
-            UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
+            UNREAL_ROOT_DIR, "integration", "UE_{}".format(ue_version), "Ayon"
         )
         if not Path(unreal_plugin_path).exists():
             compatible_versions = get_compatible_integration(
