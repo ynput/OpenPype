@@ -19,7 +19,9 @@ class CollectShotgridShot(pyblish.api.InstancePlugin):
         sg_shot = _get_shotgrid_shot(sg, anatomy_data)
 
         if sg_shot:
-            context.data["shotgridEntity"] = sg_shot
+            ### Starts Alkemy-X Override ###
+            instance.data["shotgridEntity"] = sg_shot
+            ### Ends Alkemy-X Override ###
             self.log.info(
                 "Overriding entity with corresponding shot for clip: {}".format(sg_shot)
             )

@@ -34,10 +34,14 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         )
         ### Ends Alkemy-X Override ###
 
-        version = self._find_existing_version(code, context)
+        ### Starts Alkemy-X Override ###
+        version = self._find_existing_version(code, context, instance)
+        ### Ends Alkemy-X Override ###
 
         if not version:
-            version = self._create_version(code, context)
+            ### Starts Alkemy-X Override ###
+            version = self._create_version(code, context, instance)
+            ### Ends Alkemy-X Override ###
             self.log.info("Create Shotgrid version: {}".format(version))
         else:
             self.log.info("Use existing Shotgrid version: {}".format(version))
@@ -96,22 +100,28 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
         instance.data["shotgridVersion"] = version
 
-    def _find_existing_version(self, code, context):
-
+    ### Starts Alkemy-X Override ###
+    def _find_existing_version(self, code, context, instance):
+    ### Ends Alkemy-X Override ###
         filters = [
             ["project", "is", context.data.get("shotgridProject")],
             ["sg_task", "is", context.data.get("shotgridTask")],
-            ["entity", "is", context.data.get("shotgridEntity")],
+            ### Starts Alkemy-X Override ###
+            ["entity", "is", instance.data.get("shotgridEntity")],
+            ### Ends Alkemy-X Override ###
             ["code", "is", code],
         ]
         return self.sg.find_one("Version", filters, [])
 
-    def _create_version(self, code, context):
-
+    ### Starts Alkemy-X Override ###
+    def _create_version(self, code, context, instance):
+    ### Ends Alkemy-X Override ###
         version_data = {
             "project": context.data.get("shotgridProject"),
             "sg_task": context.data.get("shotgridTask"),
-            "entity": context.data.get("shotgridEntity"),
+            ### Starts Alkemy-X Override ###
+            "entity": instance.data.get("shotgridEntity"),
+            ### Ends Alkemy-X Override ###
             "code": code,
         }
         return self.sg.create("Version", version_data)
