@@ -24,7 +24,10 @@ class ValidateOutputResolution(
     optional = True
     families = ["render"]
     label = "Write resolution"
-    hosts = ["nuke"]
+    ### Stars Alkemy-X Override ###
+    # Don't want to limit artist to only be able to write out shot resolution
+    hosts = ["None"]
+    ### Ends Alkemy-X Override ###
     actions = [RepairAction]
 
     missing_msg = "Missing Reformat node in render group node"
