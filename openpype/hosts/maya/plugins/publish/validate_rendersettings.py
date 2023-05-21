@@ -11,22 +11,7 @@ from openpype.pipeline.publish import (
     ValidateContentsOrder,
 )
 from openpype.hosts.maya.api import lib
-
-
-def convert_to_int_or_float(string_value):
-    # Order of types are important here since float can convert string
-    # representation of integer.
-    types = [int, float]
-    for t in types:
-        try:
-            result = t(string_value)
-        except ValueError:
-            continue
-        else:
-            return result
-
-    # Neither integer or float.
-    return string_value
+from openpype.settings.lib import convert_to_int_or_float
 
 
 def get_redshift_image_format_labels():

@@ -1093,3 +1093,26 @@ def clear_metadata_from_settings(values):
     elif isinstance(values, list):
         for item in values:
             clear_metadata_from_settings(item)
+
+
+def convert_to_int_or_float(string_value):
+    """Convert string value to integer or float.
+
+    Settings can return a string for integer and float values when using text
+    as universal input. For example for:
+        - project_settings/maya/publish/ValidateLight/attribute_values
+        - project_settings/maya/publish/ValidateRenderSettings
+    """
+    # Order of types are important here since float can convert string
+    # representation of integer.
+    types = [int, float]
+    for t in types:
+        try:
+            result = t(string_value)
+        except ValueError:
+            continue
+        else:
+            return result
+
+    # Neither integer or float.
+    return string_value

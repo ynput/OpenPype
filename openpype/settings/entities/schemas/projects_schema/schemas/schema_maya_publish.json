@@ -79,6 +79,67 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "ValidateLightRequired",
+            "label": "Validate Light Required",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "light_types",
+                    "label": "Light Types",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "attribute_values",
+                    "label": "Attribute Values",
+                    "use_label_wrap": true,
+                    "store_as_list": true,
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateLightOptional",
+            "label": "Validate Light Optional",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "attribute_values",
+                    "label": "Attribute Values",
+                    "use_label_wrap": true,
+                    "store_as_list": true,
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateFrameRange",
             "label": "Validate Frame Range",
             "checkbox_key": "enabled",

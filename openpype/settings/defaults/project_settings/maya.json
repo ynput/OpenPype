@@ -721,6 +721,16 @@
             "optional": true,
             "active": true
         },
+        "ValidateLightRequired": {
+            "enabled": true,
+            "light_types": [],
+            "attribute_values": []
+        },
+        "ValidateLightOptional": {
+            "enabled": true,
+            "active": true,
+            "attribute_values": []
+        },
         "ValidateFrameRange": {
             "enabled": true,
             "optional": true,
