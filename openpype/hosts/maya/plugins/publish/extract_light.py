@@ -3,7 +3,7 @@ import os
 from maya import cmds
 
 from openpype.hosts.maya.api.lib import maintained_selection
-from openpype.pipeline import AVALON_CONTAINER_ID, publish
+from openpype.pipeline import publish
 
 
 class ExtractLight(publish.Extractor):
