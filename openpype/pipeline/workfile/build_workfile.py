@@ -186,7 +186,7 @@ class BuildWorkfile:
 
         if link_context_profiles:
             # Find and append linked assets if preset has set linked mapping
-            link_assets = get_linked_assets(current_asset_entity)
+            link_assets = get_linked_assets(project_name, current_asset_entity)
             if link_assets:
                 assets.extend(link_assets)
 
