@@ -11,7 +11,6 @@ from openpype.lib import (
     EnumDef,
 )
 from openpype.pipeline import (
-    legacy_io,
     Creator as NewCreator,
     CreatedInstance,
     Anatomy,
@@ -21,7 +20,6 @@ from openpype.client import (
     get_project,
 )
 from openpype.pipeline.context_tools import (
-    get_current_context,
     get_current_project_name,
     get_current_task_name,
 )
@@ -137,12 +135,17 @@ class CreateSaver(NewCreator):
 
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""
-        if "subset" not in data:
+
+        subset = data.get("subset")
+        if subset is None:
             return
 
-        original_subset = tool.GetData("openpype.subset")
-        subset = data["subset"]
-        if original_subset != subset:
+        original_data = tool.GetData("openpype")
+
+        # As data contains an extra key called active, add it to
+        # original_data to get a correct comparison
+        original_data["active"] = data["active"]
+        if original_data != data:
             self._configure_saver_tool(data, tool, subset)
 
     def _configure_saver_tool(self, data, tool, subset):
