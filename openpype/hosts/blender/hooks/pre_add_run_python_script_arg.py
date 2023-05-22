@@ -28,6 +28,7 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
                     f"Python script {python_script_path} doesn't exist. "
                     "Skipped..."
                 )
+                continue
 
             if "--" in self.launch_context.launch_args:
                 # Insert before separator
