@@ -25,15 +25,16 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         frame_range_source = creator_attributes.get("frame_range_source")
         instance.data["frame_range_source"] = frame_range_source
 
-        if frame_range_source == "asset_db":
-            # get asset frame ranges
-            start = context.data["frameStart"]
-            end = context.data["frameEnd"]
-            handle_start = context.data["handleStart"]
-            handle_end = context.data["handleEnd"]
-            start_with_handle = start - handle_start
-            end_with_handle = end + handle_end
+        # get asset frame ranges to all instances
+        # render family instances `asset_db` render target
+        start = context.data["frameStart"]
+        end = context.data["frameEnd"]
+        handle_start = context.data["handleStart"]
+        handle_end = context.data["handleEnd"]
+        start_with_handle = start - handle_start
+        end_with_handle = end + handle_end
 
+        # conditions for render family instances
         if frame_range_source == "render_range":
             # set comp render frame ranges
             start = context.data["renderFrameStart"]
