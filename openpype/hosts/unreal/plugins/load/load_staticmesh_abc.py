@@ -135,7 +135,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
         source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
-        task = self.get_task(source_path, destination_path, name, True)
+        task = self.get_task(source_path, destination_path, name, True, False)
 
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])

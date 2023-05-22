@@ -68,6 +68,50 @@
                     "label": "Resync profile on each launch"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateSaver",
+                    "label": "Create Saver",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "key": "instance_attributes",
+                            "label": "Instance attributes",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {
+                                    "reviewable": "Reviewable"
+                                },
+                                {
+                                    "farm_rendering": "Farm rendering"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

@@ -4,9 +4,8 @@ Anything that isn't defined here is INTERNAL and unreliable for external use.
 
 """
 
-from .launch_logic import (
+from .ws_stub import (
     get_stub,
-    stub,
 )
 
 from .pipeline import (
@@ -18,7 +17,8 @@ from .pipeline import (
 from .lib import (
     maintained_selection,
     get_extension_manifest_path,
-    get_asset_settings
+    get_asset_settings,
+    set_settings
 )
 
 from .plugin import (
@@ -27,9 +27,8 @@ from .plugin import (
 
 
 __all__ = [
-    # launch_logic
+    # ws_stub
     "get_stub",
-    "stub",
 
     # pipeline
     "ls",
@@ -39,6 +38,7 @@ __all__ = [
     "maintained_selection",
     "get_extension_manifest_path",
     "get_asset_settings",
+    "set_settings",
 
     # plugin
     "AfterEffectsLoader"

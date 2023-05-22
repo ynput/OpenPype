@@ -33,15 +33,10 @@ class AbcLoader(load.LoaderPlugin):
             c for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
-
-        abc_export_cmd = (f"""
-AlembicImport.ImportToRoot = false
-
-importFile @"{file_path}" #noPrompt
-        """)
-
-        self.log.debug(f"Executing command: {abc_export_cmd}")
-        rt.execute(abc_export_cmd)
+        rt.AlembicImport.ImportToRoot = False
+        rt.AlembicImport.StartFrame = True
+        rt.AlembicImport.EndFrame = True
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
             c for c in rt.rootNode.Children
@@ -51,10 +46,15 @@ importFile @"{file_path}" #noPrompt
         # This should yield new AlembicContainer node
         abc_containers = abc_after.difference(abc_before)
 
+
         if len(abc_containers) != 1:
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
+
+        for abc in rt.getCurrentSelection():
+            for cam_shape in abc.Children:
+                cam_shape.playbackType = 2
 
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__)
