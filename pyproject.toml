@@ -105,6 +105,11 @@ name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
 secondary = true
 
+
+[project]
+[project.entry-points."openassetio.manager_plugin"]
+plugin_package_or_module = "openpype.pipeline.openassetio.openpype_manager"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
