@@ -89,4 +89,4 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
 
 # Discover the plugin only in AYON mode
 if not AYON_SERVER_ENABLED:
-    IntegrateVersionAttributes = object
+    del IntegrateVersionAttributes
