@@ -19,7 +19,8 @@ class OpenInDJV(load.LoaderPlugin):
 
     djv_list = existing_djv_path()
     families = ["*"] if djv_list else []
-    representations = [
+    representations = ["*"]
+    extensions = [
         "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
         "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
         "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
