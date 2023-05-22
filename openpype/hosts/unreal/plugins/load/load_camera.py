@@ -304,7 +304,7 @@ class CameraLoader(plugin.Loader):
                             new_time = old_time_value + (
                                 data.get('clipIn') - data.get('frameStart')
                             )
-                            key.set_time(unreal.FrameNumber(value = new_time))
+                            key.set_time(unreal.FrameNumber(value=new_time))
 
         # Create Asset Container
         unreal_pipeline.create_container(
