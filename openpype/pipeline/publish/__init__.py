@@ -36,6 +36,9 @@ from .lib import (
     context_plugin_should_run,
     get_instance_staging_dir,
     get_publish_repre_path,
+
+    apply_plugin_settings_automatically,
+    get_plugin_settings,
 )
 
 from .abstract_expected_files import ExpectedFiles
@@ -79,6 +82,9 @@ __all__ = (
     "context_plugin_should_run",
     "get_instance_staging_dir",
     "get_publish_repre_path",
+
+    "apply_plugin_settings_automatically",
+    "get_plugin_settings",
 
     "ExpectedFiles",
 
