@@ -43,16 +43,17 @@ class CreateSaver(NewCreator):
     )
 
     def create(self, subset_name, instance_data, pre_create_data):
-
         self.pass_pre_attributes_to_instance(
             instance_data,
-            pre_create_data
+            pre_create_data,
         )
 
-        instance_data.update({
-            "id": "pyblish.avalon.instance",
-            "subset": subset_name
-        })
+        instance_data.update(
+            {
+                "id": "pyblish.avalon.instance",
+                "subset": subset_name,
+            }
+        )
 
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
@@ -215,7 +216,7 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
-            self._get_frame_range_enum()
+            self._get_frame_range_enum(),
         ]
         return attr_defs
 
@@ -226,7 +227,7 @@ class CreateSaver(NewCreator):
     def pass_pre_attributes_to_instance(
         self,
         instance_data,
-        pre_create_data
+        pre_create_data,
     ):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in pre_create_data.keys():
@@ -250,13 +251,13 @@ class CreateSaver(NewCreator):
         frame_range_options = {
             "asset_db": "Current asset context",
             "render_range": "From viewer render in/out",
-            "comp_range": "From composition timeline"
+            "comp_range": "From composition timeline",
         }
 
         return EnumDef(
             "frame_range_source",
             items=frame_range_options,
-            label="Frame range source"
+            label="Frame range source",
         )
 
     def _get_reviewable_bool(self):
