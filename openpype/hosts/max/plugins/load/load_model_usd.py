@@ -20,7 +20,7 @@ class ModelUSDLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
         # asset_filepath
-        filepath = os.path.normpath(self.fname)
+        filepath = os.path.normpath(self.filepath_from_context(context))
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(filepath)
         filename, ext = os.path.splitext(base_filename)
