@@ -13,6 +13,7 @@ from .lib import (
     update_frame_range,
     set_asset_framerange,
     get_current_comp,
+    get_bmd_library,
     comp_lock_and_undo_chunk
 )
 

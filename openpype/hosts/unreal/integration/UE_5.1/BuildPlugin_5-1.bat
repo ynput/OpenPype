@@ -1,1 +1,0 @@
-"D:\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -plugin="D:\OpenPype\openpype\hosts\unreal\integration\UE_5.1\Ayon\Ayon.uplugin" -Package="D:\BuiltPlugins\5.1"
