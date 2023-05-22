@@ -11,7 +11,7 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["camera"]
+    families = ["camera", "review"]
     hosts = ["max"]
     label = "Camera Contents"
     camera_type = ["$Free_Camera", "$Target_Camera",

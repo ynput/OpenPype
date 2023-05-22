@@ -50,7 +50,8 @@ class ExtractBurnin(publish.Extractor):
         "aftereffects",
         "photoshop",
         "flame",
-        "houdini"
+        "houdini",
+        "max"
         # "resolve"
     ]
 
