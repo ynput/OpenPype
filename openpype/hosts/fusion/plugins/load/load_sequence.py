@@ -136,7 +136,14 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review", "render", "plate"]
+    families = [
+        "imagesequence",
+        "review",
+        "render",
+        "plate",
+        "image",
+        "onilne",
+    ]
     representations = ["*"]
     extensions = set(
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
