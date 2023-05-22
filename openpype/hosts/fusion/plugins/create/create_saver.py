@@ -1,17 +1,20 @@
+from copy import deepcopy
 import os
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
 )
+
 from openpype.lib import (
     BoolDef,
     EnumDef,
 )
 from openpype.pipeline import (
     legacy_io,
-    Creator,
+    Creator as NewCreator,
     CreatedInstance,
+    Anatomy,
 )
 from openpype.client import (
     get_asset_by_name,
@@ -21,7 +24,7 @@ from openpype.pipeline.context_tools import get_current_context
 from openpype.pipeline.workfile import get_workdir
 
 
-class CreateSaver(Creator):
+class CreateSaver(NewCreator):
     identifier = "io.openpype.creators.fusion.saver"
     label = "Render (saver)"
     name = "render"
@@ -31,8 +34,18 @@ class CreateSaver(Creator):
     icon = "fa5.eye"
 
     instance_attributes = ["reviewable"]
+    default_variants = ["Main", "Mask"]
+
+    # TODO: This should be renamed together with Nuke so it is aligned
+    temp_rendering_path_template = (
+        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}"
+    )
 
     def create(self, subset_name, instance_data, pre_create_data):
+        instance_data.update(
+            {"id": "pyblish.avalon.instance", "subset": subset_name}
+        )
+
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
 
@@ -41,7 +54,6 @@ class CreateSaver(Creator):
             args = (-32768, -32768)  # Magical position numbers
             saver = comp.AddTool("Saver", *args)
 
-            instance_data["subset"] = subset_name
             self._update_tool_with_data(saver, data=instance_data)
 
             saver["OutputFormat"] = file_format
@@ -80,7 +92,7 @@ class CreateSaver(Creator):
         for tool in tools:
             data = self.get_managed_tool_data(tool)
             if not data:
-                data = self._collect_unmanaged_saver(tool)
+                continue
 
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
@@ -121,12 +133,24 @@ class CreateSaver(Creator):
 
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""
-
-        subset = data["subset"]
-        if subset is None:
-            self.log.warning("No subset found for _update_tool_with_data")
+        if "subset" not in data:
             return
 
+        original_subset = tool.GetData("openpype.subset")
+        subset = data["subset"]
+        if original_subset != subset:
+            self._configure_saver_tool(data, tool, subset)
+
+    def _configure_saver_tool(self, data, tool, subset):
+        formatting_data = deepcopy(data)
+
+        # get frame padding from anatomy templates
+        anatomy = Anatomy()
+        frame_padding = int(
+            anatomy.templates["render"].get("frame_padding", 4)
+        )
+
+        # Subset change detected
         context = get_current_context()
         project_doc = get_project(context["project_name"])
         asset_doc = get_asset_by_name(context["project_name"], data["asset"])
@@ -134,58 +158,20 @@ class CreateSaver(Creator):
         workdir = os.path.normpath(
             get_workdir(project_doc, asset_doc, context["task_name"], "fusion")
         )
-        tool["Clip"] = os.path.join(
-            workdir, "render", subset, f"{subset}..exr"
+
+        formatting_data.update(
+            {"workdir": workdir, "frame": "0" * frame_padding, "ext": "exr"}
         )
+
+        # build file path to render
+        filepath = self.temp_rendering_path_template.format(**formatting_data)
+
+        tool["Clip"] = os.path.normpath(filepath)
 
         # Rename tool
         if tool.Name != subset:
             print(f"Renaming {tool.Name} -> {subset}")
             tool.SetAttrs({"TOOLS_Name": subset})
-
-    def _collect_unmanaged_saver(self, tool):
-        # TODO: this should not be done this way - this should actually
-        #       get the data as stored on the tool explicitly (however)
-        #       that would disallow any 'regular saver' to be collected
-        #       unless the instance data is stored on it to begin with
-
-        print("Collecting unmanaged saver..")
-        comp = tool.Comp()
-
-        # Allow regular non-managed savers to also be picked up
-        context = get_current_context()
-        project = context["project_name"]
-        asset = context["asset_name"]
-        task = context["task_name"]
-
-        asset_doc = get_asset_by_name(project_name=project, asset_name=asset)
-
-        path = tool["Clip"][comp.TIME_UNDEFINED]
-        fname = os.path.basename(path)
-        fname, _ext = os.path.splitext(fname)
-        variant = fname.rstrip(".")
-        subset = self.get_subset_name(
-            variant=variant,
-            task_name=task,
-            asset_doc=asset_doc,
-            project_name=project,
-        )
-
-        attrs = tool.GetAttrs()
-        passthrough = attrs["TOOLB_PassThrough"]
-        return {
-            # Required data
-            "project": project,
-            "asset": asset,
-            "subset": subset,
-            "task": task,
-            "variant": variant,
-            "active": not passthrough,
-            "family": self.family,
-            # Unique identifier for instance and this creator
-            "id": "pyblish.avalon.instance",
-            "creator_identifier": self.identifier,
-        }
 
     def get_managed_tool_data(self, tool):
         """Return data of the tool if it matches creator identifier"""
@@ -244,4 +230,25 @@ class CreateSaver(Creator):
             "review",
             default=("reviewable" in self.instance_attributes),
             label="Review",
+        )
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        # plugin settings
+        plugin_settings = project_settings["fusion"]["create"][
+            self.__class__.__name__
+        ]
+
+        # individual attributes
+        self.instance_attributes = (
+            plugin_settings.get("instance_attributes")
+            or self.instance_attributes
+        )
+        self.default_variants = (
+            plugin_settings.get("default_variants") or self.default_variants
+        )
+        self.temp_rendering_path_template = (
+            plugin_settings.get("temp_rendering_path_template")
+            or self.temp_rendering_path_template
         )
