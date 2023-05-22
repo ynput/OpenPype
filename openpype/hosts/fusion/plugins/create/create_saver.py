@@ -20,7 +20,11 @@ from openpype.client import (
     get_asset_by_name,
     get_project,
 )
-from openpype.pipeline.context_tools import get_current_context
+from openpype.pipeline.context_tools import (
+    get_current_context,
+    get_current_project_name,
+    get_current_task_name,
+)
 from openpype.pipeline.workfile import get_workdir
 
 
@@ -151,12 +155,15 @@ class CreateSaver(NewCreator):
         )
 
         # Subset change detected
-        context = get_current_context()
-        project_doc = get_project(context["project_name"])
-        asset_doc = get_asset_by_name(context["project_name"], data["asset"])
+        project_doc = get_project(get_current_project_name())
+        asset_doc = get_asset_by_name(
+            get_current_project_name(), data["asset"]
+        )
 
         workdir = os.path.normpath(
-            get_workdir(project_doc, asset_doc, context["task_name"], "fusion")
+            get_workdir(
+                project_doc, asset_doc, get_current_task_name(), "fusion"
+            )
         )
 
         formatting_data.update(
