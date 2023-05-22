@@ -1,12 +1,10 @@
 import os
 import sys
-import types
 import inspect
 import copy
 import tempfile
 import xml.etree.ElementTree
 
-import six
 import pyblish.util
 import pyblish.plugin
 import pyblish.api
