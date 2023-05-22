@@ -37,8 +37,8 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
             attributes = instance.data.get("versionAttributes")
             if not attributes:
                 self.log.debug((
-                    "Skipping instance {} because it does not have"
-                    " specified version attributes to set."
+                    "Skipping instance {} because it does not specify"
+                    " version attributes to set."
                 ).format(label))
                 continue
 
@@ -51,7 +51,8 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
 
             if not filtered_attributes:
                 self.log.debug((
-                    "Skipping instance {} all attributes were filtered out."
+                    "Skipping instance {} because all version attributes were"
+                    " filtered out."
                 ).format(label))
                 continue
 
@@ -67,15 +68,15 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
 
         if skipped_attributes:
             self.log.warning((
-                "Skipped attributes because they're not available"
-                " on the server: {}"
+                "Skipped version attributes integration because they're"
+                " not available on the server: {}"
             ).format(str(skipped_attributes)))
 
         if len(op_session):
             op_session.commit()
             self.log.info("Updated version attributes")
         else:
-            self.log.info("There is nothing to update")
+            self.log.debug("There are not version attributes to update")
 
     @staticmethod
     def get_instance_label(instance):
