@@ -593,7 +593,7 @@ def build_anim(project_name, asset_name):
         container_metadata = container["avalon"]
         family = container_metadata.get("family")
 
-        if family not in ("rig", "model", "setdress"):
+        if family not in {"rig", "model", "setdress"}:
             continue
 
         # Get version representation
