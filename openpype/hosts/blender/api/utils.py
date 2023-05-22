@@ -314,15 +314,18 @@ def transfer_stack(
     """
     src_col = getattr(source_datablock, stack_name)
     for stack_datablock in src_col:
+        if stack_datablock.is_override_data:
+            continue
+
         target_col = getattr(target_datablock, stack_name)
-        target_data = target_col.get(stack_datablock.name)
-        if not target_data:
+        target_stack_datablock = target_col.get(stack_datablock.name)
+        if not target_stack_datablock:
             if stack_name == "modifiers":
-                target_data = target_col.new(
+                target_stack_datablock = target_col.new(
                     stack_datablock.name, stack_datablock.type
                 )
             else:
-                target_data = target_col.new(stack_datablock.type)
+                target_stack_datablock = target_col.new(stack_datablock.type)
 
             # Transfer attributes
             attributes = {
@@ -331,10 +334,15 @@ def transfer_stack(
                 if not a.startswith("_")
                 and a != "bl_rna"
                 and not callable(getattr(stack_datablock, a))
-                and not stack_datablock.is_property_readonly(a)
+                and hasattr(target_stack_datablock, a)
+                and not target_stack_datablock.is_property_readonly(a)
             }
             for attr in attributes:
-                setattr(target_data, attr, getattr(stack_datablock, attr))
+                setattr(
+                    target_stack_datablock,
+                    attr,
+                    getattr(stack_datablock, attr),
+                )
 
 
 def make_paths_absolute(source_filepath: Path = None):

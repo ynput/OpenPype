@@ -692,11 +692,9 @@ class AssetLoader(Loader):
             Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
                 (Created scene container, Loaded datablocks)
         """
-        # Get current datablocks
-        file_current_datablocks = get_all_datablocks()
-
         # Load datablocks from libpath library.
-        loaded_data_collections = set()
+        loaded_data_collections = []
+        loaded_names = []
         with bpy.data.libraries.load(
             libpath.as_posix(), link=link, relative=False
         ) as (
@@ -705,21 +703,34 @@ class AssetLoader(Loader):
         ):
             for bl_type in self.bl_types:
                 data_collection_name = BL_TYPE_DATAPATH.get(bl_type)
+                loaded_datablocks = list(
+                    getattr(data_from, data_collection_name)
+                )
                 setattr(
                     data_to,
                     data_collection_name,
-                    [
-                        name
-                        for name in getattr(data_from, data_collection_name)
-                    ],
+                    loaded_datablocks,
                 )
 
-                # Keep imported datablocks names
-                loaded_data_collections.add(data_collection_name)
+                # Keep collection with datablocks
+                loaded_data_collections.append(
+                    (data_collection_name, loaded_datablocks)
+                )
 
-        # Convert datablocks names to datablocks references
-        datablocks = get_all_datablocks() - file_current_datablocks
-        for collection_name in loaded_data_collections:
+                # Keep loaded datablocks names
+                loaded_names.extend([str(l) for l in loaded_datablocks])
+
+        datablocks = set()
+        i = 0
+        for collection_name, loaded_datablocks in loaded_data_collections:
+            # Assign original datablocks names to avoid name conflicts
+            for datablock in loaded_datablocks:
+                datablock["source_name"] = loaded_names[i]
+                i += 1
+
+            # Get datablocks
+            datablocks.update(loaded_datablocks)
+
             # Remove fake user from loaded datablocks
             datacol = getattr(bpy.data, collection_name)
             seq = [
@@ -727,16 +738,17 @@ class AssetLoader(Loader):
             ]
             datacol.foreach_set("use_fake_user", seq)
 
-        # Get datablocks to override, which have
-        # no user in the loaded datablocks (orphan at this point)
-        datablocks_to_override = {
-            d
-            for d, users in bpy.data.user_map(subset=datablocks).items()
-            if not users & set(datablocks)
-        }
-
         # Override datablocks if needed
         if link and do_override:
+            # Get datablocks to override, only outliner datablocks which have
+            # no user in the loaded datablocks (orphan at this point)
+            datablocks_to_override = {
+                d
+                for d, users in bpy.data.user_map(subset=datablocks).items()
+                if not users & set(datablocks)
+                and isinstance(d, tuple(BL_OUTLINER_TYPES))
+            }
+
             override_datablocks = set()
             for d in datablocks_to_override:
                 # Override datablock and its children
@@ -1121,6 +1133,27 @@ class AssetLoader(Loader):
         """
         load_func = self.get_load_function()
 
+        # Keep current datablocks
+        old_datablocks = container.get_datablocks(only_local=False)
+
+        # Rename old datablocks
+        for old_datablock in old_datablocks:
+            if not old_datablock.library:
+                old_datablock.name += ".old"
+
+            # Restore original name for linked datablocks
+            if (
+                old_datablock.override_library
+                and old_datablock.override_library.reference
+            ):
+                old_datablock[
+                    "source_name"
+                ] = old_datablock.override_library.reference.name
+            elif old_datablock.library or not old_datablock.get("source_name"):
+                old_datablock["source_name"] = old_datablock.name
+
+            old_datablock.use_fake_user = False
+
         # Unlink from parent collection if existing
         parent_collections = {}
         for outliner_datablock in container.get_root_outliner_datablocks():
@@ -1129,18 +1162,9 @@ class AssetLoader(Loader):
 
                 # Store parent collection by name
                 parent_collections.setdefault(parent_collection, []).append(
-                    outliner_datablock.name
+                    outliner_datablock["source_name"]
                 )
 
-        # Keep current datablocks
-        old_datablocks = container.get_datablocks(only_local=False)
-
-        # Rename old datablocks
-        for old_datablock in old_datablocks:
-            old_datablock["original_name"] = old_datablock.name
-            old_datablock.name += ".old"
-            old_datablock.use_fake_user = False
-        
         # Clear container datablocks
         container.datablock_refs.clear()
 
@@ -1153,22 +1177,24 @@ class AssetLoader(Loader):
 
         # Old datablocks remap
         for old_datablock in old_datablocks:
-            # Find matching new datablock by name without .###
-            # but with same type and library or override library state
+            # Match new datablock by name
             if new_datablock := next(
-                (
-                    d
-                    for d in datablocks
-                    if type(d) is type(old_datablock)
-                    and bool(old_datablock.library) == bool(d.library)
-                    and bool(old_datablock.override_library)
-                    == bool(d.override_library)
-                    and old_datablock["original_name"].rsplit(".", 1)[0]
-                    == d.name.rsplit(".", 1)[0]
+                iter(
+                    sorted(
+                        (
+                            d
+                            for d in datablocks
+                            if type(d) is type(old_datablock)
+                            and old_datablock.get("source_name")
+                            == d.get("source_name")
+                        ),
+                        key=lambda d: d.name_full,
+                        # Library datablocks names are before override ones
+                        reverse=True,
+                    )
                 ),
                 None,
             ):
-                new_datablock.name = old_datablock["original_name"]
                 old_datablock.user_remap(new_datablock)
 
                 # Ensure action relink
@@ -1193,14 +1219,18 @@ class AssetLoader(Loader):
                 # Ensure bones constraints reassignation
                 if hasattr(old_datablock, "pose") and old_datablock.pose:
                     for bone in old_datablock.pose.bones:
-                        if new_bone := new_datablock.pose.bones.get(bone.name):
-                            transfer_stack(bone, "constraints", new_bone)
+                        if new_datablock.pose:
+                            if new_bone := new_datablock.pose.bones.get(
+                                bone.name
+                            ):
+                                transfer_stack(bone, "constraints", new_bone)
 
                 # Ensure drivers reassignation
                 if (
                     isinstance(old_datablock, bpy.types.Object)
                     and hasattr(new_datablock.data, "shape_keys")
                     and new_datablock.data.shape_keys
+                    and old_datablock.data
                 ):
                     for i, driver in enumerate(
                         new_datablock.data.shape_keys.animation_data.drivers
@@ -1224,9 +1254,17 @@ class AssetLoader(Loader):
             datablocks_to_change_parent = {
                 d
                 for d in datablocks
-                if d and not d.library and d.name in datablock_names
+                if d
+                and not d.library
+                and d.get("source_name") in datablock_names
             }
             link_to_collection(datablocks_to_change_parent, parent_collection)
+
+            # Need to unlink from scene collection to avoid duplicates
+            if parent_collection != bpy.context.scene.collection:
+                unlink_from_collection(
+                    datablocks_to_change_parent, bpy.context.scene.collection
+                )
 
         # Update override library operations from asset objects if available.
         for obj in container.get_datablocks(bpy.types.Object):
