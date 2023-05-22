@@ -150,7 +150,9 @@ class CreateSaver(NewCreator):
 
         # As data contains an extra key called active, add it to
         # original_data to get a correct comparison
-        original_data["active"] = data["active"]
+        if data.get("active"):
+            original_data["active"] = data["active"]
+
         if original_data != data:
             self._configure_saver_tool(data, tool, subset)
 
