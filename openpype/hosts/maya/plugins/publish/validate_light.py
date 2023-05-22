@@ -37,7 +37,7 @@ class ValidateLightRequired(pyblish.api.InstancePlugin):
                         skipConversionNodes=True,
                         type="file",
                         destination=False
-                    )
+                    ) or []
                 )
 
             shape_types = {x: cmds.nodeType(x) for x in shapes}
