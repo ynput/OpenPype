@@ -268,8 +268,8 @@ class CameraLoader(plugin.Loader):
         data = get_asset_by_name(project_name, asset)["data"]
         cam_seq.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
-        cam_seq.set_playback_start(0)
-        cam_seq.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
+        cam_seq.set_playback_start(data.get('clipIn'))
+        cam_seq.set_playback_end(data.get('clipOut') + 1)
         self._set_sequence_hierarchy(
             sequences[-1], cam_seq,
             data.get('clipIn'), data.get('clipOut'))
@@ -285,6 +285,26 @@ class CameraLoader(plugin.Loader):
                 settings,
                 self.fname
             )
+
+        # Set range of all sections
+        # Changing the range of the section is not enough. We need to change
+        # the frame of all the keys in the section.
+        for possessable in cam_seq.get_possessables():
+            for tracks in possessable.get_tracks():
+                for section in tracks.get_sections():
+                    section.set_range(
+                        data.get('clipIn'),
+                        data.get('clipOut') + 1)
+                    for channel in section.get_all_channels():
+                        for key in channel.get_keys():
+                            old_time = key.get_time().get_editor_property(
+                                'frame_number')
+                            old_time_value = old_time.get_editor_property(
+                                'value')
+                            new_time = old_time_value + (
+                                data.get('clipIn') - data.get('frameStart')
+                            )
+                            key.set_time(unreal.FrameNumber(value=new_time))
 
         # Create Asset Container
         unreal_pipeline.create_container(
