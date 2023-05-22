@@ -76,7 +76,7 @@ class IntegrateVersionAttributes(pyblish.api.ContextPlugin):
             op_session.commit()
             self.log.info("Updated version attributes")
         else:
-            self.log.debug("There are not version attributes to update")
+            self.log.debug("There are no version attributes to update")
 
     @staticmethod
     def get_instance_label(instance):
