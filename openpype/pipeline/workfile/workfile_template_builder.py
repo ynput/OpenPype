@@ -40,7 +40,6 @@ from openpype.lib.attribute_definitions import get_attributes_keys
 from openpype.pipeline import (
     legacy_io,
     Anatomy,
-    registered_host,
     get_current_host_name,
 )
 from openpype.pipeline.load import (
@@ -579,8 +578,7 @@ class AbstractTemplateBuilder(object):
         )
 
         if result:
-            host = registered_host()
-            host.open_file(template_path)
+            self.host.open_file(template_path)
 
     @abstractmethod
     def import_template(self, template_path):
