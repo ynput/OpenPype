@@ -270,16 +270,7 @@ class CameraLoader(plugin.Loader):
     def update(self, container, representation):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        root = "/Game/Ayon"
-
         asset_dir = container.get('namespace')
-
-        context = representation.get("context")
-
-        hierarchy = context.get('hierarchy').split("/")
-        h_dir = f"{root}/{hierarchy[0]}"
-        h_asset = hierarchy[0]
-        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
 
         EditorLevelLibrary.save_current_level()
 
@@ -295,7 +286,7 @@ class CameraLoader(plugin.Loader):
         maps = ar.get_assets(_filter)
 
         # There should be only one map in the list
-        EditorLevelLibrary.load_level(maps[0].get_full_name())
+        EditorLevelLibrary.load_level(maps[0].get_asset().get_path_name())
 
         level_sequence = sequences[0].get_asset()
 
@@ -328,6 +319,7 @@ class CameraLoader(plugin.Loader):
         # Remove the Level Sequence from the parent.
         # We need to traverse the hierarchy from the master sequence to find
         # the level sequence.
+        root = "/Game/Ayon"
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
         _filter = unreal.ARFilter(
@@ -336,6 +328,12 @@ class CameraLoader(plugin.Loader):
             recursive_paths=False)
         sequences = ar.get_assets(_filter)
         master_sequence = sequences[0].get_asset()
+        _filter = unreal.ARFilter(
+            class_names=["World"],
+            package_paths=[f"{root}/{ms_asset}"],
+            recursive_paths=False)
+        levels = ar.get_assets(_filter)
+        master_level = levels[0].get_asset().get_path_name()
 
         sequences = [master_sequence]
 
