@@ -271,6 +271,7 @@ def maintained_selection(comp=None):
             for tool in previous_selection:
                 flow.Select(tool, True)
 
+
 @contextlib.contextmanager
 def maintained_comp_range(comp=None,
                           global_start=True,
