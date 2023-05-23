@@ -78,7 +78,7 @@ class FusionRenderLocal(
 
         We try to render the minimal amount of times by combining the instances
         that have a matching frame range in one Fusion render. Then for the
-        batch of instances we store whether the
+        batch of instances we store whether the render succeeded or failed.
 
         """
 
