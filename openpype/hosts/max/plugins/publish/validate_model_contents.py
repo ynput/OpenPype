@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline import PublishValidationError
 from pymxs import runtime as rt
+
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateModelContent(pyblish.api.InstancePlugin):

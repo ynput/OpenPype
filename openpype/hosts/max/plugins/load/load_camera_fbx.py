@@ -1,14 +1,12 @@
 import os
-from openpype.pipeline import (
-    load,
-    get_representation_path
-)
-from openpype.hosts.max.api.pipeline import containerise
+
 from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.pipeline import get_representation_path, load
 
 
 class FbxLoader(load.LoaderPlugin):
-    """Fbx Loader"""
+    """Fbx Loader."""
 
     families = ["camera"]
     representations = ["fbx"]
@@ -24,17 +22,17 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Camera", True)
         rt.FBXImporterSetParam("AxisConversionMethod", True)
         rt.FBXImporterSetParam("Preserveinstances", True)
-        rt.importFile(
+        rt.ImportFile(
             filepath,
             rt.name("noPrompt"),
             using=rt.FBXIMP)
 
-        container = rt.getNodeByName(f"{name}")
+        container = rt.GetNodeByName(f"{name}")
         if not container:
-            container = rt.container()
+            container = rt.Container()
             container.name = f"{name}"
 
-        for selection in rt.getCurrentSelection():
+        for selection in rt.GetCurrentSelection():
             selection.Parent = container
 
         return containerise(
@@ -44,8 +42,8 @@ class FbxLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        rt.select(node.Children)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Select(node.Children)
         fbx_reimport_cmd = (
             f"""
 
@@ -57,10 +55,10 @@ FbxExporterSetParam "Preserveinstances" true
 
 importFile @"{path}" #noPrompt using:FBXIMP
         """)
-        rt.execute(fbx_reimport_cmd)
+        rt.Execute(fbx_reimport_cmd)
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
@@ -72,5 +70,5 @@ importFile @"{path}" #noPrompt using:FBXIMP
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
