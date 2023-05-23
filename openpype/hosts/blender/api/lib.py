@@ -1,4 +1,5 @@
 import os
+import shutil
 import traceback
 import importlib
 import contextlib
@@ -14,11 +15,16 @@ from openpype.pipeline import (
     get_current_asset_name,
     get_current_task_name,
 )
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.workfile.path_resolving import (
+    get_workfile_template_key,
+)
 from openpype.client.entities import (
     get_subsets,
     get_representations,
     get_last_version_by_subset_id,
     get_asset_by_name,
+    get_project,
 )
 
 from . import pipeline
@@ -427,16 +433,40 @@ def download_last_workfile() -> str:
             f"'{task_name}' and host blender"
         )
 
-    # Download last published workfile and return its path
-    return download_last_published_workfile(
-        "blender",
-        project_name,
+    # Get workfile template data
+    workfile_data = get_template_data(
+        get_project(project_name, inactive=False),
+        asset_doc,
         task_name,
-        workfile_representation,
-        int((
-            sync_server.sync_project_settings[
-                project_name
-            ]['config']['retry_cnt']
-        )),
-        anatomy=anatomy,
-    ), last_version_doc["data"]["time"]
+        'blender',
+    )
+
+    # Increment workfile version number
+    workfile_data['version'] = (
+        workfile_representation['context']['version'] + 1
+    )
+
+    # Get local workfile path
+    local_workfile_path = anatomy.format(workfile_data)[
+        get_workfile_template_key(task_name, 'blender', project_name)
+    ]['path']
+
+    # Download and copy last published workfile to local workfile path
+    shutil.copy(
+        download_last_published_workfile(
+            "blender",
+            project_name,
+            task_name,
+            workfile_representation,
+            int((
+                sync_server.sync_project_settings[
+                    project_name
+                ]['config']['retry_cnt']
+            )),
+            anatomy=anatomy,
+        ),
+        local_workfile_path,
+    )
+
+    return local_workfile_path, last_version_doc['data']['time']
+
