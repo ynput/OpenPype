@@ -589,12 +589,18 @@ def build_anim(project_name, asset_name):
 
     # Switch hero containers to versioned and linked setdress to appended
     errors = []
+    setdress_container = None
     for container in bpy.context.scene.openpype_containers:
         container_metadata = container["avalon"]
         family = container_metadata.get("family")
 
         if family not in {"rig", "model", "setdress"}:
             continue
+
+        # hold SetDress container
+        is_setdress = (family == "setdress")
+        if is_setdress and not setdress_container:
+            setdress_container = container
 
         # Get version representation
         current_version = get_version_by_id(
@@ -637,7 +643,7 @@ def build_anim(project_name, asset_name):
         )
 
         # get loader
-        if family == "setdress":
+        if is_setdress:
             loader_name = "AppendWoollySetdressLoader"
         else:
             loader_name = container_metadata.get("loader")
@@ -649,7 +655,7 @@ def build_anim(project_name, asset_name):
         if (
             current_version["_id"] != version_id
             or container_metadata.get("loader") != loader_name
-            or family == "setdress"  # force reload to relink world datablock
+            or is_setdress  # force reload to relink world datablock
         ):
             try:
                 switch_container(
@@ -676,6 +682,18 @@ def build_anim(project_name, asset_name):
         gdeform_collection.name += ".old"
         bpy.data.collections.remove(gdeform_collection)
     create_gdeformer_collection(bpy.context.scene.collection)
+
+    # Get world from setdress
+    setdress_world = None
+    if setdress_container:
+        for world in setdress_container.get_datablocks(bpy.types.World):
+            setdress_world = world 
+
+    # Assign setdress or last loaded world
+    if setdress_world:
+        bpy.context.scene.world = setdress_world
+    else:
+        errors.append("World from SetDress not found!")
 
     # Load camera
     try:
