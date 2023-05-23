@@ -267,7 +267,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
