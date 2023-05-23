@@ -91,16 +91,39 @@ def get_current_project():
     return self.project_manager.GetCurrentProject()
 
 
-def get_current_timeline(new=False):
+def get_current_timeline(any=False, new=False):
+    """Get current timeline object.
+
+    Args:
+        any (bool, optional): return any even new if no timeline available.
+            Defaults to False.
+        new (bool, optional): return only new timeline. Defaults to False.
+
+    Returns:
+        _type_: _description_
+    """
     # get current project
     project = get_current_project()
 
+    timeline = project.GetCurrentTimeline()
+
+    # return current timeline only if it is not new
+    if timeline and not new:
+        return timeline
+
+    # if any is True then return any timeline
+    if any:
+        timeline_count = project.GetTimelineCount()
+        if timeline_count == 0:
+            # if there is no timeline then create a new one
+            new = True
+
+    # create new timeline if new is True
     if new:
         media_pool = project.GetMediaPool()
         new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
         project.SetCurrentTimeline(new_timeline)
-
-    return project.GetCurrentTimeline()
+        return new_timeline
 
 
 def create_bin(name: str, root: object = None) -> object:
@@ -312,7 +335,8 @@ def get_current_timeline_items(
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
-    timeline = get_current_timeline()
+    # make sure some timeline will be active with `any` argument
+    timeline = get_current_timeline(any=True)
     selected_clips = []
 
     # get all tracks count filtered by track type
