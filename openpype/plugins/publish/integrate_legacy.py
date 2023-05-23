@@ -147,7 +147,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data.get("processedWithNewIntegrator"):
-            self.log.debug("Instance was already processed with new integrator")
+            self.log.debug(
+                "Instance was already processed with new integrator"
+            )
             return
 
         for ef in self.exclude_families:
