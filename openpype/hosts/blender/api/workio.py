@@ -7,6 +7,7 @@ import bpy
 
 from openpype.pipeline import legacy_io
 from openpype.client.entities import get_last_version_by_subset_name
+from openpype.settings.lib import get_project_settings
 
 
 class OpenFileCacher:
