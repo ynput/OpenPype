@@ -1,20 +1,15 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection
-)
+
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
 class ExtractModelUSD(publish.Extractor,
                       OptionalPyblishPluginMixin):
-    """
-    Extract Geometry in USDA Format
-    """
+    """Extract Geometry in USDA Format."""
 
     order = pyblish.api.ExtractorOrder - 0.05
     label = "Extract Geometry (USD)"
@@ -44,7 +39,7 @@ class ExtractModelUSD(publish.Extractor,
         with maintained_selection():
             # select and export
             node_list = instance.data["members"]
-            rt.select(node_list)
+            rt.Select(node_list)
             rt.USDExporter.ExportFile(asset_filepath,
                                       exportOptions=export_options,
                                       contentSource=rt.Name("selected"),

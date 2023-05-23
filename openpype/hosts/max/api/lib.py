@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
-import json
-import six
-from pymxs import runtime as rt
-from typing import Union, Any, Dict
 import contextlib
+import json
+from typing import Any, Dict, Union
 
+import six
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
-    get_current_project
-)
-
+    get_current_project, get_current_project_asset,)
+from pymxs import runtime as rt
 
 JSON_PREFIX = "JSON::"
 
@@ -22,7 +19,7 @@ def imprint(node_name: str, data: dict) -> bool:
 
     for k, v in data.items():
         if isinstance(v, (dict, list)):
-            rt.SetUserProp(node, k, f'{JSON_PREFIX}{json.dumps(v)}')
+            rt.SetUserProp(node, k, f"{JSON_PREFIX}{json.dumps(v)}")
         else:
             rt.SetUserProp(node, k, v)
 
@@ -171,13 +168,14 @@ def set_scene_resolution(width: int, height: int):
     """
     # make sure the render dialog is closed
     # for the update of resolution
-    # Changing the Render Setup dialog settingsshould be done
+    # Changing the Render Setup dialog settings should be done
     # with the actual Render Setup dialog in a closed state.
     if rt.renderSceneDialog.isOpen():
         rt.renderSceneDialog.close()
 
     rt.renderWidth = width
     rt.renderHeight = height
+
 
 def reset_scene_resolution():
     """Apply the scene resolution from the project definition
@@ -248,7 +246,7 @@ def reset_frame_range(fps: bool = True):
     frange_cmd = (
         f"animationRange = interval {frame_start_handle} {frame_end_handle}"
     )
-    rt.execute(frange_cmd)
+    rt.Execute(frange_cmd)
     set_render_frame_range(frame_start_handle, frame_end_handle)
 
 

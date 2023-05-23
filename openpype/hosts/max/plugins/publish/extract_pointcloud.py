@@ -1,15 +1,15 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection
-)
+
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import publish
 
 
 class ExtractPointCloud(publish.Extractor):
     """
-    Extract PRT format with tyFlow operators
+    Extract PRT format with tyFlow operators.
 
     Notes:
         Currently only works for the default partition setting
@@ -112,8 +112,7 @@ class ExtractPointCloud(publish.Extractor):
             job_args.append(mode)
 
             additional_args = self.get_custom_attr(operator)
-            for args in additional_args:
-                job_args.append(args)
+            job_args.extend(iter(additional_args))
             prt_export = f"{operator}.exportPRT()"
             job_args.append(prt_export)
 

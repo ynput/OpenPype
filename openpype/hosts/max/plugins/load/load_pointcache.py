@@ -5,11 +5,10 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 
 """
 import os
-from openpype.pipeline import (
-    load, get_representation_path
-)
-from openpype.hosts.max.api.pipeline import containerise
+
 from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.pipeline import get_representation_path, load
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -30,29 +29,28 @@ class AbcLoader(load.LoaderPlugin):
         file_path = os.path.normpath(self.fname)
 
         abc_before = {
-            c for c in rt.rootNode.Children
-            if rt.classOf(c) == rt.AlembicContainer
+            c for c in rt.RootNode.Children
+            if rt.ClassOf(c) == rt.AlembicContainer
         }
         rt.AlembicImport.ImportToRoot = False
         rt.AlembicImport.StartFrame = True
         rt.AlembicImport.EndFrame = True
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.ImportFile(file_path, rt.Name("noPrompt"))
 
         abc_after = {
-            c for c in rt.rootNode.Children
-            if rt.classOf(c) == rt.AlembicContainer
+            c for c in rt.RootNode.Children
+            if rt.ClassOf(c) == rt.AlembicContainer
         }
 
         # This should yield new AlembicContainer node
         abc_containers = abc_after.difference(abc_before)
-
 
         if len(abc_containers) != 1:
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
 
-        for abc in rt.getCurrentSelection():
+        for abc in rt.GetCurrentSelection():
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
 
@@ -63,27 +61,25 @@ class AbcLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node = rt.GetNodeByName(container["instance_node"])
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
 
-        rt.select(node.Children)
-
-        for alembic in rt.selection:
-            abc = rt.getNodeByName(alembic.name)
-            rt.select(abc.Children)
-            for abc_con in rt.selection:
-                container = rt.getNodeByName(abc_con.name)
-                container.source = path
-                rt.select(container.Children)
-                for abc_obj in rt.selection:
-                    alembic_obj = rt.getNodeByName(abc_obj.name)
-                    alembic_obj.source = path
-
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node.Children)
+
+            for alembic in rt.Selection:
+                abc = rt.GetNodeByName(alembic.name)
+                rt.Select(abc.Children)
+                for abc_con in rt.Selection:
+                    container = rt.GetNodeByName(abc_con.name)
+                    container.source = path
+                    rt.Select(container.Children)
+                    for abc_obj in rt.Selection:
+                        alembic_obj = rt.GetNodeByName(abc_obj.name)
+                        alembic_obj.source = path
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -91,8 +87,8 @@ class AbcLoader(load.LoaderPlugin):
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):

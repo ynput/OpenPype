@@ -1,10 +1,9 @@
 import os
-from openpype.pipeline import (
-    load, get_representation_path
-)
-from openpype.hosts.max.api.pipeline import containerise
+
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.pipeline import get_representation_path, load
 
 
 class ModelUSDLoader(load.LoaderPlugin):
@@ -19,6 +18,7 @@ class ModelUSDLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
+
         # asset_filepath
         filepath = os.path.normpath(self.fname)
         import_options = rt.USDImporter.CreateOptions()
@@ -27,11 +27,11 @@ class ModelUSDLoader(load.LoaderPlugin):
         log_filepath = filepath.replace(ext, "txt")
 
         rt.LogPath = log_filepath
-        rt.LogLevel = rt.name('info')
+        rt.LogLevel = rt.Name("info")
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
 
-        asset = rt.getNodeByName(f"{name}")
+        asset = rt.GetNodeByName(name)
 
         return containerise(
             name, [asset], context, loader=self.__class__.__name__)
@@ -41,11 +41,11 @@ class ModelUSDLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        node = rt.getNodeByName(node_name)
+        node = rt.GetNodeByName(node_name)
         for n in node.Children:
             for r in n.Children:
-                rt.delete(r)
-            rt.delete(n)
+                rt.Delete(r)
+            rt.Delete(n)
         instance_name, _ = node_name.split("_")
 
         import_options = rt.USDImporter.CreateOptions()
@@ -54,15 +54,15 @@ class ModelUSDLoader(load.LoaderPlugin):
         log_filepath = path.replace(ext, "txt")
 
         rt.LogPath = log_filepath
-        rt.LogLevel = rt.name('info')
+        rt.LogLevel = rt.Name("info")
         rt.USDImporter.importFile(path,
                                   importOptions=import_options)
 
-        asset = rt.getNodeByName(f"{instance_name}")
+        asset = rt.GetNodeByName(instance_name)
         asset.Parent = node
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(node_name, {
             "representation": str(representation["_id"])
@@ -74,5 +74,5 @@ class ModelUSDLoader(load.LoaderPlugin):
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

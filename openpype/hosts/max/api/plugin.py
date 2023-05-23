@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 """3dsmax specific Avalon/Pyblish plugin definitions."""
-from pymxs import runtime as rt
-from typing import Union
-import six
 from abc import ABCMeta
-from openpype.pipeline import (
-    CreatorError,
-    Creator,
-    CreatedInstance
-)
+
+import six
+from pymxs import runtime as rt
+
 from openpype.lib import BoolDef
-from .lib import imprint, read, lsattr
+from openpype.pipeline import CreatedInstance, Creator, CreatorError
+
+from .lib import imprint, lsattr, read
 
 MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 (
@@ -100,17 +98,18 @@ class MaxCreatorBase(object):
 
     @staticmethod
     def cache_subsets(shared_data):
-        if shared_data.get("max_cached_subsets") is None:
-            shared_data["max_cached_subsets"] = {}
-            cached_instances = lsattr("id", "pyblish.avalon.instance")
-            for i in cached_instances:
-                creator_id = rt.getUserProp(i, "creator_identifier")
-                if creator_id not in shared_data["max_cached_subsets"]:
-                    shared_data["max_cached_subsets"][creator_id] = [i.name]
-                else:
-                    shared_data[
-                        "max_cached_subsets"][creator_id].append(
-                        i.name)  # noqa
+        if shared_data.get("max_cached_subsets"):
+            return shared_data
+
+        shared_data["max_cached_subsets"] = {}
+        cached_instances = lsattr("id", "pyblish.avalon.instance")
+        for i in cached_instances:
+            creator_id = rt.GetUserProp(i, "creator_identifier")
+            if creator_id not in shared_data["max_cached_subsets"]:
+                shared_data["max_cached_subsets"][creator_id] = [i.name]
+            else:
+                shared_data[
+                    "max_cached_subsets"][creator_id].append(i.name)
         return shared_data
 
     @staticmethod
@@ -127,9 +126,9 @@ class MaxCreatorBase(object):
             instance
         """
         if isinstance(node, str):
-            node = rt.container(name=node)
+            node = rt.Container(name=node)
 
-        attrs = rt.execute(MS_CUSTOM_ATTRIB)
+        attrs = rt.Execute(MS_CUSTOM_ATTRIB)
         rt.custAttributes.add(node.baseObject, attrs)
 
         return node
@@ -141,7 +140,7 @@ class MaxCreator(Creator, MaxCreatorBase):
 
     def create(self, subset_name, instance_data, pre_create_data):
         if pre_create_data.get("use_selection"):
-            self.selected_nodes = rt.getCurrentSelection()
+            self.selected_nodes = rt.GetCurrentSelection()
 
         instance_node = self.create_instance_node(subset_name)
         instance_data["instance_node"] = instance_node.name
