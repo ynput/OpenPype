@@ -739,7 +739,7 @@ class PublishInstanceCardWidget(BaseClickableFrame):
         state_label = IconValuePixmapLabel(state_pix, self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(10, 5, 10, 5)
+        layout.setContentsMargins(10, 7, 10, 7)
         layout.addWidget(icon_widget, 0)
         layout.addWidget(label_widget, 1)
         layout.addWidget(state_label, 0)
