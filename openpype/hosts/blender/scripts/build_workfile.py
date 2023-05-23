@@ -696,7 +696,10 @@ def build_anim(project_name, asset_name):
     # Get world from setdress
     setdress_world = None
     if setdress_container:
-        for world in setdress_container.get_datablocks(bpy.types.World):
+        for world in setdress_container.get_datablocks(
+            bpy.types.World,
+            only_local=False,
+        ):
             setdress_world = world
 
     # Assign setdress or last loaded world
