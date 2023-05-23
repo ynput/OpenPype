@@ -5,7 +5,6 @@ from pymxs import runtime as rt
 from openpype.hosts.max.api import (
     maintained_selection
 )
-from openpype.settings import get_project_settings
 
 
 class ExtractPointCloud(publish.Extractor):
@@ -148,9 +147,7 @@ class ExtractPointCloud(publish.Extractor):
 
     @staticmethod
     def get_setting(instance):
-        project_setting = get_project_settings(
-            instance.context.data["projectName"]
-        )
+        project_setting = instance.context.data["project_settings"]
         return project_setting["max"]["PointCloud"]
 
     def get_custom_attr(self, operator):

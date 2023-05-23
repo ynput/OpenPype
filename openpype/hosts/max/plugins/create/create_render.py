@@ -23,6 +23,6 @@ class CreateRender(plugin.MaxCreator):
         sel_obj = self.selected_nodes
         if sel_obj:
             # set viewport camera for rendering(mandatory for deadline)
-            RenderSettings().set_render_camera(sel_obj)
+            RenderSettings(self.project_settings).set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
