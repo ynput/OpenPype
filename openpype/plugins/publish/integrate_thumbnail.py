@@ -162,7 +162,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
             # Skip instance if thumbnail path is not available for it
             if not thumbnail_path:
-                self.log.info((
+                self.log.debug((
                     "Skipping thumbnail integration for instance \"{}\"."
                     " Instance and context"
                     " thumbnail paths are not available."
