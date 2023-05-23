@@ -3246,6 +3246,7 @@ def set_colorspace():
     # can override the old color managenement preferences. OpenPype has
     # separate settings for both so we fall back when necessary.
     use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
+    ocio_config = imageio['ocio_config']
     required_maya_version = 2022
     maya_version = int(cmds.about(version=True))
     maya_supports_ocio_v2 = maya_version >= required_maya_version
@@ -3274,10 +3275,12 @@ def set_colorspace():
     cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
 
     # set config path
+    if not ocio_config["enabled"]:
+        raise ValueError("OCIO config is not enabled in project settings")
+
     custom_ocio_config = False
-    if root_dict.get("configFilePath"):
-        unresolved_path = root_dict["configFilePath"]
-        ocio_paths = unresolved_path[platform.system().lower()]
+    if ocio_config.get("filepath"):
+        ocio_paths = ocio_config.get("filepath")
 
         resolved_path = None
         for ocio_p in ocio_paths:
@@ -3289,7 +3292,7 @@ def set_colorspace():
             filepath = str(resolved_path).replace("\\", "/")
             cmds.colorManagementPrefs(e=True, configFilePath=filepath)
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
-            log.debug("maya '{}' changed to: {}".format(
+            log.info("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
             custom_ocio_config = True
         else:
