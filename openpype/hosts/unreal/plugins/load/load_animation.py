@@ -156,7 +156,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{root}/{hierarchy[0]}"],
             recursive_paths=False)
         levels = ar.get_assets(_filter)
-        master_level = levels[0].get_full_name()
+        master_level = levels[0].get_asset().get_path_name()
 
         hierarchy_dir = root
         for h in hierarchy:
@@ -168,7 +168,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{hierarchy_dir}/"],
             recursive_paths=True)
         levels = ar.get_assets(_filter)
-        level = levels[0].get_full_name()
+        level = levels[0].get_asset().get_path_name()
 
         unreal.EditorLevelLibrary.save_all_dirty_levels()
         unreal.EditorLevelLibrary.load_level(level)
