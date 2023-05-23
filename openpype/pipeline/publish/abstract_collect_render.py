@@ -167,9 +167,7 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
 
             frame_start_render = int(render_instance.frameStart)
             frame_end_render = int(render_instance.frameEnd)
-            """ TODO: Needs to be refofactored because this
-                      seems to be very hacky
-            """
+            # TODO: Refactor hacky frame range workaround below
             if (render_instance.ignoreFrameHandleCheck or
                     int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
