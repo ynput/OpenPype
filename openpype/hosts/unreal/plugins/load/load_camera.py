@@ -345,17 +345,21 @@ class CameraLoader(plugin.Loader):
         for s in sequences:
             tracks = s.get_master_tracks()
             subscene_track = None
+            visibility_track = None
             for t in tracks:
                 if t.get_class() == unreal.MovieSceneSubTrack.static_class():
                     subscene_track = t
-                    break
+                if (t.get_class() ==
+                        unreal.MovieSceneLevelVisibilityTrack.static_class()):
+                    visibility_track = t
             if subscene_track:
                 sections = subscene_track.get_sections()
                 for ss in sections:
-                    if ss.get_sequence().get_name() == sequence_name:
+                    if (ss.get_sequence().get_name() ==
+                            container.get('asset')):
                         parent = s
                         sub_scene = ss
-                        # subscene_track.remove_section(ss)
+                        subscene_track.remove_section(ss)
                         break
                     sequences.append(ss.get_sequence())
                 # Update subscenes indexes.
@@ -364,10 +368,24 @@ class CameraLoader(plugin.Loader):
                     ss.set_row_index(i)
                     i += 1
 
+            if visibility_track:
+                sections = visibility_track.get_sections()
+                for ss in sections:
+                    if (unreal.Name(f"{container.get('asset')}_map")
+                            in ss.get_level_names()):
+                        visibility_track.remove_section(ss)
+                # Update visibility sections indexes.
+                i = -1
+                prev_name = []
+                for ss in sections:
+                    if prev_name != ss.get_level_names():
+                        i += 1
+                    ss.set_row_index(i)
+                    prev_name = ss.get_level_names()
             if parent:
                 break
 
-        assert parent, "Could not find the parent sequence"
+            assert parent, "Could not find the parent sequence"
 
         EditorAssetLibrary.delete_asset(level_sequence.get_path_name())
 
