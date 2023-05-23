@@ -709,6 +709,27 @@ class _InstanceItem:
         return errored, warned
 
 
+class FamilyGroupLabel(QtWidgets.QWidget):
+    def __init__(self, family, parent):
+        super(FamilyGroupLabel, self).__init__(parent)
+
+        self.setLayoutDirection(QtCore.Qt.LeftToRight)
+
+        label_widget = QtWidgets.QLabel(family, self)
+
+        line_widget = QtWidgets.QWidget(self)
+        line_widget.setObjectName("Separator")
+        line_widget.setMinimumHeight(2)
+        line_widget.setMaximumHeight(2)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setAlignment(QtCore.Qt.AlignVCenter)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(label_widget, 0)
+        main_layout.addWidget(line_widget, 1)
+
+
 class PublishInstanceCardWidget(BaseClickableFrame):
     selection_requested = QtCore.Signal(str)
 
@@ -881,6 +902,7 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
         self._context_widget = None
 
         self._widgets_by_instance_id = {}
+        self._group_widgets = []
         self._ordered_widgets = []
 
         self._explicitly_selected_instance_ids = []
@@ -927,6 +949,7 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
                 widget.setVisible(False)
                 widget.deleteLater()
         self._ordered_widgets = []
+        self._group_widgets = []
         self._widgets_by_instance_id = {}
 
     def update_instances(self, instance_items):
@@ -941,27 +964,44 @@ class PublishInstancesViewWidget(QtWidgets.QWidget):
         }
 
         widgets = []
+        group_widgets = []
 
         publish_finished = (
             self._controller.publish_has_crashed
             or self._controller.publish_has_validation_errors
             or self._controller.publish_has_finished
         )
+        instances_by_family = collections.defaultdict(list)
         for instance_item in instance_items:
             if not instance_item.exists:
                 continue
-            icon = identifier_icons[instance_item.creator_identifier]
+            instances_by_family[instance_item.family].append(instance_item)
 
-            widget = PublishInstanceCardWidget(
-                instance_item, icon, publish_finished, self._instance_view
-            )
-            widget.selection_requested.connect(self._on_selection_request)
-            self._instance_layout.addWidget(widget, 0)
+        sorted_by_family = sorted(
+            instances_by_family.items(), key=lambda i: i[0]
+        )
+        for family, instance_items in sorted_by_family:
+            # Only instance without family is context
+            if family:
+                group_widget = FamilyGroupLabel(family, self._instance_view)
+                self._instance_layout.addWidget(group_widget, 0)
+                group_widgets.append(group_widget)
 
-            widgets.append(widget)
-            self._widgets_by_instance_id[widget.id] = widget
+            sorted_items = sorted(instance_items, key=lambda i: i.label)
+            for instance_item in sorted_items:
+                icon = identifier_icons[instance_item.creator_identifier]
+
+                widget = PublishInstanceCardWidget(
+                    instance_item, icon, publish_finished, self._instance_view
+                )
+                widget.selection_requested.connect(self._on_selection_request)
+                self._instance_layout.addWidget(widget, 0)
+
+                widgets.append(widget)
+                self._widgets_by_instance_id[widget.id] = widget
         self._instance_layout.addStretch(1)
         self._ordered_widgets = widgets
+        self._group_widgets = group_widgets
 
     def _on_selection_request(self, instance_id):
         instance_widget = self._widgets_by_instance_id[instance_id]
