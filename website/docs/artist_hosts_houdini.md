@@ -14,7 +14,7 @@ sidebar_label: Houdini
 - [Library Loader](artist_tools_library-loader)
 
 ## Publishing Alembic Cameras
-You can publish baked camera in Alembic format. 
+You can publish baked camera in Alembic format.
 
 Select your camera and go **OpenPype -> Create** and select **Camera (abc)**.
 This will create Alembic ROP in **out** with path and frame range already set. This node will have a name you've
@@ -30,7 +30,7 @@ You can use any COP node and publish the image sequence generated from it. For e
 ![Noise COP](assets/houdini_imagesequence_cop.png)
 
 To publish the output of the `radialblur1` go to **OpenPype -> Create** and
-select **Composite (Image Sequence)**. If you name the variant *Noise* this will create the `/out/imagesequenceNoise` Composite ROP with the frame range set. 
+select **Composite (Image Sequence)**. If you name the variant *Noise* this will create the `/out/imagesequenceNoise` Composite ROP with the frame range set.
 
 When you hit **Publish** it will render image sequence from selected node.
 
@@ -56,20 +56,32 @@ Now select the `output0` node and go **OpenPype -> Create** and select **Point C
 Alembic ROP `/out/pointcacheStrange`
 
 ## Publishing Reviews (OpenGL)
-To generate a review output from Houdini you need to create a **review** instance. 
+To generate a review output from Houdini you need to create a **review** instance.
 Go to **OpenPype -> Create** and select **Review**.
 
 ![Houdini Create Review](assets/houdini_review_create_attrs.png)
 
-On create, with the **Use Selection** checkbox enabled it will set up the first 
-camera found in your selection as the camera for the OpenGL ROP node and other 
-non-cameras are set in **Force Objects**. It will then render those even if 
+On create, with the **Use Selection** checkbox enabled it will set up the first
+camera found in your selection as the camera for the OpenGL ROP node and other
+non-cameras are set in **Force Objects**. It will then render those even if
 their display flag is disabled in your scene.
 
 ## Redshift
 :::note Work in progress
 This part of documentation is still work in progress.
 :::
+
+## Publishing Render to Deadline
+Five Renderers(Arnold, Redshift, Mantra, Karma, VRay) are supported for Render Publishing.
+They are named with the suffix("_ROP")
+To submit render to deadline, you need to create a **Render** instance.
+Go to **Openpype -> Create** and select **Publish**. Before clicking **Create** button,
+you need select your preferred image rendering format. You can also enable the **Use selection** to
+select your render camera.
+![Houdini Create Render](assets/houdini_render_publish_creator.png)
+
+All the render outputs are stored in the pyblish/render directory within your project path.\
+For Karma-specific render, it also outputs the USD render as default.
 
 ## USD (experimental support)
 ### Publishing USD
