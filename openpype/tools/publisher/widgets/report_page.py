@@ -1109,7 +1109,7 @@ class LogItemWidget(QtWidgets.QWidget):
         type_flag, level_n = self._get_log_info(log)
         icon_label = LogIconFrame(
             self, log["type"], level_n, log.get("is_validation_error"))
-        message_label = QtWidgets.QLabel(log["msg"], self)
+        message_label = QtWidgets.QLabel(log["msg"].rstrip(), self)
         message_label.setObjectName("PublishLogMessage")
         message_label.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction)
