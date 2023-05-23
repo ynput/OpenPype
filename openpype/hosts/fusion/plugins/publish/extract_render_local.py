@@ -6,7 +6,7 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
-from openpype.hosts.fusion.api.lib import get_frame_path
+from openpype.hosts.fusion.api.lib import get_frame_path, maintained_comp_range
 
 log = logging.getLogger(__name__)
 
@@ -114,14 +114,15 @@ class FusionRenderLocal(
         self.log.info(f"Rendering tools: {saver_names}")
 
         with comp_lock_and_undo_chunk(current_comp):
-            with enabled_savers(current_comp, savers_to_render):
-                result = current_comp.Render(
-                    {
-                        "Start": frame_start,
-                        "End": frame_end,
-                        "Wait": True,
-                    }
-                )
+            with maintained_comp_range(current_comp):
+                with enabled_savers(current_comp, savers_to_render):
+                    result = current_comp.Render(
+                        {
+                            "Start": frame_start,
+                            "End": frame_end,
+                            "Wait": True,
+                        }
+                    )
 
         # Store the render state for all the rendered instances
         for render_instance in render_instances:
