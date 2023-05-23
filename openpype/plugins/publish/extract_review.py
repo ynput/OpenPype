@@ -45,7 +45,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "maya",
         "blender",
         "houdini",
-        "max"
+        "max",
         "shell",
         "hiero",
         "premiere",
