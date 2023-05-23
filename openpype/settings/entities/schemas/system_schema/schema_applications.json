@@ -95,6 +95,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_substancepainter"
+    },
+    {
+      "type": "schema",
       "name": "schema_unreal"
     },
     {

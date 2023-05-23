@@ -9,7 +9,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
-    families = ["render", "kitsu"]
+    families = ["render", "image", "online", "plate", "kitsu"]
 
     # status settings
     set_status_note = False
@@ -52,8 +52,9 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         for instance in context:
             # Check if instance is a review by checking its family
             # Allow a match to primary family or any of families
-            families = set([instance.data["family"]] +
-                           instance.data.get("families", []))
+            families = set(
+                [instance.data["family"]] + instance.data.get("families", [])
+            )
             if "review" not in families:
                 continue
 

@@ -2239,13 +2239,13 @@ class WorkfileSettings(object):
         handle_end = data["handleEnd"]
 
         fps = float(data["fps"])
-        frame_start = int(data["frameStart"]) - handle_start
-        frame_end = int(data["frameEnd"]) + handle_end
+        frame_start_handle = int(data["frameStart"]) - handle_start
+        frame_end_handle = int(data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
-        self._root_node["first_frame"].setValue(frame_start)
-        self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["first_frame"].setValue(frame_start_handle)
+        self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
