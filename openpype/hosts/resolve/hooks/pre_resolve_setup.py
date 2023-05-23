@@ -101,7 +101,8 @@ class ResolvePrelaunch(PreLaunchHook):
 
         self.log.debug(f"PYTHONPATH: {self.launch_context.env['PYTHONPATH']}")
 
-        # add to the python path to PATH
+        # add the pythonhome folder to PATH because on Windows
+        # this is needed for Py3 to be correctly detected within Resolve
         env_path = self.launch_context.env["PATH"]
         self.log.info(f"Adding `{python3_home_str}` to the PATH variable")
         self.launch_context.env[
