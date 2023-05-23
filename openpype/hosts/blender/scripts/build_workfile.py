@@ -561,7 +561,7 @@ def build_layout(project_name, asset_name):
             "Background",
         )
 
-    assert not errors, "; ".join(errors)
+    assert not errors, ";\n\n".join(errors)
 
 
 def build_anim(project_name, asset_name):
@@ -608,7 +608,7 @@ def build_anim(project_name, asset_name):
             continue
 
         # hold SetDress container
-        is_setdress = (family == "setdress")
+        is_setdress = family == "setdress"
         if is_setdress and not setdress_container:
             setdress_container = container
 
