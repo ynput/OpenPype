@@ -270,7 +270,7 @@ class CameraLoader(plugin.Loader):
     def update(self, container, representation):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        root = "/Game/ayon"
+        root = "/Game/Ayon"
 
         asset_dir = container.get('namespace')
 
@@ -283,16 +283,16 @@ class CameraLoader(plugin.Loader):
 
         EditorLevelLibrary.save_current_level()
 
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["LevelSequence"],
             package_paths=[asset_dir],
             recursive_paths=False)
-        sequences = ar.get_assets(filter)
-        filter = unreal.ARFilter(
+        sequences = ar.get_assets(_filter)
+        _filter = unreal.ARFilter(
             class_names=["World"],
             package_paths=[asset_dir],
             recursive_paths=True)
-        maps = ar.get_assets(filter)
+        maps = ar.get_assets(_filter)
 
         # There should be only one map in the list
         EditorLevelLibrary.load_level(maps[0].get_full_name())
@@ -328,14 +328,13 @@ class CameraLoader(plugin.Loader):
         # Remove the Level Sequence from the parent.
         # We need to traverse the hierarchy from the master sequence to find
         # the level sequence.
-        root = "/Game/Ayon"
         namespace = container.get('namespace').replace(f"{root}/", "")
         ms_asset = namespace.split('/')[0]
-        filter = unreal.ARFilter(
+        _filter = unreal.ARFilter(
             class_names=["LevelSequence"],
             package_paths=[f"{root}/{ms_asset}"],
             recursive_paths=False)
-        sequences = ar.get_assets(filter)
+        sequences = ar.get_assets(_filter)
         master_sequence = sequences[0].get_asset()
 
         sequences = [master_sequence]
@@ -345,43 +344,19 @@ class CameraLoader(plugin.Loader):
         for s in sequences:
             tracks = s.get_master_tracks()
             subscene_track = None
-            visibility_track = None
             for t in tracks:
                 if t.get_class() == unreal.MovieSceneSubTrack.static_class():
                     subscene_track = t
-                if (t.get_class() ==
-                        unreal.MovieSceneLevelVisibilityTrack.static_class()):
-                    visibility_track = t
             if subscene_track:
                 sections = subscene_track.get_sections()
                 for ss in sections:
-                    if (ss.get_sequence().get_name() ==
-                            container.get('asset')):
+                    if ss.get_sequence().get_name() == sequence_name:
                         parent = s
                         sub_scene = ss
-                        subscene_track.remove_section(ss)
                         break
                     sequences.append(ss.get_sequence())
-                # Update subscenes indexes.
-                i = 0
-                for ss in sections:
+                for i, ss in enumerate(sections):
                     ss.set_row_index(i)
-                    i += 1
-
-            if visibility_track:
-                sections = visibility_track.get_sections()
-                for ss in sections:
-                    if (unreal.Name(f"{container.get('asset')}_map")
-                            in ss.get_level_names()):
-                        visibility_track.remove_section(ss)
-                # Update visibility sections indexes.
-                i = -1
-                prev_name = []
-                for ss in sections:
-                    if prev_name != ss.get_level_names():
-                        i += 1
-                    ss.set_row_index(i)
-                    prev_name = ss.get_level_names()
             if parent:
                 break
 
