@@ -45,9 +45,13 @@
                     ]
                 },
                 {
+                    "type": "label",
+                    "label": "Profile names mapping settings is deprecated use <a href=\"settings://project_settings/flame/imageio/remapping\"><b>./imagio/remapping</b></a> instead"
+                },
+                {
                     "key": "profilesMapping",
                     "type": "dict",
-                    "label": "Profile names mapping",
+                    "label": "Profile names mapping [deprecated]",
                     "collapsible": true,
                     "children": [
                         {

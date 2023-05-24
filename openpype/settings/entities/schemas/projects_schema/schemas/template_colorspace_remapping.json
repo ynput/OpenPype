@@ -7,14 +7,14 @@
         "children": [
             {
                 "type": "list",
-                "key": "inputs",
+                "key": "rules",
                 "object_type": {
                     "type": "dict",
                     "children": [
                         {
                             "type": "text",
-                            "key": "internal_name",
-                            "label": "Internal colorspace name"
+                            "key": "host_native_name",
+                            "label": "Application native colorspace name"
                         },
                         {
                             "type": "text",
