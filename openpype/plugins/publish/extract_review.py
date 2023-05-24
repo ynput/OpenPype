@@ -92,8 +92,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         host_name = instance.context.data["hostName"]
         family = self.main_family_from_instance(instance)
 
-        self.log.info("Host: \"{}\"".format(host_name))
-        self.log.info("Family: \"{}\"".format(family))
+        self.log.debug("Host: \"{}\"".format(host_name))
+        self.log.debug("Family: \"{}\"".format(family))
 
         profile = filter_profiles(
             self.profiles,
@@ -351,7 +351,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             temp_data = self.prepare_temp_data(instance, repre, output_def)
             files_to_clean = []
             if temp_data["input_is_sequence"]:
-                self.log.info("Filling gaps in sequence.")
+                self.log.debug("Checking sequence to fill gaps in sequence..")
                 files_to_clean = self.fill_sequence_gaps(
                     files=temp_data["origin_repre"]["files"],
                     staging_dir=new_repre["stagingDir"],

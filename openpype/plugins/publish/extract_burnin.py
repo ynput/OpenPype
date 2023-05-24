@@ -517,8 +517,8 @@ class ExtractBurnin(publish.Extractor):
         """
 
         if "burnin" not in (repre.get("tags") or []):
-            self.log.info((
-                "Representation \"{}\" don't have \"burnin\" tag. Skipped."
+            self.log.debug((
+                "Representation \"{}\" does not have \"burnin\" tag. Skipped."
             ).format(repre["name"]))
             return False
 

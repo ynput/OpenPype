@@ -73,7 +73,7 @@ class FusionSubmitDeadline(
 
     def process(self, instance):
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         attribute_values = self.get_attr_values_from_data(

@@ -30,6 +30,6 @@ class CollectAnatomyObject(pyblish.api.ContextPlugin):
 
         context.data["anatomy"] = Anatomy(project_name)
 
-        self.log.info(
+        self.log.debug(
             "Anatomy object collected for project \"{}\".".format(project_name)
         )
