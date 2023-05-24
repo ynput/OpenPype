@@ -24,16 +24,30 @@ class ExtractBlendAnimation(ExtractBlend):
         bpy.context.scene.use_preview_range = False
 
         # Keep animation assignations for auto reassign at loading
+        actions = set()
         for datablock in instance:
-            if isinstance(datablock, bpy.types.Object):
-                # Skip if object not animated
-                if not datablock.animation_data:
-                    continue
+            if isinstance(datablock, bpy.types.Collection):
+                actions.update(
+                    {
+                        obj.animation_data.action
+                        for obj in datablock.all_objects
+                        if obj.animation_data and obj.animation_data.action
+                    }
+                )
 
-                action = datablock.animation_data.action
-            else:
-                action = datablock
-            # TODO could be optimized with user_map
+            elif isinstance(datablock, bpy.types.Object):
+                # Skip if object not animated
+                if (
+                    datablock.animation_data
+                    and datablock.animation_data.action
+                ):
+                    actions.add(datablock.animation_data.action)
+
+            elif isinstance(datablock, bpy.types.Action):
+                actions.add(datablock)
+
+        # TODO could be optimized with user_map
+        for action in actions:
             action["users"] = [
                 o.name
                 for o in bpy.data.objects

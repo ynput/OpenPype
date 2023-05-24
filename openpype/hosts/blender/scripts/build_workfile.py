@@ -17,7 +17,11 @@ from openpype.client.entities import (
     get_version_by_id,
 )
 from openpype.hosts.blender.api.properties import OpenpypeContainer
-from openpype.hosts.blender.api.lib import update_scene_containers
+from openpype.hosts.blender.api.lib import (
+    add_datablocks_to_container,
+    update_scene_containers,
+)
+from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
 from openpype.lib.local_settings import get_local_site_id
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
@@ -747,18 +751,60 @@ def build_anim(project_name, asset_name):
                 use_selection=False,
             )
 
-    for obj in bpy.context.scene.objects:
-        if obj.type == "ARMATURE":
-            # Create animation instance
-            variant_name = obj.name[obj.name.find("RIG_") + 4 :].capitalize()
-            bpy.ops.scene.create_openpype_instance(
-                creator_name="CreateAnimation",
-                asset_name=asset_name,
-                subset_name=f"animation{variant_name}",
-                datapath="objects",
-                datablock_name=obj.name,
-                use_selection=False,
+    instances_to_create = {}
+    for container in bpy.context.scene.openpype_containers:
+        container_metadata = container["avalon"]
+        variant_name = container_metadata.get("asset_name")
+        family = container_metadata.get("family")
+        container_datablocks = container.get_datablocks(bpy.types.Object)
+
+        if family == "setdress":
+            # For setdress container we gather only the root collection.
+            instances_to_create[variant_name] = list(
+                container.get_root_outliner_datablocks()
             )
+        else:
+            # Get rigs
+            armature_objects = [
+                o for o in container_datablocks if o.type == "ARMATURE"
+            ]
+            # Get animated objects
+            animated_objects = [
+                o for o in container_datablocks
+                if o.animation_data and o.animation_data.action
+            ]
+            # Add new instance creation container had rigs or animated members.
+            if armature_objects or animated_objects:
+                instances_to_create[variant_name] = (
+                    armature_objects + animated_objects
+                )
+
+    # Create instances and add datablocks
+    for variant_name, objects in instances_to_create.items():
+        bpy.ops.scene.create_openpype_instance(
+            creator_name="CreateAnimation",
+            asset_name=asset_name,
+            subset_name=f"animation{variant_name}",
+            datapath=BL_TYPE_DATAPATH.get(type(objects[0])),
+            datablock_nam=objects[0].name,
+            use_selection=False,
+        )
+        animation_instance = bpy.context.scene.openpype_instances[-1]
+        add_datablocks_to_container(objects[1:], animation_instance)
+
+        # Enabled instance for publishing if any member objects are animated.
+        publish_enabled = False
+        for obj in objects:
+            if (
+                isinstance(obj, bpy.types.Object)
+                and obj.animation_data
+                and obj.animation_data.action
+            ):
+                publish_enabled = True
+                break
+            elif isinstance(obj, bpy.types.Collection):
+                objects.extend(obj.all_objects)
+        animation_instance.publish = publish_enabled
 
     # load the board mov as image background linked into the camera
     try:
