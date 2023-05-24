@@ -37,11 +37,7 @@ from openpype.lib import (
     attribute_definitions,
 )
 from openpype.lib.attribute_definitions import get_attributes_keys
-from openpype.pipeline import (
-    legacy_io,
-    Anatomy,
-    get_current_host_name,
-)
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
     get_contexts_for_repre_docs,
@@ -546,9 +542,7 @@ class AbstractTemplateBuilder(object):
         """
         from openpype.widgets import message_window
 
-        module_name = 'openpype.hosts.{}.api.lib'.format(
-            get_current_host_name()
-        )
+        module_name = 'openpype.hosts.{}.api.lib'.format(self.host_name)
         api_lib = __import__(module_name, fromlist=['get_main_window'])
         main_window = api_lib.get_main_window()
 
