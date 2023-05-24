@@ -19,9 +19,9 @@ class ScriptsMenu(QtWidgets.QMenu):
 
         Args:
             title (str): the name of the root menu which will be created
-        
+
             parent (QtWidgets.QObject) : the QObject to parent the menu to
-        
+
         Returns:
             None
 
@@ -94,7 +94,7 @@ class ScriptsMenu(QtWidgets.QMenu):
             parent(QtWidgets.QWidget): the object to parent the menu to
 
             title(str): the title of the menu
-        
+
         Returns:
              QtWidget.QMenu instance
         """
@@ -111,7 +111,7 @@ class ScriptsMenu(QtWidgets.QMenu):
         return menu
 
     def add_script(self, parent, title, command, sourcetype, icon=None,
-                   tags=None, label=None, tooltip=None):
+                   tags=None, label=None, tooltip=None, shortcut=None):
         """Create an action item which runs a script when clicked
 
         Args:
@@ -133,6 +133,8 @@ class ScriptsMenu(QtWidgets.QMenu):
                          when hovering over the menu item
 
             tooltip (str): A tip for the user about the usage fo the tool
+
+            shortcut (str): A shortcut to run the command
 
         Returns:
             QtWidget.QAction instance
@@ -165,6 +167,9 @@ class ScriptsMenu(QtWidgets.QMenu):
         except RuntimeError as e:
             raise RuntimeError("Script action can't be "
                                "processed: {}".format(e))
+
+        if shortcut:
+            script_action.setShortcut(shortcut)
 
         if icon:
             iconfile = os.path.expandvars(icon)
@@ -253,7 +258,7 @@ class ScriptsMenu(QtWidgets.QMenu):
 
     def _update_search(self, search):
         """Hide all the samples which do not match the user's import
-        
+
         Returns:
             None
 
