@@ -5,7 +5,7 @@ import shutil
 
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -38,8 +38,8 @@ class UAssetLoader(plugin.Loader):
             list(str): list of container content
         """
 
-        # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        # Create directory for asset and Ayon container
+        root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -49,7 +49,8 @@ class UAssetLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            f"{root}/{asset}/{name}", suffix=""
+        )
 
         container_name += suffix
 
@@ -67,8 +68,8 @@ class UAssetLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -78,8 +79,7 @@ class UAssetLoader(plugin.Loader):
             "parent": context["representation"]["parent"],
             "family": context["representation"]["context"]["family"]
         }
-        unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
@@ -107,7 +107,7 @@ class UAssetLoader(plugin.Loader):
 
         for asset in asset_content:
             obj = ar.get_asset_by_object_path(asset).get_asset()
-            if not obj.get_class().get_name() == 'AssetContainer':
+            if not obj.get_class().get_name() == 'AyonAssetContainer':
                 unreal.EditorAssetLibrary.delete_asset(asset)
 
         update_filepath = get_representation_path(representation)

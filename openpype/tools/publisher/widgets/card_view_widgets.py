@@ -93,7 +93,7 @@ class BaseGroupWidget(QtWidgets.QWidget):
         return self._group
 
     def get_widget_by_item_id(self, item_id):
-        """Get instance widget by it's id."""
+        """Get instance widget by its id."""
 
         return self._widgets_by_id.get(item_id)
 
@@ -702,8 +702,8 @@ class InstanceCardView(AbstractInstanceView):
 
         for group_name in sorted_group_names:
             group_icons = {
-                idenfier: self._controller.get_creator_icon(idenfier)
-                for idenfier in identifiers_by_group[group_name]
+                identifier: self._controller.get_creator_icon(identifier)
+                for identifier in identifiers_by_group[group_name]
             }
             if group_name in self._widgets_by_group:
                 group_widget = self._widgets_by_group[group_name]

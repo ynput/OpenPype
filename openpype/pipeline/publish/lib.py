@@ -7,6 +7,7 @@ import tempfile
 import xml.etree.ElementTree
 
 import six
+import pyblish.util
 import pyblish.plugin
 import pyblish.api
 
@@ -319,6 +320,14 @@ def publish_plugins_discover(paths=None):
                 continue
 
             for plugin in pyblish.plugin.plugins_from_module(module):
+                # Ignore base plugin classes
+                # NOTE 'pyblish.api.discover' does not ignore them!
+                if (
+                    plugin is pyblish.api.Plugin
+                    or plugin is pyblish.api.ContextPlugin
+                    or plugin is pyblish.api.InstancePlugin
+                ):
+                    continue
                 if not allow_duplicates and plugin.__name__ in plugin_names:
                     result.duplicated_plugins.append(plugin)
                     log.debug("Duplicate plug-in found: %s", plugin)
@@ -354,29 +363,55 @@ def publish_plugins_discover(paths=None):
     return result
 
 
-def _get_plugin_settings(host_name, project_settings, plugin, log):
+def get_plugin_settings(plugin, project_settings, log, category=None):
     """Get plugin settings based on host name and plugin name.
 
+    Note:
+        Default implementation of automated settings is passing host name
+            into 'category'.
+
     Args:
-        host_name (str): Name of host.
+        plugin (pyblish.Plugin): Plugin where settings are applied.
         project_settings (dict[str, Any]): Project settings.
-        plugin (pyliblish.Plugin): Plugin where settings are applied.
         log (logging.Logger): Logger to log messages.
+        category (Optional[str]): Settings category key where to look
+            for plugin settings.
 
     Returns:
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
 
-    # Use project settings from host name category when available
-    try:
-        return (
-            project_settings
-            [host_name]
-            ["publish"]
-            [plugin.__name__]
-        )
-    except KeyError:
-        pass
+    # Plugin can define settings category by class attribute
+    # - it's impossible to set `settings_category` via settings because
+    #     obviously settings are not applied before it.
+    # - if `settings_category` is set the fallback category method is ignored
+    settings_category = getattr(plugin, "settings_category", None)
+    if settings_category:
+        try:
+            return (
+                project_settings
+                [settings_category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            log.warning((
+                "Couldn't find plugin '{}' settings"
+                " under settings category '{}'"
+            ).format(plugin.__name__, settings_category))
+            return {}
+
+    # Use project settings based on a category name
+    if category:
+        try:
+            return (
+                project_settings
+                [category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            pass
 
     # Settings category determined from path
     # - usually path is './<category>/plugins/publish/<plugin file>'
@@ -385,9 +420,10 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
 
     split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
-        log.warning(
-            'plugin path too short to extract host {}'.format(filepath)
-        )
+        log.debug((
+            "Plugin path is too short to automatically"
+            " extract settings category. {}"
+        ).format(filepath))
         return {}
 
     category_from_file = split_path[-4]
@@ -407,6 +443,28 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
     except KeyError:
         pass
     return {}
+
+
+def apply_plugin_settings_automatically(plugin, settings, logger=None):
+    """Automatically apply plugin settings to a plugin object.
+
+    Note:
+        This function was created to be able to use it in custom overrides of
+            'apply_settings' class method.
+
+    Args:
+        plugin (type[pyblish.api.Plugin]): Class of a plugin.
+        settings (dict[str, Any]): Plugin specific settings.
+        logger (Optional[logging.Logger]): Logger to log debug messages about
+            applied settings values.
+    """
+
+    for option, value in settings.items():
+        if logger:
+            logger.debug("Plugin {} - Attr: {} -> {}".format(
+                option, value, plugin.__name__
+            ))
+        setattr(plugin, option, value)
 
 
 def filter_pyblish_plugins(plugins):
@@ -452,13 +510,10 @@ def filter_pyblish_plugins(plugins):
                 )
         else:
             # Automated
-            plugin_settins = _get_plugin_settings(
-                host_name, project_settings, plugin, log
+            plugin_settins = get_plugin_settings(
+                plugin, project_settings, log, host_name
             )
-            for option, value in plugin_settins.items():
-                log.info("setting {}:{} on plugin {}".format(
-                    option, value, plugin.__name__))
-                setattr(plugin, option, value)
+            apply_plugin_settings_automatically(plugin, plugin_settins, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:

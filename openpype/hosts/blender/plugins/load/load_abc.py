@@ -65,36 +65,18 @@ class CacheModelLoader(plugin.AssetLoader):
 
         imported = lib.get_selection()
 
-        empties = [obj for obj in imported if obj.type == 'EMPTY']
-
-        container = None
-
-        for empty in empties:
-            if not empty.parent:
-                container = empty
-                break
-
-        assert container, "No asset group found"
-
         # Children must be linked before parents,
         # otherwise the hierarchy will break
         objects = []
-        nodes = list(container.children)
 
-        for obj in nodes:
+        for obj in imported:
             obj.parent = asset_group
 
-        bpy.data.objects.remove(container)
-
-        for obj in nodes:
+        for obj in imported:
             objects.append(obj)
-            nodes.extend(list(obj.children))
+            imported.extend(list(obj.children))
 
         objects.reverse()
-
-        for obj in objects:
-            parent.objects.link(obj)
-            collection.objects.unlink(obj)
 
         for obj in objects:
             name = obj.name
@@ -138,13 +120,14 @@ class CacheModelLoader(plugin.AssetLoader):
         group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
-        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-        if not avalon_container:
-            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
-            bpy.context.scene.collection.children.link(avalon_container)
+        avalon_containers = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not avalon_containers:
+            avalon_containers = bpy.data.collections.new(
+                name=AVALON_CONTAINERS)
+            bpy.context.scene.collection.children.link(avalon_containers)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
-        avalon_container.objects.link(asset_group)
+        avalon_containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)
 
