@@ -52,12 +52,12 @@ class CollectShotgridEntities(pyblish.api.InstancePlugin):
                 "Collected correspondig shotgrid entity : {}".format(sg_entity)
             )
 
-    def _find_existing_version(self, code, context):
+    def _find_existing_version(self, code, context, instance):
 
         filters = [
             ["project", "is", context.data.get("shotgridProject")],
-            ["sg_task", "is", context.data.get("shotgridTask")],
-            ["entity", "is", context.data.get("shotgridEntity")],
+            ["sg_task", "is", instance.data.get("shotgridTask")],
+            ["entity", "is", instance.data.get("shotgridEntity")],
             ["code", "is", code],
         ]
 
