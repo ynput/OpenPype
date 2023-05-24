@@ -13,21 +13,8 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "label",
-                    "label": "This application's colorspace management can be controlled through OpenPype settings.  <br>Specifically, the configured OpenColorIO (OCIO) config path is utilized in the application's workfile. <br>Additionally, the File Rules feature can be leveraged for both publishing and loading procedures.<br><br><b><a href='https://ayon.ynput.io/docs/admin_colorspace#ocio-managed' style=\"color:#00d6a1\";>Related documentation.</a></b>"
-                },
-                {
-                    "type": "boolean",
-                    "key": "activate_host_color_management",
-                    "label": "Enable Color Management"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
             ]
         },

@@ -1,0 +1,29 @@
+[
+    {
+        "key": "remapping",
+        "type": "dict",
+        "label": "Remapping colorspace names",
+        "collapsible": true,
+        "children": [
+            {
+                "type": "list",
+                "key": "inputs",
+                "object_type": {
+                    "type": "dict",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "internal_name",
+                            "label": "Internal colorspace name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "ocio_name",
+                            "label": "OCIO colorspace name"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]
