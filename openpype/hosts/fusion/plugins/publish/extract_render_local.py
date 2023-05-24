@@ -1,8 +1,11 @@
+import os
 import logging
 import contextlib
 import pyblish.api
-from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
 
+from openpype.pipeline import publish
+from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
+from openpype.hosts.fusion.api.lib import get_frame_path
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +41,10 @@ def enabled_savers(comp, savers):
             saver.SetAttrs({"TOOLB_PassThrough": original_state})
 
 
-class FusionRenderLocal(pyblish.api.InstancePlugin):
+class FusionRenderLocal(
+    pyblish.api.InstancePlugin,
+    publish.ColormanagedPyblishPluginMixin
+):
     """Render the current Fusion composition locally."""
 
     order = pyblish.api.ExtractorOrder - 0.2
@@ -51,6 +57,8 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
 
         # Start render
         self.render_once(context)
+
+        self._add_representation(instance)
 
         # Log render status
         self.log.info(
@@ -71,11 +79,11 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
 
         savers_to_render = [
             # Get the saver tool from the instance
-            instance[0] for instance in context if
+            instance.data["tool"] for instance in context if
             # Only active instances
             instance.data.get("publish", True) and
             # Only render.local instances
-            "render.local" in instance.data["families"]
+            "render.local" in instance.data.get("families", [])
         ]
 
         if key not in context.data:
@@ -107,3 +115,39 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
 
         if context.data[key] is False:
             raise RuntimeError("Comp render failed")
+
+    def _add_representation(self, instance):
+        """Add representation to instance"""
+
+        expected_files = instance.data["expectedFiles"]
+
+        start = instance.data["frameStart"] - instance.data["handleStart"]
+
+        path = expected_files[0]
+        _, padding, ext = get_frame_path(path)
+
+        staging_dir = os.path.dirname(path)
+
+        repre = {
+            "name": ext[1:],
+            "ext": ext[1:],
+            "frameStart": f"%0{padding}d" % start,
+            "files": [os.path.basename(f) for f in expected_files],
+            "stagingDir": staging_dir,
+        }
+
+        self.set_representation_colorspace(
+            representation=repre,
+            context=instance.context,
+        )
+
+        # review representation
+        if instance.data.get("review", False):
+            repre["tags"] = ["review"]
+
+        # add the repre to the instance
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+        instance.data["representations"].append(repre)
+
+        return instance
