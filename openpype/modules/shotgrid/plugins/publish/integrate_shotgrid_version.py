@@ -60,8 +60,16 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
                 )
                 data_to_update[sg_field] = field_value
 
-        # Add version objectId to "sg_op_instance_id" so we can keep a link between both
-        data_to_update["sg_op_instance_id"] = str(instance.data["versionEntity"]["_id"])
+        # Add version objectId to "sg_op_instance_id" so we can keep a link
+        # between both
+        version_entity = instance.data.get("versionEntity", {}).get("_id")
+        if not version_entity:
+            self.log.warning(
+                "Instance doesn't have a 'versionEntity' to extract the id."
+            )
+            version_entity = "-"
+        data_to_update["sg_op_instance_id"] = str(version_entity)
+
 
         ### Ends Alkemy-X Override ###
 
