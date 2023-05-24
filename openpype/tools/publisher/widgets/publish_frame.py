@@ -310,7 +310,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property()
         self._set_progress_visibility(True)
 
-        self._main_label.setText("Hit publish (play button)! If you want")
+        self._main_label.setText("")
         self._message_label_top.setText("")
 
         self._reset_btn.setEnabled(True)
