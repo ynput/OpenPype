@@ -618,7 +618,7 @@ class LayoutLoader(plugin.Loader):
         loaded_assets = self._process(self.fname, asset_dir, shot)
 
         for s in sequences:
-            EditorAssetLibrary.save_asset(s.get_full_name())
+            EditorAssetLibrary.save_asset(s.get_path_name())
 
         EditorLevelLibrary.save_current_level()
 
@@ -697,7 +697,7 @@ class LayoutLoader(plugin.Loader):
             recursive_paths=False)
         levels = ar.get_assets(filter)
 
-        layout_level = levels[0].get_full_name()
+        layout_level = levels[0].get_asset().get_path_name()
 
         EditorLevelLibrary.save_all_dirty_levels()
         EditorLevelLibrary.load_level(layout_level)
@@ -797,7 +797,7 @@ class LayoutLoader(plugin.Loader):
                 package_paths=[f"{root}/{ms_asset}"],
                 recursive_paths=False)
             levels = ar.get_assets(_filter)
-            master_level = levels[0].get_full_name()
+            master_level = levels[0].get_asset().get_path_name()
 
             sequences = [master_sequence]
 
