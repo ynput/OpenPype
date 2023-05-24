@@ -83,7 +83,8 @@
                         "png": {
                             "ext": "png",
                             "tags": [
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
