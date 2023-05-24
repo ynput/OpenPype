@@ -30,7 +30,7 @@ class ExtractThumbnail(publish.Extractor):
     bake_viewer_process = True
     bake_viewer_input_process = True
     nodes = {}
-    reposition_nodes = []
+    reposition_nodes = None
 
     def process(self, instance):
         if instance.data.get("farm"):
