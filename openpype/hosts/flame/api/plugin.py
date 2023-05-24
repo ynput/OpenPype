@@ -10,6 +10,7 @@ from qtpy import QtCore, QtWidgets
 from openpype import style
 from openpype.lib import Logger, StringTemplate
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.pipeline.colorspace import get_remapped_colorspace_to_native
 from openpype.settings import get_current_project_settings
 
 from . import constants
@@ -701,6 +702,7 @@ class ClipLoader(LoaderPlugin):
     ]
 
     _mapping = None
+    _host_settings = None
 
     def apply_settings(cls, project_settings, system_settings):
 
@@ -769,15 +771,26 @@ class ClipLoader(LoaderPlugin):
         Returns:
             str: native colorspace name defined in mapping or None
         """
+        # TODO: rewrite to support only pipeline's remapping
+        if not cls._host_settings:
+            cls._host_settings = get_current_project_settings()["flame"]
+
+        # [Deprecated] way of remapping
         if not cls._mapping:
-            settings = get_current_project_settings()["flame"]
-            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            mapping = (
+                cls._host_settings["imageio"]["profilesMapping"]["inputs"])
             cls._mapping = {
                 input["ocioName"]: input["flameName"]
                 for input in mapping
             }
 
-        return cls._mapping.get(input_colorspace)
+        native_name = cls._mapping.get(input_colorspace)
+
+        if not native_name:
+            native_name = get_remapped_colorspace_to_native(
+                input_colorspace, "flame", cls._host_settings["imageio"])
+
+        return native_name
 
 
 class OpenClipSolver(flib.MediaInfoFile):
