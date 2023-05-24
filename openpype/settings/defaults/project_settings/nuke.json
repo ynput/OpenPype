@@ -397,7 +397,39 @@
                         false
                     ]
                 ]
-            }
+            },
+            "reposition_nodes": [
+                {
+                    "node_class": "Reformat",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "type",
+                            "value": "to format"
+                        },
+                        {
+                            "type": "text",
+                            "name": "format",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "type": "text",
+                            "name": "filter",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        },
+                        {
+                            "type": "bool",
+                            "name": "pbb",
+                            "value": false
+                        }
+                    ]
+                }
+            ]
         },
         "ExtractReviewData": {
             "enabled": false
