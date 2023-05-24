@@ -765,10 +765,13 @@ class AssetLoader(Loader):
                     if isinstance(d, bpy.types.Collection):
                         override_datablocks.update(d.all_objects)
 
-            # Ensure user override NOTE: will be unecessary after BL3.4
             for d in override_datablocks:
+                # Ensure user override NOTE: will be unecessary after BL3.4
                 if d and hasattr(d.override_library, "is_system_override"):
                     d.override_library.is_system_override = False
+
+                # Set source_name
+                d["source_name"] = d.override_library.reference.name
 
             # Add override datablocks to datablocks
             datablocks.update(override_datablocks)
@@ -1188,9 +1191,8 @@ class AssetLoader(Loader):
                             and old_datablock.get("source_name")
                             == d.get("source_name")
                         ),
-                        key=lambda d: d.name_full,
-                        # Library datablocks names are before override ones
-                        reverse=True,
+                        # Put source datablocks at the end
+                        key=lambda d: 1 if d.library else 0,
                     )
                 ),
                 None,
