@@ -847,3 +847,22 @@ def _validate_transient_template(project_name, template_name, anatomy):
         raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
                              " for project \"{}\"."
                          ).format(template_name, project_name))
+
+
+def add_repre_files_for_cleanup(instance, repre):
+    """ Explicitly mark repre files to be deleted.
+
+    Should be used on intermediate files (eg. review, thumbnails) to be
+    explicitly deleted.
+    """
+    files = repre["files"]
+    staging_dir = repre.get("stagingDir")
+    if not staging_dir:
+        return
+
+    if isinstance(files, str):
+        files = [files]
+
+    for file_name in files:
+        expected_file = os.path.join(staging_dir, file_name)
+        instance.context.data["cleanupFullPaths"].append(expected_file)

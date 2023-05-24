@@ -19,6 +19,7 @@ from openpype.lib import (
     should_convert_for_ffmpeg
 )
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractBurnin(publish.Extractor):
@@ -352,6 +353,8 @@ class ExtractBurnin(publish.Extractor):
 
                 # Add new representation to instance
                 instance.data["representations"].append(new_repre)
+
+                add_repre_files_for_cleanup(instance, new_repre)
 
             # Cleanup temp staging dir after procesisng of output definitions
             if do_convert:
