@@ -360,7 +360,7 @@ def get_imageio_config(
         # if global settings are disabled return empty dict because
         # it is expected that no colorspace management is needed
         log.info(
-            "Colorspace management is disabled."
+            "Colorspace management is disabled globally."
         )
         return {}
 
@@ -482,7 +482,7 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
     if not activate_global_rules:
         log.info(
-            "Global File Rules are disabled."
+            "Colorspace global file rules are disabled."
         )
         return {}
 
