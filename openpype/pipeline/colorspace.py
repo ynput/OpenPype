@@ -18,8 +18,8 @@ from openpype.pipeline import Anatomy
 log = Logger.get_logger(__name__)
 
 
-class cashed_data:
-    remapping: dict = None
+class CashedData:
+    remapping = None
 
 
 @contextlib.contextmanager
@@ -512,16 +512,16 @@ def get_remapped_colorspace_to_native(
         str: native colorspace name defined in remapping or None
     """
 
-    if not cashed_data.remapping.get(host_name, {}).get("to_native"):
+    if not CashedData.remapping.get(host_name, {}).get("to_native"):
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        cashed_data.remapping[host_name] = {
+        CashedData.remapping[host_name] = {
             "to_native": {
                 rule["ocio_name"]: input["host_native_name"]
                 for rule in remapping_rules
             }
         }
 
-    return cashed_data.remapping[host_name]["to_native"].get(
+    return CashedData.remapping[host_name]["to_native"].get(
         ocio_colorspace_name)
 
 
@@ -536,16 +536,16 @@ def get_remapped_colorspace_from_native(
         str: ocio colorspace name defined in remapping or None
     """
 
-    if not cashed_data.remapping.get(host_name, {}).get("from_native"):
+    if not CashedData.remapping.get(host_name, {}).get("from_native"):
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        cashed_data.remapping[host_name] = {
+        CashedData.remapping[host_name] = {
             "from_native": {
                 input["host_native_name"]: rule["ocio_name"]
                 for rule in remapping_rules
             }
         }
 
-    return cashed_data.remapping[host_name]["from_native"].get(
+    return CashedData.remapping[host_name]["from_native"].get(
         host_native_colorspace_name)
 
 
