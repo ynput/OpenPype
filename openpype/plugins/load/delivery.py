@@ -88,6 +88,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         template_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         template_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
+        frame_offset_value = QtWidgets.QSpinBox()
+        frame_offset_value.setMinimum(-99)
+
         root_line_edit = QtWidgets.QLineEdit()
 
         repre_checkboxes_layout = QtWidgets.QFormLayout()
@@ -111,6 +114,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Selected representations", selected_label)
         input_layout.addRow("Delivery template", dropdown)
         input_layout.addRow("Template value", template_label)
+        input_layout.addRow("Frame Offset", frame_offset_value)
         input_layout.addRow("Root", root_line_edit)
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
@@ -138,6 +142,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.selected_label = selected_label
         self.template_label = template_label
         self.dropdown = dropdown
+        self.frame_offset_value = frame_offset_value
         self.root_line_edit = root_line_edit
         self.progress_bar = progress_bar
         self.text_area = text_area
@@ -165,6 +170,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         datetime_data = get_datetime_data()
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
+        frame_offset = self.frame_offset_value.value()
         for repre in self._representations:
             if repre["name"] not in selected_repres:
                 continue
@@ -217,7 +223,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
+                    args.append(frame_offset)
                     new_report_items, uploaded = deliver_sequence(*args)
+                    print(frame_offset)
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
 
