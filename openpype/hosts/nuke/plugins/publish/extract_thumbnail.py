@@ -125,7 +125,7 @@ class ExtractThumbnail(publish.Extractor):
             temporary_nodes.append(rnode)
             previous_node = rnode
 
-        if not self.reposition_nodes:
+        if self.reposition_nodes is None:
             # [deprecated] create reformat node old way
             reformat_node = nuke.createNode("Reformat")
             ref_node = self.nodes.get("Reformat", None)
