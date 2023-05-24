@@ -18,7 +18,8 @@ class OCIOEnvHook(PreLaunchHook):
         "houdini",
         "maya",
         "nuke",
-        "hiero"
+        "hiero",
+        "resolve"
     ]
 
     def execute(self):
