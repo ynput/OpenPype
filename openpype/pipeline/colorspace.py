@@ -333,7 +333,7 @@ def get_imageio_config(
                                          Defaults to None.
 
     Returns:
-        dict or bool: config path data or None
+        dict: config path data or empty dict
     """
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
