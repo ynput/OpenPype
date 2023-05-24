@@ -21,6 +21,15 @@ from openpype.hosts.blender.api.utils import (
     get_used_datablocks,
 )
 from openpype.lib import Logger
+from openpype.lib.path_tools import get_version_from_path
+from openpype.modules import ModulesManager
+from openpype.pipeline import (
+    Anatomy,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.modules import ModulesManager
@@ -700,10 +709,12 @@ def download_last_workfile() -> str:
         'blender',
     )
 
-    # Increment workfile version number
-    workfile_data['version'] = (
-        workfile_representation['context']['version'] + 1
-    )
+    # TODO Get highest local version number
+    # TODO Handle subversion
+    workfile_data['version'] = int(
+        get_version_from_path(bpy.data.filepath)
+    ) + 1
+    workfile_data['ext'] = 'blend'
 
     # Get local workfile path
     local_workfile_path = anatomy.format(workfile_data)[
@@ -728,4 +739,3 @@ def download_last_workfile() -> str:
     )
 
     return local_workfile_path, last_version_doc['data']['time']
-
