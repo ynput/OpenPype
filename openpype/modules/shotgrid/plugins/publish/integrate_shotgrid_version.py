@@ -29,14 +29,18 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         code = "{}_{}_{}".format(
             anatomy["asset"],
             instance.data["subset"],
-            "v{:03}".format(int(anatomy["version"])),
+            "v{:03}".format(int(anatomy["version"]))
         )
         ### Ends Alkemy-X Override ###
 
-        version = self._find_existing_version(code, context)
+        ### Starts Alkemy-X Override ###
+        version = self._find_existing_version(code, context, instance)
+        ### Ends Alkemy-X Override ###
 
         if not version:
-            version = self._create_version(code, context)
+            ### Starts Alkemy-X Override ###
+            version = self._create_version(code, context, instance)
+            ### Ends Alkemy-X Override ###
             self.log.info("Create Shotgrid version: {}".format(version))
         else:
             self.log.info("Use existing Shotgrid version: {}".format(version))
@@ -49,14 +53,10 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
         ### Starts Alkemy-X Override ###
         # Add a few extra fields from OP to SG version
         for op_field, sg_field in self.fields_to_add.items():
-            field_value = instance.data.get(op_field) or context.data.get(
-                op_field
-            )
+            field_value = context.data.get(op_field) or instance.data.get(op_field)
             if field_value:
-                self.log.info(
-                    "Adding field '{}' to SG as '{}':'{}'".format(
-                        op_field, sg_field, field_value
-                    )
+                self.log.info("Adding field '{}' to SG as '{}':'{}'".format(
+                    op_field, sg_field, field_value)
                 )
                 data_to_update[sg_field] = field_value
 
@@ -69,6 +69,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             )
             version_entity = "-"
         data_to_update["sg_op_instance_id"] = str(version_entity)
+
 
         ### Ends Alkemy-X Override ###
 
@@ -106,20 +107,28 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
         instance.data["shotgridVersion"] = version
 
-    def _find_existing_version(self, code, context):
+    ### Starts Alkemy-X Override ###
+    def _find_existing_version(self, code, context, instance):
+    ### Ends Alkemy-X Override ###
         filters = [
             ["project", "is", context.data.get("shotgridProject")],
             ["sg_task", "is", context.data.get("shotgridTask")],
-            ["entity", "is", context.data.get("shotgridEntity")],
+            ### Starts Alkemy-X Override ###
+            ["entity", "is", instance.data.get("shotgridEntity")],
+            ### Ends Alkemy-X Override ###
             ["code", "is", code],
         ]
         return self.sg.find_one("Version", filters, [])
 
-    def _create_version(self, code, context):
+    ### Starts Alkemy-X Override ###
+    def _create_version(self, code, context, instance):
+    ### Ends Alkemy-X Override ###
         version_data = {
             "project": context.data.get("shotgridProject"),
             "sg_task": context.data.get("shotgridTask"),
-            "entity": context.data.get("shotgridEntity"),
+            ### Starts Alkemy-X Override ###
+            "entity": instance.data.get("shotgridEntity"),
+            ### Ends Alkemy-X Override ###
             "code": code,
         }
         return self.sg.create("Version", version_data)

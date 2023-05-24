@@ -29,7 +29,7 @@ def nuke_transcode_template(
         "-t",
         python_template,
         nuke_template,
-        "{0}_{1}_{2}".format(first_frame, last_frame, input_frame),
+        "{0}_{1}_{2}".format(int(first_frame), int(last_frame), int(input_frame)),
         output_ext,
         read_path,
         write_path,

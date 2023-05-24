@@ -47,14 +47,18 @@ class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
                 code = re.sub("\.\d+", "", code)
             ### Ends Alkemy-X Override ###
 
+            ### Starts Alkemy-X Override ###
             published_file = self._find_existing_publish(
-                code, context, shotgrid_version
+                code, context, instance, shotgrid_version
             )
+            ### Ends Alkemy-X Override ###
 
             published_file_data = {
                 "project": context.data.get("shotgridProject"),
                 "code": code,
-                "entity": context.data.get("shotgridEntity"),
+                ### Starts Alkemy-X Override ###
+                "entity": instance.data.get("shotgridEntity"),
+                ### Ends Alkemy-X Override ###
                 "task": context.data.get("shotgridTask"),
                 "version": shotgrid_version,
                 "path": {"local_path": local_path},
@@ -113,12 +117,16 @@ class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
         return sg_published_file_type
     ### Ends Alkemy-X Override ###
 
-    def _find_existing_publish(self, code, context, shotgrid_version):
+    ### Startss Alkemy-X Override ###
+    def _find_existing_publish(self, code, context, instance, shotgrid_version):
+    ### Ends Alkemy-X Override ###
 
         filters = [
             ["project", "is", context.data.get("shotgridProject")],
             ["task", "is", context.data.get("shotgridTask")],
-            ["entity", "is", context.data.get("shotgridEntity")],
+            ### Startss Alkemy-X Override ###
+            ["entity", "is", instance.data.get("shotgridEntity")],
+            ### Ends Alkemy-X Override ###
             ["version", "is", shotgrid_version],
             ["code", "is", code],
         ]
