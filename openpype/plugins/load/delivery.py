@@ -225,7 +225,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 else:
                     args.append(frame_offset)
                     new_report_items, uploaded = deliver_sequence(*args)
-                    print(frame_offset)
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
 
