@@ -91,16 +91,16 @@ def get_current_project():
     return self.project_manager.GetCurrentProject()
 
 
-def get_current_timeline(any=False, new=False):
+def get_current_timeline(new=False, get_any=False):
     """Get current timeline object.
 
     Args:
-        any (bool, optional): return any even new if no timeline available.
-            Defaults to False.
         new (bool, optional): return only new timeline. Defaults to False.
+        get_any (bool, optional): return any even new if no timeline available.
+            Defaults to False.
 
     Returns:
-        _type_: _description_
+        object: resolve.Timeline
     """
     # get current project
     project = get_current_project()
@@ -111,12 +111,14 @@ def get_current_timeline(any=False, new=False):
     if timeline and not new:
         return timeline
 
-    # if any is True then return any timeline
-    if any:
+    # if get_any is True then return any timeline
+    if get_any:
         timeline_count = project.GetTimelineCount()
         if timeline_count == 0:
             # if there is no timeline then create a new one
             new = True
+        else:
+            return project.GetTimelineByIndex(1)
 
     # create new timeline if new is True
     if new:
@@ -336,7 +338,7 @@ def get_current_timeline_items(
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
     # make sure some timeline will be active with `any` argument
-    timeline = get_current_timeline(any=True)
+    timeline = get_current_timeline(get_any=True)
     selected_clips = []
 
     # get all tracks count filtered by track type
