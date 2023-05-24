@@ -92,5 +92,5 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         instance.data["transientData"] = transient_data
 
-        self.log.info("collected instance: {}".format(instance.data))
-        self.log.info("parsing data: {}".format(in_data))
+        self.log.debug("collected instance: {}".format(instance.data))
+        self.log.debug("parsing data: {}".format(in_data))
