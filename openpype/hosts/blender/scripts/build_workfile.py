@@ -786,7 +786,7 @@ def build_anim(project_name, asset_name):
             asset_name=asset_name,
             subset_name=f"animation{variant_name}",
             datapath=BL_TYPE_DATAPATH.get(type(objects[0])),
-            datablock_nam=objects[0].name,
+            datablock_name=objects[0].name,
             use_selection=False,
         )
         animation_instance = bpy.context.scene.openpype_instances[-1]
