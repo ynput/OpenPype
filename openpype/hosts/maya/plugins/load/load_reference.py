@@ -10,7 +10,8 @@ import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     get_container_members,
-    parent_nodes
+    parent_nodes,
+    create_rig_animation_instance
 )
 
 
@@ -111,9 +112,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    # Name of creator class that will be used to create animation instance
-    animation_creator_name = "CreateAnimation"
-
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
 
@@ -122,14 +120,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
-        group_name = "{}:_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             file_url = self.prepare_root_value(self.fname,
                                                context["project"]["name"])
+
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -165,9 +164,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
-
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
+
+                display_handle = settings['maya']['load'].get(
+                    'reference_loader', {}
+                ).get('display_handle', True)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
+
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
@@ -177,7 +182,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                  (float(c[1]) / 255),
                                  (float(c[2]) / 255))
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -245,6 +252,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 variant=namespace,
                 pre_create_data={"use_selection": True}
             )
+
+        nodes = self[:]
+        create_rig_animation_instance(
+            nodes, context, namespace, log=self.log
+        )
 
     def _lock_camera_transforms(self, nodes):
         cameras = cmds.ls(nodes, type="camera")

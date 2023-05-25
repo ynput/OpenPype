@@ -1,0 +1,13 @@
+{
+    "imageio": {
+        "ocio_config": {
+            "enabled": true,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": true,
+            "rules": {}
+        }
+    },
+    "shelves": {}
+}

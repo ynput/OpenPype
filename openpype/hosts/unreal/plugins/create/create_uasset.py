@@ -12,7 +12,7 @@ from openpype.hosts.unreal.api.plugin import (
 class CreateUAsset(UnrealAssetCreator):
     """Create UAsset."""
 
-    identifier = "io.openpype.creators.unreal.uasset"
+    identifier = "io.ayon.creators.unreal.uasset"
     label = "UAsset"
     family = "uasset"
     icon = "cube"

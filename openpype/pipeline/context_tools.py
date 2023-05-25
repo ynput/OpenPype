@@ -35,6 +35,7 @@ from . import (
     register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_inventory_action_path,
 )
 
 
@@ -54,6 +55,7 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def _get_modules_manager():
@@ -158,6 +160,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
@@ -223,6 +226,7 @@ def uninstall_host():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     pyblish.api.deregister_discovery_filter(filter_pyblish_plugins)
     deregister_loader_plugin_path(LOAD_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
     log.info("Global plug-ins unregistred")
 
     deregister_host()
@@ -463,9 +467,7 @@ def get_workdir_from_session(session=None, template_key=None):
         session = legacy_io.Session
     project_name = session["AVALON_PROJECT"]
     host_name = session["AVALON_APP"]
-    anatomy = Anatomy(project_name)
     template_data = get_template_data_from_session(session)
-    anatomy_filled = anatomy.format(template_data)
 
     if not template_key:
         task_type = template_data["task"]["type"]
@@ -474,7 +476,10 @@ def get_workdir_from_session(session=None, template_key=None):
             host_name,
             project_name=project_name
         )
-    path = anatomy_filled[template_key]["folder"]
+
+    anatomy = Anatomy(project_name)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
+    path = template_obj.format_strict(template_data)
     if path:
         path = os.path.normpath(path)
     return path
