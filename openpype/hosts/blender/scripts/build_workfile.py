@@ -221,7 +221,9 @@ def create_instance(creator_name, instance_name, **options):
 
 
 def download_kitsu_casting(
-        project_name: str, shot_name: str, asset_types: List[str] = None,
+    project_name: str,
+    shot_name: str,
+    asset_types: List[str] = None,
 ) -> List[dict]:
     """Download kitsu casting
 
@@ -260,9 +262,8 @@ def download_kitsu_casting(
     representations = []
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
-            if (
-                actor["asset_type_name"] == "Environment"
-                and (not asset_types or "Environment" in asset_types)
+            if actor["asset_type_name"] == "Environment" and (
+                not asset_types or "Environment" in asset_types
             ):
                 subset_name = "setdressMain"
             elif not asset_types or actor["asset_type_name"] in asset_types:
@@ -274,9 +275,9 @@ def download_kitsu_casting(
             representation = download_subset(
                 project_name, actor["asset_name"], subset_name, hero=True
             )
-            if (
-                not representation
-                and actor["asset_type_name"] in ("Bidulo", "Props")
+            if not representation and actor["asset_type_name"] in (
+                "Bidulo",
+                "Props",
             ):
                 representation = download_subset(
                     project_name, actor["asset_name"], "modelMain"
@@ -321,6 +322,48 @@ def load_casting(project_name: str, shot_name: str) -> Set[OpenpypeContainer]:
             )
 
     return containers, all_datablocks
+
+
+def load_references(
+    project_name: str, asset_name: str, board_repre: dict, audio_repre: dict
+) -> List[str]:
+    """Load references for the asset.
+
+    Args:
+        project_name (str): The project name.
+        asset_name (str): The asset name.
+        board_repre (dict): The board representation.
+        audio_repre (dict): The audio representation.
+
+    Returns:
+        List[str]: Errors.
+    """
+    errors = []
+
+    # load the board mov as image background linked into the camera
+    if board_repre:
+        load_subset(project_name, board_repre, "Background")
+    else:
+        errors.append(
+            "load subset BoardReference failed:"
+            f" Missing subset for {asset_name}"
+        )
+
+    # Delete sound sequence from board mov
+    if len(bpy.context.scene.sequence_editor.sequences) > 0:
+        if sound_seq := bpy.context.scene.sequence_editor.sequences[-1]:
+            bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
+
+    # load the audio reference as sound into sequencer
+    if audio_repre:
+        load_subset(project_name, audio_repre, "Audio")
+    else:
+        errors.append(
+            "load subset AudioReference failed:"
+            f" Missing subset for {asset_name}"
+        )
+
+    return errors
 
 
 def build_model(project_name, asset_name):
@@ -405,9 +448,7 @@ def build_layout(project_name, asset_name):
     # Create layout instance
     layout_instance = create_instance("CreateLayout", "layoutMain")
     layout_collection = next(
-        iter(
-            layout_instance.get_root_datablocks(bpy.types.Collection)
-        ),
+        iter(layout_instance.get_root_datablocks(bpy.types.Collection)),
         None,
     )
 
@@ -425,18 +466,14 @@ def build_layout(project_name, asset_name):
 
         # Link loaded containers to layout collection
         for container in containers:
-            for root in container.get_root_datablocks(
-                bpy.types.Collection
-            ):
+            for root in container.get_root_datablocks(bpy.types.Collection):
                 if root not in layout_collection.children.values():
                     layout_collection.children.link(root)
                 if root in bpy.context.scene.collection.children.values():
                     bpy.context.scene.collection.children.unlink(root)
 
         # Create GDEFORMER collection
-        create_gdeformer_collection(
-            bpy.context.scene.collection
-        )
+        create_gdeformer_collection(bpy.context.scene.collection)
     except RuntimeError as err:
         errors.append(f"Load casting failed ! {err}")
 
@@ -533,29 +570,10 @@ def build_layout(project_name, asset_name):
     # Assign setdress or last loaded world
     bpy.context.scene.world = setdress_world or bpy.data.worlds[-1]
 
-    # load the board mov as image background linked into the camera
-    if board_repre:
-        load_subset(project_name, board_repre, "Background")
-    else:
-        errors.append(
-            "load subset BoardReference failed:"
-            f" Missing subset for {asset_name}"
-        )
-
-    # Delete sound sequence from board mov
-    if len(bpy.context.scene.sequence_editor.sequences) > 0:
-        sound_seq = bpy.context.scene.sequence_editor.sequences[-1]
-        if sound_seq:
-            bpy.context.scene.sequence_editor.sequences.remove(sound_seq)
-
-    # load the audio reference as sound into sequencer
-    if audio_repre:
-        load_subset(project_name, audio_repre, "Audio")
-    else:
-        errors.append(
-            "load subset AudioReference failed:"
-            f" Missing subset for {asset_name}"
-        )
+    # Load Audio and Board
+    errors.extend(
+        load_references(project_name, asset_name, board_repre, audio_repre)
+    )
 
     # load the concept reference of the environment as image background.
     if env_asset_name and concept_repre:
@@ -582,6 +600,9 @@ def build_anim(project_name, asset_name):
     layout_repre = download_subset(project_name, asset_name, "layoutMain")
     board_repre = download_subset(
         project_name, asset_name, "BoardReference", "mov"
+    )
+    audio_repre = download_subset(
+        project_name, asset_name, "AudioReference", "wav"
     )
     camera_repre = download_subset(project_name, asset_name, "cameraMain")
     wait_for_download(
@@ -682,15 +703,12 @@ def build_anim(project_name, asset_name):
                     ),
                 )
             except (RuntimeError, AssertionError) as err:
-                errors.append(
-                    f"Switch failed for {container.name}: {err}"
-                )
+                errors.append(f"Switch failed for {container.name}: {err}")
                 continue
 
     # Substitute overridden GDEFORMER collection by local one
     scene_collections_by_name = {
-        c.name: c
-        for c in bpy.context.scene.collection.children_recursive
+        c.name: c for c in bpy.context.scene.collection.children_recursive
     }
     if gdeform_collection := scene_collections_by_name.get("GDEFORMER"):
         gdeform_collection.name += ".old"
@@ -731,7 +749,9 @@ def build_anim(project_name, asset_name):
 
     # Make cam container publishable
     if cam_container:
-        bpy.ops.scene.make_container_publishable(container_name=cam_container.name)
+        bpy.ops.scene.make_container_publishable(
+            container_name=cam_container.name
+        )
         cam_instance = bpy.context.scene.openpype_instances[-1]
 
         if camera_collection := next(
@@ -770,7 +790,8 @@ def build_anim(project_name, asset_name):
             ]
             # Get animated objects
             animated_objects = [
-                o for o in container_datablocks
+                o
+                for o in container_datablocks
                 if o.animation_data and o.animation_data.action
             ]
             # Add new instance creation container had rigs or animated members.
@@ -806,11 +827,10 @@ def build_anim(project_name, asset_name):
                 objects.extend(obj.all_objects)
         animation_instance.publish = publish_enabled
 
-    # load the board mov as image background linked into the camera
-    try:
-        load_subset(project_name, board_repre, "Background")
-    except (RuntimeError, AssertionError) as err:
-        errors.append(f"Load Background failed: {err}")
+    # Load Audio and Board
+    errors.extend(
+        load_references(project_name, asset_name, board_repre, audio_repre)
+    )
 
     assert not errors, ";\n\n".join(errors)
 
