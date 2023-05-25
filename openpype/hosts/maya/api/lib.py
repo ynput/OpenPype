@@ -356,7 +356,9 @@ def collect_animation_data(fps=False):
     # get scene values as defaults
     frame_start = cmds.playbackOptions(query=True, minTime=True)
     frame_end = cmds.playbackOptions(query=True, maxTime=True)
-    frame_start_handle = cmds.playbackOptions(query=True, animationStartTime=True)
+    frame_start_handle = cmds.playbackOptions(
+        query=True, animationStartTime=True
+    )
     frame_end_handle = cmds.playbackOptions(query=True, animationEndTime=True)
 
     handle_start = frame_start - frame_start_handle
