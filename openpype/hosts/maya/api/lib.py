@@ -356,11 +356,11 @@ def collect_animation_data(fps=False):
     # get scene values as defaults
     frame_start = cmds.playbackOptions(query=True, minTime=True)
     frame_end = cmds.playbackOptions(query=True, maxTime=True)
-    handle_start = cmds.playbackOptions(query=True, animationStartTime=True)
-    handle_end = cmds.playbackOptions(query=True, animationEndTime=True)
+    frame_start_handle = cmds.playbackOptions(query=True, animationStartTime=True)
+    frame_end_handle = cmds.playbackOptions(query=True, animationEndTime=True)
 
-    handle_start = frame_start - handle_start
-    handle_end = handle_end - frame_end
+    handle_start = frame_start - frame_start_handle
+    handle_end = frame_end_handle - frame_end
 
     # build attributes
     data = OrderedDict()
