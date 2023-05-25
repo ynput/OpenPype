@@ -40,6 +40,7 @@ from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
     ConvertorsOperationFailed,
 )
+from openpype.pipeline.publish import get_publish_instance_label
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -346,7 +347,7 @@ class PublishReportMaker:
     def _extract_instance_data(self, instance, exists):
         return {
             "name": instance.data.get("name"),
-            "label": instance.data.get("label"),
+            "label": get_publish_instance_label(instance),
             "family": instance.data["family"],
             "families": instance.data.get("families") or [],
             "exists": exists,
