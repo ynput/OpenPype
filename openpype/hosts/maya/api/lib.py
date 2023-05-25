@@ -2231,19 +2231,11 @@ def get_frame_range():
         animation_start -= int(handle_start)
         animation_end += int(handle_end)
 
-    cmds.playbackOptions(
-        minTime=frame_start,
-        maxTime=frame_end,
-        animationStartTime=animation_start,
-        animationEndTime=animation_end
-    )
-    cmds.currentTime(frame_start)
-
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
-        "handleStart": handle_start,
-        "handleEnd": handle_end
+        "animationStart": animation_start,
+        "animationEnd": animation_end
     }
 
 
@@ -2266,22 +2258,20 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         set_scene_fps(fps)
 
     frame_range = get_frame_range()
-
-    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
-    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-
     if playback:
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
-        cmds.playbackOptions(animationStartTime=frame_start)
-        cmds.playbackOptions(animationEndTime=frame_end)
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
-        cmds.currentTime(frame_start)
+        cmds.playbackOptions(
+            minTime=frame_range["frameStart"],
+            maxTime=frame_range["frameEnd"],
+            animationStartTime=frame_range["animationStart"],
+            animationEndTime=frame_range["animationEnd"]
+        )
+        cmds.currentTime(frame_range["frameStart"])
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr(
+            "defaultRenderGlobals.startFrame", frame_range["frameStart"]
+        )
+        cmds.setAttr("defaultRenderGlobals.endFrame", frame_range["frameEnd"])
 
     if instances:
         project_name = get_current_project_name()
