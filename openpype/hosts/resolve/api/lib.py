@@ -15,6 +15,7 @@ log = Logger.get_logger(__name__)
 self = sys.modules[__name__]
 self.project_manager = None
 self.media_storage = None
+self.current_project = None
 
 # OpenPype sequential rename variables
 self.rename_index = 0
@@ -85,47 +86,60 @@ def get_media_storage():
 
 
 def get_current_project():
-    # initialize project manager
-    get_project_manager()
+    """Get current project object.
+    """
+    if not self.current_project:
+        self.current_project = get_project_manager().GetCurrentProject()
 
-    return self.project_manager.GetCurrentProject()
+    return self.current_project
 
 
-def get_current_timeline(new=False, get_any=False):
+def get_current_timeline(new=False):
     """Get current timeline object.
 
     Args:
-        new (bool, optional): return only new timeline. Defaults to False.
-        get_any (bool, optional): return any even new if no timeline available.
-            Defaults to False.
+        new (bool)[optional]: [DEPRECATED] if True it will create
+            new timeline if none exists
+
+    Returns:
+        TODO: will need to reflect future `None`
+        object: resolve.Timeline
+    """
+    project = get_current_project()
+    timeline = project.GetCurrentTimeline()
+
+    # return current timeline if any
+    if timeline:
+        return timeline
+
+    # TODO: [deprecated] and will be removed in future
+    if new:
+        return get_new_timeline()
+
+
+def get_any_timeline():
+    """Get any timeline object.
+
+    Returns:
+        object | None: resolve.Timeline
+    """
+    project = get_current_project()
+    timeline_count = project.GetTimelineCount()
+    if timeline_count > 0:
+        return project.GetTimelineByIndex(1)
+
+
+def get_new_timeline():
+    """Get new timeline object.
 
     Returns:
         object: resolve.Timeline
     """
-    # get current project
     project = get_current_project()
-
-    timeline = project.GetCurrentTimeline()
-
-    # return current timeline only if it is not new
-    if timeline and not new:
-        return timeline
-
-    # if get_any is True then return any timeline
-    if get_any:
-        timeline_count = project.GetTimelineCount()
-        if timeline_count == 0:
-            # if there is no timeline then create a new one
-            new = True
-        else:
-            return project.GetTimelineByIndex(1)
-
-    # create new timeline if new is True
-    if new:
-        media_pool = project.GetMediaPool()
-        new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
-        project.SetCurrentTimeline(new_timeline)
-        return new_timeline
+    media_pool = project.GetMediaPool()
+    new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
+    project.SetCurrentTimeline(new_timeline)
+    return new_timeline
 
 
 def create_bin(name: str, root: object = None) -> object:
@@ -337,8 +351,13 @@ def get_current_timeline_items(
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
-    # make sure some timeline will be active with `any` argument
-    timeline = get_current_timeline(get_any=True)
+
+    # get timeline anyhow
+    timeline = (
+        get_current_timeline() or
+        get_any_timeline() or
+        get_new_timeline()
+    )
     selected_clips = []
 
     # get all tracks count filtered by track type
