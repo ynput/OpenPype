@@ -114,8 +114,8 @@ class MusterModule(OpenPypeModule, ITrayModule):
     def save_credentials(self, token):
         """Save credentials to JSON file."""
 
-        with open(self.cred_path, 'w') as stream:
-            stream.write(json.dumps({'token': token}))
+        with open(self.cred_path, "w") as f:
+            json.dump({'token': token}, f)
 
     def show_login(self):
         """
