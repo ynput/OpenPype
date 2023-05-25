@@ -10,6 +10,8 @@ def get_resource_path(*args):
 
 
 def get_icon_path():
+    if os.environ.get("OPENPYPE_USE_STAGING") == "1":
+        return get_resource_path("AYON_staging.png")
     return get_resource_path("AYON.png")
 
 
