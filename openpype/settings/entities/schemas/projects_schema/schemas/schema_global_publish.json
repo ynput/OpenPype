@@ -97,7 +97,7 @@
                 {
                     "type": "boolean",
                     "key": "rewrite_version_enable",
-                    "label": "Rewrite latest version"
+                    "label": "Show 'Rewrite latest version' toggle"
                 }
             ]
         },
