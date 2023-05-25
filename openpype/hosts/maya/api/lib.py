@@ -2197,17 +2197,21 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def get_frame_range():
-    """Get the current assets frame range and handles."""
+def get_frame_range(include_animation_range=False):
+    """Get the current assets frame range and handles.
+
+    Args:
+        include_animation_range (bool, optional): Whether to include
+            `animationStart` and `animationEnd` keys to define the outer
+            range of the timeline. It is excluded by default.
+    Returns:
+        dict: Asset's expected frame range values.
+    """
 
     # Set frame start/end
     project_name = get_current_project_name()
-    task_name = get_current_task_name()
     asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
-    settings = get_project_settings(project_name)
-    include_handles_settings = settings["maya"]["include_handles"]
-    current_task = asset.get("data").get("tasks").get(task_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
@@ -2219,24 +2223,40 @@ def get_frame_range():
     handle_start = asset["data"].get("handleStart") or 0
     handle_end = asset["data"].get("handleEnd") or 0
 
-    animation_start = frame_start
-    animation_end = frame_end
-
-    include_handles = include_handles_settings["include_handles_default"]
-    for item in include_handles_settings["per_task_type"]:
-        if current_task["type"] in item["task_type"]:
-            include_handles = item["include_handles"]
-            break
-    if include_handles:
-        animation_start -= int(handle_start)
-        animation_end += int(handle_end)
-
-    return {
+    frame_range = {
         "frameStart": frame_start,
         "frameEnd": frame_end,
-        "animationStart": animation_start,
-        "animationEnd": animation_end
+        "handleStart": handle_start,
+        "handleEnd": handle_end
     }
+
+    if include_animation_range:
+        # The animation range values are only included to define whether
+        # the Maya time slider should include the handles or not.
+        # Some usages of this function use the full dictionary to define
+        # instance attributes for which we want to exclude the animation
+        # keys. That is why these are excluded by default.
+        task_name = get_current_task_name()
+        settings = get_project_settings(project_name)
+        include_handles_settings = settings["maya"]["include_handles"]
+        current_task = asset.get("data").get("tasks").get(task_name)
+
+        animation_start = frame_start
+        animation_end = frame_end
+
+        include_handles = include_handles_settings["include_handles_default"]
+        for item in include_handles_settings["per_task_type"]:
+            if current_task["type"] in item["task_type"]:
+                include_handles = item["include_handles"]
+                break
+        if include_handles:
+            animation_start -= int(handle_start)
+            animation_end += int(handle_end)
+
+        frame_range["animationStart"] = animation_start
+        frame_range["animationEnd"] = animation_end
+
+    return frame_range
 
 
 def reset_frame_range(playback=True, render=True, fps=True, instances=True):
@@ -2257,21 +2277,28 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         )
         set_scene_fps(fps)
 
-    frame_range = get_frame_range()
+    frame_range = get_frame_range(include_animation_range=True)
+    if not frame_range:
+        # No frame range data found for asset
+        return
+
+    frame_start = frame_range["frameStart"]
+    frame_end = frame_range["frameEnd"]
+    animation_start = frame_range["animationStart"]
+    animation_end = frame_range["animationEnd"]
+
     if playback:
         cmds.playbackOptions(
-            minTime=frame_range["frameStart"],
-            maxTime=frame_range["frameEnd"],
-            animationStartTime=frame_range["animationStart"],
-            animationEndTime=frame_range["animationEnd"]
+            minTime=frame_start,
+            maxTime=frame_end,
+            animationStartTime=animation_start,
+            animationEndTime=animation_end
         )
-        cmds.currentTime(frame_range["frameStart"])
+        cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr(
-            "defaultRenderGlobals.startFrame", frame_range["frameStart"]
-        )
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_range["frameEnd"])
+        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
 
     if instances:
         project_name = get_current_project_name()
@@ -4049,4 +4076,3 @@ def create_rig_animation_instance(
             options={"useSelection": True},
             data={"dependencies": dependency}
         )
-
