@@ -98,19 +98,32 @@ class AddonInfo(object):
     authors = attr.ib(default=None)
 
     @classmethod
-    def from_dict(cls, data):
-        sources = []
-        unknown_sources = []
+    def from_dict_by_version(cls, data, addon_version):
+        """Addon info for specific version.
 
-        production_version = data.get("productionVersion")
-        if not production_version:
+        Args:
+            data (dict[str, Any]): Addon information from server. Should
+                contain information about every version under 'versions'.
+            addon_version (str): Addon version for which is info requested.
+
+        Returns:
+            Union[AddonInfo, None]: Addon info, or None if version is not
+                available.
+        """
+
+        if not addon_version:
             return None
 
         # server payload contains info about all versions
-        # active addon must have 'productionVersion' and matching version info
-        version_data = data.get("versions", {})[production_version]
+        version_data = data.get("versions", {}).get(addon_version)
+        if not version_data:
+            return None
+
         source_info = version_data.get("clientSourceInfo")
         require_distribution = source_info is not None
+
+        sources = []
+        unknown_sources = []
         for source in (source_info or []):
             addon_source = convert_source(source)
             if addon_source is not None:
@@ -119,10 +132,10 @@ class AddonInfo(object):
                 unknown_sources.append(source)
                 print(f"Unknown source {source.get('type')}")
 
-        full_name = "{}_{}".format(data["name"], production_version)
+        full_name = "{}_{}".format(data["name"], addon_version)
         return cls(
             name=data.get("name"),
-            version=production_version,
+            version=addon_version,
             full_name=full_name,
             require_distribution=require_distribution,
             sources=sources,
@@ -133,6 +146,29 @@ class AddonInfo(object):
             license=data.get("license"),
             authors=data.get("authors")
         )
+
+    @classmethod
+    def from_dict(cls, data, use_staging=False):
+        """Get Addon information for production or staging version.
+
+        Args:
+            data (dict[str, Any]): Addon information from server. Should
+                contain information about every version under 'versions'.
+            use_staging (bool): Use staging version if set to 'True' instead
+                of production.
+
+        Returns:
+            Union[AddonInfo, None]: Addon info, or None if version is not
+                set or available.
+        """
+
+        # Active addon must have 'productionVersion' or 'stagingVersion'
+        #   and matching version info.
+        if use_staging:
+            addon_version = data.get("stagingVersion")
+        else:
+            addon_version = data.get("productionVersion")
+        return cls.from_dict_by_version(data, addon_version)
 
 
 @attr.s
