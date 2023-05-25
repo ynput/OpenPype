@@ -82,7 +82,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             # everything getting to this plugin
             # if "shotgridreview" in representation.get("tags", []):
             ### Ends Alkemy-X Override ###
-            if representation["ext"] in ["mov", "avi"]:
+            if "shotgridreview" in representation.get("tags", []) and representation["ext"] in ["mov", "avi"]:
                 self.log.info(
                     "Upload review: {} for version shotgrid {}".format(
                         local_path, version.get("id")
