@@ -761,7 +761,12 @@ class AssetLoader(Loader):
                 # Update datablocks because could have been renamed
                 override_datablocks.add(d)
                 if isinstance(d, tuple(BL_OUTLINER_TYPES)):
-                    override_datablocks.update(d.children_recursive)
+                    override_datablocks.update(
+                        col
+                        for col in d.children_recursive
+                        # Don't add empty collections
+                        if col.children and col.all_objects
+                    )
                     if isinstance(d, bpy.types.Collection):
                         override_datablocks.update(d.all_objects)
 
