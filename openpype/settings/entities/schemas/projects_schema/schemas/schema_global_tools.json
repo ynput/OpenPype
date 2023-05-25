@@ -321,10 +321,6 @@
             "label": "Publish",
             "children": [
                 {
-                    "type": "label",
-                    "label": "<b>NOTE:</b> For backwards compatibility can be value empty and in that case are used values from <a href=\"settings://project_settings/global/publish/IntegrateAssetNew\"><b>IntegrateAssetNew</b></a>. This will change in future so please move all values here as soon as possible."
-                },
-                {
                     "type": "list",
                     "key": "template_name_profiles",
                     "label": "Template name profiles",
