@@ -331,7 +331,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property(3)
         self._set_progress_visibility(True)
         self._set_main_label("Publishing...")
-        self._message_label_top.setText("")  # clear text
+        self._message_label_top.setText("")
 
         self._reset_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
