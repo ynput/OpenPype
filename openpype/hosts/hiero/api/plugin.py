@@ -1005,8 +1005,7 @@ class PublishClip:
         # reference family will already be in review form
         # NOTE: What if reference family media is not playable in SG?
         families = [self.data["family"]]
-        if self.subset_family != "reference":
-            families.append("review")
+        families.append("review")
         ### Ends Alkemy-X Override ###
 
         return {
