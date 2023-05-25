@@ -34,8 +34,9 @@ from openpype.settings.lib import (
 from openpype.lib import (
     Logger,
     import_filepath,
-    import_module_from_dirpath
+    import_module_from_dirpath,
 )
+from openpype.lib.openpype_version import is_staging_enabled
 
 from .interfaces import (
     OpenPypeInterface,
@@ -353,9 +354,13 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         ))
         return v3_addons_to_skip
 
+    version_key = (
+        "stagingVersion" if is_staging_enabled()
+        else "productionVersion"
+    )
     for addon_info in addons_info:
         addon_name = addon_info["name"]
-        addon_version = addon_info.get("productionVersion")
+        addon_version = addon_info.get(version_key)
         if not addon_version:
             continue
 
