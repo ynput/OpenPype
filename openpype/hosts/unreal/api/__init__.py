@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Unreal Editor OpenPype host API."""
+"""Unreal Editor Ayon host API."""
 
 from .plugin import (
     UnrealActorCreator,

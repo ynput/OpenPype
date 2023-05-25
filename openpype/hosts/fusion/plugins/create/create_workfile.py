@@ -1,5 +1,3 @@
-import qtawesome
-
 from openpype.hosts.fusion.api import (
     get_current_comp
 )
@@ -15,6 +13,7 @@ class FusionWorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
     label = "Workfile"
+    icon = "fa5.file"
 
     default_variant = "Main"
 
@@ -104,6 +103,3 @@ class FusionWorkfileCreator(AutoCreator):
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
-
-    def get_icon(self):
-        return qtawesome.icon("fa.file-o", color="white")
