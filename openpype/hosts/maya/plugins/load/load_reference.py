@@ -3,8 +3,6 @@ import difflib
 import contextlib
 from maya import cmds
 
-from openpype.pipeline import registered_host
-from openpype.pipeline.create import CreateContext
 from openpype.settings import get_project_settings
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
@@ -223,35 +221,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self._lock_camera_transforms(members)
 
     def _post_process_rig(self, name, namespace, context, options):
-
-        output = next((node for node in self if
-                       node.endswith("out_SET")), None)
-        controls = next((node for node in self if
-                         node.endswith("controls_SET")), None)
-
-        assert output, "No out_SET in rig, this is a bug."
-        assert controls, "No controls_SET in rig, this is a bug."
-
-        # Find the roots amongst the loaded nodes
-        roots = cmds.ls(self[:], assemblies=True, long=True)
-        assert roots, "No root nodes in rig, this is a bug."
-
-        self.log.info("Creating subset: {}".format(namespace))
-
-        # Fill creator identifier
-        creator_identifier = "io.openpype.creators.maya.animation"
-
-        host = registered_host()
-        context = CreateContext(host)
-
-        # Create the animation instance
-        with maintained_selection():
-            cmds.select([output, controls] + roots, noExpand=True)
-            context.create(
-                creator_identifier=creator_identifier,
-                variant=namespace,
-                pre_create_data={"use_selection": True}
-            )
 
         nodes = self[:]
         create_rig_animation_instance(

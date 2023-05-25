@@ -34,10 +34,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import NumberDef
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
+from openpype.pipeline.create import CreateContext
 from openpype.pipeline.context_tools import (
     get_current_asset_name,
     get_current_project_name,
@@ -3994,20 +3991,20 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
-    dependency = str(context["representation"]["_id"])
-
     if log:
         log.info("Creating subset: {}".format(namespace))
 
+    # Fill creator identifier
+    creator_identifier = "io.openpype.creators.maya.animation"
+
+    host = registered_host()
+    create_context = CreateContext(host)
+
     # Create the animation instance
-    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
     with maintained_selection():
         cmds.select([output, controls] + roots, noExpand=True)
-        legacy_create(
-            creator_plugin,
-            name=namespace,
-            asset=asset,
-            options={"useSelection": True},
-            data={"dependencies": dependency}
+        create_context.create(
+            creator_identifier=creator_identifier,
+            variant=namespace,
+            pre_create_data={"use_selection": True}
         )
