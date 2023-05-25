@@ -30,6 +30,8 @@ from .contants import (
     TRANSIENT_DIR_TEMPLATE
 )
 
+_ARG_PLACEHOLDER = object()
+
 
 def get_template_name_profiles(
     project_name, project_settings=None, logger=None
@@ -866,3 +868,33 @@ def add_repre_files_for_cleanup(instance, repre):
     for file_name in files:
         expected_file = os.path.join(staging_dir, file_name)
         instance.context.data["cleanupFullPaths"].append(expected_file)
+
+
+def get_publish_instance_label(instance, default=_ARG_PLACEHOLDER):
+    """Try to get label from pyblish instance.
+
+    First are checked 'label' and 'name' keys in instance data. If are not set
+    a default value is returned. Instance object is converted to string
+    if default value is not specific.
+
+    Todos:
+        Maybe 'subset' key could be used too.
+
+    Args:
+        instance (pyblish.api.Instance): Pyblish instance.
+        default (Optional[Any]): Default value to return if any
+
+    Returns:
+        Union[Any]: Instance label or default label.
+    """
+
+    label = (
+        instance.data.get("label")
+        or instance.data.get("name")
+    )
+    if label:
+        return label
+
+    if default is _ARG_PLACEHOLDER:
+        return str(instance)
+    return default
