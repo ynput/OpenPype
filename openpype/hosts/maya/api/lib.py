@@ -32,19 +32,17 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-<<<<<<< HEAD
 from openpype.pipeline.create import (
     legacy_create,
     get_legacy_creator_by_name
 )
-=======
->>>>>>> ec2af75dd1 (resolve conflicts)
 from openpype.pipeline.context_tools import (
     get_current_asset_name,
     get_current_project_asset,
     get_current_project_name,
     get_current_task_name
 )
+from openpype.lib.profiles_filtering import filter_profiles
 
 
 self = sys.modules[__name__]
@@ -3933,3 +3931,122 @@ def get_all_children(nodes):
             iterator.next()  # noqa: B305
 
     return list(traversed)
+
+
+def get_capture_preset(task_name, task_type, subset, project_settings, log):
+    """Get capture preset for playblasting.
+
+    Logic for transitioning from old style capture preset to new capture preset
+    profiles.
+
+    Args:
+        task_name (str): Task name.
+        take_type (str): Task type.
+        subset (str): Subset name.
+        project_settings (dict): Project settings.
+        log (object): Logging object.
+    """
+    capture_preset = None
+    filtering_criteria = {
+        "hosts": "maya",
+        "families": "review",
+        "task_names": task_name,
+        "task_types": task_type,
+        "subset": subset
+    }
+
+    plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
+    if plugin_settings["profiles"]:
+        profile = filter_profiles(
+            plugin_settings["profiles"],
+            filtering_criteria,
+            logger=log
+        )
+        capture_preset = profile.get("capture_preset")
+    else:
+        log.warning("No profiles present for Extract Playblast")
+
+    # Backward compatibility for deprecated Extract Playblast settings
+    # without profiles.
+    if capture_preset is None:
+        log.debug(
+            "Falling back to deprecated Extract Playblast capture preset "
+            "because no new style playblast profiles are defined."
+        )
+        capture_preset = plugin_settings["capture_preset"]
+
+    return capture_preset or {}
+
+
+def create_rig_animation_instance(
+    nodes, context, namespace, options=None, log=None
+):
+    """Create an animation publish instance for loaded rigs.
+
+    See the RecreateRigAnimationInstance inventory action on how to use this
+    for loaded rig containers.
+
+    Arguments:
+        nodes (list): Member nodes of the rig instance.
+        context (dict): Representation context of the rig container
+        namespace (str): Namespace of the rig container
+        options (dict, optional): Additional loader data
+        log (logging.Logger, optional): Logger to log to if provided
+
+    Returns:
+        None
+
+    """
+    if options is None:
+        options = {}
+
+    output = next((node for node in nodes if
+                   node.endswith("out_SET")), None)
+    controls = next((node for node in nodes if
+                     node.endswith("controls_SET")), None)
+
+    assert output, "No out_SET in rig, this is a bug."
+    assert controls, "No controls_SET in rig, this is a bug."
+
+    # Find the roots amongst the loaded nodes
+    roots = (
+        cmds.ls(nodes, assemblies=True, long=True) or
+        get_highest_in_hierarchy(nodes)
+    )
+    assert roots, "No root nodes in rig, this is a bug."
+
+    asset = legacy_io.Session["AVALON_ASSET"]
+    dependency = str(context["representation"]["_id"])
+
+    custom_subset = options.get("animationSubsetName")
+    if custom_subset:
+        formatting_data = {
+            "asset_name": context['asset']['name'],
+            "asset_type": context['asset']['type'],
+            "subset": context['subset']['name'],
+            "family": (
+                context['subset']['data'].get('family') or
+                context['subset']['data']['families'][0]
+            )
+        }
+        namespace = get_custom_namespace(
+            custom_subset.format(
+                **formatting_data
+            )
+        )
+
+    if log:
+        log.info("Creating subset: {}".format(namespace))
+
+    # Create the animation instance
+    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+    with maintained_selection():
+        cmds.select([output, controls] + roots, noExpand=True)
+        legacy_create(
+            creator_plugin,
+            name=namespace,
+            asset=asset,
+            options={"useSelection": True},
+            data={"dependencies": dependency}
+        )
+
