@@ -98,6 +98,11 @@
                     "type": "boolean",
                     "key": "optional",
                     "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
                 }
             ]
         },

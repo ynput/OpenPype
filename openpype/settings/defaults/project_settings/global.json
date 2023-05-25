@@ -48,7 +48,8 @@
         },
         "ValidateEditorialAssetName": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
         },
         "ValidateVersion": {
             "enabled": true,
