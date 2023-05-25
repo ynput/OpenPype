@@ -322,22 +322,6 @@ class AyonServerDownloader(SourceDownloader):
             os.remove(filepath)
 
 
-def get_addons_info():
-    """Returns list of addon information from Server
-
-    Returns:
-        List[AddonInfo]: List of metadata for addons sent from server,
-            parsed in AddonInfo objects
-    """
-
-    addons_info = []
-    for addon in ayon_api.get_addons_info(details=True)["addons"]:
-        addon_info = AddonInfo.from_dict(addon)
-        if addon_info is not None:
-            addons_info.append(addon_info)
-    return addons_info
-
-
 def get_dependency_package(package_name=None):
     """Returns info about currently used dependency package.
 
@@ -745,13 +729,16 @@ class AyonDistribution:
     Arguments are available for testing of the class.
 
     Args:
-        addon_dirpath (str): Where addons will be stored.
-        dependency_dirpath (str): Where dependencies will be stored.
-        dist_factory (DownloadFactory): Factory which cares about downloading
-            of items based on source type.
-        addons_info (List[AddonInfo]): List of prepared addons info.
-        dependency_package_info (Union[Dict[str, Any], None]): Dependency
-            package info from server. Defaults to '-1'.
+        addon_dirpath (Optional[str]): Where addons will be stored.
+        dependency_dirpath (Optional[str]): Where dependencies will be stored.
+        dist_factory (Optional[DownloadFactory]): Factory which cares about
+            downloading of items based on source type.
+        addons_info (Optional[List[AddonInfo]]): List of prepared addons' info.
+        dependency_package_info (Optional[Union[Dict[str, Any], None]]): Info
+            about package from server. Defaults to '-1'.
+        use_staging (Optional[bool]): Use staging versions of an addon.
+            If not passed, an environment variable 'OPENPYPE_USE_STAGING' is
+            checked for value '1'.
     """
 
     def __init__(
@@ -761,6 +748,7 @@ class AyonDistribution:
         dist_factory=None,
         addons_info=None,
         dependency_package_info=-1,
+        use_staging=None
     ):
         self._addons_dirpath = addon_dirpath or get_addons_dir()
         self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
@@ -777,6 +765,13 @@ class AyonDistribution:
         self._addons_dist_items = None
         self._dependency_package = dependency_package_info
         self._dependency_dist_item = -1
+        self._use_staging = use_staging
+
+    @property
+    def use_staging(self):
+        if self._use_staging is None:
+            self._use_staging = os.getenv("OPENPYPE_USE_STAGING") == "1"
+        return self._use_staging
 
     @property
     def log(self):
@@ -803,7 +798,7 @@ class AyonDistribution:
             addons_info = {}
             server_addons_info = ayon_api.get_addons_info(details=True)
             for addon in server_addons_info["addons"]:
-                addon_info = AddonInfo.from_dict(addon)
+                addon_info = AddonInfo.from_dict(addon, self.use_staging)
                 if addon_info is None:
                     continue
                 addons_info[addon_info.full_name] = addon_info
