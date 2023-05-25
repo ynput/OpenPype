@@ -36,6 +36,7 @@ from avalon import api
 import pyblish.api
 
 from pype.hosts.maya import lib
+from pype.scripts import export_maya_alembic_job
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -253,7 +254,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
-    families = ["renderlayer"]
+    families = ["renderlayer", "deadline"]
     if not os.environ.get("DEADLINE_REST_URL"):
         optional = False
         active = False
@@ -265,6 +266,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     asset_dependencies = False
     limit_groups = []
     group = "none"
+    job_info = {}
+    plugin_info = {}
+
 
     def process(self, instance):
         """Plugin entry point."""
@@ -312,7 +316,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     orig_scene = os.path.splitext(
                         os.path.basename(context.data["currentFile"]))[0]
                     exp = instance.data.get("expectedFiles")
-
                     if isinstance(exp[0], dict):
                         # we have aovs and we need to iterate over them
                         new_exp = {}
@@ -330,7 +333,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                             new_exp.append(
                                 f.replace(orig_scene, new_scene)
                             )
-                        instance.data["expectedFiles"] = [new_exp]
+                        instance.data["expectedFiles"] = new_exp
                     self.log.info("Scene name was switched {} -> {}".format(
                         orig_scene, new_scene
                     ))
@@ -357,16 +360,22 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
-        render_variables = get_renderer_variables(renderlayer, dirname)
-        filename_0 = render_variables["filename_0"]
-        if self.use_published:
-            new_scene = os.path.splitext(filename)[0]
-            orig_scene = os.path.splitext(
-                os.path.basename(context.data["currentFile"]))[0]
-            filename_0 = render_variables["filename_0"].replace(
-                orig_scene, new_scene)
+        render_variables = {}
+        output_filename_0 = instance.data.get("expectedFiles")[0] or ""
+        try:
+            render_variables = get_renderer_variables(renderlayer, dirname)
+            filename_0 = render_variables["filename_0"]
+            if self.use_published:
+                new_scene = os.path.splitext(filename)[0]
+                orig_scene = os.path.splitext(
+                    os.path.basename(context.data["currentFile"]))[0]
+                filename_0 = render_variables["filename_0"].replace(
+                    orig_scene, new_scene)
 
-        output_filename_0 = filename_0
+            output_filename_0 = filename_0
+        except TypeError:
+            self.log.warning("Getting render variables failed.")
+            pass
 
         # Create render folder ----------------------------------------------
         try:
@@ -387,6 +396,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_data["renderlayer"] = renderlayer
         payload_data["workspace"] = workspace
         payload_data["dirname"] = dirname
+        payload_data["instance_name"] = instance.name
 
         self.log.info("--- Submission data:")
         for k, v in payload_data.items():
@@ -397,7 +407,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Frames"] = frame_pattern.format(
             start=int(self._instance.data["frameStartHandle"]),
             end=int(self._instance.data["frameEndHandle"]),
-            step=int(self._instance.data["byFrameStep"]))
+            step=int(self._instance.data.get("byFrameStep", 1)))
 
         self.payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
             "mayaRenderPlugin", "MayaPype")
@@ -476,6 +486,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             payload = self._get_vray_render_payload(payload_data)
         elif "assscene" in instance.data["families"]:
             payload = self._get_arnold_render_payload(payload_data)
+        elif ("animation" in instance.data["families"] or
+              "pointcache" in instance.data["families"]):
+            payload = self._get_pointcache_payload(payload_data)
+            instance.data["byFrameStep"] = 1
         else:
             payload = self._get_maya_payload(payload_data)
 
@@ -534,6 +548,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
 
         self.preflight_check(instance)
+
+        # override deadline job/plugin info with presets
+        # TODO: this should be adopted to deadline abstract job class.
+        payload["JobInfo"].update(self.job_info)
+        payload["PluginInfo"].update(self.plugin_info)
 
         # Prepare tiles data ------------------------------------------------
         if instance.data.get("tileRendering"):
@@ -735,8 +754,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # E.g. http://192.168.0.1:8082/api/jobs
             url = "{}/api/jobs".format(self._deadline_url)
             response = self._requests_post(url, json=payload)
-            if not response.ok:
-                raise Exception(response.text)
+            assert response.ok, response.text
             instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
@@ -771,6 +789,50 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         }
         payload["JobInfo"].update(job_info_ext)
         payload["PluginInfo"].update(plugin_info)
+        return payload
+
+    def _get_pointcache_payload(self, data):
+        payload = copy.deepcopy(self.payload_skeleton)
+
+        job_info_ext = {
+            # Asset dependency to wait for at least the scene file to sync.
+            "AssetDependency0": data["filepath"],
+            "Frames": 1
+        }
+
+        plugin_info = {
+            "SceneFile": data["filepath"],
+            # Output directory and filename
+            "OutputFilePath": data["dirname"].replace("\\", "/"),
+            # Resolve relative references
+            "ProjectPath": data["workspace"],
+            "ScriptFilename": export_maya_alembic_job.__file__.replace(
+                ".pyc", ".py"
+            ),
+            "ScriptJob": True
+        }
+        payload["JobInfo"].update(job_info_ext)
+        payload["PluginInfo"].update(plugin_info)
+
+        payload["PluginInfo"].pop("Renderer")
+        payload["PluginInfo"].pop("RenderLayer")
+        payload["PluginInfo"].pop("UsingRenderLayers")
+        payload["PluginInfo"].pop("OutputFilePrefix")
+
+        envs = []
+        for k, v in payload["JobInfo"].items():
+            if k.startswith("EnvironmentKeyValue"):
+                envs.append(v)
+
+        # Add instance name.
+        envs.append(
+            "PYPE_INSTANCE_NAME={}".format(data["instance_name"]))
+
+        i = 0
+        for e in envs:
+            payload["JobInfo"]["EnvironmentKeyValue{}".format(i)] = e
+            i += 1
+
         return payload
 
     def _get_vray_export_payload(self, data):

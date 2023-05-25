@@ -17,10 +17,17 @@ class ExtractAlembic(pype.api.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["pointcache",
-                "model"]
+    families = ["pointcache", "model"]
 
     def process(self, instance):
+        if instance.data.get("farm"):
+            path = os.path.join(
+                os.path.dirname(instance.context.data["currentFile"]),
+                "cache",
+                instance.data["name"] + ".abc"
+            )
+            instance.data["expectedFiles"] = [os.path.normpath(path)]
+            return
 
         nodes = instance[:]
 

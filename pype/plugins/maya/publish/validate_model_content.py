@@ -57,15 +57,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             cls.log.error("No shapes in the model instance")
             return True
 
-        # Top group
         assemblies = cmds.ls(content_instance, assemblies=True, long=True)
-        if len(assemblies) != 1:
-            cls.log.error("Must have exactly one top group")
-            if len(assemblies) == 0:
-                cls.log.warning("No top group found. "
-                                "(Are there objects in the instance?"
-                                " Or is it parented in another group?)")
-            return assemblies or True
 
         def _is_visible(node):
             """Return whether node is visible"""

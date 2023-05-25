@@ -1733,6 +1733,18 @@ class SyncEntitiesFactory:
                     self.updates[avalon_id]["data"] = {}
                 self.updates[avalon_id]["data"]["tasks"] = final_doc_tasks
 
+            # Add Ftrack incoming links as Avalon inputs.
+            ftrack_entity = self.session.get("TypedContext", ftrack_id)
+            inputs = []
+            for link in ftrack_entity["incoming_links"]:
+                custom_attributes = link["from"]["custom_attributes"]
+                link_avalon_id = custom_attributes["avalon_mongo_id"]
+                inputs.append(ObjectId(link_avalon_id))
+
+            if "data" not in self.updates[avalon_id]:
+                self.updates[avalon_id]["data"] = {}
+            self.updates[avalon_id]["data"]["inputs"] = inputs
+
     def synchronize(self):
         self.log.debug("* Synchronization begins")
         avalon_project_id = self.ftrack_avalon_mapper.get(self.ft_project_id)

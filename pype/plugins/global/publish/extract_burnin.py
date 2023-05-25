@@ -242,7 +242,8 @@ class ExtractBurnin(pype.api.Extractor):
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
                     "options": burnin_options,
-                    "values": burnin_values
+                    "values": burnin_values,
+                    "ffmpeg_cmd": new_repre.get("ffmpeg_cmd", "")
                 }
 
                 self.log.debug(

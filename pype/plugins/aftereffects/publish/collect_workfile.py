@@ -1,6 +1,8 @@
 import os
+
 from avalon import api
 import pyblish.api
+from pype import lib
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -38,7 +40,13 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # workfile instance
         family = "workfile"
-        subset = family + task.capitalize()
+        subset = lib.get_subset_name(
+            "workfile",
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="aftereffects"
+        )
         # Create instance
         instance = context.create_instance(subset)
 

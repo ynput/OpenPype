@@ -3,7 +3,7 @@ import json
 
 import pyblish.api
 import avalon.api
-from avalon.tvpaint import pipeline, lib
+from avalon.tvpaint import pipeline, lib, HEADLESS
 
 
 class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
@@ -38,11 +38,16 @@ class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
 
 class CollectWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect Workfile Data"
-    order = pyblish.api.CollectorOrder - 1.01
+    order = pyblish.api.CollectorOrder - 0.5
     hosts = ["tvpaint"]
     actions = [ResetTVPaintWorkfileMetadata]
 
     def process(self, context):
+        if HEADLESS:
+            return
+
+        data = {}
+
         current_project_id = lib.execute_george("tv_projectcurrentid")
         lib.execute_george("tv_projectselect {}".format(current_project_id))
 
@@ -96,6 +101,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         self.log.info("Collecting instance data from workfile")
         instance_data = pipeline.list_instances()
         context.data["workfileInstances"] = instance_data
+        data["workfileInstances"] = instance_data
         self.log.debug(
             "Instance data:\"{}".format(json.dumps(instance_data, indent=4))
         )
@@ -110,7 +116,9 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
                 layers_by_name[layer_name] = []
             layers_by_name[layer_name].append(layer)
         context.data["layersData"] = layers_data
+        data["layersData"] = layers_data
         context.data["layersByName"] = layers_by_name
+        data["layersByName"] = layers_by_name
 
         self.log.debug(
             "Layers data:\"{}".format(json.dumps(layers_data, indent=4))
@@ -120,6 +128,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         self.log.info("Collecting groups data from workfile")
         group_data = lib.groups_data()
         context.data["groupsData"] = group_data
+        data["groupsData"] = group_data
         self.log.debug(
             "Group data:\"{}".format(json.dumps(group_data, indent=4))
         )
@@ -153,9 +162,13 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkIn": int(mark_in_frame),
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
-            "sceneMarkOutState": mark_out_state == "set"
+            "sceneMarkOutState": mark_out_state == "set",
+            "sceneStartFrame": int(lib.execute_george("tv_startframe"))
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))
         )
         context.data.update(scene_data)
+        data.update(scene_data)
+
+        context.data["jsonData"] = data

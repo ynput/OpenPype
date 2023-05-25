@@ -1,12 +1,16 @@
+import os
+
+from maya import cmds
+
 import pyblish.api
 import avalon.api
-import os
-from maya import cmds
+from pype import lib
 
 
 class CollectMayaScene(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
+    # Ensure order is after Avalon entities are collected to get the asset.
     order = pyblish.api.CollectorOrder - 0.01
     label = "Maya Workfile"
     hosts = ['maya']
@@ -25,7 +29,13 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
 
         # create instance
         instance = context.create_instance(name=filename)
-        subset = 'workfile' + task.capitalize()
+        subset = lib.get_subset_name(
+            "workfile",
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="maya"
+        )
 
         data.update({
             "subset": subset,

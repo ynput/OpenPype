@@ -1,4 +1,9 @@
+import os
+import sys
 import json
+import traceback
+import tempfile
+import datetime
 import collections
 import ftrack_api
 from pype.modules.ftrack.lib import ServerAction
@@ -86,27 +91,28 @@ class PushHierValuesToNonHier(ServerAction):
 
         try:
             result = self.propagate_values(session, entities)
-            job["status"] = "done"
-            session.commit()
 
-            return result
-
-        except Exception:
-            session.rollback()
-            job["status"] = "failed"
-            session.commit()
-
+        except Exception as exc:
             msg = "Pushing Custom attribute values to task Failed"
+
             self.log.warning(msg, exc_info=True)
+
+            session.rollback()
+
+            description = "{} (Download traceback)".format(msg)
+            self.handle_exception(
+                job, session, sys.exc_info(), event, msg, description
+            )
+
             return {
                 "success": False,
-                "message": msg
+                "message": "Error: {}".format(str(exc))
             }
 
-        finally:
-            if job["status"] == "running":
-                job["status"] = "failed"
-                session.commit()
+        job["status"] = "done"
+        session.commit()
+
+        return result
 
     def attrs_configurations(self, session, object_ids):
         attrs = session.query(self.cust_attrs_query.format(
@@ -468,6 +474,85 @@ class PushHierValuesToNonHier(ServerAction):
                     if len(session.recorded_operations) > 100:
                         session.commit()
 
+        session.commit()
+
+    def handle_exception(
+        self, job, session, exc_info, event, msg, description=None
+    ):
+        """Handle unexpected crash of action processing."""
+        if not description:
+            description = msg
+        job_data = {
+            "description": description
+        }
+        job["data"] = json.dumps(job_data)
+        job["status"] = "failed"
+
+        # Create temp file where traceback will be stored
+        temp_obj = tempfile.NamedTemporaryFile(
+            mode="w", prefix="pype_ftrack_", suffix=".txt", delete=False
+        )
+        temp_obj.close()
+        temp_filepath = temp_obj.name
+
+        # Store traceback to file
+        result = traceback.format_exception(*exc_info)
+        with open(temp_filepath, "w") as temp_file:
+            temp_file.write("".join(result))
+
+        # Upload file with traceback to ftrack server and add it to job
+        component_basename = "{}_{}".format(
+            self.__class__.__name__,
+            datetime.datetime.now().strftime("%y-%m-%d-%H%M")
+        )
+        self.add_component_to_job(
+            job, session, temp_filepath, component_basename
+        )
+        # Delete temp file
+        os.remove(temp_filepath)
+
+        self.log.warning(msg, exc_info=True)
+        self.show_message(event, msg, False)
+
+    def add_component_to_job(self, job, session, filepath, basename=None):
+        """Add filepath as downloadable component to job.
+
+        Args:
+            job (JobEntity): Entity of job where file should be able to
+                download.
+            session (Session): Ftrack session which was used to query/create
+                entered job.
+            filepath (str): Path to file which should be added to job.
+            basename (str): Defines name of file which will be downloaded on
+                user's side. Must be without extension otherwise extension will
+                be duplicated in downloaded name. Basename from entered path
+                used when not entered.
+        """
+        # Make sure session's locations are configured
+        session._configure_locations()
+        # Query `ftrack.server` location where component will be stored
+        location = session.query(
+            "Location where name is \"ftrack.server\""
+        ).one()
+
+        # Use filename as basename if not entered (must be without extension)
+        if basename is None:
+            basename = os.path.splitext(
+                os.path.basename(filepath)
+            )[0]
+
+        component = session.create_component(
+            filepath,
+            data={"name": basename},
+            location=location
+        )
+        session.create(
+            "JobComponent",
+            {
+                "component_id": component["id"],
+                "job_id": job["id"]
+            }
+        )
         session.commit()
 
 

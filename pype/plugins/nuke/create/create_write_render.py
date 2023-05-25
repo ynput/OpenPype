@@ -14,6 +14,9 @@ class CreateWriteRender(plugin.PypeCreator):
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
+    deadlineChunkSize = 0
+    deadlinePriority = 50
+    render = "Use existing frames"
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
@@ -105,5 +108,11 @@ class CreateWriteRender(plugin.PypeCreator):
 
         for output in outputs:
             output.setInput(0, write_node)
+
+        render_mapping = {"Use existing frames": 0, "Local": 1, "On farm": 2}
+        write_node["render"].setValue(render_mapping[self.render])
+
+        write_node["deadlineChunkSize"].setValue(self.deadlineChunkSize)
+        write_node["deadlinePriority"].setValue(self.deadlinePriority)
 
         return write_node

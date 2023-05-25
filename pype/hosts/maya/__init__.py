@@ -160,7 +160,10 @@ def on_open(_):
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
+
+    # Patching pipeline data.
     lib.fix_incompatible_containers()
+    lib.fix_incompatible_instances()
 
     if any_outdated():
         log.warning("Scene has outdated content.")

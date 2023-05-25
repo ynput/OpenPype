@@ -28,3 +28,7 @@ class CreatePointCache(plugin.Creator):
         # Add options for custom attributes
         self.data["attr"] = ""
         self.data["attrPrefix"] = ""
+
+        # Default to not send to farm.
+        self.data["farm"] = False
+        self.data["priority"] = 50

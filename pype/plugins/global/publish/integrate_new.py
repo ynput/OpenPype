@@ -91,6 +91,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "harmony.template",
                 "harmony.palette",
                 "editorial",
+                "transcode",
                 "background",
                 "camerarig",
                 "redshiftproxy"
@@ -109,6 +110,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
 
     def process(self, instance):
+        # Ignore instances going to Deadline.
+        if "deadline" in instance.data["families"]:
+            return
+
         self.integrated_file_sizes = {}
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
@@ -368,7 +373,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 test_dest_files = list()
                 for i in [1, 2]:
                     template_data["representation"] = repre['ext']
-                    template_data["frame"] = src_padding_exp % i
+                    if not repre.get("udim"):
+                        template_data["frame"] = src_padding_exp % i
+                    else:
+                        template_data["udim"] = src_padding_exp % i
+
                     anatomy_filled = anatomy.format(template_data)
                     template_filled = anatomy_filled[template_name]["path"]
                     if repre_context is None:
@@ -376,7 +385,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
-                template_data["frame"] = repre_context["frame"]
+                if not repre.get("udim"):
+                    template_data["frame"] = repre_context["frame"]
+                else:
+                    template_data["udim"] = repre_context["udim"]
 
                 self.log.debug(
                     "test_dest_files: {}".format(str(test_dest_files)))
@@ -438,7 +450,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_start_frame = dst_padding
 
                 # Store used frame value to template data
-                template_data["frame"] = dst_start_frame
+                if repre.get("frame"):
+                    template_data["frame"] = dst_start_frame
+
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
@@ -462,7 +476,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
                 template_data["representation"] = repre['ext']
-
+                # Store used frame value to template data
+                if repre.get("udim"):
+                    template_data["udim"] = repre["udim"][0]
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
@@ -474,6 +490,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 published_files.append(dst)
                 repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
+
+            if repre.get("udim"):
+                repre_context["udim"] = repre.get("udim")  # store list
 
             repre["publishedFiles"] = published_files
 
@@ -1010,6 +1029,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                 )
                             )
                             shutil.copy(file_url, new_name)
+                            os.remove(file_url)
                         else:
                             self.log.debug(
                                 "Renaming file {} to {}".format(

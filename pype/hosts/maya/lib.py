@@ -2266,10 +2266,8 @@ def get_attr_in_layer(attr, layer):
 
     try:
         if cmds.mayaHasRenderSetup():
-            log.debug("lib.get_attr_in_layer is not "
-                      "optimized for render setup")
-            with renderlayer(layer):
-                return cmds.getAttr(attr)
+            from . import lib_rendersetup
+            return lib_rendersetup.get_attr_in_layer(attr, layer)
     except AttributeError:
         pass
 
@@ -2348,6 +2346,48 @@ def fix_incompatible_containers():
                       "FBXLoader"]:
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
+
+
+def fix_incompatible_instances():
+    """Update instances attributes."""
+    for objset in cmds.ls(type="objectSet"):
+        attr = "{}.id".format(objset)
+
+        if not cmds.objExists(attr):
+            continue
+
+        value = cmds.getAttr(attr)
+        if value != "pyblish.avalon.instance":
+            continue
+
+        family = cmds.getAttr("{}.family".format(objset))
+        if family not in ["animation", "pointcache"]:
+            continue
+
+        # Patching missing attributes.
+        attributes = [
+            {
+                "longName": "farm",
+                "attributeType": "bool",
+                "defaultValue": False,
+                "hidden": False,
+                "keyable": False
+            },
+            {
+                "longName": "priority",
+                "attributeType": "long",
+                "defaultValue": 50,
+                "hidden": False,
+                "keyable": False
+            }
+        ]
+        for data in attributes:
+            attr = "{}.{}".format(objset, data["longName"])
+            if not cmds.objExists(attr):
+                print("Fixing missing attribute: {}".format(attr))
+                data.update({"hidden": False, "keyable": False})
+                cmds.addAttr(objset, **data)
+                cmds.setAttr(attr, channelBox=True)
 
 
 def _null(*args):

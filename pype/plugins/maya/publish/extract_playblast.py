@@ -1,5 +1,5 @@
 import os
-import glob
+import json
 import contextlib
 import clique
 import capture
@@ -79,6 +79,11 @@ class ExtractPlayblast(pype.api.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
@@ -91,6 +96,24 @@ class ExtractPlayblast(pype.api.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Image planes do not update the file sequence unless the active panel
+        # is viewing through the camera.
+        model_panel = instance.context.data.get("model_panel")
+        if not model_panel:
+            model_panels = cmds.getPanel(type="modelPanel")
+            visible_panels = cmds.getPanel(visiblePanels=True)
+            model_panel = list(
+                set(visible_panels) - (set(visible_panels) - set(model_panels))
+            )[0]
+            instance.context.data["model_panel"] = model_panel
+
+        panel_camera = instance.context.data.get("panel_camera")
+        if not panel_camera:
+            panel_camera = capture.parse_view(model_panel)["camera"]
+            instance.context.data["panel_camera"] = panel_camera
+
+        cmds.modelPanel(model_panel, edit=True, camera=preset["camera"])
+
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -99,7 +122,15 @@ class ExtractPlayblast(pype.api.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
+            self.log.info(
+                "Capturing with preset:\n{}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
+            )
             path = capture.capture(**preset)
+
+        # Restore panel camera.
+        cmds.modelPanel(model_panel, edit=True, camera=panel_camera)
 
         collected_files = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_files)

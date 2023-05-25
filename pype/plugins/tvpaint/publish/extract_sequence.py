@@ -16,6 +16,15 @@ class ExtractSequence(pyblish.api.Extractor):
     families = ["review", "renderPass", "renderLayer"]
 
     def process(self, instance):
+        # Ignore if the deadline submission instance is active.
+        for inst in instance.context:
+            if inst.data["family"] != "deadline":
+                continue
+
+            if inst.data["publish"]:
+                self.log.debug("Ignore extraction due to deadline submission.")
+                return
+
         self.log.info(
             "* Processing instance \"{}\"".format(instance.data["label"])
         )
@@ -47,6 +56,14 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
+
+        # Scene start frame offsets the output files, so we need to offset the
+        # marks.
+        start_frame = instance.context.data["sceneStartFrame"]
+        difference = start_frame - mark_in
+        mark_in += difference
+        mark_out += difference
+
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
@@ -129,7 +146,9 @@ class ExtractSequence(pyblish.api.Extractor):
             output_filenames, thumbnail_fullpath = self.render(
                 filename_template, output_dir,
                 mark_in, mark_out,
-                filtered_layers
+                filtered_layers,
+                instance.context.data["behavior_by_layer_id"],
+                instance.context.data["exposure_frames_by_layer_id"]
             )
 
         # Sequence of one frame
@@ -302,7 +321,14 @@ class ExtractSequence(pyblish.api.Extractor):
 
         return output_filenames, thumbnail_filepath
 
-    def render(self, filename_template, output_dir, mark_in, mark_out, layers):
+    def render(self,
+               filename_template,
+               output_dir,
+               mark_in,
+               mark_out,
+               layers,
+               behavior_by_layer_id,
+               exposure_frames_by_layer_id):
         """ Export images from TVPaint.
 
         Args:
@@ -335,15 +361,12 @@ class ExtractSequence(pyblish.api.Extractor):
         if not sorted_positions:
             return [], None
 
-        self.log.debug("Collecting pre/post behavior of individual layers.")
-        behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
-
         tmp_filename_template = "pos_{pos}." + filename_template
 
         files_by_position = {}
         for position in sorted_positions:
             layer = layers_by_position[position]
-            behavior = behavior_by_layer_id[layer["layer_id"]]
+            behavior = behavior_by_layer_id[str(layer["layer_id"])]
 
             files_by_frames = self._render_layer(
                 layer,
@@ -351,7 +374,8 @@ class ExtractSequence(pyblish.api.Extractor):
                 output_dir,
                 behavior,
                 mark_in,
-                mark_out
+                mark_out,
+                exposure_frames_by_layer_id
             )
             if files_by_frames:
                 files_by_position[position] = files_by_frames
@@ -407,9 +431,10 @@ class ExtractSequence(pyblish.api.Extractor):
         output_dir,
         behavior,
         mark_in_index,
-        mark_out_index
+        mark_out_index,
+        exposure_frames_by_layer_id
     ):
-        layer_id = layer["layer_id"]
+        layer_id = str(layer["layer_id"])
         frame_start_index = layer["frame_start"]
         frame_end_index = layer["frame_end"]
 
@@ -428,15 +453,14 @@ class ExtractSequence(pyblish.api.Extractor):
             if pre_behavior == "none":
                 return {}
 
-        exposure_frames = lib.get_exposure_frames(
-            layer_id, frame_start_index, frame_end_index
-        )
+        exposure_frames = exposure_frames_by_layer_id[layer_id]
 
         if frame_start_index not in exposure_frames:
             exposure_frames.append(frame_start_index)
 
         layer_files_by_frame = {}
         george_script_lines = [
+            "tv_layerset {}".format(layer_id),
             "tv_SaveMode \"PNG\""
         ]
         layer_position = layer["position"]
