@@ -267,7 +267,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
@@ -480,7 +480,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 update_data
             )
 
-        self.log.info("Prepared subset: {}".format(subset_name))
+        self.log.debug("Prepared subset: {}".format(subset_name))
         return subset_doc
 
     def prepare_version(self, instance, op_session, subset_doc, project_name):
@@ -521,7 +521,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 project_name, version_doc["type"], version_doc
             )
 
-        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
+        self.log.debug(
+            "Prepared version: v{0:03d}".format(version_doc["name"])
+        )
 
         return version_doc
 
