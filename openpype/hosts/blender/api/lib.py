@@ -36,7 +36,6 @@ from openpype.modules import ModulesManager
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.template_data import (
     get_template_data,
-    get_template_data_with_names,
 )
 from openpype.pipeline.workfile.path_resolving import (
     get_workfile_template_key,
