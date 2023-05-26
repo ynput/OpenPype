@@ -21,6 +21,8 @@ class UAssetLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
+    extension = "uasset"
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
@@ -42,11 +44,7 @@ class UAssetLoader(plugin.Loader):
         root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
-
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{root}/{asset}/{name}", suffix=""
@@ -61,7 +59,7 @@ class UAssetLoader(plugin.Loader):
             Path(unreal.Paths.project_content_dir()).as_posix(),
             1)
 
-        shutil.copy(self.fname, f"{destination_path}/{name}.uasset")
+        shutil.copy(self.fname, f"{destination_path}/{name}.{self.extension}")
 
         # Create Asset Container
         unreal_pipeline.create_container(
@@ -107,15 +105,15 @@ class UAssetLoader(plugin.Loader):
 
         for asset in asset_content:
             obj = ar.get_asset_by_object_path(asset).get_asset()
-            if not obj.get_class().get_name() == 'AyonAssetContainer':
+            if obj.get_class().get_name() != 'AyonAssetContainer':
                 unreal.EditorAssetLibrary.delete_asset(asset)
 
         update_filepath = get_representation_path(representation)
 
-        shutil.copy(update_filepath, f"{destination_path}/{name}.uasset")
+        shutil.copy(
+            update_filepath, f"{destination_path}/{name}.{self.extension}")
 
-        container_path = "{}/{}".format(container["namespace"],
-                                        container["objectName"])
+        container_path = f'{container["namespace"]}/{container["objectName"]}'
         # update metadata
         unreal_pipeline.imprint(
             container_path,
@@ -143,3 +141,13 @@ class UAssetLoader(plugin.Loader):
 
         if len(asset_content) == 0:
             unreal.EditorAssetLibrary.delete_directory(parent_path)
+
+
+class UMapLoader(UAssetLoader):
+    """Load Level."""
+
+    families = ["uasset"]
+    label = "Load Level"
+    representations = ["umap"]
+
+    extension = "umap"
