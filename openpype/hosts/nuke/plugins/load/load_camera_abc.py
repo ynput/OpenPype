@@ -66,8 +66,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
                     object_name, file),
                 inpanel=False
             )
-            # hide property panel
-            camera_node.hideControlPanel()
 
             camera_node.forceValidate()
             camera_node["frame_rate"].setValue(float(fps))
