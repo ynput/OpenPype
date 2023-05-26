@@ -147,7 +147,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data.get("processedWithNewIntegrator"):
-            self.log.info("Instance was already processed with new integrator")
+            self.log.debug(
+                "Instance was already processed with new integrator"
+            )
             return
 
         for ef in self.exclude_families:
@@ -274,7 +276,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))

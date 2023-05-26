@@ -35,8 +35,12 @@ ResetKeySequence = QtGui.QKeySequence(
 
 __all__ = (
     "CONTEXT_ID",
+    "CONTEXT_LABEL",
 
     "VARIANT_TOOLTIP",
+
+    "INPUTS_LAYOUT_HSPACING",
+    "INPUTS_LAYOUT_VSPACING",
 
     "INSTANCE_ID_ROLE",
     "SORT_VALUE_ROLE",
@@ -47,4 +51,6 @@ __all__ = (
     "FAMILY_ROLE",
     "GROUP_ROLE",
     "CONVERTER_IDENTIFIER_ROLE",
+
+    "ResetKeySequence",
 )

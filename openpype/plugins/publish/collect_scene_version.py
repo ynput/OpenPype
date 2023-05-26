@@ -53,6 +53,10 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if '<shell>' in filename:
             return
 
+        self.log.debug(
+            "Collecting scene version from filename: {}".format(filename)
+        )
+
         version = get_version_from_path(filename)
         if version is None:
             raise KnownPublishError("Unable to retrieve version number from "
