@@ -150,7 +150,7 @@ class RenderProducts(object):
 
     def get_arnold_product_name(self, folder, startFrame, endFrame, fmt):
         """Get all the Arnold AOVs"""
-        aovs
+        aov_dict = {}
 
         amw = rt.MaxtoAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
@@ -187,7 +187,7 @@ class RenderProducts(object):
                     render_element = render_element.replace("\\", "/")
                     render_dict.update({renderpass: render_element})
 
-        return render_dirname
+        return render_dict
 
     def image_format(self):
         return self._project_settings["max"]["RenderSettings"]["image_format"]  # noqa
