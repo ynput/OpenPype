@@ -39,7 +39,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             full_render_list = beauty_list
 
         files_by_aov = {
-            "max_beauty": beauty_list
+            "beauty": beauty_list
         }
 
         folder = folder.replace("\\", "/")
