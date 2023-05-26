@@ -386,6 +386,16 @@ def _convert_flame_project_settings(ayon_settings, output):
     for plugin_name in ("LoadClip", "LoadClipBatch"):
         plugin_settings = ayon_load_flame[plugin_name]
         plugin_settings["families"] = plugin_settings.pop("product_types")
+        plugin_settings["clip_name_template"] = (
+            plugin_settings["clip_name_template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+        )
+        plugin_settings["layer_rename_template"] = (
+            plugin_settings["layer_rename_template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+        )
 
     output["flame"] = ayon_flame
 
@@ -420,6 +430,15 @@ def _convert_fusion_project_settings(ayon_settings, output):
         ayon_imageio_fusion["ocio"]["configFilePath"] = paths
 
     _convert_host_imageio(ayon_imageio_fusion)
+
+    ayon_create_saver = ayon_fusion["create"]["CreateSaver"]
+    ayon_create_saver["temp_rendering_path_template"] = (
+        ayon_create_saver["temp_rendering_path_template"]
+        .replace("{product[name]}", "{subset}")
+        .replace("{product[type]}", "{family}")
+        .replace("{folder[name]}", "{asset}")
+        .replace("{task[name]}", "{task}")
+    )
 
     output["fusion"] = ayon_fusion
 
@@ -567,9 +586,17 @@ def _convert_maya_project_settings(ayon_settings, output):
 
     _convert_host_imageio(ayon_maya)
 
-    load_colors = ayon_maya["load"]["colors"]
+    ayon_maya_load = ayon_maya["load"]
+    load_colors = ayon_maya_load["colors"]
     for key, color in tuple(load_colors.items()):
         load_colors[key] = _convert_color(color)
+
+    reference_loader = ayon_maya_load["reference_loader"]
+    reference_loader["namespace"] = (
+        reference_loader["namespace"]
+        .replace("{folder[name]}", "{asset_name}")
+        .replace("{product[name]}", "{subset}")
+    )
 
     output["maya"] = ayon_maya
 
@@ -658,13 +685,21 @@ def _convert_nuke_project_settings(ayon_settings, output):
         "CreateWriteImage",
         "CreateWriteRender",
     ):
+        create_plugin_settings = ayon_create[creator_name]
+        create_plugin_settings["temp_rendering_path_template"] = (
+            create_plugin_settings["temp_rendering_path_template"]
+            .replace("{product[name]}", "{subset}")
+            .replace("{product[type]}", "{family}")
+            .replace("{task[name]}", "{task}")
+            .replace("{folder[name]}", "{asset}")
+        )
         new_prenodes = {}
-        for prenode in ayon_create[creator_name]["prenodes"]:
+        for prenode in create_plugin_settings["prenodes"]:
             name = prenode.pop("name")
             prenode["knobs"] = _convert_nuke_knobs(prenode["knobs"])
             new_prenodes[name] = prenode
 
-        ayon_create[creator_name]["prenodes"] = new_prenodes
+        create_plugin_settings["prenodes"] = new_prenodes
 
     # --- Publish ---
     ayon_publish = ayon_nuke["publish"]
@@ -748,6 +783,13 @@ def _convert_hiero_project_settings(ayon_settings, output):
     ayon_load_clip = ayon_hiero["load"]["LoadClip"]
     if "product_types" in ayon_load_clip:
         ayon_load_clip["families"] = ayon_load_clip.pop("product_types")
+
+    ayon_load_clip = ayon_hiero["load"]["LoadClip"]
+    ayon_load_clip["clip_name_template"] = (
+        ayon_load_clip["clip_name_template"]
+        .replace("{folder[name]}", "{asset}")
+        .replace("{product[name]}", "{subset}")
+    )
 
     output["hiero"] = ayon_hiero
 
@@ -1072,6 +1114,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             profile["subsets"] = profile.pop("product_names")
             profile["families"] = profile.pop("product_types")
 
+        for burnin_def in extract_burnin_defs:
+            for key in (
+                "TOP_LEFT",
+                "TOP_CENTERED",
+                "TOP_RIGHT",
+                "BOTTOM_LEFT",
+                "BOTTOM_CENTERED",
+                "BOTTOM_RIGHT",
+            ):
+                burnin_def[key] = (
+                    burnin_def[key]
+                    .replace("{product[name]}", "{subset}")
+                    .replace("{Product[name]}", "{Subset}")
+                    .replace("{PRODUCT[NAME]}", "{SUBSET}")
+                    .replace("{product[type]}", "{family}")
+                    .replace("{Product[type]}", "{Family}")
+                    .replace("{PRODUCT[TYPE]}", "{FAMILY}")
+                    .replace("{folder[name]}", "{asset}")
+                    .replace("{Folder[name]}", "{Asset}")
+                    .replace("{FOLDER[NAME]}", "{ASSET}")
+                )
         profile["burnins"] = {
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
@@ -1112,6 +1175,21 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         for profile in product_name_profiles:
             profile["families"] = profile.pop("product_types")
         ayon_create_tool["subset_name_profiles"] = product_name_profiles
+
+    for profile in ayon_create_tool["subset_name_profiles"]:
+        template = profile["template"]
+        profile["template"] = (
+            template
+            .replace("{task[name]}", "{task}")
+            .replace("{Task[name]}", "{Task}")
+            .replace("{TASK[NAME]}", "{TASK}")
+            .replace("{product[type]}", "{family}")
+            .replace("{Product[type]}", "{Family}")
+            .replace("{PRODUCT[TYPE]}", "{FAMILY}")
+            .replace("{folder[name]}", "{asset}")
+            .replace("{Folder[name]}", "{Asset}")
+            .replace("{FOLDER[NAME]}", "{ASSET}")
+        )
 
     product_smart_select_key = "families_smart_select"
     if "product_types_smart_select" in ayon_create_tool:
