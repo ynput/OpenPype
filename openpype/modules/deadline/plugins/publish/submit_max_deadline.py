@@ -132,8 +132,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         # Add list of expected files to job
         # ---------------------------------
-        files = instance.data.get("files")
-        for filepath in files:
+        exp = instance.data.get("expectedFiles")
+        for filepath in self._iter_expected_files(exp):
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
 
@@ -162,10 +162,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         instance = self._instance
         filepath = self.scene_path
 
-        files = instance.data["files"]
+        files = instance.data["expectedFiles"]
         if not files:
             raise RuntimeError("No Render Elements found!")
-        output_dir = os.path.dirname(files[0])
+        first_file = next(self._iter_expected_files(files))
+        output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
@@ -202,17 +203,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         old_output_dir = os.path.dirname(files[0])
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
-        filepath = self.scene_path
-
-        def _clean_name(path):
-            return os.path.splitext(os.path.basename(path))[0]
-
-        new_scene = _clean_name(filepath)
-        orig_scene = _clean_name(instance.context.data["currentFile"])
-
-        output_beauty = output_beauty.replace(orig_scene, new_scene)
-        output_beauty = output_beauty.replace("\\", "/")
-        plugin_data["RenderOutput"] = output_beauty
+        files = instance.data["expectedFiles"]
+        first_file = next(self._iter_expected_files(files))
+        rgb_bname = os.path.basename(output_beauty)
+        dir = os.path.dirname(first_file)
+        plugin_data["RenderOutput"] = f"{dir}/{rgb_bname}"
 
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
@@ -226,13 +221,24 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         ]:
             render_elem_list = RenderSettings().get_render_element()
             for i, element in enumerate(render_elem_list):
-                element = element.replace(orig_scene, new_scene)
-                plugin_data["RenderElementOutputFilename%d" % i] = element   # noqa
+                elem_bname = os.path.basename(element)
+                new_elem = f"{dir}/{elem_bname}"
+                plugin_data["RenderElementOutputFilename%d" % i] = new_elem   # noqa
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    @staticmethod
+    def _iter_expected_files(exp):
+        if isinstance(exp[0], dict):
+            for _aov, files in exp[0].items():
+                for file in files:
+                    yield file
+        else:
+            for file in exp:
+                yield file
 
     @classmethod
     def get_attribute_defs(cls):

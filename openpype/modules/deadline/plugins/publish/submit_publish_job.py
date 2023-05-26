@@ -348,7 +348,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Submitting Deadline job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10, verify=False)
         if not response.ok:
             raise Exception(response.text)
 
@@ -488,11 +488,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if cam:
                 if aov:
                     subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov == "max_beauty":
+                    subset_name = '{}_{}'.format(group_name, cam)
                 else:
                     subset_name = '{}_{}'.format(group_name, cam)
             else:
                 if aov:
                     subset_name = '{}_{}'.format(group_name, aov)
+                if aov == "max_beauty":
+                    subset_name = '{}'.format(group_name)
                 else:
                     subset_name = '{}'.format(group_name)
 
