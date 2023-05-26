@@ -34,13 +34,12 @@ class RenderProducts(object):
                                    render_folder,
                                    filename,
                                    container)
-
-        context = get_current_project_asset()
-        startFrame = context["data"].get("frameStart")
-        endFrame = context["data"].get("frameEnd") + 1
+        # TODO: change the frame range follows the current render setting
+        startFrame = int(rt.rendStart)
+        endFrame = int(rt.rendEnd) + 1
 
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        full_render_list = self.beauty_render_product(output_file,
+        rgba_render_list = self.beauty_render_product(output_file,
                                                       startFrame,
                                                       endFrame,
                                                       img_fmt)
@@ -48,9 +47,7 @@ class RenderProducts(object):
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
 
-
-        if renderer == "VUE_File_Renderer":
-            return full_render_list
+        render_elem_list = None
 
         if renderer in [
             "ART_Renderer",
@@ -64,18 +61,41 @@ class RenderProducts(object):
                                                             startFrame,
                                                             endFrame,
                                                             img_fmt)
-            if render_elem_list:
-                full_render_list.extend(iter(render_elem_list))
-            return full_render_list
 
         if renderer == "Arnold":
-            aov_list = self.arnold_render_product(output_file,
+            render_elem_list = self.arnold_render_product(output_file,
                                                   startFrame,
                                                   endFrame,
                                                   img_fmt)
-            if aov_list:
-                full_render_list.extend(iter(aov_list))
-            return full_render_list
+
+        return rgba_render_list, render_elem_list
+
+    def get_aov(self):
+        folder = rt.maxFilePath
+        folder = folder.replace("\\", "/")
+        setting = self._project_settings
+        img_fmt = setting["max"]["RenderSettings"]["image_format"]   # noqa
+
+        startFrame = int(rt.rendStart)
+        endFrame = int(rt.rendEnd) + 1
+        renderer_class = get_current_renderer()
+        renderer = str(renderer_class).split(":")[0]
+        if renderer in [
+            "ART_Renderer",
+            "Redshift_Renderer",
+            "V_Ray_6_Hotfix_3",
+            "V_Ray_GPU_6_Hotfix_3",
+            "Default_Scanline_Renderer",
+            "Quicksilver_Hardware_Renderer",
+        ]:
+            render_dict = self.get_render_elements_name(
+                folder, startFrame, endFrame, img_fmt)
+
+        if renderer == "Arnold":
+            render_dict = self.get_arnold_product_name(
+                folder, startFrame, endFrame, img_fmt)
+
+        return render_dict
 
     def beauty_render_product(self, folder, startFrame, endFrame, fmt):
         beauty_frame_range = []
@@ -125,6 +145,47 @@ class RenderProducts(object):
                     render_element = f"{folder}_{renderpass}.{f}.{fmt}"
                     render_element = render_element.replace("\\", "/")
                     render_dirname.append(render_element)
+
+        return render_dirname
+
+    def get_arnold_product_name(self, folder, startFrame, endFrame, fmt):
+        """Get all the Arnold AOVs"""
+        aovs
+
+        amw = rt.MaxtoAOps.AOVsManagerWindow()
+        aov_mgr = rt.renderers.current.AOVManager
+        # Check if there is any aov group set in AOV manager
+        aov_group_num = len(aov_mgr.drivers)
+        if aov_group_num < 1:
+            return
+        for i in range(aov_group_num):
+            # get the specific AOV group
+            for aov in aov_mgr.drivers[i].aov_list:
+                for f in range(startFrame, endFrame):
+                    render_element = f"{folder}_{aov.name}.{f}.{fmt}"
+                    render_element = render_element.replace("\\", "/")
+                    aov = str(aov.name)
+                    aov_dict.update({aov: render_element})
+        # close the AOVs manager window
+        amw.close()
+
+        return aov_dict
+
+    def get_render_elements_name(self, folder, startFrame, endFrame, fmt):
+        """Get all the render element output files. """
+        render_dict = {}
+
+        render_elem = rt.maxOps.GetCurRenderElementMgr()
+        render_elem_num = render_elem.NumRenderElements()
+        # get render elements from the renders
+        for i in range(render_elem_num):
+            renderlayer_name = render_elem.GetRenderElement(i)
+            target, renderpass = str(renderlayer_name).split(":")
+            if renderlayer_name.enabled:
+                for f in range(startFrame, endFrame):
+                    render_element = f"{folder}_{renderpass}.{f}.{fmt}"
+                    render_element = render_element.replace("\\", "/")
+                    render_dict.update({renderpass: render_element})
 
         return render_dirname
 

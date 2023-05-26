@@ -256,8 +256,11 @@ def switch_item(container,
 
 
 @contextlib.contextmanager
-def maintained_selection():
-    comp = get_current_comp()
+def maintained_selection(comp=None):
+    """Reset comp selection from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
     previous_selection = comp.GetToolList(True).values()
     try:
         yield
@@ -267,6 +270,33 @@ def maintained_selection():
         if previous_selection:
             for tool in previous_selection:
                 flow.Select(tool, True)
+
+
+@contextlib.contextmanager
+def maintained_comp_range(comp=None,
+                          global_start=True,
+                          global_end=True,
+                          render_start=True,
+                          render_end=True):
+    """Reset comp frame ranges from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
+    comp_attrs = comp.GetAttrs()
+    preserve_attrs = {}
+    if global_start:
+        preserve_attrs["COMPN_GlobalStart"] = comp_attrs["COMPN_GlobalStart"]
+    if global_end:
+        preserve_attrs["COMPN_GlobalEnd"] = comp_attrs["COMPN_GlobalEnd"]
+    if render_start:
+        preserve_attrs["COMPN_RenderStart"] = comp_attrs["COMPN_RenderStart"]
+    if render_end:
+        preserve_attrs["COMPN_RenderEnd"] = comp_attrs["COMPN_RenderEnd"]
+
+    try:
+        yield
+    finally:
+        comp.SetAttrs(preserve_attrs)
 
 
 def get_frame_path(path):
@@ -307,6 +337,12 @@ def get_fusion_module():
     """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     return fusion
+
+
+def get_bmd_library():
+    """Get bmd library"""
+    bmd = getattr(sys.modules["__main__"], "bmd", None)
+    return bmd
 
 
 def get_current_comp():

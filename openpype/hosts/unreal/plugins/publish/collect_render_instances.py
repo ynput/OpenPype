@@ -73,8 +73,8 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                     new_data["level"] = data.get("level")
                     new_data["output"] = s.get('output')
                     new_data["fps"] = seq.get_display_rate().numerator
-                    new_data["frameStart"] = s.get('frame_range')[0]
-                    new_data["frameEnd"] = s.get('frame_range')[1]
+                    new_data["frameStart"] = int(s.get('frame_range')[0])
+                    new_data["frameEnd"] = int(s.get('frame_range')[1])
                     new_data["sequence"] = seq.get_path_name()
                     new_data["master_sequence"] = data["master_sequence"]
                     new_data["master_level"] = data["master_level"]
@@ -103,8 +103,8 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                         new_instance.data["representations"] = []
 
                     repr = {
-                        'frameStart': s.get('frame_range')[0],
-                        'frameEnd': s.get('frame_range')[1],
+                        'frameStart': instance.data["frameStart"],
+                        'frameEnd': instance.data["frameEnd"],
                         'name': 'png',
                         'ext': 'png',
                         'files': frames,
