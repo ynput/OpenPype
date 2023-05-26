@@ -16,7 +16,9 @@ class CustomScriptDialog(QtWidgets.QDialog):
     on_line_changed = QtCore.Signal(str)
 
     def __init__(self, parent=None, *args, **kwargs):
-        super(CustomScriptDialog, self).__init__(parent=parent, *args, **kwargs)
+        super(CustomScriptDialog, self).__init__(parent=parent,
+                                                 *args,
+                                                 **kwargs)
         self.setContentsMargins(0, 0, 0, 0)
 
         # Layout
@@ -30,7 +32,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
 
         # Increase spacing slightly for readability
         line_layout.setSpacing(10)
-        button_layout.setSpacing(8)
+        button_layout.setSpacing(10)
         name = QtWidgets.QLabel("")
         name.setStyleSheet("""
         QLabel {
@@ -47,7 +49,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
         has_selection = QtWidgets.QCheckBox()
         button = QtWidgets.QPushButton("Execute")
         button.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
-                           QtWidgets.QSizePolicy.Maximum)
+                             QtWidgets.QSizePolicy.Maximum)
         cancel = QtWidgets.QPushButton("Cancel")
         cancel.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
                              QtWidgets.QSizePolicy.Maximum)
@@ -62,7 +64,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
         layout.addLayout(selection_layout)
         layout.addLayout(button_layout)
         # Default size
-        self.resize(100, 30)
+        self.resize(100, 40)
 
         self.widgets = {
             "name": name,
@@ -107,7 +109,6 @@ class CustomScriptDialog(QtWidgets.QDialog):
         self.on_line_changed.emit(line_edit)
         return self.set_line_edit(line_edit)
 
-
     def _on_clicked(self):
         """Callback for when the 'show' button is clicked.
 
@@ -128,6 +129,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
 
         # Position popup based on contents on show event
         return super(CustomScriptDialog, self).showEvent(event)
+
 
 @contextlib.contextmanager
 def application():

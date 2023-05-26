@@ -2362,7 +2362,7 @@ class WorkfileSettings(object):
         from openpype.widgets import custom_popup
         parent = get_main_window()
         dialog = custom_popup.CustomScriptDialog(parent=parent)
-        dialog.setWindowTitle("Frame Range for Read Node")
+        dialog.setWindowTitle("Frame Range")
         dialog.set_name("Frame Range: ")
         dialog.set_line_edit("%s - %s" % (nuke.root().firstFrame(),
                                           nuke.root().lastFrame()))
@@ -2371,9 +2371,12 @@ class WorkfileSettings(object):
         dialog.on_clicked.connect(
             lambda: set_frame_range(frame, selection)
         )
+
         def set_frame_range(frame, selection):
             frame_range = frame.text()
             selected = selection.isChecked()
+            if not nuke.allNodes("Read"):
+                return
             for read_node in nuke.allNodes("Read"):
                 if selected:
                     if not nuke.selectedNodes():
