@@ -55,9 +55,6 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Get all invalid nodes"""
 
-        cls.log.info("Validating look content for "
-                     "'{}'".format(instance.name))
-
         relationships = instance.data["lookData"]["relationships"]
         invalid = []
 

@@ -38,9 +38,6 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Get all invalid nodes"""
 
-        cls.log.info("Validating look content for "
-                     "'{}'".format(instance.name))
-
         # check if data has the right attributes and content
         attributes = cls.validate_lookdata_attributes(instance)
         # check the looks for ID
