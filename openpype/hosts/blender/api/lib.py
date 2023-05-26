@@ -21,7 +21,6 @@ from openpype.hosts.blender.api.utils import (
     get_used_datablocks,
 )
 from openpype.lib import Logger
-from openpype.lib.path_tools import get_version_from_path
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     Anatomy,
