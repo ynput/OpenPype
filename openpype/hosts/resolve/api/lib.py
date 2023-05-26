@@ -182,7 +182,7 @@ def create_media_pool_item(fpath: str,
     # if any are added then look into them for the right extension
     media_pool_item = [
         mpi for mpi in media_pool_items
-        if ext in mpi.GetClipProperty("File Path")
+        if mpi.GetClipProperty("File Path").endswith(ext)
     ]
 
     # return only first found

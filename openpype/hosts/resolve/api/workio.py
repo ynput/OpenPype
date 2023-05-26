@@ -85,7 +85,7 @@ def current_file():
     current_file = os.path.join(current_dir, fname)
 
     # check if file exists
-    if not current_file:
+    if not os.path.exists(current_file):
         return None
 
     return os.path.normpath(current_file)
