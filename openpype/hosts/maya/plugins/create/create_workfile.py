@@ -11,7 +11,7 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
     identifier = "io.openpype.creators.maya.workfile"
     label = "Workfile"
     family = "workfile"
-    icon = "document"
+    icon = "fa5.file"
 
     default_variant = "Main"
 
