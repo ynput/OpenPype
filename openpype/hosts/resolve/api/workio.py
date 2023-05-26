@@ -27,14 +27,16 @@ def save_file(filepath):
     pm = get_project_manager()
     file = os.path.basename(filepath)
     fname, _ = os.path.splitext(file)
+    dname, _ = fname.split("_v")
     project = get_current_project()
     name = project.GetName()
 
-    if "Untitled Project" not in name:
-        log.info("Saving project: `{}` as '{}'".format(name, file))
-        pm.ExportProject(name, filepath)
-    else:
-        log.info("Creating new project...")
+    if fname != name:
+        # nest project version iteration in own folder
+        if not set_project_manager_to_folder_name(dname):
+            raise
+
+        log.info(f"Creating new project {fname}...")
         pm.CreateProject(fname)
         pm.ExportProject(name, filepath)
 
@@ -50,8 +52,9 @@ def open_file(filepath):
 
     # deal with current project
     project = pm.GetCurrentProject()
-    log.info(f"Test `pm`: {pm}")
-    pm.SaveProject()
+    if project.GetName() != "Untitled Project":
+        log.info(f"Saving project: `{project.GetName()}`")
+        pm.SaveProject()
 
     try:
         log.info(f"Test `dname`: {dname}")
@@ -72,6 +75,7 @@ def open_file(filepath):
         return False
     return True
 
+
 def current_file():
     pm = get_project_manager()
     current_dir = os.getenv("AVALON_WORKDIR")
@@ -79,8 +83,11 @@ def current_file():
     name = project.GetName()
     fname = name + exported_projet_ext
     current_file = os.path.join(current_dir, fname)
+
+    # check if file exists
     if not current_file:
         return None
+
     return os.path.normpath(current_file)
 
 

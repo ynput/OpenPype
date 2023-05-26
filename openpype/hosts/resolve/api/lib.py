@@ -170,6 +170,8 @@ def create_media_pool_item(fpath: str,
     dirname, file = os.path.split(fpath)
     _name, ext = os.path.splitext(file)
 
+    print("Adding to media pool: {}".format(fpath))
+
     # add all data in folder to mediapool
     media_pool_items = media_storage.AddItemListToMediaPool(
         os.path.normpath(dirname))
@@ -178,8 +180,10 @@ def create_media_pool_item(fpath: str,
         return False
 
     # if any are added then look into them for the right extension
-    media_pool_item = [mpi for mpi in media_pool_items
-                       if ext in mpi.GetClipProperty("File Path")]
+    media_pool_item = [
+        mpi for mpi in media_pool_items
+        if ext in mpi.GetClipProperty("File Path")
+    ]
 
     # return only first found
     return media_pool_item.pop()
