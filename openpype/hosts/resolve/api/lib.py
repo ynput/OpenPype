@@ -15,6 +15,7 @@ log = Logger.get_logger(__name__)
 self = sys.modules[__name__]
 self.project_manager = None
 self.media_storage = None
+self.current_project = None
 
 # OpenPype sequential rename variables
 self.rename_index = 0
@@ -85,22 +86,60 @@ def get_media_storage():
 
 
 def get_current_project():
-    # initialize project manager
-    get_project_manager()
+    """Get current project object.
+    """
+    if not self.current_project:
+        self.current_project = get_project_manager().GetCurrentProject()
 
-    return self.project_manager.GetCurrentProject()
+    return self.current_project
 
 
 def get_current_timeline(new=False):
-    # get current project
+    """Get current timeline object.
+
+    Args:
+        new (bool)[optional]: [DEPRECATED] if True it will create
+            new timeline if none exists
+
+    Returns:
+        TODO: will need to reflect future `None`
+        object: resolve.Timeline
+    """
     project = get_current_project()
+    timeline = project.GetCurrentTimeline()
 
+    # return current timeline if any
+    if timeline:
+        return timeline
+
+    # TODO: [deprecated] and will be removed in future
     if new:
-        media_pool = project.GetMediaPool()
-        new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
-        project.SetCurrentTimeline(new_timeline)
+        return get_new_timeline()
 
-    return project.GetCurrentTimeline()
+
+def get_any_timeline():
+    """Get any timeline object.
+
+    Returns:
+        object | None: resolve.Timeline
+    """
+    project = get_current_project()
+    timeline_count = project.GetTimelineCount()
+    if timeline_count > 0:
+        return project.GetTimelineByIndex(1)
+
+
+def get_new_timeline():
+    """Get new timeline object.
+
+    Returns:
+        object: resolve.Timeline
+    """
+    project = get_current_project()
+    media_pool = project.GetMediaPool()
+    new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
+    project.SetCurrentTimeline(new_timeline)
+    return new_timeline
 
 
 def create_bin(name: str, root: object = None) -> object:
@@ -312,7 +351,13 @@ def get_current_timeline_items(
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
-    timeline = get_current_timeline()
+
+    # get timeline anyhow
+    timeline = (
+        get_current_timeline() or
+        get_any_timeline() or
+        get_new_timeline()
+    )
     selected_clips = []
 
     # get all tracks count filtered by track type
