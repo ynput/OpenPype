@@ -45,23 +45,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         }
 
         folder = folder.replace("\\", "/")
-        if aov_list:
-            if renderer in [
-                "ART_Renderer",
-                "V_Ray_6_Hotfix_3",
-                "V_Ray_GPU_6_Hotfix_3"
-                "Redshift_Renderer",
-                "Default_Scanline_Renderer",
-                "Quicksilver_Hardware_Renderer",
-            ]:
-
-                render_element = RenderProducts().get_aov()
-                files_by_aov.update(render_element)
-                self.log.debug(files_by_aov)
-
-            if renderer == "Arnold":
-                aovs = RenderProducts().get_aovs()
-                files_by_aov.update(aovs)
+        aovs = RenderProducts().get_aovs()
+        files_by_aov.update(aovs)
 
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()

@@ -70,7 +70,7 @@ class RenderProducts(object):
 
         return rgba_render_list, render_elem_list
 
-    def get_aov(self):
+    def get_aovs(self):
         folder = rt.maxFilePath
         folder = folder.replace("\\", "/")
         setting = self._project_settings
@@ -177,6 +177,8 @@ class RenderProducts(object):
 
         render_elem = rt.maxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
+        if render_elem_num < 1:
+            return
         # get render elements from the renders
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
