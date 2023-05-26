@@ -34,9 +34,13 @@ from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.modules import ModulesManager
 from openpype.pipeline import legacy_io, Anatomy
-from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.template_data import (
+    get_template_data,
+    get_template_data_with_names,
+)
 from openpype.pipeline.workfile.path_resolving import (
     get_workfile_template_key,
+    get_last_workfile_with_version,
 )
 from openpype.client.entities import (
     get_subsets,
@@ -709,11 +713,14 @@ def download_last_workfile() -> str:
         'blender',
     )
 
-    # TODO Get highest local version number
-    # TODO Handle subversion
-    workfile_data['version'] = int(
-        get_version_from_path(bpy.data.filepath)
-    ) + 1
+    workfile_data['version'] = get_last_workfile_with_version(
+        Path(bpy.data.filepath).parent.as_posix(),
+        anatomy.templates[get_workfile_template_key(
+            task_name, 'blender', project_name
+        )]['file'],
+        workfile_data,
+        ['blend'],
+    )[1] + 1
     workfile_data['ext'] = 'blend'
 
     # Get local workfile path
@@ -721,20 +728,25 @@ def download_last_workfile() -> str:
         get_workfile_template_key(task_name, 'blender', project_name)
     ]['path']
 
+    last_published_workfile_path = download_last_published_workfile(
+        "blender",
+        project_name,
+        task_name,
+        workfile_representation,
+        int((
+            sync_server.sync_project_settings[
+                project_name
+            ]['config']['retry_cnt']
+        )),
+        anatomy=anatomy,
+    )
+
+    if not last_published_workfile_path or not Path(last_published_workfile_path).exists():
+        raise OSError('Failed to download last published workfile')
+
     # Download and copy last published workfile to local workfile path
     shutil.copy(
-        download_last_published_workfile(
-            "blender",
-            project_name,
-            task_name,
-            workfile_representation,
-            int((
-                sync_server.sync_project_settings[
-                    project_name
-                ]['config']['retry_cnt']
-            )),
-            anatomy=anatomy,
-        ),
+        last_published_workfile_path,
         local_workfile_path,
     )
 
