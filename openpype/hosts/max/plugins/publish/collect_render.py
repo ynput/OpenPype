@@ -6,7 +6,7 @@ import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.max.api import colorspace
-from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
+from openpype.hosts.max.api.lib import get_max_version
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
@@ -29,8 +29,6 @@ class CollectRender(pyblish.api.InstancePlugin):
         context.data['currentFile'] = current_file
         asset = get_current_asset_name()
 
-        renderer_class = get_current_renderer()
-        renderer = str(renderer_class).split(":")[0]
         beauty_list, aov_list = RenderProducts().render_product(instance.name)
         full_render_list = list()
         if aov_list:

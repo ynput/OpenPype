@@ -103,7 +103,7 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_render_elements(
-                        output_file, name, startFrame, endFrame, img_fmt)
+                            output_file, name, startFrame, endFrame, img_fmt)
                     })
 
         if renderer == "Arnold":
@@ -112,7 +112,7 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_arnold_product(
-                        output_file, name, startFrame, endFrame, img_fmt)
+                            output_file, name, startFrame, endFrame, img_fmt)
                     })
 
         return render_dict
