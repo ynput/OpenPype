@@ -22,13 +22,13 @@ class ExtractRig(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
                     self.log.info(
-                        "Using {} as scene type".format(self.scene_type))
+                        "Using '.{}' as scene type".format(self.scene_type))
                     break
                 except AttributeError:
                     # no preset found

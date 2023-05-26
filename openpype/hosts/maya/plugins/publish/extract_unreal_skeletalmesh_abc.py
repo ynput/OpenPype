@@ -32,7 +32,7 @@ class ExtractUnrealSkeletalMeshAbc(publish.Extractor):
     optional = True
 
     def process(self, instance):
-        self.log.info("Extracting pointcache..")
+        self.log.debug("Extracting pointcache..")
 
         geo = cmds.listRelatives(
             instance.data.get("geometry"), allDescendents=True, fullPath=True)

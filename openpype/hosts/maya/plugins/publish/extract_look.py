@@ -412,7 +412,7 @@ class ExtractLook(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
@@ -444,12 +444,12 @@ class ExtractLook(publish.Extractor):
 
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Processing sets..")
+        self.log.debug("Processing sets..")
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
         sets = list(relationships.keys())
         if not sets:
-            self.log.info("No sets found")
+            self.log.info("No sets found for the look")
             return
 
         # Specify texture processing executables to activate
