@@ -445,6 +445,7 @@ class ServerCreateOperation(CreateOperation):
 
         elif entity_type == "subset":
             new_data = convert_create_subset_to_v4(data, self.con)
+            entity_type = "product"
 
         elif entity_type == "version":
             new_data = convert_create_version_to_v4(data, self.con)
@@ -551,6 +552,7 @@ class ServerUpdateOperation(UpdateOperation):
             new_update_data = convert_update_subset_to_v4(
                 project_name, entity_id, update_data, self.con
             )
+            entity_type = "product"
 
         elif entity_type == "version":
             new_update_data = convert_update_version_to_v4(
@@ -636,8 +638,11 @@ class ServerDeleteOperation(DeleteOperation):
         if entity_type == "asset":
             entity_type == "folder"
 
-        if entity_type == "hero_version":
+        elif entity_type == "hero_version":
             entity_type = "version"
+
+        elif entity_type == "subset":
+            entity_type = "product"
 
         super(ServerDeleteOperation, self).__init__(
             project_name, entity_type, entity_id
