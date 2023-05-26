@@ -9,6 +9,7 @@ from openpype.pipeline import (
     CreatorError
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
+from openpype.hosts.aftereffects.api.lib import set_settings
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
@@ -32,6 +33,14 @@ class RenderCreator(Creator):
 
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
+
+        try:
+            _ = stub.get_active_document_full_name()
+        except ValueError:
+            raise CreatorError(
+                "Please save workfile via Workfile app first!"
+            )
+
         if pre_create_data.get("use_selection"):
             comps = stub.get_selected_items(
                 comps=True, folders=False, footages=False
@@ -41,8 +50,8 @@ class RenderCreator(Creator):
 
         if not comps:
             raise CreatorError(
-                "Nothing to create. Select composition "
-                "if 'useSelection' or create at least "
+                "Nothing to create. Select composition in Project Bin if "
+                "'Use selection' is toggled or create at least "
                 "one composition."
             )
         use_composition_name = (pre_create_data.get("use_composition_name") or
@@ -87,10 +96,14 @@ class RenderCreator(Creator):
             self._add_instance_to_context(new_instance)
 
             stub.rename_item(comp.id, subset_name)
+            set_settings(True, True, [comp.id], print_msg=False)
 
     def get_pre_create_attr_defs(self):
         output = [
-            BoolDef("use_selection", default=True, label="Use selection"),
+            BoolDef("use_selection",
+                    tooltip="Composition for publishable instance should be "
+                            "selected by default.",
+                    default=True, label="Use selection"),
             BoolDef("use_composition_name",
                     label="Use composition name in subset"),
             UISeparatorDef(),
