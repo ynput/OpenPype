@@ -50,16 +50,23 @@ class UAssetLoader(plugin.Loader):
             f"{root}/{asset}/{name}", suffix=""
         )
 
-        container_name += suffix
+        unique_number = 1
+        while unreal.EditorAssetLibrary.does_directory_exist(
+            f"{asset_dir}_{unique_number:02}"
+        ):
+            unique_number += 1
+
+        asset_dir = f"{asset_dir}_{unique_number:02}"
+        container_name = f"{container_name}_{unique_number:02}{suffix}"
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
         destination_path = asset_dir.replace(
-            "/Game",
-            Path(unreal.Paths.project_content_dir()).as_posix(),
-            1)
+            "/Game", Path(unreal.Paths.project_content_dir()).as_posix(), 1)
 
-        shutil.copy(self.fname, f"{destination_path}/{name}.{self.extension}")
+        shutil.copy(
+            self.fname,
+            f"{destination_path}/{name}_{unique_number:02}.{self.extension}")
 
         # Create Asset Container
         unreal_pipeline.create_container(
@@ -75,7 +82,7 @@ class UAssetLoader(plugin.Loader):
             "loader": str(self.__class__.__name__),
             "representation": context["representation"]["_id"],
             "parent": context["representation"]["parent"],
-            "family": context["representation"]["context"]["family"]
+            "family": context["representation"]["context"]["family"],
         }
         unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
 
@@ -94,10 +101,10 @@ class UAssetLoader(plugin.Loader):
         asset_dir = container["namespace"]
         name = representation["context"]["subset"]
 
+        unique_number = container["container_name"].split("_")[-2]
+
         destination_path = asset_dir.replace(
-            "/Game",
-            Path(unreal.Paths.project_content_dir()).as_posix(),
-            1)
+            "/Game", Path(unreal.Paths.project_content_dir()).as_posix(), 1)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=False, include_folder=True
@@ -105,13 +112,14 @@ class UAssetLoader(plugin.Loader):
 
         for asset in asset_content:
             obj = ar.get_asset_by_object_path(asset).get_asset()
-            if obj.get_class().get_name() != 'AyonAssetContainer':
+            if obj.get_class().get_name() != "AyonAssetContainer":
                 unreal.EditorAssetLibrary.delete_asset(asset)
 
         update_filepath = get_representation_path(representation)
 
         shutil.copy(
-            update_filepath, f"{destination_path}/{name}.{self.extension}")
+            update_filepath,
+            f"{destination_path}/{name}_{unique_number}.{self.extension}")
 
         container_path = f'{container["namespace"]}/{container["objectName"]}'
         # update metadata
@@ -119,8 +127,9 @@ class UAssetLoader(plugin.Loader):
             container_path,
             {
                 "representation": str(representation["_id"]),
-                "parent": str(representation["parent"])
-            })
+                "parent": str(representation["parent"]),
+            }
+        )
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
