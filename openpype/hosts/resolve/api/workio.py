@@ -43,18 +43,22 @@ def open_file(filepath):
     """
     Loading project
     """
+
+    from . import bmdvr
+
     pm = get_project_manager()
+    page = bmdvr.GetCurrentPage()
+    if page is not None:
+        # Save current project only if Resolve has an active page, otherwise
+        # we consider Resolve being in a pre-launch state (no open UI yet)
+        project = pm.GetCurrentProject()
+        print(f"Saving current project: {project}")
+        pm.SaveProject()
+
     file = os.path.basename(filepath)
     fname, _ = os.path.splitext(file)
     dname, _ = fname.split("_v")
-
-    # deal with current project
-    project = pm.GetCurrentProject()
-    log.info(f"Test `pm`: {pm}")
-    pm.SaveProject()
-
     try:
-        log.info(f"Test `dname`: {dname}")
         if not set_project_manager_to_folder_name(dname):
             raise
         # load project from input path
@@ -71,6 +75,7 @@ def open_file(filepath):
             return True
         return False
     return True
+
 
 def current_file():
     pm = get_project_manager()
