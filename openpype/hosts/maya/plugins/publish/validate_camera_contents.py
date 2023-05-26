@@ -34,7 +34,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
         cameras = cmds.ls(shapes, type='camera', long=True)
         if len(cameras) != 1:
             cls.log.error("Camera instance must have a single camera. "
-                            "Found {0}: {1}".format(len(cameras), cameras))
+                          "Found {0}: {1}".format(len(cameras), cameras))
             invalid.extend(cameras)
 
             # We need to check this edge case because returning an extended
@@ -51,7 +51,8 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
                 raise RuntimeError("No cameras found in empty instance.")
 
         if not cls.validate_shapes:
-            cls.log.info("not validating shapes in the content")
+            cls.log.debug("Not validating shapes in the camera content"
+                          " because 'validate shapes' is disabled")
             return invalid
 
         # non-camera shapes
@@ -60,13 +61,10 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
         if shapes:
             shapes = list(shapes)
             cls.log.error("Camera instance should only contain camera "
-                            "shapes. Found: {0}".format(shapes))
+                          "shapes. Found: {0}".format(shapes))
             invalid.extend(shapes)
 
-
-
         invalid = list(set(invalid))
-
         return invalid
 
     def process(self, instance):
