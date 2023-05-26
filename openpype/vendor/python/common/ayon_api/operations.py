@@ -31,12 +31,14 @@ def new_folder_entity(
 
     Args:
         name (str): Is considered as unique identifier of folder in project.
-        parent_id (str): Id of parent folder.
-        attribs (Dict[str, Any]): Explicitly set attributes of folder.
-        data (Dict[str, Any]): Custom folder data. Empty dictionary is used
-            if not passed.
-        thumbnail_id (str): Id of thumbnail related to folder.
-        entity_id (str): Predefined id of entity. New id is
+        folder_type (str): Type of folder.
+        parent_id (Optional[str]]): Id of parent folder.
+        attribs (Optional[Dict[str, Any]]): Explicitly set attributes
+            of folder.
+        data (Optional[Dict[str, Any]]): Custom folder data. Empty dictionary
+            is used if not passed.
+        thumbnail_id (Optional[str]): Id of thumbnail related to folder.
+        entity_id (Optional[str]): Predefined id of entity. New id is
             created if not passed.
 
     Returns:
@@ -64,23 +66,32 @@ def new_folder_entity(
     }
 
 
-def new_subset_entity(
-    name, family, folder_id, attribs=None, data=None, entity_id=None
+def new_product_entity(
+    name,
+    product_type,
+    folder_id,
+    status=None,
+    attribs=None,
+    data=None,
+    entity_id=None
 ):
-    """Create skeleton data of subset entity.
+    """Create skeleton data of product entity.
 
     Args:
-        name (str): Is considered as unique identifier of subset under folder.
-        family (str): Subset's family.
+        name (str): Is considered as unique identifier of
+            product under folder.
+        product_type (str): Product type.
         folder_id (str): Id of parent folder.
-        attribs (Dict[str, Any]): Explicitly set attributes of subset.
-        data (Dict[str, Any]): Subset entity data. Empty dictionary is used
-            if not passed. Value of 'family' is used to fill 'family'.
-        entity_id (str): Predefined id of entity. New id is
+        status (Optional[str]): Product status.
+        attribs (Optional[Dict[str, Any]]): Explicitly set attributes
+            of product.
+        data (Optional[Dict[str, Any]]): product entity data. Empty dictionary
+            is used if not passed.
+        entity_id (Optional[str]): Predefined id of entity. New id is
             created if not passed.
 
     Returns:
-        Dict[str, Any]: Skeleton of subset entity.
+        Dict[str, Any]: Skeleton of product entity.
     """
 
     if attribs is None:
@@ -89,19 +100,22 @@ def new_subset_entity(
     if data is None:
         data = {}
 
-    return {
+    output = {
         "id": _create_or_convert_to_id(entity_id),
         "name": name,
-        "family": family,
+        "productType": product_type,
         "attrib": attribs,
         "data": data,
-        "folderId": _create_or_convert_to_id(folder_id)
+        "folderId": _create_or_convert_to_id(folder_id),
     }
+    if status:
+        output["status"] = status
+    return output
 
 
 def new_version_entity(
     version,
-    subset_id,
+    product_id,
     task_id=None,
     thumbnail_id=None,
     author=None,
@@ -113,14 +127,15 @@ def new_version_entity(
 
     Args:
         version (int): Is considered as unique identifier of version
-            under subset.
-        subset_id (str): Id of parent subset.
-        task_id (str): Id of task under which subset was created.
-        thumbnail_id (str): Thumbnail related to version.
-        author (str): Name of version author.
-        attribs (Dict[str, Any]): Explicitly set attributes of version.
-        data (Dict[str, Any]): Version entity custom data.
-        entity_id (str): Predefined id of entity. New id is
+            under product.
+        product_id (str): Id of parent product.
+        task_id (Optional[str]]): Id of task under which product was created.
+        thumbnail_id (Optional[str]]): Thumbnail related to version.
+        author (Optional[str]]): Name of version author.
+        attribs (Optional[Dict[str, Any]]): Explicitly set attributes
+            of version.
+        data (Optional[Dict[str, Any]]): Version entity custom data.
+        entity_id (Optional[str]): Predefined id of entity. New id is
             created if not passed.
 
     Returns:
@@ -139,7 +154,7 @@ def new_version_entity(
     output = {
         "id": _create_or_convert_to_id(entity_id),
         "version": int(version),
-        "subsetId": _create_or_convert_to_id(subset_id),
+        "productId": _create_or_convert_to_id(product_id),
         "attrib": attribs,
         "data": data
     }
@@ -154,7 +169,7 @@ def new_version_entity(
 
 def new_hero_version_entity(
     version,
-    subset_id,
+    product_id,
     task_id=None,
     thumbnail_id=None,
     author=None,
@@ -166,14 +181,15 @@ def new_hero_version_entity(
 
     Args:
         version (int): Is considered as unique identifier of version
-            under subset. Should be same as standard version if there is any.
-        subset_id (str): Id of parent subset.
-        task_id (str): Id of task under which subset was created.
-        thumbnail_id (str): Thumbnail related to version.
-        author (str): Name of version author.
-        attribs (Dict[str, Any]): Explicitly set attributes of version.
-        data (Dict[str, Any]): Version entity data.
-        entity_id (str): Predefined id of entity. New id is
+            under product. Should be same as standard version if there is any.
+        product_id (str): Id of parent product.
+        task_id (Optional[str]): Id of task under which product was created.
+        thumbnail_id (Optional[str]): Thumbnail related to version.
+        author (Optional[str]): Name of version author.
+        attribs (Optional[Dict[str, Any]]): Explicitly set attributes
+            of version.
+        data (Optional[Dict[str, Any]]): Version entity data.
+        entity_id (Optional[str]): Predefined id of entity. New id is
             created if not passed.
 
     Returns:
@@ -189,7 +205,7 @@ def new_hero_version_entity(
     output = {
         "id": _create_or_convert_to_id(entity_id),
         "version": -abs(int(version)),
-        "subsetId": subset_id,
+        "productId": product_id,
         "attrib": attribs,
         "data": data
     }
@@ -211,9 +227,10 @@ def new_representation_entity(
         name (str): Representation name considered as unique identifier
             of representation under version.
         version_id (str): Id of parent version.
-        attribs (Dict[str, Any]): Explicitly set attributes of representation.
-        data (Dict[str, Any]): Representation entity data.
-        entity_id (str): Predefined id of entity. New id is created
+        attribs (Optional[Dict[str, Any]]): Explicitly set attributes
+            of representation.
+        data (Optional[Dict[str, Any]]): Representation entity data.
+        entity_id (Optional[str]): Predefined id of entity. New id is created
             if not passed.
 
     Returns:
@@ -247,8 +264,8 @@ def new_workfile_info_doc(
         folder_id (str): Id of folder under which workfile live.
         task_name (str): Task under which was workfile created.
         files (List[str]): List of rootless filepaths related to workfile.
-        data (Dict[str, Any]): Additional metadata.
-        entity_id (str): Predefined id of entity. New id is created
+        data (Optional[Dict[str, Any]]): Additional metadata.
+        entity_id (Optional[str]): Predefined id of entity. New id is created
             if not passed.
 
     Returns:

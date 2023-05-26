@@ -123,6 +123,51 @@ def projects_graphql_query(fields):
     return query
 
 
+def product_types_query(fields):
+    query = GraphQlQuery("ProductTypes")
+    product_types_field = query.add_field("productTypes")
+
+    nested_fields = fields_to_dict(fields)
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, product_types_field))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+def project_product_types_query(fields):
+    query = GraphQlQuery("ProjectProductTypes")
+    project_query = query.add_field("project")
+    project_name_var = query.add_variable("projectName", "String!")
+    project_query.set_filter("name", project_name_var)
+    product_types_field = project_query.add_field("productTypes")
+    nested_fields = fields_to_dict(fields)
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, product_types_field))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
 def folders_graphql_query(fields):
     query = GraphQlQuery("FoldersQuery")
     project_name_var = query.add_variable("projectName", "String!")
@@ -130,7 +175,7 @@ def folders_graphql_query(fields):
     parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
     folder_paths_var = query.add_variable("folderPaths", "[String!]")
     folder_names_var = query.add_variable("folderNames", "[String!]")
-    has_subsets_var = query.add_variable("folderHasSubsets", "Boolean!")
+    has_products_var = query.add_variable("folderHasProducts", "Boolean!")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -140,7 +185,7 @@ def folders_graphql_query(fields):
     folders_field.set_filter("parentIds", parent_folder_ids_var)
     folders_field.set_filter("names", folder_names_var)
     folders_field.set_filter("paths", folder_paths_var)
-    folders_field.set_filter("hasSubsets", has_subsets_var)
+    folders_field.set_filter("hasProducts", has_products_var)
 
     nested_fields = fields_to_dict(fields)
     add_links_fields(folders_field, nested_fields)
@@ -198,28 +243,28 @@ def tasks_graphql_query(fields):
     return query
 
 
-def subsets_graphql_query(fields):
-    query = GraphQlQuery("SubsetsQuery")
+def products_graphql_query(fields):
+    query = GraphQlQuery("ProductsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
     folder_ids_var = query.add_variable("folderIds", "[String!]")
-    subset_ids_var = query.add_variable("subsetIds", "[String!]")
-    subset_names_var = query.add_variable("subsetNames", "[String!]")
+    product_ids_var = query.add_variable("productIds", "[String!]")
+    product_names_var = query.add_variable("productNames", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
 
-    subsets_field = project_field.add_field_with_edges("subsets")
-    subsets_field.set_filter("ids", subset_ids_var)
-    subsets_field.set_filter("names", subset_names_var)
-    subsets_field.set_filter("folderIds", folder_ids_var)
+    products_field = project_field.add_field_with_edges("products")
+    products_field.set_filter("ids", product_ids_var)
+    products_field.set_filter("names", product_names_var)
+    products_field.set_filter("folderIds", folder_ids_var)
 
     nested_fields = fields_to_dict(set(fields))
-    add_links_fields(subsets_field, nested_fields)
+    add_links_fields(products_field, nested_fields)
 
     query_queue = collections.deque()
     for key, value in nested_fields.items():
-        query_queue.append((key, value, subsets_field))
+        query_queue.append((key, value, products_field))
 
     while query_queue:
         item = query_queue.popleft()
@@ -237,7 +282,7 @@ def versions_graphql_query(fields):
     query = GraphQlQuery("VersionsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
-    subset_ids_var = query.add_variable("subsetIds", "[String!]")
+    product_ids_var = query.add_variable("productIds", "[String!]")
     version_ids_var = query.add_variable("versionIds", "[String!]")
     versions_var = query.add_variable("versions", "[Int!]")
     hero_only_var = query.add_variable("heroOnly", "Boolean")
@@ -249,20 +294,20 @@ def versions_graphql_query(fields):
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
 
-    subsets_field = project_field.add_field_with_edges("versions")
-    subsets_field.set_filter("ids", version_ids_var)
-    subsets_field.set_filter("subsetIds", subset_ids_var)
-    subsets_field.set_filter("versions", versions_var)
-    subsets_field.set_filter("heroOnly", hero_only_var)
-    subsets_field.set_filter("latestOnly", latest_only_var)
-    subsets_field.set_filter("heroOrLatestOnly", hero_or_latest_only_var)
+    products_field = project_field.add_field_with_edges("versions")
+    products_field.set_filter("ids", version_ids_var)
+    products_field.set_filter("productIds", product_ids_var)
+    products_field.set_filter("versions", versions_var)
+    products_field.set_filter("heroOnly", hero_only_var)
+    products_field.set_filter("latestOnly", latest_only_var)
+    products_field.set_filter("heroOrLatestOnly", hero_or_latest_only_var)
 
     nested_fields = fields_to_dict(set(fields))
-    add_links_fields(subsets_field, nested_fields)
+    add_links_fields(products_field, nested_fields)
 
     query_queue = collections.deque()
     for key, value in nested_fields.items():
-        query_queue.append((key, value, subsets_field))
+        query_queue.append((key, value, products_field))
 
     while query_queue:
         item = query_queue.popleft()
@@ -312,7 +357,7 @@ def representations_graphql_query(fields):
 
 
 def representations_parents_qraphql_query(
-    version_fields, subset_fields, folder_fields
+    version_fields, product_fields, folder_fields
 ):
     query = GraphQlQuery("RepresentationsParentsQuery")
 
@@ -331,11 +376,11 @@ def representations_parents_qraphql_query(
     for key, value in fields_to_dict(version_fields).items():
         fields_queue.append((key, value, version_field))
 
-    subset_field = version_field.add_field("subset")
-    for key, value in fields_to_dict(subset_fields).items():
-        fields_queue.append((key, value, subset_field))
+    product_field = version_field.add_field("product")
+    for key, value in fields_to_dict(product_fields).items():
+        fields_queue.append((key, value, product_field))
 
-    folder_field = subset_field.add_field("folder")
+    folder_field = product_field.add_field("folder")
     for key, value in fields_to_dict(folder_fields).items():
         fields_queue.append((key, value, folder_field))
 
