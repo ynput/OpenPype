@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pyblish.api
 from openpype.pipeline.publish import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
@@ -87,6 +89,11 @@ class ValidateNukeWriteNode(
             correct_data
         ))
 
+        # Collect key values of same type in a list.
+        values_by_name = defaultdict(list)
+        for knob_data in correct_data["knobs"]:
+            values_by_name[knob_data["name"]].append(knob_data["value"])
+
         for knob_data in correct_data["knobs"]:
             knob_type = knob_data["type"]
             self.log.debug("__ knob_type: {}".format(
@@ -105,28 +112,33 @@ class ValidateNukeWriteNode(
                 )
 
             key = knob_data["name"]
-            value = knob_data["value"]
+            values = values_by_name[key]
             node_value = write_node[key].value()
 
             # fix type differences
-            if type(node_value) in (int, float):
-                try:
-                    if isinstance(value, list):
-                        value = color_gui_to_int(value)
-                    else:
-                        value = float(value)
-                        node_value = float(node_value)
-                except ValueError:
-                    value = str(value)
-            else:
-                value = str(value)
-                node_value = str(node_value)
+            fixed_values = []
+            for value in values:
+                if type(node_value) in (int, float):
+                    try:
 
-            self.log.debug("__ key: {} | value: {}".format(
-                key, value
+                        if isinstance(value, list):
+                            value = color_gui_to_int(value)
+                        else:
+                            value = float(value)
+                            node_value = float(node_value)
+                    except ValueError:
+                        value = str(value)
+                else:
+                    value = str(value)
+                    node_value = str(node_value)
+
+                fixed_values.append(value)
+
+            self.log.debug("__ key: {} | values: {}".format(
+                key, fixed_values
             ))
             if (
-                node_value != value
+                node_value not in fixed_values
                 and key != "file"
                 and key != "tile_color"
             ):
