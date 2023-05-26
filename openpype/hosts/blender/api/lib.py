@@ -445,6 +445,7 @@ def download_last_workfile() -> str:
         'blender',
     )
 
+    # Get workfile version
     workfile_data['version'] = get_last_workfile_with_version(
         Path(bpy.data.filepath).parent.as_posix(),
         anatomy.templates[get_workfile_template_key(
@@ -460,6 +461,7 @@ def download_last_workfile() -> str:
         get_workfile_template_key(task_name, 'blender', project_name)
     ]['path']
 
+    # Download and get last workfile
     last_published_workfile_path = download_last_published_workfile(
         "blender",
         project_name,
