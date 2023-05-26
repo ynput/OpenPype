@@ -40,6 +40,11 @@ class CreateSaver(NewCreator):
         "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
+        self.pass_pre_attributes_to_instance(
+            instance_data,
+            pre_create_data
+        )
+
         instance_data.update({
             "id": "pyblish.avalon.instance",
             "subset": subset_name
@@ -194,20 +199,25 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
+            self._get_frame_range_enum()
         ]
         return attr_defs
 
     def get_instance_attr_defs(self):
         """Settings for publish page"""
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool(),
-        ]
-        return attr_defs
+        return self.get_pre_create_attr_defs()
+
+    def pass_pre_attributes_to_instance(
+        self,
+        instance_data,
+        pre_create_data
+    ):
+        creator_attrs = instance_data["creator_attributes"] = {}
+        for pass_key in pre_create_data.keys():
+            creator_attrs[pass_key] = pre_create_data[pass_key]
 
     # These functions below should be moved to another file
     # so it can be used by other plugins. plugin.py ?
-
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
@@ -218,6 +228,19 @@ class CreateSaver(NewCreator):
 
         return EnumDef(
             "render_target", items=rendering_targets, label="Render target"
+        )
+
+    def _get_frame_range_enum(self):
+        frame_range_options = {
+            "asset_db": "Current asset context",
+            "render_range": "From render in/out",
+            "comp_range": "From composition timeline"
+        }
+
+        return EnumDef(
+            "frame_range_source",
+            items=frame_range_options,
+            label="Frame range source"
         )
 
     def _get_reviewable_bool(self):
