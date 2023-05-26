@@ -1,6 +1,6 @@
 import os
 import shutil
-from openpype.lib import Logger
+from openpype.lib import Logger, is_running_from_build
 
 RESOLVE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -41,6 +41,13 @@ def setup(env):
     # copy scripts into Resolve's utility scripts dir
     for directory, scripts in scripts.items():
         for script in scripts:
+            if (
+                is_running_from_build() and
+                script in ["tests", "develop"]
+            ):
+                # only copy those if started from build
+                continue
+
             src = os.path.join(directory, script)
             dst = os.path.join(util_scripts_dir, script)
             log.info("Copying `{}` to `{}`...".format(src, dst))

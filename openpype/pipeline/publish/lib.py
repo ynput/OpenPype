@@ -1,12 +1,10 @@
 import os
 import sys
-import types
 import inspect
 import copy
 import tempfile
 import xml.etree.ElementTree
 
-import six
 import pyblish.util
 import pyblish.plugin
 import pyblish.api
@@ -14,7 +12,8 @@ import pyblish.api
 from openpype.lib import (
     Logger,
     import_filepath,
-    filter_profiles
+    filter_profiles,
+    is_func_signature_supported,
 )
 from openpype.settings import (
     get_project_settings,
@@ -42,7 +41,9 @@ def get_template_name_profiles(
 
     Args:
         project_name (str): Name of project where to look for templates.
-        project_settings(Dic[str, Any]): Prepared project settings.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        logger (Optional[logging.Logger]): Logger object to be used instead
+            of default logger.
 
     Returns:
         List[Dict[str, Any]]: Publish template profiles.
@@ -103,7 +104,9 @@ def get_hero_template_name_profiles(
 
     Args:
         project_name (str): Name of project where to look for templates.
-        project_settings(Dic[str, Any]): Prepared project settings.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        logger (Optional[logging.Logger]): Logger object to be used instead
+            of default logger.
 
     Returns:
         List[Dict[str, Any]]: Publish template profiles.
@@ -172,9 +175,10 @@ def get_publish_template_name(
         project_name (str): Name of project where to look for settings.
         host_name (str): Name of host integration.
         family (str): Family for which should be found template.
-        task_name (str): Task name on which is intance working.
-        task_type (str): Task type on which is intance working.
-        project_setting (Dict[str, Any]): Prepared project settings.
+        task_name (str): Task name on which is instance working.
+        task_type (str): Task type on which is instance working.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        hero (bool): Template is for hero version publishing.
         logger (logging.Logger): Custom logger used for 'filter_profiles'
             function.
 
@@ -264,19 +268,18 @@ def load_help_content_from_plugin(plugin):
 def publish_plugins_discover(paths=None):
     """Find and return available pyblish plug-ins
 
-    Overridden function from `pyblish` module to be able collect crashed files
-    and reason of their crash.
+    Overridden function from `pyblish` module to be able to collect
+        crashed files and reason of their crash.
 
     Arguments:
         paths (list, optional): Paths to discover plug-ins from.
             If no paths are provided, all paths are searched.
-
     """
 
     # The only difference with `pyblish.api.discover`
     result = DiscoverResult(pyblish.api.Plugin)
 
-    plugins = dict()
+    plugins = {}
     plugin_names = []
 
     allow_duplicates = pyblish.plugin.ALLOW_DUPLICATES
@@ -302,7 +305,7 @@ def publish_plugins_discover(paths=None):
 
             mod_name, mod_ext = os.path.splitext(fname)
 
-            if not mod_ext == ".py":
+            if mod_ext != ".py":
                 continue
 
             try:
@@ -494,12 +497,26 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
         # Apply settings to plugins
-        if hasattr(plugin, "apply_settings"):
+
+        apply_settings_func = getattr(plugin, "apply_settings", None)
+        if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
             # - can be used to target settings from custom settings place
             # - skip default behavior when successful
             try:
-                plugin.apply_settings(project_settings, system_settings)
+                # Support to pass only project settings
+                # - make sure that both settings are passed, when can be
+                #   - that covers cases when *args are in method parameters
+                both_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings, system_settings
+                )
+                project_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings
+                )
+                if not both_supported and project_supported:
+                    plugin.apply_settings(project_settings)
+                else:
+                    plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -533,10 +550,10 @@ def find_close_plugin(close_plugin_name, log):
 def remote_publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
-        Args:
-            log (openpype.lib.Logger)
-            close_plugin_name (str): name of plugin with responsibility to
-                close host app
+    Args:
+        log (Logger)
+        close_plugin_name (str): name of plugin with responsibility to
+            close host app
     """
     # Error exit as soon as any error occurs.
     error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
@@ -845,3 +862,45 @@ def _validate_transient_template(project_name, template_name, anatomy):
         raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
                              " for project \"{}\"."
                          ).format(template_name, project_name))
+
+
+def add_repre_files_for_cleanup(instance, repre):
+    """ Explicitly mark repre files to be deleted.
+
+    Should be used on intermediate files (eg. review, thumbnails) to be
+    explicitly deleted.
+    """
+    files = repre["files"]
+    staging_dir = repre.get("stagingDir")
+    if not staging_dir:
+        return
+
+    if isinstance(files, str):
+        files = [files]
+
+    for file_name in files:
+        expected_file = os.path.join(staging_dir, file_name)
+        instance.context.data["cleanupFullPaths"].append(expected_file)
+
+
+def get_publish_instance_label(instance):
+    """Try to get label from pyblish instance.
+
+    First are used values in instance data under 'label' and 'name' keys. Then
+    is used string conversion of instance object -> 'instance._name'.
+
+    Todos:
+        Maybe 'subset' key could be used too.
+
+    Args:
+        instance (pyblish.api.Instance): Pyblish instance.
+
+    Returns:
+        str: Instance label.
+    """
+
+    return (
+        instance.data.get("label")
+        or instance.data.get("name")
+        or str(instance)
+    )

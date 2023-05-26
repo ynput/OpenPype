@@ -365,7 +365,7 @@ class CameraLoader(plugin.Loader):
         maps = ar.get_assets(filter)
 
         # There should be only one map in the list
-        EditorLevelLibrary.load_level(maps[0].get_full_name())
+        EditorLevelLibrary.load_level(maps[0].get_asset().get_path_name())
 
         level_sequence = sequences[0].get_asset()
 
@@ -513,7 +513,7 @@ class CameraLoader(plugin.Loader):
         map = maps[0]
 
         EditorLevelLibrary.save_all_dirty_levels()
-        EditorLevelLibrary.load_level(map.get_full_name())
+        EditorLevelLibrary.load_level(map.get_asset().get_path_name())
 
         # Remove the camera from the level.
         actors = EditorLevelLibrary.get_all_level_actors()
@@ -523,7 +523,7 @@ class CameraLoader(plugin.Loader):
                 EditorLevelLibrary.destroy_actor(a)
 
         EditorLevelLibrary.save_all_dirty_levels()
-        EditorLevelLibrary.load_level(world.get_full_name())
+        EditorLevelLibrary.load_level(world.get_asset().get_path_name())
 
         # There should be only one sequence in the path.
         sequence_name = sequences[0].asset_name
