@@ -41,11 +41,11 @@ class CollectRender(pyblish.api.InstancePlugin):
             full_render_list = beauty_list
 
         files_by_aov = {
-            "_": beauty_list
+            "beauty": beauty_list
         }
 
         folder = folder.replace("\\", "/")
-        aovs = RenderProducts().get_aovs()
+        aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 
         if "expectedFiles" not in instance.data:
@@ -78,8 +78,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []
 
         data = {
-            "subset": instance.name,
             "asset": asset,
+            "subset": str(instance.name),
             "publish": True,
             "maxversion": str(get_max_version()),
             "imageFormat": img_format,
@@ -95,5 +95,3 @@ class CollectRender(pyblish.api.InstancePlugin):
         }
         instance.data.update(data)
         self.log.info("data: {0}".format(data))
-        files = instance.data["expectedFiles"]
-        self.log.debug("expectedFiles: {0}".format(files))

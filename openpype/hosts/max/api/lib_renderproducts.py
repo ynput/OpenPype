@@ -70,9 +70,18 @@ class RenderProducts(object):
 
         return rgba_render_list, render_elem_list
 
-    def get_aovs(self):
+    def get_aovs(self, container):
         folder = rt.maxFilePath
+        file = rt.maxFileName
         folder = folder.replace("\\", "/")
+        setting = self._project_settings
+        render_folder = get_default_render_folder(setting)
+        filename, ext = os.path.splitext(file)
+
+        output_file = os.path.join(folder,
+                                   render_folder,
+                                   filename,
+                                   container)
         setting = self._project_settings
         img_fmt = setting["max"]["RenderSettings"]["image_format"]   # noqa
 
@@ -80,6 +89,7 @@ class RenderProducts(object):
         endFrame = int(rt.rendEnd) + 1
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
+        render_dict = {}
         if renderer in [
             "ART_Renderer",
             "Redshift_Renderer",
@@ -88,12 +98,22 @@ class RenderProducts(object):
             "Default_Scanline_Renderer",
             "Quicksilver_Hardware_Renderer",
         ]:
-            render_dict = self.get_render_elements_name(
-                folder, startFrame, endFrame, img_fmt)
+            render_name = self.get_render_elements_name()
+            if render_name:
+                for name in render_name:
+                    render_dict.update({
+                        name: self.get_expected_render_elements(
+                        output_file, name, startFrame, endFrame, img_fmt)
+                    })
 
         if renderer == "Arnold":
-            render_dict = self.get_arnold_product_name(
-                folder, startFrame, endFrame, img_fmt)
+            render_name = self.get_arnold_product_name()
+            if render_name:
+                for name in render_name:
+                    render_dict.update({
+                        name: self.get_expected_arnold_product(
+                        output_file, name, startFrame, endFrame, img_fmt)
+                    })
 
         return render_dict
 
@@ -148,9 +168,9 @@ class RenderProducts(object):
 
         return render_dirname
 
-    def get_arnold_product_name(self, folder, startFrame, endFrame, fmt):
-        """Get all the Arnold AOVs"""
-        aov_dict = {}
+    def get_arnold_product_name(self):
+        """Get all the Arnold AOVs name"""
+        aov_name = []
 
         amw = rt.MaxtoAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
@@ -161,20 +181,27 @@ class RenderProducts(object):
         for i in range(aov_group_num):
             # get the specific AOV group
             for aov in aov_mgr.drivers[i].aov_list:
-                for f in range(startFrame, endFrame):
-                    render_element = f"{folder}_{aov.name}.{f}.{fmt}"
-                    render_element = render_element.replace("\\", "/")
-                    aov = str(aov.name)
-                    aov_dict.update({aov: render_element})
+                aov_name.append(aov.name)
+
         # close the AOVs manager window
         amw.close()
 
-        return aov_dict
+        return aov_name
 
-    def get_render_elements_name(self, folder, startFrame, endFrame, fmt):
-        """Get all the render element output files. """
-        render_dict = {}
+    def get_expected_arnold_product(self, folder, name,
+                                    startFrame, endFrame, fmt):
+        """Get all the expected Arnold AOVs"""
+        aov_list = []
+        for f in range(startFrame, endFrame):
+            render_element = f"{folder}_{name}.{f}.{fmt}"
+            render_element = render_element.replace("\\", "/")
+            aov_list.append(render_element)
 
+        return aov_list
+
+    def get_render_elements_name(self):
+        """Get all the render element names. """
+        render_name = []
         render_elem = rt.maxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
         if render_elem_num < 1:
@@ -182,14 +209,21 @@ class RenderProducts(object):
         # get render elements from the renders
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
-            target, renderpass = str(renderlayer_name).split(":")
-            if renderlayer_name.enabled:
-                for f in range(startFrame, endFrame):
-                    render_element = f"{folder}_{renderpass}.{f}.{fmt}"
-                    render_element = render_element.replace("\\", "/")
-                    render_dict.update({renderpass: render_element})
+            if renderlayer_name.enabled or "Cryptomatte" in renderlayer_name:
+                target, renderpass = str(renderlayer_name).split(":")
+                render_name.append(renderpass)
+        return render_name
 
-        return render_dict
+    def get_expected_render_elements(self, folder, name,
+                                     startFrame, endFrame, fmt):
+        """Get all the expected render element output files. """
+        render_elements = []
+        for f in range(startFrame, endFrame):
+            render_element = f"{folder}_{name}.{f}.{fmt}"
+            render_element = render_element.replace("\\", "/")
+            render_elements.append(render_element)
+
+        return render_elements
 
     def image_format(self):
         return self._project_settings["max"]["RenderSettings"]["image_format"]  # noqa
