@@ -130,10 +130,21 @@ def _get_default_template_name(templates):
     return default_template
 
 
+def _template_replacements_to_v3(template):
+    return (
+        template
+        .replace("{folder[name]}", "{asset}")
+        .replace("{product[name]}", "{subset}")
+        .replace("{product[type]}", "{family}")
+    )
+
+
 def _convert_template_item(template):
-    template["folder"] = template.pop("directory")
+    folder = _template_replacements_to_v3(template.pop("directory"))
+    template["folder"] = folder
+    template["file"] = _template_replacements_to_v3(template["file"])
     template["path"] = "/".join(
-        (template["folder"], template["file"])
+        (folder, template["file"])
     )
 
 
