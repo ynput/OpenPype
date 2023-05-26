@@ -220,7 +220,6 @@ def new_representation_doc(
         "parent": version_id,
         "name": name,
         "data": data,
-
         # Imprint shortcut to context for performance reasons.
         "context": context
     }
@@ -708,7 +707,14 @@ class OperationsSession(object):
         return operation
 
 
-def create_project(project_name, project_code, library_project=False):
+def create_project(
+    project_name,
+    project_code,
+    width=None,
+    height=None,
+    fps=None,
+    library_project=False,
+):
     """Create project using OpenPype settings.
 
     This project creation function is not validating project document on
@@ -737,6 +743,13 @@ def create_project(project_name, project_code, library_project=False):
     from openpype.settings import ProjectSettings, SaveWarningExc
     from openpype.pipeline.schema import validate
 
+    if width is None:
+        width = 1920
+    if height is None:
+        height = 1080
+    if fps is None:
+        fps = 25
+    
     if get_project(project_name, fields=["name"]):
         raise ValueError("Project with name \"{}\" already exists".format(
             project_name
@@ -752,7 +765,10 @@ def create_project(project_name, project_code, library_project=False):
         "name": project_name,
         "data": {
             "code": project_code,
-            "library_project": library_project
+            "library_project": library_project,
+            "resolutionWidth": width,
+            "resolutionHeight": height,
+            "fps": fps,
         },
         "schema": CURRENT_PROJECT_SCHEMA
     }
