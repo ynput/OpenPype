@@ -9,7 +9,6 @@ from typing import Dict, List, Union
 import bpy
 import addon_utils
 from openpype.lib import Logger
-from openpype.lib.path_tools import get_version_from_path
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     Anatomy,
