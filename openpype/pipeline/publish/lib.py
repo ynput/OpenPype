@@ -12,7 +12,8 @@ import pyblish.api
 from openpype.lib import (
     Logger,
     import_filepath,
-    filter_profiles
+    filter_profiles,
+    is_func_signature_supported,
 )
 from openpype.settings import (
     get_project_settings,
@@ -498,12 +499,26 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
         # Apply settings to plugins
-        if hasattr(plugin, "apply_settings"):
+
+        apply_settings_func = getattr(plugin, "apply_settings", None)
+        if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
             # - can be used to target settings from custom settings place
             # - skip default behavior when successful
             try:
-                plugin.apply_settings(project_settings, system_settings)
+                # Support to pass only project settings
+                # - make sure that both settings are passed, when can be
+                #   - that covers cases when *args are in method parameters
+                both_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings, system_settings
+                )
+                project_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings
+                )
+                if not both_supported and project_supported:
+                    plugin.apply_settings(project_settings)
+                else:
+                    plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
