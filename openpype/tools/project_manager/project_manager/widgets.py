@@ -31,11 +31,11 @@ class NameTextEdit(QtWidgets.QLineEdit):
 
         idx = self.cursorPosition()
         before_text = text[0:idx]
-        after_text = text[idx:len(text)]
+        after_text = text[idx : len(text)]
         sub_regex = "[^{}]+".format(NAME_ALLOWED_SYMBOLS)
         new_before_text = re.sub(sub_regex, "", before_text)
         new_after_text = re.sub(sub_regex, "", after_text)
-        idx -= (len(before_text) - len(new_before_text))
+        idx -= len(before_text) - len(new_before_text)
 
         self.setText(new_before_text + new_after_text)
         self.setCursorPosition(idx)
@@ -141,6 +141,9 @@ class CreateProjectDialog(QtWidgets.QDialog):
         inputs_widget = QtWidgets.QWidget(self)
         project_name_input = QtWidgets.QLineEdit(inputs_widget)
         project_code_input = QtWidgets.QLineEdit(inputs_widget)
+        project_width_input = QtWidgets.QLineEdit(inputs_widget)
+        project_height_input = QtWidgets.QLineEdit(inputs_widget)
+        project_fps_input = QtWidgets.QLineEdit(inputs_widget)
         library_project_input = QtWidgets.QCheckBox(inputs_widget)
 
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
@@ -148,9 +151,15 @@ class CreateProjectDialog(QtWidgets.QDialog):
         inputs_layout.addRow("Project name:", project_name_input)
         inputs_layout.addRow("Project code:", project_code_input)
         inputs_layout.addRow("Library project:", library_project_input)
+        inputs_layout.addRow("Width:", project_width_input)
+        inputs_layout.addRow("Height:", project_height_input)
+        inputs_layout.addRow("FPS:", project_fps_input)
 
         project_name_label = QtWidgets.QLabel(self)
         project_code_label = QtWidgets.QLabel(self)
+        project_width_label = QtWidgets.QLabel(self)
+        project_height_label = QtWidgets.QLabel(self)
+        project_fps_label = QtWidgets.QLabel(self)
 
         btns_widget = QtWidgets.QWidget(self)
         ok_btn = QtWidgets.QPushButton("Ok", btns_widget)
@@ -166,6 +175,9 @@ class CreateProjectDialog(QtWidgets.QDialog):
         main_layout.addWidget(inputs_widget, 0)
         main_layout.addWidget(project_name_label, 1)
         main_layout.addWidget(project_code_label, 1)
+        main_layout.addWidget(project_width_label, 1)
+        main_layout.addWidget(project_height_label, 1)
+        main_layout.addWidget(project_fps_label, 1)
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
 
@@ -179,9 +191,15 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         self.project_name_label = project_name_label
         self.project_code_label = project_code_label
+        self.project_width_label = project_width_label
+        self.project_height_label = project_height_label
+        self.project_fps_label = project_fps_label
 
         self.project_name_input = project_name_input
         self.project_code_input = project_code_input
+        self.project_width_input = project_width_input
+        self.project_height_input = project_height_input
+        self.project_fps_input = project_fps_input
         self.library_project_input = library_project_input
 
         self.ok_btn = ok_btn
@@ -215,12 +233,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
             is_valid = False
 
         elif value in self.invalid_project_names:
-            message = "Project name \"{}\" already exist".format(value)
+            message = 'Project name "{}" already exist'.format(value)
             is_valid = False
 
         elif not PROJECT_NAME_REGEX.match(value):
             message = (
-                "Project name \"{}\" contain not supported symbols"
+                'Project name "{}" contain not supported symbols'
             ).format(value)
             is_valid = False
 
@@ -237,12 +255,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
             is_valid = False
 
         elif value in self.invalid_project_names:
-            message = "Project code \"{}\" already exist".format(value)
+            message = 'Project code "{}" already exist'.format(value)
             is_valid = False
 
         elif not PROJECT_NAME_REGEX.match(value):
             message = (
-                "Project code \"{}\" contain not supported symbols"
+                'Project code "{}" contain not supported symbols'
             ).format(value)
             is_valid = False
 
@@ -258,14 +276,36 @@ class CreateProjectDialog(QtWidgets.QDialog):
     def _on_cancel_clicked(self):
         self.done(0)
 
+    def _validate_number(self, value: str, value_type: type):
+        try:
+            value = value_type(value)
+            print(value)
+            if value > 0:
+                return value
+        except (ValueError, TypeError):
+            return None
+        
     def _on_ok_clicked(self):
         if not self._project_name_is_valid or not self._project_code_is_valid:
             return
 
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
+        project_width = self._validate_number(
+            self.project_width_input.text(), int)
+        project_height = self._validate_number(
+            self.project_height_input.text(), int)
+        project_fps = self._validate_number(
+            self.project_fps_input.text(), float)
         library_project = self.library_project_input.isChecked()
-        create_project(project_name, project_code, library_project)
+        create_project(
+            project_name,
+            project_code,
+            project_width,
+            project_height,
+            project_fps,
+            library_project,
+        )
 
         self.done(1)
 
@@ -292,6 +332,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
 #   imported from there
 class PixmapLabel(QtWidgets.QLabel):
     """Label resizing image to height of font."""
+
     def __init__(self, pixmap, parent):
         super(PixmapLabel, self).__init__(parent)
         self._empty_pixmap = QtGui.QPixmap(0, 0)
@@ -316,7 +357,7 @@ class PixmapLabel(QtWidgets.QLabel):
                 width,
                 height,
                 QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
+                QtCore.Qt.SmoothTransformation,
             )
         )
 
@@ -327,6 +368,7 @@ class PixmapLabel(QtWidgets.QLabel):
 
 class ConfirmProjectDeletion(QtWidgets.QDialog):
     """Dialog which confirms deletion of a project."""
+
     def __init__(self, project_name, parent):
         super(ConfirmProjectDeletion, self).__init__(parent)
 
@@ -340,18 +382,19 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         message_label = QtWidgets.QLabel(top_widget)
         message_label.setWordWrap(True)
         message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
-        message_label.setText((
-            "<b>WARNING: This cannot be undone.</b><br/><br/>"
-            "Project <b>\"{}\"</b> with all related data will be"
-            " permanently removed from the database. (This action won't remove"
-            " any files on disk.)"
-        ).format(project_name))
+        message_label.setText(
+            (
+                "<b>WARNING: This cannot be undone.</b><br/><br/>"
+                'Project <b>"{}"</b> with all related data will be'
+                " permanently removed from the database. (This action won't remove"
+                " any files on disk.)"
+            ).format(project_name)
+        )
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.addWidget(
-            warning_icon_label, 0,
-            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+            warning_icon_label, 0, QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
         )
         top_layout.addWidget(message_label, 1)
 
@@ -359,7 +402,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         confirm_input = PlaceholderLineEdit(self)
         confirm_input.setPlaceholderText(
-            "Type \"{}\" to confirm...".format(project_name)
+            'Type "{}" to confirm...'.format(project_name)
         )
 
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
@@ -429,6 +472,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
 class SpinBoxScrollFixed(QtWidgets.QSpinBox):
     """QSpinBox which only allow edits change with scroll wheel when active"""
+
     def __init__(self, *args, **kwargs):
         super(SpinBoxScrollFixed, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -442,6 +486,7 @@ class SpinBoxScrollFixed(QtWidgets.QSpinBox):
 
 class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
     """QDoubleSpinBox which only allow edits with scroll wheel when active"""
+
     def __init__(self, *args, **kwargs):
         super(DoubleSpinBoxScrollFixed, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
