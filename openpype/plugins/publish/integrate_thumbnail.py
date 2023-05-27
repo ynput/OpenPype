@@ -20,6 +20,7 @@ import pyblish.api
 
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
+from openpype.pipeline.publish import get_publish_instance_label
 
 InstanceFilterResult = collections.namedtuple(
     "InstanceFilterResult",
@@ -133,7 +134,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         filtered_instances = []
         for instance in context:
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             # Skip instances without published representations
             # - there is no place where to put the thumbnail
             published_repres = instance.data.get("published_representations")
@@ -248,7 +249,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             version_doc = version_docs_by_str_id.get(version_id)
             if not version_doc:
                 self.log.warning((
@@ -339,10 +340,3 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
             ))
 
         op_session.commit()
-
-    def _get_instance_label(self, instance):
-        return (
-            instance.data.get("label")
-            or instance.data.get("name")
-            or "N/A"
-        )
