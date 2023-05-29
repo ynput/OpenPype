@@ -5,23 +5,26 @@ This is resolving index of server lists stored in `deadlineServers` instance
 attribute or using default server if that attribute doesn't exists.
 
 """
+from maya import cmds
+
 import pyblish.api
 
 
 class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
     """Collect Deadline Webservice URL from instance."""
 
-    order = pyblish.api.CollectorOrder + 0.415
+    # Run before collect_render.
+    order = pyblish.api.CollectorOrder + 0.005
     label = "Deadline Webservice from the Instance"
     families = ["rendering", "renderlayer"]
+    hosts = ["maya"]
 
     def process(self, instance):
         instance.data["deadlineUrl"] = self._collect_deadline_url(instance)
         self.log.info(
             "Using {} for submission.".format(instance.data["deadlineUrl"]))
 
-    @staticmethod
-    def _collect_deadline_url(render_instance):
+    def _collect_deadline_url(self, render_instance):
         # type: (pyblish.api.Instance) -> str
         """Get Deadline Webservice URL from render instance.
 
@@ -49,7 +52,15 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
         default_server = render_instance.context.data["defaultDeadline"]
         instance_server = render_instance.data.get("deadlineServers")
         if not instance_server:
+            self.log.debug("Using default server.")
             return default_server
+
+        # Get instance server as sting.
+        if isinstance(instance_server, int):
+            instance_server = cmds.getAttr(
+                "{}.deadlineServers".format(render_instance.data["objset"]),
+                asString=True
+            )
 
         default_servers = deadline_settings["deadline_urls"]
         project_servers = (
@@ -58,15 +69,23 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
             ["deadline"]
             ["deadline_servers"]
         )
-        deadline_servers = {
+        if not project_servers:
+            self.log.debug("Not project servers found. Using default servers.")
+            return default_servers[instance_server]
+
+        project_enabled_servers = {
             k: default_servers[k]
             for k in project_servers
             if k in default_servers
         }
-        # This is Maya specific and may not reflect real selection of deadline
-        #   url as dictionary keys in Python 2 are not ordered
-        return deadline_servers[
-            list(deadline_servers.keys())[
-                int(render_instance.data.get("deadlineServers"))
-            ]
-        ]
+
+        msg = (
+            "\"{}\" server on instance is not enabled in project settings."
+            " Enabled project servers:\n{}".format(
+                instance_server, project_enabled_servers
+            )
+        )
+        assert instance_server in project_enabled_servers, msg
+
+        self.log.debug("Using project approved server.")
+        return project_enabled_servers[instance_server]
