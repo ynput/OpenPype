@@ -618,6 +618,14 @@ def get_thumbnail(
 
 
 def get_thumbnails(project_name, thumbnail_contexts, fields=None):
+    """Get thumbnail entities.
+
+    Warning:
+        This function is not OpenPype compatible. There is none usage of this
+            function in codebase so there is nothing to convert. The previous
+            implementation cannot be AYON compatible without entity types.
+    """
+
     thumbnail_items = set()
     for thumbnail_context in thumbnail_contexts:
         thumbnail_id, entity_type, entity_id = thumbnail_context
