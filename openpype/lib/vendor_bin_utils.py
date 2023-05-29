@@ -421,11 +421,11 @@ def _chrome_executable_validation(filepath):
 
 
 def get_chrome_tool_path(tool="chrome"):
-    """Path to vendorized FFmpeg executable.
+    """Path to Chrome executable.
 
     Args:
         tool (string): Tool name (ffmpeg, ffprobe, ...).
-            Default is "ffmpeg".
+            Default is "chrome".
 
     Returns:
         str: Full path to ffmpeg executable.
