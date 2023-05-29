@@ -37,5 +37,5 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        container= instance.data.get("instance_node")
+        container = instance.data.get("instance_node")
         RenderSettings().render_output(container)
