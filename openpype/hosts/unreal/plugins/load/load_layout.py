@@ -5,13 +5,16 @@ import collections
 from pathlib import Path
 
 import unreal
-from unreal import EditorAssetLibrary
-from unreal import EditorLevelLibrary
-from unreal import EditorLevelUtils
-from unreal import AssetToolsHelpers
-from unreal import FBXImportType
-from unreal import MovieSceneLevelVisibilityTrack
-from unreal import MovieSceneSubTrack
+from unreal import (
+    EditorAssetLibrary,
+    EditorLevelLibrary,
+    EditorLevelUtils,
+    AssetToolsHelpers,
+    FBXImportType,
+    MovieSceneLevelVisibilityTrack,
+    MovieSceneSubTrack,
+    LevelSequenceEditorBlueprintLibrary as LevelSequenceLib,
+)
 
 from openpype.client import get_asset_by_name, get_representations
 from openpype.pipeline import (
@@ -661,6 +664,13 @@ class LayoutLoader(plugin.Loader):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
+        curr_level_sequence = LevelSequenceLib.get_current_level_sequence()
+        curr_time = LevelSequenceLib.get_current_time()
+        is_cam_lock = LevelSequenceLib.is_camera_cut_locked_to_viewport()
+
+        editor_subsystem = unreal.UnrealEditorSubsystem()
+        vp_loc, vp_rot = editor_subsystem.get_level_viewport_camera_info()
+
         root = "/Game/Ayon"
 
         asset_dir = container.get('namespace')
@@ -741,6 +751,13 @@ class LayoutLoader(plugin.Loader):
             EditorLevelLibrary.load_level(master_level)
         elif prev_level:
             EditorLevelLibrary.load_level(prev_level)
+
+        if curr_level_sequence:
+            LevelSequenceLib.open_level_sequence(curr_level_sequence)
+            LevelSequenceLib.set_current_time(curr_time)
+            LevelSequenceLib.set_lock_camera_cut_to_viewport(is_cam_lock)
+
+        editor_subsystem.set_level_viewport_camera_info(vp_loc, vp_rot)
 
     def remove(self, container):
         """

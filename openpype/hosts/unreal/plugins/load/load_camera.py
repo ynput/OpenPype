@@ -3,9 +3,12 @@
 from pathlib import Path
 
 import unreal
-from unreal import EditorAssetLibrary
-from unreal import EditorLevelLibrary
-from unreal import EditorLevelUtils
+from unreal import (
+    EditorAssetLibrary,
+    EditorLevelLibrary,
+    EditorLevelUtils,
+    LevelSequenceEditorBlueprintLibrary as LevelSequenceLib,
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AYON_CONTAINER_ID,
@@ -259,6 +262,13 @@ class CameraLoader(plugin.Loader):
     def update(self, container, representation):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
+        curr_level_sequence = LevelSequenceLib.get_current_level_sequence()
+        curr_time = LevelSequenceLib.get_current_time()
+        is_cam_lock = LevelSequenceLib.is_camera_cut_locked_to_viewport()
+
+        editor_subsystem = unreal.UnrealEditorSubsystem()
+        vp_loc, vp_rot = editor_subsystem.get_level_viewport_camera_info()
+
         asset_dir = container.get('namespace')
 
         EditorLevelLibrary.save_current_level()
@@ -415,6 +425,13 @@ class CameraLoader(plugin.Loader):
             EditorAssetLibrary.save_asset(a)
 
         EditorLevelLibrary.load_level(master_level)
+
+        if curr_level_sequence:
+            LevelSequenceLib.open_level_sequence(curr_level_sequence)
+            LevelSequenceLib.set_current_time(curr_time)
+            LevelSequenceLib.set_lock_camera_cut_to_viewport(is_cam_lock)
+
+        editor_subsystem.set_level_viewport_camera_info(vp_loc, vp_rot)
 
     def remove(self, container):
         asset_dir = container.get('namespace')
