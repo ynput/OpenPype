@@ -78,7 +78,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data["plugin"]
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
-
+        job_info.EnableAutoTimeout = True
         # Deadline requires integers in frame range
         frames = "{start}-{end}".format(
             start=int(instance.data["frameStart"]),
@@ -207,9 +207,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         rgb_bname = os.path.basename(output_beauty)
         dir = os.path.dirname(first_file)
-        plugin_data["RenderOutput"] = f"{dir}/{rgb_bname}"
-
+        beauty_name =  f"{dir}/{rgb_bname}"
+        beauty_name = beauty_name.replace("\\", "/")
+        plugin_data["RenderOutput"] = beauty_name
+        # as 3dsmax has version with different languages
+        plugin_data["Language"] = "ENU"
         renderer_class = get_current_renderer()
+
         renderer = str(renderer_class).split(":")[0]
         if renderer in [
             "ART_Renderer",
@@ -223,12 +227,83 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             for i, element in enumerate(render_elem_list):
                 elem_bname = os.path.basename(element)
                 new_elem = f"{dir}/{elem_bname}"
+                new_elem = new_elem.replace("/", "\\")
                 plugin_data["RenderElementOutputFilename%d" % i] = new_elem   # noqa
+
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    def from_published_scene(self, replace_in_path=True):
+        instance = self._instance
+        workfile_instance = self._get_workfile_instance(instance.context)
+        if workfile_instance is None:
+            return
+
+        # determine published path from Anatomy.
+        template_data = workfile_instance.data.get("anatomyData")
+        rep = workfile_instance.data["representations"][0]
+        template_data["representation"] = rep.get("name")
+        template_data["ext"] = rep.get("ext")
+        template_data["comment"] = None
+
+        anatomy = instance.context.data['anatomy']
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        template_filled = template_obj.format_strict(template_data)
+        file_path = os.path.normpath(template_filled)
+
+        self.log.info("Using published scene for render {}".format(file_path))
+
+        if not os.path.exists(file_path):
+            self.log.error("published scene does not exist!")
+            raise
+
+        if not replace_in_path:
+            return file_path
+
+        # now we need to switch scene in expected files
+        # because <scene> token will now point to published
+        # scene file and that might differ from current one
+        def _clean_name(path):
+            return os.path.splitext(os.path.basename(path))[0]
+
+        new_scene = _clean_name(file_path)
+        orig_scene = _clean_name(instance.data["AssetName"])
+        expected_files = instance.data.get("expectedFiles")
+
+        if isinstance(expected_files[0], dict):
+            # we have aovs and we need to iterate over them
+            new_exp = {}
+            for aov, files in expected_files[0].items():
+                replaced_files = []
+                for f in files:
+                    replaced_files.append(
+                        str(f).replace(orig_scene, new_scene)
+                    )
+                new_exp[aov] = replaced_files
+            # [] might be too much here, TODO
+            instance.data["expectedFiles"] = [new_exp]
+        else:
+            new_exp = []
+            for f in expected_files:
+                new_exp.append(
+                    str(f).replace(orig_scene, new_scene)
+                )
+            instance.data["expectedFiles"] = new_exp
+
+        metadata_folder = instance.data.get("publishRenderMetadataFolder")
+        if metadata_folder:
+            metadata_folder = metadata_folder.replace(orig_scene,
+                                                      new_scene)
+            instance.data["publishRenderMetadataFolder"] = metadata_folder
+
+        self.log.info("Scene name was switched {} -> {}".format(
+            orig_scene, new_scene
+        ))
+
+        return file_path
 
     @staticmethod
     def _iter_expected_files(exp):

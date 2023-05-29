@@ -29,19 +29,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         context.data['currentFile'] = current_file
         asset = get_current_asset_name()
 
-        beauty_list, aov_list = RenderProducts().render_product(instance.name)
-        full_render_list = list()
-        if aov_list:
-            full_render_list.extend(iter(beauty_list))
-            full_render_list.extend(iter(aov_list))
-
-        else:
-            full_render_list = beauty_list
-
-        files_by_aov = {
-            "beauty": beauty_list
-        }
-
+        files_by_aov = RenderProducts().get_beauty(instance.name)
         folder = folder.replace("\\", "/")
         aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
@@ -67,14 +55,14 @@ class CollectRender(pyblish.api.InstancePlugin):
         # OCIO config not support in
         # most of the 3dsmax renderers
         # so this is currently hard coded
-        setting = instance.context.data["project_settings"]
-        image_io = setting["global"]["imageio"]
-        instance.data["colorspaceConfig"] = image_io["ocio_config"]["filepath"][0]     # noqa
+        # TODO: add options for redshift/vray ocio config
+        instance.data["colorspaceConfig"] = ""
         instance.data["colorspaceDisplay"] = "sRGB"
-        instance.data["colorspaceView"] = "ACES 1.0"
+        instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
         instance.data["renderProducts"] = colorspace.ARenderProduct()
+        instance.data["publishJobState"] = "Suspended"
         instance.data["attachTo"] = []
-
+        # also need to get the render dir for coversion
         data = {
             "asset": asset,
             "subset": str(instance.name),
@@ -84,7 +72,6 @@ class CollectRender(pyblish.api.InstancePlugin):
             "family": 'maxrender',
             "families": ['maxrender'],
             "source": filepath,
-            "files": full_render_list,
             "plugin": "3dsmax",
             "frameStart": int(rt.rendStart),
             "frameEnd": int(rt.rendEnd),
@@ -93,3 +80,4 @@ class CollectRender(pyblish.api.InstancePlugin):
         }
         instance.data.update(data)
         self.log.info("data: {0}".format(data))
+        self.log.debug("expectedFiles:{0}".format(instance.data["expectedFiles"]))
