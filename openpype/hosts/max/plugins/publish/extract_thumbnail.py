@@ -1,4 +1,5 @@
 import os
+import tempfile
 import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
@@ -16,15 +17,22 @@ class ExtractThumbnail(publish.Extractor):
 
     def process(self, instance):
         self.log.info("Extracting Thumbnail ...")
-        staging_dir = self.staging_dir(instance)
+
+        # TODO: Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            f"Create temp directory {tmp_staging} for thumbnail"
+        )
+        instance.context.data["cleanupFullPaths"].append(tmp_staging)
         filename = "{name}..jpg".format(**instance.data)
-        filepath = os.path.join(staging_dir, filename)
+        filepath = os.path.join(tmp_staging, filename)
         filepath = filepath.replace("\\", "/")
         thumbnail = self.get_filename(instance.name)
 
         self.log.info(
             "Writing Thumbnail to"
-            " '%s' to '%s'" % (filename, staging_dir))
+            " '%s' to '%s'" % (filename, tmp_staging))
 
         preview_arg = self.set_preview_arg(
             instance, filepath)
@@ -34,7 +42,7 @@ class ExtractThumbnail(publish.Extractor):
             "name": "thumbnail",
             "ext": "jpg",
             "files": thumbnail,
-            "stagingDir": staging_dir,
+            "stagingDir": tmp_staging,
             "thumbnail": True
         }
 
