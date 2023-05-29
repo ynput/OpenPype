@@ -72,7 +72,7 @@ class RenderProducts(object):
             render_name = self.get_render_elements_name()
             if render_name:
                 rs_AovFiles = rt.Redshift_Renderer().SeparateAovFiles
-                if rs_AovFiles != True and img_fmt == "exr":
+                if rs_AovFiles == False and img_fmt == "exr":
                     for name in render_name:
                         if name == "RsCryptomatte":
                             render_dict.update({
@@ -98,7 +98,8 @@ class RenderProducts(object):
                     })
         if renderer in [
             "V_Ray_6_Hotfix_3",
-            "V_Ray_GPU_6_Hotfix_3"]:
+            "V_Ray_GPU_6_Hotfix_3"
+            ]:
             if img_fmt !="exr":
                 render_name = self.get_render_elements_name()
                 if render_name:
