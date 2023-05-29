@@ -197,10 +197,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         else:
             plugin_data["DisableMultipass"] = 1
 
-        files = instance.data.get("files")
+        files = instance.data.get("expectedFiles")
         if not files:
             raise RuntimeError("No render elements found")
-        old_output_dir = os.path.dirname(files[0])
+        first_file = next(self._iter_expected_files(files))
+        old_output_dir = os.path.dirname(first_file)
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
         files = instance.data["expectedFiles"]
