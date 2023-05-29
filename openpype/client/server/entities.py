@@ -281,7 +281,7 @@ def get_subsets(
 
 def get_subset_families(project_name, subset_ids=None):
     con = get_server_api_connection()
-    return con.get_project_product_type_names(project_name, subset_ids)
+    return con.get_product_type_names(project_name, subset_ids)
 
 
 def get_version_by_id(project_name, version_id, fields=None):

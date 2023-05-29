@@ -375,7 +375,18 @@ def prepare_representation_update_data(old_doc, new_doc, replace=True):
         Dict[str, Any]: Changes between old and new document.
     """
 
-    return _prepare_update_data(old_doc, new_doc, replace)
+    changes = _prepare_update_data(old_doc, new_doc, replace)
+    context = changes.get("data", {}).get("context")
+    # Make sure that both 'family' and 'subset' are in changes if
+    #   one of them changed (they'll both become 'product').
+    if (
+        context
+        and ("family" in context or "subset" in context)
+    ):
+        context["family"] = new_doc["data"]["context"]["family"]
+        context["subset"] = new_doc["data"]["context"]["subset"]
+
+    return changes
 
 
 def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):

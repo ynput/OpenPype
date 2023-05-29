@@ -660,6 +660,16 @@ def convert_v4_representation_to_v3(representation):
         context = representation["context"]
         if isinstance(context, six.string_types):
             context = json.loads(context)
+
+        if "folder" in context:
+            _c_folder = context.pop("folder")
+            context["asset"] = _c_folder["name"]
+
+        if "product" in context:
+            _c_product = context.pop("product")
+            context["family"] = _c_product["type"]
+            context["subset"] = _c_product["name"]
+
         output["context"] = context
 
     if "files" in representation:
@@ -699,6 +709,14 @@ def convert_v4_representation_to_v3(representation):
         if key in representation:
             output_data[data_key] = representation[key]
 
+    if "template" in output_data:
+        output_data["template"] = (
+            output_data["template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+            .replace("{product[type]}", "{family}")
+        )
+
     output["data"] = output_data
 
     return output
@@ -727,7 +745,7 @@ def workfile_info_fields_v3_to_v4(fields):
 
 def convert_v4_workfile_info_to_v3(workfile_info, task):
     output = {
-        "type": "representation",
+        "type": "workfile",
         "schema": CURRENT_WORKFILE_INFO_SCHEMA,
     }
     if "id" in workfile_info:
@@ -938,12 +956,28 @@ def convert_create_representation_to_v4(representation, con):
         new_files.append(new_file_item)
 
     converted_representation["files"] = new_files
+
+    context = representation["context"]
+    context["folder"] = {
+        "name": context.pop("asset", None)
+    }
+    context["product"] = {
+        "type": context.pop("family", None),
+        "name": context.pop("subset", None),
+    }
+
     attribs = {}
     data = {
-        "context": representation["context"],
+        "context": context,
     }
 
     representation_data = representation["data"]
+    representation_data["template"] = (
+        representation_data["template"]
+        .replace("{asset}", "{folder[name]}")
+        .replace("{subset}", "{product[name]}")
+        .replace("{family}", "{product[type]}")
+    )
 
     for key, value in representation_data.items():
         if key not in representation_attributes:
@@ -1226,6 +1260,14 @@ def convert_update_representation_to_v4(
             else:
                 new_data[key] = value
 
+    if "template" in attribs:
+        attribs["template"] = (
+            attribs["template"]
+            .replace("{asset}", "{folder[name]}")
+            .replace("{family}", "{product[type]}")
+            .replace("{subset}", "{product[name]}")
+        )
+
     if "name" in update_data:
         new_update_data["name"] = update_data["name"]
 
@@ -1240,7 +1282,16 @@ def convert_update_representation_to_v4(
         new_update_data["versionId"] = update_data["parent"]
 
     if "context" in update_data:
-        new_data["context"] = update_data["context"]
+        context = update_data["context"]
+        if "asset" in context:
+            context["folder"] = {"name": context.pop("asset")}
+
+        if "family" in context or "subset" in context:
+            context["product"] = {
+                "name": context.pop("subset"),
+                "type": context.pop("family"),
+            }
+        new_data["context"] = context
 
     if "files" in update_data:
         new_files = update_data["files"]
