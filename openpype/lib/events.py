@@ -6,10 +6,9 @@ import inspect
 import logging
 import weakref
 from uuid import uuid4
-try:
-    from weakref import WeakMethod
-except Exception:
-    from openpype.lib.python_2_comp import WeakMethod
+
+from .python_2_comp import WeakMethod
+from .python_module_tools import is_func_signature_supported
 
 
 class MissingEventSystem(Exception):
@@ -80,40 +79,8 @@ class EventCallback(object):
 
         # Get expected arguments from function spec
         # - positional arguments are always preferred
-        expect_args = False
-        expect_kwargs = False
-        fake_event = "fake"
-        if hasattr(inspect, "signature"):
-            # Python 3 using 'Signature' object where we try to bind arg
-            #   or kwarg. Using signature is recommended approach based on
-            #   documentation.
-            sig = inspect.signature(func)
-            try:
-                sig.bind(fake_event)
-                expect_args = True
-            except TypeError:
-                pass
-
-            try:
-                sig.bind(event=fake_event)
-                expect_kwargs = True
-            except TypeError:
-                pass
-
-        else:
-            # In Python 2 'signature' is not available so 'getcallargs' is used
-            # - 'getcallargs' is marked as deprecated since Python 3.0
-            try:
-                inspect.getcallargs(func, fake_event)
-                expect_args = True
-            except TypeError:
-                pass
-
-            try:
-                inspect.getcallargs(func, event=fake_event)
-                expect_kwargs = True
-            except TypeError:
-                pass
+        expect_args = is_func_signature_supported(func, "fake")
+        expect_kwargs = is_func_signature_supported(func, event="fake")
 
         self._func_ref = func_ref
         self._func_name = func_name

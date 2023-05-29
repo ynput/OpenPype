@@ -1,7 +1,9 @@
 import os
 import json
+
 import appdirs
 import requests
+
 from openpype.modules import OpenPypeModule, ITrayModule
 
 
@@ -110,16 +112,10 @@ class MusterModule(OpenPypeModule, ITrayModule):
         self.save_credentials(token)
 
     def save_credentials(self, token):
-        """
-        Save credentials to JSON file
-        """
-        data = {
-            'token': token
-        }
+        """Save credentials to JSON file."""
 
-        file = open(self.cred_path, 'w')
-        file.write(json.dumps(data))
-        file.close()
+        with open(self.cred_path, "w") as f:
+            json.dump({'token': token}, f)
 
     def show_login(self):
         """

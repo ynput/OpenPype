@@ -1069,8 +1069,8 @@
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "RESOLVE_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
-                "darwin": "~/Library/Python/3.6/bin",
-                "linux": "/opt/Python/3.6/bin"
+                "darwin": "/Library/Frameworks/Python.framework/Versions/3.6",
+                "linux": "/opt/Python/3.6"
             }
         },
         "variants": {
@@ -1476,6 +1476,33 @@
                     "linux": []
                 },
                 "environment": {}
+            }
+        }
+    },
+    "substancepainter": {
+        "enabled": true,
+        "label": "Substance Painter",
+        "icon": "app_icons/substancepainter.png",
+        "host_name": "substancepainter",
+        "environment": {},
+        "variants": {
+            "8-2-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "8-2-0": "8.2.0"
             }
         }
     },

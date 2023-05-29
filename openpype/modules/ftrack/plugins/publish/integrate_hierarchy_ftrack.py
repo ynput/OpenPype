@@ -378,7 +378,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     existing_tasks.append(task_name_low)
 
                     for instance in instances_by_task_name[task_name_low]:
-                        instance["ftrackTask"] = child
+                        instance.data["ftrackTask"] = child
 
             for task_name in tasks:
                 task_type = tasks[task_name]["type"]

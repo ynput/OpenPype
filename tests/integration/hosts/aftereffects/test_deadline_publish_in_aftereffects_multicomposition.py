@@ -9,6 +9,9 @@ log = logging.getLogger("test_publish_in_aftereffects")
 class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestClass):  # noqa
     """est case for DL publishing in AfterEffects with multiple compositions.
 
+        Workfile contains 2 prepared `render` instances. First has review set,
+        second doesn't.
+
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
@@ -68,7 +71,7 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
                                     name="renderTest_taskMain2"))
 
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 7))
+            DBAssert.count_of_types(dbcon, "representation", 5))
 
         additional_args = {"context.subset": "workfileTest_task",
                            "context.ext": "aep"}
@@ -105,13 +108,13 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
         additional_args = {"context.subset": "renderTest_taskMain2",
                            "name": "thumbnail"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 0,
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain2",
                            "name": "png_exr"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 0,
                                     additional_args=additional_args))
 
         assert not any(failures)
