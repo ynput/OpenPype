@@ -30,12 +30,14 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
         filename, ext = os.path.splitext(file)
         if filename not in rt.rendOutputFilename:
             raise PublishValidationError(
-                "Directory of RenderOutput doesn't "
-                "have with the current Max SceneName "
-                "please repair to rename the folder!"
+                "Render output folder "
+                "doesn't match the max scene name! "
+                "Use Repair action to "
+                "fix the folder file path.."
             )
 
     @classmethod
     def repair(cls, instance):
         container = instance.data.get("instance_node")
         RenderSettings().render_output(container)
+        cls.log.debug("Reset the render output folder...")
