@@ -36,10 +36,6 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
 
         """
 
-        if AYON_SERVER_ENABLED:
-            self.log.info("Skipping, in AYON mode")
-            return
-
         workfile = None
         publishing = []
 
@@ -139,3 +135,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
                 {"_id": version_doc["_id"]},
                 {"$set": {"data.inputLinks": input_links}}
             )
+
+
+if AYON_SERVER_ENABLED:
+    del IntegrateInputLinks
