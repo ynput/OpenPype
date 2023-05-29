@@ -207,7 +207,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         rgb_bname = os.path.basename(output_beauty)
         dir = os.path.dirname(first_file)
-        beauty_name =  f"{dir}/{rgb_bname}"
+        beauty_name = f"{dir}/{rgb_bname}"
         beauty_name = beauty_name.replace("\\", "/")
         plugin_data["RenderOutput"] = beauty_name
         # as 3dsmax has version with different languages

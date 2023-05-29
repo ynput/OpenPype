@@ -65,7 +65,8 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_render_elements(
-                            output_file, name, startFrame, endFrame, img_fmt)
+                            output_file, name, startFrame,
+                            endFrame, img_fmt)
                     })
         if renderer == "Redshift_Renderer":
             render_name = self.get_render_elements_name()
@@ -76,13 +77,15 @@ class RenderProducts(object):
                         if name == "RsCryptomatte":
                             render_dict.update({
                             name: self.get_expected_render_elements(
-                                output_file, name, startFrame, endFrame, img_fmt)
+                                output_file, name, startFrame,
+                                endFrame, img_fmt)
                         })
                 else:
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                                output_file, name, startFrame, endFrame, img_fmt)
+                                output_file, name, startFrame,
+                                endFrame, img_fmt)
                         })
 
         if renderer == "Arnold":
@@ -95,15 +98,15 @@ class RenderProducts(object):
                     })
         if renderer in [
             "V_Ray_6_Hotfix_3",
-            "V_Ray_GPU_6_Hotfix_3"
-        ]:
+            "V_Ray_GPU_6_Hotfix_3"]:
             if img_fmt !="exr":
                 render_name = self.get_render_elements_name()
                 if render_name:
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                                output_file, name, startFrame, endFrame, img_fmt)
+                                output_file, name, startFrame,
+                                endFrame, img_fmt)      # noqa
                         })
 
         return render_dict

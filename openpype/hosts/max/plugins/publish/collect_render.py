@@ -80,4 +80,3 @@ class CollectRender(pyblish.api.InstancePlugin):
         }
         instance.data.update(data)
         self.log.info("data: {0}".format(data))
-        self.log.debug("expectedFiles:{0}".format(instance.data["expectedFiles"]))
