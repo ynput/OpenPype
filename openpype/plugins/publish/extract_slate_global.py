@@ -47,9 +47,12 @@ class SlateCreator:
         staging_dir="",
         staging_subfolder="",
         data=None,
+        log=None,
     ):
         self.data = data.copy() if data else {}
-        self.log = logging.getLogger(self.__class__.__name__)
+        if log is None:
+            log = logging.getLogger(self.__class__.__name__)
+        self.log = log
         self.set_template_paths(template_path, resources_path=resources_path)
         self.set_staging_dir(staging_dir, subfolder=staging_subfolder)
         self.read_template()
@@ -391,6 +394,7 @@ class ExtractSlateGlobal(publish.Extractor):
             template_path=slate_data["slate_template_path"],
             resources_path=slate_data["slate_resources_path"],
             data=common_data,
+            log=self.log,
         )
 
         # loop through representations to find thumbnail path
