@@ -89,10 +89,7 @@ class CameraLoader(plugin.Loader):
             hierarchy_dir_list.append(hierarchy_dir)
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
-        else:
-            asset_name = "{}".format(name)
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
 
@@ -106,22 +103,14 @@ class CameraLoader(plugin.Loader):
             # Get highest number to make a unique name
             folders = [a for a in asset_content
                        if a[-1] == "/" and f"{name}_" in a]
-            f_numbers = []
-            for f in folders:
-                # Get number from folder name. Splits the string by "_" and
-                # removes the last element (which is a "/").
-                f_numbers.append(int(f.split("_")[-1][:-1]))
+            # Get number from folder name. Splits the string by "_" and
+            # removes the last element (which is a "/").
+            f_numbers = [int(f.split("_")[-1][:-1]) for f in folders]
             f_numbers.sort()
-            if not f_numbers:
-                unique_number = 1
-            else:
-                unique_number = f_numbers[-1] + 1
+            unique_number = f_numbers[-1] + 1 if f_numbers else 1
 
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{hierarchy_dir}/{asset}/{name}_{unique_number:02d}", suffix="")
-
-        asset_path = Path(asset_dir)
-        asset_path_parent = str(asset_path.parent.as_posix())
 
         container_name += suffix
 
@@ -163,17 +152,17 @@ class CameraLoader(plugin.Loader):
                     asset).get_class().get_name() == 'LevelSequence'
             ]
 
-            if not existing_sequences:
+            if existing_sequences:
+                for seq in existing_sequences:
+                    sequences.append(seq.get_asset())
+                    frame_ranges.append((
+                        seq.get_asset().get_playback_start(),
+                        seq.get_asset().get_playback_end()))
+            else:
                 sequence, frame_range = generate_sequence(h, h_dir)
 
                 sequences.append(sequence)
                 frame_ranges.append(frame_range)
-            else:
-                for e in existing_sequences:
-                    sequences.append(e.get_asset())
-                    frame_ranges.append((
-                        e.get_asset().get_playback_start(),
-                        e.get_asset().get_playback_end()))
 
         EditorAssetLibrary.make_directory(asset_dir)
 
@@ -252,8 +241,7 @@ class CameraLoader(plugin.Loader):
             "parent": context["representation"]["parent"],
             "family": context["representation"]["context"]["family"]
         }
-        imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+        imprint(f"{asset_dir}/{container_name}", data)
 
         EditorLevelLibrary.save_all_dirty_levels()
         EditorLevelLibrary.load_level(master_level)
@@ -415,8 +403,7 @@ class CameraLoader(plugin.Loader):
             "representation": str(representation["_id"]),
             "parent": str(representation["parent"])
         }
-        imprint(
-            "{}/{}".format(asset_dir, container.get('container_name')), data)
+        imprint(f"{asset_dir}/{container.get('container_name')}", data)
 
         EditorLevelLibrary.save_current_level()
 
@@ -514,10 +501,8 @@ class CameraLoader(plugin.Loader):
                         break
                     sequences.append(ss.get_sequence())
                 # Update subscenes indexes.
-                i = 0
-                for ss in sections:
+                for i, ss in enumerate(sections):
                     ss.set_row_index(i)
-                    i += 1
 
             if visibility_track:
                 sections = visibility_track.get_sections()
