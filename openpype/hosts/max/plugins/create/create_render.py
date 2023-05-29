@@ -2,7 +2,6 @@
 """Creator plugin for creating camera."""
 import os
 from openpype.hosts.max.api import plugin
-from openpype.lib import BoolDef
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
