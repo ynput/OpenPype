@@ -10,7 +10,6 @@ from openpype.hosts.max.api import lib
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
-
     """Load rs files with Redshift Proxy"""
 
     label = "Load Redshift Proxy"
