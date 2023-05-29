@@ -232,7 +232,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
-                "separateAovFiles", False)
+                "separateAovFiles")
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)

@@ -47,10 +47,8 @@ class CreateRender(plugin.MaxCreator):
 
     def get_pre_create_attr_defs(self):
         attrs = super(CreateRender, self).get_pre_create_attr_defs()
-
         return attrs + [
             BoolDef("separateAovFiles",
                     label="Separate Aov Files",
-                    default=False),
-
+                    default=False)
         ]
