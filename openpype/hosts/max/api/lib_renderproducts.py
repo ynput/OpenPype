@@ -100,7 +100,7 @@ class RenderProducts(object):
             "V_Ray_6_Hotfix_3",
             "V_Ray_GPU_6_Hotfix_3"
         ]:
-            if img_fmt !="exr":
+            if img_fmt != "exr":
                 render_name = self.get_render_elements_name()
                 if render_name:
                     for name in render_name:
