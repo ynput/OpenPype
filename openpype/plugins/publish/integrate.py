@@ -163,6 +163,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Instance is marked to be processed on farm. Skipping")
             return
 
+        # Instance is marked to not get integrated
+        if not instance.data.get("integrate", True):
+            self.log.info("Instance is marked to skip integrating. Skipping")
+            return
+
         filtered_repres = self.filter_representations(instance)
         # Skip instance if there are not representations to integrate
         #   all representations should not be integrated
@@ -262,7 +267,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
@@ -475,7 +480,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 update_data
             )
 
-        self.log.info("Prepared subset: {}".format(subset_name))
+        self.log.debug("Prepared subset: {}".format(subset_name))
         return subset_doc
 
     def prepare_version(self, instance, op_session, subset_doc, project_name):
@@ -516,7 +521,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 project_name, version_doc["type"], version_doc
             )
 
-        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
+        self.log.debug(
+            "Prepared version: v{0:03d}".format(version_doc["name"])
+        )
 
         return version_doc
 

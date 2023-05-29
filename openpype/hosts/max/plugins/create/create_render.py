@@ -27,6 +27,11 @@ class CreateRender(plugin.MaxCreator):
         # for additional work on the node:
         # instance_node = rt.getNodeByName(instance.get("instance_node"))
 
+        # make sure the render dialog is closed
+        # for the update of resolution
+        # Changing the Render Setup dialog settings should be done
+        # with the actual Render Setup dialog in a closed state.
+
         # set viewport camera for rendering(mandatory for deadline)
         RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)

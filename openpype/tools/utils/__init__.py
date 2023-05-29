@@ -1,12 +1,16 @@
+from .layouts import FlowLayout
 from .widgets import (
     FocusSpinBox,
     FocusDoubleSpinBox,
+    ComboBox,
     CustomTextComboBox,
     PlaceholderLineEdit,
+    ExpandingTextEdit,
     BaseClickableFrame,
     ClickableFrame,
     ClickableLabel,
     ExpandBtn,
+    ClassicExpandBtn,
     PixmapLabel,
     IconButton,
     PixmapButton,
@@ -36,14 +40,19 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "FlowLayout",
+
     "FocusSpinBox",
     "FocusDoubleSpinBox",
+    "ComboBox",
     "CustomTextComboBox",
     "PlaceholderLineEdit",
+    "ExpandingTextEdit",
     "BaseClickableFrame",
     "ClickableFrame",
     "ClickableLabel",
     "ExpandBtn",
+    "ClassicExpandBtn",
     "PixmapLabel",
     "IconButton",
     "PixmapButton",
