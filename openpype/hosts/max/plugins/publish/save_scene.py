@@ -18,9 +18,4 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
         file = rt.maxFileName
         current = os.path.join(folder, file)
         assert context.data["currentFile"] == current
-
-        if rt.checkForSave():
-            self.log.debug("Skipping file save as there "
-                           "are no modifications..")
-            return
         rt.saveMaxFile(current)

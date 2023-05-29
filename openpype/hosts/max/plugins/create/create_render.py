@@ -2,6 +2,7 @@
 """Creator plugin for creating camera."""
 import os
 from openpype.hosts.max.api import plugin
+from openpype.lib import BoolDef
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
@@ -18,6 +19,9 @@ class CreateRender(plugin.MaxCreator):
         file = rt.maxFileName
         filename, _ = os.path.splitext(file)
         instance_data["AssetName"] = filename
+        instance_data["separateAovFiles"] = (
+            pre_create_data.get("separateAovFiles"))
+
         instance = super(CreateRender, self).create(
             subset_name,
             instance_data,
@@ -40,3 +44,13 @@ class CreateRender(plugin.MaxCreator):
         RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
+
+    def get_pre_create_attr_defs(self):
+        attrs = super(CreateRender, self).get_pre_create_attr_defs()
+
+        return attrs + [
+            BoolDef("separateAovFiles",
+                    label="Separate Aov Files",
+                    default=False),
+
+        ]

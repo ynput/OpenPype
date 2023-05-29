@@ -38,7 +38,7 @@ class RenderProducts(object):
         }
         return render_dict
 
-    def get_aovs(self, container):
+    def get_aovs(self, container, instance):
         render_dir = os.path.dirname(rt.rendOutputFilename)
 
         output_file = os.path.join(render_dir,
@@ -71,7 +71,7 @@ class RenderProducts(object):
         if renderer == "Redshift_Renderer":
             render_name = self.get_render_elements_name()
             if render_name:
-                rs_AovFiles = rt.Redshift_Renderer().SeparateAovFiles
+                rs_AovFiles = instance.data.get("separateAovFiles")
                 if img_fmt == "exr" and not rs_AovFiles:
                     for name in render_name:
                         if name == "RsCryptomatte":

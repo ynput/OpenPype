@@ -133,6 +133,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
+
         for filepath in self._iter_expected_files(exp):
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
@@ -204,8 +205,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         old_output_dir = os.path.dirname(first_file)
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
-        files = instance.data["expectedFiles"]
-        first_file = next(self._iter_expected_files(files))
         rgb_bname = os.path.basename(output_beauty)
         dir = os.path.dirname(first_file)
         beauty_name = f"{dir}/{rgb_bname}"
@@ -231,6 +230,9 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 new_elem = new_elem.replace("/", "\\")
                 plugin_data["RenderElementOutputFilename%d" % i] = new_elem   # noqa
 
+        if renderer == "Redshift_Renderer":
+            plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
+                "separateAovFiles", False)
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
@@ -239,72 +241,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
     def from_published_scene(self, replace_in_path=True):
         instance = self._instance
-        workfile_instance = self._get_workfile_instance(instance.context)
-        if workfile_instance is None:
-            return
-
-        # determine published path from Anatomy.
-        template_data = workfile_instance.data.get("anatomyData")
-        rep = workfile_instance.data["representations"][0]
-        template_data["representation"] = rep.get("name")
-        template_data["ext"] = rep.get("ext")
-        template_data["comment"] = None
-
-        anatomy = instance.context.data['anatomy']
-        template_obj = anatomy.templates_obj["publish"]["path"]
-        template_filled = template_obj.format_strict(template_data)
-        file_path = os.path.normpath(template_filled)
-
-        self.log.info("Using published scene for render {}".format(file_path))
-
-        if not os.path.exists(file_path):
-            self.log.error("published scene does not exist!")
-            raise
-
-        if not replace_in_path:
-            return file_path
-
-        # now we need to switch scene in expected files
-        # because <scene> token will now point to published
-        # scene file and that might differ from current one
-        def _clean_name(path):
-            return os.path.splitext(os.path.basename(path))[0]
-
-        new_scene = _clean_name(file_path)
-        orig_scene = _clean_name(instance.data["AssetName"])
-        expected_files = instance.data.get("expectedFiles")
-
-        if isinstance(expected_files[0], dict):
-            # we have aovs and we need to iterate over them
-            new_exp = {}
-            for aov, files in expected_files[0].items():
-                replaced_files = []
-                for f in files:
-                    replaced_files.append(
-                        str(f).replace(orig_scene, new_scene)
-                    )
-                new_exp[aov] = replaced_files
-            # [] might be too much here, TODO
-            instance.data["expectedFiles"] = [new_exp]
-        else:
-            new_exp = []
-            for f in expected_files:
-                new_exp.append(
-                    str(f).replace(orig_scene, new_scene)
-                )
-            instance.data["expectedFiles"] = new_exp
-
-        metadata_folder = instance.data.get("publishRenderMetadataFolder")
-        if metadata_folder:
-            metadata_folder = metadata_folder.replace(orig_scene,
-                                                      new_scene)
-            instance.data["publishRenderMetadataFolder"] = metadata_folder
-
-        self.log.info("Scene name was switched {} -> {}".format(
-            orig_scene, new_scene
-        ))
-
-        return file_path
+        if instance.data["renderer"] == "Redshift_Renderer":
+            self.log.debug("Using Redshift...published scene wont be used..")
+            replace_in_path = False
+            return replace_in_path
 
     @staticmethod
     def _iter_expected_files(exp):

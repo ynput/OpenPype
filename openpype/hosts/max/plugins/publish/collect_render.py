@@ -6,7 +6,7 @@ import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.max.api import colorspace
-from openpype.hosts.max.api.lib import get_max_version
+from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
@@ -31,12 +31,14 @@ class CollectRender(pyblish.api.InstancePlugin):
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
         folder = folder.replace("\\", "/")
-        aovs = RenderProducts().get_aovs(instance.name)
+        aovs = RenderProducts().get_aovs(instance.name, instance)
         files_by_aov.update(aovs)
 
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
+            instance.data["files"] = list()
             instance.data["expectedFiles"].append(files_by_aov)
+            instance.data["files"].append(files_by_aov)
 
         img_format = RenderProducts().image_format()
         project_name = context.data["projectName"]
@@ -62,6 +64,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         instance.data["renderProducts"] = colorspace.ARenderProduct()
         instance.data["publishJobState"] = "Suspended"
         instance.data["attachTo"] = []
+        renderer_class = get_current_renderer()
+        renderer = str(renderer_class).split(":")[0]
         # also need to get the render dir for coversion
         data = {
             "asset": asset,
@@ -71,6 +75,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             "imageFormat": img_format,
             "family": 'maxrender',
             "families": ['maxrender'],
+            "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
             "frameStart": int(rt.rendStart),
