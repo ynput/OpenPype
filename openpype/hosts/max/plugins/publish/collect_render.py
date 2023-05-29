@@ -31,7 +31,7 @@ class CollectRender(pyblish.api.InstancePlugin):
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
         folder = folder.replace("\\", "/")
-        aovs = RenderProducts().get_aovs(instance.name, instance)
+        aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 
         if "expectedFiles" not in instance.data:
