@@ -642,8 +642,10 @@ class LayoutLoader(plugin.Loader):
         imprint(
             "{}/{}".format(asset_dir, container_name), data)
 
+        save_dir = hierarchy_dir_list[0] if create_sequences else asset_dir
+
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+            save_dir, recursive=True, include_folder=False)
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
@@ -664,11 +666,12 @@ class LayoutLoader(plugin.Loader):
         asset_dir = container.get('namespace')
         context = representation.get("context")
 
+        hierarchy = context.get('hierarchy').split("/")
+
         sequence = None
         master_level = None
 
         if create_sequences:
-            hierarchy = context.get('hierarchy').split("/")
             h_dir = f"{root}/{hierarchy[0]}"
             h_asset = hierarchy[0]
             master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
@@ -726,8 +729,10 @@ class LayoutLoader(plugin.Loader):
 
         EditorLevelLibrary.save_current_level()
 
+        save_dir = f"{root}/{hierarchy[0]}" if create_sequences else asset_dir
+
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+            save_dir, recursive=True, include_folder=False)
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)

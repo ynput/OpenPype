@@ -246,8 +246,9 @@ class CameraLoader(plugin.Loader):
         EditorLevelLibrary.save_all_dirty_levels()
         EditorLevelLibrary.load_level(master_level)
 
+        # Save all assets in the hierarchy
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=True
+            hierarchy_dir_list[0], recursive=True, include_folder=False
         )
 
         for a in asset_content:
@@ -408,7 +409,7 @@ class CameraLoader(plugin.Loader):
         EditorLevelLibrary.save_current_level()
 
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+            f"{root}/{ms_asset}", recursive=True, include_folder=False)
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
