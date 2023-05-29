@@ -1641,7 +1641,7 @@ class ServerAPI(object):
             checksum=checksum,
             **kwargs
         )
-        if response.status not in (200, 201, 204):
+        if response.status not in (200, 201):
             raise ServerError("Failed to create/update dependency")
         return response.data
 
@@ -3050,7 +3050,7 @@ class ServerAPI(object):
             project_name (Optional[str]): Name of project where to look for
                 queried entities.
             product_ids (Optional[Iterable[str]]): Product ids filter. Can be
-                used only with project name.
+                used only with 'project_name'.
 
         Returns:
             set[str]: Product type names.
@@ -3070,7 +3070,7 @@ class ServerAPI(object):
 
         return {
             product_info["name"]
-            for product_info in self.get_product_types(
+            for product_info in self.get_project_product_types(
                 project_name, fields=["name"]
             )
         }
