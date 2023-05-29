@@ -90,12 +90,6 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
         if "families" not in instance.data:
             instance.data["families"] = list()
 
-        if "versionData" not in instance.data:
-            instance.data["versionData"] = dict()
-
-        if "families" not in instance.data["versionData"]:
-            instance.data["versionData"]["families"] = list()
-
         task_type = instance.data["anatomyData"]["task"]["type"]
         if task_type in slate_settings["integrate_task_types"]:
 
