@@ -623,10 +623,17 @@ def generate_sequence(h, h_dir):
     min_frame = min(start_frames)
     max_frame = max(end_frames)
 
+    fps = asset_data.get('data').get("fps")
+
     sequence.set_display_rate(
-        unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
+        unreal.FrameRate(fps, 1.0))
     sequence.set_playback_start(min_frame)
     sequence.set_playback_end(max_frame)
+
+    sequence.set_work_range_start(min_frame / fps)
+    sequence.set_work_range_end(max_frame / fps)
+    sequence.set_view_range_start(min_frame / fps)
+    sequence.set_view_range_end(max_frame / fps)
 
     tracks = sequence.get_master_tracks()
     track = None
