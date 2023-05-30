@@ -350,11 +350,9 @@ def download_last_workfile() -> str:
         download_last_published_workfile,
     )
 
-    sync_server = ModulesManager().get('sync_server')
+    sync_server = ModulesManager().get("sync_server")
     if not sync_server or not sync_server.enabled:
-        raise RuntimeError(
-            'Sync server module is not enabled or available'
-        )
+        raise RuntimeError("Sync server module is not enabled or available")
 
     project_name = get_current_project_name()
     task_name = get_current_task_name()
@@ -364,25 +362,25 @@ def download_last_workfile() -> str:
         project_name,
         asset_name,
     )
-    family = 'workfile'
+    family = "workfile"
 
     filtered_subsets = [
         subset
         for subset in get_subsets(
             project_name,
-            asset_ids=[asset_doc['_id']],
-            fields=['_id', 'name', 'data.family', 'data.families'],
+            asset_ids=[asset_doc["_id"]],
+            fields=["_id", "name", "data.family", "data.families"],
         )
         if (
-            subset['data'].get('family') == family
+            subset["data"].get("family") == family
             # Legacy compatibility
-            or family in subset['data'].get('families', {})
+            or family in subset["data"].get("families", {})
         )
     ]
     if not filtered_subsets:
         raise RuntimeError(
             "Not any subset for asset '{}' with id '{}'".format(
-                asset_doc['name'], asset_doc['_id']
+                asset_doc["name"], asset_doc["_id"]
             )
         )
 
@@ -390,10 +388,10 @@ def download_last_workfile() -> str:
     low_task_name = task_name.lower()
     if len(filtered_subsets) > 1:
         for subset in filtered_subsets:
-            if low_task_name in subset['name'].lower():
-                subset_id = subset['_id']  # What if none is found?
+            if low_task_name in subset["name"].lower():
+                subset_id = subset["_id"]  # What if none is found?
     else:
-        subset_id = filtered_subsets[0]['_id']
+        subset_id = filtered_subsets[0]["_id"]
 
     if subset_id is None:
         print(
@@ -410,14 +408,16 @@ def download_last_workfile() -> str:
         print("Subset does not have any version")
         return
 
-    workfile_representations = list(get_representations(
-        project_name,
-        context_filters={
-            'asset': asset_name,
-            'family': 'workfile',
-            'task': {'name': task_name},
-        }
-    ))
+    workfile_representations = list(
+        get_representations(
+            project_name,
+            context_filters={
+                "asset": asset_name,
+                "family": "workfile",
+                "task": {"name": task_name},
+            },
+        )
+    )
 
     if not workfile_representations:
         raise RuntimeError(
@@ -426,15 +426,14 @@ def download_last_workfile() -> str:
 
     workfile_representation = max(
         filter(
-            lambda r: r['context'].get('version'),
+            lambda r: r["context"].get("version"),
             workfile_representations,
         ),
-        key=lambda r: r['context']['version'],
+        key=lambda r: r["context"]["version"],
     )
     if not workfile_representation:
         raise RuntimeError(
-            "No published workfile for task "
-            f"'{task_name}' and host blender"
+            "No published workfile for task " f"'{task_name}' and host blender"
         )
 
     # Get workfile template data
@@ -442,24 +441,27 @@ def download_last_workfile() -> str:
         get_project(project_name, inactive=False),
         asset_doc,
         task_name,
-        'blender',
+        "blender",
     )
 
     # Get workfile version
-    workfile_data['version'] = get_last_workfile_with_version(
-        Path(bpy.data.filepath).parent.as_posix(),
-        anatomy.templates[get_workfile_template_key(
-            task_name, 'blender', project_name
-        )]['file'],
-        workfile_data,
-        ['blend'],
-    )[1] + 1
-    workfile_data['ext'] = 'blend'
+    workfile_data["version"] = (
+        get_last_workfile_with_version(
+            Path(bpy.data.filepath).parent.as_posix(),
+            anatomy.templates[
+                get_workfile_template_key(task_name, "blender", project_name)
+            ]["file"],
+            workfile_data,
+            ["blend"],
+        )[1]
+        + 1
+    )
+    workfile_data["ext"] = "blend"
 
     # Get local workfile path
     local_workfile_path = anatomy.format(workfile_data)[
-        get_workfile_template_key(task_name, 'blender', project_name)
-    ]['path']
+        get_workfile_template_key(task_name, "blender", project_name)
+    ]["path"]
 
     # Download and get last workfile
     last_published_workfile_path = download_last_published_workfile(
@@ -467,16 +469,21 @@ def download_last_workfile() -> str:
         project_name,
         task_name,
         workfile_representation,
-        int((
-            sync_server.sync_project_settings[
-                project_name
-            ]['config']['retry_cnt']
-        )),
+        int(
+            (
+                sync_server.sync_project_settings[project_name]["config"][
+                    "retry_cnt"
+                ]
+            )
+        ),
         anatomy=anatomy,
     )
 
-    if not last_published_workfile_path or not Path(last_published_workfile_path).exists():
-        raise OSError('Failed to download last published workfile')
+    if (
+        not last_published_workfile_path
+        or not Path(last_published_workfile_path).exists()
+    ):
+        raise OSError("Failed to download last published workfile")
 
     # Download and copy last published workfile to local workfile path
     shutil.copy(
@@ -484,4 +491,4 @@ def download_last_workfile() -> str:
         local_workfile_path,
     )
 
-    return local_workfile_path, last_version_doc['data']['time']
+    return local_workfile_path, last_version_doc["data"]["time"]
