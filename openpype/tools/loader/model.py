@@ -7,6 +7,7 @@ from uuid import uuid4
 from qtpy import QtCore, QtGui
 import qtawesome
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_subsets,
@@ -143,9 +144,9 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
     ]
 
     column_labels_mapping = {
-        "subset": "Subset",
-        "asset": "Asset",
-        "family": "Family",
+        "subset": "Product" if AYON_SERVER_ENABLED else "Subset",
+        "asset": "Folder" if AYON_SERVER_ENABLED else "Asset",
+        "family": "Product type" if AYON_SERVER_ENABLED else "Family",
         "version": "Version",
         "time": "Time",
         "author": "Author",
