@@ -5,10 +5,9 @@ function file_exists(name)
 end
 
 
-openpype_root = os.getenv("OPENPYPE_ROOT")
-if openpype_root ~= nil then
-    script = openpype_root .. "/openpype/hosts/resolve/startup.py"
-    script = fusion:MapPath(script)
+openpype_startup_script = os.getenv("OPENPYPE_RESOLVE_STARTUP_SCRIPT")
+if openpype_startup_script ~= nil then
+    script = fusion:MapPath(openpype_startup_script)
 
     if file_exists(script) then
         -- We must use RunScript to ensure it runs in a separate

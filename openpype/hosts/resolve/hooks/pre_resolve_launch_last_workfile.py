@@ -1,6 +1,7 @@
 import os
 
 from openpype.lib import PreLaunchHook
+import openpype.hosts.resolve
 
 
 class ResolveLaunchLastWorkfile(PreLaunchHook):
@@ -33,3 +34,13 @@ class ResolveLaunchLastWorkfile(PreLaunchHook):
                       f"last workfile: {last_workfile}")
         key = "OPENPYPE_RESOLVE_OPEN_ON_LAUNCH"
         self.launch_context.env[key] = last_workfile
+
+        # Set the openpype prelaunch startup script path for easy access
+        # in the LUA .scriptlib code
+        op_resolve_root = os.path.dirname(openpype.hosts.resolve.__file__)
+        script_path = os.path.join(op_resolve_root, "startup.py")
+        key = "OPENPYPE_RESOLVE_STARTUP_SCRIPT"
+        self.launch_context.env[key] = script_path
+        self.log.info("Setting OPENPYPE_RESOLVE_STARTUP_SCRIPT to: "
+                      f"{script_path}")
+
