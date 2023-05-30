@@ -426,7 +426,9 @@ def create_gdeformer_collection(parent_collection: bpy.types.Collection):
             gdeformer_col.objects.link(obj)
 
         # Assign collection to sol(s) object(s)
-        if obj.name.startswith("sol") and obj.modifiers.get("GroundDeform"):
+        if obj.name.lower().startswith("sol") and obj.modifiers.get(
+            "GroundDeform"
+        ):
             obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
 
 
