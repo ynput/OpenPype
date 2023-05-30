@@ -178,7 +178,7 @@ def get_openpype_qt_app():
         app = QtWidgets.QApplication(sys.argv)
 
     app.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
-    return  app
+    return app
 
 
 class SharedObjects:
