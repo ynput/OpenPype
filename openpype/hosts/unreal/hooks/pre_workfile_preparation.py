@@ -24,7 +24,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     """Hook to handle launching Unreal.
 
     This hook will check if current workfile path has Unreal
-    project inside. IF not, it initialize it and finally it pass
+    project inside. IF not, it initializes it, and finally it pass
     path to the project by environment variable to Unreal launcher
     shell script.
 
@@ -61,10 +61,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
             project_name=project_doc["name"]
         )
         # Fill templates
-        filled_anatomy = anatomy.format(workdir_data)
+        template_obj = anatomy.templates_obj[workfile_template_key]["file"]
 
         # Return filename
-        return filled_anatomy[workfile_template_key]["file"]
+        return template_obj.format_strict(workdir_data)
 
     def exec_plugin_install(self, engine_path: Path, env: dict = None):
         # set up the QThread and worker with necessary signals
@@ -141,6 +141,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     def execute(self):
         """Hook entry method."""
         workdir = self.launch_context.env["AVALON_WORKDIR"]
+        executable = str(self.launch_context.executable)
         engine_version = self.app_name.split("/")[-1].replace("-", ".")
         try:
             if int(engine_version.split(".")[0]) < 4 and \
@@ -152,7 +153,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
             # there can be string in minor version and in that case
             # int cast is failing. This probably happens only with
             # early access versions and is of no concert for this check
-            # so lets keep it quite.
+            # so let's keep it quiet.
             ...
 
         unreal_project_filename = self._get_work_filename()
@@ -183,41 +184,23 @@ class UnrealPrelaunchHook(PreLaunchHook):
             f"[ {engine_version} ]"
         ))
 
-        detected = unreal_lib.get_engine_versions(self.launch_context.env)
-        detected_str = ', '.join(detected.keys()) or 'none'
-        self.log.info((
-            f"{self.signature} detected UE versions: "
-            f"[ {detected_str} ]"
-        ))
-        if not detected:
-            raise ApplicationNotFound("No Unreal Engines are found.")
-
-        engine_version = ".".join(engine_version.split(".")[:2])
-        if engine_version not in detected.keys():
-            raise ApplicationLaunchFailed((
-                f"{self.signature} requested version not "
-                f"detected [ {engine_version} ]"
-            ))
-
-        ue_path = unreal_lib.get_editor_exe_path(
-            Path(detected[engine_version]), engine_version)
-
-        self.launch_context.launch_args = [ue_path.as_posix()]
         project_path.mkdir(parents=True, exist_ok=True)
 
-        # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
+        # Set "AYON_UNREAL_PLUGIN" to current process environment for
         # execution of `create_unreal_project`
 
-        if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
+        if self.launch_context.env.get("AYON_UNREAL_PLUGIN"):
             self.log.info((
-                f"{self.signature} using OpenPype plugin from "
-                f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
+                f"{self.signature} using Ayon plugin from "
+                f"{self.launch_context.env.get('AYON_UNREAL_PLUGIN')}"
             ))
-        env_key = "OPENPYPE_UNREAL_PLUGIN"
+        env_key = "AYON_UNREAL_PLUGIN"
         if self.launch_context.env.get(env_key):
             os.environ[env_key] = self.launch_context.env[env_key]
 
-        engine_path: Path = Path(detected[engine_version])
+        # engine_path points to the specific Unreal Engine root
+        # so, we are going up from the executable itself 3 levels.
+        engine_path: Path = Path(executable).parents[3]
 
         if not unreal_lib.check_plugin_existence(engine_path):
             self.exec_plugin_install(engine_path)
@@ -230,7 +213,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                                      engine_path,
                                      project_path)
 
-        self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
+        self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")

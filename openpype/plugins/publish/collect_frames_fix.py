@@ -26,11 +26,13 @@ class CollectFramesFixDef(
     targets = ["local"]
     hosts = ["nuke"]
     families = ["render", "prerender"]
-    enabled = True
+
+    rewrite_version_enable = False
 
     def process(self, instance):
         attribute_values = self.get_attr_values_from_data(instance.data)
         frames_to_fix = attribute_values.get("frames_to_fix")
+
         rewrite_version = attribute_values.get("rewrite_version")
 
         if frames_to_fix:
@@ -71,10 +73,19 @@ class CollectFramesFixDef(
 
     @classmethod
     def get_attribute_defs(cls):
-        return [
+        attributes = [
             TextDef("frames_to_fix", label="Frames to fix",
                     placeholder="5,10-15",
-                    regex="[0-9,-]+"),
-            BoolDef("rewrite_version", label="Rewrite latest version",
-                    default=False),
+                    regex="[0-9,-]+")
         ]
+
+        if cls.rewrite_version_enable:
+            attributes.append(
+                BoolDef(
+                    "rewrite_version",
+                    label="Rewrite latest version",
+                    default=False
+                )
+            )
+
+        return attributes

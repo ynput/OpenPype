@@ -3,6 +3,8 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
 
+import hou
+
 
 class CreatePointCache(plugin.HoudiniCreator):
     """Alembic ROP to pointcache"""
@@ -49,3 +51,9 @@ class CreatePointCache(plugin.HoudiniCreator):
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_network_categories(self):
+        return [
+            hou.ropNodeTypeCategory(),
+            hou.sopNodeTypeCategory()
+        ]

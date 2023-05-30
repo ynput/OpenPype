@@ -291,6 +291,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 ))
         try:
             src_to_dst_file_paths = []
+            path_template_obj = anatomy.templates_obj[template_key]["path"]
             for repre_info in published_repres.values():
 
                 # Skip if new repre does not have published repre files
@@ -303,9 +304,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 anatomy_data.pop("version", None)
 
                 # Get filled path to repre context
-                anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled[template_key]["path"]
-
+                template_filled = path_template_obj.format_strict(anatomy_data)
                 repre_data = {
                     "path": str(template_filled),
                     "template": hero_template
@@ -343,8 +342,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     # Get head and tail for collection
                     frame_splitter = "_-_FRAME_SPLIT_-_"
                     anatomy_data["frame"] = frame_splitter
-                    _anatomy_filled = anatomy.format(anatomy_data)
-                    _template_filled = _anatomy_filled[template_key]["path"]
+                    _template_filled = path_template_obj.format_strict(
+                        anatomy_data
+                    )
                     head, tail = _template_filled.split(frame_splitter)
                     padding = int(
                         anatomy.templates[template_key]["frame_padding"]
@@ -520,24 +520,24 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             })
 
         if "folder" in anatomy.templates[template_key]:
-            anatomy_filled = anatomy.format(template_data)
-            publish_folder = anatomy_filled[template_key]["folder"]
+            template_obj = anatomy.templates_obj[template_key]["folder"]
+            publish_folder = template_obj.format_strict(template_data)
         else:
             # This is for cases of Deprecated anatomy without `folder`
             # TODO remove when all clients have solved this issue
-            template_data.update({
-                "frame": "FRAME_TEMP",
-                "representation": "TEMP"
-            })
-            anatomy_filled = anatomy.format(template_data)
-            # solve deprecated situation when `folder` key is not underneath
-            # `publish` anatomy
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(anatomy.project_name))
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            template_data.update({
+                "frame": "FRAME_TEMP",
+                "representation": "TEMP"
+            })
+            template_obj = anatomy.templates_obj[template_key]["path"]
+            file_path = template_obj.format_strict(template_data)
 
-            file_path = anatomy_filled[template_key]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 

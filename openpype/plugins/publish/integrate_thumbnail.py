@@ -20,6 +20,7 @@ import pyblish.api
 
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
+from openpype.pipeline.publish import get_publish_instance_label
 
 InstanceFilterResult = collections.namedtuple(
     "InstanceFilterResult",
@@ -41,7 +42,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
         # Filter instances which can be used for integration
         filtered_instance_items = self._prepare_instances(context)
         if not filtered_instance_items:
-            self.log.info(
+            self.log.debug(
                 "All instances were filtered. Thumbnail integration skipped."
             )
             return
@@ -133,7 +134,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         filtered_instances = []
         for instance in context:
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             # Skip instances without published representations
             # - there is no place where to put the thumbnail
             published_repres = instance.data.get("published_representations")
@@ -162,7 +163,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
             # Skip instance if thumbnail path is not available for it
             if not thumbnail_path:
-                self.log.info((
+                self.log.debug((
                     "Skipping thumbnail integration for instance \"{}\"."
                     " Instance and context"
                     " thumbnail paths are not available."
@@ -248,7 +249,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             version_doc = version_docs_by_str_id.get(version_id)
             if not version_doc:
                 self.log.warning((
@@ -271,9 +272,9 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
                 "thumbnail_type": "thumbnail"
             })
 
-            anatomy_filled = anatomy.format(template_data)
-            thumbnail_template = anatomy.templates["publish"]["thumbnail"]
-            template_filled = anatomy_filled["publish"]["thumbnail"]
+            template_obj = anatomy.templates_obj["publish"]["thumbnail"]
+            template_filled = template_obj.format_strict(template_data)
+            thumbnail_template = template_filled.template
 
             dst_full_path = os.path.normpath(str(template_filled))
             self.log.debug("Copying file .. {} -> {}".format(
@@ -339,10 +340,3 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
             ))
 
         op_session.commit()
-
-    def _get_instance_label(self, instance):
-        return (
-            instance.data.get("label")
-            or instance.data.get("name")
-            or "N/A"
-        )

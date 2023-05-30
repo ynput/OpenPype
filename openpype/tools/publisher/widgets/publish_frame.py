@@ -310,7 +310,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property()
         self._set_progress_visibility(True)
 
-        self._main_label.setText("Hit publish (play button)! If you want")
+        self._main_label.setText("")
         self._message_label_top.setText("")
 
         self._reset_btn.setEnabled(True)
@@ -331,6 +331,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property(3)
         self._set_progress_visibility(True)
         self._set_main_label("Publishing...")
+        self._message_label_top.setText("")
 
         self._reset_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
@@ -468,45 +469,14 @@ class PublishFrame(QtWidgets.QWidget):
                 widget.setProperty("state", state)
                 widget.style().polish(widget)
 
-    def _copy_report(self):
-        logs = self._controller.get_publish_report()
-        logs_string = json.dumps(logs, indent=4)
-
-        mime_data = QtCore.QMimeData()
-        mime_data.setText(logs_string)
-        QtWidgets.QApplication.instance().clipboard().setMimeData(
-            mime_data
-        )
-
-    def _export_report(self):
-        default_filename = "publish-report-{}".format(
-            time.strftime("%y%m%d-%H-%M")
-        )
-        default_filepath = os.path.join(
-            os.path.expanduser("~"),
-            default_filename
-        )
-        new_filepath, ext = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save report", default_filepath, ".json"
-        )
-        if not ext or not new_filepath:
-            return
-
-        logs = self._controller.get_publish_report()
-        full_path = new_filepath + ext
-        dir_path = os.path.dirname(full_path)
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        with open(full_path, "w") as file_stream:
-            json.dump(logs, file_stream)
-
     def _on_report_triggered(self, identifier):
         if identifier == "export_report":
-            self._export_report()
+            self._controller.event_system.emit(
+                "export_report.request", {}, "publish_frame")
 
         elif identifier == "copy_report":
-            self._copy_report()
+            self._controller.event_system.emit(
+                "copy_report.request", {}, "publish_frame")
 
         elif identifier == "go_to_report":
             self.details_page_requested.emit()

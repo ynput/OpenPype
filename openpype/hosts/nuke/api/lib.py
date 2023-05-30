@@ -495,17 +495,17 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
         data (dict)
     """
 
+    data = {}
+    if AVALON_TAB not in node.knobs():
+        return data
+
     # check if lists
     if not isinstance(prefix, list):
-        prefix = list([prefix])
-
-    data = dict()
+        prefix = [prefix]
 
     # loop prefix
     for p in prefix:
         # check if the node is avalon tracked
-        if AVALON_TAB not in node.knobs():
-            continue
         try:
             # check if data available on the node
             test = node[AVALON_DATA_GROUP].value()
@@ -516,8 +516,7 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
             if create:
                 node = set_avalon_knob_data(node)
                 return get_avalon_knob_data(node)
-            else:
-                return {}
+            return {}
 
         # get data from filtered knobs
         data.update({k.replace(p, ''): node[k].value()
@@ -2240,13 +2239,13 @@ class WorkfileSettings(object):
         handle_end = data["handleEnd"]
 
         fps = float(data["fps"])
-        frame_start = int(data["frameStart"]) - handle_start
-        frame_end = int(data["frameEnd"]) + handle_end
+        frame_start_handle = int(data["frameStart"]) - handle_start
+        frame_end_handle = int(data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
-        self._root_node["first_frame"].setValue(frame_start)
-        self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["first_frame"].setValue(frame_start_handle)
+        self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
