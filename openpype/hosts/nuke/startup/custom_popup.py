@@ -21,6 +21,7 @@ def get_main_window():
                 break
     return main_window
 
+
 class CustomScriptDialog(QtWidgets.QDialog):
     """A Popup that moves itself to bottom right of screen on show event.
 
@@ -32,7 +33,6 @@ class CustomScriptDialog(QtWidgets.QDialog):
     on_clicked = QtCore.Signal()
     on_line_changed = QtCore.Signal(str)
     context = None
-
 
 
     def __init__(self, parent=None, *args, **kwargs):

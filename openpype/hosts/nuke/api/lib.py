@@ -2358,7 +2358,6 @@ class WorkfileSettings(object):
         # add colorspace menu item
         self.set_colorspace()
 
-
     def set_favorites(self):
         from .utils import set_context_favorites
 
