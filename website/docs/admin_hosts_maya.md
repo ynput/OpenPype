@@ -247,15 +247,24 @@ Fill in the necessary fields (the optional fields are regex filters)
 ![new place holder](assets/maya-placeholder_new.png)
 
 
-    - Builder type: Whether the the placeholder should load current asset representations or linked assets representations
+  - ***Builder type***: Whether the the placeholder should load current asset representations or linked assets representations
 
-    - Representation: Representation that will be loaded (ex: ma, abc, png, etc...)
+  - ***Representation***: Representation that will be loaded (ex: ma, abc, png, etc...)
 
-    - Family: Family of the representation to load (main, look, image, etc ...)
+  - ***Family***: Family of the representation to load (main, look, image, etc ...)
 
-    - Loader: Placeholder loader name that will be used to load corresponding representations
+  - ***Loader***: Placeholder loader name that will be used to load corresponding representations
 
-    - Order: Priority for current placeholder loader (priority is lowest first, highet last)
+  - ***Order***: Priority for current placeholder loader (priority is lowest first, highest last)
+
+  - ***Loader arguments***: Loader arguments dictionary can be used to pass optional data to loaders.
+  One use case is to define a custom Subset name for the animation instances created while loading Rig references.This follows the custom namespace system used by loaders.
+
+    **Example**
+      ```
+      {"animationSubsetName": "{asset_name}_animation_{subset}_##_"}
+      ```
+
 
 - **Save your template**
 

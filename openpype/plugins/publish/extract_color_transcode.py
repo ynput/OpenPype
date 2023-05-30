@@ -336,13 +336,13 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         if repre.get("ext") not in self.supported_exts:
             self.log.debug((
-                    "Representation '{}' of unsupported extension. Skipped."
-            ).format(repre["name"]))
+                "Representation '{}' has unsupported extension: '{}'. Skipped."
+            ).format(repre["name"], repre.get("ext")))
             return False
 
         if not repre.get("files"):
             self.log.debug((
-                "Representation '{}' have empty files. Skipped."
+                "Representation '{}' has empty files. Skipped."
             ).format(repre["name"]))
             return False
 
