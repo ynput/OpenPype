@@ -43,7 +43,7 @@ def main(*subprocess_args):
     install_host(host)
 
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
-    app = get_openpype_qt_app([])
+    app = get_openpype_qt_app()
     app.setQuitOnLastWindowClosed(False)
 
     launcher = ProcessLauncher(subprocess_args)
