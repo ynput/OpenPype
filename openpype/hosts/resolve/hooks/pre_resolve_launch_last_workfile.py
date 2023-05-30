@@ -43,4 +43,3 @@ class ResolveLaunchLastWorkfile(PreLaunchHook):
         self.launch_context.env[key] = script_path
         self.log.info("Setting OPENPYPE_RESOLVE_STARTUP_SCRIPT to: "
                       f"{script_path}")
-
