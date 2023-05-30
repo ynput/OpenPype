@@ -1,26 +1,44 @@
+"""This script is used as a startup script in Resolve through a .scriptlib file
+
+It triggers directly after the launch of Resolve and it's recommended to keep
+it optimized for fast performance since the Resolve UI is actually interactive
+while this is running. As such, there's nothing ensuring the user isn't
+continuing manually before any of the logic here runs. As such we also try
+to delay any imports as much as possible.
+
+This code runs in a separate process to the main Resolve process.
+
+"""
 import os
 
-# Importing this takes a little over a second and thus this means
-# that we have about 1.5 seconds delay before the workfile will actually
-# be opened at the minimum
 import openpype.hosts.resolve.api
 
 
-def launch_menu():
-    from openpype.pipeline import install_host
-    print("Launching Resolve OpenPype menu..")
+def ensure_installed_host():
+    """Install resolve host with openpype and return the registered host.
 
-    # Activate resolve from openpype
+    This function can be called multiple times without triggering an
+    additional install.
+    """
+    from openpype.pipeline import install_host, registered_host
+    host = registered_host()
+    if host:
+        return host
+
     install_host(openpype.hosts.resolve.api)
+    return registered_host()
 
+
+def launch_menu():
+    print("Launching Resolve OpenPype menu..")
+    ensure_installed_host()
     openpype.hosts.resolve.api.launch_pype_menu()
 
 
 def open_file(path):
     # Avoid the need to "install" the host
-    openpype.hosts.resolve.api.bmdvr = resolve  # noqa
-    openpype.hosts.resolve.api.bmdvf = fusion  # noqa
-    openpype.hosts.resolve.api.open_file(path)
+    host = ensure_installed_host()
+    host.open_file(path)
 
 
 def main():
@@ -32,8 +50,12 @@ def main():
         print("No last workfile set to open. Skipping..")
 
     # Launch OpenPype menu
-    # TODO: Add a setting to enable/disable this
-    launch_menu()
+    from openpype.settings import get_project_settings
+    from openpype.pipeline.context_tools import get_current_project_name
+    project_name = get_current_project_name()
+    settings = get_project_settings(project_name)
+    if settings.get("resolve", {}).get("launch_openpype_menu_on_start", True):
+        launch_menu()
 
 
 if __name__ == "__main__":

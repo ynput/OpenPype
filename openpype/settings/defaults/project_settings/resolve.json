@@ -1,4 +1,5 @@
 {
+    "launch_openpype_menu_on_start": false,
     "imageio": {
         "ocio_config": {
             "enabled": false,
