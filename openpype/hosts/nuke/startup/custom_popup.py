@@ -1,8 +1,25 @@
 import sys
 import contextlib
-
+import re
+import nuke
 from PySide2 import QtCore, QtWidgets
 
+
+def get_main_window():
+    """Acquire Nuke's main window"""
+    main_window = None
+    if main_window is None:
+
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "Foundry::UI::DockMainWindow"
+        for widget in top_widgets:
+            if (
+                widget.inherits("QMainWindow")
+                and widget.metaObject().className() == name
+            ):
+                main_window = widget
+                break
+    return main_window
 
 class CustomScriptDialog(QtWidgets.QDialog):
     """A Popup that moves itself to bottom right of screen on show event.
@@ -14,6 +31,9 @@ class CustomScriptDialog(QtWidgets.QDialog):
 
     on_clicked = QtCore.Signal()
     on_line_changed = QtCore.Signal(str)
+    context = None
+
+
 
     def __init__(self, parent=None, *args, **kwargs):
         super(CustomScriptDialog, self).__init__(parent=parent,
@@ -23,23 +43,25 @@ class CustomScriptDialog(QtWidgets.QDialog):
 
         # Layout
         layout = QtWidgets.QVBoxLayout(self)
-        line_layout = QtWidgets.QHBoxLayout()
-        line_layout.setContentsMargins(10, 5, 10, 10)
+        frame_layout = QtWidgets.QHBoxLayout()
+        frame_layout.setContentsMargins(10, 5, 10, 10)
         selection_layout = QtWidgets.QHBoxLayout()
         selection_layout.setContentsMargins(10, 5, 10, 10)
         button_layout = QtWidgets.QHBoxLayout()
         button_layout.setContentsMargins(10, 5, 10, 10)
 
         # Increase spacing slightly for readability
-        line_layout.setSpacing(10)
+        frame_layout.setSpacing(10)
         button_layout.setSpacing(10)
-        name = QtWidgets.QLabel("")
+        name = QtWidgets.QLabel("Frame Range: ")
         name.setStyleSheet("""
         QLabel {
             font-size: 12px;
         }
         """)
-        line_edit = QtWidgets.QLineEdit("")
+        line_edit = QtWidgets.QLineEdit(
+            "%s-%s" % (nuke.root().firstFrame(),
+                       nuke.root().lastFrame()))
         selection_name = QtWidgets.QLabel("Use Selection")
         selection_name.setStyleSheet("""
         QLabel {
@@ -54,13 +76,13 @@ class CustomScriptDialog(QtWidgets.QDialog):
         cancel.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
                              QtWidgets.QSizePolicy.Maximum)
 
-        line_layout.addWidget(name)
-        line_layout.addWidget(line_edit)
+        frame_layout.addWidget(name)
+        frame_layout.addWidget(line_edit)
         selection_layout.addWidget(selection_name)
         selection_layout.addWidget(has_selection)
         button_layout.addWidget(button)
         button_layout.addWidget(cancel)
-        layout.addLayout(line_layout)
+        layout.addLayout(frame_layout)
         layout.addLayout(selection_layout)
         layout.addLayout(button_layout)
         # Default size
@@ -73,7 +95,6 @@ class CustomScriptDialog(QtWidgets.QDialog):
             "button": button,
             "cancel": cancel
         }
-
         # Signals
         has_selection.toggled.connect(self.emit_click_with_state)
         line_edit.textChanged.connect(self.on_line_edit_changed)
@@ -115,18 +136,34 @@ class CustomScriptDialog(QtWidgets.QDialog):
         Raises the parent (if any)
 
         """
+        frame_range = self.widgets['line_edit'].text()
+        selected = self.widgets["selection"].isChecked()
+        pattern = r"^(?P<start>-?[0-9]+)(?:(?:-+)(?P<end>-?[0-9]+))?$"
+        match = re.match(pattern, frame_range)
+        frame_start = int(match.group("start"))
+        frame_end = int(match.group("end"))
+        if not nuke.allNodes("Read"):
+            return
+        for read_node in nuke.allNodes("Read"):
+            if selected:
+                if not nuke.selectedNodes():
+                    return
+                if read_node in nuke.selectedNodes():
+                    read_node["frame_mode"].setValue("start_at")
+                    read_node["frame"].setValue(frame_range)
+                    read_node["first"].setValue(frame_start)
+                    read_node["last"].setValue(frame_end)
+            else:
+                read_node["frame_mode"].setValue("start_at")
+                read_node["frame"].setValue(frame_range)
+                read_node["first"].setValue(frame_start)
+                read_node["last"].setValue(frame_end)
 
-        parent = self.parent()
         self.close()
 
-        # Trigger the signal
-        self.on_clicked.emit()
-
-        if parent:
-            parent.raise_()
+        return False
 
     def showEvent(self, event):
-
         # Position popup based on contents on show event
         return super(CustomScriptDialog, self).showEvent(event)
 

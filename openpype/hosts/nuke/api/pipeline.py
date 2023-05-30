@@ -288,11 +288,6 @@ def _install_menu():
 
     menu.addSeparator()
     menu.addCommand(
-        "Set Frame Range(Read Node)",
-        lambda: WorkfileSettings().reset_frame_range_read_nodes()
-    )
-    menu.addSeparator()
-    menu.addCommand(
         "Build Workfile",
         lambda: BuildWorkfile().process()
     )
