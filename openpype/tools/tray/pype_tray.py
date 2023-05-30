@@ -36,7 +36,8 @@ from openpype.settings import (
 from openpype.tools.utils import (
     WrappedCallbackItem,
     paint_image_with_color,
-    get_warning_pixmap
+    get_warning_pixmap,
+    get_openpype_qt_app,
 )
 
 from .pype_info_widget import PypeInfoWidget
@@ -858,37 +859,7 @@ class PypeTrayStarter(QtCore.QObject):
 
 
 def main():
-    log = Logger.get_logger(__name__)
-    app = QtWidgets.QApplication.instance()
-
-    high_dpi_scale_attr = None
-    if not app:
-        # 'AA_EnableHighDpiScaling' must be set before app instance creation
-        high_dpi_scale_attr = getattr(
-            QtCore.Qt, "AA_EnableHighDpiScaling", None
-        )
-        if high_dpi_scale_attr is not None:
-            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
-
-        app = QtWidgets.QApplication([])
-
-    if high_dpi_scale_attr is None:
-        log.debug((
-            "Attribute 'AA_EnableHighDpiScaling' was not set."
-            " UI quality may be affected."
-        ))
-
-    for attr_name in (
-        "AA_UseHighDpiPixmaps",
-    ):
-        attr = getattr(QtCore.Qt, attr_name, None)
-        if attr is None:
-            log.debug((
-                "Missing QtCore.Qt attribute \"{}\"."
-                " UI quality may be affected."
-            ).format(attr_name))
-        else:
-            app.setAttribute(attr)
+    app = get_openpype_qt_app()
 
     starter = PypeTrayStarter(app)
 
