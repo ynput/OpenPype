@@ -284,7 +284,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         args = [
             "--headless",
             'publish',
-            rootless_metadata_path,
+            '"{}"'.format(rootless_metadata_path),
             "--targets", "deadline",
             "--targets", "farm"
         ]

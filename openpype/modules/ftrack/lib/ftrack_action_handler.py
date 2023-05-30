@@ -234,6 +234,10 @@ class BaseAction(BaseHandler):
         if not settings_roles:
             return default
 
+        user_roles = {
+            role_name.lower()
+            for role_name in user_roles
+        }
         for role_name in settings_roles:
             if role_name.lower() in user_roles:
                 return True
@@ -264,8 +268,15 @@ class BaseAction(BaseHandler):
         return user_entity
 
     @classmethod
-    def get_user_roles_from_event(cls, session, event):
-        """Query user entity from event."""
+    def get_user_roles_from_event(cls, session, event, lower=True):
+        """Get user roles based on data in event.
+
+        Args:
+            session (ftrack_api.Session): Prepared ftrack session.
+            event (ftrack_api.event.Event): Event which is processed.
+            lower (Optional[bool]): Lower the role names. Default 'True'.
+        """
+
         not_set = object()
 
         user_roles = event["data"].get("user_roles", not_set)
@@ -273,7 +284,10 @@ class BaseAction(BaseHandler):
             user_roles = []
             user_entity = cls.get_user_entity_from_event(session, event)
             for role in user_entity["user_security_roles"]:
-                user_roles.append(role["security_role"]["name"].lower())
+                role_name = role["security_role"]["name"]
+                if lower:
+                    role_name = role_name.lower()
+                user_roles.append(role_name)
             event["data"]["user_roles"] = user_roles
         return user_roles
 
@@ -322,7 +336,8 @@ class BaseAction(BaseHandler):
             if not settings.get(self.settings_enabled_key, True):
                 return False
 
-        user_role_list = self.get_user_roles_from_event(session, event)
+        user_role_list = self.get_user_roles_from_event(
+            session, event, lower=False)
         if not self.roles_check(settings.get("role_list"), user_role_list):
             return False
         return True
