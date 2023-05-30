@@ -3,22 +3,20 @@
 # arnold
 # https://help.autodesk.com/view/ARNOL/ENU/?guid=arnold_for_3ds_max_ax_maxscript_commands_ax_renderview_commands_html
 import os
+
 from pymxs import runtime as rt
-from openpype.hosts.max.api.lib import (
-    get_current_renderer
-)
-from openpype.settings import get_project_settings
+
+from openpype.hosts.max.api.lib import get_current_renderer
 from openpype.pipeline import legacy_io
+from openpype.settings import get_project_settings
 
 
 class RenderProducts(object):
 
     def __init__(self, project_settings=None):
-        self._project_settings = project_settings
-        if not self._project_settings:
-            self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
-            )
+        self._project_settings = project_settings or get_project_settings(
+                        legacy_io.Session["AVALON_PROJECT"]
+                    )
 
     def get_beauty(self, container):
         render_dir = os.path.dirname(rt.rendOutputFilename)
@@ -29,14 +27,14 @@ class RenderProducts(object):
         setting = self._project_settings
         img_fmt = setting["max"]["RenderSettings"]["image_format"]   # noqa
 
-        startFrame = int(rt.rendStart)
-        endFrame = int(rt.rendEnd) + 1
+        start_frame = int(rt.rendStart)
+        end_frame = int(rt.rendEnd) + 1
 
-        render_dict = {
+        return {
             "beauty": self.get_expected_beauty(
-                output_file, startFrame, endFrame, img_fmt)
+                output_file, start_frame, end_frame, img_fmt
+            )
         }
-        return render_dict
 
     def get_aovs(self, container):
         render_dir = os.path.dirname(rt.rendOutputFilename)
@@ -47,8 +45,8 @@ class RenderProducts(object):
         setting = self._project_settings
         img_fmt = setting["max"]["RenderSettings"]["image_format"]   # noqa
 
-        startFrame = int(rt.rendStart)
-        endFrame = int(rt.rendEnd) + 1
+        start_frame = int(rt.rendStart)
+        end_frame = int(rt.rendEnd) + 1
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
         render_dict = {}
@@ -65,38 +63,40 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_render_elements(
-                            output_file, name, startFrame,
-                            endFrame, img_fmt)
+                            output_file, name, start_frame,
+                            end_frame, img_fmt)
                     })
-        if renderer == "Redshift_Renderer":
+        elif renderer == "Redshift_Renderer":
             render_name = self.get_render_elements_name()
             if render_name:
-                rs_AovFiles = rt.RedShift_Renderer().separateAovFiles
-                if img_fmt == "exr" and not rs_AovFiles:
+                rs_aov_files = rt.Execute("renderers.current.separateAovFiles")
+                # this doesn't work, always returns False
+                # rs_AovFiles = rt.RedShift_Renderer().separateAovFiles
+                if img_fmt == "exr" and not rs_aov_files:
                     for name in render_name:
                         if name == "RsCryptomatte":
                             render_dict.update({
                                 name: self.get_expected_render_elements(
-                                    output_file, name, startFrame,
-                                    endFrame, img_fmt)
+                                    output_file, name, start_frame,
+                                    end_frame, img_fmt)
                             })
                 else:
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                                output_file, name, startFrame,
-                                endFrame, img_fmt)
+                                output_file, name, start_frame,
+                                end_frame, img_fmt)
                         })
 
-        if renderer == "Arnold":
+        elif renderer == "Arnold":
             render_name = self.get_arnold_product_name()
             if render_name:
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_arnold_product(
-                            output_file, name, startFrame, endFrame, img_fmt)
+                            output_file, name, start_frame, end_frame, img_fmt)
                     })
-        if renderer in [
+        elif renderer in [
             "V_Ray_6_Hotfix_3",
             "V_Ray_GPU_6_Hotfix_3"
         ]:
@@ -106,15 +106,15 @@ class RenderProducts(object):
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                                output_file, name, startFrame,
-                                endFrame, img_fmt)      # noqa
+                                output_file, name, start_frame,
+                                end_frame, img_fmt)      # noqa
                         })
 
         return render_dict
 
-    def get_expected_beauty(self, folder, startFrame, endFrame, fmt):
+    def get_expected_beauty(self, folder, start_frame, end_frame, fmt):
         beauty_frame_range = []
-        for f in range(startFrame, endFrame):
+        for f in range(start_frame, end_frame):
             frame = "%04d" % f
             beauty_output = f"{folder}.{frame}.{fmt}"
             beauty_output = beauty_output.replace("\\", "/")
@@ -134,19 +134,17 @@ class RenderProducts(object):
             return
         for i in range(aov_group_num):
             # get the specific AOV group
-            for aov in aov_mgr.drivers[i].aov_list:
-                aov_name.append(aov.name)
-
+            aov_name.extend(aov.name for aov in aov_mgr.drivers[i].aov_list)
         # close the AOVs manager window
         amw.close()
 
         return aov_name
 
     def get_expected_arnold_product(self, folder, name,
-                                    startFrame, endFrame, fmt):
+                                    start_frame, end_frame, fmt):
         """Get all the expected Arnold AOVs"""
         aov_list = []
-        for f in range(startFrame, endFrame):
+        for f in range(start_frame, end_frame):
             frame = "%04d" % f
             render_element = f"{folder}_{name}.{frame}.{fmt}"
             render_element = render_element.replace("\\", "/")
@@ -171,10 +169,10 @@ class RenderProducts(object):
         return render_name
 
     def get_expected_render_elements(self, folder, name,
-                                     startFrame, endFrame, fmt):
+                                     start_frame, end_frame, fmt):
         """Get all the expected render element output files. """
         render_elements = []
-        for f in range(startFrame, endFrame):
+        for f in range(start_frame, end_frame):
             frame = "%04d" % f
             render_element = f"{folder}_{name}.{frame}.{fmt}"
             render_element = render_element.replace("\\", "/")

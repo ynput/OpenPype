@@ -66,7 +66,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
-        # also need to get the render dir for coversion
+        # also need to get the render dir for conversion
         data = {
             "asset": asset,
             "subset": str(instance.name),
@@ -84,4 +84,12 @@ class CollectRender(pyblish.api.InstancePlugin):
             "farm": True
         }
         instance.data.update(data)
+
+        # TODO: this should be unified with maya and its "multipart" flag
+        #       on instance.
+        if renderer == "Redshift_Renderer":
+            instance.data.update(
+                {"separateAovFiles": rt.Execute(
+                    "renderers.current.separateAovFiles")})
+
         self.log.info("data: {0}".format(data))
