@@ -20,6 +20,7 @@ from openpype.host import (
 
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
+from openpype.tools.utils import get_openpype_qt_app
 
 from . import lib
 
@@ -163,10 +164,7 @@ def check_inventory():
         return
 
     # Warn about outdated containers.
-    _app = QtWidgets.QApplication.instance()
-    if not _app:
-        print("Starting new QApplication..")
-        _app = QtWidgets.QApplication([])
+    _app = get_openpype_qt_app()
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)

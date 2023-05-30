@@ -24,9 +24,7 @@ def main(user_role=None):
             user_role, ", ".join(allowed_roles)
         ))
 
-    app = QtWidgets.QApplication.instance()
-    if not app:
-        app = QtWidgets.QApplication(sys.argv)
+    app = get_openpype_qt_app()
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
     widget = MainWidget(user_role)
