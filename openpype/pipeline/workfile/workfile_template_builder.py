@@ -1585,10 +1585,7 @@ class PlaceholderLoadMixin(object):
             placeholder.load_succeed(container)
 
     def cleanup_placeholder(self, placeholder):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
