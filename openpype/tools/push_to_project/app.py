@@ -1,6 +1,6 @@
 import click
-from qtpy import QtWidgets, QtCore
 
+from openpype.tools.utils import get_openpype_qt_app
 from openpype.tools.push_to_project.window import PushToContextSelectWindow
 
 
@@ -15,20 +15,7 @@ def main(project, version):
         version (str): Version id.
     """
 
-    app = QtWidgets.QApplication.instance()
-    if not app:
-        # 'AA_EnableHighDpiScaling' must be set before app instance creation
-        high_dpi_scale_attr = getattr(
-            QtCore.Qt, "AA_EnableHighDpiScaling", None
-        )
-        if high_dpi_scale_attr is not None:
-            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
-
-        app = QtWidgets.QApplication([])
-
-    attr = getattr(QtCore.Qt, "AA_UseHighDpiPixmaps", None)
-    if attr is not None:
-        app.setAttribute(attr)
+    app = get_openpype_qt_app()
 
     window = PushToContextSelectWindow()
     window.show()

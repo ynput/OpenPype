@@ -1,7 +1,8 @@
 import sys
-from qtpy import QtWidgets, QtGui
+from qtpy import QtGui
 
 from openpype import style
+from openpype.tools.utils import get_openpype_qt_app
 from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
@@ -24,9 +25,7 @@ def main(user_role=None):
             user_role, ", ".join(allowed_roles)
         ))
 
-    app = QtWidgets.QApplication.instance()
-    if not app:
-        app = QtWidgets.QApplication(sys.argv)
+    app = get_openpype_qt_app()
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
     widget = MainWidget(user_role)

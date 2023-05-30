@@ -14,6 +14,7 @@ from openpype.client import (
 from openpype.style import (
     get_default_entity_icon_color,
     get_objected_colors,
+    get_app_icon_path,
 )
 from openpype.resources import get_image_path
 from openpype.lib import filter_profiles, Logger
@@ -150,6 +151,36 @@ def qt_app_context():
     else:
         print("Using existing QApplication..")
         yield app
+
+
+def get_openpype_qt_app():
+    """Main Qt application initialized for OpenPype processed.
+
+    This function should be used only inside OpenPype process and never inside
+        other processes.
+    """
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        for attr_name in (
+            "AA_EnableHighDpiScaling",
+            "AA_UseHighDpiPixmaps",
+        ):
+            attr = getattr(QtCore.Qt, attr_name, None)
+            if attr is not None:
+                QtWidgets.QApplication.setAttribute(attr)
+
+        if hasattr(
+            QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
+        ):
+            QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
+                QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+            )
+
+        app = QtWidgets.QApplication(sys.argv)
+
+    app.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
+    return app
 
 
 class SharedObjects:
