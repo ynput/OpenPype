@@ -162,9 +162,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
-
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
+
+                display_handle = settings['maya']['load'].get(
+                    'reference_loader', {}
+                ).get('display_handle', True)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
+
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
@@ -174,7 +180,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                  (float(c[1]) / 255),
                                  (float(c[2]) / 255))
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -215,7 +223,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def _post_process_rig(self, name, namespace, context, options):
         nodes = self[:]
         create_rig_animation_instance(
-            nodes, context, namespace, log=self.log
+            nodes, context, namespace, options=options, log=self.log
         )
 
     def _lock_camera_transforms(self, nodes):

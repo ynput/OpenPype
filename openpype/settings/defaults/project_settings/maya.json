@@ -734,6 +734,7 @@
         "ValidateShaderName": {
             "enabled": false,
             "optional": true,
+            "active": true,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
@@ -1460,7 +1461,8 @@
         },
         "reference_loader": {
             "namespace": "{asset_name}_{subset}_##_",
-            "group_name": "_GRP"
+            "group_name": "_GRP",
+            "display_handle": true
         }
     },
     "workfile_build": {

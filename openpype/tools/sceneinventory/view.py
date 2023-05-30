@@ -791,7 +791,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         else:
             version_str = version
 
-        dialog = QtWidgets.QMessageBox()
+        dialog = QtWidgets.QMessageBox(self)
         dialog.setIcon(QtWidgets.QMessageBox.Warning)
         dialog.setStyleSheet(style.load_stylesheet())
         dialog.setWindowTitle("Update failed")

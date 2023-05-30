@@ -41,10 +41,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
-)
+from openpype.hosts.max.api import maintained_selection, get_all_children
 
 
 class ExtractAlembic(publish.Extractor):
@@ -66,35 +63,30 @@ class ExtractAlembic(publish.Extractor):
         path = os.path.join(parent_dir, file_name)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (file_name,
-                                                        parent_dir))
+        self.log.info("Writing alembic '%s' to '%s'" % (file_name, parent_dir))
 
-        abc_export_cmd = (
-            f"""
-AlembicExport.ArchiveType = #ogawa
-AlembicExport.CoordinateSystem = #maya
-AlembicExport.StartFrame = {start}
-AlembicExport.EndFrame = {end}
-
-exportFile @"{path}" #noPrompt selectedOnly:on using:AlembicExport
-
-            """)
-
-        self.log.debug(f"Executing command: {abc_export_cmd}")
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.StartFrame = start
+        rt.AlembicExport.EndFrame = end
 
         with maintained_selection():
             # select and export
-
             rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(abc_export_cmd)
+            rt.exportFile(
+                path,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.AlembicExport,
+            )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': file_name,
+            "name": "abc",
+            "ext": "abc",
+            "files": file_name,
             "stagingDir": parent_dir,
         }
         instance.data["representations"].append(representation)
