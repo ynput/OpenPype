@@ -66,7 +66,7 @@ class CollectFramesFixDef(
             self.log.debug("last_version_published_files::{}".format(
                 instance.data["last_version_published_files"]))
 
-            if rewrite_version:
+            if self.rewrite_version_enable and rewrite_version:
                 instance.data["version"] = version["name"]
                 # limits triggering version validator
                 instance.data.pop("latestVersion")
