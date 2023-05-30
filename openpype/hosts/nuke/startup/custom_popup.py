@@ -34,7 +34,6 @@ class CustomScriptDialog(QtWidgets.QDialog):
     on_line_changed = QtCore.Signal(str)
     context = None
 
-
     def __init__(self, parent=None, *args, **kwargs):
         super(CustomScriptDialog, self).__init__(parent=parent,
                                                  *args,
