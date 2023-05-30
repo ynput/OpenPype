@@ -333,11 +333,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         # A Renderlayer is never explicitly created using the create method.
         # Instead, renderlayers from the scene are collected. Thus "create"
         # would only ever be called to say, 'hey, please refresh collect'
-
-        # Only allow a single render instance to exist
-        if self._get_singleton_node():
-            raise CreatorError("A Render instance already exists - only "
-                               "one can be configured.")
+        self.create_singleton_node()
 
         # if no render layers are present, create default one with
         # asterisk selector
@@ -347,16 +343,23 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
             collection = render_layer.createCollection("defaultCollection")
             collection.getSelector().setPattern('*')
 
+        # By RenderLayerCreator.create we make it so that the renderlayer
+        # instances directly appear even though it just collects scene
+        # renderlayers. This doesn't actually 'create' any scene contents.
+        self.collect_instances()
+
+    def create_singleton_node(self):
+        if self._get_singleton_node():
+            raise CreatorError("A Render instance already exists - only "
+                               "one can be configured.")
+
         with lib.undo_chunk():
             node = cmds.sets(empty=True, name=self.singleton_node_name)
             lib.imprint(node, data={
                 "pre_creator_identifier": self.identifier
             })
 
-            # By RenderLayerCreator.create we make it so that the renderlayer
-            # instances directly appear even though it just collects scene
-            # renderlayers. This doesn't actually 'create' any scene contents.
-            self.collect_instances()
+        return node
 
     def collect_instances(self):
 
@@ -449,11 +452,6 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 layer = instance.transient_data["layer"]
                 instance_node = self._create_layer_instance_node(layer)
                 instance.data["instance_node"] = instance_node
-            else:
-                # TODO: Keep name in sync with the actual renderlayer?
-                self.log.warning("No instance node found for to be updated "
-                                 "instance: {}".format(instance))
-                continue
 
             self.imprint_instance_node(instance_node,
                                        data=instance.data_to_store())
