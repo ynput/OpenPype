@@ -156,8 +156,10 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
             )
         return loaded_representation_ids
 
-    def _before_repre_load(self, placeholder, representation):
+    def _before_placeholder_load(self, placeholder):
         placeholder.data["nodes_init"] = nuke.allNodes()
+
+    def _before_repre_load(self, placeholder, representation):
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -189,7 +191,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def cleanup_placeholder(self, placeholder):
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -603,7 +605,7 @@ class NukePlaceholderCreatePlugin(
     def get_placeholder_options(self, options=None):
         return self.get_create_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def cleanup_placeholder(self, placeholder):
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
