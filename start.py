@@ -319,9 +319,6 @@ def set_openpype_global_environments() -> None:
     if "QT_AUTO_SCREEN_SCALE_FACTOR" not in os.environ:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
-    if "QT_SCALE_FACTOR_ROUNDING_POLICY" not in os.environ:
-        os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
-
 
 def run(arguments: list, env: dict = None) -> int:
     """Use correct executable to run stuff.

@@ -231,9 +231,6 @@ def set_global_environments() -> None:
     if "QT_AUTO_SCREEN_SCALE_FACTOR" not in os.environ:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
-    if "QT_SCALE_FACTOR_ROUNDING_POLICY" not in os.environ:
-        os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
-
 
 def set_addons_environments():
     """Set global environments for OpenPype modules.
