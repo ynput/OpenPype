@@ -142,10 +142,12 @@ class CustomScriptDialog(QtWidgets.QDialog):
         frame_start = int(match.group("start"))
         frame_end = int(match.group("end"))
         if not nuke.allNodes("Read"):
+            self.close()
             return
         for read_node in nuke.allNodes("Read"):
             if selected:
                 if not nuke.selectedNodes():
+                    self.close()
                     return
                 if read_node in nuke.selectedNodes():
                     read_node["frame_mode"].setValue("start_at")
