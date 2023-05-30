@@ -676,7 +676,15 @@ class PublisherWindow(QtWidgets.QDialog):
         self._tabs_widget.set_current_tab(identifier)
 
     def set_current_tab(self, tab):
-        self._set_current_tab(tab)
+        if tab == "create":
+            self._go_to_create_tab()
+        elif tab == "publish":
+            self._go_to_publish_tab()
+        elif tab == "report":
+            self._go_to_report_tab()
+        elif tab == "details":
+            self._go_to_details_tab()
+
         if not self._window_is_visible:
             self.set_tab_on_reset(tab)
 
@@ -686,6 +694,12 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_create_tab(self):
         if self._create_tab.isEnabled():
             self._set_current_tab("create")
+            return
+
+        self._overlay_object.add_message(
+            "Can't switch to Create tab because publishing is paused.",
+            message_type="info"
+        )
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
