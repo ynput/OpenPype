@@ -31,7 +31,7 @@ class NameTextEdit(QtWidgets.QLineEdit):
 
         idx = self.cursorPosition()
         before_text = text[0:idx]
-        after_text = text[idx : len(text)]
+        after_text = text[idx:len(text)]
         sub_regex = "[^{}]+".format(NAME_ALLOWED_SYMBOLS)
         new_before_text = re.sub(sub_regex, "", before_text)
         new_after_text = re.sub(sub_regex, "", after_text)
