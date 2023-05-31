@@ -35,7 +35,6 @@ class CollectRender(pyblish.api.InstancePlugin, OpenPypePyblishPluginMixin):
         asset = get_current_asset_name()
 
         render_layer_files = RenderProducts().render_product(instance.name)
-        folder = folder.replace("\\", "/")
 
         img_format = RenderProducts().image_format()
         project_name = context.data["projectName"]
