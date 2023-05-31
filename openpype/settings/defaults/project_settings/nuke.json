@@ -214,20 +214,20 @@
         }
     },
     "scriptsmenu": {
-        "name": "OpenPype Tools",
+        "name": "Ayon Tools",
         "definition": [
             {
                 "type": "action",
                 "sourcetype": "python",
-                "title": "OpenPype Docs",
-                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
-                "tooltip": "Open the OpenPype Nuke user doc page"
+                "title": "Ayon Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://ayon.ynput.io/docs/artist_hosts_nuke_tut')",
+                "tooltip": "Open the Ayon Nuke user doc page"
             }
         ]
     },
     "gizmo": [
         {
-            "toolbar_menu_name": "OpenPype Gizmo",
+            "toolbar_menu_name": "Ayon Gizmos",
             "gizmo_source_dir": {
                 "windows": [],
                 "darwin": [],
@@ -245,7 +245,7 @@
                         {
                             "sourcetype": "python",
                             "title": "Gizmo Note",
-                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of Ayon')",
                             "icon": "",
                             "shortcut": ""
                         }
