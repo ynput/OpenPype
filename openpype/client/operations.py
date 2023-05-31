@@ -731,6 +731,9 @@ def create_project(
     Args:
         project_name(str): New project name. Should be unique.
         project_code(str): Project's code should be unique too.
+        width(int): New project's width
+        height(int): New project's height
+        fps(float): New project's fps
         library_project(bool): Project is library project.
 
     Raises:
