@@ -3486,6 +3486,21 @@ files = [
 six = "*"
 
 [[package]]
+name = "wemake-python-styleguide"
+version = "0.0.1"
+description = "Opinionated styleguide that we use in wemake.services projects"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "wemake-python-styleguide-0.0.1.tar.gz", hash = "sha256:e1f47a2be6aa79ca8a1cfbbbffdd67bf4df32b76306f4c3dd2a620a2af78e671"},
+    {file = "wemake_python_styleguide-0.0.1-py2.py3-none-any.whl", hash = "sha256:505a19d82f9c4f450c6f06bb8c74d86c99cabcc4d5e6d8ea70e90b13b049f34f"},
+]
+
+[package.dependencies]
+flake8 = "*"
+
+[[package]]
 name = "wheel"
 version = "0.40.0"
 description = "A built-package format for Python"
@@ -3716,4 +3731,4 @@ docs = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.1,<3.10"
-content-hash = "cdf2ba74b9838635baddfd5d79ea94e10243db328fe6dc426455475b8a047671"
+content-hash = "deb8ba4b77d9d02f40e01a6657a29631bb553bf643f8af89b65ba2cc76d9ed90"
