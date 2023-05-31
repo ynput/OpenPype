@@ -46,6 +46,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -82,7 +86,8 @@
                         "png": {
                             "ext": "png",
                             "tags": [
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
@@ -251,7 +256,9 @@
                     }
                 },
                 {
-                    "families": ["review"],
+                    "families": [
+                        "review"
+                    ],
                     "hosts": [
                         "maya",
                         "houdini"

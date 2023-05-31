@@ -55,7 +55,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             has_family = node.evalParm("family")
             assert has_family, "'%s' is missing 'family'" % node.name()
 
-            self.log.info("processing {}".format(node))
+            self.log.info(
+                "Processing legacy instance node {}".format(node.path())
+            )
 
             data = lib.read(node)
             # Check bypass state and reverse
