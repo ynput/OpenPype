@@ -745,13 +745,6 @@ def create_project(
 
     from openpype.settings import ProjectSettings, SaveWarningExc
     from openpype.pipeline.schema import validate
-
-    if width is None:
-        width = 1920
-    if height is None:
-        height = 1080
-    if fps is None:
-        fps = 25
     
     if get_project(project_name, fields=["name"]):
         raise ValueError("Project with name \"{}\" already exists".format(
