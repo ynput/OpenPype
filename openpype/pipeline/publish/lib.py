@@ -12,7 +12,8 @@ import pyblish.api
 from openpype.lib import (
     Logger,
     import_filepath,
-    filter_profiles
+    filter_profiles,
+    is_func_signature_supported,
 )
 from openpype.settings import (
     get_project_settings,
@@ -496,12 +497,26 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
         # Apply settings to plugins
-        if hasattr(plugin, "apply_settings"):
+
+        apply_settings_func = getattr(plugin, "apply_settings", None)
+        if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
             # - can be used to target settings from custom settings place
             # - skip default behavior when successful
             try:
-                plugin.apply_settings(project_settings, system_settings)
+                # Support to pass only project settings
+                # - make sure that both settings are passed, when can be
+                #   - that covers cases when *args are in method parameters
+                both_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings, system_settings
+                )
+                project_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings
+                )
+                if not both_supported and project_supported:
+                    plugin.apply_settings(project_settings)
+                else:
+                    plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -866,3 +881,26 @@ def add_repre_files_for_cleanup(instance, repre):
     for file_name in files:
         expected_file = os.path.join(staging_dir, file_name)
         instance.context.data["cleanupFullPaths"].append(expected_file)
+
+
+def get_publish_instance_label(instance):
+    """Try to get label from pyblish instance.
+
+    First are used values in instance data under 'label' and 'name' keys. Then
+    is used string conversion of instance object -> 'instance._name'.
+
+    Todos:
+        Maybe 'subset' key could be used too.
+
+    Args:
+        instance (pyblish.api.Instance): Pyblish instance.
+
+    Returns:
+        str: Instance label.
+    """
+
+    return (
+        instance.data.get("label")
+        or instance.data.get("name")
+        or str(instance)
+    )

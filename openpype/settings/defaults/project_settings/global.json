@@ -47,6 +47,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
