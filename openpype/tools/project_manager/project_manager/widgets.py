@@ -283,7 +283,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
                 return value
         except (ValueError, TypeError):
             return None
-        
+
     def _on_ok_clicked(self):
         if not self._project_name_is_valid or not self._project_code_is_valid:
             return
@@ -385,8 +385,8 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
             (
                 "<b>WARNING: This cannot be undone.</b><br/><br/>"
                 'Project <b>"{}"</b> with all related data will be'
-                " permanently removed from the database. (This action won't remove"
-                " any files on disk.)"
+                " permanently removed from the database."
+                " (This action won't remove any files on disk.)"
             ).format(project_name)
         )
 

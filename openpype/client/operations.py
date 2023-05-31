@@ -745,7 +745,7 @@ def create_project(
 
     from openpype.settings import ProjectSettings, SaveWarningExc
     from openpype.pipeline.schema import validate
-    
+
     if get_project(project_name, fields=["name"]):
         raise ValueError("Project with name \"{}\" already exists".format(
             project_name
