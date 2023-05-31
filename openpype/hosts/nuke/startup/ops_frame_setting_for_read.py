@@ -9,11 +9,14 @@ class FrameSettingsPanel(nukescripts.PythonPanel):
         self.read_node = node
         # CREATE KNOBS
         self.range = nuke.String_Knob('fRange', 'Frame Range', '%s-%s' %
-                                      (nuke.root().firstFrame(), nuke.root().lastFrame()))
+                                      (nuke.root().firstFrame(),
+                                       nuke.root().lastFrame()))
         self.selected = nuke.Boolean_Knob("selection")
+        self.info = nuke.Help_Knob("Instruction")
         # ADD KNOBS
         self.addKnob(self.selected)
         self.addKnob(self.range)
+        self.addKnob(self.info)
         self.selected.setValue(False)
 
     def knobChanged(self, knob):
