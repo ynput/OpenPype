@@ -160,6 +160,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
 
         return False
 
+
 @contextlib.contextmanager
 def application():
     app = QtWidgets.QApplication(sys.argv)
