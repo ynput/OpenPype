@@ -959,7 +959,7 @@ class ServerAPI(object):
             key: value
             for key, value in (
                 ("sender", sender),
-                ("projectName", project_name),
+                ("project", project_name),
                 ("status", status),
                 ("description", description),
                 ("summary", summary),
@@ -1641,7 +1641,7 @@ class ServerAPI(object):
             checksum=checksum,
             **kwargs
         )
-        if response.status not in (200, 201):
+        if response.status not in (200, 201, 204):
             raise ServerError("Failed to create/update dependency")
         return response.data
 

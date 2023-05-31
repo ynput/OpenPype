@@ -771,6 +771,21 @@ def get_repre_ids_by_context_filters(*args, **kwargs):
     return con.get_repre_ids_by_context_filters(*args, **kwargs)
 
 
+def get_workfiles_info(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfiles_info(*args, **kwargs)
+
+
+def get_workfile_info(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfile_info(*args, **kwargs)
+
+
+def get_workfile_info_by_id(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfile_info_by_id(*args, **kwargs)
+
+
 def create_project(
     project_name,
     project_code,

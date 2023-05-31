@@ -124,6 +124,10 @@ from ._api import (
     get_representation_parents,
     get_repre_ids_by_context_filters,
 
+    get_workfiles_info,
+    get_workfile_info,
+    get_workfile_info_by_id,
+
     get_thumbnail,
     get_folder_thumbnail,
     get_version_thumbnail,
@@ -277,6 +281,10 @@ __all__ = (
     "get_representations_parents",
     "get_representation_parents",
     "get_repre_ids_by_context_filters",
+
+    "get_workfiles_info",
+    "get_workfile_info",
+    "get_workfile_info_by_id",
 
     "get_thumbnail",
     "get_folder_thumbnail",
