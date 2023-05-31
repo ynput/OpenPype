@@ -279,7 +279,6 @@ class CreateProjectDialog(QtWidgets.QDialog):
     def _validate_number(self, value: str, value_type: type):
         try:
             value = value_type(value)
-            print(value)
             if value > 0:
                 return value
         except (ValueError, TypeError):
