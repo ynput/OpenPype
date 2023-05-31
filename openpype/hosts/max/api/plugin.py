@@ -52,6 +52,10 @@ class MaxCreator(Creator, MaxCreatorBase):
         if pre_create_data.get("use_selection"):
             self.selected_nodes = rt.getCurrentSelection()
 
+        if rt.GetNodeByName(subset_name):
+            raise OpenPypeCreatorError(
+                "Subset with the same name already exists"
+            )
         instance_node = self.create_instance_node(subset_name)
         instance_data["instance_node"] = instance_node.name
         instance = CreatedInstance(

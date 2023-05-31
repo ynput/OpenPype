@@ -12,8 +12,7 @@ class ValidateMaxContents(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     families = ["camera",
-                "maxScene",
-                "maxrender"]
+                "maxScene"]
     hosts = ["max"]
     label = "Max Scene Contents"
 
