@@ -11,7 +11,7 @@
             "filepath": []
         },
         "file_rules": {
-            "override_global_rules": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },

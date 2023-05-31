@@ -483,22 +483,22 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     frules_global = imageio_global["file_rules"]
     activate_global_rules = frules_global.get(
         "activate_global_file_rules", False)
+    global_rules = frules_global["rules"]
 
     if not activate_global_rules:
         log.info(
             "Colorspace global file rules are disabled."
         )
-        return {}
+        global_rules = {}
 
     # host is optional, some might not have any settings
     frules_host = imageio_host.get("file_rules", {})
 
     # compile file rules dictionary
-    override_global_rules = frules_host.get("override_global_rules")
-    if override_global_rules:
-        return frules_host["rules"]
-    else:
-        return frules_global["rules"]
+    activate_host_rules = frules_host.get("activate_host_rules")
+
+    # return host rules if activated or global rules
+    return frules_host["rules"] if activate_host_rules else global_rules
 
 
 def get_remapped_colorspace_to_native(

@@ -6,7 +6,7 @@
             "filepath": []
         },
         "file_rules": {
-            "override_global_rules": true,
+            "activate_host_rules": true,
             "rules": {}
         }
     },

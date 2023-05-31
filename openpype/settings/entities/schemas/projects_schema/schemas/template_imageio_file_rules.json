@@ -7,8 +7,8 @@
         "children": [
             {
                 "type": "boolean",
-                "key": "override_global_rules",
-                "label": "Override global File Rules"
+                "key": "activate_host_rules",
+                "label": "Activate Host File Rules"
             },
             {
                 "key": "rules",
