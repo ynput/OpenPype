@@ -327,7 +327,10 @@ class ClipLoader:
                 self.active_timeline = options["timeline"]
             else:
                 # create new sequence
-                self.active_timeline = lib.get_current_timeline(new=True)
+                self.active_timeline = (
+                    lib.get_current_timeline() or
+                    lib.get_new_timeline()
+                )
         else:
             self.active_timeline = lib.get_current_timeline()
 

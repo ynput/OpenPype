@@ -19,6 +19,7 @@ from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS
 )
 
+
 class LoadClip(plugin.TimelineItemLoader):
     """Load a subset to timeline as clip
 
