@@ -24,14 +24,13 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         pattern = re.compile(r'^\d+-\d+$')
 
         if not pattern.match(app.name):
+            msg = "Unreal application name must be in format '5-0' or '5-1'"
             Window(
                 parent=None,
                 title="Unreal application name format",
-                message="Unreal application name must be in format '5-0' or '5-1'",
+                message=msg,
                 level="critical")
-            raise ValueError(
-                "Unreal application name must be in format '5-0' or '5-1'"
-            )
+            raise ValueError(msg)
 
         ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
