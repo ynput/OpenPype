@@ -36,8 +36,6 @@ class CreateBackdrop(NukeCreator):
             created_node["note_font_size"].setValue(24)
             created_node["label"].setValue("[{}]".format(node_name))
 
-            self.add_info_knob(created_node)
-
             return created_node
 
     def create(self, subset_name, instance_data, pre_create_data):
