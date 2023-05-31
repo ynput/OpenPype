@@ -1238,6 +1238,7 @@ class AssetLoader(Loader):
                     and hasattr(new_datablock.data, "shape_keys")
                     and new_datablock.data.shape_keys
                     and old_datablock.data
+                    and old_datablock.data.shape_keys
                 ):
                     for i, driver in enumerate(
                         new_datablock.data.shape_keys.animation_data.drivers
