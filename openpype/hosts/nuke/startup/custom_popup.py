@@ -23,10 +23,7 @@ def get_main_window():
 
 
 class CustomScriptDialog(QtWidgets.QDialog):
-    """A Popup that moves itself to bottom right of screen on show event.
-
-    The UI contains a message label and a red highlighted button to "show"
-    or perform another custom action from this pop-up.
+    """A Custom Popup For Nuke Read Node
 
     """
 
@@ -95,7 +92,7 @@ class CustomScriptDialog(QtWidgets.QDialog):
             "cancel": cancel
         }
         # Signals
-        has_selection.toggled.connect(self.emit_click_with_state)
+        has_selection.toggled.connect(self.on_checked_changed)
         line_edit.textChanged.connect(self.on_line_edit_changed)
         button.clicked.connect(self._on_clicked)
         cancel.clicked.connect(self.close)
@@ -104,10 +101,9 @@ class CustomScriptDialog(QtWidgets.QDialog):
         self.setWindowTitle("Custom Popup")
 
     def update_values(self):
-        self.widgets["selection"].isChecked()
+        return self.widgets["selection"].isChecked()
 
-    def emit_click_with_state(self):
-        """Emit the on_clicked signal with the toggled state"""
+    def on_checked_changed(self):
         checked = self.widgets["selection"].isChecked()
         return checked
 
@@ -163,11 +159,6 @@ class CustomScriptDialog(QtWidgets.QDialog):
         self.close()
 
         return False
-
-    def showEvent(self, event):
-        # Position popup based on contents on show event
-        return super(CustomScriptDialog, self).showEvent(event)
-
 
 @contextlib.contextmanager
 def application():

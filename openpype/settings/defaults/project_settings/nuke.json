@@ -227,7 +227,7 @@
                 "type": "action",
                 "sourcetype": "python",
                 "title": "Set Frame Range(Read Node)",
-                "command": "from openpype.hosts.nuke.startup import custom_popup;from openpype.hosts.nuke.startup.custom_popup import get_main_window;custom_popup.CustomScriptDialog(parent=get_main_window()).show();",
+                "command": "import openpype.hosts.nuke.startup.custom_popup as popup;popup.CustomScriptDialog(parent=popup.get_main_window()).show();",
                 "tooltip": "Set Frame Range for Read Node(s)"
             }
         ]
