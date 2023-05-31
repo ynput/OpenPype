@@ -15,14 +15,12 @@ class RenderProducts(object):
 
     def __init__(self, project_settings=None):
         self._project_settings = project_settings or get_project_settings(
-                        legacy_io.Session["AVALON_PROJECT"]
-                    )
+            legacy_io.Session["AVALON_PROJECT"])
 
     def get_beauty(self, container):
         render_dir = os.path.dirname(rt.rendOutputFilename)
 
-        output_file = os.path.join(render_dir,
-                                   container)
+        output_file = os.path.join(render_dir, container)
 
         setting = self._project_settings
         img_fmt = setting["max"]["RenderSettings"]["image_format"]   # noqa
