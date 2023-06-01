@@ -4,16 +4,12 @@ import contextlib
 from maya import cmds
 
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
     get_container_members,
-    parent_nodes
+    parent_nodes,
+    create_rig_animation_instance
 )
 
 
@@ -114,9 +110,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    # Name of creator class that will be used to create animation instance
-    animation_creator_name = "CreateAnimation"
-
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
 
@@ -169,9 +162,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
-
                 settings = get_project_settings(os.environ['AVALON_PROJECT'])
+
+                display_handle = settings['maya']['load'].get(
+                    'reference_loader', {}
+                ).get('display_handle', True)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
+
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
@@ -181,7 +180,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                  (float(c[1]) / 255),
                                  (float(c[2]) / 255))
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -220,37 +221,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self._lock_camera_transforms(members)
 
     def _post_process_rig(self, name, namespace, context, options):
-
-        output = next((node for node in self if
-                       node.endswith("out_SET")), None)
-        controls = next((node for node in self if
-                         node.endswith("controls_SET")), None)
-
-        assert output, "No out_SET in rig, this is a bug."
-        assert controls, "No controls_SET in rig, this is a bug."
-
-        # Find the roots amongst the loaded nodes
-        roots = cmds.ls(self[:], assemblies=True, long=True)
-        assert roots, "No root nodes in rig, this is a bug."
-
-        asset = legacy_io.Session["AVALON_ASSET"]
-        dependency = str(context["representation"]["_id"])
-
-        self.log.info("Creating subset: {}".format(namespace))
-
-        # Create the animation instance
-        creator_plugin = get_legacy_creator_by_name(
-            self.animation_creator_name
+        nodes = self[:]
+        create_rig_animation_instance(
+            nodes, context, namespace, options=options, log=self.log
         )
-        with maintained_selection():
-            cmds.select([output, controls] + roots, noExpand=True)
-            legacy_create(
-                creator_plugin,
-                name=namespace,
-                asset=asset,
-                options={"useSelection": True},
-                data={"dependencies": dependency}
-            )
 
     def _lock_camera_transforms(self, nodes):
         cameras = cmds.ls(nodes, type="camera")

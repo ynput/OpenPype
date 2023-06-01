@@ -73,6 +73,10 @@
                     }
                 }
             ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_max_publish"
         }
     ]
 }

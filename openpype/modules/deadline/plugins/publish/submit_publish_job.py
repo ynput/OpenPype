@@ -275,7 +275,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         args = [
             "--headless",
             'publish',
-            rootless_metadata_path,
+            '"{}"'.format(rootless_metadata_path),
             "--targets", "deadline",
             "--targets", "farm"
         ]
@@ -438,7 +438,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "Finished copying %i files" % len(resource_files))
 
     def _create_instances_for_aov(
-        self, instance_data, exp_files, additional_data
+        self, instance_data, exp_files, additional_data, do_not_add_review
     ):
         """Create instance for each AOV found.
 
@@ -449,6 +449,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_data (pyblish.plugin.Instance): skeleton data for instance
                 (those needed) later by collector
             exp_files (list): list of expected files divided by aovs
+            additional_data (dict):
+            do_not_add_review (bool): explicitly skip review
 
         Returns:
             list of instances
@@ -514,8 +516,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             app = os.environ.get("AVALON_APP", "")
 
-            preview = False
-
             if isinstance(col, list):
                 render_file_name = os.path.basename(col[0])
             else:
@@ -532,6 +532,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
+
+            preview = preview and not do_not_add_review
             if preview:
                 new_instance["review"] = True
 
@@ -591,7 +593,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files):
+    def _get_representations(self, instance, exp_files, do_not_add_review):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
@@ -602,6 +604,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance (dict): instance data for which we are
                              setting representations
             exp_files (list): list of expected files
+            do_not_add_review (bool): explicitly skip review
 
         Returns:
             list of representations
@@ -651,6 +654,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance.get("slate"):
                 frame_start -= 1
 
+            preview = preview and not do_not_add_review
             rep = {
                 "name": ext,
                 "ext": ext,
@@ -705,6 +709,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = match_aov_pattern(
                 host_name, self.aov_filter, remainder
             )
+            preview = preview and not do_not_add_review
             if preview:
                 rep.update({
                     "fps": instance.get("fps"),
@@ -757,7 +762,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         data = instance.data.copy()
@@ -820,8 +825,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         families = [family]
 
         # pass review to families if marked as review
+        do_not_add_review = False
         if data.get("review"):
             families.append("review")
+        elif data.get("review") == False:
+            self.log.debug("Instance has review explicitly disabled.")
+            do_not_add_review = True
 
         instance_skeleton_data = {
             "family": family,
@@ -977,7 +986,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instances = self._create_instances_for_aov(
                 instance_skeleton_data,
                 data.get("expectedFiles"),
-                additional_data
+                additional_data,
+                do_not_add_review
             )
             self.log.info("got {} instance{}".format(
                 len(instances),
@@ -986,7 +996,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             representations = self._get_representations(
                 instance_skeleton_data,
-                data.get("expectedFiles")
+                data.get("expectedFiles"),
+                do_not_add_review
             )
 
             if "representations" not in instance_skeleton_data.keys():

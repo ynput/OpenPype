@@ -23,3 +23,11 @@ jobs:
           limit_to: 100
           form: .github/ISSUE_TEMPLATE/bug_report.yml
           commit_message: 'chore(): update bug report / version'
+          dry_run: no-push
+
+      - name: Push to protected develop branch
+        uses: CasperWA/push-protected@v2.10.0
+        with:
+          token: ${{ secrets.YNPUT_BOT_TOKEN }}
+          branch: develop
+          unprotect_reviews: true

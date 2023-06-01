@@ -217,7 +217,11 @@ class ExtractPlayblast(publish.Extractor):
                 instance.data["panel"], edit=True, **viewport_defaults
             )
 
-        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
+        try:
+            cmds.setAttr(
+                "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
+        except RuntimeError:
+            self.log.warning("Cannot restore Pan/Zoom settings.")
 
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]

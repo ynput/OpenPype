@@ -23,7 +23,7 @@ from openpype.lib.attribute_definitions import (
     get_default_values,
 )
 from openpype.host import IPublishHost, IWorkfileHost
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
@@ -1383,6 +1383,8 @@ class CreateContext:
         self._current_task_name = None
         self._current_workfile_path = None
 
+        self._current_project_anatomy = None
+
         self._host_is_valid = host_is_valid
         # Currently unused variable
         self.headless = headless
@@ -1546,6 +1548,18 @@ class CreateContext:
 
         return self._current_workfile_path
 
+    def get_current_project_anatomy(self):
+        """Project anatomy for current project.
+
+        Returns:
+            Anatomy: Anatomy object ready to be used.
+        """
+
+        if self._current_project_anatomy is None:
+            self._current_project_anatomy = Anatomy(
+                self._current_project_name)
+        return self._current_project_anatomy
+
     @property
     def context_has_changed(self):
         """Host context has changed.
@@ -1568,6 +1582,7 @@ class CreateContext:
         )
 
     project_name = property(get_current_project_name)
+    project_anatomy = property(get_current_project_anatomy)
 
     @property
     def log(self):
@@ -1679,6 +1694,8 @@ class CreateContext:
         self._current_asset_name = asset_name
         self._current_task_name = task_name
         self._current_workfile_path = workfile_path
+
+        self._current_project_anatomy = None
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.

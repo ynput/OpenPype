@@ -554,7 +554,7 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": true,
+            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
@@ -734,6 +734,7 @@
         "ValidateShaderName": {
             "enabled": false,
             "optional": true,
+            "active": true,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
@@ -1459,8 +1460,9 @@
             ]
         },
         "reference_loader": {
-            "namespace": "{asset_name}_{subset}_##",
-            "group_name": "_GRP"
+            "namespace": "{asset_name}_{subset}_##_",
+            "group_name": "_GRP",
+            "display_handle": true
         }
     },
     "workfile_build": {

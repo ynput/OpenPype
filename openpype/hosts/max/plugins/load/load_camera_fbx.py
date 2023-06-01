@@ -20,28 +20,25 @@ class FbxLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         filepath = os.path.normpath(self.fname)
+        rt.FBXImporterSetParam("Animation", True)
+        rt.FBXImporterSetParam("Camera", True)
+        rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.importFile(
+            filepath,
+            rt.name("noPrompt"),
+            using=rt.FBXIMP)
 
-        fbx_import_cmd = (
-            f"""
+        container = rt.getNodeByName(f"{name}")
+        if not container:
+            container = rt.container()
+            container.name = f"{name}"
 
-FBXImporterSetParam "Animation" true
-FBXImporterSetParam "Cameras" true
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-importFile @"{filepath}" #noPrompt using:FBXIMP
-        """)
-
-        self.log.debug(f"Executing command: {fbx_import_cmd}")
-        rt.execute(fbx_import_cmd)
-
-        container_name = f"{name}_CON"
-
-        asset = rt.getNodeByName(f"{name}")
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [container], context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt

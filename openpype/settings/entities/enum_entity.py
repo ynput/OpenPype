@@ -169,6 +169,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "unreal",
         "gaffer",
         "standalonepublisher",
+        "substancepainter",
         "traypublisher",
         "webpublisher"
     ]

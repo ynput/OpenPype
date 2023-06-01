@@ -1,6 +1,6 @@
 import os
 import shutil
-from openpype.lib import Logger
+from openpype.lib import Logger, is_running_from_build
 
 RESOLVE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -8,30 +8,33 @@ RESOLVE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 def setup(env):
     log = Logger.get_logger("ResolveSetup")
     scripts = {}
-    us_env = env.get("RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR")
-    us_dir = env["RESOLVE_UTILITY_SCRIPTS_DIR"]
+    util_scripts_env = env.get("RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR")
+    util_scripts_dir = env["RESOLVE_UTILITY_SCRIPTS_DIR"]
 
-    us_paths = [os.path.join(
+    util_scripts_paths = [os.path.join(
         RESOLVE_ROOT_DIR,
         "utility_scripts"
     )]
 
     # collect script dirs
-    if us_env:
-        log.info("Utility Scripts Env: `{}`".format(us_env))
-        us_paths = us_env.split(
-            os.pathsep) + us_paths
+    if util_scripts_env:
+        log.info("Utility Scripts Env: `{}`".format(util_scripts_env))
+        util_scripts_paths = util_scripts_env.split(
+            os.pathsep) + util_scripts_paths
 
     # collect scripts from dirs
-    for path in us_paths:
+    for path in util_scripts_paths:
         scripts.update({path: os.listdir(path)})
 
-    log.info("Utility Scripts Dir: `{}`".format(us_paths))
+    log.info("Utility Scripts Dir: `{}`".format(util_scripts_paths))
     log.info("Utility Scripts: `{}`".format(scripts))
 
+    # Make sure scripts dir exists
+    os.makedirs(util_scripts_dir, exist_ok=True)
+
     # make sure no script file is in folder
-    for s in os.listdir(us_dir):
-        path = os.path.join(us_dir, s)
+    for script in os.listdir(util_scripts_dir):
+        path = os.path.join(util_scripts_dir, script)
         log.info("Removing `{}`...".format(path))
         if os.path.isdir(path):
             shutil.rmtree(path, onerror=None)
@@ -39,12 +42,17 @@ def setup(env):
             os.remove(path)
 
     # copy scripts into Resolve's utility scripts dir
-    for d, sl in scripts.items():
-        # directory and scripts list
-        for s in sl:
-            # script in script list
-            src = os.path.join(d, s)
-            dst = os.path.join(us_dir, s)
+    for directory, scripts in scripts.items():
+        for script in scripts:
+            if (
+                is_running_from_build() and
+                script in ["tests", "develop"]
+            ):
+                # only copy those if started from build
+                continue
+
+            src = os.path.join(directory, script)
+            dst = os.path.join(util_scripts_dir, script)
             log.info("Copying `{}` to `{}`...".format(src, dst))
             if os.path.isdir(src):
                 shutil.copytree(

@@ -280,7 +280,7 @@ class MakeTX(TextureProcessor):
             # Do nothing if the source file is already a .tx file.
             return TextureResult(
                 path=source,
-                file_hash=None,     # todo: unknown texture hash?
+                file_hash=source_hash(source),
                 colorspace=colorspace,
                 transfer_mode=COPY
             )

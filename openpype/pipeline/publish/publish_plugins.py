@@ -45,7 +45,7 @@ class PublishValidationError(Exception):
 
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
-        self.title = title or "< Missing title >"
+        self.title = title
         self.description = description or message
         self.detail = detail
         super(PublishValidationError, self).__init__(message)
@@ -379,7 +379,9 @@ class ColormanagedPyblishPluginMixin(object):
 
         # check if ext in lower case is in self.allowed_ext
         if ext.lstrip(".").lower() not in self.allowed_ext:
-            self.log.debug("Extension is not in allowed extensions.")
+            self.log.debug(
+                "Extension '{}' is not in allowed extensions.".format(ext)
+            )
             return
 
         if colorspace_settings is None:
@@ -393,8 +395,7 @@ class ColormanagedPyblishPluginMixin(object):
             self.log.warning("No colorspace management was defined")
             return
 
-        self.log.info("Config data is : `{}`".format(
-            config_data))
+        self.log.debug("Config data is: `{}`".format(config_data))
 
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
@@ -405,8 +406,7 @@ class ColormanagedPyblishPluginMixin(object):
         if isinstance(filename, list):
             filename = filename[0]
 
-        self.log.debug("__ filename: `{}`".format(
-            filename))
+        self.log.debug("__ filename: `{}`".format(filename))
 
         # get matching colorspace from rules
         colorspace = colorspace or get_imageio_colorspace_from_filepath(
@@ -415,8 +415,7 @@ class ColormanagedPyblishPluginMixin(object):
             file_rules=file_rules,
             project_settings=project_settings
         )
-        self.log.debug("__ colorspace: `{}`".format(
-            colorspace))
+        self.log.debug("__ colorspace: `{}`".format(colorspace))
 
         # infuse data to representation
         if colorspace:
