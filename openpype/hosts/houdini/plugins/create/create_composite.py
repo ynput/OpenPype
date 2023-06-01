@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating composite sequences."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
+from openpype.pipeline import CreatedInstance, CreatorError
+
+import hou
 
 
 class CreateCompositeSequence(plugin.HoudiniCreator):
@@ -35,8 +37,20 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
             "copoutput": filepath
         }
 
+        if self.selected_nodes:
+            if len(self.selected_nodes) > 1:
+                raise CreatorError("More than one item selected.")
+            path = self.selected_nodes[0].path()
+            parms["coppath"] = path
+
         instance_node.setParms(parms)
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_network_categories(self):
+        return [
+            hou.ropNodeTypeCategory(),
+            hou.cop2NodeTypeCategory()
+        ]

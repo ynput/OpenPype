@@ -81,7 +81,8 @@ class CleanUp(pyblish.api.InstancePlugin):
         staging_dir = instance.data.get("stagingDir", None)
 
         if not staging_dir:
-            self.log.info("Staging dir not set.")
+            self.log.debug("Skipping cleanup. Staging dir not set "
+                           "on instance: {}.".format(instance))
             return
 
         if not os.path.normpath(staging_dir).startswith(temp_root):
@@ -90,7 +91,11 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
 
         if not os.path.exists(staging_dir):
-            self.log.info("No staging directory found: %s" % staging_dir)
+            self.log.debug("No staging directory found at: %s" % staging_dir)
+            return
+
+        if instance.data.get("stagingDir_persistent"):
+            self.log.info("Staging dir: %s should be persistent" % staging_dir)
             return
 
         self.log.info("Removing staging directory {}".format(staging_dir))
@@ -127,7 +132,9 @@ class CleanUp(pyblish.api.InstancePlugin):
                     try:
                         os.remove(src)
                     except PermissionError:
-                        self.log.warning("Insufficient permission to delete {}".format(src))
+                        self.log.warning(
+                            "Insufficient permission to delete {}".format(src)
+                        )
                         continue
 
                     # add dir for cleanup

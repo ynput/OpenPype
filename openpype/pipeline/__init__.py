@@ -1,5 +1,6 @@
 from .constants import (
     AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     HOST_WORKFILE_EXTENSIONS,
 )
 
@@ -99,6 +100,7 @@ uninstall = uninstall_host
 
 __all__ = (
     "AVALON_CONTAINER_ID",
+    "AYON_CONTAINER_ID",
     "HOST_WORKFILE_EXTENSIONS",
 
     # --- MongoDB ---

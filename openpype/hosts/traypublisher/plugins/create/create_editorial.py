@@ -260,7 +260,7 @@ or updating already created. Publishing will create OTIO file.
             )
 
             if not first_otio_timeline:
-                # assing otio timeline for multi file to layer
+                # assign otio timeline for multi file to layer
                 first_otio_timeline = otio_timeline
 
         # create otio editorial instance
@@ -283,7 +283,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             subset_name (str): name of subset
-            data (dict): instnance data
+            data (dict): instance data
             sequence_path (str): path to sequence file
             media_path (str): path to media file
             otio_timeline (otio.Timeline): otio timeline object
@@ -315,7 +315,7 @@ or updating already created. Publishing will create OTIO file.
         kwargs = {}
         if extension == ".edl":
             # EDL has no frame rate embedded so needs explicit
-            # frame rate else 24 is asssumed.
+            # frame rate else 24 is assumed.
             kwargs["rate"] = fps
             kwargs["ignore_timecode_mismatch"] = True
 
@@ -358,7 +358,7 @@ or updating already created. Publishing will create OTIO file.
         sequence_file_name,
         first_otio_timeline=None
     ):
-        """Helping function fro creating clip instance
+        """Helping function for creating clip instance
 
         Args:
             otio_timeline (otio.Timeline): otio timeline object
@@ -527,7 +527,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             otio_clip (otio.Clip): otio clip object
-            preset (dict): sigle family preset
+            preset (dict): single family preset
             instance_data (dict): instance data
             parenting_data (dict): shot instance parent data
 
@@ -767,7 +767,7 @@ or updating already created. Publishing will create OTIO file.
         ]
 
     def _validate_clip_for_processing(self, otio_clip):
-        """Validate otio clip attribues
+        """Validate otio clip attributes
 
         Args:
             otio_clip (otio.Clip): otio clip object
@@ -843,7 +843,7 @@ or updating already created. Publishing will create OTIO file.
                 single_item=False,
                 label="Media files",
             ),
-            # TODO: perhpas better would be timecode and fps input
+            # TODO: perhaps better would be timecode and fps input
             NumberDef(
                 "timeline_offset",
                 default=0,

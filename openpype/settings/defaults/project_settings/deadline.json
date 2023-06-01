@@ -43,10 +43,16 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "group": "none",
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "framePerTask": 1
+            "group": "none"
+        },
+        "FusionSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "concurrent_tasks": 1,
+            "group": ""
         },
         "NukeSubmitDeadline": {
             "enabled": true,
@@ -116,6 +122,9 @@
                     ".*"
                 ],
                 "max": [
+                    ".*"
+                ],
+                "fusion": [
                     ".*"
                 ]
             }

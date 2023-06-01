@@ -46,6 +46,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -82,7 +86,8 @@
                         "png": {
                             "ext": "png",
                             "tags": [
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
@@ -239,6 +244,32 @@
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
                             "TOP_CENTERED": "",
+                            "TOP_RIGHT": "{anatomy[version]}",
+                            "BOTTOM_LEFT": "{username}",
+                            "BOTTOM_CENTERED": "{asset}",
+                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                            "filter": {
+                                "families": [],
+                                "tags": []
+                            }
+                        }
+                    }
+                },
+                {
+                    "families": [
+                        "review"
+                    ],
+                    "hosts": [
+                        "maya",
+                        "houdini"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
+                    "burnins": {
+                        "focal_length_burnin": {
+                            "TOP_LEFT": "{yy}-{mm}-{dd}",
+                            "TOP_CENTERED": "{focalLength:.2f} mm",
                             "TOP_RIGHT": "{anatomy[version]}",
                             "BOTTOM_LEFT": "{username}",
                             "BOTTOM_CENTERED": "{asset}",
@@ -591,7 +622,8 @@
                     "task_names": [],
                     "template_name": "simpleUnrealTextureHero"
                 }
-            ]
+            ],
+            "custom_staging_dir_profiles": []
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",

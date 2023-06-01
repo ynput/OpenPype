@@ -9,12 +9,14 @@ import time
 
 import pyblish.api
 
+from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
+    legacy_io,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -22,12 +24,13 @@ from openpype.host import HostBase, ILoadHost, IPublishHost
 
 import unreal  # noqa
 
+# Rename to Ayon once parent module renames
 logger = logging.getLogger("openpype.hosts.unreal")
 
-OPENPYPE_CONTAINERS = "OpenPypeContainers"
-CONTEXT_CONTAINER = "OpenPype/context.json"
+AYON_CONTAINERS = "AyonContainers"
+CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
-    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+    *os.getenv("AYON_UNREAL_VERSION").split(".")
 )
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
@@ -53,14 +56,14 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
     def get_containers(self):
         return ls()
 
-    def show_tools_popup(self):
+    @staticmethod
+    def show_tools_popup():
         """Show tools popup with actions leading to show other tools."""
-
         show_tools_popup()
 
-    def show_tools_dialog(self):
+    @staticmethod
+    def show_tools_dialog():
         """Show tools dialog with actions leading to show other tools."""
-
         show_tools_dialog()
 
     def update_context_data(self, data, changes):
@@ -72,9 +75,10 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
                 with open(op_ctx, "w+") as f:
                     json.dump(data, f)
                 break
-            except IOError:
+            except IOError as e:
                 if i == attempts - 1:
-                    raise Exception("Failed to write context data. Aborting.")
+                    raise Exception(
+                        "Failed to write context data. Aborting.") from e
                 unreal.log_warning("Failed to write context data. Retrying...")
                 i += 1
                 time.sleep(3)
@@ -95,19 +99,30 @@ def install():
     print("-=" * 40)
     logo = '''.
 .
-     ____________
-   / \\      __   \\
-   \\  \\     \\/_\\  \\
-    \\  \\     _____/ ______
-     \\  \\    \\___// \\     \\
-      \\  \\____\\   \\  \\_____\\
-       \\/_____/    \\/______/  PYPE Club .
+                    ·
+                    │
+                   ·∙/
+                 ·-∙•∙-·
+              / \\  /∙·  / \\
+             ∙   \\  │  /   ∙
+              \\   \\ · /   /
+              \\\\   ∙ ∙  //
+                \\\\/   \\//
+                   ___
+                  │   │
+                  │   │
+                  │   │
+                  │___│
+                    -·
+
+         ·-─═─-∙ A Y O N ∙-─═─-·
+                by  YNPUT
 .
 '''
     print(logo)
-    print("installing OpenPype for Unreal ...")
+    print("installing Ayon for Unreal ...")
     print("-=" * 40)
-    logger.info("installing OpenPype for Unreal")
+    logger.info("installing Ayon for Unreal")
     pyblish.api.register_host("unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
@@ -117,7 +132,7 @@ def install():
 
 
 def uninstall():
-    """Uninstall Unreal configuration for Avalon."""
+    """Uninstall Unreal configuration for Ayon."""
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
@@ -125,14 +140,14 @@ def uninstall():
 
 def _register_callbacks():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
 
 def _register_events():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
@@ -146,32 +161,30 @@ def ls():
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     # UE 5.1 changed how class name is specified
-    class_name = ["/Script/OpenPype", "AssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AssetContainer"  # noqa
-    openpype_containers = ar.get_assets_by_class(class_name, True)
+    class_name = ["/Script/Ayon", "AyonAssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AyonAssetContainer"  # noqa
+    ayon_containers = ar.get_assets_by_class(class_name, True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
     # Asset Registry Project settings (and there is no way to set it with
     # python short of editing ini configuration file).
-    for asset_data in openpype_containers:
+    for asset_data in ayon_containers:
         asset = asset_data.get_asset()
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
-        data = cast_map_to_str_dict(data)
-
-        yield data
+        yield cast_map_to_str_dict(data)
 
 
 def ls_inst():
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     # UE 5.1 changed how class name is specified
     class_name = [
-        "/Script/OpenPype",
-        "OpenPypePublishInstance"
+        "/Script/Ayon",
+        "AyonPublishInstance"
     ] if (
             UNREAL_VERSION.major == 5
             and UNREAL_VERSION.minor > 0
-    ) else "OpenPypePublishInstance"  # noqa
+    ) else "AyonPublishInstance"  # noqa
     instances = ar.get_assets_by_class(class_name, True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
@@ -182,13 +195,11 @@ def ls_inst():
         asset = asset_data.get_asset()
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
-        data = cast_map_to_str_dict(data)
-
-        yield data
+        yield cast_map_to_str_dict(data)
 
 
 def parse_container(container):
-    """To get data from container, AssetContainer must be loaded.
+    """To get data from container, AyonAssetContainer must be loaded.
 
     Args:
         container(str): path to container
@@ -217,7 +228,7 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     Unreal doesn't support *groups* of assets that you can add metadata to.
     But it does support folders that helps to organize asset. Unfortunately
     those folders are just that - you cannot add any additional information
-    to them. OpenPype Integration Plugin is providing way out - Implementing
+    to them. Ayon Integration Plugin is providing way out - Implementing
     `AssetContainer` Blueprint class. This class when added to folder can
     handle metadata on it using standard
     :func:`unreal.EditorAssetLibrary.set_metadata_tag()` and
@@ -226,30 +237,30 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     those assets is available as `assets` property.
 
     This is list of strings starting with asset type and ending with its path:
-    `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
+    `Material /Game/Ayon/Test/TestMaterial.TestMaterial`
 
     """
     # 1 - create directory for container
     root = "/Game"
-    container_name = "{}{}".format(name, suffix)
+    container_name = f"{name}{suffix}"
     new_name = move_assets_to_path(root, container_name, nodes)
 
     # 2 - create Asset Container there
-    path = "{}/{}".format(root, new_name)
+    path = f"{root}/{new_name}"
     create_container(container=container_name, path=path)
 
     namespace = path
 
     data = {
-        "schema": "openpype:container-2.0",
-        "id": AVALON_CONTAINER_ID,
+        "schema": "ayon:container-2.0",
+        "id": AYON_CONTAINER_ID,
         "name": new_name,
         "namespace": namespace,
         "loader": str(loader),
         "representation": context["representation"]["_id"],
     }
     # 3 - imprint data
-    imprint("{}/{}".format(path, container_name), data)
+    imprint(f"{path}/{container_name}", data)
     return path
 
 
@@ -257,7 +268,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
     """Bundles *nodes* into *container*.
 
     Marking it with metadata as publishable instance. If assets are provided,
-    they are moved to new path where `OpenPypePublishInstance` class asset is
+    they are moved to new path where `AyonPublishInstance` class asset is
     created and imprinted with metadata.
 
     This can then be collected for publishing by Pyblish for example.
@@ -271,7 +282,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
         suffix (str): suffix string to append to instance name
 
     """
-    container_name = "{}{}".format(name, suffix)
+    container_name = f"{name}{suffix}"
 
     # if we specify assets, create new folder and move them there. If not,
     # just create empty folder
@@ -280,10 +291,10 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
     else:
         new_name = create_folder(root, name)
 
-    path = "{}/{}".format(root, new_name)
+    path = f"{root}/{new_name}"
     create_publish_instance(instance=container_name, path=path)
 
-    imprint("{}/{}".format(path, container_name), data)
+    imprint(f"{path}/{container_name}", data)
 
 
 def imprint(node, data):
@@ -299,14 +310,14 @@ def imprint(node, data):
             loaded_asset, key, str(value)
         )
 
-    with unreal.ScopedEditorTransaction("OpenPype containerising"):
+    with unreal.ScopedEditorTransaction("Ayon containerising"):
         unreal.EditorAssetLibrary.save_asset(node)
 
 
 def show_tools_popup():
     """Show popup with tools.
 
-    Popup will disappear on click or loosing focus.
+    Popup will disappear on click or losing focus.
     """
     from openpype.hosts.unreal.api import tools_ui
 
@@ -366,11 +377,11 @@ def create_folder(root: str, name: str) -> str:
     eal = unreal.EditorAssetLibrary
     index = 1
     while True:
-        if eal.does_directory_exist("{}/{}".format(root, name)):
-            name = "{}{}".format(name, index)
+        if eal.does_directory_exist(f"{root}/{name}"):
+            name = f"{name}{index}"
             index += 1
         else:
-            eal.make_directory("{}/{}".format(root, name))
+            eal.make_directory(f"{root}/{name}")
             break
 
     return name
@@ -403,9 +414,7 @@ def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
     unreal.log(assets)
     for asset in assets:
         loaded = eal.load_asset(asset)
-        eal.rename_asset(
-            asset, "{}/{}/{}".format(root, name, loaded.get_name())
-        )
+        eal.rename_asset(asset, f"{root}/{name}/{loaded.get_name()}")
 
     return name
 
@@ -432,17 +441,16 @@ def create_container(container: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.AssetContainerFactory()
+    factory = unreal.AyonAssetContainerFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
-    asset = tools.create_asset(container, path, None, factory)
-    return asset
+    return tools.create_asset(container, path, None, factory)
 
 
 def create_publish_instance(instance: str, path: str) -> unreal.Object:
-    """Helper function to create OpenPype Publish Instance on given path.
+    """Helper function to create Ayon Publish Instance on given path.
 
-    This behaves similarly as :func:`create_openpype_container`.
+    This behaves similarly as :func:`create_ayon_container`.
 
     Args:
         path (str): Path where to create Publish Instance.
@@ -460,10 +468,9 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.OpenPypePublishInstanceFactory()
+    factory = unreal.AyonPublishInstanceFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
-    asset = tools.create_asset(instance, path, None, factory)
-    return asset
+    return tools.create_asset(instance, path, None, factory)
 
 
 def cast_map_to_str_dict(umap) -> dict:
@@ -494,14 +501,152 @@ def get_subsequences(sequence: unreal.LevelSequence):
 
     """
     tracks = sequence.get_master_tracks()
-    subscene_track = None
-    for t in tracks:
-        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
-            subscene_track = t
-            break
+    subscene_track = next(
+        (
+            t
+            for t in tracks
+            if t.get_class() == unreal.MovieSceneSubTrack.static_class()
+        ),
+        None,
+    )
     if subscene_track is not None and subscene_track.get_sections():
         return subscene_track.get_sections()
     return []
+
+
+def set_sequence_hierarchy(
+    seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+):
+    # Get existing sequencer tracks or create them if they don't exist
+    tracks = seq_i.get_master_tracks()
+    subscene_track = None
+    visibility_track = None
+    for t in tracks:
+        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+            subscene_track = t
+        if (t.get_class() ==
+                unreal.MovieSceneLevelVisibilityTrack.static_class()):
+            visibility_track = t
+    if not subscene_track:
+        subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
+    if not visibility_track:
+        visibility_track = seq_i.add_master_track(
+            unreal.MovieSceneLevelVisibilityTrack)
+
+    # Create the sub-scene section
+    subscenes = subscene_track.get_sections()
+    subscene = None
+    for s in subscenes:
+        if s.get_editor_property('sub_sequence') == seq_j:
+            subscene = s
+            break
+    if not subscene:
+        subscene = subscene_track.add_section()
+        subscene.set_row_index(len(subscene_track.get_sections()))
+        subscene.set_editor_property('sub_sequence', seq_j)
+        subscene.set_range(
+            min_frame_j,
+            max_frame_j + 1)
+
+    # Create the visibility section
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    maps = []
+    for m in map_paths:
+        # Unreal requires to load the level to get the map name
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        unreal.EditorLevelLibrary.load_level(m)
+        maps.append(str(ar.get_asset_by_object_path(m).asset_name))
+
+    vis_section = visibility_track.add_section()
+    index = len(visibility_track.get_sections())
+
+    vis_section.set_range(
+        min_frame_j,
+        max_frame_j + 1)
+    vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
+    vis_section.set_row_index(index)
+    vis_section.set_level_names(maps)
+
+    if min_frame_j > 1:
+        hid_section = visibility_track.add_section()
+        hid_section.set_range(
+            1,
+            min_frame_j)
+        hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+        hid_section.set_row_index(index)
+        hid_section.set_level_names(maps)
+    if max_frame_j < max_frame_i:
+        hid_section = visibility_track.add_section()
+        hid_section.set_range(
+            max_frame_j + 1,
+            max_frame_i + 1)
+        hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+        hid_section.set_row_index(index)
+        hid_section.set_level_names(maps)
+
+
+def generate_sequence(h, h_dir):
+    tools = unreal.AssetToolsHelpers().get_asset_tools()
+
+    sequence = tools.create_asset(
+        asset_name=h,
+        package_path=h_dir,
+        asset_class=unreal.LevelSequence,
+        factory=unreal.LevelSequenceFactoryNew()
+    )
+
+    project_name = legacy_io.active_project()
+    asset_data = get_asset_by_name(
+        project_name,
+        h_dir.split('/')[-1],
+        fields=["_id", "data.fps"]
+    )
+
+    start_frames = []
+    end_frames = []
+
+    elements = list(get_assets(
+        project_name,
+        parent_ids=[asset_data["_id"]],
+        fields=["_id", "data.clipIn", "data.clipOut"]
+    ))
+    for e in elements:
+        start_frames.append(e.get('data').get('clipIn'))
+        end_frames.append(e.get('data').get('clipOut'))
+
+        elements.extend(get_assets(
+            project_name,
+            parent_ids=[e["_id"]],
+            fields=["_id", "data.clipIn", "data.clipOut"]
+        ))
+
+    min_frame = min(start_frames)
+    max_frame = max(end_frames)
+
+    fps = asset_data.get('data').get("fps")
+
+    sequence.set_display_rate(
+        unreal.FrameRate(fps, 1.0))
+    sequence.set_playback_start(min_frame)
+    sequence.set_playback_end(max_frame)
+
+    sequence.set_work_range_start(min_frame / fps)
+    sequence.set_work_range_end(max_frame / fps)
+    sequence.set_view_range_start(min_frame / fps)
+    sequence.set_view_range_end(max_frame / fps)
+
+    tracks = sequence.get_master_tracks()
+    track = None
+    for t in tracks:
+        if (t.get_class() ==
+                unreal.MovieSceneCameraCutTrack.static_class()):
+            track = t
+            break
+    if not track:
+        track = sequence.add_master_track(
+            unreal.MovieSceneCameraCutTrack)
+
+    return sequence, (min_frame, max_frame)
 
 
 @contextmanager

@@ -14,7 +14,7 @@ from openpype.lib import UILabelDef
 class CreateLook(UnrealAssetCreator):
     """Shader connections defining shape look."""
 
-    identifier = "io.openpype.creators.unreal.look"
+    identifier = "io.ayon.creators.unreal.look"
     label = "Look"
     family = "look"
     icon = "paint-brush"
@@ -30,7 +30,7 @@ class CreateLook(UnrealAssetCreator):
 
         selected_asset = selection[0]
 
-        look_directory = "/Game/OpenPype/Looks"
+        look_directory = "/Game/Ayon/Looks"
 
         # Create the folder
         folder_name = create_folder(look_directory, subset_name)

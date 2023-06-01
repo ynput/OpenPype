@@ -61,7 +61,7 @@ class Server(threading.Thread):
                 "module": (str),  # Module of method.
                 "method" (str),  # Name of method in module.
                 "args" (list),  # Arguments to pass to method.
-                "kwargs" (dict),  # Keywork arguments to pass to method.
+                "kwargs" (dict),  # Keyword arguments to pass to method.
                 "reply" (bool),  # Optional wait for method completion.
             }
         """

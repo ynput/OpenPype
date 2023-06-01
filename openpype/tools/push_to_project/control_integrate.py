@@ -1050,8 +1050,8 @@ class ProjectPushItemProcess:
                 repre_format_data["ext"] = ext[1:]
                 break
 
-            tmp_result = anatomy.format(formatting_data)
-            folder_path = tmp_result[template_name]["folder"]
+            template_obj = anatomy.templates_obj[template_name]["folder"]
+            folder_path = template_obj.format_strict(formatting_data)
             repre_context = folder_path.used_values
             folder_path_rootless = folder_path.rootless
             repre_filepaths = []

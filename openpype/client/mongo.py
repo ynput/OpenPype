@@ -5,6 +5,12 @@ import logging
 import pymongo
 import certifi
 
+from bson.json_util import (
+    loads,
+    dumps,
+    CANONICAL_JSON_OPTIONS
+)
+
 if sys.version_info[0] == 2:
     from urlparse import urlparse, parse_qs
 else:
@@ -13,6 +19,49 @@ else:
 
 class MongoEnvNotSet(Exception):
     pass
+
+
+def documents_to_json(docs):
+    """Convert documents to json string.
+
+    Args:
+        Union[list[dict[str, Any]], dict[str, Any]]: Document/s to convert to
+            json string.
+
+    Returns:
+        str: Json string with mongo documents.
+    """
+
+    return dumps(docs, json_options=CANONICAL_JSON_OPTIONS)
+
+
+def load_json_file(filepath):
+    """Load mongo documents from a json file.
+
+    Args:
+        filepath (str): Path to a json file.
+
+    Returns:
+        Union[dict[str, Any], list[dict[str, Any]]]: Loaded content from a
+            json file.
+    """
+
+    if not os.path.exists(filepath):
+        raise ValueError("Path {} was not found".format(filepath))
+
+    with open(filepath, "r") as stream:
+        content = stream.read()
+    return loads("".join(content))
+
+
+def get_project_database_name():
+    """Name of database name where projects are available.
+
+    Returns:
+        str: Name of database name where projects are.
+    """
+
+    return os.environ.get("AVALON_DB") or "avalon"
 
 
 def _decompose_url(url):
@@ -210,12 +259,102 @@ class OpenPypeMongoConnection:
         return mongo_client
 
 
-def get_project_database():
-    db_name = os.environ.get("AVALON_DB") or "avalon"
-    return OpenPypeMongoConnection.get_mongo_client()[db_name]
+# ------ Helper Mongo functions ------
+# Functions can be helpful with custom tools to backup/restore mongo state.
+# Not meant as API functionality that should be used in production codebase!
+def get_collection_documents(database_name, collection_name, as_json=False):
+    """Query all documents from a collection.
+
+    Args:
+        database_name (str): Name of database where to look for collection.
+        collection_name (str): Name of collection where to look for collection.
+        as_json (Optional[bool]): Output should be a json string.
+            Default: 'False'
+
+    Returns:
+        Union[list[dict[str, Any]], str]: Queried documents.
+    """
+
+    client = OpenPypeMongoConnection.get_mongo_client()
+    output = list(client[database_name][collection_name].find({}))
+    if as_json:
+        output = documents_to_json(output)
+    return output
 
 
-def get_project_connection(project_name):
+def store_collection(filepath, database_name, collection_name):
+    """Store collection documents to a json file.
+
+    Args:
+        filepath (str): Path to a json file where documents will be stored.
+        database_name (str): Name of database where to look for collection.
+        collection_name (str): Name of collection to store.
+    """
+
+    # Make sure directory for output file exists
+    dirpath = os.path.dirname(filepath)
+    if not os.path.isdir(dirpath):
+        os.makedirs(dirpath)
+
+    content = get_collection_documents(database_name, collection_name, True)
+    with open(filepath, "w") as stream:
+        stream.write(content)
+
+
+def replace_collection_documents(docs, database_name, collection_name):
+    """Replace all documents in a collection with passed documents.
+
+    Warnings:
+        All existing documents in collection will be removed if there are any.
+
+    Args:
+        docs (list[dict[str, Any]]): New documents.
+        database_name (str): Name of database where to look for collection.
+        collection_name (str): Name of collection where new documents are
+            uploaded.
+    """
+
+    client = OpenPypeMongoConnection.get_mongo_client()
+    database = client[database_name]
+    if collection_name in database.list_collection_names():
+        database.drop_collection(collection_name)
+    col = database[collection_name]
+    col.insert_many(docs)
+
+
+def restore_collection(filepath, database_name, collection_name):
+    """Restore/replace collection from a json filepath.
+
+    Warnings:
+        All existing documents in collection will be removed if there are any.
+
+    Args:
+        filepath (str): Path to a json with documents.
+        database_name (str): Name of database where to look for collection.
+        collection_name (str): Name of collection where new documents are
+            uploaded.
+    """
+
+    docs = load_json_file(filepath)
+    replace_collection_documents(docs, database_name, collection_name)
+
+
+def get_project_database(database_name=None):
+    """Database object where project collections are.
+
+    Args:
+        database_name (Optional[str]): Custom name of database.
+
+    Returns:
+        pymongo.database.Database: Collection related to passed project.
+    """
+
+    if not database_name:
+        database_name = get_project_database_name()
+    return OpenPypeMongoConnection.get_mongo_client()[database_name]
+
+
+def get_project_connection(project_name, database_name=None):
     """Direct access to mongo collection.
 
     We're trying to avoid using direct access to mongo. This should be used
@@ -223,13 +362,83 @@ def get_project_connection(project_name):
     api calls for that.
 
     Args:
-        project_name(str): Project name for which collection should be
+        project_name (str): Project name for which collection should be
             returned.
+        database_name (Optional[str]): Custom name of database.
 
     Returns:
-        pymongo.Collection: Collection realated to passed project.
+        pymongo.collection.Collection: Collection related to passed project.
     """
 
     if not project_name:
         raise ValueError("Invalid project name {}".format(str(project_name)))
-    return get_project_database()[project_name]
+    return get_project_database(database_name)[project_name]
+
+
+def get_project_documents(project_name, database_name=None):
+    """Query all documents from project collection.
+
+    Args:
+        project_name (str): Name of project.
+        database_name (Optional[str]): Name of mongo database where to look for
+            project.
+
+    Returns:
+        list[dict[str, Any]]: Documents in project collection.
+    """
+
+    if not database_name:
+        database_name = get_project_database_name()
+    return get_collection_documents(database_name, project_name)
+
+
+def store_project_documents(project_name, filepath, database_name=None):
+    """Store project documents to a file as json string.
+
+    Args:
+        project_name (str): Name of project to store.
+        filepath (str): Path to a json file where output will be stored.
+        database_name (Optional[str]): Name of mongo database where to look for
+            project.
+    """
+
+    if not database_name:
+        database_name = get_project_database_name()
+
+    store_collection(filepath, database_name, project_name)
+
+
+def replace_project_documents(project_name, docs, database_name=None):
+    """Replace documents in mongo with passed documents.
+
+    Warnings:
+        Existing project collection is removed if exists in mongo.
+
+    Args:
+        project_name (str): Name of project.
+        docs (list[dict[str, Any]]): Documents to restore.
+        database_name (Optional[str]): Name of mongo database where project
+            collection will be created.
+    """
+
+    if not database_name:
+        database_name = get_project_database_name()
+    replace_collection_documents(docs, database_name, project_name)
+
+
+def restore_project_documents(project_name, filepath, database_name=None):
+    """Replace documents in mongo with passed documents.
+
+    Warnings:
+        Existing project collection is removed if exists in mongo.
+
+    Args:
+        project_name (str): Name of project.
+        filepath (str): File to json file with project documents.
+        database_name (Optional[str]): Name of mongo database where project
+            collection will be created.
+    """
+
+    if not database_name:
+        database_name = get_project_database_name()
+    restore_collection(filepath, database_name, project_name)

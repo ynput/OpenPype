@@ -34,7 +34,7 @@ class MessageWidget(QtWidgets.QWidget):
 
     def _ui_layout(self, messages):
         if not messages:
-            messages = ["*Misssing messages (This is a bug)*", ]
+            messages = ["*Missing messages (This is a bug)*", ]
 
         elif not isinstance(messages, (tuple, list)):
             messages = [messages, ]

@@ -116,7 +116,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             kwargs = {}
             if extension == ".edl":
                 # EDL has no frame rate embedded so needs explicit
-                # frame rate else 24 is asssumed.
+                # frame rate else 24 is assumed.
                 kwargs["rate"] = get_current_project_asset()["data"]["fps"]
 
             instance.data["otio_timeline"] = otio.adapters.read_from_file(

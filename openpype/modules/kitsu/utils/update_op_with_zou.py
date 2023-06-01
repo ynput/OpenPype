@@ -94,9 +94,7 @@ def update_op_assets(
         if not item_doc:  # Create asset
             op_asset = create_op_asset(item)
             insert_result = dbcon.insert_one(op_asset)
-            item_doc = get_asset_by_id(
-                project_name, insert_result.inserted_id
-            )
+            item_doc = get_asset_by_id(project_name, insert_result.inserted_id)
 
         # Update asset
         item_data = deepcopy(item_doc["data"])
@@ -329,6 +327,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
+            "active": project["project_status_name"] != "Closed",
         }
     )
 
@@ -358,7 +357,10 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
 
 
 def sync_all_projects(
-    login: str, password: str, ignore_projects: list = None
+    login: str,
+    password: str,
+    ignore_projects: list = None,
+    filter_projects: tuple = None,
 ):
     """Update all OP projects in DB with Zou data.
 
@@ -366,6 +368,7 @@ def sync_all_projects(
         login (str): Kitsu user login
         password (str): Kitsu user password
         ignore_projects (list): List of unsynced project names
+        filter_projects (tuple): Tuple of filter project names to sync with
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -379,8 +382,25 @@ def sync_all_projects(
     # Iterate projects
     dbcon = AvalonMongoDB()
     dbcon.install()
-    all_projects = gazu.project.all_open_projects()
-    for project in all_projects:
+    all_projects = gazu.project.all_projects()
+
+    project_to_sync = []
+
+    if filter_projects:
+        all_kitsu_projects = {p["name"]: p for p in all_projects}
+        for proj_name in filter_projects:
+            if proj_name in all_kitsu_projects:
+                project_to_sync.append(all_kitsu_projects[proj_name])
+            else:
+                log.info(
+                    f"`{proj_name}` project does not exist in Kitsu."
+                    f" Please make sure the project is spelled correctly."
+                )
+    else:
+        # all project
+        project_to_sync = all_projects
+
+    for project in project_to_sync:
         if ignore_projects and project["name"] in ignore_projects:
             continue
         sync_project_from_kitsu(dbcon, project)
@@ -404,7 +424,20 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    log.info("Synchronizing {}...".format(project["name"]))
+    # Get all statuses for projects from Kitsu
+    all_status = gazu.project.all_project_status()
+    for status in all_status:
+        if project["project_status_id"] == status["id"]:
+            project["project_status_name"] = status["name"]
+            break
+
+    #  Do not sync closed kitsu project that is not found in openpype
+    if project["project_status_name"] == "Closed" and not get_project(
+        project["name"]
+    ):
+        return
+
+    log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
@@ -428,6 +461,9 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project_dict:
         log.info("Project created: {}".format(project_name))
     bulk_writes.append(write_project_to_op(project, dbcon))
+
+    if project["project_status_name"] == "Closed":
+        return
 
     # Try to find project document
     if not project_dict:

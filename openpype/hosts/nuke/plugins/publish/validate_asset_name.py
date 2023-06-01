@@ -9,8 +9,8 @@ import openpype.hosts.nuke.api.lib as nlib
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
+    OptionalPyblishPluginMixin
 )
-
 
 class SelectInvalidInstances(pyblish.api.Action):
     """Select invalid instances in Outliner."""
@@ -92,7 +92,10 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
             nlib.set_node_data(node, nlib.INSTANCE_DATA_KNOB, node_data)
 
 
-class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
+class ValidateCorrectAssetName(
+    pyblish.api.InstancePlugin,
+    OptionalPyblishPluginMixin
+):
     """Validator to check if instance asset match context asset.
 
     When working in per-shot style you always publish data in context of
@@ -111,6 +114,9 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
         node = instance.data["transientData"]["node"]

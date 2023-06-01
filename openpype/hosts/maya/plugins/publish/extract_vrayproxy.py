@@ -30,9 +30,7 @@ class ExtractVRayProxy(publish.Extractor):
             # non-animated subsets
             keys = ["frameStart", "frameEnd",
                     "handleStart", "handleEnd",
-                    "frameStartHandle", "frameEndHandle",
-                    # Backwards compatibility
-                    "handles"]
+                    "frameStartHandle", "frameEndHandle"]
             for key in keys:
                 instance.data.pop(key, None)
 

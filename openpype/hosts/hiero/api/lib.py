@@ -1221,7 +1221,7 @@ def set_track_color(track_item, color):
 
 def check_inventory_versions(track_items=None):
     """
-    Actual version color idetifier of Loaded containers
+    Actual version color identifier of Loaded containers
 
     Check all track items and filter only
     Loader nodes for its version. It will get all versions from database
@@ -1249,10 +1249,10 @@ def check_inventory_versions(track_items=None):
     project_name = legacy_io.active_project()
     filter_result = filter_containers(containers, project_name)
     for container in filter_result.latest:
-        set_track_color(container["_item"], clip_color)
+        set_track_color(container["_item"], clip_color_last)
 
     for container in filter_result.outdated:
-        set_track_color(container["_item"], clip_color_last)
+        set_track_color(container["_item"], clip_color)
 
 
 def selection_changed_timeline(event):

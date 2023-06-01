@@ -63,7 +63,7 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
-![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
 
 ## Profile filters
 
@@ -82,8 +82,8 @@ All context filters are lists which may contain strings or Regular expressions (
 - **`tasks`** - Currently processed task. `["modeling", "animation"]`
 
 :::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority that profile without filters.
-(Eg. order of when filter is added doesn't matter, only the precision of matching does.)
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
 :::
 
 ## Publish plugins
@@ -94,7 +94,7 @@ Publish plugins used across all integrations.
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
 
-Extract review is using [profile filtering](#profile-filters) to be able render different outputs for different situations.
+Extract review uses [profile filtering](#profile-filters) to render different outputs for different situations.
 
 Applicable context filters:
  **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
@@ -104,7 +104,7 @@ Applicable context filters:
 
 **Output Definitions**
 
-Profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
+A profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
 
 ![global_extract_review_output_defs](assets/global_extract_review_output_defs.png)
 - **`Tags`**
@@ -118,7 +118,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - **Output arguments** other FFmpeg output arguments like codec definition.
 
 - **`Output width`** and **`Output height`**
-    - it is possible to rescale output to specified resolution and keep aspect ratio.
+    - It is possible to rescale output to specified resolution and keep aspect ratio.
     - If value is set to 0, source resolution will be used.
 
 - **`Overscan crop`**
@@ -194,6 +194,74 @@ Profile may generate multiple outputs from a single input. Each output must defi
         - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/add_custom_tags`
     - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
 
+    
+### Extract Burnin
+
+Plugin is responsible for adding burnins into review representations.
+
+Burnins are text values painted on top of input and may be surrounded with box in 6 available positions `Top Left`, `Top Center`, `Top Right`, `Bottom Left`, `Bottom Center`, `Bottom Right`.
+
+![presets_plugins_extract_burnin](../assets/presets_plugins_extract_burnin_01.png)
+
+The Extract Burnin plugin creates new representations based on plugin presets, representations in instance and whether the reviewable matches the profile filter.
+A burnin can also be directly linked by name in the output definitions of the [Extract Review plug-in settings](#extract-review) so _can_ be triggered without a matching profile.
+
+#### Burnin formatting options (`options`)
+
+The formatting options define the font style for the burnin texts.
+The X and Y offset define the margin around texts and (background) boxes.
+
+#### Burnin profiles (`profiles`)
+
+Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each burnin profile may specify filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [Profile Filters](#profile-filters).
+
+#### Profile burnins
+
+A burnin profile may set multiple burnin outputs from one input. The burnin's name represents the unique **filename suffix** to avoid overriding files with same name.
+
+| Key | Description | Type | Example |
+| --- | --- | --- | --- |
+| **Top Left** | Top left corner content. | str | "{dd}.{mm}.{yyyy}" |
+| **Top Centered** | Top center content. | str | "v{version:0>3}" |
+| **Top Right** | Top right corner content. | str | "Static text" |
+| **Bottom Left** | Bottom left corner content. | str | "{asset}" |
+| **Bottom Centered** | Bottom center content. | str | "{username}" |
+| **Bottom Right** | Bottom right corner content. | str | "{frame_start}-{current_frame}-{frame_end}" |
+
+Each burnin profile can be configured with additional family filtering and can 
+add additional tags to the burnin representation, these can be configured under 
+the profile's **Additional filtering** section.
+
+:::note Filename suffix
+The filename suffix is appended to filename of the source representation. For 
+example, if the source representation has suffix **"h264"** and the burnin 
+suffix is **"client"** then the final suffix is **"h264_client"**.
+:::
+
+**Available keys in burnin content**
+
+- It is possible to use same keys as in [Anatomy](admin_settings_project_anatomy.md#available-template-keys).
+- It is allowed to use Anatomy templates themselves in burnins if they can be filled with available data.
+
+- Additional keys in burnins:
+
+  | Burnin key | Description |
+  | --- | --- |
+  | frame_start | First frame number. |
+  | frame_end | Last frame number. |
+  | current_frame | Frame number for each frame. |
+  | duration | Count number of frames. |
+  | resolution_width | Resolution width. |
+  | resolution_height | Resolution height. |
+  | fps | Fps of an output. |
+  | timecode | Timecode by frame start and fps. |
+  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
+
+:::warning
+`timecode` is a specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
+:::
+
+
 ### IntegrateAssetNew
 
 Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
@@ -230,10 +298,10 @@ Applicable context filters:
 ## Tools
 Settings for OpenPype tools.
 
-## Creator
+### Creator
 Settings related to [Creator tool](artist_tools_creator).
 
-### Subset name profiles
+#### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
 
 Subset name helps to identify published content. More specific name helps with organization and avoid mixing of published content. Subset name is defined using one of templates defined in **Subset name profiles settings**. The template is filled with context information at the time of creation.
@@ -263,10 +331,31 @@ Template may look like `"{family}{Task}{Variant}"`.
 Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
 
 
-## Workfiles
+### Publish
+
+#### Custom Staging Directory Profiles
+With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
+
+![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
+
+Staging directories are used as a destination for intermediate files (as renders) before they are renamed and copied to proper location during the integration phase. They could be created completely dynamically in the temp folder or for some DCCs in the `work` area.
+Example could be Nuke where artist might want to temporarily render pictures into `work` area to check them before they get published with the choice of "Use existing frames" on the write node.
+
+One of the key advantages of this feature is that it allows users to choose the folder for writing such intermediate files to take advantage of faster storage for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their intermediate extracted data persistent, and use their own infrastructure for regular cleaning.
+
+In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
+
+The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
+
+##### Known issues
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
+
+### Workfiles
 All settings related to Workfile tool.
 
-### Open last workfile at launch
+#### Open last workfile at launch
 This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
 
 ![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)

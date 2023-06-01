@@ -69,7 +69,7 @@ def _resolution_from_document(doc):
         resolution_width = doc["data"].get("resolution_width")
         resolution_height = doc["data"].get("resolution_height")
 
-    # Make sure both width and heigh are set
+    # Make sure both width and height are set
     if resolution_width is None or resolution_height is None:
         cmds.warning(
             "No resolution information found for \"{}\"".format(doc["name"])

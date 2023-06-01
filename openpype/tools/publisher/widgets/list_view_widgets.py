@@ -11,7 +11,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 - Backspace - disable selection
 
 ```
-|- Options
+|- Context
 |- <Group 1> [x]
 |  |- <Instance 1> [x]
 |  |- <Instance 2> [x]
@@ -198,6 +198,9 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.instance["active"] = new_value
         self.active_changed.emit(self.instance.id, new_value)
 
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
 
 class ListContextWidget(QtWidgets.QFrame):
     """Context (or global attributes) widget."""
@@ -301,6 +304,9 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             self.expand_btn.setArrowType(QtCore.Qt.DownArrow)
         else:
             self.expand_btn.setArrowType(QtCore.Qt.RightArrow)
+
+    def set_active_toggle_enabled(self, enabled):
+        self.toggle_checkbox.setEnabled(enabled)
 
 
 class InstanceTreeView(QtWidgets.QTreeView):
@@ -461,6 +467,8 @@ class InstanceListView(AbstractInstanceView):
         self._instance_model = instance_model
         self._proxy_model = proxy_model
 
+        self._active_toggle_enabled = True
+
     def _on_expand(self, index):
         self._update_widget_expand_state(index, True)
 
@@ -478,6 +486,9 @@ class InstanceListView(AbstractInstanceView):
             group_widget.set_expanded(expanded)
 
     def _on_toggle_request(self, toggle):
+        if not self._active_toggle_enabled:
+            return
+
         selected_instance_ids = self._instance_view.get_selected_instance_ids()
         if toggle == -1:
             active = None
@@ -667,6 +678,9 @@ class InstanceListView(AbstractInstanceView):
                     widget = InstanceListItemWidget(
                         instance, self._instance_view
                     )
+                    widget.set_active_toggle_enabled(
+                        self._active_toggle_enabled
+                    )
                     widget.active_changed.connect(self._on_active_changed)
                     self._instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.id] = widget
@@ -802,6 +816,9 @@ class InstanceListView(AbstractInstanceView):
             proxy_index = self._proxy_model.mapFromSource(index)
             group_name = group_item.data(GROUP_ROLE)
             widget = InstanceListGroupWidget(group_name, self._instance_view)
+            widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
+            )
             widget.expand_changed.connect(self._on_group_expand_request)
             widget.toggle_requested.connect(self._on_group_toggle_request)
             self._group_widgets[group_name] = widget
@@ -1052,3 +1069,16 @@ class InstanceListView(AbstractInstanceView):
             QtCore.QItemSelectionModel.Select
             | QtCore.QItemSelectionModel.Rows
         )
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+
+        self._active_toggle_enabled = enabled
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceListItemWidget):
+                widget.set_active_toggle_enabled(enabled)
+
+        for widget in self._group_widgets.values():
+            if isinstance(widget, InstanceListGroupWidget):
+                widget.set_active_toggle_enabled(enabled)

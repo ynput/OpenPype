@@ -22,9 +22,11 @@ class CollectOutputFrameRange(pyblish.api.InstancePlugin):
         context = instance.context
 
         frame_start = asset_doc["data"]["frameStart"]
+        fps = asset_doc["data"]["fps"]
         frame_end = frame_start + (
             context.data["sceneMarkOut"] - context.data["sceneMarkIn"]
         )
+        instance.data["fps"] = fps
         instance.data["frameStart"] = frame_start
         instance.data["frameEnd"] = frame_end
         self.log.info(

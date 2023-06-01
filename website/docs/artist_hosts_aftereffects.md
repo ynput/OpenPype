@@ -15,18 +15,18 @@ sidebar_label: AfterEffects
 
 ## Setup
 
-To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`. 
+To install the extension, download, install [Anastasyi's Extension Manager](https://install.anastasiy.com/). Open Anastasyi's Extension Manager and select AfterEffects in menu. Then go to `{path to pype}hosts/aftereffects/api/extension.zxp`.
 
-Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself. 
+Drag extension.zxp and drop it to Anastasyi's Extension Manager. The extension will install itself.
 
 ## Implemented functionality
 
 AfterEffects implementation currently allows you to import and add various media to composition (image plates, renders, audio files, video files etc.)
-and send prepared composition for rendering to Deadline or render locally. 
+and send prepared composition for rendering to Deadline or render locally.
 
 ## Usage
 
-When you launch AfterEffects you will be met with the Workfiles app. If don't 
+When you launch AfterEffects you will be met with the Workfiles app. If don't
 have any previous workfiles, you can just close this window.
 
 Workfiles tools takes care of saving your .AEP files in the correct location and under
@@ -34,7 +34,7 @@ a correct name. You should use it instead of standard file saving dialog.
 
 In AfterEffects you'll find the tools in the `OpenPype` extension:
 
-![Extension](assets/photoshop_extension.png) <!-- same menu as in PS -->
+![Extension](assets/photoshop_extension.png)
 
 You can show the extension panel by going to `Window` > `Extensions` > `OpenPype`.
 
@@ -58,6 +58,9 @@ Name of publishable instance (eg. subset name) could be configured with a templa
 
 Trash icon under the list of instances allows to delete any selected `render` instance.
 
+Frame information (frame start, duration, fps) and resolution (width and height) is applied to selected composition from Asset Management System (Ftrack or DB) automatically!
+(Eg. number of rendered frames is controlled by settings inserted from supervisor. Artist can override this by disabling validation only in special cases.)
+
 Workfile instance will be automatically recreated though. If you do not want to publish it, use pill toggle on the instance item.
 
 If you would like to modify publishable instance, click on `Publish` tab at the top. This would allow you to change name of publishable
@@ -67,7 +70,7 @@ Publisher allows publishing into different context, just click on any instance, 
 
 #### RenderQueue
 
-AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. 
+AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module.
 Currently its expected to have only single render item per composition in the Render Queue.
 
 
@@ -90,7 +93,7 @@ If there is an option of automatic repair, there will be `Repair` button on the 
 
 There are currently 2 options of `render` item:
 - Render of farm - allows offload rendering and publishing to Deadline - requires Deadline module being enabled
-- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrak) and scene itself
+- Validate Scene Settings - enables validation plugin which controls setting in DB (or asset control system like Ftrack) and scene itself
 
 ![Configuration of render instance](assets/aftereffects_render_instance.png)
 
@@ -99,6 +102,23 @@ There are currently 2 options of `render` item:
 - `Stop/pause publishing` - if you would like to pause publishing process at any time
 - `Validate` - if you would like to run only collecting and validating phases (nothing will be published yet)
 - `Publish` - standard way how to kick off full publishing process
+
+#### Support help
+If you would like to ask for help admin or support, you could use any of the three options on the `Note` button on bottom left:
+- `Go to details` - switches into a more detailed list of published instances and plugins.
+- `Copy report` - stash full publishing log to a clipboard
+- `Export report` - save log into a file for sending it via mail or any communication tool
+
+If you are able to fix the workfile yourself, use the first button on the right to set the UI to initial state before publish. (Click the `Publish` button to start again.)
+
+#### Legacy instances
+
+All screenshots from Publish are from updated dialog, before publishing was being done by regular `Pyblish` tool.
+New publishing process should be backward compatible, eg. if you have a workfile with instances created in the previous publishing approach, they will be translated automatically and
+could be used right away.
+
+If you hit on unexpected behaviour with old instances, contact support first, then you could try to delete and recreate instances from scratch.
+Nuclear option is to purge workfile metadata in `Window > Metadata > Basic > Label`. This is only for most determined daredevils though!
 
 ### Load
 
@@ -135,19 +155,24 @@ You can switch to a previous version of the image or update to the latest.
 ![Loader](assets/photoshop_manage_switch.gif)
 ![Loader](assets/photoshop_manage_update.gif)
 
-#### Support help
-If you would like to ask for help admin or support, you could use any of the three options on the `Note` button on bottom left:
-- `Go to details` - switches into a more detailed list of published instances and plugins.
-- `Copy report` - stash full publishing log to a clipboard
-- `Export report` - save log into a file for sending it via mail or any communication tool
 
-If you are able to fix the workfile yourself, use the first button on the right to set the UI to initial state before publish. (Click the `Publish` button to start again.)
+### Setting section
 
-#### Legacy instances
+Composition properties should be controlled by state in Asset Management System (Ftrack etc). Extension provides couple of buttons to trigger this propagation.
 
-All screenshots from Publish are from updated dialog, before publishing was being done by regular `Pyblish` tool.
-New publishing process should be backward compatible, eg. if you have a workfile with instances created in the previous publishing approach, they will be translated automatically and
-could be used right away.
+#### Set Resolution
 
-If you hit on unexpected behaviour with old instances, contact support first, then you could try to delete and recreate instances from scratch.
-Nuclear option is to purge workfile metadata in `Window > Metadata > Basic > Label`. This is only for most determined daredevils though!
+Set width and height from AMS to composition.
+
+#### Set Frame Range
+
+Start frame and duration in workarea is set according to the settings in AMS. Handles are incorporated (not inclusive).
+It is expected that composition(s) is selected first before pushing this button!
+
+#### Apply All Settings
+
+Both previous settings are triggered at same time.
+
+### Experimental tools
+
+Currently empty. Could contain special tools available only for specific hosts for early access testing.

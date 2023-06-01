@@ -222,6 +222,13 @@
                 "title": "OpenPype Docs",
                 "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
                 "tooltip": "Open the OpenPype Nuke user doc page"
+            },
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "Set Frame Start (Read Node)",
+                "command": "from openpype.hosts.nuke.startup.frame_setting_for_read_nodes import main;main();",
+                "tooltip": "Set frame start for read node(s)"
             }
         ]
     },
@@ -358,6 +365,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateBackdrop": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateGizmo": {
             "enabled": true,
             "optional": true,
@@ -396,7 +408,39 @@
                         false
                     ]
                 ]
-            }
+            },
+            "reposition_nodes": [
+                {
+                    "node_class": "Reformat",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "type",
+                            "value": "to format"
+                        },
+                        {
+                            "type": "text",
+                            "name": "format",
+                            "value": "HD_1080"
+                        },
+                        {
+                            "type": "text",
+                            "name": "filter",
+                            "value": "Lanczos6"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        },
+                        {
+                            "type": "bool",
+                            "name": "pbb",
+                            "value": false
+                        }
+                    ]
+                }
+            ]
         },
         "ExtractReviewData": {
             "enabled": false
@@ -537,45 +581,10 @@
         "create_first_version": false,
         "custom_templates": [],
         "builder_on_start": false,
-        "profiles": [
-            {
-                "task_types": [],
-                "tasks": [],
-                "current_context": [
-                    {
-                        "subset_name_filters": [],
-                        "families": [
-                            "render",
-                            "plate"
-                        ],
-                        "repre_names": [
-                            "exr",
-                            "dpx",
-                            "mov",
-                            "mp4",
-                            "h264"
-                        ],
-                        "loaders": [
-                            "LoadClip"
-                        ]
-                    }
-                ],
-                "linked_assets": []
-            }
-        ]
+        "profiles": []
     },
     "templated_workfile_build": {
-        "profiles": [
-            {
-                "task_types": [
-                    "Compositing"
-                ],
-                "task_names": [],
-                "path": "{project[name]}/templates/comp.nk",
-                "keep_placeholder": true,
-                "create_first_version": true
-            }
-        ]
+        "profiles": []
     },
     "filters": {}
 }

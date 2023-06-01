@@ -202,7 +202,13 @@
                     "key": "auto_detect_render",
                     "label": "Auto-Detect Create Render",
                     "is_group": true,
+                    "checkbox_key": "enabled",
                     "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
                         {
                             "type": "label",
                             "label": "The creator tries to auto-detect Render Layers and Render Passes in scene. For Render Layers is used group name as a variant and for Render Passes is used TVPaint layer name.<br/><br/>Group names can be renamed by their used order in scene. The renaming template where can be used <b>{group_index}</b> formatting key which is filled by \"used position index of group\".<br/>- Template: <b>L{group_index}</b><br/>- Group offset: <b>10</b><br/>- Group padding: <b>3</b><br/>Would create group names \"<b>L010</b>\", \"<b>L020</b>\", ..."

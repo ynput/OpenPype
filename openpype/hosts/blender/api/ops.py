@@ -24,7 +24,7 @@ from .workio import OpenFileCacher
 PREVIEW_COLLECTIONS: Dict = dict()
 
 # This seems like a good value to keep the Qt app responsive and doesn't slow
-# down Blender. At least on macOS I the interace of Blender gets very laggy if
+# down Blender. At least on macOS I the interface of Blender gets very laggy if
 # you make it smaller.
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
@@ -84,11 +84,11 @@ class MainThreadItem:
         self.kwargs = kwargs
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         print("Executing process in main thread")
         if self.done:

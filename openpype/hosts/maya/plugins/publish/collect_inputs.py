@@ -166,7 +166,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
 
         inputs = [c["representation"] for c in containers]
         instance.data["inputRepresentations"] = inputs
-        self.log.info("Collected inputs: %s" % inputs)
+        self.log.debug("Collected inputs: %s" % inputs)
 
     def _collect_renderlayer_inputs(self, scene_containers, instance):
         """Collects inputs from nodes in renderlayer, incl. shaders + camera"""

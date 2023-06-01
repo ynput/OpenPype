@@ -773,7 +773,7 @@ class MediaInfoFile(object):
         if logger:
             self.log = logger
 
-        # test if `dl_get_media_info` paht exists
+        # test if `dl_get_media_info` path exists
         self._validate_media_script_path()
 
         # derivate other feed variables
@@ -993,7 +993,7 @@ class MediaInfoFile(object):
 
     def _validate_media_script_path(self):
         if not os.path.isfile(self.MEDIA_SCRIPT_PATH):
-            raise IOError("Media Scirpt does not exist: `{}`".format(
+            raise IOError("Media Script does not exist: `{}`".format(
                 self.MEDIA_SCRIPT_PATH))
 
     def _generate_media_info_file(self, fpath, feed_ext, feed_dir):

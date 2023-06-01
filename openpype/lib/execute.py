@@ -8,6 +8,8 @@ import tempfile
 from .log import Logger
 from .vendor_bin_utils import find_executable
 
+from .openpype_version import is_running_from_build
+
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
 
@@ -161,18 +163,20 @@ def run_subprocess(*args, **kwargs):
 
 
 def clean_envs_for_openpype_process(env=None):
-    """Modify environemnts that may affect OpenPype process.
+    """Modify environments that may affect OpenPype process.
 
     Main reason to implement this function is to pop PYTHONPATH which may be
     affected by in-host environments.
     """
     if env is None:
         env = os.environ
-    return {
-        key: value
-        for key, value in env.items()
-        if key not in ("PYTHONPATH",)
-    }
+
+    # Exclude some environment variables from a copy of the environment
+    env = env.copy()
+    for key in ["PYTHONPATH", "PYTHONHOME"]:
+        env.pop(key, None)
+
+    return env
 
 
 def run_openpype_process(*args, **kwargs):
@@ -186,7 +190,7 @@ def run_openpype_process(*args, **kwargs):
 
     Example:
     ```
-    run_openpype_process("run", "<path to .py script>")
+    run_detached_process("run", "<path to .py script>")
     ```
 
     Args:
@@ -200,6 +204,11 @@ def run_openpype_process(*args, **kwargs):
         # Skip envs that can affect OpenPype process
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
+
+    # Only keep OpenPype version if we are running from build.
+    if not is_running_from_build():
+        env.pop("OPENPYPE_VERSION", None)
+
     return run_subprocess(args, env=env, **kwargs)
 
 

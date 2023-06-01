@@ -4,8 +4,9 @@ from .icons import (
     get_icon
 )
 from .widgets import (
-    StopBtn,
+    SaveBtn,
     ResetBtn,
+    StopBtn,
     ValidateBtn,
     PublishBtn,
     CreateNextPageOverlay,
@@ -17,7 +18,7 @@ from .help_widget import (
 from .publish_frame import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import OverviewWidget
-from .validations_widget import ValidationsWidget
+from .report_page import ReportPageWidget
 
 
 __all__ = (
@@ -25,8 +26,9 @@ __all__ = (
     "get_pixmap",
     "get_icon",
 
-    "StopBtn",
+    "SaveBtn",
     "ResetBtn",
+    "StopBtn",
     "ValidateBtn",
     "PublishBtn",
     "CreateNextPageOverlay",
@@ -38,5 +40,5 @@ __all__ = (
 
     "PublisherTabsWidget",
     "OverviewWidget",
-    "ValidationsWidget",
+    "ReportPageWidget",
 )

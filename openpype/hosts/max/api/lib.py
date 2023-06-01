@@ -6,6 +6,11 @@ from pymxs import runtime as rt
 from typing import Union
 import contextlib
 
+from openpype.pipeline.context_tools import (
+    get_current_project_asset,
+    get_current_project
+)
+
 
 JSON_PREFIX = "JSON::"
 
@@ -123,7 +128,14 @@ def get_all_children(parent, node_type=None):
 
 
 def get_current_renderer():
-    """get current renderer"""
+    """
+    Notes:
+        Get current renderer for Max
+
+    Returns:
+        "{Current Renderer}:{Current Renderer}"
+        e.g. "Redshift_Renderer:Redshift_Renderer"
+    """
     return rt.renderers.production
 
 
@@ -133,7 +145,7 @@ def get_default_render_folder(project_setting=None):
                            ["default_render_image_folder"])
 
 
-def set_framerange(start_frame, end_frame):
+def set_render_frame_range(start_frame, end_frame):
     """
     Note:
         Frame range can be specified in different types. Possible values are:
@@ -145,16 +157,127 @@ def set_framerange(start_frame, end_frame):
     Todo:
         Current type is hard-coded, there should be a custom setting for this.
     """
-    rt.rendTimeType = 4
+    rt.rendTimeType = 3
     if start_frame is not None and end_frame is not None:
-        frame_range = "{0}-{1}".format(start_frame, end_frame)
-        rt.rendPickupFrames = frame_range
+        rt.rendStart = int(start_frame)
+        rt.rendEnd = int(end_frame)
 
 
 def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
+
+def set_scene_resolution(width: int, height: int):
+    """Set the render resolution
+
+    Args:
+        width(int): value of the width
+        height(int): value of the height
+
+    Returns:
+        None
+
+    """
+    # make sure the render dialog is closed
+    # for the update of resolution
+    # Changing the Render Setup dialog settingsshould be done
+    # with the actual Render Setup dialog in a closed state.
+    if rt.renderSceneDialog.isOpen():
+        rt.renderSceneDialog.close()
+
+    rt.renderWidth = width
+    rt.renderHeight = height
+
+def reset_scene_resolution():
+    """Apply the scene resolution from the project definition
+
+    scene resolution can be overwritten by an asset if the asset.data contains
+    any information regarding scene resolution .
+    Returns:
+        None
+    """
+    data = ["data.resolutionWidth", "data.resolutionHeight"]
+    project_resolution = get_current_project(fields=data)
+    project_resolution_data = project_resolution["data"]
+    asset_resolution = get_current_project_asset(fields=data)
+    asset_resolution_data = asset_resolution["data"]
+    # Set project resolution
+    project_width = int(project_resolution_data.get("resolutionWidth", 1920))
+    project_height = int(project_resolution_data.get("resolutionHeight", 1080))
+    width = int(asset_resolution_data.get("resolutionWidth", project_width))
+    height = int(asset_resolution_data.get("resolutionHeight", project_height))
+
+    set_scene_resolution(width, height)
+
+
+def get_frame_range() -> dict:
+    """Get the current assets frame range and handles.
+
+    Returns:
+        dict: with frame start, frame end, handle start, handle end.
+    """
+    # Set frame start/end
+    asset = get_current_project_asset()
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+
+    if frame_start is None or frame_end is None:
+        return
+
+    handle_start = asset["data"].get("handleStart", 0)
+    handle_end = asset["data"].get("handleEnd", 0)
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range(fps: bool = True):
+    """Set frame range to current asset.
+    This is part of 3dsmax documentation:
+
+    animationRange: A System Global variable which lets you get and
+        set an Interval value that defines the start and end frames
+        of the Active Time Segment.
+    frameRate: A System Global variable which lets you get
+            and set an Integer value that defines the current
+            scene frame rate in frames-per-second.
+    """
+    if fps:
+        data_fps = get_current_project(fields=["data.fps"])
+        fps_number = float(data_fps["data"]["fps"])
+        rt.frameRate = fps_number
+    frame_range = get_frame_range()
+    frame_start_handle = frame_range["frameStart"] - int(
+        frame_range["handleStart"]
+    )
+    frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frange_cmd = (
+        f"animationRange = interval {frame_start_handle} {frame_end_handle}"
+    )
+    rt.execute(frange_cmd)
+    set_render_frame_range(frame_start_handle, frame_end_handle)
+
+
+def set_context_setting():
+    """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        frame range
+        resolution
+
+    Returns:
+        None
+    """
+    reset_scene_resolution()
+    reset_frame_range()
 
 
 def get_max_version():

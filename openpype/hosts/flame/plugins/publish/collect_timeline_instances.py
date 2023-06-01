@@ -203,7 +203,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
             self._get_xml_preset_attrs(
                 attributes, split)
 
-        # add xml overides resolution to instance data
+        # add xml overrides resolution to instance data
         xml_overrides = attributes["xml_overrides"]
         if xml_overrides.get("width"):
             attributes.update({
@@ -284,7 +284,7 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
         self.log.debug("__ head: `{}`".format(head))
         self.log.debug("__ tail: `{}`".format(tail))
 
-        # HACK: it is here to serve for versions bellow 2021.1
+        # HACK: it is here to serve for versions below 2021.1
         if not any([head, tail]):
             retimed_attributes = get_media_range_with_retimes(
                 otio_clip, handle_start, handle_end)

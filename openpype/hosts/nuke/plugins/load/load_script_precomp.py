@@ -138,7 +138,6 @@ class LinkAsGroup(load.LoaderPlugin):
             "version": version_doc.get("name"),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handles": version_data.get("handles"),
             "fps": version_data.get("fps"),
             "author": version_data.get("author")
         })

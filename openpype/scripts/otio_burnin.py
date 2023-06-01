@@ -4,8 +4,10 @@ import re
 import subprocess
 import platform
 import json
-import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
+import tempfile
+from string import Formatter
 
+import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_ffmpeg_codec_args,
@@ -23,7 +25,7 @@ FFMPEG = (
 ).format(ffmpeg_path)
 
 DRAWTEXT = (
-    "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':"
+    "drawtext@'%(label)s'=fontfile='%(font)s':text=\\'%(text)s\\':"
     "x=%(x)s:y=%(y)s:fontcolor=%(color)s@%(opacity).1f:fontsize=%(size)d"
 )
 TIMECODE = (
@@ -37,6 +39,45 @@ CURRENT_FRAME_KEY = "{current_frame}"
 CURRENT_FRAME_SPLITTER = "_-_CURRENT_FRAME_-_"
 TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
+
+
+def convert_list_to_command(list_to_convert, fps, label=""):
+    """Convert a list of values to a drawtext command file for ffmpeg `sendcmd`
+
+    The list of values is expected to have a value per frame. If the video
+    file ends up being longer than the amount of samples per frame than the
+    last value will be held.
+
+    Args:
+        list_to_convert (list): List of values per frame.
+        fps (float or int): The expected frame per seconds of the output file.
+        label (str): Label for the drawtext, if specific drawtext filter is
+            required
+
+    Returns:
+        str: Filepath to the temporary drawtext command file.
+
+    """
+
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        for i, value in enumerate(list_to_convert):
+            seconds = i / fps
+
+            # Escape special character
+            value = str(value).replace(":", "\\:")
+
+            filter = "drawtext"
+            if label:
+                filter += "@" + label
+
+            line = (
+                "{start} {filter} reinit text='{value}';"
+                "\n".format(start=seconds, filter=filter, value=value)
+            )
+
+            f.write(line)
+        f.flush()
+        return f.name
 
 
 def _get_ffprobe_data(source):
@@ -144,7 +185,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             self.options_init.update(options_init)
 
     def add_text(
-        self, text, align, frame_start=None, frame_end=None, options=None
+        self,
+        text,
+        align,
+        frame_start=None,
+        frame_end=None,
+        options=None,
+        cmd=""
     ):
         """
         Adding static text to a filter.
@@ -165,7 +212,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if frame_end is not None:
             options["frame_end"] = frame_end
 
-        self._add_burnin(text, align, options, DRAWTEXT)
+        draw_text = DRAWTEXT
+        if cmd:
+            draw_text = "{}, {}".format(cmd, DRAWTEXT)
+
+        options["label"] = align
+
+        self._add_burnin(text, align, options, draw_text)
 
     def add_timecode(
         self, align, frame_start=None, frame_end=None, frame_start_tc=None,
@@ -408,11 +461,13 @@ def burnins_from_data(
             True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
-    - "options" - sets look of burnins - colors, opacity,...(more info: ModifiedBurnins doc)
+    - "options" - sets look of burnins - colors, opacity,...
+        (more info: ModifiedBurnins doc)
                 - *OPTIONAL* default values are used when not included
     - "burnins" - contains dictionary with burnins settings
                 - *OPTIONAL* burnins won't be added (easier is not to use this)
-        - each key of "burnins" represents Alignment, there are 6 possibilities:
+        - each key of "burnins" represents Alignment,
+        there are 6 possibilities:
             TOP_LEFT        TOP_CENTERED        TOP_RIGHT
             BOTTOM_LEFT     BOTTOM_CENTERED     BOTTOM_RIGHT
         - value must be string with text you want to burn-in
@@ -491,13 +546,14 @@ def burnins_from_data(
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
+    clean_up_paths = []
     for align_text, value in burnin_values.items():
         if not value:
             continue
 
-        if isinstance(value, (dict, list, tuple)):
+        if isinstance(value, dict):
             raise TypeError((
-                "Expected string or number type."
+                "Expected string, number or list type."
                 " Got: {} - \"{}\""
                 " (Make sure you have new burnin presets)."
             ).format(str(type(value)), str(value)))
@@ -533,8 +589,48 @@ def burnins_from_data(
             print("Source does not have set timecode value.")
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
-        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+        # Convert lists.
+        cmd = ""
+        text = None
+        keys = [i[1] for i in Formatter().parse(value) if i[1] is not None]
+        list_to_convert = []
 
+        # Warn about nested dictionary support for lists. Ei. we dont support
+        # it.
+        if "[" in "".join(keys):
+            print(
+                "We dont support converting nested dictionaries to lists,"
+                " so skipping {}".format(value)
+            )
+        else:
+            for key in keys:
+                data_value = data[key]
+
+                # Multiple lists are not supported.
+                if isinstance(data_value, list) and list_to_convert:
+                    raise ValueError(
+                        "Found multiple lists to convert, which is not "
+                        "supported: {}".format(value)
+                    )
+
+                if isinstance(data_value, list):
+                    print("Found list to convert: {}".format(data_value))
+                    for v in data_value:
+                        data[key] = v
+                        list_to_convert.append(value.format(**data))
+
+        if list_to_convert:
+            value = list_to_convert[0]
+            path = convert_list_to_command(
+                list_to_convert, data["fps"], label=align
+            )
+            cmd = "sendcmd=f='{}'".format(path)
+            cmd = cmd.replace("\\", "/")
+            cmd = cmd.replace(":", "\\:")
+            clean_up_paths.append(path)
+
+        # Failsafe for missing keys.
+        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
         missing_keys = []
         for group in key_pattern.findall(value):
             try:
@@ -568,7 +664,8 @@ def burnins_from_data(
             continue
 
         text = value.format(**data)
-        burnin.add_text(text, align, frame_start, frame_end)
+
+        burnin.add_text(text, align, frame_start, frame_end, cmd=cmd)
 
     ffmpeg_args = []
     if codec_data:
@@ -599,6 +696,8 @@ def burnins_from_data(
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
     )
+    for path in clean_up_paths:
+        os.remove(path)
 
 
 if __name__ == "__main__":

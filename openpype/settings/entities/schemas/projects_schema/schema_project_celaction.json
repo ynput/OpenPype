@@ -25,6 +25,31 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "workfile",
+            "label": "Workfile",
+            "children": [
+                {
+                    "key": "submission_overrides",
+                    "label": "Submission workfile overrides",
+                    "type": "enum",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "render_chunk": "Pass chunk size"
+                        },
+                        {
+                            "frame_range": "Pass frame range"
+                        },
+                        {
+                            "resolution": "Pass resolution"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [

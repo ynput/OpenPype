@@ -1,4 +1,5 @@
 import os
+import re
 
 from maya import cmds
 
@@ -12,6 +13,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     Anatomy,
 )
+from openpype.pipeline.load import LoadError
 from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
@@ -143,15 +145,46 @@ class ReferenceLoader(Loader):
         assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load']['reference_loader']
         loaded_containers = []
 
-        count = options.get("count") or 1
-        for c in range(0, count):
-            namespace = namespace or lib.unique_namespace(
-                "{}_{}_".format(asset["name"], context["subset"]["name"]),
-                prefix="_" if asset["name"][0].isdigit() else "",
-                suffix="_",
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            raise LoadError("No group name specified in "
+                            "Maya ReferenceLoader settings")
+
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "subset": subset['name'],
+            "family": (
+                subset['data'].get('family') or
+                subset['data']['families'][0]
             )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+
+        count = options.get("count") or 1
+
+        for c in range(0, count):
+            namespace = lib.get_custom_namespace(custom_namespace)
+            group_name = "{}:{}".format(
+                namespace,
+                custom_group_name
+            )
+
+            options['group_name'] = group_name
 
             # Offset loaded subset
             if "offset" in options:
@@ -187,7 +220,7 @@ class ReferenceLoader(Loader):
 
         return loaded_containers
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 

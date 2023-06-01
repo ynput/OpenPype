@@ -1,4 +1,3 @@
-import uuid
 import copy
 
 from qtpy import QtWidgets, QtCore
@@ -126,7 +125,7 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
         row = 0
         for attr_def in attr_defs:
-            if not isinstance(attr_def, UIDef):
+            if attr_def.is_value_def:
                 if attr_def.key in self._current_keys:
                     raise KeyError(
                         "Duplicated key \"{}\"".format(attr_def.key))
@@ -144,11 +143,16 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            if attr_def.label:
+            if attr_def.is_value_def and attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
                 tooltip = attr_def.tooltip
                 if tooltip:
                     label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )

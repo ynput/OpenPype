@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -158,7 +158,7 @@ $.oColorValue.prototype.fromColorString = function (hexString){
 
 
 /**
- * Uses a color integer (used in backdrops) and parses the INT; applies the RGBA components of the INT to thos oColorValue
+ * Uses a color integer (used in backdrops) and parses the INT; applies the RGBA components of the INT to the oColorValue
  * @param   { int }    colorInt                      24 bit-shifted integer containing RGBA values
  */
 $.oColorValue.prototype.parseColorFromInt = function(colorInt){

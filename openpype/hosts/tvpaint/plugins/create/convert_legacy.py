@@ -55,7 +55,7 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
         self._convert_render_layers(
             to_convert["renderLayer"], current_instances)
         self._convert_render_passes(
-            to_convert["renderpass"], current_instances)
+            to_convert["renderPass"], current_instances)
         self._convert_render_scenes(
             to_convert["renderScene"], current_instances)
         self._convert_workfiles(
@@ -116,7 +116,7 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
         render_layers_by_group_id = {}
         for instance in current_instances:
             if instance.get("creator_identifier") == "render.layer":
-                group_id = instance["creator_identifier"]["group_id"]
+                group_id = instance["creator_attributes"]["group_id"]
                 render_layers_by_group_id[group_id] = instance
 
         for render_pass in render_passes:

@@ -130,7 +130,7 @@ class FileTransaction(object):
             path_same = self._same_paths(src, dst)
             if path_same:
                 self.log.debug(
-                    "Source and destionation are same files {} -> {}".format(
+                    "Source and destination are same files {} -> {}".format(
                         src, dst))
                 continue
 

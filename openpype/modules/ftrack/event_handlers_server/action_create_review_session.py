@@ -230,7 +230,7 @@ class CreateDailyReviewSessionServerAction(ServerAction):
             if not today_session_name:
                 continue
 
-            # Find matchin review session
+            # Find matching review session
             project_review_sessions = review_sessions_by_project_id[project_id]
             todays_session = None
             yesterdays_session = None

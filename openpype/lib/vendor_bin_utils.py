@@ -260,7 +260,7 @@ def _oiio_executable_validation(filepath):
     that it can be executed. For that is used '--help' argument which is fast
     and does not need any other inputs.
 
-    Any possible crash of missing libraries or invalid build should be catched.
+    Any possible crash of missing libraries or invalid build should be caught.
 
     Main reason is to validate if executable can be executed on OS just running
     which can be issue ob linux machines.
@@ -329,7 +329,7 @@ def _ffmpeg_executable_validation(filepath):
     that it can be executed. For that is used '-version' argument which is fast
     and does not need any other inputs.
 
-    Any possible crash of missing libraries or invalid build should be catched.
+    Any possible crash of missing libraries or invalid build should be caught.
 
     Main reason is to validate if executable can be executed on OS just running
     which can be issue ob linux machines.

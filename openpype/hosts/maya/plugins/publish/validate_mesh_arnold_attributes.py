@@ -1,8 +1,14 @@
-import pymel.core as pc
 from maya import cmds
 import pyblish.api
+
 import openpype.hosts.maya.api.action
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import (
+    maintained_selection,
+    delete_after,
+    undo_chunk,
+    get_attribute,
+    set_attribute
+)
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
@@ -32,59 +38,67 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
         active = False
 
     @classmethod
+    def get_default_attributes(cls):
+        # Get default arnold attribute values for mesh type.
+        defaults = {}
+        with delete_after() as tmp:
+            transform = cmds.createNode("transform")
+            tmp.append(transform)
+
+            mesh = cmds.createNode("mesh", parent=transform)
+            for attr in cmds.listAttr(mesh, string="ai*"):
+                plug = "{}.{}".format(mesh, attr)
+                try:
+                    defaults[attr] = get_attribute(plug)
+                except RuntimeError:
+                    cls.log.debug("Ignoring arnold attribute: {}".format(attr))
+
+        return defaults
+
+    @classmethod
     def get_invalid_attributes(cls, instance, compute=False):
         invalid = []
 
         if compute:
-            # Get default arnold attributes.
-            temp_transform = pc.polyCube()[0]
 
-            for shape in pc.ls(instance, type="mesh"):
-                for attr in temp_transform.getShape().listAttr():
-                    if not attr.attrName().startswith("ai"):
-                        continue
+            meshes = cmds.ls(instance, type="mesh", long=True)
+            if not meshes:
+                return []
 
-                    target_attr = pc.PyNode(
-                        "{}.{}".format(shape.name(), attr.attrName())
-                    )
-                    if attr.get() != target_attr.get():
-                        invalid.append(target_attr)
-
-            pc.delete(temp_transform)
+            # Compare the values against the defaults
+            defaults = cls.get_default_attributes()
+            for mesh in meshes:
+                for attr_name, default_value in defaults.items():
+                    plug = "{}.{}".format(mesh, attr_name)
+                    if get_attribute(plug) != default_value:
+                        invalid.append(plug)
 
             instance.data["nondefault_arnold_attributes"] = invalid
-        else:
-            invalid.extend(instance.data["nondefault_arnold_attributes"])
 
-        return invalid
+        return instance.data.get("nondefault_arnold_attributes", [])
 
     @classmethod
     def get_invalid(cls, instance):
-        invalid = []
-
-        for attr in cls.get_invalid_attributes(instance, compute=False):
-            invalid.append(attr.node().name())
-
-        return invalid
+        invalid_attrs = cls.get_invalid_attributes(instance, compute=False)
+        invalid_nodes = set(attr.split(".", 1)[0] for attr in invalid_attrs)
+        return sorted(invalid_nodes)
 
     @classmethod
     def repair(cls, instance):
         with maintained_selection():
-            with pc.UndoChunk():
-                temp_transform = pc.polyCube()[0]
-
+            with undo_chunk():
+                defaults = cls.get_default_attributes()
                 attributes = cls.get_invalid_attributes(
                     instance, compute=False
                 )
                 for attr in attributes:
-                    source = pc.PyNode(
-                        "{}.{}".format(
-                            temp_transform.getShape(), attr.attrName()
-                        )
+                    node, attr_name = attr.split(".", 1)
+                    value = defaults[attr_name]
+                    set_attribute(
+                        node=node,
+                        attribute=attr_name,
+                        value=value
                     )
-                    attr.set(source.get())
-
-                pc.delete(temp_transform)
 
     def process(self, instance):
 

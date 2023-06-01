@@ -504,13 +504,8 @@ def set_context_settings(project_name, asset_doc):
         print("Frame range was not found!")
         return
 
-    handles = asset_doc["data"].get("handles") or 0
     handle_start = asset_doc["data"].get("handleStart")
     handle_end = asset_doc["data"].get("handleEnd")
-
-    if handle_start is None or handle_end is None:
-        handle_start = handles
-        handle_end = handles
 
     # Always start from 0 Mark In and set only Mark Out
     mark_in = 0

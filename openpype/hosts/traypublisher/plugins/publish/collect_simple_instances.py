@@ -14,7 +14,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
     There is also possibility to have reviewable representation which can be
     stored under 'reviewable' attribute stored on instance data. If there was
-    already created representation with the same files as 'revieable' containes
+    already created representation with the same files as 'reviewable' contains
 
     Representations can be marked for review and in that case is also added
     'review' family to instance families. For review can be marked only one

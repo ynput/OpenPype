@@ -9,7 +9,7 @@ Only one item can be selected at a time.
 ```
 <i> : Icon. Can have Warning icon when context is not right
 ┌──────────────────────┐
-│  Options             │
+│  Context             │
 │ <Group 1> ────────── │
 │ <i> <Instance 1>  [x]│
 │ <i> <Instance 2>  [x]│
@@ -93,7 +93,7 @@ class BaseGroupWidget(QtWidgets.QWidget):
         return self._group
 
     def get_widget_by_item_id(self, item_id):
-        """Get instance widget by it's id."""
+        """Get instance widget by its id."""
 
         return self._widgets_by_id.get(item_id)
 
@@ -164,6 +164,11 @@ class BaseGroupWidget(QtWidgets.QWidget):
     def _on_widget_selection(self, instance_id, group_id, selection_type):
         self.selected.emit(instance_id, group_id, selection_type)
 
+    def set_active_toggle_enabled(self, enabled):
+        for widget in self._widgets_by_id.values():
+            if isinstance(widget, InstanceCardWidget):
+                widget.set_active_toggle_enabled(enabled)
+
 
 class ConvertorItemsGroupWidget(BaseGroupWidget):
     def update_items(self, items_by_id):
@@ -197,7 +202,7 @@ class ConvertorItemsGroupWidget(BaseGroupWidget):
 class InstanceGroupWidget(BaseGroupWidget):
     """Widget wrapping instances under group."""
 
-    active_changed = QtCore.Signal()
+    active_changed = QtCore.Signal(str, str, bool)
 
     def __init__(self, group_icons, *args, **kwargs):
         super(InstanceGroupWidget, self).__init__(*args, **kwargs)
@@ -248,12 +253,15 @@ class InstanceGroupWidget(BaseGroupWidget):
                         instance, group_icon, self
                     )
                     widget.selected.connect(self._on_widget_selection)
-                    widget.active_changed.connect(self.active_changed)
+                    widget.active_changed.connect(self._on_active_changed)
                     self._widgets_by_id[instance.id] = widget
                     self._content_layout.insertWidget(widget_idx, widget)
                 widget_idx += 1
 
         self._update_ordered_item_ids()
+
+    def _on_active_changed(self, instance_id, value):
+        self.active_changed.emit(self.group_name, instance_id, value)
 
 
 class CardWidget(BaseClickableFrame):
@@ -327,7 +335,7 @@ class ContextCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(icon_layout, 0)
         layout.addWidget(label_widget, 1)
 
@@ -358,7 +366,7 @@ class ConvertorItemCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(icon_layout, 0)
         layout.addWidget(label_widget, 1)
 
@@ -372,7 +380,7 @@ class ConvertorItemCardWidget(CardWidget):
 class InstanceCardWidget(CardWidget):
     """Card widget representing instance."""
 
-    active_changed = QtCore.Signal()
+    active_changed = QtCore.Signal(str, bool)
 
     def __init__(self, instance, group_icon, parent):
         super(InstanceCardWidget, self).__init__(parent)
@@ -419,7 +427,7 @@ class InstanceCardWidget(CardWidget):
         top_layout.addWidget(expand_btn, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 5, 10, 5)
+        layout.setContentsMargins(0, 2, 10, 2)
         layout.addLayout(top_layout)
         layout.addWidget(detail_widget)
 
@@ -436,6 +444,13 @@ class InstanceCardWidget(CardWidget):
         self._expand_btn = expand_btn
 
         self.update_instance_values()
+
+    def set_active_toggle_enabled(self, enabled):
+        self._active_checkbox.setEnabled(enabled)
+
+    @property
+    def is_active(self):
+        return self._active_checkbox.isChecked()
 
     def set_active(self, new_value):
         """Set instance as active."""
@@ -507,7 +522,7 @@ class InstanceCardWidget(CardWidget):
             return
 
         self.instance["active"] = new_value
-        self.active_changed.emit()
+        self.active_changed.emit(self._id, new_value)
 
     def _on_expend_clicked(self):
         self._set_expanded()
@@ -551,6 +566,7 @@ class InstanceCardView(AbstractInstanceView):
 
         self._context_widget = None
         self._convertor_items_group = None
+        self._active_toggle_enabled = True
         self._widgets_by_group = {}
         self._ordered_groups = []
 
@@ -574,6 +590,45 @@ class InstanceCardView(AbstractInstanceView):
         result = super(InstanceCardView, self).sizeHint()
         result.setWidth(width)
         return result
+
+    def _toggle_instances(self, value):
+        if not self._active_toggle_enabled:
+            return
+
+        widgets = self._get_selected_widgets()
+        changed = False
+        for widget in widgets:
+            if not isinstance(widget, InstanceCardWidget):
+                continue
+
+            is_active = widget.is_active
+            if value == -1:
+                widget.set_active(not is_active)
+                changed = True
+                continue
+
+            _value = bool(value)
+            if is_active is not _value:
+                widget.set_active(_value)
+                changed = True
+
+        if changed:
+            self.active_changed.emit()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Space:
+            self._toggle_instances(-1)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Backspace:
+            self._toggle_instances(0)
+            return True
+
+        elif event.key() == QtCore.Qt.Key_Return:
+            self._toggle_instances(1)
+            return True
+
+        return super(InstanceCardView, self).keyPressEvent(event)
 
     def _get_selected_widgets(self):
         output = []
@@ -647,8 +702,8 @@ class InstanceCardView(AbstractInstanceView):
 
         for group_name in sorted_group_names:
             group_icons = {
-                idenfier: self._controller.get_creator_icon(idenfier)
-                for idenfier in identifiers_by_group[group_name]
+                identifier: self._controller.get_creator_icon(identifier)
+                for identifier in identifiers_by_group[group_name]
             }
             if group_name in self._widgets_by_group:
                 group_widget = self._widgets_by_group[group_name]
@@ -666,6 +721,9 @@ class InstanceCardView(AbstractInstanceView):
             widget_idx += 1
             group_widget.update_instances(
                 instances_by_group[group_name]
+            )
+            group_widget.set_active_toggle_enabled(
+                self._active_toggle_enabled
             )
 
         self._update_ordered_group_names()
@@ -730,7 +788,15 @@ class InstanceCardView(AbstractInstanceView):
         for widget in self._widgets_by_group.values():
             widget.update_instance_values()
 
-    def _on_active_changed(self):
+    def _on_active_changed(self, group_name, instance_id, value):
+        group_widget = self._widgets_by_group[group_name]
+        instance_widget = group_widget.get_widget_by_item_id(instance_id)
+        if instance_widget.is_selected:
+            for widget in self._get_selected_widgets():
+                if isinstance(widget, InstanceCardWidget):
+                    widget.set_active(value)
+        else:
+            self._select_item_clear(instance_id, group_name, instance_widget)
         self.active_changed.emit()
 
     def _on_widget_selection(self, instance_id, group_name, selection_type):
@@ -1091,3 +1157,10 @@ class InstanceCardView(AbstractInstanceView):
 
         self._explicitly_selected_groups = selected_groups
         self._explicitly_selected_instance_ids = selected_instances
+
+    def set_active_toggle_enabled(self, enabled):
+        if self._active_toggle_enabled is enabled:
+            return
+        self._active_toggle_enabled = enabled
+        for group_widget in self._widgets_by_group.values():
+            group_widget.set_active_toggle_enabled(enabled)

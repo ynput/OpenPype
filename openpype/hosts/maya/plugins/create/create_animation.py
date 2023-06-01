@@ -7,6 +7,12 @@ from openpype.hosts.maya.api import (
 class CreateAnimation(plugin.Creator):
     """Animation output for character rigs"""
 
+    # We hide the animation creator from the UI since the creation of it
+    # is automated upon loading a rig. There's an inventory action to recreate
+    # it for loaded rigs if by chance someone deleted the animation instance.
+    # Note: This setting is actually applied from project settings
+    enabled = False
+
     name = "animationDefault"
     label = "Animation"
     family = "animation"

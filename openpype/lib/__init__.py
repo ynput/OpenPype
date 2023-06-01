@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa E402
-"""Pype module API."""
+"""OpenPype lib functions."""
 # add vendor to sys path based on Python version
 import sys
 import os
@@ -94,7 +94,8 @@ from .python_module_tools import (
     modules_from_path,
     recursive_bases_from_class,
     classes_from_module,
-    import_module_from_dirpath
+    import_module_from_dirpath,
+    is_func_signature_supported,
 )
 
 from .profiles_filtering import (
@@ -243,6 +244,7 @@ __all__ = [
     "recursive_bases_from_class",
     "classes_from_module",
     "import_module_from_dirpath",
+    "is_func_signature_supported",
 
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",

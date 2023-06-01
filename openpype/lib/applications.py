@@ -889,7 +889,8 @@ class ApplicationLaunchContext:
         self.modules_manager = ModulesManager()
 
         # Logger
-        logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
+        logger_name = "{}-{}".format(self.__class__.__name__,
+                                     self.application.full_name)
         self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
@@ -968,7 +969,7 @@ class ApplicationLaunchContext:
         """Helper to collect application launch hooks from addons.
 
         Module have to have implemented 'get_launch_hook_paths' method which
-        can expect appliction as argument or nothing.
+        can expect application as argument or nothing.
 
         Returns:
             List[str]: Paths to launch hook directories.
@@ -1246,7 +1247,7 @@ class ApplicationLaunchContext:
             args_len_str = " ({})".format(len(args))
         self.log.info(
             "Launching \"{}\" with args{}: {}".format(
-                self.app_name, args_len_str, args
+                self.application.full_name, args_len_str, args
             )
         )
         self.launch_args = args
@@ -1271,7 +1272,9 @@ class ApplicationLaunchContext:
                     exc_info=True
                 )
 
-        self.log.debug("Launch of {} finished.".format(self.app_name))
+        self.log.debug("Launch of {} finished.".format(
+            self.application.full_name
+        ))
 
         return self.process
 
@@ -1508,8 +1511,8 @@ def prepare_app_environments(
         if key in source_env:
             source_env[key] = value
 
-    # `added_env_keys` has debug purpose
-    added_env_keys = {app.group.name, app.name}
+    # `app_and_tool_labels` has debug purpose
+    app_and_tool_labels = [app.full_name]
     # Environments for application
     environments = [
         app.group.environment,
@@ -1532,15 +1535,14 @@ def prepare_app_environments(
         for group_name in sorted(groups_by_name.keys()):
             group = groups_by_name[group_name]
             environments.append(group.environment)
-            added_env_keys.add(group_name)
             for tool_name in sorted(tool_by_group_name[group_name].keys()):
                 tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
-                added_env_keys.add(tool.name)
+                app_and_tool_labels.append(tool.full_name)
 
     log.debug(
         "Will add environments for apps and tools: {}".format(
-            ", ".join(added_env_keys)
+            ", ".join(app_and_tool_labels)
         )
     )
 

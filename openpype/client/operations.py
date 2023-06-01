@@ -368,7 +368,7 @@ def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
 class AbstractOperation(object):
     """Base operation class.
 
-    Opration represent a call into database. The call can create, change or
+    Operation represent a call into database. The call can create, change or
     remove data.
 
     Args:
@@ -409,7 +409,7 @@ class AbstractOperation(object):
         pass
 
     def to_data(self):
-        """Convert opration to data that can be converted to json or others.
+        """Convert operation to data that can be converted to json or others.
 
         Warning:
             Current state returns ObjectId objects which cannot be parsed by
@@ -428,7 +428,7 @@ class AbstractOperation(object):
 
 
 class CreateOperation(AbstractOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -485,7 +485,7 @@ class CreateOperation(AbstractOperation):
 
 
 class UpdateOperation(AbstractOperation):
-    """Opeartion to update an entity.
+    """Operation to update an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -552,7 +552,7 @@ class UpdateOperation(AbstractOperation):
 
 
 class DeleteOperation(AbstractOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.

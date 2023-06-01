@@ -23,6 +23,9 @@ from openpype.client import (
 
 from openpype.host import HostDirmap
 from openpype.tools.utils import host_tools
+from openpype.pipeline.workfile.workfile_template_builder import (
+    TemplateProfileNotFound
+)
 from openpype.lib import (
     env_value_to_bool,
     Logger,
@@ -148,7 +151,7 @@ def get_main_window():
 def set_node_data(node, knobname, data):
     """Write data to node invisible knob
 
-    Will create new in case it doesnt exists
+    Will create new in case it doesn't exists
     or update the one already created.
 
     Args:
@@ -492,29 +495,28 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
         data (dict)
     """
 
+    data = {}
+    if AVALON_TAB not in node.knobs():
+        return data
+
     # check if lists
     if not isinstance(prefix, list):
-        prefix = list([prefix])
-
-    data = dict()
+        prefix = [prefix]
 
     # loop prefix
     for p in prefix:
         # check if the node is avalon tracked
-        if AVALON_TAB not in node.knobs():
-            continue
         try:
             # check if data available on the node
             test = node[AVALON_DATA_GROUP].value()
-            log.debug("Only testing if data avalable: `{}`".format(test))
+            log.debug("Only testing if data available: `{}`".format(test))
         except NameError as e:
             # if it doesn't then create it
             log.debug("Creating avalon knob: `{}`".format(e))
             if create:
                 node = set_avalon_knob_data(node)
                 return get_avalon_knob_data(node)
-            else:
-                return {}
+            return {}
 
         # get data from filtered knobs
         data.update({k.replace(p, ''): node[k].value()
@@ -908,11 +910,11 @@ def get_view_process_node():
             continue
 
         if not ipn_node:
-            # in case a Viewer node is transfered from
+            # in case a Viewer node is transferred from
             # different workfile with old values
             raise NameError((
                 "Input process node name '{}' set in "
-                "Viewer '{}' is does't exists in nodes"
+                "Viewer '{}' is doesn't exists in nodes"
             ).format(ipn, v_.name()))
 
         ipn_node.setSelected(True)
@@ -1662,7 +1664,7 @@ def create_write_node_legacy(
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
 
-    # overrie knob values from settings
+    # override knob values from settings
     for knob in knob_overrides:
         knob_type = knob["type"]
         knob_name = knob["name"]
@@ -2117,7 +2119,7 @@ class WorkfileSettings(object):
                     write_node[knob["name"]].setValue(value)
             except TypeError:
                 log.warning(
-                    "Legacy workflow didnt work, switching to current")
+                    "Legacy workflow didn't work, switching to current")
 
                 set_node_knobs_from_settings(
                     write_node, nuke_imageio_writes["knobs"])
@@ -2237,13 +2239,13 @@ class WorkfileSettings(object):
         handle_end = data["handleEnd"]
 
         fps = float(data["fps"])
-        frame_start = int(data["frameStart"]) - handle_start
-        frame_end = int(data["frameEnd"]) + handle_end
+        frame_start_handle = int(data["frameStart"]) - handle_start
+        frame_end_handle = int(data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
-        self._root_node["first_frame"].setValue(frame_start)
-        self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["first_frame"].setValue(frame_start_handle)
+        self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
@@ -2543,7 +2545,7 @@ def reset_selection():
 
 
 def select_nodes(nodes):
-    """Selects all inputed nodes
+    """Selects all inputted nodes
 
     Arguments:
         nodes (list): nuke nodes to be selected
@@ -2560,7 +2562,7 @@ def launch_workfiles_app():
     Trigger to show workfiles tool on application launch. Can be executed only
     once all other calls are ignored.
 
-    Workfiles tool show is deffered after application initialization using
+    Workfiles tool show is deferred after application initialization using
     QTimer.
     """
 
@@ -2581,7 +2583,7 @@ def launch_workfiles_app():
     # Show workfiles tool using timer
     # - this will be probably triggered during initialization in that case
     #   the application is not be able to show uis so it must be
-    #   deffered using timer
+    #   deferred using timer
     # - timer should be processed when initialization ends
     #       When applications starts to process events.
     timer = QtCore.QTimer()
@@ -2684,7 +2686,10 @@ def start_workfile_template_builder():
 
     # to avoid looping of the callback, remove it!
     log.info("Starting workfile template builder...")
-    build_workfile_template(workfile_creation_enabled=True)
+    try:
+        build_workfile_template(workfile_creation_enabled=True)
+    except TemplateProfileNotFound:
+        log.warning("Template profile not found. Skipping...")
 
     # remove callback since it would be duplicating the workfile
     nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
