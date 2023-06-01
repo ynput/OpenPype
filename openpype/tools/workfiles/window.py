@@ -1,6 +1,7 @@
 import os
 import datetime
 import copy
+import pwd
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
@@ -134,7 +135,9 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Created:</b>",
             creation_time.strftime(datetime_format),
             "<b>Modified:</b>",
-            modification_time.strftime(datetime_format)
+            modification_time.strftime(datetime_format),
+            "<b>User:</b>",
+            pwd.getpwuid(filestat.st_uid).pw_name
         )
         self._details_input.appendHtml("<br>".join(lines))
 
