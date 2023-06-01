@@ -2385,8 +2385,7 @@ def build_first_workfile_from_template_builder():
     task_name = get_current_task_name()
     current_tasks = asset.get("data").get("tasks")
 
-    build_workfile_profiles = project_settings['maya']\
-        ['templated_workfile_build'].get('profiles')
+    build_workfile_profiles = project_settings['maya']['templated_workfile_build'].get('profiles')  # noqa
 
     if build_workfile_profiles:
         for profile in build_workfile_profiles:
