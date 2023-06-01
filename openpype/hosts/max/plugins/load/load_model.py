@@ -30,7 +30,7 @@ class ModelAbcLoader(load.LoaderPlugin):
         rt.AlembicImport.CustomAttributes = True
         rt.AlembicImport.UVs = True
         rt.AlembicImport.VertexColors = True
-        rt.importFile(filepath, rt.name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
             c
