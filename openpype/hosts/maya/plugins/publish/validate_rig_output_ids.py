@@ -55,7 +55,8 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
                 if shapes:
                     instance_nodes.extend(shapes)
 
-            scene_nodes = cmds.ls(type="transform") + cmds.ls(type="mesh")
+            scene_nodes = cmds.ls(type="transform", long=True)
+            scene_nodes += cmds.ls(type="mesh", long=True)
             scene_nodes = set(scene_nodes) - set(instance_nodes)
 
             scene_nodes_by_basename = defaultdict(list)
@@ -76,7 +77,7 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
                 if len(ids) > 1:
                     cls.log.error(
                         "\"{}\" id mismatch to: {}".format(
-                            instance_node.longName(), matches
+                            instance_node, matches
                         )
                     )
                     invalid[instance_node] = matches
