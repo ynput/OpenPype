@@ -53,7 +53,8 @@
         },
         "ValidateEditorialAssetName": {
             "enabled": true,
-            "optional": false
+            "optional": false,
+            "active": true
         },
         "ValidateVersion": {
             "enabled": true,
@@ -296,71 +297,6 @@
                     "task_types": [],
                     "tasks": [],
                     "template": ""
-                }
-            ]
-        },
-        "IntegrateAssetNew": {
-            "subset_grouping_profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template": ""
-                }
-            ],
-            "template_name_profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "publish"
-                },
-                {
-                    "families": [
-                        "review",
-                        "render",
-                        "prerender"
-                    ],
-                    "hosts": [],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "render"
-                },
-                {
-                    "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "simpleUnrealTexture"
-                },
-                {
-                    "families": [
-                        "staticMesh",
-                        "skeletalMesh"
-                    ],
-                    "hosts": [
-                        "maya"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "maya2unreal"
-                },
-                {
-                    "families": [
-                        "online"
-                    ],
-                    "hosts": [
-                        "traypublisher"
-                    ],
-                    "task_types": [],
-                    "tasks": [],
-                    "template_name": "online"
                 }
             ]
         },

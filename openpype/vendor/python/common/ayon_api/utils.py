@@ -22,7 +22,7 @@ SLUGIFY_SEP_WHITELIST = " ,./\\;:!|*^#@~+-_="
 
 RepresentationParents = collections.namedtuple(
     "RepresentationParents",
-    ("version", "subset", "folder", "project")
+    ("version", "product", "folder", "project")
 )
 
 
