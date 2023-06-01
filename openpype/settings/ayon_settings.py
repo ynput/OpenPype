@@ -351,18 +351,25 @@ def _convert_flame_project_settings(ayon_settings, output):
     ayon_flame = ayon_settings["flame"]
 
     ayon_publish_flame = ayon_flame["publish"]
+    # Plugin 'ExtractSubsetResources' renamed to 'ExtractProductResources'
+    if "ExtractSubsetResources" in ayon_publish_flame:
+        ayon_product_resources = ayon_publish_flame["ExtractSubsetResources"]
+    else:
+        ayon_product_resources = (
+            ayon_publish_flame.pop("ExtractProductResources"))
+        ayon_publish_flame["ExtractSubsetResources"] = ayon_product_resources
+
     # 'ExtractSubsetResources' changed model of 'export_presets_mapping'
     # - some keys were moved under 'other_parameters'
-    ayon_subset_resources = ayon_publish_flame["ExtractSubsetResources"]
     new_subset_resources = {}
-    for item in ayon_subset_resources.pop("export_presets_mapping"):
+    for item in ayon_product_resources.pop("export_presets_mapping"):
         name = item.pop("name")
         if "other_parameters" in item:
             other_parameters = item.pop("other_parameters")
             item.update(other_parameters)
         new_subset_resources[name] = item
 
-    ayon_subset_resources["export_presets_mapping"] = new_subset_resources
+    ayon_product_resources["export_presets_mapping"] = new_subset_resources
 
     # 'imageio' changed model
     # - missing subkey 'project' which is in root of 'imageio' model
@@ -374,6 +381,21 @@ def _convert_flame_project_settings(ayon_settings, output):
             "project": ayon_imageio_flame,
             "profilesMapping": profile_mapping
         }
+
+    ayon_load_flame = ayon_flame["load"]
+    for plugin_name in ("LoadClip", "LoadClipBatch"):
+        plugin_settings = ayon_load_flame[plugin_name]
+        plugin_settings["families"] = plugin_settings.pop("product_types")
+        plugin_settings["clip_name_template"] = (
+            plugin_settings["clip_name_template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+        )
+        plugin_settings["layer_rename_template"] = (
+            plugin_settings["layer_rename_template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+        )
 
     output["flame"] = ayon_flame
 
@@ -408,6 +430,15 @@ def _convert_fusion_project_settings(ayon_settings, output):
         ayon_imageio_fusion["ocio"]["configFilePath"] = paths
 
     _convert_host_imageio(ayon_imageio_fusion)
+
+    ayon_create_saver = ayon_fusion["create"]["CreateSaver"]
+    ayon_create_saver["temp_rendering_path_template"] = (
+        ayon_create_saver["temp_rendering_path_template"]
+        .replace("{product[name]}", "{subset}")
+        .replace("{product[type]}", "{family}")
+        .replace("{folder[name]}", "{asset}")
+        .replace("{task[name]}", "{task}")
+    )
 
     output["fusion"] = ayon_fusion
 
@@ -477,6 +508,11 @@ def _convert_maya_project_settings(ayon_settings, output):
         SUFFIX_NAMING_TABLE
     )
 
+    validate_frame_range = ayon_publish["ValidateFrameRange"]
+    if "exclude_product_types" in validate_frame_range:
+        validate_frame_range["exclude_families"] = (
+            validate_frame_range.pop("exclude_product_types"))
+
     # Extract playblast capture settings
     validate_rendern_settings = ayon_publish["ValidateRenderSettings"]
     for key in (
@@ -537,11 +573,30 @@ def _convert_maya_project_settings(ayon_settings, output):
             for item in renderer_settings["additional_options"]
         ]
 
+    # Workfile build
+    ayon_workfile_build = ayon_maya["workfile_build"]
+    for item in ayon_workfile_build["profiles"]:
+        for key in ("current_context", "linked_assets"):
+            for subitem in item[key]:
+                if "families" in subitem:
+                    break
+                subitem["families"] = subitem.pop("product_types")
+                subitem["subset_name_filters"] = subitem.pop(
+                    "product_name_filters")
+
     _convert_host_imageio(ayon_maya)
 
-    load_colors = ayon_maya["load"]["colors"]
+    ayon_maya_load = ayon_maya["load"]
+    load_colors = ayon_maya_load["colors"]
     for key, color in tuple(load_colors.items()):
         load_colors[key] = _convert_color(color)
+
+    reference_loader = ayon_maya_load["reference_loader"]
+    reference_loader["namespace"] = (
+        reference_loader["namespace"]
+        .replace("{folder[name]}", "{asset_name}")
+        .replace("{product[name]}", "{subset}")
+    )
 
     output["maya"] = ayon_maya
 
@@ -630,13 +685,21 @@ def _convert_nuke_project_settings(ayon_settings, output):
         "CreateWriteImage",
         "CreateWriteRender",
     ):
+        create_plugin_settings = ayon_create[creator_name]
+        create_plugin_settings["temp_rendering_path_template"] = (
+            create_plugin_settings["temp_rendering_path_template"]
+            .replace("{product[name]}", "{subset}")
+            .replace("{product[type]}", "{family}")
+            .replace("{task[name]}", "{task}")
+            .replace("{folder[name]}", "{asset}")
+        )
         new_prenodes = {}
-        for prenode in ayon_create[creator_name]["prenodes"]:
+        for prenode in create_plugin_settings["prenodes"]:
             name = prenode.pop("name")
             prenode["knobs"] = _convert_nuke_knobs(prenode["knobs"])
             new_prenodes[name] = prenode
 
-        ayon_create[creator_name]["prenodes"] = new_prenodes
+        create_plugin_settings["prenodes"] = new_prenodes
 
     # --- Publish ---
     ayon_publish = ayon_nuke["publish"]
@@ -651,6 +714,11 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
     new_review_data_outputs = {}
     for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+        item_filter = item["filter"]
+        if "product_names" in item_filter:
+            item_filter["subsets"] = item_filter.pop("product_names")
+            item_filter["families"] = item_filter.pop("product_types")
+
         item["reformat_node_config"] = _convert_nuke_knobs(
             item["reformat_node_config"])
 
@@ -659,8 +727,13 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
-
     ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    collect_instance_data = ayon_publish["CollectInstanceData"]
+    if "sync_workfile_version_on_product_types" in collect_instance_data:
+        collect_instance_data["sync_workfile_version_on_families"] = (
+            collect_instance_data.pop(
+                "sync_workfile_version_on_product_types"))
 
     # TODO 'ExtractThumbnail' does not have ideal schema in v3
     new_thumbnail_nodes = {}
@@ -707,6 +780,17 @@ def _convert_hiero_project_settings(ayon_settings, output):
         new_gui_filters[key] = subvalue
     ayon_hiero["filters"] = new_gui_filters
 
+    ayon_load_clip = ayon_hiero["load"]["LoadClip"]
+    if "product_types" in ayon_load_clip:
+        ayon_load_clip["families"] = ayon_load_clip.pop("product_types")
+
+    ayon_load_clip = ayon_hiero["load"]["LoadClip"]
+    ayon_load_clip["clip_name_template"] = (
+        ayon_load_clip["clip_name_template"]
+        .replace("{folder[name]}", "{asset}")
+        .replace("{product[name]}", "{subset}")
+    )
+
     output["hiero"] = ayon_hiero
 
 
@@ -717,7 +801,14 @@ def _convert_photoshop_project_settings(ayon_settings, output):
     ayon_photoshop = ayon_settings["photoshop"]
     _convert_host_imageio(ayon_photoshop)
 
-    collect_review = ayon_photoshop["publish"]["CollectReview"]
+    ayon_publish_photoshop = ayon_photoshop["publish"]
+
+    ayon_colorcoded = ayon_publish_photoshop["CollectColorCodedInstances"]
+    if "flatten_product_type_template" in ayon_colorcoded:
+        ayon_colorcoded["flatten_subset_template"] = (
+            ayon_colorcoded.pop("flatten_product_type_template"))
+
+    collect_review = ayon_publish_photoshop["CollectReview"]
     if "active" in collect_review:
         collect_review["publish"] = collect_review.pop("active")
 
@@ -762,6 +853,14 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
         extract_sequence_setting["review_bg"]
     )
 
+    # TODO remove when removed from OpenPype schema
+    #   this is unused setting
+    ayon_tvpaint["publish"]["ExtractSequence"]["families_to_review"] = [
+        "review",
+        "renderlayer",
+        "renderscene"
+    ]
+
     output["tvpaint"] = ayon_tvpaint
 
 
@@ -776,6 +875,13 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     ayon_editorial_simple = (
         ayon_traypublisher["editorial_creators"]["editorial_simple"]
     )
+    # Subset -> Product type conversion
+    if "product_type_presets" in ayon_editorial_simple:
+        family_presets = ayon_editorial_simple.pop("product_type_presets")
+        for item in family_presets:
+            item["family"] = item.pop("product_type")
+        ayon_editorial_simple["family_presets"] = family_presets
+
     if "shot_metadata_creator" in ayon_editorial_simple:
         shot_metadata_creator = ayon_editorial_simple.pop(
             "shot_metadata_creator"
@@ -797,6 +903,13 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
             ayon_editorial_simple.pop("shot_subset_creator"))
     for item in ayon_editorial_simple["shot_hierarchy"]["parents"]:
         item["type"] = item.pop("parent_type")
+
+    # Simple creators
+    ayon_simple_creators = ayon_traypublisher["simple_creators"]
+    for item in ayon_simple_creators:
+        if "product_type" not in item:
+            break
+        item["family"] = item.pop("product_type")
 
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
     if isinstance(shot_add_tasks, dict):
@@ -886,6 +999,13 @@ def _convert_kitsu_project_settings(ayon_settings, output):
 
     ayon_kitsu_settings = ayon_settings["kitsu"]
     ayon_kitsu_settings.pop("server")
+
+    integrate_note = ayon_kitsu_settings["publish"]["IntegrateKitsuNote"]
+    status_change_conditions = integrate_note["status_change_conditions"]
+    if "product_type_requirements" in status_change_conditions:
+        status_change_conditions["family_requirements"] = (
+            status_change_conditions.pop("product_type_requirements"))
+
     output["kitsu"] = ayon_kitsu_settings
 
 
@@ -946,11 +1066,24 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
+
+    ayon_collect_audio = ayon_publish["CollectAudio"]
+    if "audio_product_name" in ayon_collect_audio:
+        ayon_collect_audio["audio_subset_name"] = (
+            ayon_collect_audio.pop("audio_product_name"))
+
     for profile in ayon_publish["ExtractReview"]["profiles"]:
+        if "product_types" in profile:
+            profile["families"] = profile.pop("product_types")
         new_outputs = {}
         for output_def in profile.pop("outputs"):
             name = output_def.pop("name")
             new_outputs[name] = output_def
+
+            output_def_filter = output_def["filter"]
+            if "product_names" in output_def_filter:
+                output_def_filter["subsets"] = (
+                    output_def_filter.pop("product_names"))
 
             for color_key in ("overscan_color", "bg_color"):
                 output_def[color_key] = _convert_color(output_def[color_key])
@@ -967,6 +1100,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
 
         profile["outputs"] = new_outputs
 
+    # Extract Burnin plugin
     extract_burnin = ayon_publish["ExtractBurnin"]
     extract_burnin_options = extract_burnin["options"]
     for color_key in ("font_color", "bg_color"):
@@ -976,16 +1110,56 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
 
     for profile in extract_burnin["profiles"]:
         extract_burnin_defs = profile["burnins"]
+        if "product_names" in profile:
+            profile["subsets"] = profile.pop("product_names")
+            profile["families"] = profile.pop("product_types")
+
+        for burnin_def in extract_burnin_defs:
+            for key in (
+                "TOP_LEFT",
+                "TOP_CENTERED",
+                "TOP_RIGHT",
+                "BOTTOM_LEFT",
+                "BOTTOM_CENTERED",
+                "BOTTOM_RIGHT",
+            ):
+                burnin_def[key] = (
+                    burnin_def[key]
+                    .replace("{product[name]}", "{subset}")
+                    .replace("{Product[name]}", "{Subset}")
+                    .replace("{PRODUCT[NAME]}", "{SUBSET}")
+                    .replace("{product[type]}", "{family}")
+                    .replace("{Product[type]}", "{Family}")
+                    .replace("{PRODUCT[TYPE]}", "{FAMILY}")
+                    .replace("{folder[name]}", "{asset}")
+                    .replace("{Folder[name]}", "{Asset}")
+                    .replace("{FOLDER[NAME]}", "{ASSET}")
+                )
         profile["burnins"] = {
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
 
+    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
+    for profile in ayon_integrate_hero["template_name_profiles"]:
+        if "product_types" not in profile:
+            break
+        profile["families"] = profile.pop("product_types")
+
+    if "IntegrateProductGroup" in ayon_publish:
+        subset_group = ayon_publish.pop("IntegrateProductGroup")
+        subset_group_profiles = subset_group.pop("product_grouping_profiles")
+        for profile in subset_group_profiles:
+            profile["families"] = profile.pop("product_types")
+        subset_group["subset_grouping_profiles"] = subset_group_profiles
+        ayon_publish["IntegrateSubsetGroup"] = subset_group
+
+    # Cleanup plugin
     ayon_cleanup = ayon_publish["CleanUp"]
     if "patterns" in ayon_cleanup:
         ayon_cleanup["paterns"] = ayon_cleanup.pop("patterns")
 
-    # Project root settings
+    # Project root settings - json string to dict
     ayon_core["project_environments"] = json.loads(
         ayon_core["project_environments"]
     )
@@ -996,18 +1170,55 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     # Tools settings
     ayon_tools = ayon_core["tools"]
     ayon_create_tool = ayon_tools["creator"]
+    if "product_name_profiles" in ayon_create_tool:
+        product_name_profiles = ayon_create_tool.pop("product_name_profiles")
+        for profile in product_name_profiles:
+            profile["families"] = profile.pop("product_types")
+        ayon_create_tool["subset_name_profiles"] = product_name_profiles
+
+    for profile in ayon_create_tool["subset_name_profiles"]:
+        template = profile["template"]
+        profile["template"] = (
+            template
+            .replace("{task[name]}", "{task}")
+            .replace("{Task[name]}", "{Task}")
+            .replace("{TASK[NAME]}", "{TASK}")
+            .replace("{product[type]}", "{family}")
+            .replace("{Product[type]}", "{Family}")
+            .replace("{PRODUCT[TYPE]}", "{FAMILY}")
+            .replace("{folder[name]}", "{asset}")
+            .replace("{Folder[name]}", "{Asset}")
+            .replace("{FOLDER[NAME]}", "{ASSET}")
+        )
+
+    product_smart_select_key = "families_smart_select"
+    if "product_types_smart_select" in ayon_create_tool:
+        product_smart_select_key = "product_types_smart_select"
+
     new_smart_select_families = {
         item["name"]: item["task_names"]
-        for item in ayon_create_tool["families_smart_select"]
+        for item in ayon_create_tool.pop(product_smart_select_key)
     }
     ayon_create_tool["families_smart_select"] = new_smart_select_families
 
     ayon_loader_tool = ayon_tools["loader"]
-    for profile in ayon_loader_tool["family_filter_profiles"]:
-        if "template_publish_families" in profile:
-            profile["filter_families"] = (
-                profile.pop("template_publish_families")
-            )
+    if "product_type_filter_profiles" in ayon_loader_tool:
+        product_type_filter_profiles = (
+            ayon_loader_tool.pop("product_type_filter_profiles"))
+        for profile in product_type_filter_profiles:
+            profile["filter_families"] = profile.pop("filter_product_types")
+
+        ayon_loader_tool["family_filter_profiles"] = (
+            product_type_filter_profiles)
+
+    ayon_publish_tool = ayon_tools["publish"]
+    for profile in ayon_publish_tool["hero_template_name_profiles"]:
+        if "product_types" in profile:
+            profile["families"] = profile.pop("product_types")
+
+    for profile in ayon_publish_tool["template_name_profiles"]:
+        if "product_types" in profile:
+            profile["families"] = profile.pop("product_types")
 
     ayon_core["sync_server"] = (
         default_settings["global"]["sync_server"]

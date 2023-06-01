@@ -656,29 +656,39 @@ def get_folder_by_name(*args, **kwargs):
     return con.get_folder_by_name(*args, **kwargs)
 
 
-def get_folder_ids_with_subsets(*args, **kwargs):
+def get_folder_ids_with_products(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_folder_ids_with_subsets(*args, **kwargs)
+    return con.get_folder_ids_with_products(*args, **kwargs)
 
 
-def get_subsets(*args, **kwargs):
+def get_product_types(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_subsets(*args, **kwargs)
+    return con.get_product_types(*args, **kwargs)
 
 
-def get_subset_by_id(*args, **kwargs):
+def get_project_product_types(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_subset_by_id(*args, **kwargs)
+    return con.get_project_product_types(*args, **kwargs)
 
 
-def get_subset_by_name(*args, **kwargs):
+def get_product_type_names(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_subset_by_name(*args, **kwargs)
+    return con.get_product_type_names(*args, **kwargs)
 
 
-def get_subset_families(*args, **kwargs):
+def get_products(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_subset_families(*args, **kwargs)
+    return con.get_products(*args, **kwargs)
+
+
+def get_product_by_id(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_product_by_id(*args, **kwargs)
+
+
+def get_product_by_name(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_product_by_name(*args, **kwargs)
 
 
 def get_versions(*args, **kwargs):
@@ -701,9 +711,9 @@ def get_hero_version_by_id(*args, **kwargs):
     return con.get_hero_version_by_id(*args, **kwargs)
 
 
-def get_hero_version_by_subset_id(*args, **kwargs):
+def get_hero_version_by_product_id(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_hero_version_by_subset_id(*args, **kwargs)
+    return con.get_hero_version_by_product_id(*args, **kwargs)
 
 
 def get_hero_versions(*args, **kwargs):
@@ -716,14 +726,14 @@ def get_last_versions(*args, **kwargs):
     return con.get_last_versions(*args, **kwargs)
 
 
-def get_last_version_by_subset_id(*args, **kwargs):
+def get_last_version_by_product_id(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_last_version_by_subset_id(*args, **kwargs)
+    return con.get_last_version_by_product_id(*args, **kwargs)
 
 
-def get_last_version_by_subset_name(*args, **kwargs):
+def get_last_version_by_product_name(*args, **kwargs):
     con = get_server_api_connection()
-    return con.get_last_version_by_subset_name(*args, **kwargs)
+    return con.get_last_version_by_product_name(*args, **kwargs)
 
 
 def version_is_latest(*args, **kwargs):
@@ -759,6 +769,21 @@ def get_representations_parents(*args, **kwargs):
 def get_repre_ids_by_context_filters(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_repre_ids_by_context_filters(*args, **kwargs)
+
+
+def get_workfiles_info(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfiles_info(*args, **kwargs)
+
+
+def get_workfile_info(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfile_info(*args, **kwargs)
+
+
+def get_workfile_info_by_id(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_workfile_info_by_id(*args, **kwargs)
 
 
 def create_project(
@@ -954,31 +979,31 @@ def get_task_links(
     )
 
 
-def get_subsets_links(
+def get_products_links(
     project_name,
-    subset_ids=None,
+    product_ids=None,
     link_types=None,
     link_direction=None
 ):
     con = get_server_api_connection()
-    return con.get_subsets_links(
+    return con.get_products_links(
         project_name,
-        subset_ids,
+        product_ids,
         link_types,
         link_direction
     )
 
 
-def get_subset_links(
+def get_product_links(
     project_name,
-    subset_id,
+    product_id,
     link_types=None,
     link_direction=None
 ):
     con = get_server_api_connection()
-    return con.get_subset_links(
+    return con.get_product_links(
         project_name,
-        subset_id,
+        product_id,
         link_types,
         link_direction
     )

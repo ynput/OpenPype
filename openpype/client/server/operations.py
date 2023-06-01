@@ -375,7 +375,18 @@ def prepare_representation_update_data(old_doc, new_doc, replace=True):
         Dict[str, Any]: Changes between old and new document.
     """
 
-    return _prepare_update_data(old_doc, new_doc, replace)
+    changes = _prepare_update_data(old_doc, new_doc, replace)
+    context = changes.get("data", {}).get("context")
+    # Make sure that both 'family' and 'subset' are in changes if
+    #   one of them changed (they'll both become 'product').
+    if (
+        context
+        and ("family" in context or "subset" in context)
+    ):
+        context["family"] = new_doc["data"]["context"]["family"]
+        context["subset"] = new_doc["data"]["context"]["subset"]
+
+    return changes
 
 
 def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
@@ -445,6 +456,7 @@ class ServerCreateOperation(CreateOperation):
 
         elif entity_type == "subset":
             new_data = convert_create_subset_to_v4(data, self.con)
+            entity_type = "product"
 
         elif entity_type == "version":
             new_data = convert_create_version_to_v4(data, self.con)
@@ -551,6 +563,7 @@ class ServerUpdateOperation(UpdateOperation):
             new_update_data = convert_update_subset_to_v4(
                 project_name, entity_id, update_data, self.con
             )
+            entity_type = "product"
 
         elif entity_type == "version":
             new_update_data = convert_update_version_to_v4(
@@ -636,8 +649,11 @@ class ServerDeleteOperation(DeleteOperation):
         if entity_type == "asset":
             entity_type == "folder"
 
-        if entity_type == "hero_version":
+        elif entity_type == "hero_version":
             entity_type = "version"
+
+        elif entity_type == "subset":
+            entity_type = "product"
 
         super(ServerDeleteOperation, self).__init__(
             project_name, entity_type, entity_id

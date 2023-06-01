@@ -4,6 +4,13 @@ SERVER_API_ENV_KEY = "AYON_API_KEY"
 # Backwards compatibility
 SERVER_TOKEN_ENV_KEY = SERVER_API_ENV_KEY
 
+# --- Product types ---
+DEFAULT_PRODUCT_TYPE_FIELDS = {
+    "name",
+    "icon",
+    "color",
+}
+
 # --- Project ---
 DEFAULT_PROJECT_FIELDS = {
     "active",
@@ -36,13 +43,13 @@ DEFAULT_TASK_FIELDS = {
     "assignees",
 }
 
-# --- Subsets ---
-DEFAULT_SUBSET_FIELDS = {
+# --- Products ---
+DEFAULT_PRODUCT_FIELDS = {
     "id",
     "name",
     "folderId",
     "active",
-    "family",
+    "productType",
 }
 
 # --- Versions ---
@@ -50,7 +57,7 @@ DEFAULT_VERSION_FIELDS = {
     "id",
     "name",
     "version",
-    "subsetId",
+    "productId",
     "taskId",
     "active",
     "author",
