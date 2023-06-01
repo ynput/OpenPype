@@ -278,7 +278,11 @@ def _convert_modules_system(
         if "enabled" not in value or module_name not in output_modules:
             continue
 
-        output_modules[module_name]["enabled"] = module_name in addon_versions
+        ayon_module_name = module_name
+        if module_name == "sync_server":
+            ayon_module_name = "sitesync"
+        output_modules[module_name]["enabled"] = (
+            ayon_module_name in addon_versions)
 
     # Missing modules conversions
     # - "sync_server" -> renamed to sitesync
