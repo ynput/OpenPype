@@ -226,9 +226,9 @@
             {
                 "type": "action",
                 "sourcetype": "python",
-                "title": "Set Frame Range (Read Node)",
-                "command": "import openpype.hosts.nuke.startup.ops_frame_setting_for_read as popup;import nuke;popup.FrameSettingsPanel(nuke.allNodes('Read')).showModalDialog();",
-                "tooltip": "Set Frame Range for Read Node(s)"
+                "title": "Set Frame Start (Read Node)",
+                "command": "from openpype.hosts.nuke.startup.frame_setting_for_read_nodes import main;main();",
+                "tooltip": "Set frame start for read node(s)"
             }
         ]
     },
