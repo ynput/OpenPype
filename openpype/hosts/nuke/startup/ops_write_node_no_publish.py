@@ -1,6 +1,5 @@
 import os
 import nuke
-from pathlib import Path
 from openpype.client import get_asset_by_name, get_project
 from openpype.pipeline import Anatomy, legacy_io
 from openpype.pipeline.template_data import get_template_data
@@ -48,11 +47,11 @@ def main():
     }
 
     write_selected_nodes = [
-            s for s in nuke.selectedNodes() if s.Class() == "Write"]
+        s for s in nuke.selectedNodes() if s.Class() == "Write"]
 
     for i in range(len(write_selected_nodes)):
-            data.update({"version": i})
-            data.update(template_data)
+        data.update({"version": i})
+        data.update(template_data)
 
     anatomy_filled = anatomy.format(data)
     folder = anatomy_filled["work"]["folder"]
