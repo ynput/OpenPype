@@ -778,6 +778,10 @@ class AssetLoader(Loader):
                 # Set source_name
                 d["source_name"] = d.override_library.reference.name
 
+                # Override armature
+                if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
+                    d.data = d.data.override_create()
+
             # Add override datablocks to datablocks
             datablocks.update(override_datablocks)
 
