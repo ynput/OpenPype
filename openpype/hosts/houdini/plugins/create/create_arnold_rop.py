@@ -33,11 +33,6 @@ class CreateArnoldRop(plugin.HoudiniCreator):
 
         instance_node = hou.node(instance.get("instance_node"))
 
-        # Hide Properties Tab on Arnold ROP since that's used
-        # for rendering instead of .ass Archive Export
-        parm_template_group = instance_node.parmTemplateGroup()
-        parm_template_group.hideFolder("Properties", True)
-        instance_node.setParmTemplateGroup(parm_template_group)
 
         ext = pre_create_data.get("image_format")
 
