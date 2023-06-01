@@ -710,9 +710,6 @@ class OperationsSession(object):
 def create_project(
     project_name,
     project_code,
-    width=None,
-    height=None,
-    fps=None,
     library_project=False,
 ):
     """Create project using OpenPype settings.
@@ -731,9 +728,6 @@ def create_project(
     Args:
         project_name(str): New project name. Should be unique.
         project_code(str): Project's code should be unique too.
-        width(int): New project's width
-        height(int): New project's height
-        fps(float): New project's fps
         library_project(bool): Project is library project.
 
     Raises:
@@ -762,9 +756,6 @@ def create_project(
         "data": {
             "code": project_code,
             "library_project": library_project,
-            "resolutionWidth": width,
-            "resolutionHeight": height,
-            "fps": fps,
         },
         "schema": CURRENT_PROJECT_SCHEMA
     }
