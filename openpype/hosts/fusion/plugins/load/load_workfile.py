@@ -27,6 +27,7 @@ class FusionLoadWorkfile(load.LoaderPlugin):
         # Get needed elements
         bmd = get_bmd_library()
         comp = get_current_comp()
+        path = self.filepath_from_context(context)
 
         # Paste the content of the file into the current comp
-        comp.Paste(bmd.readfile(self.fname))
+        comp.Paste(bmd.readfile(path))
