@@ -81,7 +81,7 @@ class ResolvePrelaunch(PreLaunchHook):
         python3_home = Path(
             self.launch_context.env.get("RESOLVE_PYTHON3_HOME", "")
         )
-        
+
         if not python3_home.is_dir():
             raise ApplicationLaunchFailed(
                 "Python 3 is not installed at the provided path.\n"
@@ -92,7 +92,8 @@ class ResolvePrelaunch(PreLaunchHook):
             )
         python3_home_str = python3_home.as_posix()
         self.launch_context.env["PYTHONHOME"] = python3_home_str
-        self.log.info(f"Path to Resolve Python folder: `{python3_home_str}`...")
+        self.log.info(
+            f"Path to Resolve Python folder: `{python3_home_str}`...")
 
         # add to the python path to path
         env_path = self.launch_context.env["PATH"]
