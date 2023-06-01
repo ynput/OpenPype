@@ -1468,7 +1468,9 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
     return conn.find(query_filter, _prepare_fields(fields))
 
 
-def get_thumbnail(project_name, thumbnail_id, fields=None):
+def get_thumbnail(
+    project_name, thumbnail_id, entity_type, entity_id, fields=None
+):
     """Receive thumbnail entity data.
 
     Args:

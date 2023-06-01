@@ -32,10 +32,6 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
             specific publish plugin.
         """
 
-        if not AYON_SERVER_ENABLED:
-            self.log.info("Skipping, not in AYON mode")
-            return
-
         workfile_instance, other_instances = self.split_instances(context)
 
         # Variable where links are stored in submethods
@@ -158,3 +154,7 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
                     output_id,
                     "version"
                 )
+
+
+if not AYON_SERVER_ENABLED:
+    del IntegrateInputLinksAYON
