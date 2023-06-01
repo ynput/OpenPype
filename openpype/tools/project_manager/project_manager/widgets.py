@@ -8,9 +8,9 @@ from .constants import (
 )
 from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
-    PROJECT_NAME_REGEX, 
+    PROJECT_NAME_REGEX,
     OperationsSession,
-    prepare_subset_update_data
+    prepare_subset_update_data,
 )
 from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
@@ -294,11 +294,14 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
         project_width = self._validate_number(
-            self.project_width_input.text(), int)
+            self.project_width_input.text(), int
+        )
         project_height = self._validate_number(
-            self.project_height_input.text(), int)
+            self.project_height_input.text(), int
+        )
         project_fps = self._validate_number(
-            self.project_fps_input.text(), float)
+            self.project_fps_input.text(), float
+        )
         library_project = self.library_project_input.isChecked()
         project_doc = create_project(
             project_name,
@@ -315,9 +318,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         new_project_doc = copy.deepcopy(project_doc)
         new_project_doc["data"] = data
 
-        update_data = prepare_subset_update_data(
-            project_doc, new_project_doc
-        )
+        update_data = prepare_subset_update_data(project_doc, new_project_doc)
         if not update_data:
             return
 
