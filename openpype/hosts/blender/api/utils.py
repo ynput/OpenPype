@@ -436,3 +436,32 @@ def get_all_datablocks():
             ):
                 all_datablocks.update(getattr(bpy.data, bl_type))
     return all_datablocks
+
+
+def get_used_datablocks(
+    user_datablocks: Set[bpy.types.ID],
+) -> Set[bpy.types.ID]:
+    """Get all datablocks that are used by the given datablocks.
+
+    Args:
+        user_datablocks (Set[bpy.types.ID]):
+            Datablocks to get used datablocks from
+
+    Returns:
+        Set[bpy.types.ID]: Used datablocks
+    """
+    return {
+        d
+        for d, users in bpy.data.user_map(
+            subset=itertools.chain.from_iterable(
+                getattr(bpy.data, datacol)
+                for datacol in dir(bpy.data)
+                if not datacol.startswith("_")
+                and isinstance(
+                    getattr(bpy.data, datacol), bpy.types.bpy_prop_collection
+                )
+                and not callable(getattr(bpy.data, datacol))
+            )
+        ).items()
+        if users & user_datablocks
+    }

@@ -8,7 +8,6 @@ from typing import Dict, Iterator, List, Union
 
 import bpy
 import addon_utils
-from openpype.client.entities import get_representation_by_id
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api.utils import (
     AVALON_PROPERTY,
@@ -18,6 +17,7 @@ from openpype.hosts.blender.api.utils import (
     ensure_unique_name,
     get_all_outliner_children,
     get_instanced_collections,
+    get_used_datablocks,
 )
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io, schema
@@ -202,6 +202,11 @@ def update_scene_containers() -> List[OpenpypeContainer]:
             if datablock and datablock.override_library
         )
 
+        # Add datablocks used by the main datablocks
+        container_datablocks.extend(
+            get_used_datablocks(set(container_datablocks))
+        )
+
         # Skip container datablocks later
         datablocks_to_skip.update(container_datablocks)
 
@@ -221,28 +226,25 @@ def update_scene_containers() -> List[OpenpypeContainer]:
                 container = c
                 break
 
-        if container:
-            add_datablocks_to_container(container_datablocks, container)
-        else:
-            # Create container and keep it
-            container_name = build_op_basename(
-                container_metadata.get("asset_name"),
-                container_metadata.get("name"),
-            )
-            create_container(container_name, container_datablocks)
-            # NOTE need to get it this way because memory could have changed
-            # BUG: https://projects.blender.org/blender/blender/issues/105338
-            container = bpy.context.scene.openpype_containers[-1]
+        # Create container and keep it
+        container_name = build_op_basename(
+            container_metadata.get("asset_name"),
+            container_metadata.get("name"),
+        )
+        create_container(container_name, container_datablocks)
+        # NOTE need to get it this way because memory could have changed
+        # BUG: https://projects.blender.org/blender/blender/issues/105338
+        container = bpy.context.scene.openpype_containers[-1]
 
-            # Keep objectName for update/switch
-            container_metadata["objectName"] = container.name
-            # Transfer container metadata and keep original outliner entity
-            container[AVALON_PROPERTY] = container_metadata
-            container.library = (
-                entity.override_library.reference.library
-                if entity.override_library
-                else entity.library
-            )
+        # Keep objectName for update/switch
+        container_metadata["objectName"] = container.name
+        # Transfer container metadata and keep original outliner entity
+        container[AVALON_PROPERTY] = container_metadata
+        container.library = (
+            entity.override_library.reference.library
+            if entity.override_library
+            else entity.library
+        )
 
     # Clear containers when data has been deleted from the outliner
     for i, container in reversed(
