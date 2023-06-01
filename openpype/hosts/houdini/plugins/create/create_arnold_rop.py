@@ -33,7 +33,6 @@ class CreateArnoldRop(plugin.HoudiniCreator):
 
         instance_node = hou.node(instance.get("instance_node"))
 
-
         ext = pre_create_data.get("image_format")
 
         filepath = "{renders_dir}{subset_name}/{subset_name}.$F4.{ext}".format(
