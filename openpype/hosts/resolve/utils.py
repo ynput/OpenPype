@@ -29,6 +29,9 @@ def setup(env):
     log.info("Utility Scripts Dir: `{}`".format(util_scripts_paths))
     log.info("Utility Scripts: `{}`".format(scripts))
 
+    # Make sure scripts dir exists
+    os.makedirs(util_scripts_dir, exist_ok=True)
+
     # make sure no script file is in folder
     for script in os.listdir(util_scripts_dir):
         path = os.path.join(util_scripts_dir, script)
