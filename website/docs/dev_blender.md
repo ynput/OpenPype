@@ -9,14 +9,14 @@ toc_max_heading_level: 4
 In case you need to execute a python script when Blender is started (aka [`-P`](https://docs.blender.org/manual/en/latest/advanced/command_line/arguments.html#python-options)), for example to programmatically modify a blender file for conformation, you can create an OpenPype hook as follows:
 
 ```python
-from openpype.hosts.blender.hooks.pre_add_run_python_script_arg import AddPythonScriptToLaunchArgs
+from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
 from openpype.lib import PreLaunchHook
 
 
 class MyHook(PreLaunchHook):
     """Add python script to be executed before Blender launch."""
 
-    order = AddPythonScriptToLaunchArgs.order - 1
+    order = pre_add_run_python_script_arg.AddPythonScriptToLaunchArgs.order - 1
     app_groups = [
         "blender",
     ]
