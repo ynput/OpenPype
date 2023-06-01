@@ -1,16 +1,12 @@
-import re
 import os
+import re
 
 import hou
 import pyblish.api
 
+from openpype.hosts.houdini.api import colorspace
 from openpype.hosts.houdini.api.lib import (
-    evalParmNoFrame,
-    get_color_management_preferences
-)
-from openpype.hosts.houdini.api import (
-    colorspace
-)
+    evalParmNoFrame, get_color_management_preferences)
 
 
 class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
@@ -52,7 +48,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         }
 
         num_aovs = rop.evalParm("ar_aovs")
-        for index in range(num_aovs):
+        for index in range(1, num_aovs + 1):
             i = index + 1
 
             # Skip disabled AOVs
@@ -97,8 +93,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         # When AOV is explicitly defined in prefix we just swap it out
         # directly with the AOV suffix to embed it.
         # Note: ${AOV} seems to be evaluated in the parameter as %AOV%
-        has_aov_in_prefix = "%AOV%" in prefix
-        if has_aov_in_prefix:
+        if "%AOV%" in prefix:
             # It seems that when some special separator characters are present
             # before the %AOV% token that Redshift will secretly remove it if
             # there is no suffix for the current product, for example:

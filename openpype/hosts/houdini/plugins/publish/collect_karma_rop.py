@@ -75,7 +75,7 @@ class CollectKarmaROPRenderProducts(pyblish.api.InstancePlugin):
         if suffix:
             # Add ".{suffix}" before the extension
             prefix_base, ext = os.path.splitext(prefix)
-            product_name = prefix_base + "." + suffix + ext
+            product_name = "{}.{}{}".format(prefix_base, suffix,ext)
 
         return product_name
 
