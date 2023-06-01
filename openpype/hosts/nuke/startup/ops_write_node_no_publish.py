@@ -21,7 +21,7 @@ def main():
     project_doc = get_project(project_name)
     template_data = get_template_data(project_doc, asset_doc)
     template_data["root"] = anatomy.roots
-    template_data["task"] = {"name":task_name}
+    template_data["task"] = {"name": task_name}
 
     padding = int(
         anatomy.templates["render"]["frame_padding"]
