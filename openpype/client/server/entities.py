@@ -79,7 +79,7 @@ def _get_subsets(
     if archived:
         active = False
 
-    for subset in con.get_subsets(
+    for subset in con.get_products(
         project_name,
         subset_ids,
         subset_names,
@@ -105,11 +105,11 @@ def _get_versions(
 
     fields = version_fields_v3_to_v4(fields, con)
 
-    # Make sure 'subsetId' and 'version' are available when hero versions
+    # Make sure 'productId' and 'version' are available when hero versions
     #   are queried
     if fields and hero:
         fields = set(fields)
-        fields |= {"subsetId", "version"}
+        fields |= {"productId", "version"}
 
     queried_versions = con.get_versions(
         project_name,
@@ -135,22 +135,22 @@ def _get_versions(
         versions_nums = set()
         for hero_version in hero_versions:
             versions_nums.add(abs(hero_version["version"]))
-            subset_ids.add(hero_version["subsetId"])
+            subset_ids.add(hero_version["productId"])
 
         hero_eq_versions = con.get_versions(
             project_name,
-            subset_ids=subset_ids,
+            product_ids=subset_ids,
             versions=versions_nums,
             hero=False,
-            fields=["id", "version", "subsetId"]
+            fields=["id", "version", "productId"]
         )
         hero_eq_by_subset_id = collections.defaultdict(list)
         for version in hero_eq_versions:
-            hero_eq_by_subset_id[version["subsetId"]].append(version)
+            hero_eq_by_subset_id[version["productId"]].append(version)
 
         for hero_version in hero_versions:
             abs_version = abs(hero_version["version"])
-            subset_id = hero_version["subsetId"]
+            subset_id = hero_version["productId"]
             version_id = None
             for version in hero_eq_by_subset_id.get(subset_id, []):
                 if version["version"] == abs_version:
@@ -235,7 +235,7 @@ def get_archived_assets(
 
 def get_asset_ids_with_subsets(project_name, asset_ids=None):
     con = get_server_api_connection()
-    return con.get_asset_ids_with_subsets(project_name, asset_ids)
+    return con.get_folder_ids_with_products(project_name, asset_ids)
 
 
 def get_subset_by_id(project_name, subset_id, fields=None):
@@ -281,7 +281,7 @@ def get_subsets(
 
 def get_subset_families(project_name, subset_ids=None):
     con = get_server_api_connection()
-    return con.get_subset_families(project_name, subset_ids)
+    return con.get_product_type_names(project_name, subset_ids)
 
 
 def get_version_by_id(project_name, version_id, fields=None):
@@ -618,6 +618,14 @@ def get_thumbnail(
 
 
 def get_thumbnails(project_name, thumbnail_contexts, fields=None):
+    """Get thumbnail entities.
+
+    Warning:
+        This function is not OpenPype compatible. There is none usage of this
+            function in codebase so there is nothing to convert. The previous
+            implementation cannot be AYON compatible without entity types.
+    """
+
     thumbnail_items = set()
     for thumbnail_context in thumbnail_contexts:
         thumbnail_id, entity_type, entity_id = thumbnail_context
