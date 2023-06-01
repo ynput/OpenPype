@@ -56,7 +56,7 @@ SUBSET_FIELDS_MAPPING_V3_V4 = {
 VERSION_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"version"},
-    "parent": {"subsetId"}
+    "parent": {"productId"}
 }
 
 # --- Representation entity ---
@@ -130,10 +130,21 @@ def _get_default_template_name(templates):
     return default_template
 
 
+def _template_replacements_to_v3(template):
+    return (
+        template
+        .replace("{folder[name]}", "{asset}")
+        .replace("{product[name]}", "{subset}")
+        .replace("{product[type]}", "{family}")
+    )
+
+
 def _convert_template_item(template):
-    template["folder"] = template.pop("directory")
+    folder = _template_replacements_to_v3(template.pop("directory"))
+    template["folder"] = folder
+    template["file"] = _template_replacements_to_v3(template["file"])
     template["path"] = "/".join(
-        (template["folder"], template["file"])
+        (folder, template["file"])
     )
 
 
@@ -384,7 +395,7 @@ def subset_fields_v3_to_v4(fields, con):
     if not fields:
         return None
 
-    subset_attributes = con.get_attributes_for_type("subset")
+    product_attributes = con.get_attributes_for_type("product")
 
     output = set()
     for field in fields:
@@ -395,11 +406,11 @@ def subset_fields_v3_to_v4(fields, con):
             output |= SUBSET_FIELDS_MAPPING_V3_V4[field]
 
         elif field == "data":
-            output.add("family")
+            output.add("productType")
             output.add("active")
             output |= {
                 "attrib.{}".format(attr)
-                for attr in subset_attributes
+                for attr in product_attributes
             }
 
         elif field.startswith("data"):
@@ -407,9 +418,9 @@ def subset_fields_v3_to_v4(fields, con):
             field_parts.pop(0)
             data_key = ".".join(field_parts)
             if data_key in ("family", "families"):
-                output.add("family")
+                output.add("productType")
 
-            elif data_key in subset_attributes:
+            elif data_key in product_attributes:
                 output.add("attrib.{}".format(data_key))
 
             else:
@@ -443,9 +454,11 @@ def convert_v4_subset_to_v3(subset):
 
     if "attrib" in subset:
         attrib = subset["attrib"]
+        if "productGroup" in attrib:
+            attrib["subsetGroup"] = attrib.pop("productGroup")
         output_data.update(attrib)
 
-    family = subset.get("family")
+    family = subset.get("productType")
     if family:
         output_data["family"] = family
         output_data["families"] = [family]
@@ -537,8 +550,8 @@ def convert_v4_version_to_v3(version):
             "type": "hero_version",
             "schema": CURRENT_HERO_VERSION_SCHEMA,
         }
-        if "subsetId" in version:
-            output["parent"] = version["subsetId"]
+        if "productId" in version:
+            output["parent"] = version["productId"]
 
         if "data" in version:
             output["data"] = version["data"]
@@ -550,8 +563,8 @@ def convert_v4_version_to_v3(version):
         "name": version_num,
         "schema": CURRENT_VERSION_SCHEMA
     }
-    if "subsetId" in version:
-        output["parent"] = version["subsetId"]
+    if "productId" in version:
+        output["parent"] = version["productId"]
 
     output_data = version.get("data") or {}
     if "attrib" in version:
@@ -647,6 +660,16 @@ def convert_v4_representation_to_v3(representation):
         context = representation["context"]
         if isinstance(context, six.string_types):
             context = json.loads(context)
+
+        if "folder" in context:
+            _c_folder = context.pop("folder")
+            context["asset"] = _c_folder["name"]
+
+        if "product" in context:
+            _c_product = context.pop("product")
+            context["family"] = _c_product["type"]
+            context["subset"] = _c_product["name"]
+
         output["context"] = context
 
     if "files" in representation:
@@ -686,6 +709,14 @@ def convert_v4_representation_to_v3(representation):
         if key in representation:
             output_data[data_key] = representation[key]
 
+    if "template" in output_data:
+        output_data["template"] = (
+            output_data["template"]
+            .replace("{folder[name]}", "{asset}")
+            .replace("{product[name]}", "{subset}")
+            .replace("{product[type]}", "{family}")
+        )
+
     output["data"] = output_data
 
     return output
@@ -714,7 +745,7 @@ def workfile_info_fields_v3_to_v4(fields):
 
 def convert_v4_workfile_info_to_v3(workfile_info, task):
     output = {
-        "type": "representation",
+        "type": "workfile",
         "schema": CURRENT_WORKFILE_INFO_SCHEMA,
     }
     if "id" in workfile_info:
@@ -790,44 +821,46 @@ def convert_create_task_to_v4(task, project, con):
 
 
 def convert_create_subset_to_v4(subset, con):
-    subset_attributes = con.get_attributes_for_type("subset")
+    product_attributes = con.get_attributes_for_type("product")
 
     subset_data = subset["data"]
-    family = subset_data.get("family")
-    if not family:
-        family = subset_data["families"][0]
+    product_type = subset_data.get("family")
+    if not product_type:
+        product_type = subset_data["families"][0]
 
-    converted_subset = {
+    converted_product = {
         "name": subset["name"],
-        "family": family,
+        "productType": product_type,
         "folderId": subset["parent"],
     }
     entity_id = subset.get("_id")
     if entity_id:
-        converted_subset["id"] = entity_id
+        converted_product["id"] = entity_id
 
     attribs = {}
     data = {}
+    if "subsetGroup" in subset_data:
+        subset_data["productGroup"] = subset_data.pop("subsetGroup")
     for key, value in subset_data.items():
-        if key not in subset_attributes:
+        if key not in product_attributes:
             data[key] = value
         elif value is not None:
             attribs[key] = value
 
     if attribs:
-        converted_subset["attrib"] = attribs
+        converted_product["attrib"] = attribs
 
     if data:
-        converted_subset["data"] = data
+        converted_product["data"] = data
 
-    return converted_subset
+    return converted_product
 
 
 def convert_create_version_to_v4(version, con):
     version_attributes = con.get_attributes_for_type("version")
     converted_version = {
         "version": version["name"],
-        "subsetId": version["parent"],
+        "productId": version["parent"],
     }
     entity_id = version.get("_id")
     if entity_id:
@@ -870,7 +903,7 @@ def convert_create_hero_version_to_v4(hero_version, project_name, con):
     version_attributes = con.get_attributes_for_type("version")
     converted_version = {
         "version": hero_version["version"],
-        "subsetId": hero_version["parent"],
+        "productId": hero_version["parent"],
     }
     entity_id = hero_version.get("_id")
     if entity_id:
@@ -923,12 +956,28 @@ def convert_create_representation_to_v4(representation, con):
         new_files.append(new_file_item)
 
     converted_representation["files"] = new_files
+
+    context = representation["context"]
+    context["folder"] = {
+        "name": context.pop("asset", None)
+    }
+    context["product"] = {
+        "type": context.pop("family", None),
+        "name": context.pop("subset", None),
+    }
+
     attribs = {}
     data = {
-        "context": representation["context"],
+        "context": context,
     }
 
     representation_data = representation["data"]
+    representation_data["template"] = (
+        representation_data["template"]
+        .replace("{asset}", "{folder[name]}")
+        .replace("{subset}", "{product[name]}")
+        .replace("{family}", "{product[type]}")
+    )
 
     for key, value in representation_data.items():
         if key not in representation_attributes:
@@ -1073,7 +1122,7 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
 def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     new_update_data = {}
 
-    subset_attributes = con.get_attributes_for_type("subset")
+    product_attributes = con.get_attributes_for_type("product")
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
@@ -1081,15 +1130,17 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     if data:
         if "family" in data:
             family = data.pop("family")
-            new_update_data["family"] = family
+            new_update_data["productType"] = family
 
         if "families" in data:
             families = data.pop("families")
-            if "family" not in new_update_data:
-                new_update_data["family"] = families[0]
+            if "productType" not in new_update_data:
+                new_update_data["productType"] = families[0]
 
+        if "subsetGroup" in data:
+            data["productGroup"] = data.pop("subsetGroup")
         for key, value in data.items():
-            if key in subset_attributes:
+            if key in product_attributes:
                 if value is REMOVED_VALUE:
                     value = None
                 attribs[key] = value
@@ -1159,7 +1210,7 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
             new_update_data["active"] = False
 
     if "parent" in update_data:
-        new_update_data["subsetId"] = update_data["parent"]
+        new_update_data["productId"] = update_data["parent"]
 
     flat_data = _to_flat_dict(new_update_data)
     if new_data:
@@ -1209,6 +1260,14 @@ def convert_update_representation_to_v4(
             else:
                 new_data[key] = value
 
+    if "template" in attribs:
+        attribs["template"] = (
+            attribs["template"]
+            .replace("{asset}", "{folder[name]}")
+            .replace("{family}", "{product[type]}")
+            .replace("{subset}", "{product[name]}")
+        )
+
     if "name" in update_data:
         new_update_data["name"] = update_data["name"]
 
@@ -1223,7 +1282,16 @@ def convert_update_representation_to_v4(
         new_update_data["versionId"] = update_data["parent"]
 
     if "context" in update_data:
-        new_data["context"] = update_data["context"]
+        context = update_data["context"]
+        if "asset" in context:
+            context["folder"] = {"name": context.pop("asset")}
+
+        if "family" in context or "subset" in context:
+            context["product"] = {
+                "name": context.pop("subset"),
+                "type": context.pop("family"),
+            }
+        new_data["context"] = context
 
     if "files" in update_data:
         new_files = update_data["files"]

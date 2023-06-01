@@ -558,7 +558,7 @@ class EntityHub(object):
         folder_fields = set(
             self._connection.get_default_fields_for_type("folder")
         )
-        folder_fields.add("hasSubsets")
+        folder_fields.add("hasProducts")
         if self._allow_data_changes:
             folder_fields.add("data")
         return folder_fields
@@ -602,7 +602,7 @@ class EntityHub(object):
             for folder in folders_by_parent_id[parent_id]:
                 folder_entity = self.add_folder(folder)
                 children_ids.add(folder_entity.id)
-                folder_entity.has_published_content = folder["hasSubsets"]
+                folder_entity.has_published_content = folder["hasProducts"]
                 hierarchy_queue.append((folder_entity.id, folder_entity))
 
             for task in tasks_by_parent_id[parent_id]:
@@ -1564,7 +1564,7 @@ class FolderEntity(BaseEntity):
 
         self._orig_folder_type = folder_type
         self._orig_label = label
-        # Know if folder has any subsets
+        # Know if folder has any products
         # - is used to know if folder allows hierarchy changes
         self._has_published_content = False
         self._path = path
