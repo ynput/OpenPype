@@ -1,7 +1,7 @@
 import os
 import datetime
 import copy
-import pwd
+import platform
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
@@ -95,6 +95,19 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._on_note_change()
         self.save_clicked.emit()
 
+    def get_user_name(self, file):
+        if platform.system() == "Windows":
+            import win32security
+            sd = win32security.GetFileSecurity(
+                file, win32security.OWNER_SECURITY_INFORMATION)
+            owner_sid = sd.GetSecurityDescriptorOwner()
+            name, domain, type = win32security.LookupAccountSid(None, owner_sid)
+            return f"{name}@{domain}"
+        else:
+            import pwd
+            filestat = os.stat(file)
+            return pwd.getpwuid(filestat.st_uid).pw_name
+
     def set_context(self, asset_id, task_name, filepath, workfile_doc):
         # Check if asset, task and file are selected
         # NOTE workfile document is not requirement
@@ -137,7 +150,7 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format),
             "<b>User:</b>",
-            pwd.getpwuid(filestat.st_uid).pw_name
+            self.get_user_name(filepath)
         )
         self._details_input.appendHtml("<br>".join(lines))
 
