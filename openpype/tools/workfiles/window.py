@@ -148,9 +148,12 @@ class SidePanelWidget(QtWidgets.QWidget):
             creation_time.strftime(datetime_format),
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format),
-            "<b>User:</b>",
-            self.get_user_name(filepath),
         )
+        if platform.system() != "Windows":
+            lines += (
+                "<b>User:</b>",
+                self.get_user_name(filepath),
+            )
         self._details_input.appendHtml("<br>".join(lines))
 
     def get_workfile_data(self):
