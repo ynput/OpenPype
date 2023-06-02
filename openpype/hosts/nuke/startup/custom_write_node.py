@@ -45,11 +45,6 @@ knobs_setting = {
             "value": "rgb"
         },
         {
-            "type": "text",
-            "name": "colorspace",
-            "value": "linear"
-        },
-        {
             "type": "bool",
             "name": "create_directories",
             "value": True
