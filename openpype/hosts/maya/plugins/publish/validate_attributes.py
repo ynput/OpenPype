@@ -8,8 +8,10 @@ from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
+
 
 
 class ValidateAttributes(pyblish.api.InstancePlugin,
@@ -43,7 +45,7 @@ class ValidateAttributes(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Found attributes with invalid values: {}".format(invalid)
             )
 

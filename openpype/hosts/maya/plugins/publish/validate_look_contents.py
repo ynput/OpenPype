@@ -1,6 +1,11 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    ValidateContentsOrder
+)
+
+
 from maya import cmds  # noqa
 
 
@@ -28,10 +33,10 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         """Process all the nodes in the instance"""
 
         if not instance[:]:
-            raise RuntimeError("Instance is empty")
+            raise PublishValidationError("Instance is empty")
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("'{}' has invalid look "
+            raise PublishValidationError("'{}' has invalid look "
                                "content".format(instance.name))
 
     @classmethod
