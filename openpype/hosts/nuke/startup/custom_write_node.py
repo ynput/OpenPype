@@ -1,6 +1,5 @@
 import os
 import nuke
-from pathlib import Path
 from openpype.hosts.nuke.api.lib import set_node_knobs_from_settings
 
 
@@ -70,10 +69,10 @@ def main():
             ext = knob["value"]
     for w in write_selected_nodes:
         data = {
-        "work": os.getenv("AVALON_WORKDIR"),
-        "subset": w["name"].value(),
-        "frame": "#" * frame_padding,
-        "ext": ext
+            "work": os.getenv("AVALON_WORKDIR"),
+            "subset": w["name"].value(),
+            "frame": "#" * frame_padding,
+            "ext": ext
         }
         file_path = temp_rendering_path_template.format(**data)
         file_path = file_path.replace("\\", "/")
