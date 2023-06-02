@@ -5,27 +5,36 @@ import collections
 from pathlib import Path
 
 import unreal
-from unreal import EditorAssetLibrary
-from unreal import EditorLevelLibrary
-from unreal import EditorLevelUtils
-from unreal import AssetToolsHelpers
-from unreal import FBXImportType
-from unreal import MovieSceneLevelVisibilityTrack
-from unreal import MovieSceneSubTrack
+from unreal import (
+    EditorAssetLibrary,
+    EditorLevelLibrary,
+    EditorLevelUtils,
+    AssetToolsHelpers,
+    FBXImportType,
+    MovieSceneLevelVisibilityTrack,
+    MovieSceneSubTrack,
+    LevelSequenceEditorBlueprintLibrary as LevelSequenceLib,
+)
 
-from openpype.client import get_asset_by_name, get_assets, get_representations
+from openpype.client import get_asset_by_name, get_representations
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
     load_container,
     get_representation_path,
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+from openpype.hosts.unreal.api.pipeline import (
+    generate_sequence,
+    set_sequence_hierarchy,
+    create_container,
+    imprint,
+    ls,
+)
 
 
 class LayoutLoader(plugin.Loader):
@@ -90,77 +99,6 @@ class LayoutLoader(plugin.Loader):
                 return loader
 
         return None
-
-    @staticmethod
-    def _set_sequence_hierarchy(
-        seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
-    ):
-        # Get existing sequencer tracks or create them if they don't exist
-        tracks = seq_i.get_master_tracks()
-        subscene_track = None
-        visibility_track = None
-        for t in tracks:
-            if t.get_class() == unreal.MovieSceneSubTrack.static_class():
-                subscene_track = t
-            if (t.get_class() ==
-                    unreal.MovieSceneLevelVisibilityTrack.static_class()):
-                visibility_track = t
-        if not subscene_track:
-            subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
-        if not visibility_track:
-            visibility_track = seq_i.add_master_track(
-                unreal.MovieSceneLevelVisibilityTrack)
-
-        # Create the sub-scene section
-        subscenes = subscene_track.get_sections()
-        subscene = None
-        for s in subscenes:
-            if s.get_editor_property('sub_sequence') == seq_j:
-                subscene = s
-                break
-        if not subscene:
-            subscene = subscene_track.add_section()
-            subscene.set_row_index(len(subscene_track.get_sections()))
-            subscene.set_editor_property('sub_sequence', seq_j)
-            subscene.set_range(
-                min_frame_j,
-                max_frame_j + 1)
-
-        # Create the visibility section
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        maps = []
-        for m in map_paths:
-            # Unreal requires to load the level to get the map name
-            EditorLevelLibrary.save_all_dirty_levels()
-            EditorLevelLibrary.load_level(m)
-            maps.append(str(ar.get_asset_by_object_path(m).asset_name))
-
-        vis_section = visibility_track.add_section()
-        index = len(visibility_track.get_sections())
-
-        vis_section.set_range(
-            min_frame_j,
-            max_frame_j + 1)
-        vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
-        vis_section.set_row_index(index)
-        vis_section.set_level_names(maps)
-
-        if min_frame_j > 1:
-            hid_section = visibility_track.add_section()
-            hid_section.set_range(
-                1,
-                min_frame_j)
-            hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
-            hid_section.set_row_index(index)
-            hid_section.set_level_names(maps)
-        if max_frame_j < max_frame_i:
-            hid_section = visibility_track.add_section()
-            hid_section.set_range(
-                max_frame_j + 1,
-                max_frame_i + 1)
-            hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
-            hid_section.set_row_index(index)
-            hid_section.set_level_names(maps)
 
     def _transform_from_basis(self, transform, basis):
         """Transform a transform from a basis to a new basis."""
@@ -352,63 +290,6 @@ class LayoutLoader(plugin.Loader):
                     sec_params = section.get_editor_property('params')
                     sec_params.set_editor_property('animation', animation)
 
-    @staticmethod
-    def _generate_sequence(h, h_dir):
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-
-        sequence = tools.create_asset(
-            asset_name=h,
-            package_path=h_dir,
-            asset_class=unreal.LevelSequence,
-            factory=unreal.LevelSequenceFactoryNew()
-        )
-
-        project_name = legacy_io.active_project()
-        asset_data = get_asset_by_name(
-            project_name,
-            h_dir.split('/')[-1],
-            fields=["_id", "data.fps"]
-        )
-
-        start_frames = []
-        end_frames = []
-
-        elements = list(get_assets(
-            project_name,
-            parent_ids=[asset_data["_id"]],
-            fields=["_id", "data.clipIn", "data.clipOut"]
-        ))
-        for e in elements:
-            start_frames.append(e.get('data').get('clipIn'))
-            end_frames.append(e.get('data').get('clipOut'))
-
-            elements.extend(get_assets(
-                project_name,
-                parent_ids=[e["_id"]],
-                fields=["_id", "data.clipIn", "data.clipOut"]
-            ))
-
-        min_frame = min(start_frames)
-        max_frame = max(end_frames)
-
-        sequence.set_display_rate(
-            unreal.FrameRate(asset_data.get('data').get("fps"), 1.0))
-        sequence.set_playback_start(min_frame)
-        sequence.set_playback_end(max_frame)
-
-        tracks = sequence.get_master_tracks()
-        track = None
-        for t in tracks:
-            if (t.get_class() ==
-                    unreal.MovieSceneCameraCutTrack.static_class()):
-                track = t
-                break
-        if not track:
-            track = sequence.add_master_track(
-                unreal.MovieSceneCameraCutTrack)
-
-        return sequence, (min_frame, max_frame)
-
     def _get_repre_docs_by_version_id(self, data):
         version_ids = {
             element.get("version")
@@ -421,7 +302,7 @@ class LayoutLoader(plugin.Loader):
         if not version_ids:
             return output
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         repre_docs = get_representations(
             project_name,
             representation_names=["fbx", "abc"],
@@ -696,7 +577,7 @@ class LayoutLoader(plugin.Loader):
                 ]
 
                 if not existing_sequences:
-                    sequence, frame_range = self._generate_sequence(h, h_dir)
+                    sequence, frame_range = generate_sequence(h, h_dir)
 
                     sequences.append(sequence)
                     frame_ranges.append(frame_range)
@@ -716,20 +597,20 @@ class LayoutLoader(plugin.Loader):
 
             # sequences and frame_ranges have the same length
             for i in range(0, len(sequences) - 1):
-                self._set_sequence_hierarchy(
+                set_sequence_hierarchy(
                     sequences[i], sequences[i + 1],
                     frame_ranges[i][1],
                     frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                     [level])
 
-            project_name = legacy_io.active_project()
+            project_name = get_current_project_name()
             data = get_asset_by_name(project_name, asset)["data"]
             shot.set_display_rate(
                 unreal.FrameRate(data.get("fps"), 1.0))
             shot.set_playback_start(0)
             shot.set_playback_end(data.get('clipOut') - data.get('clipIn') + 1)
             if sequences:
-                self._set_sequence_hierarchy(
+                set_sequence_hierarchy(
                     sequences[-1], shot,
                     frame_ranges[-1][1],
                     data.get('clipIn'), data.get('clipOut'),
@@ -737,7 +618,8 @@ class LayoutLoader(plugin.Loader):
 
             EditorLevelLibrary.load_level(level)
 
-        loaded_assets = self._process(self.fname, asset_dir, shot)
+        path = self.filepath_from_context(context)
+        loaded_assets = self._process(path, asset_dir, shot)
 
         for s in sequences:
             EditorAssetLibrary.save_asset(s.get_path_name())
@@ -745,7 +627,7 @@ class LayoutLoader(plugin.Loader):
         EditorLevelLibrary.save_current_level()
 
         # Create Asset Container
-        unreal_pipeline.create_container(
+        create_container(
             container=container_name, path=asset_dir)
 
         data = {
@@ -761,11 +643,13 @@ class LayoutLoader(plugin.Loader):
             "family": context["representation"]["context"]["family"],
             "loaded_assets": loaded_assets
         }
-        unreal_pipeline.imprint(
+        imprint(
             "{}/{}".format(asset_dir, container_name), data)
 
+        save_dir = hierarchy_dir_list[0] if create_sequences else asset_dir
+
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+            save_dir, recursive=True, include_folder=False)
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
@@ -781,16 +665,24 @@ class LayoutLoader(plugin.Loader):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
+        curr_level_sequence = LevelSequenceLib.get_current_level_sequence()
+        curr_time = LevelSequenceLib.get_current_time()
+        is_cam_lock = LevelSequenceLib.is_camera_cut_locked_to_viewport()
+
+        editor_subsystem = unreal.UnrealEditorSubsystem()
+        vp_loc, vp_rot = editor_subsystem.get_level_viewport_camera_info()
+
         root = "/Game/Ayon"
 
         asset_dir = container.get('namespace')
         context = representation.get("context")
 
+        hierarchy = context.get('hierarchy').split("/")
+
         sequence = None
         master_level = None
 
         if create_sequences:
-            hierarchy = context.get('hierarchy').split("/")
             h_dir = f"{root}/{hierarchy[0]}"
             h_asset = hierarchy[0]
             master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
@@ -843,13 +735,15 @@ class LayoutLoader(plugin.Loader):
             "parent": str(representation["parent"]),
             "loaded_assets": loaded_assets
         }
-        unreal_pipeline.imprint(
+        imprint(
             "{}/{}".format(asset_dir, container.get('container_name')), data)
 
         EditorLevelLibrary.save_current_level()
 
+        save_dir = f"{root}/{hierarchy[0]}" if create_sequences else asset_dir
+
         asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+            save_dir, recursive=True, include_folder=False)
 
         for a in asset_content:
             EditorAssetLibrary.save_asset(a)
@@ -858,6 +752,13 @@ class LayoutLoader(plugin.Loader):
             EditorLevelLibrary.load_level(master_level)
         elif prev_level:
             EditorLevelLibrary.load_level(prev_level)
+
+        if curr_level_sequence:
+            LevelSequenceLib.open_level_sequence(curr_level_sequence)
+            LevelSequenceLib.set_current_time(curr_time)
+            LevelSequenceLib.set_lock_camera_cut_to_viewport(is_cam_lock)
+
+        editor_subsystem.set_level_viewport_camera_info(vp_loc, vp_rot)
 
     def remove(self, container):
         """
@@ -870,7 +771,7 @@ class LayoutLoader(plugin.Loader):
         root = "/Game/Ayon"
         path = Path(container.get("namespace"))
 
-        containers = unreal_pipeline.ls()
+        containers = ls()
         layout_containers = [
             c for c in containers
             if (c.get('asset_name') != container.get('asset_name') and

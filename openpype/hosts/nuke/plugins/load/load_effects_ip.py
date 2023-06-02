@@ -8,8 +8,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api import lib
@@ -73,7 +73,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
@@ -161,7 +161,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node

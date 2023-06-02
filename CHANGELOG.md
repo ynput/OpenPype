@@ -1,6 +1,341 @@
 # Changelog
 
 
+## [3.15.9](https://github.com/ynput/OpenPype/tree/3.15.9)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.8...3.15.9)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Blender: Implemented Loading of Alembic Camera <a href="https://github.com/ynput/OpenPype/pull/4990">#4990</a></summary>
+
+Implemented loading of Alembic cameras in Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Implemented Creator, Loader and Extractor for Levels <a href="https://github.com/ynput/OpenPype/pull/5008">#5008</a></summary>
+
+Creator, Loader and Extractor for Unreal Levels have been implemented.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Blender: Added setting for base unit scale <a href="https://github.com/ynput/OpenPype/pull/4987">#4987</a></summary>
+
+A setting for the base unit scale has been added for Blender.The unit scale is automatically applied when opening a file or creating a new one.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Changed naming and path of Camera Levels <a href="https://github.com/ynput/OpenPype/pull/5010">#5010</a></summary>
+
+The levels created for the camera in Unreal now include `_camera` in the name, to be better identifiable, and are placed in the camera folder.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings: Added option to nest settings templates <a href="https://github.com/ynput/OpenPype/pull/5022">#5022</a></summary>
+
+It is possible to nest settings templates in another templates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement/publisher: Remove "hit play to continue" label on continue <a href="https://github.com/ynput/OpenPype/pull/5029">#5029</a></summary>
+
+Remove "hit play to continue" message on continue so that it doesn't show anymore when play was clicked.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Limit number of ftrack events to query at once <a href="https://github.com/ynput/OpenPype/pull/5033">#5033</a></summary>
+
+Limit the amount of ftrack events received from mongo at once to 100.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Small code cleanups <a href="https://github.com/ynput/OpenPype/pull/5034">#5034</a></summary>
+
+Small code cleanup and updates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: collect frames to fix with settings <a href="https://github.com/ynput/OpenPype/pull/5036">#5036</a></summary>
+
+Settings for `Collect Frames to Fix` will allow disable per project the plugin. Also `Rewriting latest version` attribute is hiddable from settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Publish plugin apply settings can expect only project settings <a href="https://github.com/ynput/OpenPype/pull/5037">#5037</a></summary>
+
+Only project settings are passed to optional `apply_settings` method, if the method expects only one argument.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Load Assembly fix invalid imports  <a href="https://github.com/ynput/OpenPype/pull/4859">#4859</a></summary>
+
+Refactors imports so they are now correct.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Skipping rendersetup for members. <a href="https://github.com/ynput/OpenPype/pull/4973">#4973</a></summary>
+
+When publishing a `rendersetup`, the objectset is and should be empty.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Validate Rig Output IDs <a href="https://github.com/ynput/OpenPype/pull/5016">#5016</a></summary>
+
+Absolute names of node were not used, so plugin did not fetch the nodes properly.Also missed pymel command.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: escape rootless path in publish job <a href="https://github.com/ynput/OpenPype/pull/4910">#4910</a></summary>
+
+If the publish path on Deadline job contains spaces or other characters, command was failing because the path wasn't properly escaped. This is fixing it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Company name and URL changed <a href="https://github.com/ynput/OpenPype/pull/4974">#4974</a></summary>
+
+The current records were obsolete in inno_setup, changed to the up-to-date.
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix usage of 'get_full_path' function <a href="https://github.com/ynput/OpenPype/pull/5014">#5014</a></summary>
+
+This PR changes all the occurrences of `get_full_path` functions to alternatives to get the path of the objects.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix sequence frames validator to use correct data <a href="https://github.com/ynput/OpenPype/pull/5021">#5021</a></summary>
+
+Fix sequence frames validator to use clipIn and clipOut data instead of frameStart and frameEnd.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix render instances collection to use correct data <a href="https://github.com/ynput/OpenPype/pull/5023">#5023</a></summary>
+
+Fix render instances collection to use `frameStart` and `frameEnd` from the Project Manager, instead of the sequence's ones.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: loader is opening even if no timeline in project <a href="https://github.com/ynput/OpenPype/pull/5025">#5025</a></summary>
+
+Loader is opening now even no timeline is available in a project.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>nuke: callback for dirmapping is on demand <a href="https://github.com/ynput/OpenPype/pull/5030">#5030</a></summary>
+
+Nuke was slowed down on processing due this callback. Since it is disabled by default it made sense to add it only on demand.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: UI works with instances without label <a href="https://github.com/ynput/OpenPype/pull/5032">#5032</a></summary>
+
+Publisher UI does not crash if instance don't have filled 'label' key in instance data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Call explicitly prepared tab methods <a href="https://github.com/ynput/OpenPype/pull/5044">#5044</a></summary>
+
+It is not possible to go to Create tab during publishing from OpenPype menu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Role names are not case sensitive in ftrack event server status action <a href="https://github.com/ynput/OpenPype/pull/5058">#5058</a></summary>
+
+Event server status action is not case sensitive for role names of user.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix border widget <a href="https://github.com/ynput/OpenPype/pull/5063">#5063</a></summary>
+
+Fixed border lines in Publisher UI to be painted correctly with correct indentation and size.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix Commandlet Project and Permissions <a href="https://github.com/ynput/OpenPype/pull/5066">#5066</a></summary>
+
+Fix problem when creating an Unreal Project when Commandlet Project is in a protected location.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Added verification for Unreal app name format <a href="https://github.com/ynput/OpenPype/pull/5070">#5070</a></summary>
+
+The Unreal app name is used to determine the Unreal version folder, so it is necessary that if follows the format `x-x`, where `x` is any integer. This PR adds a verification that the app name follows that format.
+
+
+___
+
+</details>
+
+### **📃 Documentation**
+
+
+<details>
+<summary>Docs: Display wrong image in ExtractOIIOTranscode <a href="https://github.com/ynput/OpenPype/pull/5045">#5045</a></summary>
+
+Wrong image display in `https://openpype.io/docs/project_settings/settings_project_global#extract-oiio-transcode`.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Drop-down menu to list all families in create placeholder <a href="https://github.com/ynput/OpenPype/pull/4928">#4928</a></summary>
+
+Currently in the create placeholder window, we need to write the family manually. This replace the text field by an enum field with all families for the current software.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>add sync to specific projects or listen only <a href="https://github.com/ynput/OpenPype/pull/4919">#4919</a></summary>
+
+Extend kitsu sync service with additional arguments to sync specific projects.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.8](https://github.com/ynput/OpenPype/tree/3.15.8)
 
 
