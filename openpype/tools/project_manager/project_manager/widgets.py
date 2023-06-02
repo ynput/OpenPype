@@ -309,18 +309,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
             library_project,
         )
 
-        data = {
-            "resolutionWidth": project_width,
-            "resolutionHeight": project_height,
-            "fps": project_fps,
+        update_data = {
+            "data.resolutionWidth": project_width,
+            "data.resolutionHeight": project_height,
+            "data.fps": project_fps,
         }
         session = OperationsSession()
-        new_project_doc = copy.deepcopy(project_doc)
-        new_project_doc["data"].update(data)
-
-        update_data = prepare_subset_update_data(project_doc, new_project_doc)
-        if not update_data:
-            return
 
         session.update_entity(
             project_name,
