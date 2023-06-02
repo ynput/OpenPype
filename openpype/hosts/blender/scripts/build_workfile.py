@@ -624,7 +624,7 @@ def build_anim(project_name, asset_name):
 
     update_scene_containers()
 
-    # Switch hero containers to versioned and linked setdress to appended
+    # Switch hero containers to versioned
     errors = []
     setdress_container = None
     for container in bpy.context.scene.openpype_containers:
