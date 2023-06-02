@@ -242,7 +242,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
     def get_default_attributes(self):
         settings = get_default_settings()
-        return settings['project_anatomy']['attributes']
+        return settings["project_anatomy"]["attributes"]
 
     def _on_project_name_change(self, value):
         if self._project_code_value is None:
@@ -332,7 +332,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_aspect = self.project_aspect_input.text()
         project_frame_start = self.project_frame_start_input.text()
         project_frame_end = self.project_frame_end_input.text()
-        
+
         library_project = self.library_project_input.isChecked()
         project_doc = create_project(
             project_name,
@@ -547,7 +547,6 @@ class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
 
 
 class NumScrollWidget(SpinBoxScrollFixed):
-
     def __init__(self, minimum, maximum):
         super(NumScrollWidget, self).__init__()
         self.setMaximum(maximum)
@@ -556,7 +555,6 @@ class NumScrollWidget(SpinBoxScrollFixed):
 
 
 class FloatScrollWidget(DoubleSpinBoxScrollFixed):
-
     def __init__(self, minimum, maximum, decimals, step=None):
         super(FloatScrollWidget, self).__init__()
         self.setMaximum(maximum)
