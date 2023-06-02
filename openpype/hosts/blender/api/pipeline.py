@@ -39,6 +39,8 @@ SCRIPTS_PATH = os.path.join(HOST_DIR, "scripts")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
 
+AVALON_INSTANCES = "AVALON_INSTANCES"
+AVALON_CONTAINERS = "AVALON_CONTAINERS"
 # TODO refactor all imports to avoid this duplicate
 AVALON_PROPERTY = utils.AVALON_PROPERTY
 
