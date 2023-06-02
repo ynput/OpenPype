@@ -35,6 +35,11 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
         # camera.
         cameras = cmds.ls(type="camera", long=True)
         renderable = [c for c in cameras if cmds.getAttr("%s.renderable" % c)]
+        if not renderable:
+            raise ValueError(
+                "No renderable cameraes found, which is required for "
+                "publishing ASS."
+            )
         camera = renderable[0]
         for node in instance.data["contentMembers"]:
             camera_shapes = cmds.listRelatives(
