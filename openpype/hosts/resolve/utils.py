@@ -1,6 +1,6 @@
 import os
 import shutil
-from openpype.lib import Logger
+from openpype.lib import Logger, is_running_from_build
 
 RESOLVE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -29,6 +29,9 @@ def setup(env):
     log.info("Utility Scripts Dir: `{}`".format(util_scripts_paths))
     log.info("Utility Scripts: `{}`".format(scripts))
 
+    # Make sure scripts dir exists
+    os.makedirs(util_scripts_dir, exist_ok=True)
+
     # make sure no script file is in folder
     for script in os.listdir(util_scripts_dir):
         path = os.path.join(util_scripts_dir, script)
@@ -41,8 +44,23 @@ def setup(env):
     # copy scripts into Resolve's utility scripts dir
     for directory, scripts in scripts.items():
         for script in scripts:
+            if (
+                is_running_from_build() and
+                script in ["tests", "develop"]
+            ):
+                # only copy those if started from build
+                continue
+
             src = os.path.join(directory, script)
             dst = os.path.join(util_scripts_dir, script)
+
+            # TODO: Make this a less hacky workaround
+            if script == "openpype_startup.scriptlib":
+                # Handle special case for scriptlib that needs to be a folder
+                # up from the Comp folder in the Fusion scripts
+                dst = os.path.join(os.path.dirname(util_scripts_dir),
+                                   script)
+
             log.info("Copying `{}` to `{}`...".format(src, dst))
             if os.path.isdir(src):
                 shutil.copytree(
