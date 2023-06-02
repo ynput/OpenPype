@@ -71,7 +71,7 @@ requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
-Unidecode = "^1.2"
+Unidecode = "1.2.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
