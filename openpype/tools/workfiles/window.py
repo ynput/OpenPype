@@ -30,11 +30,7 @@ from .files_widget import FilesWidget
 
 def file_size_to_string(file_size):
     size = 0
-    size_ending_mapping = {
-        "KB": 1024 ** 1,
-        "MB": 1024 ** 2,
-        "GB": 1024 ** 3
-    }
+    size_ending_mapping = {"KB": 1024**1, "MB": 1024**2, "GB": 1024**3}
     ending = "B"
     for _ending, _size in size_ending_mapping.items():
         if file_size < _size:
@@ -103,13 +99,18 @@ class SidePanelWidget(QtWidgets.QWidget):
     def get_user_name(self, file):
         if platform.system() == "Windows":
             import win32security
+
             sd = win32security.GetFileSecurity(
-                file, win32security.OWNER_SECURITY_INFORMATION)
+                file, win32security.OWNER_SECURITY_INFORMATION
+            )
             owner_sid = sd.GetSecurityDescriptorOwner()
-            name, domain, type = win32security.LookupAccountSid(None, owner_sid)
+            name, domain, type = win32security.LookupAccountSid(
+                None, owner_sid
+            )
             return f"{name}@{domain}"
         else:
             import pwd
+
             filestat = os.stat(file)
             return pwd.getpwuid(filestat.st_uid).pw_name
 
@@ -155,19 +156,18 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format),
             "<b>User:</b>",
-            self.get_user_name(filepath)
+            self.get_user_name(filepath),
         )
         self._details_input.appendHtml("<br>".join(lines))
 
     def get_workfile_data(self):
-        data = {
-            "note": self._note_input.toPlainText()
-        }
+        data = {"note": self._note_input.toPlainText()}
         return self._workfile_doc, data
 
 
 class Window(QtWidgets.QWidget):
     """Work Files Window"""
+
     title = "Work Files"
 
     def __init__(self, parent=None):
@@ -252,9 +252,7 @@ class Window(QtWidgets.QWidget):
         self._first_show = True
         self._context_to_set = None
 
-    def ensure_visible(
-        self, use_context=None, save=None, on_top=None
-    ):
+    def ensure_visible(self, use_context=None, save=None, on_top=None):
         if save is None:
             save = True
 
@@ -287,7 +285,7 @@ class Window(QtWidgets.QWidget):
         if use_context is None or use_context is True:
             context = {
                 "asset": get_current_asset_name(),
-                "task": get_current_task_name()
+                "task": get_current_task_name(),
             }
             self.set_context(context)
 
@@ -375,9 +373,7 @@ class Window(QtWidgets.QWidget):
 
         filename = os.path.split(filepath)[1]
         project_name = self.project_name
-        return get_workfile_info(
-            project_name, asset_id, task_name, filename
-        )
+        return get_workfile_info(project_name, asset_id, task_name, filename)
 
     def _create_workfile_doc(self, filepath):
         workfile_doc = self._get_current_workfile_doc(filepath)
@@ -392,10 +388,9 @@ class Window(QtWidgets.QWidget):
 
         anatomy = Anatomy(project_name)
         success, rootless_dir = anatomy.find_root_template_from_path(workdir)
-        filepath = "/".join([
-            os.path.normpath(rootless_dir).replace("\\", "/"),
-            filename
-        ])
+        filepath = "/".join(
+            [os.path.normpath(rootless_dir).replace("\\", "/"), filename]
+        )
 
         workfile_doc = new_workfile_info_doc(
             filename, asset_id, task_name, [filepath]
