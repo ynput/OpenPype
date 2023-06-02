@@ -26,10 +26,6 @@ def main():
     padding = int(
         anatomy.templates["render"]["frame_padding"]
     )
-    version_int = 0
-    version_int += 1
-    if version_int:
-        version_int += 1
 
     node_settings = get_imageio_node_setting(
         "Write", "CreateWriteRender", subset=None)
