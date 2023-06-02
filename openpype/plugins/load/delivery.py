@@ -1,5 +1,4 @@
 import copy
-import math
 from collections import defaultdict
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -92,7 +91,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         renumber_frame = QtWidgets.QCheckBox()
 
         frame_offset_value = QtWidgets.QSpinBox()
-        frame_offset_value.setMinimum(-(1<<32)//2)
+        frame_offset_value.setMinimum(-(1 << 32) // 2)
 
         root_line_edit = QtWidgets.QLineEdit()
 
