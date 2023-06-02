@@ -23,7 +23,7 @@ except ImportError:
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings
-from openpype.pipeline import Anatomy, get_current_project_name
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
@@ -620,7 +620,7 @@ def get_publish_attribute(tag):
 
 def sync_avalon_data_to_workfile():
     # import session to get project dir
-    project_name = get_current_project_name()
+    project_name = legacy_io.Session["AVALON_PROJECT"]
 
     anatomy = Anatomy(project_name)
     work_template = anatomy.templates["work"]["path"]
@@ -815,7 +815,7 @@ class PublishAction(QtWidgets.QAction):
 #     # create root node and save all metadata
 #     root_node = hiero.core.nuke.RootNode()
 #
-#     anatomy = Anatomy(get_current_project_name())
+#     anatomy = Anatomy(os.environ["AVALON_PROJECT"])
 #     work_template = anatomy.templates["work"]["path"]
 #     root_path = anatomy.root_value_for_template(work_template)
 #
@@ -1035,7 +1035,7 @@ def _set_hrox_project_knobs(doc, **knobs):
 
 
 def apply_colorspace_project():
-    project_name = get_current_project_name()
+    project_name = os.getenv("AVALON_PROJECT")
     # get path the the active projects
     project = get_current_project(remove_untitled=True)
     current_file = project.path()
@@ -1092,7 +1092,7 @@ def apply_colorspace_project():
 
 
 def apply_colorspace_clips():
-    project_name = get_current_project_name()
+    project_name = os.getenv("AVALON_PROJECT")
     project = get_current_project(remove_untitled=True)
     clips = project.clips()
 
@@ -1246,7 +1246,7 @@ def check_inventory_versions(track_items=None):
     if not containers:
         return
 
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     filter_result = filter_containers(containers, project_name)
     for container in filter_result.latest:
         set_track_color(container["_item"], clip_color_last)

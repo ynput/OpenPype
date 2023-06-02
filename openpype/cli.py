@@ -200,6 +200,85 @@ def remotepublish(project, path, user=None, targets=None):
     PypeCommands.remotepublish(project, path, user, targets=targets)
 
 
+@main.command()
+@click.option("-p", "--project", required=True,
+              help="name of project asset is under")
+@click.option("-a", "--asset", required=True,
+              help="name of asset to which we want to copy textures")
+@click.option("--path", required=True,
+              help="path where textures are found",
+              type=click.Path(exists=True))
+def texturecopy(project, asset, path):
+    """Copy specified textures to provided asset path.
+
+    It validates if project and asset exists. Then it will use speedcopy to
+    copy all textures found in all directories under --path to destination
+    folder, determined by template texture in anatomy. I will use source
+    filename and automatically rise version number on directory.
+
+    Result will be copied without directory structure so it will be flat then.
+    Nothing is written to database.
+    """
+
+    PypeCommands().texture_copy(project, asset, path)
+
+
+@main.command(context_settings={"ignore_unknown_options": True})
+@click.option("--app", help="Registered application name")
+@click.option("--project", help="Project name",
+              default=lambda: os.environ.get('AVALON_PROJECT', ''))
+@click.option("--asset", help="Asset name",
+              default=lambda: os.environ.get('AVALON_ASSET', ''))
+@click.option("--task", help="Task name",
+              default=lambda: os.environ.get('AVALON_TASK', ''))
+@click.option("--tools", help="List of tools to add")
+@click.option("--user", help="Pype user name",
+              default=lambda: os.environ.get('OPENPYPE_USERNAME', ''))
+@click.option("-fs",
+              "--ftrack-server",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_SERVER', ''))
+@click.option("-fu",
+              "--ftrack-user",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_USER', ''))
+@click.option("-fk",
+              "--ftrack-key",
+              help="Registered application name",
+              default=lambda: os.environ.get('FTRACK_API_KEY', ''))
+@click.argument('arguments', nargs=-1)
+def launch(app, project, asset, task,
+           ftrack_server, ftrack_user, ftrack_key, tools, arguments, user):
+    """Launch registered application name in Pype context.
+
+    You can define applications in pype-config toml files. Project, asset name
+    and task name must be provided (even if they are not used by app itself).
+    Optionally you can specify ftrack credentials if needed.
+
+    ARGUMENTS are passed to launched application.
+
+    """
+    # TODO: this needs to switch for Settings
+    if ftrack_server:
+        os.environ["FTRACK_SERVER"] = ftrack_server
+
+    if ftrack_server:
+        os.environ["FTRACK_API_USER"] = ftrack_user
+
+    if ftrack_server:
+        os.environ["FTRACK_API_KEY"] = ftrack_key
+
+    if user:
+        os.environ["OPENPYPE_USERNAME"] = user
+
+    # test required
+    if not project or not asset or not task:
+        print("!!! Missing required arguments")
+        return
+
+    PypeCommands().run_application(app, project, asset, task, tools, arguments)
+
+
 @main.command(context_settings={"ignore_unknown_options": True})
 def projectmanager():
     PypeCommands().launch_project_manager()

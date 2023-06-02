@@ -19,7 +19,7 @@ class PointCloudLoader(load.LoaderPlugin):
         """load point cloud by tyCache"""
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.filepath_from_context(context))
+        filepath = os.path.normpath(self.fname)
         obj = rt.tyCache()
         obj.filename = filepath
 

@@ -18,20 +18,9 @@ This setting is available for all the users of the OpenPype instance.
 ## Synchronize
 Updating OP with Kitsu data is executed running the `sync-service`, which requires to provide your Kitsu credentials with `-l, --login` and `-p, --password` or by setting the environment variables `KITSU_LOGIN` and `KITSU_PWD`. This process will request data from Kitsu and create/delete/update OP assets.
 Once this sync is done, the thread will automatically start a loop to listen to Kitsu events.
-- `-prj, --project` This flag accepts multiple project name to sync specific projects, and the default to sync all projects.
-- `-lo, --listen-only` This flag to run listen to Kitsu events only without any sync.
-
-Note: You must use one argument of `-pro` or `-lo`, because the listen only flag override syncing flag. 
 
 ```bash
-// sync all projects then run listen
 openpype_console module kitsu sync-service -l me@domain.ext -p my_password
-
-// sync specific projects then run listen
-openpype_console module kitsu sync-service -l me@domain.ext -p my_password -prj project_name01 -prj  project_name02
-
-// start listen only for all projects
-openpype_console module kitsu sync-service -l me@domain.ext -p my_password -lo
 ```
 
 ### Events listening

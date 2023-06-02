@@ -34,7 +34,7 @@ class ImageSequenceLoader(load.LoaderPlugin):
             data (dict, optional): Additional data passed into loader.
 
         """
-        fname = Path(self.filepath_from_context(context))
+        fname = Path(self.fname)
         self_name = self.__class__.__name__
         collections, remainder = clique.assemble(
             os.listdir(fname.parent.as_posix())

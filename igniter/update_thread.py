@@ -48,8 +48,6 @@ class UpdateThread(QtCore.QThread):
         """
         bs = BootstrapRepos(
             progress_callback=self.set_progress, message=self.message)
-
-        bs.set_data_dir(OpenPypeVersion.get_local_openpype_path())
         version_path = bs.install_version(self._openpype_version)
         self._set_result(version_path)
 

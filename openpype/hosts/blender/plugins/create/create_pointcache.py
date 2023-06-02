@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name
+from openpype.pipeline import legacy_io
 import openpype.hosts.blender.api.plugin
 from openpype.hosts.blender.api import lib
 
@@ -22,7 +22,7 @@ class CreatePointcache(openpype.hosts.blender.api.plugin.Creator):
         name = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
-        self.data['task'] = get_current_task_name()
+        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(collection, self.data)
 
         if (self.options or {}).get("useSelection"):

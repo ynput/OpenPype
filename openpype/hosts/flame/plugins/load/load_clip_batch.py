@@ -81,10 +81,9 @@ class LoadClipBatch(opfapi.ClipLoader):
         if not os.path.exists(openclip_dir):
             os.makedirs(openclip_dir)
 
-        # prepare clip data from context and send it to openClipLoader
-        path = self.filepath_from_context(context)
+        # prepare clip data from context ad send it to openClipLoader
         loading_context = {
-            "path": path.replace("\\", "/"),
+            "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,

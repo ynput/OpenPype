@@ -5,7 +5,6 @@ import logging
 import pymongo
 from uuid import uuid4
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.client import OpenPypeMongoConnection
 
 from . import schema
@@ -188,8 +187,7 @@ class AvalonMongoDB:
             return
 
         self._installed = True
-        if not AYON_SERVER_ENABLED:
-            self._database = self.mongo_client[str(os.environ["AVALON_DB"])]
+        self._database = self.mongo_client[str(os.environ["AVALON_DB"])]
 
     def uninstall(self):
         """Close any connection to the database"""

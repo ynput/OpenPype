@@ -3,7 +3,7 @@
 from maya import cmds
 
 from openpype.client import get_asset_by_name, get_project
-from openpype.pipeline import get_current_project_name, get_current_asset_name
+from openpype.pipeline import legacy_io
 
 
 class ToolWindows:
@@ -85,8 +85,8 @@ def reset_resolution():
     resolution_height = 1080
 
     # Get resolution from asset
-    project_name = get_current_project_name()
-    asset_name = get_current_asset_name()
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
     asset_doc = get_asset_by_name(project_name, asset_name)
     resolution = _resolution_from_document(asset_doc)
     # Try get resolution from project

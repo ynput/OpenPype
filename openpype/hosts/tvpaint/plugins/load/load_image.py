@@ -77,9 +77,8 @@ class ImportImage(plugin.Loader):
         )
         # Fill import script with filename and layer name
         # - filename mus not contain backwards slashes
-        path = self.filepath_from_context(context).replace("\\", "/")
         george_script = self.import_script.format(
-            path,
+            self.fname.replace("\\", "/"),
             layer_name,
             load_options_str
         )

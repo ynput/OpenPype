@@ -238,8 +238,7 @@ class BackgroundLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        path = self.filepath_from_context(context)
-        with open(path) as json_file:
+        with open(self.fname) as json_file:
             data = json.load(json_file)
 
         layers = list()
@@ -252,7 +251,7 @@ class BackgroundLoader(load.LoaderPlugin):
                     if layer.get("filename"):
                         layers.append(layer["filename"])
 
-        bg_folder = os.path.dirname(path)
+        bg_folder = os.path.dirname(self.fname)
 
         subset_name = context["subset"]["name"]
         # read_node_name += "_{}".format(uuid.uuid4())

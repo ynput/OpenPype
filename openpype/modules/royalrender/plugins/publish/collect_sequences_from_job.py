@@ -189,7 +189,7 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
                     "families": list(families),
                     "subset": subset,
                     "asset": data.get(
-                        "asset", context.data["asset"]
+                        "asset", legacy_io.Session["AVALON_ASSET"]
                     ),
                     "stagingDir": root,
                     "frameStart": start,

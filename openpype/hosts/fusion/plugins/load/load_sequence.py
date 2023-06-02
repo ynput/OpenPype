@@ -1,7 +1,10 @@
 import contextlib
 
 import openpype.pipeline.load as load
-from openpype.pipeline.load import get_representation_context
+from openpype.pipeline.load import (
+    get_representation_context,
+    get_representation_path_from_context,
+)
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
@@ -154,7 +157,7 @@ class FusionLoadSequence(load.LoaderPlugin):
             namespace = context["asset"]["name"]
 
         # Use the first file for now
-        path = self.filepath_from_context(context)
+        path = get_representation_path_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
@@ -225,7 +228,7 @@ class FusionLoadSequence(load.LoaderPlugin):
         comp = tool.Comp()
 
         context = get_representation_context(representation)
-        path = self.filepath_from_context(context)
+        path = get_representation_path_from_context(context)
 
         # Get start frame from version data
         start = self._get_start(context["version"], tool)

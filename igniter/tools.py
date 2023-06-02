@@ -40,7 +40,7 @@ def should_add_certificate_path_to_mongo_url(mongo_url):
     add_certificate = False
     # Check if url 'ssl' or 'tls' are set to 'true'
     for key in ("ssl", "tls"):
-        if key in query and "true" in query[key]:
+        if key in query and "true" in query["ssl"]:
             add_certificate = True
             break
 
@@ -73,7 +73,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     }
     # Add certificate path if should be required
     if should_add_certificate_path_to_mongo_url(cnx):
-        kwargs["tlsCAFile"] = certifi.where()
+        kwargs["ssl_ca_certs"] = certifi.where()
 
     try:
         client = MongoClient(cnx, **kwargs)
@@ -147,7 +147,7 @@ def get_openpype_global_settings(url: str) -> dict:
     """
     kwargs = {}
     if should_add_certificate_path_to_mongo_url(url):
-        kwargs["tlsCAFile"] = certifi.where()
+        kwargs["ssl_ca_certs"] = certifi.where()
 
     try:
         # Create mongo connection
@@ -186,26 +186,6 @@ def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
         paths = [paths]
 
     return next((path for path in paths if os.path.exists(path)), None)
-
-
-def get_local_openpype_path_from_settings(settings: dict) -> Union[str, None]:
-    """Get OpenPype local path from global settings.
-
-    Used to download and unzip OP versions.
-    Args:
-        settings (dict): settings from DB.
-
-    Returns:
-        path to OpenPype or None if not found
-    """
-    path = (
-        settings
-        .get("local_openpype_path", {})
-        .get(platform.system().lower())
-    )
-    if path:
-        return Path(path)
-    return None
 
 
 def get_expected_studio_version_str(

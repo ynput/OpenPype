@@ -7,7 +7,7 @@ from openpype.client import (
 # from openpype.hosts import resolve
 from openpype.pipeline import (
     get_representation_path,
-    get_current_project_name,
+    legacy_io,
 )
 from openpype.hosts.resolve.api import lib, plugin
 from openpype.hosts.resolve.api.pipeline import (
@@ -55,9 +55,8 @@ class LoadClip(plugin.TimelineItemLoader):
             })
 
         # load clip to timeline and get main variables
-        path = self.filepath_from_context(context)
         timeline_item = plugin.ClipLoader(
-            self, context, path, **options).load()
+            self, context, **options).load()
         namespace = namespace or timeline_item.GetName()
         version = context['version']
         version_data = version.get("data", {})
@@ -110,16 +109,16 @@ class LoadClip(plugin.TimelineItemLoader):
         namespace = container['namespace']
         timeline_item_data = lib.get_pype_timeline_item_by_name(namespace)
         timeline_item = timeline_item_data["clip"]["item"]
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         version = get_version_by_id(project_name, representation["parent"])
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        path = get_representation_path(representation)
+        self.fname = get_representation_path(representation)
         context["version"] = {"data": version_data}
 
-        loader = plugin.ClipLoader(self, context, path)
+        loader = plugin.ClipLoader(self, context)
         timeline_item = loader.update(timeline_item)
 
         # add additional metadata from the version to imprint Avalon knob
@@ -153,7 +152,7 @@ class LoadClip(plugin.TimelineItemLoader):
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         last_version_doc = get_last_version_by_subset_id(
             project_name,
             version["parent"],

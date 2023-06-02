@@ -3,7 +3,7 @@ from openpype.settings import get_project_settings
 from openpype.lib import Logger
 
 
-def create_workspace_mel(workdir, project_name, project_settings=None):
+def create_workspace_mel(workdir, project_name):
     dst_filepath = os.path.join(workdir, "workspace.mel")
     if os.path.exists(dst_filepath):
         return
@@ -11,9 +11,8 @@ def create_workspace_mel(workdir, project_name, project_settings=None):
     if not os.path.exists(workdir):
         os.makedirs(workdir)
 
-    if not project_settings:
-        project_settings = get_project_settings(project_name)
-    mel_script = project_settings["maya"].get("mel_workspace")
+    project_setting = get_project_settings(project_name)
+    mel_script = project_setting["maya"].get("mel_workspace")
 
     # Skip if mel script in settings is empty
     if not mel_script:

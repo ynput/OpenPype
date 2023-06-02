@@ -20,8 +20,6 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_inventory_action_path,
     AVALON_CONTAINER_ID,
-    get_current_asset_name,
-    get_current_task_name,
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
@@ -213,13 +211,6 @@ def _show_workfiles():
     host_tools.show_workfiles(parent=None, on_top=False)
 
 
-def get_context_label():
-    return "{0}, {1}".format(
-        get_current_asset_name(),
-        get_current_task_name()
-    )
-
-
 def _install_menu():
     """Install Avalon menu into Nuke's main menu bar."""
 
@@ -229,7 +220,9 @@ def _install_menu():
     menu = menubar.addMenu(MENU_LABEL)
 
     if not ASSIST:
-        label = get_context_label()
+        label = "{0}, {1}".format(
+            os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+        )
         Context.context_label = label
         context_action = menu.addCommand(label)
         context_action.setEnabled(False)
@@ -335,7 +328,9 @@ def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 
-    label = get_context_label()
+    label = "{0}, {1}".format(
+        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+    )
 
     rm_item = [
         (i, item) for i, item in enumerate(menu.items())

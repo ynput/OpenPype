@@ -8,11 +8,7 @@ from openpype.client import get_asset_by_name, get_subsets
 from openpype import style
 from openpype.settings import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
-from openpype.pipeline import (
-    get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
-)
+from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     legacy_create,
@@ -220,7 +216,7 @@ class CreatorWindow(QtWidgets.QDialog):
             self._set_valid_state(False)
             return
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         asset_doc = None
         if creator_plugin:
             # Get the asset from the database which match with the name
@@ -241,7 +237,7 @@ class CreatorWindow(QtWidgets.QDialog):
             return
 
         asset_id = asset_doc["_id"]
-        task_name = get_current_task_name()
+        task_name = legacy_io.Session["AVALON_TASK"]
 
         # Calculate subset name with Creator plugin
         subset_name = creator_plugin.get_subset_name(
@@ -373,7 +369,7 @@ class CreatorWindow(QtWidgets.QDialog):
             self.setStyleSheet(style.load_stylesheet())
 
     def refresh(self):
-        self._asset_name_input.setText(get_current_asset_name())
+        self._asset_name_input.setText(legacy_io.Session["AVALON_ASSET"])
 
         self._creators_model.reset()
 
@@ -386,7 +382,7 @@ class CreatorWindow(QtWidgets.QDialog):
         )
         current_index = None
         family = None
-        task_name = get_current_task_name() or None
+        task_name = legacy_io.Session.get("AVALON_TASK", None)
         lowered_task_name = task_name.lower()
         if task_name:
             for _family, _task_names in pype_project_setting.items():

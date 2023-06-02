@@ -4,6 +4,7 @@ import re
 import pyblish.api
 
 from openpype.client import get_subset_by_name
+from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.pipeline import PublishValidationError
 
@@ -17,7 +18,7 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
     label = "USD Shade model exists"
 
     def process(self, instance):
-        project_name = instance.context.data["projectName"]
+        project_name = legacy_io.active_project()
         asset_name = instance.data["asset"]
         subset = instance.data["subset"]
 

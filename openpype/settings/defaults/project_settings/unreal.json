@@ -15,6 +15,6 @@
     "preroll_frames": 0,
     "render_format": "png",
     "project_setup": {
-        "dev_mode": false
+        "dev_mode": true
     }
 }

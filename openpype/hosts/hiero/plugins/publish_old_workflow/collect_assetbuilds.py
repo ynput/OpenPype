@@ -1,5 +1,6 @@
 from pyblish import api
 from openpype.client import get_assets
+from openpype.pipeline import legacy_io
 
 
 class CollectAssetBuilds(api.ContextPlugin):
@@ -17,7 +18,7 @@ class CollectAssetBuilds(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
-        project_name = context.data["projectName"]
+        project_name = legacy_io.active_project()
         asset_builds = {}
         for asset in get_assets(project_name):
             if asset["data"]["entityType"] == "AssetBuild":

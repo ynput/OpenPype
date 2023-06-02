@@ -32,32 +32,32 @@ class FileLoader(AfterEffectsLoader):
 
         import_options = {}
 
-        path = self.filepath_from_context(context)
+        file = self.fname
 
         repr_cont = context["representation"]["context"]
-        if "#" not in path:
+        if "#" not in file:
             frame = repr_cont.get("frame")
             if frame:
                 padding = len(frame)
-                path = path.replace(frame, "#" * padding)
+                file = file.replace(frame, "#" * padding)
                 import_options['sequence'] = True
 
-        if not path:
+        if not file:
             repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        path = path.replace("\\", "/")
-        if '.psd' in path:
+        file = file.replace("\\", "/")
+        if '.psd' in file:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
 
-        comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
+        comp = stub.import_file(self.fname, stub.LOADED_ICON + comp_name,
                                 import_options)
 
         if not comp:
             self.log.warning(
-                "Representation `{}` is failing to load".format(path))
+                "Representation id `{}` is failing to load".format(file))
             self.log.warning("Check host app for alert error.")
             return
 

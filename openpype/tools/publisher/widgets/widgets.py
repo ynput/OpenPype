@@ -9,7 +9,6 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
@@ -1117,16 +1116,10 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
         main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
-        main_layout.addRow(
-            "Folder" if AYON_SERVER_ENABLED else "Asset",
-            asset_value_widget)
+        main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
-        main_layout.addRow(
-            "Product type" if AYON_SERVER_ENABLED else "Family",
-            family_value_widget)
-        main_layout.addRow(
-            "Product name" if AYON_SERVER_ENABLED else "Subset",
-            subset_value_widget)
+        main_layout.addRow("Family", family_value_widget)
+        main_layout.addRow("Subset", subset_value_widget)
         main_layout.addRow(btns_layout)
 
         variant_input.value_changed.connect(self._on_variant_change)

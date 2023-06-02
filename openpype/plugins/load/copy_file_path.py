@@ -14,9 +14,8 @@ class CopyFilePath(load.LoaderPlugin):
     color = "#999999"
 
     def load(self, context, name=None, namespace=None, data=None):
-        path = self.filepath_from_context(context)
-        self.log.info("Added file path to clipboard: {0}".format(path))
-        self.copy_path_to_clipboard(path)
+        self.log.info("Added file path to clipboard: {0}".format(self.fname))
+        self.copy_path_to_clipboard(self.fname)
 
     @staticmethod
     def copy_path_to_clipboard(path):

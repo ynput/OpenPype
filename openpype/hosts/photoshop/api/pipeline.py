@@ -6,8 +6,11 @@ import pyblish.api
 
 from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
+    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
+    deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
@@ -20,7 +23,6 @@ from openpype.host import (
 
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
-from openpype.tools.utils import get_openpype_qt_app
 
 from . import lib
 
@@ -109,6 +111,14 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item["id"] = "publish_context"
         _get_stub().imprint(item["id"], item)
 
+    def get_context_title(self):
+        """Returns title for Creator window"""
+
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        return "{}/{}/{}".format(project_name, asset_name, task_name)
+
     def list_instances(self):
         """List all created instances to publish from current workfile.
 
@@ -164,7 +174,10 @@ def check_inventory():
         return
 
     # Warn about outdated containers.
-    _app = get_openpype_qt_app()
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)

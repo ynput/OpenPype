@@ -5,7 +5,7 @@ import hiero
 
 from openpype.client import get_project, get_assets
 from openpype.lib import Logger
-from openpype.pipeline import get_current_project_name
+from openpype.pipeline import legacy_io
 
 log = Logger.get_logger(__name__)
 
@@ -142,7 +142,7 @@ def add_tags_to_workfile():
     nks_pres_tags = tag_data()
 
     # Get project task types.
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     tasks = project_doc["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}

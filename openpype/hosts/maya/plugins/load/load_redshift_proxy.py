@@ -46,19 +46,18 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         # Ensure Redshift for Maya is loaded.
         cmds.loadPlugin("redshift4maya", quiet=True)
 
-        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, group_node = self.create_rs_proxy(name, path)
+                nodes, group_node = self.create_rs_proxy(
+                    name, self.fname)
 
         self[:] = nodes
         if not nodes:
             return
 
         # colour the group node
-        project_name = context["project"]["name"]
-        settings = get_project_settings(project_name)
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:

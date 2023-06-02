@@ -64,9 +64,8 @@ class UAssetLoader(plugin.Loader):
         destination_path = asset_dir.replace(
             "/Game", Path(unreal.Paths.project_content_dir()).as_posix(), 1)
 
-        path = self.filepath_from_context(context)
         shutil.copy(
-            path,
+            self.fname,
             f"{destination_path}/{name}_{unique_number:02}.{self.extension}")
 
         # Create Asset Container

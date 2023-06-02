@@ -92,7 +92,7 @@ class BlendLookLoader(plugin.AssetLoader):
             options: Additional settings dictionary
         """
 
-        libpath = self.filepath_from_context(context)
+        libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 

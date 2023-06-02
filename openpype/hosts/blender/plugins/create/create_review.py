@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -33,7 +33,7 @@ class CreateReview(plugin.Creator):
         name = plugin.asset_name(asset, subset)
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
-        self.data['task'] = get_current_task_name()
+        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
 
         if (self.options or {}).get("useSelection"):

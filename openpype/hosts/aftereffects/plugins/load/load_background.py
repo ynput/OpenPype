@@ -34,10 +34,9 @@ class BackgroundLoader(AfterEffectsLoader):
             existing_items,
             "{}_{}".format(context["asset"]["name"], name))
 
-        path = self.filepath_from_context(context)
-        layers = get_background_layers(path)
+        layers = get_background_layers(self.fname)
         if not layers:
-            raise ValueError("No layers found in {}".format(path))
+            raise ValueError("No layers found in {}".format(self.fname))
 
         comp = stub.import_background(None, stub.LOADED_ICON + comp_name,
                                       layers)

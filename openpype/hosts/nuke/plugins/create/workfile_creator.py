@@ -3,6 +3,7 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
+    legacy_io,
 )
 from openpype.hosts.nuke.api import (
     INSTANCE_DATA_KNOB,
@@ -26,10 +27,10 @@ class WorkfileCreator(AutoCreator):
             root_node, api.INSTANCE_DATA_KNOB
         )
 
-        project_name = self.create_context.get_current_project_name()
-        asset_name = self.create_context.get_current_asset_name()
-        task_name = self.create_context.get_current_task_name()
-        host_name = self.create_context.host_name
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
 
         asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(

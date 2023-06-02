@@ -67,42 +67,39 @@ def _print(msg: str, message_type: int = 0) -> None:
     print(f"{header}{msg}")
 
 
-def _pip_install(openpype_root, package, version=None):
-    arg = None
-    if package and version:
-        arg = f"{package}=={version}"
-    elif package:
-        arg = package
+def install_qtbinding(pyproject, openpype_root, platform_name):
+    _print("Handling Qt binding framework ...")
+    qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
+    package = qtbinding_def["package"]
+    version = qtbinding_def.get("version")
 
-    if not arg:
-        _print("Couldn't find package to install")
+    qtbinding_arg = None
+    if package and version:
+        qtbinding_arg = f"{package}=={version}"
+    elif package:
+        qtbinding_arg = package
+
+    if not qtbinding_arg:
+        _print("Didn't find Qt binding to install")
         sys.exit(1)
 
-    _print(f"We'll install {arg}")
+    _print(f"We'll install {qtbinding_arg}")
 
     python_vendor_dir = openpype_root / "vendor" / "python"
     try:
         subprocess.run(
             [
                 sys.executable,
-                "-m", "pip", "install", "--upgrade", arg,
+                "-m", "pip", "install", "--upgrade", qtbinding_arg,
                 "-t", str(python_vendor_dir)
             ],
             check=True,
             stdout=subprocess.DEVNULL
         )
     except subprocess.CalledProcessError as e:
-        _print(f"Error during {package} installation.", 1)
+        _print("Error during PySide2 installation.", 1)
         _print(str(e), 1)
         sys.exit(1)
-
-
-def install_qtbinding(pyproject, openpype_root, platform_name):
-    _print("Handling Qt binding framework ...")
-    qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
-    package = qtbinding_def["package"]
-    version = qtbinding_def.get("version")
-    _pip_install(openpype_root, package, version)
 
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of
@@ -113,14 +110,6 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
         )
         for filepath in sqldrivers_dir.iterdir():
             os.remove(str(filepath))
-
-
-def install_opencolorio(pyproject, openpype_root):
-    _print("Installing PyOpenColorIO")
-    opencolorio_def = pyproject["openpype"]["opencolorio"]
-    package = opencolorio_def["package"]
-    version = opencolorio_def.get("version")
-    _pip_install(openpype_root, package, version)
 
 
 def install_thirdparty(pyproject, openpype_root, platform_name):
@@ -232,7 +221,6 @@ def main():
     pyproject = toml.load(openpype_root / "pyproject.toml")
     platform_name = platform.system().lower()
     install_qtbinding(pyproject, openpype_root, platform_name)
-    install_opencolorio(pyproject, openpype_root)
     install_thirdparty(pyproject, openpype_root, platform_name)
     end_time = time.time_ns()
     total_time = (end_time - start_time) / 1000000000

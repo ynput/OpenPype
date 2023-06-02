@@ -75,7 +75,7 @@ class ExtractTemplate(publish.Extractor):
             instance.data["representations"] = [representation]
 
         instance.data["version_name"] = "{}_{}".format(
-            instance.data["subset"], instance.context.data["task"])
+            instance.data["subset"], os.environ["AVALON_TASK"])
 
     def get_backdrops(self, node: str) -> list:
         """Get backdrops for the node.

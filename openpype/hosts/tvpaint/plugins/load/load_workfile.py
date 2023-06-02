@@ -3,7 +3,7 @@ import os
 from openpype.lib import StringTemplate
 from openpype.pipeline import (
     registered_host,
-    get_current_context,
+    legacy_io,
     Anatomy,
 )
 from openpype.pipeline.workfile import (
@@ -31,17 +31,17 @@ class LoadWorkfile(plugin.Loader):
     def load(self, context, name, namespace, options):
         # Load context of current workfile as first thing
         #   - which context and extension has
-        filepath = self.filepath_from_context(context)
-        filepath = filepath.replace("\\", "/")
+        host = registered_host()
+        current_file = host.get_current_workfile()
+
+        context = get_current_workfile_context()
+
+        filepath = self.fname.replace("\\", "/")
 
         if not os.path.exists(filepath):
             raise FileExistsError(
                 "The loaded file does not exist. Try downloading it first."
             )
-
-        host = registered_host()
-        current_file = host.get_current_workfile()
-        work_context = get_current_workfile_context()
 
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
             filepath
@@ -50,15 +50,14 @@ class LoadWorkfile(plugin.Loader):
 
         # Save workfile.
         host_name = "tvpaint"
-        project_name = work_context.get("project")
-        asset_name = work_context.get("asset")
-        task_name = work_context.get("task")
-        # Far cases when there is workfile without work_context
+        project_name = context.get("project")
+        asset_name = context.get("asset")
+        task_name = context.get("task")
+        # Far cases when there is workfile without context
         if not asset_name:
-            context = get_current_context()
-            project_name = context["project_name"]
-            asset_name = context["asset_name"]
-            task_name = context["task_name"]
+            project_name = legacy_io.active_project()
+            asset_name = legacy_io.Session["AVALON_ASSET"]
+            task_name = legacy_io.Session["AVALON_TASK"]
 
         template_key = get_workfile_template_key_from_context(
             asset_name,

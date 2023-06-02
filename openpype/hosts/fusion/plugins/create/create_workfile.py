@@ -5,6 +5,7 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
+    legacy_io,
 )
 
 
@@ -63,10 +64,10 @@ class FusionWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        project_name = self.create_context.get_current_project_name()
-        asset_name = self.create_context.get_current_asset_name()
-        task_name = self.create_context.get_current_task_name()
-        host_name = self.create_context.host_name
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)

@@ -18,9 +18,8 @@ class MatchmoveLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        path = self.filepath_from_context(context)
-        if path.lower().endswith(".py"):
-            exec(open(path).read())
+        if self.fname.lower().endswith(".py"):
+            exec(open(self.fname).read())
 
         else:
             msg = "Unsupported script type"

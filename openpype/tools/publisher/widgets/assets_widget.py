@@ -2,7 +2,6 @@ import collections
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     RecursiveSortFilterProxyModel,
@@ -188,8 +187,7 @@ class AssetsDialog(QtWidgets.QDialog):
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         filter_input = PlaceholderLineEdit(self)
-        filter_input.setPlaceholderText("Filter {}..".format(
-            "folders" if AYON_SERVER_ENABLED else "assets"))
+        filter_input.setPlaceholderText("Filter assets..")
 
         asset_view = AssetDialogView(self)
         asset_view.setModel(proxy_model)

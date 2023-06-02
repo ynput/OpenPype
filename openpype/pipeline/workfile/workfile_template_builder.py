@@ -28,7 +28,8 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
-from openpype.host import IWorkfileHost, HostBase
+from openpype.host import IWorkfileHost
+from openpype.host import HostBase
 from openpype.lib import (
     Logger,
     StringTemplate,
@@ -36,7 +37,7 @@ from openpype.lib import (
     attribute_definitions,
 )
 from openpype.lib.attribute_definitions import get_attributes_keys
-from openpype.pipeline import Anatomy
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
     get_contexts_for_repre_docs,
@@ -124,30 +125,15 @@ class AbstractTemplateBuilder(object):
 
     @property
     def project_name(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_project_name()
-        return os.getenv("AVALON_PROJECT")
+        return legacy_io.active_project()
 
     @property
     def current_asset_name(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_asset_name()
-        return os.getenv("AVALON_ASSET")
+        return legacy_io.Session["AVALON_ASSET"]
 
     @property
     def current_task_name(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_task_name()
-        return os.getenv("AVALON_TASK")
-
-    def get_current_context(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_context()
-        return {
-            "project_name": self.project_name,
-            "asset_name": self.current_asset_name,
-            "task_name": self.current_task_name
-        }
+        return legacy_io.Session["AVALON_TASK"]
 
     @property
     def system_settings(self):
@@ -802,8 +788,9 @@ class AbstractTemplateBuilder(object):
         fill_data["root"] = anatomy.roots
         fill_data["project"] = {
             "name": project_name,
-            "code": anatomy.project_code,
+            "code": anatomy["attributes"]["code"]
         }
+
 
         result = StringTemplate.format_template(path, fill_data)
         if result.solved:
@@ -1701,10 +1688,9 @@ class PlaceholderCreateMixin(object):
         creator_plugin = self.builder.get_creators_by_name()[creator_name]
 
         # create subset name
-        context = self._builder.get_current_context()
-        project_name = context["project_name"]
-        asset_name = context["asset_name"]
-        task_name = context["task_name"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
 
         if legacy_create:
             asset_doc = get_asset_by_name(

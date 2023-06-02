@@ -47,8 +47,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
-            path = self.filepath_from_context(context)
-            result = prompt_new_file_with_mesh(mesh_filepath=path)
+            result = prompt_new_file_with_mesh(mesh_filepath=self.fname)
             if not result:
                 self.log.info("User cancelled new project prompt.")
                 return
@@ -66,7 +65,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
                 else:
                     raise LoadError("Reload of mesh failed")
 
-            path = self.filepath_from_context(context)
+            path = self.fname
             substance_painter.project.reload_mesh(path,
                                                   settings,
                                                   on_mesh_reload)

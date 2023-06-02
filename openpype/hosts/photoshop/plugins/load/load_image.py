@@ -22,8 +22,7 @@ class ImageLoader(photoshop.PhotoshopLoader):
             name
         )
         with photoshop.maintained_selection():
-            path = self.filepath_from_context(context)
-            layer = self.import_layer(path, layer_name, stub)
+            layer = self.import_layer(self.fname, layer_name, stub)
 
         self[:] = [layer]
         namespace = namespace or layer_name

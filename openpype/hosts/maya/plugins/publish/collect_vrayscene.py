@@ -7,6 +7,7 @@ from maya import cmds
 
 import pyblish.api
 
+from openpype.pipeline import legacy_io
 from openpype.lib import get_formatted_current_time
 from openpype.hosts.maya.api import lib
 
@@ -117,7 +118,7 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 # instance subset
                 "family": "vrayscene_layer",
                 "families": ["vrayscene_layer"],
-                "asset": context.data["asset"],
+                "asset": legacy_io.Session["AVALON_ASSET"],
                 "time": get_formatted_current_time(),
                 "author": context.data["user"],
                 # Add source to allow tracing back to the scene from

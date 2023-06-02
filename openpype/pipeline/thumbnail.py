@@ -2,7 +2,6 @@ import os
 import copy
 import logging
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_project
 from . import legacy_io
 from .anatomy import Anatomy
@@ -132,32 +131,6 @@ class BinaryThumbnail(ThumbnailResolver):
         return thumbnail_entity["data"].get("binary_data")
 
 
-class ServerThumbnailResolver(ThumbnailResolver):
-    def process(self, thumbnail_entity, thumbnail_type):
-        if not AYON_SERVER_ENABLED:
-            return None
-        data = thumbnail_entity["data"]
-        entity_type = data.get("entity_type")
-        entity_id = data.get("entity_id")
-        if not entity_type or not entity_id:
-            return None
-
-        from openpype.client.server.server_api import get_server_api_connection
-
-        project_name = self.dbcon.active_project()
-        thumbnail_id = thumbnail_entity["_id"]
-        con = get_server_api_connection()
-        filepath = con.get_thumbnail(
-            project_name, entity_type, entity_id, thumbnail_id
-        )
-        content = None
-        if filepath:
-            with open(filepath, "rb") as stream:
-                content = stream.read()
-
-        return content
-
-
 # Thumbnail resolvers
 def discover_thumbnail_resolvers():
     return discover(ThumbnailResolver)
@@ -173,4 +146,3 @@ def register_thumbnail_resolver_path(path):
 
 register_thumbnail_resolver(TemplateResolver)
 register_thumbnail_resolver(BinaryThumbnail)
-register_thumbnail_resolver(ServerThumbnailResolver)

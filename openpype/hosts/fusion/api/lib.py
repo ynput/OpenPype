@@ -14,7 +14,7 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     switch_container,
-    get_current_project_name,
+    legacy_io,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 
@@ -206,7 +206,7 @@ def switch_item(container,
 
     # Collect any of current asset, subset and representation if not provided
     #   so we can use the original name from those.
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)

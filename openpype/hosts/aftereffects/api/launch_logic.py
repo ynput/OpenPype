@@ -13,13 +13,13 @@ from wsrpc_aiohttp import (
     WebSocketAsync
 )
 
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 
 from openpype.lib import Logger
+from openpype.tools.utils import host_tools
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline import install_host, legacy_io
 from openpype.modules import ModulesManager
-from openpype.tools.utils import host_tools, get_openpype_qt_app
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import get_stub
@@ -43,7 +43,7 @@ def main(*subprocess_args):
     install_host(host)
 
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
-    app = get_openpype_qt_app()
+    app = QtWidgets.QApplication([])
     app.setQuitOnLastWindowClosed(False)
 
     launcher = ProcessLauncher(subprocess_args)

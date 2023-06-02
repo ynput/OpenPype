@@ -27,8 +27,7 @@ class AbcLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        file_path = self.filepath_from_context(context)
-        file_path = os.path.normpath(file_path)
+        file_path = os.path.normpath(self.fname)
 
         abc_before = {
             c for c in rt.rootNode.Children

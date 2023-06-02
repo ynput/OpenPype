@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating camera."""
-import os
 from openpype.hosts.max.api import plugin
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
@@ -15,10 +14,6 @@ class CreateRender(plugin.MaxCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
         sel_obj = list(rt.selection)
-        file = rt.maxFileName
-        filename, _ = os.path.splitext(file)
-        instance_data["AssetName"] = filename
-
         instance = super(CreateRender, self).create(
             subset_name,
             instance_data,

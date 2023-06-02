@@ -63,7 +63,7 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
-![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
 
 ## Profile filters
 

@@ -23,9 +23,6 @@ from openpype.lib import (
 )
 from openpype.pipeline import (
     legacy_io,
-    get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -74,7 +71,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         project_settings = get_project_settings(project_name)
         # process path mapping
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
@@ -302,7 +299,7 @@ def _remove_workfile_lock():
 def handle_workfile_locks():
     if lib.IS_HEADLESS:
         return False
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     return is_workfile_lock_enabled(MayaHost.name, project_name)
 
 
@@ -659,9 +656,9 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        get_current_project_name(),
-        get_current_asset_name(),
-        get_current_task_name()
+        legacy_io.active_project(),
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     lib.show_message(
@@ -676,7 +673,7 @@ def before_workfile_open():
 
 
 def before_workfile_save(event):
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     if handle_workfile_locks():
         _remove_workfile_lock()
     workdir_path = event["workdir_path"]

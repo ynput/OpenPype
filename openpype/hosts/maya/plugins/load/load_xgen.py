@@ -47,8 +47,7 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             return
 
         maya_filepath = self.prepare_root_value(
-            file_url=self.filepath_from_context(context),
-            project_name=context["project"]["name"]
+            self.fname, context["project"]["name"]
         )
 
         # Reference xgen. Xgen does not like being referenced in under a group.

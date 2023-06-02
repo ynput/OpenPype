@@ -130,7 +130,7 @@ class FbxModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        libpath = self.filepath_from_context(context)
+        libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 

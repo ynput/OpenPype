@@ -8,7 +8,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    get_current_project_name,
+    legacy_io,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -99,8 +99,7 @@ class LoadClip(plugin.NukeLoader):
             representation = self._representation_with_hash_in_frame(
                 representation
             )
-        filepath = self.filepath_from_context(context)
-        filepath = filepath.replace("\\", "/")
+        filepath = get_representation_path(representation).replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
@@ -156,7 +155,7 @@ class LoadClip(plugin.NukeLoader):
             read_node["file"].setValue(filepath)
 
             used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"], filepath)
+                read_node, version_data, representation["data"])
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -268,7 +267,7 @@ class LoadClip(plugin.NukeLoader):
             if "addRetime" in key
         ]
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         version_data = version_doc.get("data", {})
@@ -305,7 +304,8 @@ class LoadClip(plugin.NukeLoader):
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
             used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"], filepath)
+                read_node, version_data, representation["data"],
+                path=filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -452,9 +452,9 @@ class LoadClip(plugin.NukeLoader):
 
         return self.node_name_template.format(**name_data)
 
-    def _set_colorspace(self, node, version_data, repre_data, path):
+    def _set_colorspace(self, node, version_data, repre_data, path=None):
         output_color = None
-        path = path.replace("\\", "/")
+        path = path or self.fname.replace("\\", "/")
         # get colorspace
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")

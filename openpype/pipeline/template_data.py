@@ -128,7 +128,7 @@ def get_task_template_data(project_doc, asset_doc, task_name):
     Args:
         project_doc (Dict[str, Any]): Queried project document.
         asset_doc (Dict[str, Any]): Queried asset document.
-        task_name (str): Name of task for which data should be returned.
+        tas_name (str): Name of task for which data should be returned.
 
     Returns:
         Dict[str, Dict[str, str]]: Template data

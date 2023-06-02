@@ -5,7 +5,6 @@ import qtpy
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_project,
     get_assets,
@@ -608,8 +607,7 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_btn.setToolTip("Refresh items")
 
         filter_input = PlaceholderLineEdit(header_widget)
-        filter_input.setPlaceholderText("Filter {}..".format(
-            "folders" if AYON_SERVER_ENABLED else "assets"))
+        filter_input.setPlaceholderText("Filter assets..")
 
         # Header
         header_layout = QtWidgets.QHBoxLayout(header_widget)

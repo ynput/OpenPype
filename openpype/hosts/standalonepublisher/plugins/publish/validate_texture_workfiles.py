@@ -1,5 +1,7 @@
+import os
 import pyblish.api
 
+from openpype.settings import get_project_settings
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
@@ -19,30 +21,27 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        if instance.data["family"] != "workfile":
-            return
+        if instance.data["family"] == "workfile":
+            ext = instance.data["representations"][0]["ext"]
+            main_workfile_extensions = self.get_main_workfile_extensions()
+            if ext not in main_workfile_extensions:
+                self.log.warning("Only secondary workfile present!")
+                return
 
-        ext = instance.data["representations"][0]["ext"]
-        main_workfile_extensions = self.get_main_workfile_extensions(
-            instance
-        )
-        if ext not in main_workfile_extensions:
-            self.log.warning("Only secondary workfile present!")
-            return
+            if not instance.data.get("resources"):
+                msg = "No secondary workfile present for workfile '{}'". \
+                    format(instance.data["name"])
+                ext = main_workfile_extensions[0]
+                formatting_data = {"file_name": instance.data["name"],
+                                   "extension": ext}
 
-        if not instance.data.get("resources"):
-            msg = "No secondary workfile present for workfile '{}'". \
-                format(instance.data["name"])
-            ext = main_workfile_extensions[0]
-            formatting_data = {"file_name": instance.data["name"],
-                               "extension": ext}
-
-            raise PublishXmlValidationError(
-                self, msg, formatting_data=formatting_data)
+                raise PublishXmlValidationError(self, msg,
+                                                formatting_data=formatting_data
+                                                )
 
     @staticmethod
-    def get_main_workfile_extensions(instance):
-        project_settings = instance.context.data["project_settings"]
+    def get_main_workfile_extensions():
+        project_settings = get_project_settings(os.environ["AVALON_PROJECT"])
 
         try:
             extensions = (project_settings["standalonepublisher"]

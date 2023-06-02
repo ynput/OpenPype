@@ -2,7 +2,7 @@ import os
 import bpy
 
 import pyblish.api
-from openpype.pipeline import get_current_task_name, get_current_asset_name
+from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import workio
 
 
@@ -37,7 +37,7 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
 
-        task = get_current_task_name()
+        task = legacy_io.Session["AVALON_TASK"]
 
         data = {}
 
@@ -47,7 +47,7 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
 
         data.update({
             "subset": subset,
-            "asset": get_current_asset_name(),
+            "asset": os.getenv("AVALON_ASSET", None),
             "label": subset,
             "publish": True,
             "family": "workfile",

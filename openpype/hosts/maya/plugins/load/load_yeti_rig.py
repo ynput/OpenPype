@@ -20,10 +20,9 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self, context, name=None, namespace=None, options=None
     ):
         group_name = options['group_name']
-        path = self.filepath_from_context(context)
         with lib.maintained_selection():
             file_url = self.prepare_root_value(
-                path, context["project"]["name"]
+                self.fname, context["project"]["name"]
             )
             nodes = cmds.file(
                 file_url,

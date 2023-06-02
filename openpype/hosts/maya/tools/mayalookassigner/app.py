@@ -4,9 +4,9 @@ import logging
 
 from qtpy import QtWidgets, QtCore
 
-from openpype import style
 from openpype.client import get_last_version_by_subset_id
-from openpype.pipeline import get_current_project_name
+from openpype import style
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
 from openpype.hosts.maya.api.lib import assign_look_by_version
 
@@ -213,7 +213,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         selection = self.assign_selected.isChecked()
         asset_nodes = self.asset_outliner.get_nodes(selection=selection)
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         start = time.time()
         for i, (asset, item) in enumerate(asset_nodes.items()):
 

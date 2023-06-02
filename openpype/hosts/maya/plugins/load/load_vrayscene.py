@@ -46,18 +46,15 @@ class VRaySceneLoader(load.LoaderPlugin):
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, root_node = self.create_vray_scene(
-                    name,
-                    filename=self.filepath_from_context(context)
-                )
+                nodes, root_node = self.create_vray_scene(name,
+                                                          filename=self.fname)
 
         self[:] = nodes
         if not nodes:
             return
 
         # colour the group node
-        project_name = context["project"]["name"]
-        settings = get_project_settings(project_name)
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:

@@ -1,5 +1,4 @@
 import os
-from openpype import AYON_SERVER_ENABLED
 from openpype.lib.openpype_version import is_running_staging
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,17 +40,11 @@ def get_liberation_font_path(bold=False, italic=False):
 
 
 def get_openpype_production_icon_filepath():
-    filename = "openpype_icon.png"
-    if AYON_SERVER_ENABLED:
-        filename = "AYON_icon.png"
-    return get_resource("icons", filename)
+    return get_resource("icons", "openpype_icon.png")
 
 
 def get_openpype_staging_icon_filepath():
-    filename = "openpype_icon_staging.png"
-    if AYON_SERVER_ENABLED:
-        filename = "AYON_icon_staging.png"
-    return get_resource("icons", filename)
+    return get_resource("icons", "openpype_icon_staging.png")
 
 
 def get_openpype_icon_filepath(staging=None):
@@ -67,12 +60,7 @@ def get_openpype_splash_filepath(staging=None):
     if staging is None:
         staging = is_running_staging()
 
-    if AYON_SERVER_ENABLED:
-        if staging:
-            splash_file_name = "AYON_splash_staging.png"
-        else:
-            splash_file_name = "AYON_splash.png"
-    elif staging:
+    if staging:
         splash_file_name = "openpype_splash_staging.png"
     else:
         splash_file_name = "openpype_splash.png"

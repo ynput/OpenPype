@@ -1,6 +1,8 @@
 import logging
 import pyblish.api
 
+from openpype.pipeline import legacy_io
+
 
 class CollectFtrackApi(pyblish.api.ContextPlugin):
     """ Collects an ftrack session and the current task id. """
@@ -22,9 +24,9 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
 
         # Collect task
-        project_name = context.data["projectName"]
-        asset_name = context.data["asset"]
-        task_name = context.data["task"]
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
 
         # Find project entity
         project_query = 'Project where full_name is "{0}"'.format(project_name)

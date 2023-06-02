@@ -9,7 +9,7 @@ except ImportError:
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import Anatomy, get_current_project_name
+from openpype.pipeline import legacy_io, Anatomy
 
 log = logging.getLogger(__name__)
 
@@ -126,7 +126,7 @@ def create_model(filename, asset, variant_subsets):
 
     """
 
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
@@ -177,7 +177,7 @@ def create_shade(filename, asset, variant_subsets):
 
     """
 
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
@@ -213,7 +213,7 @@ def create_shade_variation(filename, asset, model_variant, shade_variants):
 
     """
 
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     asset_doc = get_asset_by_name(project_name, asset)
     assert asset_doc, "Asset not found: %s" % asset
 
@@ -314,7 +314,7 @@ def get_usd_master_path(asset, subset, representation):
 
     """
 
-    project_name = get_current_project_name()
+    project_name = legacy_io.active_project()
     anatomy = Anatomy(project_name)
     project_doc = get_project(
         project_name,

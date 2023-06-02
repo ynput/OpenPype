@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.pipeline import get_current_asset_name
+from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
@@ -28,10 +28,10 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
         stub = photoshop.stub()
-        current_asset_name = get_current_asset_name()
         for instance in instances:
             data = stub.read(instance[0])
-            data["asset"] = current_asset_name
+
+            data["asset"] = legacy_io.Session["AVALON_ASSET"]
             stub.imprint(instance[0], data)
 
 
@@ -55,7 +55,7 @@ class ValidateInstanceAsset(OptionalPyblishPluginMixin,
 
     def process(self, instance):
         instance_asset = instance.data["asset"]
-        current_asset = get_current_asset_name()
+        current_asset = legacy_io.Session["AVALON_ASSET"]
 
         if instance_asset != current_asset:
             msg = (

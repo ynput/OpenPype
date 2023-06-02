@@ -5,8 +5,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
+    legacy_io,
     load,
-    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -73,7 +73,7 @@ class LoadGizmo(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.filepath_from_context(context).replace("\\", "/")
+        file = self.fname.replace("\\", "/")
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -106,7 +106,7 @@ class LoadGizmo(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node

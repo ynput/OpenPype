@@ -6,8 +6,6 @@ import subprocess
 from distutils import dir_util
 from pathlib import Path
 from typing import List, Union
-import tempfile
-from distutils.dir_util import copy_tree
 
 import openpype.hosts.unreal.lib as ue_lib
 
@@ -92,20 +90,9 @@ class UEProjectGenerationWorker(QtCore.QObject):
             ("Generating a new UE project ... 1 out of "
              f"{stage_count}"))
 
-        # Need to copy the commandlet project to a temporary folder where
-        # users don't need admin rights to write to.
-        cmdlet_tmp = tempfile.TemporaryDirectory()
-        cmdlet_filename = cmdlet_project.name
-        cmdlet_dir = cmdlet_project.parent.as_posix()
-        cmdlet_tmp_name = Path(cmdlet_tmp.name)
-        cmdlet_tmp_file = cmdlet_tmp_name.joinpath(cmdlet_filename)
-        copy_tree(
-            cmdlet_dir,
-            cmdlet_tmp_name.as_posix())
-
         commandlet_cmd = [
             f"{ue_editor_exe.as_posix()}",
-            f"{cmdlet_tmp_file.as_posix()}",
+            f"{cmdlet_project.as_posix()}",
             "-run=AyonGenerateProject",
             f"{project_file.resolve().as_posix()}",
         ]
@@ -123,8 +110,6 @@ class UEProjectGenerationWorker(QtCore.QObject):
             self.log.emit(decoded_line)
         gen_process.stdout.close()
         return_code = gen_process.wait()
-
-        cmdlet_tmp.cleanup()
 
         if return_code and return_code != 0:
             msg = (

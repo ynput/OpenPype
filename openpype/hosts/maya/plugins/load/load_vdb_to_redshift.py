@@ -67,8 +67,7 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
         label = "{}:{}".format(namespace, name)
         root = cmds.createNode("transform", name=label)
 
-        project_name = context["project"]["name"]
-        settings = get_project_settings(project_name)
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)
@@ -86,7 +85,7 @@ class LoadVDBtoRedShift(load.LoaderPlugin):
                                       parent=root)
 
         self._set_path(volume_node,
-                       path=self.filepath_from_context(context),
+                       path=self.fname,
                        representation=context["representation"])
 
         nodes = [root, volume_node]

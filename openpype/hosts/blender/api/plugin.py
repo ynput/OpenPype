@@ -243,8 +243,7 @@ class AssetLoader(LoaderPlugin):
         """
         # TODO (jasper): make it possible to add the asset several times by
         # just re-using the collection
-        filepath = self.filepath_from_context(context)
-        assert Path(filepath).exists(), f"{filepath} doesn't exist."
+        assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]

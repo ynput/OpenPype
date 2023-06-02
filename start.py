@@ -133,10 +133,6 @@ else:
 vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
 sys.path.insert(0, vendor_python_path)
 
-# Add common package to sys path
-# - common contains common code for bootstraping and OpenPype processes
-sys.path.insert(0, os.path.join(OPENPYPE_ROOT, "common"))
-
 import blessed  # noqa: E402
 import certifi  # noqa: E402
 
@@ -144,8 +140,8 @@ import certifi  # noqa: E402
 if sys.__stdout__:
     term = blessed.Terminal()
 
-    def _print(message: str, force=False):
-        if silent_mode and not force:
+    def _print(message: str):
+        if silent_mode:
             return
         if message.startswith("!!! "):
             print(f'{term.orangered2("!!! ")}{message[4:]}')
@@ -200,15 +196,6 @@ if "--headless" in sys.argv:
     sys.argv.remove("--headless")
 elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
-
-# Set builtin ocio root
-os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
-    OPENPYPE_ROOT,
-    "vendor",
-    "bin",
-    "ocioconfig",
-    "OpenColorIOConfigs"
-)
 
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
@@ -268,7 +255,6 @@ from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_global_settings,
     get_openpype_path_from_settings,
-    get_local_openpype_path_from_settings,
     validate_mongo_connection,
     OpenPypeVersionNotFound,
     OpenPypeVersionIncompatible
@@ -362,15 +348,8 @@ def run_disk_mapping_commands(settings):
 
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
-        if low_platform == "windows":
-            destination = destination.replace("/", "\\").rstrip("\\")
-            source = source.replace("/", "\\").rstrip("\\")
-            # Add slash after ':' ('G:' -> 'G:\')
-            if destination.endswith(":"):
-                destination += "\\"
-        else:
-            destination = destination.rstrip("/")
-            source = source.rstrip("/")
+        destination = destination.rstrip('/')
+        source = source.rstrip('/')
 
         if low_platform == "darwin":
             scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
@@ -528,8 +507,8 @@ def _process_arguments() -> tuple:
                 not use_version_value
                 or not use_version_value.startswith("=")
             ):
-                _print("!!! Please use option --use-version like:", True)
-                _print("    --use-version=3.0.0", True)
+                _print("!!! Please use option --use-version like:")
+                _print("    --use-version=3.0.0")
                 sys.exit(1)
 
             version_str = use_version_value[1:]
@@ -546,14 +525,14 @@ def _process_arguments() -> tuple:
                     break
 
             if use_version is None:
-                _print("!!! Requested version isn't in correct format.", True)
+                _print("!!! Requested version isn't in correct format.")
                 _print(("    Use --list-versions to find out"
-                       " proper version string."), True)
+                       " proper version string."))
                 sys.exit(1)
 
         if arg == "--validate-version":
-            _print("!!! Please use option --validate-version like:", True)
-            _print("    --validate-version=3.0.0", True)
+            _print("!!! Please use option --validate-version like:")
+            _print("    --validate-version=3.0.0")
             sys.exit(1)
 
         if arg.startswith("--validate-version="):
@@ -564,9 +543,9 @@ def _process_arguments() -> tuple:
                 sys.argv.remove(arg)
                 commands.append("validate")
             else:
-                _print("!!! Requested version isn't in correct format.", True)
+                _print("!!! Requested version isn't in correct format.")
                 _print(("    Use --list-versions to find out"
-                        " proper version string."), True)
+                        " proper version string."))
                 sys.exit(1)
 
     if "--list-versions" in sys.argv:
@@ -577,7 +556,7 @@ def _process_arguments() -> tuple:
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
         if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
-            _print("!!! Cannot open Igniter dialog in headless mode.", True)
+            _print("!!! Cannot open Igniter dialog in headless mode.")
             sys.exit(1)
 
         return_code = igniter.open_dialog()
@@ -627,9 +606,9 @@ def _determine_mongodb() -> str:
     if not openpype_mongo:
         _print("*** No DB connection string specified.")
         if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
-            _print("!!! Cannot open Igniter dialog in headless mode.", True)
-            _print(("!!! Please use `OPENPYPE_MONGO` to specify "
-                    "server address."), True)
+            _print("!!! Cannot open Igniter dialog in headless mode.")
+            _print(
+                "!!! Please use `OPENPYPE_MONGO` to specify server address.")
             sys.exit(1)
         _print("--- launching setup UI ...")
 
@@ -804,7 +783,7 @@ def _find_frozen_openpype(use_version: str = None,
         try:
             version_path = bootstrap.extract_openpype(openpype_version)
         except OSError as e:
-            _print("!!! failed: {}".format(str(e)), True)
+            _print("!!! failed: {}".format(str(e)))
             sys.exit(1)
         else:
             # cleanup zip after extraction
@@ -920,7 +899,7 @@ def _boot_validate_versions(use_version, local_version):
     v: OpenPypeVersion
     found = [v for v in openpype_versions if str(v) == use_version]
     if not found:
-        _print(f"!!! Version [ {use_version} ] not found.", True)
+        _print(f"!!! Version [ {use_version} ] not found.")
         list_versions(openpype_versions, local_version)
         sys.exit(1)
 
@@ -929,8 +908,7 @@ def _boot_validate_versions(use_version, local_version):
         use_version, openpype_versions
     )
     valid, message = bootstrap.validate_openpype_version(version_path)
-    _print(f'{">>> " if valid else "!!! "}{message}', not valid)
-    return valid
+    _print(f'{">>> " if valid else "!!! "}{message}')
 
 
 def _boot_print_versions(openpype_root):
@@ -957,7 +935,7 @@ def _boot_print_versions(openpype_root):
 
 
 def _boot_handle_missing_version(local_version, message):
-    _print(message, True)
+    _print(message)
     if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
         openpype_versions = bootstrap.find_openpype(
             include_zips=True)
@@ -1005,7 +983,7 @@ def boot():
         openpype_mongo = _determine_mongodb()
     except RuntimeError as e:
         # without mongodb url we are done for.
-        _print(f"!!! {e}", True)
+        _print(f"!!! {e}")
         sys.exit(1)
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
@@ -1040,18 +1018,14 @@ def boot():
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_settings(global_settings)
 
-    # Check if local versions should be installed in custom folder and not in
-    # user app data
-    data_dir = get_local_openpype_path_from_settings(global_settings)
-    bootstrap.set_data_dir(data_dir)
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
     else:
         local_version = OpenPypeVersion.get_installed_version_str()
 
     if "validate" in commands:
-        valid = _boot_validate_versions(use_version, local_version)
-        sys.exit(0 if valid else 1)
+        _boot_validate_versions(use_version, local_version)
+        sys.exit(1)
 
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
@@ -1061,7 +1035,7 @@ def boot():
 
     if "print_versions" in commands:
         _boot_print_versions(OPENPYPE_ROOT)
-        sys.exit(0)
+        sys.exit(1)
 
     # ------------------------------------------------------------------------
     # Find OpenPype versions
@@ -1078,13 +1052,13 @@ def boot():
 
         except RuntimeError as e:
             # no version to run
-            _print(f"!!! {e}", True)
+            _print(f"!!! {e}")
             sys.exit(1)
         # validate version
-        _print(f">>> Validating version in frozen [ {str(version_path)} ]")
+        _print(f">>> Validating version [ {str(version_path)} ]")
         result = bootstrap.validate_openpype_version(version_path)
         if not result[0]:
-            _print(f"!!! Invalid version: {result[1]}", True)
+            _print(f"!!! Invalid version: {result[1]}")
             sys.exit(1)
         _print("--- version is valid")
     else:
@@ -1152,7 +1126,7 @@ def boot():
         cli.main(obj={}, prog_name="openpype")
     except Exception:  # noqa
         exc_info = sys.exc_info()
-        _print("!!! OpenPype crashed:", True)
+        _print("!!! OpenPype crashed:")
         traceback.print_exception(*exc_info)
         sys.exit(1)
 

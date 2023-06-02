@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+from openpype.pipeline import legacy_io
 
 
 class CollectCelactionInstances(pyblish.api.ContextPlugin):
@@ -9,7 +10,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
-        task = context.data["task"]
+        task = legacy_io.Session["AVALON_TASK"]
         current_file = context.data["currentFile"]
         staging_dir = os.path.dirname(current_file)
         scene_file = os.path.basename(current_file)

@@ -15,12 +15,7 @@ from openpype.client.operations import (
 )
 from openpype import style
 from openpype import resources
-from openpype.pipeline import (
-    Anatomy,
-    get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
-)
+from openpype.pipeline import Anatomy
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
@@ -285,8 +280,8 @@ class Window(QtWidgets.QWidget):
 
         if use_context is None or use_context is True:
             context = {
-                "asset": get_current_asset_name(),
-                "task": get_current_task_name()
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"]
             }
             self.set_context(context)
 
@@ -296,7 +291,7 @@ class Window(QtWidgets.QWidget):
 
     @property
     def project_name(self):
-        return get_current_project_name()
+        return legacy_io.Session["AVALON_PROJECT"]
 
     def showEvent(self, event):
         super(Window, self).showEvent(event)
@@ -325,7 +320,7 @@ class Window(QtWidgets.QWidget):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            project_name = self.project_name
+            project_name = legacy_io.active_project()
             workfile_doc = get_workfile_info(
                 project_name, asset_id, task_name, filename
             )
@@ -356,7 +351,7 @@ class Window(QtWidgets.QWidget):
         if not update_data:
             return
 
-        project_name = self.project_name
+        project_name = legacy_io.active_project()
 
         session = OperationsSession()
         session.update_entity(
@@ -373,7 +368,7 @@ class Window(QtWidgets.QWidget):
             return
 
         filename = os.path.split(filepath)[1]
-        project_name = self.project_name
+        project_name = legacy_io.active_project()
         return get_workfile_info(
             project_name, asset_id, task_name, filename
         )
@@ -385,7 +380,7 @@ class Window(QtWidgets.QWidget):
 
         workdir, filename = os.path.split(filepath)
 
-        project_name = self.project_name
+        project_name = legacy_io.active_project()
         asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
 

@@ -60,17 +60,15 @@ class YetiCacheLoader(load.LoaderPlugin):
             cmds.loadPlugin("pgYetiMaya", quiet=True)
 
         # Create Yeti cache nodes according to settings
-        path = self.filepath_from_context(context)
-        settings = self.read_settings(path)
+        settings = self.read_settings(self.fname)
         nodes = []
         for node in settings["nodes"]:
             nodes.extend(self.create_node(namespace, node))
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
-        project_name = context["project"]["name"]
 
-        settings = get_project_settings(project_name)
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)

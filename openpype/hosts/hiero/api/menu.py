@@ -4,30 +4,17 @@ import sys
 import hiero.core
 from hiero.ui import findMenuAction
 
-from qtpy import QtGui
-
 from openpype.lib import Logger
+from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
-from openpype.settings import get_project_settings
-from openpype.pipeline import (
-    get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name
-)
 
 from . import tags
+from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None
-
-
-def get_context_label():
-    return "{}, {}".format(
-        get_current_asset_name(),
-        get_current_task_name()
-    )
 
 
 def update_menu_task_label():
@@ -40,7 +27,10 @@ def update_menu_task_label():
         log.warning("Can't find menuItem: {}".format(object_name))
         return
 
-    label = get_context_label()
+    label = "{}, {}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
 
     menu = found_menu.menu()
     self._change_context_menu = label
@@ -53,6 +43,7 @@ def menu_install():
 
     """
 
+    from qtpy import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
         apply_colorspace_project, apply_colorspace_clips
@@ -65,7 +56,10 @@ def menu_install():
 
     menu_name = os.environ['AVALON_LABEL']
 
-    context_label = get_context_label()
+    context_label = "{0}, {1}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
 
     self._change_context_menu = context_label
 
@@ -160,7 +154,7 @@ def add_scripts_menu():
         return
 
     # load configuration of custom menu
-    project_settings = get_project_settings(get_current_project_name())
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     config = project_settings["hiero"]["scriptsmenu"]["definition"]
     _menu = project_settings["hiero"]["scriptsmenu"]["name"]
 

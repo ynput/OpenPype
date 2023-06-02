@@ -227,7 +227,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
-
         output_dir = self._get_publish_folder(
             instance.context.data['anatomy'],
             deepcopy(instance.data["anatomyData"]),
@@ -243,9 +242,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = {
-            "AVALON_PROJECT": instance.context.data["projectName"],
-            "AVALON_ASSET": instance.context.data["asset"],
-            "AVALON_TASK": instance.context.data["task"],
+            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
+            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
+            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
@@ -374,10 +373,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Preparing to copy ...")
         start = instance.data.get("frameStart")
         end = instance.data.get("frameEnd")
+        project_name = legacy_io.active_project()
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        project_name = self.context.data["projectName"]
+        project_name = legacy_io.active_project()
         version = get_last_version_by_subset_name(
             project_name,
             instance.data.get("subset"),
@@ -456,8 +456,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             list of instances
 
         """
-        task = self.context.data["task"]
-        host_name = self.context.data["hostName"]
+        task = os.environ["AVALON_TASK"]
         subset = instance_data["subset"]
         cameras = instance_data.get("cameras", [])
         instances = []
@@ -515,15 +514,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             self.log.info("Creating data for: {}".format(subset_name))
 
+            app = os.environ.get("AVALON_APP", "")
+
             if isinstance(col, list):
                 render_file_name = os.path.basename(col[0])
             else:
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter
 
-            preview = match_aov_pattern(
-                host_name, aov_patterns, render_file_name
-            )
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
             # toggle preview on if multipart is on
 
             if instance_data.get("multipartExr"):
@@ -612,7 +611,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         representations = []
-        host_name = self.context.data["hostName"]
+        host_name = os.environ.get("AVALON_APP", "")
         collections, remainders = clique.assemble(exp_files)
 
         # create representation for every collected sequence
@@ -771,7 +770,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        asset = data.get("asset") or context.data["asset"]
+        asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
         start = instance.data.get("frameStart")
@@ -1149,7 +1148,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        project_name = self.context.data["projectName"]
+        project_name = legacy_io.active_project()
         version = get_last_version_by_subset_name(
             project_name,
             subset,
@@ -1198,9 +1197,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 be stored
                 based on 'publish' template
         """
-
-        project_name = self.context.data["projectName"]
         if not version:
+            project_name = legacy_io.active_project()
             version = get_last_version_by_subset_name(
                 project_name,
                 subset,
@@ -1223,6 +1221,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
+            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

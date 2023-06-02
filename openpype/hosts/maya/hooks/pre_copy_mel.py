@@ -10,11 +10,10 @@ class PreCopyMel(PreLaunchHook):
     app_groups = ["maya"]
 
     def execute(self):
-        project_doc = self.data["project_doc"]
+        project_name = self.launch_context.env.get("AVALON_PROJECT")
         workdir = self.launch_context.env.get("AVALON_WORKDIR")
         if not workdir:
             self.log.warning("BUG: Workdir is not filled.")
             return
 
-        project_settings = self.data["project_settings"]
-        create_workspace_mel(workdir, project_doc["name"], project_settings)
+        create_workspace_mel(workdir, project_name)

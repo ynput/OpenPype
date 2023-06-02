@@ -20,7 +20,7 @@ class FbxModelLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.filepath_from_context(context))
+        filepath = os.path.normpath(self.fname)
         rt.FBXImporterSetParam("Animation", False)
         rt.FBXImporterSetParam("Cameras", False)
         rt.FBXImporterSetParam("Preserveinstances", True)

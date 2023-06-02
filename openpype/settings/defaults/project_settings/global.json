@@ -2,8 +2,8 @@
     "imageio": {
         "ocio_config": {
             "filepath": [
-                "{BUILTIN_OCIO_ROOT}/aces_1.2/config.ocio",
-                "{BUILTIN_OCIO_ROOT}/nuke-default/config.ocio"
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio",
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/nuke-default/config.ocio"
             ]
         },
         "file_rules": {
@@ -46,14 +46,9 @@
             "enabled": false,
             "families": []
         },
-        "CollectFramesFixDef": {
-            "enabled": true,
-            "rewrite_version_enable": true
-        },
         "ValidateEditorialAssetName": {
             "enabled": true,
-            "optional": false,
-            "active": true
+            "optional": false
         },
         "ValidateVersion": {
             "enabled": true,
@@ -257,9 +252,7 @@
                     }
                 },
                 {
-                    "families": [
-                        "review"
-                    ],
+                    "families": ["review"],
                     "hosts": [
                         "maya",
                         "houdini"
@@ -298,6 +291,74 @@
                     "template": ""
                 }
             ]
+        },
+        "IntegrateAssetNew": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ],
+            "template_name_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "publish"
+                },
+                {
+                    "families": [
+                        "review",
+                        "render",
+                        "prerender"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "simpleUnrealTexture"
+                },
+                {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
+                }
+            ]
+        },
+        "IntegrateAsset": {
+            "skip_host_families": []
         },
         "IntegrateHeroVersion": {
             "enabled": true,

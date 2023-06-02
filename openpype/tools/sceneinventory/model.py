@@ -15,7 +15,7 @@ from openpype.client import (
     get_representation_by_id,
 )
 from openpype.pipeline import (
-    get_current_project_name,
+    legacy_io,
     schema,
     HeroVersionType,
     registered_host,
@@ -27,6 +27,7 @@ from openpype.modules import ModulesManager
 from .lib import (
     get_site_icons,
     walk_hierarchy,
+    get_progress_for_repre
 )
 
 
@@ -62,7 +63,7 @@ class InventoryModel(TreeModel):
         if not self.sync_enabled:
             return
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.current_project()
         active_site = sync_server.get_active_site(project_name)
         remote_site = sync_server.get_remote_site(project_name)
 
@@ -79,7 +80,7 @@ class InventoryModel(TreeModel):
                 project_name, remote_site
             )
 
-        self.sync_server = sync_server
+        # self.sync_server = sync_server
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
@@ -320,7 +321,7 @@ class InventoryModel(TreeModel):
         """
 
         # NOTE: @iLLiCiTiT this need refactor
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
 
         self.beginResetModel()
 
@@ -444,7 +445,7 @@ class InventoryModel(TreeModel):
             group_node["group"] = subset["data"].get("subsetGroup")
 
             if self.sync_enabled:
-                progress = self.sync_server.get_progress_for_repre(
+                progress = get_progress_for_repre(
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site

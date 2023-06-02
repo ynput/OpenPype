@@ -19,37 +19,21 @@ if "OpenPypeVersion" not in sys.modules:
     sys.modules["OpenPypeVersion"] = OpenPypeVersion
 
 
-def _get_qt_app():
-    from qtpy import QtWidgets, QtCore
-
-    app = QtWidgets.QApplication.instance()
-    if app is not None:
-        return app
-
-    for attr_name in (
-        "AA_EnableHighDpiScaling",
-        "AA_UseHighDpiPixmaps",
-    ):
-        attr = getattr(QtCore.Qt, attr_name, None)
-        if attr is not None:
-            QtWidgets.QApplication.setAttribute(attr)
-
-    if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
-        QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
-            QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-        )
-
-    return QtWidgets.QApplication(sys.argv)
-
-
 def open_dialog():
     """Show Igniter dialog."""
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
+    from qtpy import QtWidgets, QtCore
     from .install_dialog import InstallDialog
 
-    app = _get_qt_app()
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
 
     d = InstallDialog()
     d.open()
@@ -63,10 +47,16 @@ def open_update_window(openpype_version):
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
-
+    from qtpy import QtWidgets, QtCore
     from .update_window import UpdateWindow
 
-    app = _get_qt_app()
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
 
     d = UpdateWindow(version=openpype_version)
     d.open()
@@ -81,10 +71,16 @@ def show_message_dialog(title, message):
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
-
+    from qtpy import QtWidgets, QtCore
     from .message_dialog import MessageDialog
 
-    app = _get_qt_app()
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
 
     dialog = MessageDialog(title, message)
     dialog.open()

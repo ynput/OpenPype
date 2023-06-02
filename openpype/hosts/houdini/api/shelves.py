@@ -4,7 +4,6 @@ import logging
 import platform
 
 from openpype.settings import get_project_settings
-from openpype.pipeline import get_current_project_name
 
 import hou
 
@@ -18,8 +17,7 @@ def generate_shelves():
     current_os = platform.system().lower()
 
     # load configuration of houdini shelves
-    project_name = get_current_project_name()
-    project_settings = get_project_settings(project_name)
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     shelves_set_config = project_settings["houdini"]["shelves"]
 
     if not shelves_set_config:

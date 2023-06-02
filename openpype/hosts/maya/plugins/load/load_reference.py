@@ -118,16 +118,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
-        project_name = context["project"]["name"]
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
-        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
+            file_url = self.prepare_root_value(self.fname,
+                                               context["project"]["name"])
 
-            file_url = self.prepare_root_value(path, project_name)
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -163,7 +162,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                settings = get_project_settings(project_name)
+                settings = get_project_settings(os.environ['AVALON_PROJECT'])
 
                 display_handle = settings['maya']['load'].get(
                     'reference_loader', {}

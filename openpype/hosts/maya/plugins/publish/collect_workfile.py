@@ -2,6 +2,7 @@ import os
 import pyblish.api
 
 from maya import cmds
+from openpype.pipeline import legacy_io
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -19,7 +20,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
 
-        task = context.data["task"]
+        task = legacy_io.Session["AVALON_TASK"]
 
         data = {}
 
@@ -29,7 +30,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         data.update({
             "subset": subset,
-            "asset": context.data["asset"],
+            "asset": os.getenv("AVALON_ASSET", None),
             "label": subset,
             "publish": True,
             "family": 'workfile',

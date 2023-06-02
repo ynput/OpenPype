@@ -1,4 +1,3 @@
-from openpype import AYON_SERVER_ENABLED
 from openpype.modules import OpenPypeModule, ITrayModule
 
 
@@ -8,8 +7,6 @@ class LogViewModule(OpenPypeModule, ITrayModule):
     def initialize(self, modules_settings):
         logging_settings = modules_settings[self.name]
         self.enabled = logging_settings["enabled"]
-        if AYON_SERVER_ENABLED:
-            self.enabled = False
 
         # Tray attributes
         self.window = None

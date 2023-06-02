@@ -8,7 +8,7 @@ from openpype.client import (
 from openpype.pipeline import (
     InventoryAction,
     get_representation_context,
-    get_current_project_name,
+    legacy_io,
 )
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -35,7 +35,7 @@ class ImportModelRender(InventoryAction):
     def process(self, containers):
         from maya import cmds
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         for container in containers:
             con_name = container["objectName"]
             nodes = []
@@ -68,7 +68,7 @@ class ImportModelRender(InventoryAction):
 
         from maya import cmds
 
-        project_name = get_current_project_name()
+        project_name = legacy_io.active_project()
         repre_docs = get_representations(
             project_name, version_ids=[version_id], fields=["_id", "name"]
         )

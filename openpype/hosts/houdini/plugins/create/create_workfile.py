@@ -4,6 +4,7 @@ from openpype.hosts.houdini.api import plugin
 from openpype.hosts.houdini.api.lib import read, imprint
 from openpype.hosts.houdini.api.pipeline import CONTEXT_CONTAINER
 from openpype.pipeline import CreatedInstance, AutoCreator
+from openpype.pipeline import legacy_io
 from openpype.client import get_asset_by_name
 import hou
 
@@ -26,9 +27,9 @@ class CreateWorkfile(plugin.HoudiniCreatorBase, AutoCreator):
             ), None)
 
         project_name = self.project_name
-        asset_name = self.create_context.get_current_asset_name()
-        task_name = self.create_context.get_current_task_name()
-        host_name = self.host_name
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
 
         if current_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)

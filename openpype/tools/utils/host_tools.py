@@ -10,7 +10,7 @@ from openpype.host import IWorkfileHost, ILoadHost
 from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
-    get_current_asset_name,
+    legacy_io,
 )
 
 from .lib import qt_app_context
@@ -96,7 +96,7 @@ class HostToolsHelper:
                 use_context = False
 
             if use_context:
-                context = {"asset": get_current_asset_name()}
+                context = {"asset": legacy_io.Session["AVALON_ASSET"]}
                 loader_tool.set_context(context, refresh=True)
             else:
                 loader_tool.refresh()

@@ -50,10 +50,9 @@ class MultiverseUsdOverLoader(load.LoaderPlugin):
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
         import multiverse
 
-        path = self.filepath_from_context(context)
         nodes = current_usd
         with maintained_selection():
-            multiverse.AddUsdCompoundAssetPath(current_usd[0], path)
+            multiverse.AddUsdCompoundAssetPath(current_usd[0], self.fname)
 
         namespace = current_usd[0].split("|")[1].split(":")[0]
 

@@ -5,7 +5,6 @@ import platform
 import getpass
 import socket
 
-from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import get_local_settings
 from .execute import get_openpype_execute_args
 from .local_settings import get_local_site_id
@@ -34,21 +33,6 @@ def get_openpype_info():
     }
 
 
-def get_ayon_info():
-    executable_args = get_openpype_execute_args()
-    if is_running_from_build():
-        version_type = "build"
-    else:
-        version_type = "code"
-    return {
-        "build_verison": get_build_version(),
-        "version_type": version_type,
-        "executable": executable_args[-1],
-        "ayon_root": os.environ["AYON_ROOT"],
-        "server_url": os.environ["AYON_SERVER_URL"]
-    }
-
-
 def get_workstation_info():
     """Basic information about workstation."""
     host_name = socket.gethostname()
@@ -68,17 +52,12 @@ def get_workstation_info():
 
 def get_all_current_info():
     """All information about current process in one dictionary."""
-
-    output = {
+    return {
+        "pype": get_openpype_info(),
         "workstation": get_workstation_info(),
         "env": os.environ.copy(),
         "local_settings": get_local_settings()
     }
-    if AYON_SERVER_ENABLED:
-        output["ayon"] = get_ayon_info()
-    else:
-        output["openpype"] = get_openpype_info()
-    return output
 
 
 def extract_pype_info_to_file(dirpath):

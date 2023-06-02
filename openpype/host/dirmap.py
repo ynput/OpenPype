@@ -149,7 +149,7 @@ class HostDirmap(object):
             Returns:
                 dict : { "source-path": [XXX], "destination-path": [YYYY]}
         """
-        project_name = self.project_name
+        project_name = os.getenv("AVALON_PROJECT")
 
         mapping = {}
         if (not self.sync_module.enabled or

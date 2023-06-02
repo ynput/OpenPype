@@ -886,9 +886,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
             self.set_pixmap()
             return
 
-        thumbnail_ent = get_thumbnail(
-            project_name, thumbnail_id, src_type, src_id
-        )
+        thumbnail_ent = get_thumbnail(project_name, thumbnail_id)
         if not thumbnail_ent:
             return
 

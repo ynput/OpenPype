@@ -78,7 +78,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data["plugin"]
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
-        job_info.EnableAutoTimeout = True
+
         # Deadline requires integers in frame range
         frames = "{start}-{end}".format(
             start=int(instance.data["frameStart"]),
@@ -133,8 +133,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
-
-        for filepath in self._iter_expected_files(exp):
+        for filepath in exp:
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
 
@@ -163,11 +162,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         instance = self._instance
         filepath = self.scene_path
 
-        files = instance.data["expectedFiles"]
-        if not files:
+        expected_files = instance.data["expectedFiles"]
+        if not expected_files:
             raise RuntimeError("No Render Elements found!")
-        first_file = next(self._iter_expected_files(files))
-        output_dir = os.path.dirname(first_file)
+        output_dir = os.path.dirname(expected_files[0])
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
@@ -179,39 +177,44 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        project_settings = instance.context.data["project_settings"]
-        payload = self._use_published_name(payload_data, project_settings)
+        payload = self._use_published_name(payload_data)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data, project_settings):
+    def _use_published_name(self, data):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
+        project_setting = get_project_settings(
+            legacy_io.Session["AVALON_PROJECT"]
+        )
 
-        multipass = get_multipass_setting(project_settings)
+        multipass = get_multipass_setting(project_setting)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:
             plugin_data["DisableMultipass"] = 1
 
-        files = instance.data.get("expectedFiles")
-        if not files:
+        expected_files = instance.data.get("expectedFiles")
+        if not expected_files:
             raise RuntimeError("No render elements found")
-        first_file = next(self._iter_expected_files(files))
-        old_output_dir = os.path.dirname(first_file)
+        old_output_dir = os.path.dirname(expected_files[0])
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
-        rgb_bname = os.path.basename(output_beauty)
-        dir = os.path.dirname(first_file)
-        beauty_name = f"{dir}/{rgb_bname}"
-        beauty_name = beauty_name.replace("\\", "/")
-        plugin_data["RenderOutput"] = beauty_name
-        # as 3dsmax has version with different languages
-        plugin_data["Language"] = "ENU"
-        renderer_class = get_current_renderer()
+        filepath = self.from_published_scene()
 
+        def _clean_name(path):
+            return os.path.splitext(os.path.basename(path))[0]
+
+        new_scene = _clean_name(filepath)
+        orig_scene = _clean_name(instance.context.data["currentFile"])
+
+        output_beauty = output_beauty.replace(orig_scene, new_scene)
+        output_beauty = output_beauty.replace("\\", "/")
+        plugin_data["RenderOutput"] = output_beauty
+
+        renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
         if renderer in [
             "ART_Renderer",
@@ -223,36 +226,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         ]:
             render_elem_list = RenderSettings().get_render_element()
             for i, element in enumerate(render_elem_list):
-                elem_bname = os.path.basename(element)
-                new_elem = f"{dir}/{elem_bname}"
-                new_elem = new_elem.replace("/", "\\")
-                plugin_data["RenderElementOutputFilename%d" % i] = new_elem   # noqa
-
-        if renderer == "Redshift_Renderer":
-            plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
-                "separateAovFiles")
+                element = element.replace(orig_scene, new_scene)
+                plugin_data["RenderElementOutputFilename%d" % i] = element   # noqa
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
-
-    def from_published_scene(self, replace_in_path=True):
-        instance = self._instance
-        if instance.data["renderer"] == "Redshift_Renderer":
-            self.log.debug("Using Redshift...published scene wont be used..")
-            replace_in_path = False
-            return replace_in_path
-
-    @staticmethod
-    def _iter_expected_files(exp):
-        if isinstance(exp[0], dict):
-            for _aov, files in exp[0].items():
-                for file in files:
-                    yield file
-        else:
-            for file in exp:
-                yield file
 
     @classmethod
     def get_attribute_defs(cls):

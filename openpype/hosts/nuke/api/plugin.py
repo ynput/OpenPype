@@ -19,7 +19,7 @@ from openpype.pipeline import (
     CreatorError,
     Creator as NewCreator,
     CreatedInstance,
-    get_current_task_name
+    legacy_io
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -1189,7 +1189,7 @@ def convert_to_valid_instaces():
 
     from openpype.hosts.nuke.api import workio
 
-    task_name = get_current_task_name()
+    task_name = legacy_io.Session["AVALON_TASK"]
 
     # save into new workfile
     current_file = workio.current_file()
