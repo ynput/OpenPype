@@ -224,7 +224,7 @@ class OpenPypeMongoConnection:
             "serverSelectionTimeoutMS": timeout
         }
         if should_add_certificate_path_to_mongo_url(mongo_url):
-            kwargs["ssl_ca_certs"] = certifi.where()
+            kwargs["tlsCAFile"] = certifi.where()
 
         mongo_client = pymongo.MongoClient(mongo_url, **kwargs)
 
