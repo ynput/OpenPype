@@ -1553,12 +1553,12 @@ def register():
     )
 
     # Use a timer to delay execution of check_workfile_up_to_date
-    def run_op_check_workfile_up_to_date():
+    def delayed_check_workfile_up_to_date():
         if hasattr(
             bpy.types, bpy.ops.wm.check_workfile_up_to_date.idname()
         ):
             bpy.ops.wm.check_workfile_up_to_date("INVOKE_DEFAULT")
-    bpy.app.timers.register(run_op_check_workfile_up_to_date, persistent=True)
+    bpy.app.timers.register(delayed_check_workfile_up_to_date, persistent=True)
 
 def unregister():
     """Unregister the operators and menu."""
