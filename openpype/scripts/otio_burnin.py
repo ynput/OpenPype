@@ -41,45 +41,6 @@ TIMECODE_KEY = "{timecode}"
 SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
-def convert_list_to_command(list_to_convert, fps, label=""):
-    """Convert a list of values to a drawtext command file for ffmpeg `sendcmd`
-
-    The list of values is expected to have a value per frame. If the video
-    file ends up being longer than the amount of samples per frame than the
-    last value will be held.
-
-    Args:
-        list_to_convert (list): List of values per frame.
-        fps (float or int): The expected frame per seconds of the output file.
-        label (str): Label for the drawtext, if specific drawtext filter is
-            required
-
-    Returns:
-        str: Filepath to the temporary drawtext command file.
-
-    """
-
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-        for i, value in enumerate(list_to_convert):
-            seconds = i / fps
-
-            # Escape special character
-            value = str(value).replace(":", "\\:")
-
-            filter = "drawtext"
-            if label:
-                filter += "@" + label
-
-            line = (
-                "{start} {filter} reinit text='{value}';"
-                "\n".format(start=seconds, filter=filter, value=value)
-            )
-
-            f.write(line)
-        f.flush()
-        return f.name
-
-
 def _get_ffprobe_data(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
     :param str source: source media file
@@ -178,6 +139,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
+        self.cleanup_paths = []
 
         super().__init__(source, source_streams)
 
@@ -191,7 +153,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         frame_start=None,
         frame_end=None,
         options=None,
-        cmd=""
     ):
         """
         Adding static text to a filter.
@@ -212,13 +173,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if frame_end is not None:
             options["frame_end"] = frame_end
 
-        draw_text = DRAWTEXT
-        if cmd:
-            draw_text = "{}, {}".format(cmd, DRAWTEXT)
 
         options["label"] = align
-
-        self._add_burnin(text, align, options, draw_text)
+        self._add_burnin(text, align, options, DRAWTEXT)
 
     def add_timecode(
         self, align, frame_start=None, frame_end=None, frame_start_tc=None,
@@ -263,6 +220,96 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         self._add_burnin(text, align, options, TIMECODE)
 
+    def add_per_frame_text(
+        self,
+        text,
+        align,
+        frame_start,
+        frame_end,
+        listed_keys,
+        options=None
+    ):
+        if not options:
+            options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
+
+        options = options.copy()
+        if frame_start is None:
+            frame_start = options["frame_offset"]
+
+        # `frame_end` is only for meassurements of text position
+        if frame_end is None:
+            frame_end = options["frame_end"]
+
+        fps = options.get("fps")
+        if not fps:
+            fps = self.frame_rate
+
+        text_for_size = text
+        if CURRENT_FRAME_SPLITTER in text:
+            expr = self._get_current_frame_expression(frame_start, frame_end)
+            if expr is None:
+                expr = MISSING_KEY_VALUE
+                text_for_size = text_for_size.replace(
+                    CURRENT_FRAME_SPLITTER, MISSING_KEY_VALUE)
+            text = text.replace(CURRENT_FRAME_SPLITTER, expr)
+
+        longest_list = max([len(values) for values in listed_keys.values()])
+        new_listed_keys = [{} for _ in range(longest_list)]
+        longest_value_by_key = {}
+        for key, values in listed_keys.items():
+            for _ in range(longest_list - len(values)):
+                values.append("")
+            key_max_len = 0
+            key_max_value = ""
+            for _value, _new_value in zip(values, new_listed_keys):
+                _value = str(_value)
+                _value_len = len(_value)
+                if _value_len > key_max_len:
+                    key_max_value = _value
+                    key_max_len = _value_len
+                _new_value[key] = _value
+            longest_value_by_key[key] = key_max_value
+
+        for key, value in longest_value_by_key.items():
+            text_for_size = text_for_size.replace(key, value)
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
+            path = temp.name
+            lines = []
+            for frame, value in enumerate(new_listed_keys):
+                seconds = frame / fps
+                # Escape special character
+                new_text = text
+                for _key, _value in value.items():
+                    _value = str(_value)
+                    new_text = new_text.replace(_key, str(_value))
+
+                new_text = (
+                    str(new_text)
+                    .replace("\\", "\\\\")
+                    .replace(",", "\\,")
+                    .replace(":", "\\:")
+                )
+                filter_type = f"drawtext@{align}"
+                lines.append(
+                    f"{seconds} {filter_type} reinit text='{new_text}';")
+
+            temp.write("\n".join(lines))
+
+        self.cleanup_paths.append(path)
+        self.filters["drawtext"].append("sendcmd=f='{}'".format(
+            path.replace("\\", "/").replace(":", "\\:")
+        ))
+        self.add_text(text_for_size, align, frame_start, frame_end, options)
+
+    def _get_current_frame_expression(self, frame_start, frame_end):
+        if frame_start is None:
+            return None
+        return (
+            "%{eif:n+" + str(frame_start)
+            + ":d:" + str(len(str(frame_end))) + "}"
+        )
+
     def _add_burnin(self, text, align, options, draw):
         """
         Generic method for building the filter flags.
@@ -276,18 +323,19 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if CURRENT_FRAME_SPLITTER in text:
             frame_start = options["frame_offset"]
             frame_end = options.get("frame_end", frame_start)
-            if frame_start is None:
-                replacement_final = replacement_size = str(MISSING_KEY_VALUE)
+            expr = self._get_current_frame_expression(frame_start, frame_end)
+            if expr is not None:
+                max_length = len(str(frame_end))
+                # Use number '8' length times for replacement
+                size_replacement = max_length * "8"
             else:
-                replacement_final = "%{eif:n+" + str(frame_start) + ":d:" + \
-                                    str(len(str(frame_end))) + "}"
-                replacement_size = str(frame_end)
+                expr = size_replacement = MISSING_KEY_VALUE
 
             final_text = final_text.replace(
-                CURRENT_FRAME_SPLITTER, replacement_final
+                CURRENT_FRAME_SPLITTER, expr
             )
             text_for_size = text_for_size.replace(
-                CURRENT_FRAME_SPLITTER, replacement_size
+                CURRENT_FRAME_SPLITTER, size_replacement
             )
 
         resolution = self.resolution
@@ -314,13 +362,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
         )
 
-        arg_font_path = font_path
-        if platform.system().lower() == "windows":
-            arg_font_path = (
-                arg_font_path
-                .replace(os.sep, r'\\' + os.sep)
-                .replace(':', r'\:')
-            )
+        arg_font_path = (
+            font_path
+            .replace("\\", "\\\\")
+            .replace(':', r'\:')
+        )
         data["font"] = arg_font_path
 
         self.filters['drawtext'].append(draw % data)
@@ -347,9 +393,15 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if overwrite:
             output = '-y {}'.format(output)
 
-        filters = ''
-        if self.filter_string:
-            filters = '-vf "{}"'.format(self.filter_string)
+        filters = ""
+        filter_string = self.filter_string
+        if filter_string:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
+                temp.write(filter_string)
+                filters_path = temp.name
+            filters = '-filter_script "{}"'.format(filters_path)
+            print("Filters:", filter_string)
+            self.cleanup_paths.append(filters_path)
 
         if self.first_frame is not None:
             start_number_arg = "-start_number {}".format(self.first_frame)
@@ -419,6 +471,10 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             raise RuntimeError(
                 "Failed to generate this f*cking file '%s'" % output
             )
+
+        for path in self.cleanup_paths:
+            if os.path.exists(path):
+                os.remove(path)
 
 
 def example(input_path, output_path):
@@ -589,58 +645,41 @@ def burnins_from_data(
             print("Source does not have set timecode value.")
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
-        # Convert lists.
-        cmd = ""
-        text = None
-        keys = [i[1] for i in Formatter().parse(value) if i[1] is not None]
-        list_to_convert = []
-
-        # Warn about nested dictionary support for lists. Ei. we dont support
-        # it.
-        if "[" in "".join(keys):
-            print(
-                "We dont support converting nested dictionaries to lists,"
-                " so skipping {}".format(value)
-            )
-        else:
-            for key in keys:
-                data_value = data[key]
-
-                # Multiple lists are not supported.
-                if isinstance(data_value, list) and list_to_convert:
-                    raise ValueError(
-                        "Found multiple lists to convert, which is not "
-                        "supported: {}".format(value)
-                    )
-
-                if isinstance(data_value, list):
-                    print("Found list to convert: {}".format(data_value))
-                    for v in data_value:
-                        data[key] = v
-                        list_to_convert.append(value.format(**data))
-
-        if list_to_convert:
-            value = list_to_convert[0]
-            path = convert_list_to_command(
-                list_to_convert, data["fps"], label=align
-            )
-            cmd = "sendcmd=f='{}'".format(path)
-            cmd = cmd.replace("\\", "/")
-            cmd = cmd.replace(":", "\\:")
-            clean_up_paths.append(path)
-
         # Failsafe for missing keys.
         key_pattern = re.compile(r"(\{.*?[^{0]*\})")
         missing_keys = []
+        listed_keys = {}
+        fill_values = {}
         for group in key_pattern.findall(value):
+            keys_str = group[1:-1]
+            keys = [item.rstrip("]") for item in keys_str.split("[")]
+            key_value = data
             try:
-                group.format(**data)
-            except (TypeError, KeyError):
+                for key in keys:
+                    key_value = key_value[key]
+
+                if isinstance(key_value, list):
+                    listed_keys[group] = key_value
+                else:
+                    fill_values[group] = key_value
+                    group.format(**data)
+            except (KeyError, TypeError):
                 missing_keys.append(group)
+                continue
 
         missing_keys = list(set(missing_keys))
         for key in missing_keys:
             value = value.replace(key, MISSING_KEY_VALUE)
+
+        if listed_keys:
+            for key, key_value in fill_values.items():
+                if key == CURRENT_FRAME_KEY:
+                    key_value = CURRENT_FRAME_SPLITTER
+                value = value.replace(key, str(key_value))
+            burnin.add_per_frame_text(
+                value, align, frame_start, frame_end, listed_keys
+            )
+            continue
 
         # Handle timecode differently
         if has_source_timecode:
@@ -665,7 +704,7 @@ def burnins_from_data(
 
         text = value.format(**data)
 
-        burnin.add_text(text, align, frame_start, frame_end, cmd=cmd)
+        burnin.add_text(text, align, frame_start, frame_end)
 
     ffmpeg_args = []
     if codec_data:
