@@ -1,4 +1,5 @@
 import copy
+import math
 from collections import defaultdict
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -88,8 +89,10 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         template_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         template_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
+        renumber_frame = QtWidgets.QCheckBox()
+
         frame_offset_value = QtWidgets.QSpinBox()
-        frame_offset_value.setMinimum(-99)
+        frame_offset_value.setMinimum(-(1<<32)//2)
 
         root_line_edit = QtWidgets.QLineEdit()
 
@@ -115,6 +118,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Delivery template", dropdown)
         input_layout.addRow("Template value", template_label)
         input_layout.addRow("Frame Offset", frame_offset_value)
+        input_layout.addRow("Renumber Frame", renumber_frame)
         input_layout.addRow("Root", root_line_edit)
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
@@ -143,6 +147,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.template_label = template_label
         self.dropdown = dropdown
         self.frame_offset_value = frame_offset_value
+        self.renumber_frame = renumber_frame
         self.root_line_edit = root_line_edit
         self.progress_bar = progress_bar
         self.text_area = text_area
@@ -170,6 +175,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         datetime_data = get_datetime_data()
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
+        renumber_frame = self.renumber_frame.isChecked()
         frame_offset = self.frame_offset_value.value()
         for repre in self._representations:
             if repre["name"] not in selected_repres:
@@ -223,6 +229,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
+                    args.append(renumber_frame)
                     args.append(frame_offset)
                     new_report_items, uploaded = deliver_sequence(*args)
                 report_items.update(new_report_items)

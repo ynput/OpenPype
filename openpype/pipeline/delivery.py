@@ -177,6 +177,7 @@ def deliver_sequence(
     format_dict,
     report_items,
     log,
+    renumber_frame=False,
     frame_offset=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
@@ -299,19 +300,34 @@ def deliver_sequence(
         src = os.path.normpath(
             os.path.join(dir_path, src_file_name)
         )
-        dsp_index = int(index) + frame_offset
-        if dsp_index < 0:
-            msg = "Frame has a smaller number than Frame Offset"
-            report_items[msg].append(src_file_name)
-            log.warning("{} <{}>".format(msg, context))
-            return report_items, 0
 
-        dst_padding = dst_collection.format("{padding}") % dsp_index
-        dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
-        dst = os.path.normpath(
-            os.path.join(delivery_folder, dst)
-        )
-        _copy_file(src, dst)
+        if renumber_frame:
+            first_index = src_collection.indexes[0]
+            dsp_index = (int(index) - first_index) + 1
+            dst_padding = dst_collection.format("{padding}") % dsp_index
+            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+            dst = os.path.normpath(
+                os.path.join(delivery_folder, dst)
+            )
+
+            _copy_file(src, dst)
+
+        else:
+            dsp_index = int(index) + frame_offset
+            if dsp_index < 0:
+                msg = "Frame has a smaller number than Frame Offset"
+                report_items[msg].append(src_file_name)
+                log.warning("{} <{}>".format(msg, context))
+                return report_items, 0
+
+            dst_padding = dst_collection.format("{padding}") % dsp_index
+            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+            dst = os.path.normpath(
+                os.path.join(delivery_folder, dst)
+            )
+
+            _copy_file(src, dst)
+
         uploaded += 1
 
     return report_items, uploaded
