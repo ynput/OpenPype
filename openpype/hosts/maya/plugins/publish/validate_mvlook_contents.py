@@ -3,7 +3,8 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -42,7 +43,7 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin,
                           .format(intent))
 
         if not instance[:]:
-            raise RuntimeError("Instance is empty")
+            raise PublishValidationError("Instance is empty")
 
         invalid = set()
 
@@ -69,12 +70,12 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin,
                     if enforced:
                         invalid.add(node)
                         self.log.error(msg)
-                        raise RuntimeError(msg)
+                        raise PublishValidationError(msg)
                     else:
                         self.log.warning(msg)
 
         if invalid:
-            raise RuntimeError("'{}' has invalid look "
+            raise PublishValidationError("'{}' has invalid look "
                                "content".format(instance.name))
 
     def valid_file(self, fname):

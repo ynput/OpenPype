@@ -1,7 +1,10 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
@@ -48,7 +51,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("'{}' has invalid look "
+            raise PublishValidationError("'{}' has invalid look "
                                "content".format(instance.name))
 
     @classmethod

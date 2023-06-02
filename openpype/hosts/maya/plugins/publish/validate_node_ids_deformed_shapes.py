@@ -6,6 +6,7 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -35,7 +36,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Shapes found that are considered 'Deformed'"
+            raise PublishValidationError("Shapes found that are considered 'Deformed'"
                                "without object ids: {0}".format(invalid))
 
     @classmethod

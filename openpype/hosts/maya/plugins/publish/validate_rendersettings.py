@@ -284,7 +284,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     render_value = cmds.getAttr(
                         "{}.{}".format(node, attribute)
                     )
-                except RuntimeError:
+                except PublishValidationError:
                     invalid = True
                     cls.log.error(
                         "Cannot get value of {}.{}".format(node, attribute)

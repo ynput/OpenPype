@@ -11,7 +11,10 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin
+    PublishValidationError
 )
+
+
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
@@ -158,4 +161,4 @@ class ValidateModelName(pyblish.api.InstancePlugin,
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Model naming is invalid. See the log.")
+            raise PublishValidationError("Model naming is invalid. See the log.")

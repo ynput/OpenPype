@@ -2,7 +2,10 @@ import pyblish.api
 
 from openpype.client import get_assets
 from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import ValidatePipelineOrder
+from openpype.pipeline.publish import (
+    ValidatePipelineOrder,
+    PublishValidationError
+)
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -29,7 +32,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found asset IDs which are not related to "
+            raise PublishValidationError("Found asset IDs which are not related to "
                                "current project in instance: "
                                "`%s`" % instance.name)
 

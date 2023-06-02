@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -48,7 +51,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
                                   "members: {}".format(members))
                     return members
 
-                raise RuntimeError("No cameras found in empty instance.")
+                raise PublishValidationError("No cameras found in empty instance.")
 
         if not cls.validate_shapes:
             cls.log.debug("Not validating shapes in the camera content"
@@ -72,5 +75,5 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Invalid camera contents: "
+            raise PublishValidationError("Invalid camera contents: "
                                "{0}".format(invalid))

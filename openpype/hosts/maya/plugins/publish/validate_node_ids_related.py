@@ -2,7 +2,8 @@ import pyblish.api
 
 from openpype.pipeline.publish import (
     ValidatePipelineOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
@@ -33,7 +34,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin,
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes IDs found that are not related to asset "
+            raise PublishValidationError("Nodes IDs found that are not related to asset "
                                "'{}' : {}".format(instance.data['asset'],
                                                   invalid))
 

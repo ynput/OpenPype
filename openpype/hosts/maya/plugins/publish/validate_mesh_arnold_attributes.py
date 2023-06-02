@@ -13,8 +13,8 @@ from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin,
     RepairAction,
     ValidateMeshOrder,
+    PublishValidationError
 )
-
 
 class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
                                    OptionalPyblishPluginMixin):
@@ -54,7 +54,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
                 plug = "{}.{}".format(mesh, attr)
                 try:
                     defaults[attr] = get_attribute(plug)
-                except RuntimeError:
+                except PublishValidationError:
                     cls.log.debug("Ignoring arnold attribute: {}".format(attr))
 
         return defaults
@@ -110,7 +110,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid_attributes(instance, compute=True)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Non-default Arnold attributes found in instance:"
                 " {0}".format(invalid)
             )
