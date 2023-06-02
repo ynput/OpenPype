@@ -316,7 +316,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         }
         session = OperationsSession()
         new_project_doc = copy.deepcopy(project_doc)
-        new_project_doc["data"] = data
+        new_project_doc["data"].update(data)
 
         update_data = prepare_subset_update_data(project_doc, new_project_doc)
         if not update_data:
