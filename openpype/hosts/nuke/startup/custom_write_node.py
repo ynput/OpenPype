@@ -68,6 +68,7 @@ def main():
         if knob["name"] == "file_type":
             ext = knob["value"]
     for w in write_selected_nodes:
+        # data for mapping the path
         data = {
             "work": os.getenv("AVALON_WORKDIR"),
             "subset": w["name"].value(),
