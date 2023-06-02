@@ -1,5 +1,4 @@
 import re
-import copy
 
 from openpype.client import get_projects, create_project
 from .constants import (
@@ -18,6 +17,7 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     get_warning_pixmap
 )
+from openpype.settings.lib import get_default_settings
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -144,9 +144,23 @@ class CreateProjectDialog(QtWidgets.QDialog):
         inputs_widget = QtWidgets.QWidget(self)
         project_name_input = QtWidgets.QLineEdit(inputs_widget)
         project_code_input = QtWidgets.QLineEdit(inputs_widget)
-        project_width_input = QtWidgets.QLineEdit(inputs_widget)
-        project_height_input = QtWidgets.QLineEdit(inputs_widget)
-        project_fps_input = QtWidgets.QLineEdit(inputs_widget)
+        project_width_input = NumScrollWidget(0, 9999999)
+        project_height_input = NumScrollWidget(0, 9999999)
+        project_fps_input = FloatScrollWidget(1, 9999999, decimals=3, step=1)
+        project_aspect_input = FloatScrollWidget(
+            0, 9999999, decimals=2, step=0.01
+        )
+        project_frame_start_input = NumScrollWidget(-9999999, 9999999)
+        project_frame_end_input = NumScrollWidget(-9999999, 9999999)
+
+        default_project_data = self.get_default_attributes()
+        project_width_input.setValue(default_project_data["resolutionWidth"])
+        project_height_input.setValue(default_project_data["resolutionHeight"])
+        project_fps_input.setValue(default_project_data["fps"])
+        project_aspect_input.setValue(default_project_data["pixelAspect"])
+        project_frame_start_input.setValue(default_project_data["frameStart"])
+        project_frame_end_input.setValue(default_project_data["frameEnd"])
+
         library_project_input = QtWidgets.QCheckBox(inputs_widget)
 
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
@@ -157,12 +171,18 @@ class CreateProjectDialog(QtWidgets.QDialog):
         inputs_layout.addRow("Width:", project_width_input)
         inputs_layout.addRow("Height:", project_height_input)
         inputs_layout.addRow("FPS:", project_fps_input)
+        inputs_layout.addRow("Aspect:", project_aspect_input)
+        inputs_layout.addRow("Frame Start:", project_frame_start_input)
+        inputs_layout.addRow("Frame End:", project_frame_end_input)
 
         project_name_label = QtWidgets.QLabel(self)
         project_code_label = QtWidgets.QLabel(self)
         project_width_label = QtWidgets.QLabel(self)
         project_height_label = QtWidgets.QLabel(self)
         project_fps_label = QtWidgets.QLabel(self)
+        project_aspect_label = QtWidgets.QLabel(self)
+        project_frame_start_label = QtWidgets.QLabel(self)
+        project_frame_end_label = QtWidgets.QLabel(self)
 
         btns_widget = QtWidgets.QWidget(self)
         ok_btn = QtWidgets.QPushButton("Ok", btns_widget)
@@ -181,6 +201,9 @@ class CreateProjectDialog(QtWidgets.QDialog):
         main_layout.addWidget(project_width_label, 1)
         main_layout.addWidget(project_height_label, 1)
         main_layout.addWidget(project_fps_label, 1)
+        main_layout.addWidget(project_aspect_label, 1)
+        main_layout.addWidget(project_frame_start_label, 1)
+        main_layout.addWidget(project_frame_end_label, 1)
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
 
@@ -197,19 +220,29 @@ class CreateProjectDialog(QtWidgets.QDialog):
         self.project_width_label = project_width_label
         self.project_height_label = project_height_label
         self.project_fps_label = project_fps_label
+        self.project_aspect_label = project_aspect_label
+        self.project_frame_start_label = project_frame_start_label
+        self.project_frame_end_label = project_frame_end_label
 
         self.project_name_input = project_name_input
         self.project_code_input = project_code_input
+        self.library_project_input = library_project_input
         self.project_width_input = project_width_input
         self.project_height_input = project_height_input
         self.project_fps_input = project_fps_input
-        self.library_project_input = library_project_input
+        self.project_aspect_input = project_aspect_input
+        self.project_frame_start_input = project_frame_start_input
+        self.project_frame_end_input = project_frame_end_input
 
         self.ok_btn = ok_btn
 
     @property
     def project_name(self):
         return self.project_name_input.text()
+
+    def get_default_attributes(self):
+        settings = get_default_settings()
+        return settings['project_anatomy']['attributes']
 
     def _on_project_name_change(self, value):
         if self._project_code_value is None:
@@ -293,29 +326,28 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
-        project_width = self._validate_number(
-            self.project_width_input.text(), int
-        )
-        project_height = self._validate_number(
-            self.project_height_input.text(), int
-        )
-        project_fps = self._validate_number(
-            self.project_fps_input.text(), float
-        )
+        project_width = self.project_width_input.text()
+        project_height = self.project_height_input.text()
+        project_fps = self.project_fps_input.text()
+        project_aspect = self.project_aspect_input.text()
+        project_frame_start = self.project_frame_start_input.text()
+        project_frame_end = self.project_frame_end_input.text()
+        
         library_project = self.library_project_input.isChecked()
         project_doc = create_project(
             project_name,
             project_code,
             library_project,
         )
-
         update_data = {
             "data.resolutionWidth": project_width,
             "data.resolutionHeight": project_height,
             "data.fps": project_fps,
+            "data.pixelAspect": project_aspect,
+            "data.frameStart": project_frame_start,
+            "data.frameEnd": project_frame_end,
         }
         session = OperationsSession()
-
         session.update_entity(
             project_name,
             project_doc["type"],
@@ -512,3 +544,23 @@ class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
             event.ignore()
         else:
             super(DoubleSpinBoxScrollFixed, self).wheelEvent(event)
+
+
+class NumScrollWidget(SpinBoxScrollFixed):
+
+    def __init__(self, minimum, maximum):
+        super(NumScrollWidget, self).__init__()
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+
+
+class FloatScrollWidget(DoubleSpinBoxScrollFixed):
+
+    def __init__(self, minimum, maximum, decimals, step=None):
+        super(FloatScrollWidget, self).__init__()
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.setDecimals(decimals)
+        self.setSingleStep(step)
+        self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
