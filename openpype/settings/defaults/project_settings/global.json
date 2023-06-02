@@ -46,6 +46,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -252,7 +256,9 @@
                     }
                 },
                 {
-                    "families": ["review"],
+                    "families": [
+                        "review"
+                    ],
                     "hosts": [
                         "maya",
                         "houdini"

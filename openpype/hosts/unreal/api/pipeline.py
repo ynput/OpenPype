@@ -9,12 +9,14 @@ import time
 
 import pyblish.api
 
+from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AYON_CONTAINER_ID,
+    legacy_io,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -510,6 +512,141 @@ def get_subsequences(sequence: unreal.LevelSequence):
     if subscene_track is not None and subscene_track.get_sections():
         return subscene_track.get_sections()
     return []
+
+
+def set_sequence_hierarchy(
+    seq_i, seq_j, max_frame_i, min_frame_j, max_frame_j, map_paths
+):
+    # Get existing sequencer tracks or create them if they don't exist
+    tracks = seq_i.get_master_tracks()
+    subscene_track = None
+    visibility_track = None
+    for t in tracks:
+        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+            subscene_track = t
+        if (t.get_class() ==
+                unreal.MovieSceneLevelVisibilityTrack.static_class()):
+            visibility_track = t
+    if not subscene_track:
+        subscene_track = seq_i.add_master_track(unreal.MovieSceneSubTrack)
+    if not visibility_track:
+        visibility_track = seq_i.add_master_track(
+            unreal.MovieSceneLevelVisibilityTrack)
+
+    # Create the sub-scene section
+    subscenes = subscene_track.get_sections()
+    subscene = None
+    for s in subscenes:
+        if s.get_editor_property('sub_sequence') == seq_j:
+            subscene = s
+            break
+    if not subscene:
+        subscene = subscene_track.add_section()
+        subscene.set_row_index(len(subscene_track.get_sections()))
+        subscene.set_editor_property('sub_sequence', seq_j)
+        subscene.set_range(
+            min_frame_j,
+            max_frame_j + 1)
+
+    # Create the visibility section
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    maps = []
+    for m in map_paths:
+        # Unreal requires to load the level to get the map name
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        unreal.EditorLevelLibrary.load_level(m)
+        maps.append(str(ar.get_asset_by_object_path(m).asset_name))
+
+    vis_section = visibility_track.add_section()
+    index = len(visibility_track.get_sections())
+
+    vis_section.set_range(
+        min_frame_j,
+        max_frame_j + 1)
+    vis_section.set_visibility(unreal.LevelVisibility.VISIBLE)
+    vis_section.set_row_index(index)
+    vis_section.set_level_names(maps)
+
+    if min_frame_j > 1:
+        hid_section = visibility_track.add_section()
+        hid_section.set_range(
+            1,
+            min_frame_j)
+        hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+        hid_section.set_row_index(index)
+        hid_section.set_level_names(maps)
+    if max_frame_j < max_frame_i:
+        hid_section = visibility_track.add_section()
+        hid_section.set_range(
+            max_frame_j + 1,
+            max_frame_i + 1)
+        hid_section.set_visibility(unreal.LevelVisibility.HIDDEN)
+        hid_section.set_row_index(index)
+        hid_section.set_level_names(maps)
+
+
+def generate_sequence(h, h_dir):
+    tools = unreal.AssetToolsHelpers().get_asset_tools()
+
+    sequence = tools.create_asset(
+        asset_name=h,
+        package_path=h_dir,
+        asset_class=unreal.LevelSequence,
+        factory=unreal.LevelSequenceFactoryNew()
+    )
+
+    project_name = legacy_io.active_project()
+    asset_data = get_asset_by_name(
+        project_name,
+        h_dir.split('/')[-1],
+        fields=["_id", "data.fps"]
+    )
+
+    start_frames = []
+    end_frames = []
+
+    elements = list(get_assets(
+        project_name,
+        parent_ids=[asset_data["_id"]],
+        fields=["_id", "data.clipIn", "data.clipOut"]
+    ))
+    for e in elements:
+        start_frames.append(e.get('data').get('clipIn'))
+        end_frames.append(e.get('data').get('clipOut'))
+
+        elements.extend(get_assets(
+            project_name,
+            parent_ids=[e["_id"]],
+            fields=["_id", "data.clipIn", "data.clipOut"]
+        ))
+
+    min_frame = min(start_frames)
+    max_frame = max(end_frames)
+
+    fps = asset_data.get('data').get("fps")
+
+    sequence.set_display_rate(
+        unreal.FrameRate(fps, 1.0))
+    sequence.set_playback_start(min_frame)
+    sequence.set_playback_end(max_frame)
+
+    sequence.set_work_range_start(min_frame / fps)
+    sequence.set_work_range_end(max_frame / fps)
+    sequence.set_view_range_start(min_frame / fps)
+    sequence.set_view_range_end(max_frame / fps)
+
+    tracks = sequence.get_master_tracks()
+    track = None
+    for t in tracks:
+        if (t.get_class() ==
+                unreal.MovieSceneCameraCutTrack.static_class()):
+            track = t
+            break
+    if not track:
+        track = sequence.add_master_track(
+            unreal.MovieSceneCameraCutTrack)
+
+    return sequence, (min_frame, max_frame)
 
 
 @contextmanager
