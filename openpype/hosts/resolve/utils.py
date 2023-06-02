@@ -50,6 +50,14 @@ def setup(env):
 
             src = os.path.join(directory, script)
             dst = os.path.join(util_scripts_dir, script)
+
+            # TODO: Make this a less hacky workaround
+            if script == "openpype_startup.scriptlib":
+                # Handle special case for scriptlib that needs to be a folder
+                # up from the Comp folder in the Fusion scripts
+                dst = os.path.join(os.path.dirname(util_scripts_dir),
+                                   script)
+
             log.info("Copying `{}` to `{}`...".format(src, dst))
             if os.path.isdir(src):
                 shutil.copytree(
