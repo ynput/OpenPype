@@ -1089,6 +1089,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             deadline_publish_job_id = \
                 self._submit_deadline_post_job(instance, render_job, instances)
 
+            # Inject deadline url to instances.
+            for inst in instances:
+                inst["deadlineUrl"] = self.deadline_url
+
         # publish job file
         publish_job = {
             "asset": asset,
