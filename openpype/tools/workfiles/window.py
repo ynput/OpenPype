@@ -101,18 +101,12 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.save_clicked.emit()
 
     def get_user_name(self, file):
-        if platform.system() == "Windows":
-            import win32security
-
-            sd = win32security.GetFileSecurity(
-                file, win32security.OWNER_SECURITY_INFORMATION
-            )
-            owner_sid = sd.GetSecurityDescriptorOwner()
-            name, domain, type = win32security.LookupAccountSid(
-                None, owner_sid
-            )
-            return f"{name}@{domain}"
-        else:
+        """Get user name from file path"""
+        # Only run on Unix because pwd module is not available on Windows.
+        # NOTE: we tried adding "win32security" module but it was not working
+        # on all hosts so we decided to just support Linux until migration
+        # to Ayon
+        if platform.system() != "Windows":
             import pwd
 
             filestat = os.stat(file)
