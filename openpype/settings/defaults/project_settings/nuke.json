@@ -227,7 +227,7 @@
                 "type": "action",
                 "sourcetype": "python",
                 "title": "Set non publish output for Write Node",
-                "command": "from openpype.hosts.nuke.startup.ops_write_node_no_publish import main;main();",
+                "command": "from openpype.hosts.nuke.startup.custom_write_node import main;main();",
                 "tooltip": "Open the OpenPype Nuke user doc page"
             }
         ]
