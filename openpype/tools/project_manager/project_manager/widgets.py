@@ -177,12 +177,6 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         project_name_label = QtWidgets.QLabel(self)
         project_code_label = QtWidgets.QLabel(self)
-        project_width_label = QtWidgets.QLabel(self)
-        project_height_label = QtWidgets.QLabel(self)
-        project_fps_label = QtWidgets.QLabel(self)
-        project_aspect_label = QtWidgets.QLabel(self)
-        project_frame_start_label = QtWidgets.QLabel(self)
-        project_frame_end_label = QtWidgets.QLabel(self)
 
         btns_widget = QtWidgets.QWidget(self)
         ok_btn = QtWidgets.QPushButton("Ok", btns_widget)
