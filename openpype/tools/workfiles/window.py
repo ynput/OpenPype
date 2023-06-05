@@ -149,10 +149,11 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format),
         )
-        if platform.system() != "Windows":
+        username = self.get_user_name(filepath)
+        if username:
             lines += (
                 "<b>User:</b>",
-                self.get_user_name(filepath),
+                username,
             )
         self._details_input.appendHtml("<br>".join(lines))
 
