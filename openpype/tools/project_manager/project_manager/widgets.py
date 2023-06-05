@@ -17,7 +17,7 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     get_warning_pixmap
 )
-from openpype.settings.lib import get_default_settings
+from openpype.settings.lib import get_default_anatomy_settings
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -241,8 +241,8 @@ class CreateProjectDialog(QtWidgets.QDialog):
         return self.project_name_input.text()
 
     def get_default_attributes(self):
-        settings = get_default_settings()
-        return settings["project_anatomy"]["attributes"]
+        settings = get_default_anatomy_settings()
+        return settings["attributes"]
 
     def _on_project_name_change(self, value):
         if self._project_code_value is None:
