@@ -37,7 +37,7 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
         renderable = [c for c in cameras if cmds.getAttr("%s.renderable" % c)]
         if not renderable:
             raise ValueError(
-                "No renderable cameraes found, which is required for "
+                "No renderable cameras found, which is required for "
                 "publishing ASS."
             )
         camera = renderable[0]
