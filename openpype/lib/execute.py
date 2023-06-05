@@ -190,7 +190,7 @@ def run_openpype_process(*args, **kwargs):
 
     Example:
     ```
-    run_openpype_process("run", "<path to .py script>")
+    run_detached_process("run", "<path to .py script>")
     ```
 
     Args:

@@ -39,7 +39,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         self._create_context_thumbnail(instance.context)
 
         subset_name = instance.data["subset"]
-        self.log.info(
+        self.log.debug(
             "Processing instance with subset name {}".format(subset_name)
         )
         thumbnail_source = instance.data.get("thumbnailSource")
@@ -104,7 +104,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         full_output_path = os.path.join(dst_staging, dst_filename)
 
         if oiio_supported:
-            self.log.info("Trying to convert with OIIO")
+            self.log.debug("Trying to convert with OIIO")
             # If the input can read by OIIO then use OIIO method for
             # conversion otherwise use ffmpeg
             thumbnail_created = self.create_thumbnail_oiio(

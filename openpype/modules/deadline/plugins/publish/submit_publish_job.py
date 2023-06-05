@@ -280,7 +280,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         args = [
             "--headless",
             'publish',
-            rootless_metadata_path,
+            '"{}"'.format(rootless_metadata_path),
             "--targets", "deadline",
             "--targets", "farm"
         ]
@@ -767,7 +767,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         data = instance.data.copy()
@@ -1093,6 +1093,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             deadline_publish_job_id = \
                 self._submit_deadline_post_job(instance, render_job, instances)
+
+            # Inject deadline url to instances.
+            for inst in instances:
+                inst["deadlineUrl"] = self.deadline_url
 
         # publish job file
         publish_job = {

@@ -63,7 +63,7 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
-![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
 
 ## Profile filters
 
@@ -170,12 +170,10 @@ A profile may generate multiple outputs from a single input. Each output must de
 
 - **`Letter Box`**
     - **Enabled** - Enable letter boxes
-    - **Ratio** - Ratio of letter boxes
-    - **Type** - **Letterbox** (horizontal bars) or **Pillarbox** (vertical bars)
+    - **Ratio** - Ratio of letter boxes. Ratio type is calculated from output image dimensions. If letterbox ratio > image ratio, _letterbox_ is applied. Otherwise _pillarbox_ will be rendered.
     - **Fill color** - Fill color of boxes (RGBA: 0-255)
     - **Line Thickness** - Line thickness on the edge of box (set to `0` to turn off)
-    - **Fill color** - Line color on the edge of box (RGBA: 0-255)
-    - **Example**
+    - **Line color** - Line color on the edge of box (RGBA: 0-255)
 
     ![global_extract_review_letter_box_settings](assets/global_extract_review_letter_box_settings.png)
     ![global_extract_review_letter_box](assets/global_extract_review_letter_box.png)

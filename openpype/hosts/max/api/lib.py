@@ -128,7 +128,14 @@ def get_all_children(parent, node_type=None):
 
 
 def get_current_renderer():
-    """get current renderer"""
+    """
+    Notes:
+        Get current renderer for Max
+
+    Returns:
+        "{Current Renderer}:{Current Renderer}"
+        e.g. "Redshift_Renderer:Redshift_Renderer"
+    """
     return rt.renderers.production
 
 
