@@ -312,14 +312,6 @@ class CreateProjectDialog(QtWidgets.QDialog):
     def _on_cancel_clicked(self):
         self.done(0)
 
-    def _validate_number(self, value: str, value_type: type):
-        try:
-            value = value_type(value)
-            if value > 0:
-                return value
-        except (ValueError, TypeError):
-            return None
-
     def _on_ok_clicked(self):
         if not self._project_name_is_valid or not self._project_code_is_valid:
             return
