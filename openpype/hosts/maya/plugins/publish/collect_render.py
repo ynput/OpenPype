@@ -336,7 +336,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 context.data["system_settings"]["modules"]["deadline"]
             )
             if deadline_settings["enabled"]:
-                data["deadlineUrl"] = render_instance.data.get("deadlineUrl")
+                data["deadlineUrl"] = render_instance.data["deadlineUrl"]
 
             rr_settings = (
                 context.data["system_settings"]["modules"]["royalrender"]

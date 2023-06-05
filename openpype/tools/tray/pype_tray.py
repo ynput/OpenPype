@@ -633,10 +633,10 @@ class TrayManager:
 
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
-        # Check last argument from `get_openpype_execute_args`
-        # - when running from code it is the same as first from sys.argv
-        if args[-1] == additional_args[0]:
-            additional_args.pop(0)
+        # Remove first argument from 'sys.argv'
+        # - when running from code the first argument is 'start.py'
+        # - when running from build the first argument is executable
+        additional_args.pop(0)
 
         cleanup_additional_args = False
         if use_expected_version:
@@ -663,7 +663,6 @@ class TrayManager:
             additional_args = _additional_args
 
         args.extend(additional_args)
-
         run_detached_process(args, env=envs)
         self.exit()
 
