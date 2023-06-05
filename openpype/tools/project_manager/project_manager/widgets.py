@@ -192,12 +192,6 @@ class CreateProjectDialog(QtWidgets.QDialog):
         main_layout.addWidget(inputs_widget, 0)
         main_layout.addWidget(project_name_label, 1)
         main_layout.addWidget(project_code_label, 1)
-        main_layout.addWidget(project_width_label, 1)
-        main_layout.addWidget(project_height_label, 1)
-        main_layout.addWidget(project_fps_label, 1)
-        main_layout.addWidget(project_aspect_label, 1)
-        main_layout.addWidget(project_frame_start_label, 1)
-        main_layout.addWidget(project_frame_end_label, 1)
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
 
