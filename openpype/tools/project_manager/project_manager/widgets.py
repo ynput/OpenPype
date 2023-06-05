@@ -9,7 +9,6 @@ from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX,
     OperationsSession,
-    prepare_subset_update_data,
 )
 from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
