@@ -101,7 +101,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         # NOTE: we tried adding "win32security" module but it was not working
         # on all hosts so we decided to just support Linux until migration
         # to Ayon
-        if platform.system().lower() == "window":
+        if platform.system().lower() == "windows":
             return None
         import pwd
 
