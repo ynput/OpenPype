@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateAnimation(plugin.Creator):
+class CreateAnimation(plugin.BlenderCreator):
     """Animation output for character rigs"""
 
     name = "animationMain"

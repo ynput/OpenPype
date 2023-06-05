@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateRig(plugin.Creator):
+class CreateRig(plugin.BlenderCreator):
     """Artist-friendly rig with controls to direct motion"""
 
     name = "rigMain"

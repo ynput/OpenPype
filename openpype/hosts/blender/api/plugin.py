@@ -6,7 +6,8 @@ from typing import Dict, List, Optional
 import bpy
 
 from openpype.pipeline import (
-    LegacyCreator,
+    Creator,
+    CreatedInstance,
     LoaderPlugin,
 )
 from .pipeline import AVALON_CONTAINERS
@@ -134,10 +135,11 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class Creator(LegacyCreator):
-    """Base class for Creator plug-ins."""
+class BlenderCreator(Creator):
+    """Base class for Blender Creator plug-ins."""
     defaults = ['Main']
 
+    # Deprecated?
     def process(self):
         collection = bpy.data.collections.new(name=self.data["subset"])
         bpy.context.scene.collection.children.link(collection)
@@ -148,6 +150,23 @@ class Creator(LegacyCreator):
                 collection.objects.link(obj)
 
         return collection
+
+
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
+        """Override abstract method from Creator.
+        Create new instance and store it.
+
+        Args:
+            subset_name(str): Subset name of created instance.
+            instance_data(dict): Base data for instance.
+            pre_create_data(dict): Data based on pre creation attributes.
+                Those may affect how creator works.
+        """
+        instance = CreatedInstance(
+            self.family, subset_name, instance_data
+        )
 
 
 class Loader(LoaderPlugin):

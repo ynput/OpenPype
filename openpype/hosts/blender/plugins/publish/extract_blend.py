@@ -5,7 +5,7 @@ import bpy
 from openpype.pipeline import publish
 
 
-class ExtractBlend(publish.Extractor):
+class ExtractBlend(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a blend file."""
 
     label = "Extract Blend"
@@ -15,6 +15,9 @@ class ExtractBlend(publish.Extractor):
 
     def process(self, instance):
         # Define extract output file path
+
+        if not self.is_active(instance.data):
+            return
 
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.blend"

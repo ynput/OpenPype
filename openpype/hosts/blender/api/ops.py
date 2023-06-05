@@ -275,6 +275,10 @@ class LaunchCreator(LaunchQtApp):
     def before_window_show(self):
         self._window.refresh()
 
+    def execute(self, context):
+        host_tools.show_publisher(tab="create")
+        return {"FINISHED"}
+
 
 class LaunchLoader(LaunchQtApp):
     """Launch Avalon Loader."""
@@ -299,7 +303,7 @@ class LaunchPublisher(LaunchQtApp):
     bl_label = "Publish..."
 
     def execute(self, context):
-        host_tools.show_publish()
+        host_tools.show_publisher(tab="publish")
         return {"FINISHED"}
 
 

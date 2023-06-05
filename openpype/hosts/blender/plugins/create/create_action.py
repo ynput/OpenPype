@@ -7,7 +7,7 @@ import openpype.hosts.blender.api.plugin
 from openpype.hosts.blender.api import lib
 
 
-class CreateAction(openpype.hosts.blender.api.plugin.Creator):
+class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
     """Action output for character rigs"""
 
     name = "actionMain"

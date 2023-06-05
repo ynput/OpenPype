@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateLayout(plugin.Creator):
+class CreateLayout(plugin.BlenderCreator):
     """Layout output for character rigs"""
 
     name = "layoutMain"
