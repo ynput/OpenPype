@@ -205,12 +205,6 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         self.project_name_label = project_name_label
         self.project_code_label = project_code_label
-        self.project_width_label = project_width_label
-        self.project_height_label = project_height_label
-        self.project_fps_label = project_fps_label
-        self.project_aspect_label = project_aspect_label
-        self.project_frame_start_label = project_frame_start_label
-        self.project_frame_end_label = project_frame_end_label
 
         self.project_name_input = project_name_input
         self.project_code_input = project_code_input
