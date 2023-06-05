@@ -45,6 +45,6 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                     camera = node
             instance.data["camera"] = camera
         else:
-            self.log.debug("No renderable cameraes found.")
+            self.log.debug("No renderable cameras found.")
 
         self.log.debug("data: {}".format(instance.data))
