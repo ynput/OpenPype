@@ -49,16 +49,14 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
 
         num_aovs = rop.evalParm("ar_aovs")
         for index in range(1, num_aovs + 1):
-            i = index + 1
-
             # Skip disabled AOVs
-            if not rop.evalParm("ar_enable_aov%s" % i):
+            if not rop.evalParm("ar_enable_aovP{}".format(index)):
                 continue
 
-            if rop.evalParm("ar_aov_exr_enable_layer_name%s" % i):
-                label = rop.evalParm("ar_aov_exr_layer_name%s" % i)
+            if rop.evalParm("ar_aov_exr_enable_layer_name{}".format(index)):
+                label = rop.evalParm("ar_aov_exr_layer_name{}".format(index))
             else:
-                label = evalParmNoFrame(rop, "ar_aov_label%s" % i)
+                label = evalParmNoFrame(rop, "ar_aov_label{}".format(index))
 
             aov_product = self.get_render_product_name(default_prefix,
                                                        suffix=label)
@@ -67,10 +65,9 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
                                                                aov_product)
 
         for product in render_products:
-            self.log.debug("Found render product: %s" % product)
+            self.log.debug("Found render product: {}".format(product))
 
-        filenames = list(render_products)
-        instance.data["files"] = filenames
+        instance.data["files"] = list(render_products)
         instance.data["renderProducts"] = colorspace.ARenderProduct()
 
         # For now by default do NOT try to publish the rendered output

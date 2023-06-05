@@ -55,7 +55,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
 
-        job_info.Name = "%s - %s" % (filename, instance.name)
+        job_info.Name = "{} - {}".format(filename, instance.name)
         job_info.BatchName = filename
         job_info.Plugin = "Houdini"
         job_info.UserName = context.data.get(
