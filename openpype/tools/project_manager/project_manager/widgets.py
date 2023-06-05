@@ -560,5 +560,6 @@ class FloatScrollWidget(DoubleSpinBoxScrollFixed):
         self.setMaximum(maximum)
         self.setMinimum(minimum)
         self.setDecimals(decimals)
-        self.setSingleStep(step)
+        if step is not None:
+            self.setSingleStep(step)
         self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
