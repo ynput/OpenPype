@@ -11,7 +11,7 @@ OpenPype stores some of it's settings and configuration in local file system. Th
 
 **Local Settings** GUI can be started from the tray menu.
 
-![Local Settings](assets/settings/settings_local_02.png)
+![Local Settings](assets/settings/settings_local.png)
 
 ## Categories
 
