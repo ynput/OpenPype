@@ -123,10 +123,14 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         project_name = self.dbcon.active_project()
         # Add all available versions to the editor
         parent_id = item["version_document"]["parent"]
-        version_docs = list(sorted(
-            get_versions(project_name, subset_ids=[parent_id]),
-            key=lambda item: item["name"]
-        ))
+        version_docs = [
+            version_doc
+            for version_doc in sorted(
+                get_versions(project_name, subset_ids=[parent_id]),
+                key=lambda item: item["name"]
+            )
+            if version_doc["data"].get("active", True)
+        ]
 
         hero_versions = list(
             get_hero_versions(
