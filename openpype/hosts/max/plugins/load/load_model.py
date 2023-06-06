@@ -3,7 +3,6 @@ from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.pipeline import get_representation_path, load
 
 
 class ModelAbcLoader(load.LoaderPlugin):
