@@ -36,7 +36,7 @@ Futur version of existing tools or new ones.
 
 <br>
 
-### Environments 
+### Environments
 **Environments** data of each software and there extra in-house needed to be loaded correctly. More details [here](https://openpype.io/docs/pype2/admin_config/#environments).
 
 <br>
@@ -48,6 +48,3 @@ Location of the softwares and there versions. More details [here](https://openpy
 
 ### Project Settings
 The **Project Settings** allows to determine the root folder. More details [here](https://openpype.io/docs/module_site_sync/#project-settings).
-
-
-
