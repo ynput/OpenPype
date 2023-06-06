@@ -304,7 +304,7 @@ def deliver_sequence(
         if renumber_frame:
             dsp_index = (re_frame_value - int(index)) + 1
             if dsp_index < 0:
-                msg = "Renumber frame has a smaller number than original frame"
+                msg = "Renumber frame has a smaller number than original frame"     #noqa
                 report_items[msg].append(src_file_name)
                 log.warning("{} <{}>".format(msg, context))
                 return report_items, 0
