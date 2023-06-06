@@ -1,8 +1,5 @@
-
 import os
-from openpype.pipeline import (
-    load, get_representation_path
-)
+from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
@@ -24,24 +21,20 @@ class ModelAbcLoader(load.LoaderPlugin):
         file_path = os.path.normpath(self.fname)
 
         abc_before = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
-        abc_import_cmd = (f"""
-AlembicImport.ImportToRoot = false
-AlembicImport.CustomAttributes = true
-AlembicImport.UVs = true
-AlembicImport.VertexColors = true
-
-importFile @"{file_path}" #noPrompt
-        """)
-
-        self.log.debug(f"Executing command: {abc_import_cmd}")
-        rt.execute(abc_import_cmd)
+        rt.AlembicImport.ImportToRoot = False
+        rt.AlembicImport.CustomAttributes = True
+        rt.AlembicImport.UVs = True
+        rt.AlembicImport.VertexColors = True
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
@@ -54,10 +47,12 @@ importFile @"{file_path}" #noPrompt
         abc_container = abc_containers.pop()
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__)
+            name, [abc_container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
+
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
         rt.select(node.Children)
@@ -76,9 +71,10 @@ importFile @"{file_path}" #noPrompt
         with maintained_selection():
             rt.select(node)
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)
