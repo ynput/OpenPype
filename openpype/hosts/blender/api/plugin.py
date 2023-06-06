@@ -10,7 +10,11 @@ from openpype.pipeline import (
     CreatedInstance,
     LoaderPlugin,
 )
-from .pipeline import AVALON_CONTAINERS
+from .pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_INSTANCES,
+    AVALON_PROPERTY,
+)
 from .ops import (
     MainThreadItem,
     execute_in_main_thread
@@ -174,6 +178,44 @@ class BlenderCreator(Creator):
             cache = {}
             cache_legacy = {}
 
+            avalon_instances = bpy.data.collections.get(AVALON_INSTANCES)
+            if avalon_instances:
+                for obj in bpy.data.collections.get(AVALON_INSTANCES).objects:
+                    avalon_prop = obj.get(AVALON_PROPERTY, {})
+                    if avalon_prop.get('id') == 'pyblish.avalon.instance':
+                        creator_id = avalon_prop.get('creator_identifier')
+
+                        if creator_id:
+                            # Creator instance
+                            cache.setdefault(creator_id, []).append(
+                                avalon_prop
+                            )
+                        else:
+                            family = avalon_prop.get('family')
+                            if family:
+                                # Legacy creator instance
+                                cache_legacy.setdefault(family, []).append(
+                                    avalon_prop
+                                )
+
+            for col in bpy.data.collections:
+                avalon_prop = col.get(AVALON_PROPERTY, {})
+                if avalon_prop.get('id') == 'pyblish.avalon.instance':
+                    creaor_id = avalon_prop.get('creator_identifier')
+
+                    if creator_id:
+                        # Creator instance
+                        cache.setdefault(creator_id, []).append(avalon_prop)
+                    else:
+                        family = avalon_prop.get('family')
+                        if family:
+                            cache_legacy.setdefault(family, [])
+                            if family:
+                                # Legacy creator instance
+                                cache_legacy.setdefault(family, []).append(
+                                    avalon_prop
+                                )
+
 
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
@@ -202,11 +244,16 @@ class BlenderCreator(Creator):
     def collect_instances(self):
         """Override abstract method from BaseCreator.
         Collect existing instances related to this creator plugin."""
-        for (
-            instance_data in self.cache_subsets(
-                self.collection_shared_data
-            ).get('blender_cached_subsets')
-        ):
+
+        # Cache subsets in shared data
+        self.cache_subsets(self.collection_shared_data)
+
+        # Get cached subsets
+        cached_subsets = self.collection_shared_data.get('blender_cached_subsets')
+        if not cached_subsets:
+            return
+
+        for instance_data in cached_subsets:
             # Process only instances that were created by this creator
             creator_id = instance_data.get('creator_identifier')
 
