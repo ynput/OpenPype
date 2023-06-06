@@ -14,7 +14,8 @@ from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import (
     PlaceholderLineEdit,
-    get_warning_pixmap
+    get_warning_pixmap,
+    PixmapLabel,
 )
 from openpype.settings.lib import get_default_anatomy_settings
 
@@ -349,42 +350,10 @@ class CreateProjectDialog(QtWidgets.QDialog):
         return project_names, project_codes
 
 
-# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
-#   imported from there
-class PixmapLabel(QtWidgets.QLabel):
-    """Label resizing image to height of font."""
-
-    def __init__(self, pixmap, parent):
-        super(PixmapLabel, self).__init__(parent)
-        self._empty_pixmap = QtGui.QPixmap(0, 0)
-        self._source_pixmap = pixmap
-
-    def set_source_pixmap(self, pixmap):
-        """Change source image."""
-        self._source_pixmap = pixmap
-        self._set_resized_pix()
-
+class ProjectManagerPixmapLabel(PixmapLabel):
     def _get_pix_size(self):
         size = self.fontMetrics().height() * 4
         return size, size
-
-    def _set_resized_pix(self):
-        if self._source_pixmap is None:
-            self.setPixmap(self._empty_pixmap)
-            return
-        width, height = self._get_pix_size()
-        self.setPixmap(
-            self._source_pixmap.scaled(
-                width,
-                height,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation,
-            )
-        )
-
-    def resizeEvent(self, event):
-        self._set_resized_pix()
-        super(PixmapLabel, self).resizeEvent(event)
 
 
 class ConfirmProjectDeletion(QtWidgets.QDialog):
@@ -398,7 +367,9 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         top_widget = QtWidgets.QWidget(self)
 
         warning_pixmap = get_warning_pixmap()
-        warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
+        warning_icon_label = ProjectManagerPixmapLabel(
+            warning_pixmap, top_widget
+        )
 
         message_label = QtWidgets.QLabel(top_widget)
         message_label.setWordWrap(True)
