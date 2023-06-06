@@ -152,6 +152,29 @@ class BlenderCreator(Creator):
         return collection
 
 
+    @staticmethod
+    def cache_subsets(shared_data):
+        """Cache instances for Creators shared data.
+
+        Create `blender_cached_subsets` key when needed in shared data and
+        fill it with all collected instances from the scene under its
+        respective creator identifiers.
+
+        If legacy instances are detected in the scene, create
+        `blender_cached_legacy_subsets` key and fill it with
+        all legacy subsets from this family as a value.  # key or value?
+
+        Args:
+            shared_data(Dict[str, Any]): Shared data.
+
+        Return:
+            Dict[str, Any]: Shared data with cached subsets.
+        """
+        if not shared_data.get('blender_cached_subsets'):
+            cache = {}
+            cache_legacy = {}
+
+
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
@@ -167,6 +190,58 @@ class BlenderCreator(Creator):
         instance = CreatedInstance(
             self.family, subset_name, instance_data
         )
+
+        collection = bpy.data.collections.new(name=self.data['subset'])
+        bpy.context.scene.collection.children.link(collection)
+
+        if (self.options or {}).get("useSelection"):
+            for obj in get_selection():
+                collection.objects.link(obj)
+
+
+    def collect_instances(self):
+        """Override abstract method from BaseCreator.
+        Collect existing instances related to this creator plugin."""
+        for (
+            instance_data in self.cache_subsets(
+                self.collection_shared_data
+            ).get('blender_cached_subsets')
+        ):
+            # Process only instances that were created by this creator
+            creator_id = instance_data.get('creator_identifier')
+
+            if creator_id == self.identifier:
+                # Create instance object from existing data
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+
+                # Add instance to create context
+                self.add_instance_to_context(instance)
+
+
+    def update_instances(self, update_list):
+        """Override abstract method from BaseCreator.
+        Store changes of existing instances so they can be recollected.
+
+        Args:
+            update_list(List[UpdateData]): Changed instances
+                and their changes, as a list of tuples."""
+        for created_instance, _changes in update_list:
+            data = created_instance.data_to_store()
+
+            # TODO
+
+
+    def remove_instances(self, instances: List[CreatedInstance]):
+        """Override abstract method from BaseCreator.
+        Method called when instances are removed.
+
+        Args:
+            instance(List[CreatedInstance]): Instance objects to remove.
+        """
+        for instance in instances:
+            self._remove_instance_from_context(instance)
 
 
 class Loader(LoaderPlugin):
