@@ -783,23 +783,25 @@ def build_anim(project_name, asset_name):
         if family == "setdress":
             # For setdress container we gather only the root collection.
             instances_to_create[variant_name] = list(
-                container.get_root_outliner_datablocks()
+                d
+                for d in container.get_root_outliner_datablocks()
+                if isinstance(d, bpy.types.Collection)
             )
         else:
             # Get rigs
-            armature_objects = [
+            armature_objects = {
                 o for o in container_datablocks if o.type == "ARMATURE"
-            ]
+            }
             # Get animated objects
-            animated_objects = [
+            animated_objects = {
                 o
                 for o in container_datablocks
                 if o.animation_data and o.animation_data.action
-            ]
+            }
             # Add new instance creation container had rigs or animated members.
             if armature_objects or animated_objects:
-                instances_to_create[variant_name] = (
-                    armature_objects + animated_objects
+                instances_to_create[variant_name] = list(
+                    armature_objects | animated_objects
                 )
 
     # Create instances and add datablocks
