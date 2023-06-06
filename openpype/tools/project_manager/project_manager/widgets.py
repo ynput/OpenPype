@@ -300,12 +300,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
-        project_width = self.project_width_input.text()
-        project_height = self.project_height_input.text()
-        project_fps = self.project_fps_input.text()
-        project_aspect = self.project_aspect_input.text()
-        project_frame_start = self.project_frame_start_input.text()
-        project_frame_end = self.project_frame_end_input.text()
+        project_width = self.project_width_input.value()
+        project_height = self.project_height_input.value()
+        project_fps = self.project_fps_input.value()
+        project_aspect = self.project_aspect_input.value()
+        project_frame_start = self.project_frame_start_input.value()
+        project_frame_end = self.project_frame_end_input.value()
 
         library_project = self.library_project_input.isChecked()
         project_doc = create_project(
