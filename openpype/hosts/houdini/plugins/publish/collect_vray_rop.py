@@ -13,8 +13,8 @@ from openpype.hosts.houdini.api import (
 )
 
 
-class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
-    """Collect USD Render Products
+class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
+    """Collect Vray Render Products
 
     Collects the instance.data["files"] for the render products.
 
@@ -23,10 +23,10 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Redshift ROP Render Products"
+    label = "VRay ROP Render Products"
     order = pyblish.api.CollectorOrder + 0.4
     hosts = ["houdini"]
-    families = ["redshift_rop"]
+    families = ["vray_rop"]
 
     def process(self, instance):
 
@@ -39,41 +39,25 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             instance.data["chunkSize"] = chunk_size
             self.log.debug("Chunk Size: %s" % chunk_size)
 
-        default_prefix = evalParmNoFrame(rop, "RS_outputFileNamePrefix")
-        beauty_suffix = rop.evalParm("RS_outputBeautyAOVSuffix")
+        default_prefix = evalParmNoFrame(rop, "SettingsOutput_img_file_path")
         render_products = []
+        # TODO: add render elements if render element
 
-        # Default beauty AOV
-        beauty_product = self.get_render_product_name(
-            prefix=default_prefix, suffix=beauty_suffix
-        )
+        beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
-            "_": self.generate_expected_files(instance,
-                                              beauty_product)}
+            "RGB Color": self.generate_expected_files(instance,
+                                                      beauty_product)}
 
-        num_aovs = rop.evalParm("RS_aov")
-        for index in range(num_aovs):
-            i = index + 1
-
-            # Skip disabled AOVs
-            if not rop.evalParm("RS_aovEnable_%s" % i):
-                continue
-
-            aov_suffix = rop.evalParm("RS_aovSuffix_%s" % i)
-            aov_prefix = evalParmNoFrame(rop, "RS_aovCustomPrefix_%s" % i)
-            if not aov_prefix:
-                aov_prefix = default_prefix
-
-            aov_product = self.get_render_product_name(aov_prefix, aov_suffix)
-            render_products.append(aov_product)
-
-            files_by_aov[aov_suffix] = self.generate_expected_files(instance,
-                                                                    aov_product)    # noqa
+        if instance.data.get("RenderElement", True):
+            render_element = self.get_render_element_name(rop, default_prefix)
+            if render_element:
+                for aov, renderpass in render_element.items():
+                    render_products.append(renderpass)
+                    files_by_aov[aov] = self.generate_expected_files(instance, renderpass)          # noqa
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
-
         filenames = list(render_products)
         instance.data["files"] = filenames
         instance.data["renderProducts"] = colorspace.ARenderProduct()
@@ -85,6 +69,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
         instance.data["expectedFiles"].append(files_by_aov)
+        self.log.debug("expectedFiles:{}".format(files_by_aov))
 
         # update the colorspace data
         colorspace_data = get_color_management_preferences()
@@ -92,29 +77,32 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceDisplay"] = colorspace_data["display"]
         instance.data["colorspaceView"] = colorspace_data["view"]
 
-    def get_render_product_name(self, prefix, suffix):
-        """Return the output filename using the AOV prefix and suffix"""
-
-        # When AOV is explicitly defined in prefix we just swap it out
-        # directly with the AOV suffix to embed it.
-        # Note: ${AOV} seems to be evaluated in the parameter as %AOV%
-        has_aov_in_prefix = "%AOV%" in prefix
-        if has_aov_in_prefix:
-            # It seems that when some special separator characters are present
-            # before the %AOV% token that Redshift will secretly remove it if
-            # there is no suffix for the current product, for example:
-            # foo_%AOV% -> foo.exr
-            pattern = "%AOV%" if suffix else "[._-]?%AOV%"
-            product_name = re.sub(pattern, suffix, prefix, flags=re.IGNORECASE)
+    def get_beauty_render_product(self, prefix, suffix="<reName>"):
+        """Return the beauty output filename if render element enabled
+        """
+        aov_parm = ".{}".format(suffix)
+        beauty_product = None
+        if aov_parm in prefix:
+            beauty_product = prefix.replace(aov_parm, "")
         else:
-            if suffix:
-                # Add ".{suffix}" before the extension
-                prefix_base, ext = os.path.splitext(prefix)
-                product_name = prefix_base + "." + suffix + ext
-            else:
-                product_name = prefix
+            beauty_product = prefix
 
-        return product_name
+        return beauty_product
+
+    def get_render_element_name(self, node, prefix, suffix="<reName>"):
+        """Return the output filename using the AOV prefix and suffix
+        """
+        render_element_dict = {}
+        # need a rewrite
+        re_path = node.evalParm("render_network_render_channels")
+        if re_path:
+            node_children = hou.node(re_path).children()
+            for element in node_children:
+                if element.shaderName() != "vray:SettingsRenderChannels":
+                    aov = str(element)
+                    render_product = prefix.replace(suffix, aov)
+                    render_element_dict[aov] = render_product
+        return render_element_dict
 
     def generate_expected_files(self, instance, path):
         """Create expected files in instance data"""
