@@ -240,12 +240,14 @@ def _install_menu():
         menu.addCommand(
             "Create...",
             lambda: host_tools.show_publisher(
+                parent=main_window,
                 tab="create"
             )
         )
         menu.addCommand(
             "Publish...",
             lambda: host_tools.show_publisher(
+                parent=main_window,
                 tab="publish"
             )
         )
