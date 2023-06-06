@@ -26,6 +26,7 @@ from openpype.hosts.blender.api.utils import (
     get_children_recursive,
     get_parent_collection,
     get_root_datablocks,
+    get_used_datablocks,
     link_to_collection,
     transfer_stack,
     unlink_from_collection,
@@ -780,7 +781,7 @@ class AssetLoader(Loader):
 
                 # Override armature
                 if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
-                    d.data = d.data.override_create()
+                    d.data.override_create(remap_local_usages=True)
 
             # Add override datablocks to datablocks
             datablocks.update(override_datablocks)
@@ -1241,8 +1242,10 @@ class AssetLoader(Loader):
                     isinstance(old_datablock, bpy.types.Object)
                     and hasattr(new_datablock.data, "shape_keys")
                     and new_datablock.data.shape_keys
+                    and new_datablock.data.shape_keys.animation_data
                     and old_datablock.data
                     and old_datablock.data.shape_keys
+                    and old_datablock.data.shape_keys.animation_data
                 ):
                     for i, driver in enumerate(
                         new_datablock.data.shape_keys.animation_data.drivers
