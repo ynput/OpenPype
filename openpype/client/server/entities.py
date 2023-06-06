@@ -99,7 +99,8 @@ def _get_versions(
     hero=True,
     standard=True,
     latest=None,
-    fields=None
+    fields=None,
+    active=None
 ):
     con = get_server_api_connection()
 
@@ -119,7 +120,8 @@ def _get_versions(
         hero,
         standard,
         latest,
-        fields=fields
+        fields=fields,
+        active=active,
     )
 
     versions = []
@@ -364,7 +366,7 @@ def get_hero_versions(
     )
 
 
-def get_last_versions(project_name, subset_ids, fields=None):
+def get_last_versions(project_name, subset_ids, active=None, fields=None):
     if fields:
         fields = set(fields)
         fields.add("parent")
@@ -374,7 +376,8 @@ def get_last_versions(project_name, subset_ids, fields=None):
         subset_ids=subset_ids,
         latest=True,
         hero=False,
-        fields=fields
+        fields=fields,
+        active=active
     )
     return {
         version["parent"]: version
@@ -382,7 +385,9 @@ def get_last_versions(project_name, subset_ids, fields=None):
     }
 
 
-def get_last_version_by_subset_id(project_name, subset_id, fields=None):
+def get_last_version_by_subset_id(
+    project_name, subset_id, fields=None
+):
     versions = _get_versions(
         project_name,
         subset_ids=[subset_id],
