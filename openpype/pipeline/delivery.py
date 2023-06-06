@@ -178,7 +178,7 @@ def deliver_sequence(
     report_items,
     log,
     renumber_frame=False,
-    frame_offset=0
+    re_frame_value=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
         contain files.
@@ -302,20 +302,9 @@ def deliver_sequence(
         )
 
         if renumber_frame:
-            first_index = src_collection.indexes[0]
-            dsp_index = (int(index) - first_index) + 1
-            dst_padding = dst_collection.format("{padding}") % dsp_index
-            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
-            dst = os.path.normpath(
-                os.path.join(delivery_folder, dst)
-            )
-
-            _copy_file(src, dst)
-
-        else:
-            dsp_index = int(index) + frame_offset
+            dsp_index = (re_frame_value - int(index)) + 1
             if dsp_index < 0:
-                msg = "Frame has a smaller number than Frame Offset"
+                msg = "Renumber frame has a smaller number than original frame"
                 report_items[msg].append(src_file_name)
                 log.warning("{} <{}>".format(msg, context))
                 return report_items, 0
@@ -326,6 +315,12 @@ def deliver_sequence(
                 os.path.join(delivery_folder, dst)
             )
 
+            _copy_file(src, dst)
+
+        else:
+            dst_padding = dst_collection.format("{padding}") % index
+            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+            log.debug("Copying single: {} -> {}".format(src, dst))
             _copy_file(src, dst)
 
         uploaded += 1
