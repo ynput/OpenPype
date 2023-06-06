@@ -5,6 +5,7 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 
 """
 import os
+from openpype.pipeline import load, get_representation_path
 
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import containerise
@@ -14,9 +15,7 @@ from openpype.pipeline import get_representation_path, load
 class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
-    families = ["camera",
-                "animation",
-                "pointcache"]
+    families = ["camera", "animation", "pointcache"]
     label = "Load Alembic"
     representations = ["abc"]
     order = -10
@@ -29,17 +28,18 @@ class AbcLoader(load.LoaderPlugin):
         file_path = os.path.normpath(self.fname)
 
         abc_before = {
-            c for c in rt.RootNode.Children
-            if rt.ClassOf(c) == rt.AlembicContainer
+            c
+            for c in rt.rootNode.Children
+            if rt.classOf(c) == rt.AlembicContainer
         }
+
         rt.AlembicImport.ImportToRoot = False
-        rt.AlembicImport.StartFrame = True
-        rt.AlembicImport.EndFrame = True
-        rt.ImportFile(file_path, rt.Name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
-            c for c in rt.RootNode.Children
-            if rt.ClassOf(c) == rt.AlembicContainer
+            c
+            for c in rt.rootNode.Children
+            if rt.classOf(c) == rt.AlembicContainer
         }
 
         # This should yield new AlembicContainer node
@@ -55,7 +55,8 @@ class AbcLoader(load.LoaderPlugin):
                 cam_shape.playbackType = 2
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__)
+            name, [abc_container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
@@ -63,9 +64,14 @@ class AbcLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        alembic_objects = self.get_container_children(node, "AlembicObject")
+        for alembic_object in alembic_objects:
+            alembic_object.source = path
+
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
         with maintained_selection():
             rt.Select(node.Children)

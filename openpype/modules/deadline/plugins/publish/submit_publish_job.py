@@ -118,11 +118,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_plugin = "OpenPype"
     targets = ["local"]
 
-    hosts = ["fusion", "max", "maya", "nuke",
+    hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
+                "renderlayer", "imagesequence",
+                "vrayscene", "maxrender",
+                "arnold_rop", "mantra_rop",
+                "karma_rop", "vray_rop",
+                "redshift_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
@@ -140,7 +144,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER",
+        "OPENPYPE_VERSION",
+        "OPENPYPE_SG_USER"
     ]
 
     # Add OpenPype version if we are running from build.
@@ -275,7 +280,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         args = [
             "--headless",
             'publish',
-            rootless_metadata_path,
+            '"{}"'.format(rootless_metadata_path),
             "--targets", "deadline",
             "--targets", "farm"
         ]
@@ -762,7 +767,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         """
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         data = instance.data.copy()
@@ -1088,6 +1093,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             deadline_publish_job_id = \
                 self._submit_deadline_post_job(instance, render_job, instances)
+
+            # Inject deadline url to instances.
+            for inst in instances:
+                inst["deadlineUrl"] = self.deadline_url
 
         # publish job file
         publish_job = {

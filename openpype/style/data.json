@@ -26,8 +26,8 @@
 
         "bg": "#2C313A",
         "bg-inputs": "#21252B",
-        "bg-buttons": "#434a56",
-        "bg-button-hover": "rgb(81, 86, 97)",
+        "bg-buttons": "rgb(67, 74, 86)",
+        "bg-buttons-hover": "rgb(81, 86, 97)",
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
 
@@ -66,7 +66,9 @@
             "bg-success": "#458056",
             "bg-success-hover": "#55a066",
             "bg-error": "#AD2E2E",
-            "bg-error-hover": "#C93636"
+            "bg-error-hover": "#C93636",
+            "bg-info": "rgb(63, 98, 121)",
+            "bg-info-hover": "rgb(81, 146, 181)"
         },
         "tab-widget": {
             "bg": "#21252B",
@@ -94,6 +96,7 @@
             "crash": "#FF6432",
             "success": "#458056",
             "warning": "#ffc671",
+            "progress": "rgb(194, 226, 236)",
             "tab-bg": "#16191d",
             "list-view-group": {
                 "bg": "#434a56",

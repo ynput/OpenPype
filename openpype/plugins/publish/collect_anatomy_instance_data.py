@@ -46,17 +46,17 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     follow_workfile_version = False
 
     def process(self, context):
-        self.log.info("Collecting anatomy data for all instances.")
+        self.log.debug("Collecting anatomy data for all instances.")
 
         project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
         self.fill_latest_versions(context, project_name)
         self.fill_anatomy_data(context)
 
-        self.log.info("Anatomy Data collection finished.")
+        self.log.debug("Anatomy Data collection finished.")
 
     def fill_missing_asset_docs(self, context, project_name):
-        self.log.debug("Qeurying asset documents for instances.")
+        self.log.debug("Querying asset documents for instances.")
 
         context_asset_doc = context.data.get("assetEntity")
 
@@ -271,7 +271,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             instance_name = instance.data["name"]
             instance_label = instance.data.get("label")
             if instance_label:
-                instance_name += "({})".format(instance_label)
+                instance_name += " ({})".format(instance_label)
             self.log.debug("Anatomy data for instance {}: {}".format(
                 instance_name,
                 json.dumps(anatomy_data, indent=4)

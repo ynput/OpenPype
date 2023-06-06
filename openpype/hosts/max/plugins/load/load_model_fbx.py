@@ -1,8 +1,8 @@
 import os
-
+from openpype.pipeline import load, get_representation_path
+from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
 from openpype.pipeline import get_representation_path, load
 
 
@@ -22,10 +22,7 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Animation", False)
         rt.FBXImporterSetParam("Cameras", False)
         rt.FBXImporterSetParam("Preserveinstances", True)
-        rt.ImportFile(
-            filepath,
-            rt.Name("noPrompt"),
-            using=rt.FBXIMP)
+        rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
         container = rt.GetNodeByName(name)
         if not container:
@@ -36,32 +33,29 @@ class FbxModelLoader(load.LoaderPlugin):
             selection.Parent = container
 
         return containerise(
-            name, [container], context, loader=self.__class__.__name__)
+            name, [container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
-
         path = get_representation_path(representation)
-        node = rt.GetNodeByName(container["instance_node"])
-        rt.Select(node.Children)
-        fbx_reimport_cmd = (
-            f"""
-FBXImporterSetParam "Animation" false
-FBXImporterSetParam "Cameras" false
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
+        node = rt.getNodeByName(container["instance_node"])
+        rt.select(node.Children)
 
-importFile @"{path}" #noPrompt using:FBXIMP
-        """)
-        rt.Execute(fbx_reimport_cmd)
+        rt.FBXImporterSetParam("Animation", False)
+        rt.FBXImporterSetParam("Cameras", False)
+        rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("UpAxis", "Y")
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
 
         with maintained_selection():
             rt.Select(node)
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)

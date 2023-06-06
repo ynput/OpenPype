@@ -103,8 +103,8 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                         new_instance.data["representations"] = []
 
                     repr = {
-                        'frameStart': s.get('frame_range')[0],
-                        'frameEnd': s.get('frame_range')[1],
+                        'frameStart': instance.data["frameStart"],
+                        'frameEnd': instance.data["frameEnd"],
                         'name': 'png',
                         'ext': 'png',
                         'files': frames,
