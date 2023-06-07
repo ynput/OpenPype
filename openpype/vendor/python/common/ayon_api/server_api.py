@@ -1586,7 +1586,7 @@ class ServerAPI(object):
                 server.
         """
 
-        result = self.get("dependencies")
+        result = self.get("desktop/dependency_packages")
         return result.data
 
     def update_dependency_info(
@@ -1633,8 +1633,8 @@ class ServerAPI(object):
             if value
         }
 
-        response = self.put(
-            "dependencies",
+        response = self.post(
+            "desktop/dependency_packages",
             name=name,
             platform=platform_name,
             size=size,
@@ -1678,7 +1678,8 @@ class ServerAPI(object):
 
         package_filepath = os.path.join(dst_directory, filename)
         self.download_file(
-            "dependencies/{}/{}".format(package_name, platform_name),
+            "desktop/dependency_packages/{}/{}".format(package_name,
+                                                       platform_name),
             package_filepath,
             chunk_size=chunk_size,
             progress=progress
@@ -1703,7 +1704,8 @@ class ServerAPI(object):
             platform_name = platform.system().lower()
 
         self.upload_file(
-            "dependencies/{}/{}".format(package_name, platform_name),
+            "desktop/dependency_packages/{}/{}".format(package_name,
+                                                       platform_name),
             filepath,
             progress=progress
         )
@@ -1721,7 +1723,8 @@ class ServerAPI(object):
             platform_name = platform.system().lower()
 
         response = self.delete(
-            "dependencies/{}/{}".format(package_name, platform_name),
+            "desktop/dependency_packages/{}/{}".format(package_name,
+                                                       platform_name),
         )
         if response.status != 200:
             raise ServerError("Failed to delete dependency file")
