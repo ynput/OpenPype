@@ -25,13 +25,12 @@ def open_file(filepath):
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
-    autosave = f"{filepath}.autosave"
+    autosave = "{}.autosave".format(filepath)
     autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
     if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
         filepath = autosave
-        nuke.scriptReadFile(filepath)
-    else:
-        nuke.scriptReadFile(filepath)
+
+    nuke.scriptReadFile(filepath)
     nuke.Root()["name"].setValue(filepath)
     nuke.Root()["project_directory"].setValue(os.path.dirname(filepath))
     nuke.Root().setModified(False)
