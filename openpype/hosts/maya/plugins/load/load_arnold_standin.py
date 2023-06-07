@@ -16,10 +16,13 @@ from openpype.hosts.maya.api.pipeline import containerise
 
 def is_sequence(files):
     sequence = False
-    collections, remainder = clique.assemble(files)
+    print("here calling")
+    if len(files) == 1:
+        collections, remainder = clique.assemble(files, minimum_items=1)
+    else:
+        collections, remainder = clique.assemble(files)
     if collections:
         sequence = True
-
     return sequence
 
 
@@ -84,6 +87,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
+
         nodes = [root, standin, standin_shape]
         if operator is not None:
             nodes.append(operator)
@@ -146,6 +150,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             os.path.basename(path),
             type="string"
         )
+        print("#"*100)
+
+
+        # Object name value
 
         cmds.connectAttr(
             string_replace_operator + ".out",
