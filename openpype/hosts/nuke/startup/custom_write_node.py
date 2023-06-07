@@ -105,18 +105,20 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
 
     def get_node_knobs_setting(self, value):
         settings = [
-            node for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
+            node
+            for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
         ]
         if not settings:
             return
-        for i, setting in enumerate(settings):
+        for i, _ in enumerate(settings):
             if value in settings[i]["subsets"]:
                 return settings[i]["knobs"]
 
     def get_node_knobs_override(self):
         knobs_value = []
         settings = [
-            node for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
+            node
+            for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
         ]
         if not settings:
             return
@@ -126,6 +128,7 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
                 for knob in setting["subsets"]:
                     knobs_value.append(knob)
         return knobs_value
+
 
 def main():
     p_ = WriteNodeKnobSettingPanel()
