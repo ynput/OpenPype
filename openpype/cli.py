@@ -80,6 +80,7 @@ def module(ctx):
     """
     pass
 
+
 # Add 'addon' as alias for module
 main.set_alias("module", "addon")
 
