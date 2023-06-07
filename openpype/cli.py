@@ -71,12 +71,12 @@ def tray():
 
 
 @PypeCommands.add_modules
-@main.group(help="Run command line arguments of OpenPype modules")
+@main.group(help="Run command line arguments of OpenPype addons")
 @click.pass_context
 def module(ctx):
-    """Module specific commands created dynamically.
+    """Addon specific commands created dynamically.
 
-    These commands are generated dynamically by currently loaded addon/modules.
+    These commands are generated dynamically by currently loaded addons.
     """
     pass
 
