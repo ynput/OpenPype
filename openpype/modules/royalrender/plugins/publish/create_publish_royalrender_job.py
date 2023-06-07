@@ -10,7 +10,8 @@ import pyblish.api
 from openpype.modules.royalrender.rr_job import (
     RRJob,
     RREnvList,
-    get_rr_platform
+    get_rr_platform,
+    SubmitterParameter
 )
 from openpype.pipeline.publish import KnownPublishError
 from openpype.pipeline import (
@@ -134,6 +135,10 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
         rr_job = self.get_job(instance, instances)
         instance.data["rrJobs"].append(rr_job)
 
+        serialized_rr_job = attr.asdict(rr_job)
+        serialized_rr_job["SubmitterParameters"] = [
+            sp.serialize() for sp in rr_job.SubmitterParameters]
+
         # publish job file
         publish_job = {
             "asset": instance_skeleton_data["asset"],
@@ -145,7 +150,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
             "version": instance.context.data["version"],   # workfile version
             "intent": instance.context.data.get("intent"),
             "comment": instance.context.data.get("comment"),
-            "job": attr.asdict(rr_job),
+            "job": serialized_rr_job,
             "session": legacy_io.Session.copy(),
             "instances": instances
         }
@@ -222,6 +227,11 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
                               "rr_out.log"),
             "2>&1"
         ]
+        submitter_parameters = []
+        if instance.data["suspend_publish"]:
+            # 1~1 means user settable, checked
+            submitter_parameters.append(SubmitterParameter("SendJobDisabled",
+                                                           "1~1"))
 
         job = RRJob(
             Software="OpenPype",
@@ -243,7 +253,8 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
             rrEnvList=environment.serialize(),
             Priority=priority,
             CustomSHotName=jobname,
-            CompanyProjectName=instance.context.data["projectName"]
+            CompanyProjectName=instance.context.data["projectName"],
+            SubmitterParameters=submitter_parameters
         )
 
         # add assembly jobs as dependencies
