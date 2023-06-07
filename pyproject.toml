@@ -101,6 +101,8 @@ wheel = "*"
 enlighten = "*"  # cool terminal progress bars
 toml = "^0.10.2" # for parsing pyproject.toml
 pre-commit = "*"
+wemake-python-styleguide = "*"
+isort="*"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
