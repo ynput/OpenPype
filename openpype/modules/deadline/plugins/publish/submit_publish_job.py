@@ -118,11 +118,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_plugin = "OpenPype"
     targets = ["local"]
 
-    hosts = ["fusion", "max", "maya", "nuke",
+    hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
+                "renderlayer", "imagesequence",
+                "vrayscene", "maxrender",
+                "arnold_rop", "mantra_rop",
+                "karma_rop", "vray_rop",
+                "redshift_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
@@ -140,7 +144,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER",
+        "OPENPYPE_VERSION",
+        "OPENPYPE_SG_USER"
     ]
 
     # Add OpenPype version if we are running from build.
