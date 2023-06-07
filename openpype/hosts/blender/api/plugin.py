@@ -766,7 +766,7 @@ class AssetLoader(Loader):
                         col
                         for col in d.children_recursive
                         # Don't add empty collections
-                        if col.children and col.all_objects
+                        if col.children or col.all_objects
                     )
                     if isinstance(d, bpy.types.Collection):
                         override_datablocks.update(d.all_objects)
