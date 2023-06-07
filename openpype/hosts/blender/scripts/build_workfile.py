@@ -609,7 +609,13 @@ def build_anim(project_name, asset_name):
     camera_repre = download_subset(project_name, asset_name, "cameraMain")
     wait_for_download(
         project_name,
-        [workfile_layout_repre, layout_repre, board_repre, camera_repre],
+        [
+            workfile_layout_repre,
+            layout_repre,
+            board_repre,
+            audio_repre,
+            camera_repre,
+        ],
     )
 
     # Load layout subset
@@ -831,10 +837,14 @@ def build_anim(project_name, asset_name):
                 objects.extend(obj.all_objects)
         animation_instance.publish = publish_enabled
 
-    # Load Audio and Board
-    errors.extend(
-        load_references(project_name, asset_name, board_repre, audio_repre)
-    )
+    # load the audio reference as sound into sequencer
+    if audio_repre:
+        load_subset(project_name, audio_repre, "Audio")
+    else:
+        errors.append(
+            "load subset AudioReference failed:"
+            f" Missing subset for {asset_name}"
+        )
 
     assert not errors, ";\n\n".join(errors)
 
