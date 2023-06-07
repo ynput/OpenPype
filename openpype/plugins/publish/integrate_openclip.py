@@ -28,14 +28,18 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
 
 
     def process(self, instance):
-        supported_exts = ['jpg', 'exr', 'hdr', 'raw', 'dpx', 'png', 'jpeg']
+        supported_exts = ['jpg', 'exr', 'hdr', 'raw', 'dpx', 'png', 'jpeg','mov','mp4','tiff','tga']
         instance_repres = instance.data.get("representations")
         clippable_reps = [rep for rep in instance_repres
                           if 'files' in rep.keys() and 'ext' in rep.keys() and rep['ext'] in supported_exts]
+        sequence = True
+        for rep in clippable_reps:
+            if 'ext' in rep.keys() and rep['ext'] in ['mov','mp4']:
+                sequence = False
         self.log.info(clippable_reps)
         self.log.info(instance_repres)
         if len(clippable_reps) < 1:
-            self.log.warn('No image sequences to make openclip from')
+            self.log.warn('No media to make openclip from')
             return
         workf = instance.data['publishDir']
         #remove version
@@ -56,9 +60,17 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
         ext = clippable_reps[0]['ext']
         patternPosix = pattern.replace('\\','/').replace('P:', '/Volumes/production').replace('D:','/Volumes/production')
         patternStripped = os.path.splitext(patternPosix)[0]
-        wildcard = re.sub('[0-9]+$','{frame}',patternStripped)
-        regex = re.compile('[^a-zA-Z]v[0-9]+[^a-zA-Z]')
-        versions = regex.sub(lambda m: m.group().replace(m.group()[1:-1], 'v{version}'),wildcard)
+        if not sequence:
+            self.log.info("Not an image sequence, clipping movie file")
+            wildcard = patternStripped
+            self.log.info(wildcard)
+            regex = re.compile('v[0-9]+')
+            versions = regex.sub('v{version}', wildcard)
+        else:
+            wildcard = re.sub('[0-9]+$','{frame}',patternStripped)
+            self.log.info(wildcard)
+            regex = re.compile('[^a-zA-Z]v[0-9]+[^a-zA-Z]')
+            versions = regex.sub(lambda m: m.group().replace(m.group()[1:-1], 'v{version}'),wildcard)
         #versions = re.sub('/v[0-9]+', '/v{version}',wildcard)
         self.log.info(versions)
         #res = requests.post('http://pype-db.local:4040', json={'output': clipPathPosix,'pattern':versions + '.' + ext})
