@@ -43,7 +43,8 @@ from .lib import (
     add_scripts_menu,
     add_scripts_gizmo,
     get_node_data,
-    set_node_data
+    set_node_data,
+    get_app_version_info
 )
 from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
@@ -218,6 +219,7 @@ def _install_menu():
     main_window = get_main_window()
     menubar = nuke.menu("Nuke")
     menu = menubar.addMenu(MENU_LABEL)
+    app_version = get_app_version_info()
 
     if not ASSIST:
         label = "{0}, {1}".format(
@@ -237,17 +239,21 @@ def _install_menu():
 
     menu.addSeparator()
     if not ASSIST:
+        # only add parent if nuke version is 14 or higher
+        # known issue with no solution yet
         menu.addCommand(
             "Create...",
             lambda: host_tools.show_publisher(
-                parent=main_window,
+                parent=main_window if app_version["major"] >= 14 else None,
                 tab="create"
             )
         )
+        # only add parent if nuke version is 14 or higher
+        # known issue with no solution yet
         menu.addCommand(
             "Publish...",
             lambda: host_tools.show_publisher(
-                parent=main_window,
+                parent=main_window if app_version["major"] >= 14 else None,
                 tab="publish"
             )
         )
