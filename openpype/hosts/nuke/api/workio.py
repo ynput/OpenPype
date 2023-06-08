@@ -1,6 +1,7 @@
 """Host API required Work Files tool"""
 import os
 import nuke
+from qtpy import QtWidgets
 
 
 def file_extensions():
@@ -19,13 +20,14 @@ def save_file(filepath):
     nuke.Root().setModified(False)
 
 
-def open_file(filepath, allow_autosave=True):
+def open_file(filepath):
     filepath = filepath.replace("\\", "/")
 
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
-    if allow_autosave:
+    headless = QtWidgets.QApplication.instance() is None
+    if not headless:
         autosave = "{}.autosave".format(filepath)
         autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
         if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
