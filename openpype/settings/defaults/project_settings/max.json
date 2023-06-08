@@ -5,8 +5,8 @@
         "image_format": "exr",
         "multipass": true
     },
-    "PointCloud":{
-        "attribute":{
+    "PointCloud": {
+        "attribute": {
             "Age": "age",
             "Radius": "radius",
             "Position": "position",

@@ -456,6 +456,10 @@
             "destination-path": []
         }
     },
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
+    },
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [
@@ -1555,10 +1559,6 @@
                 ]
             }
         ]
-    },
-    "include_handles": {
-        "include_handles_default": false,
-        "per_task_type": []
     },
     "templated_workfile_build": {
         "profiles": []
