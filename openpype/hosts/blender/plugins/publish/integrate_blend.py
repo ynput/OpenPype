@@ -118,12 +118,12 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
 
                 # Submit command to pool
                 f = pool.submit(
-                    subprocess.check_call, main_command, shell=False
+                    subprocess.check_output,
+                    main_command,
+                    shell=False,
+                    stderr=subprocess.PIPE,
                 )
                 f.add_done_callback(partial(callback, repre_id))
 
                 # Keep future for waiting for it to finish at unpause
                 instance.data["representations_futures"].append(f)
-
-        # Go asynchrone
-        pool.shutdown(wait=False)

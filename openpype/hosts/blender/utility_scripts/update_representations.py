@@ -48,7 +48,9 @@ if __name__ == "__main__":
         help="representation ID",
         required=True,
     )
-    args, unknown = parser.parse_known_args(sys.argv[sys.argv.index("--") + 1 :])
+    args, unknown = parser.parse_known_args(
+        sys.argv[sys.argv.index("--") + 1 :]
+    )
 
     containerized_datablocks = set()
     for datapath in args.datapaths:
