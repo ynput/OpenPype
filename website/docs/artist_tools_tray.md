@@ -13,10 +13,10 @@ Click on the **OpenPype** logo to open the tray and find the major informations 
 ## Ftrack
 
 ### Credentials
-The **Credentials** contains the studio's **Ftrack URL**, your **Username** on it and the **API Key** given by your studio.
+The **Credentials** contains the studio's **Ftrack URL**, your **Username** and the **API Key** given by your studio.
 
 ### Action server
-Delete or stop [Action](manager_ftrack_actions/) server.
+Delete or stop [Action](manager_ftrack_actions.md) server.
 
  ![OpenPype Tray Ftrack](assets/tools/tools_openpype_ftrack.png)
 
@@ -24,7 +24,7 @@ Delete or stop [Action](manager_ftrack_actions/) server.
 Access to **Ftrack**'s website and sign in.
 
 ## Launcher
-Select your working context. Once choosen, you can see all the files, assets and its associated **Tasks**. You can also filter your assets for a more efficient research. Click on a task and choose one of the softwares to open it.
+Select your working context. Once choosen, you can see all the files, assets and its associated **Tasks**. You can also filter your assets for a more efficient research. Click on a task and select one of the softwares to open it.
 
 ## Loader
 Loader loads published subsets into your current scene or script.
@@ -39,12 +39,14 @@ More details [here](admin_settings_local).
 
 ## Publisher (legacy)
 Publish files without opening a software. More details [here](pype2/admin_presets_plugins.md#extractreview).
+
 ## Publisher
 Publish files without opening a software.
 
 ## Admin
+
 ### Studio Settings
-Details [here](admin_settings_system).
+Details [here](admin_settings_system.md).
 
 ### Project Manager
 Find here your projects library and there informations. You can add new projects, starting folders, assets and tasks, or delete them.
