@@ -311,8 +311,8 @@ def deliver_sequence(
     src_tail = src_collection.tail
     uploaded = 0
     if renumber_frame:
-        for (src_idx, dst_idx) in zip(
-            src_collection.indexes, dst_collection.indexes):
+        for (src_idx, dst_idx) in zip(src_collection.indexes,
+                                      dst_collection.indexes):
             src_padding = src_collection.format("{padding}") % src_idx
             src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
             src = os.path.normpath(
