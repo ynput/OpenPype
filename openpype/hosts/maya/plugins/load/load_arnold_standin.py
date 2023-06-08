@@ -17,7 +17,6 @@ from openpype.hosts.maya.api.lib import (
 )
 from openpype.hosts.maya.api.pipeline import containerise
 
-
 def is_sequence(files):
     sequence = False
     if len(files) == 1:
@@ -27,13 +26,6 @@ def is_sequence(files):
     if collections:
         sequence = True
     return sequence
-
-def get_fps(standin_shape):
-
-    fps = convert_to_maya_fps(
-            float(legacy_io.Session.get("AVALON_FPS", 25))
-        )
-    return fps
 
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
@@ -96,9 +88,8 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-            cmds.setAttr(standin_shape + ".dso", path, type="string")
-            matching_fps = get_fps(os.listdir(os.path.dirname(self.fname)))
-            cmds.setAttr(standin_shape + ".abcFPS", matching_fps)
+            fps = float(version["data"]["fps"])
+            cmds.setAttr(standin_shape + ".abcFPS", fps)
 
         nodes = [root, standin, standin_shape]
         if operator is not None:
