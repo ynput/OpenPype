@@ -493,7 +493,20 @@
             "upload_reviewable_with_origin_name": false
         },
         "IntegrateFtrackFarmStatus": {
-            "farm_status_profiles": []
+            "farm_status_profiles": [
+                {
+                    "hosts": [
+                        "celaction"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "families": [
+                        "render"
+                    ],
+                    "subsets": [],
+                    "status_name": "Render"
+                }
+            ]
         }
     }
 }

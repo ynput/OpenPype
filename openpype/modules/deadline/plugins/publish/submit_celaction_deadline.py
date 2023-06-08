@@ -59,7 +59,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             render_path).replace("\\", "/")
 
         instance.data["publishJobState"] = "Suspended"
-        instance.context.data['ftrackStatus'] = "Render"
 
         # adding 2d render specific family for version identification in Loader
         instance.data["families"] = ["render2d"]

@@ -109,8 +109,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 for status in asset_version_statuses
             }
 
-        self._set_task_status(instance, project_entity, task_entity, session)
-
         # Prepare AssetTypes
         asset_types_by_short = self._ensure_asset_types_exists(
             session, component_list
@@ -179,45 +177,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         for asset_version in used_asset_versions:
             if asset_version not in instance.data[asset_versions_key]:
                 instance.data[asset_versions_key].append(asset_version)
-
-    def _set_task_status(self, instance, project_entity, task_entity, session):
-        if not project_entity:
-            self.log.info("Task status won't be set, project is not known.")
-            return
-
-        if not task_entity:
-            self.log.info("Task status won't be set, task is not known.")
-            return
-
-        status_name = instance.context.data.get("ftrackStatus")
-        if not status_name:
-            self.log.info("Ftrack status name is not set.")
-            return
-
-        self.log.debug(
-            "Ftrack status name will be (maybe) set to \"{}\"".format(
-                status_name
-            )
-        )
-
-        project_schema = project_entity["project_schema"]
-        task_statuses = project_schema.get_statuses(
-            "Task", task_entity["type_id"]
-        )
-        task_statuses_by_low_name = {
-            status["name"].lower(): status for status in task_statuses
-        }
-        status = task_statuses_by_low_name.get(status_name.lower())
-        if not status:
-            self.log.warning((
-                "Task status \"{}\" won't be set,"
-                " status is now allowed on task type \"{}\"."
-            ).format(status_name, task_entity["type"]["name"]))
-            return
-
-        self.log.info("Setting task status to \"{}\"".format(status_name))
-        task_entity["status"] = status
-        session.commit()
 
     def _fill_component_locations(self, session, component_list):
         components_by_location_name = collections.defaultdict(list)
