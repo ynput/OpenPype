@@ -1,5 +1,6 @@
 """Shared functionality for pipeline plugins for Blender."""
 
+import itertools
 from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
@@ -761,15 +762,20 @@ class AssetLoader(Loader):
 
                 # Update datablocks because could have been renamed
                 override_datablocks.add(d)
-                if isinstance(d, tuple(BL_OUTLINER_TYPES)):
+                if isinstance(d, bpy.types.Object):
+                    override_datablocks.update(d.children_recursive)
+                elif isinstance(d, bpy.types.Collection):
                     override_datablocks.update(
-                        col
-                        for col in d.children_recursive
-                        # Don't add empty collections
-                        if col.children or col.all_objects
+                        itertools.chain(
+                            (
+                                col
+                                for col in d.children_recursive
+                                # Only not empty collections
+                                if col.children or col.all_objects
+                            ),
+                            d.all_objects,
+                        )
                     )
-                    if isinstance(d, bpy.types.Collection):
-                        override_datablocks.update(d.all_objects)
 
             for d in override_datablocks:
                 # Ensure user override NOTE: will be unecessary after BL3.4

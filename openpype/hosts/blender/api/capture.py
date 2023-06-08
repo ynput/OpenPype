@@ -6,7 +6,7 @@ import contextlib
 import bpy
 
 from .lib import maintained_time
-from .plugin import deselect_all, create_blender_context
+from .plugin import deselect_all
 
 
 def capture(
