@@ -10,7 +10,10 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.maya.api.lib import (
-    unique_namespace, get_attribute_input, maintained_selection, convert_to_maya_fps
+    unique_namespace, 
+    get_attribute_input, 
+    maintained_selection, 
+    convert_to_maya_fps
 )
 from openpype.hosts.maya.api.pipeline import containerise
 
@@ -25,17 +28,12 @@ def is_sequence(files):
         sequence = True
     return sequence
 
-#get the fps from the project itself
 def get_fps(standin_shape):
 
     fps = convert_to_maya_fps(
             float(legacy_io.Session.get("AVALON_FPS", 25))
         )
     return fps
-
-    
-
-
 
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
