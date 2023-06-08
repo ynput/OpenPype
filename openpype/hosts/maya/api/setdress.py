@@ -28,7 +28,9 @@ from openpype.pipeline import (
 )
 from openpype.hosts.maya.api.lib import (
     matrix_equals,
-    unique_namespace
+    unique_namespace,
+    get_container_transforms,
+    DEFAULT_MATRIX
 )
 
 log = logging.getLogger("PackageLoader")
@@ -182,8 +184,6 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
         str: The created Avalon container.
 
     """
-
-    from openpype.hosts.maya.lib import get_container_transforms
 
     # Process within the namespace
     with namespaced(namespace, new=False) as namespace:
@@ -378,8 +378,6 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
         processed_containers (list): all new and updated containers
 
     """
-
-    from openpype.hosts.maya.lib import DEFAULT_MATRIX, get_container_transforms
 
     set_namespace = set_container['namespace']
     project_name = legacy_io.active_project()
