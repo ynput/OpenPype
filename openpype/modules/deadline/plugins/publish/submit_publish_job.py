@@ -21,6 +21,7 @@ from openpype.pipeline import (
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
+from openpype.pipeline import publish
 
 
 def get_resources(project_name, version, extension=None):
@@ -79,7 +80,8 @@ def get_resource_files(resources, frame_range=None):
     return list(res_collection)
 
 
-class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
+class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
+                                publish.ColormanagedPyblishPluginMixin):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -733,6 +735,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if not already_there:
                 representations.append(rep)
 
+        for rep in representations:
+            # inject colorspace data
+            self.set_representation_colorspace(
+                rep, self.context,
+                colorspace=instance["colorspace"]
+            )
+
         return representations
 
     def _solve_families(self, instance, preview=False):
@@ -861,7 +870,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True),
             # map inputVersions `ObjectId` -> `str` so json supports it
-            "inputVersions": list(map(str, data.get("inputVersions", [])))
+            "inputVersions": list(map(str, data.get("inputVersions", []))),
+            "colorspace": instance.data['colorspace']
         }
 
         # skip locking version if we are creating v01
