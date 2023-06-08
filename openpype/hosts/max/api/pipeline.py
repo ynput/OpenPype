@@ -6,7 +6,7 @@ from operator import attrgetter
 
 import json
 
-from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 import pyblish.api
 from openpype.pipeline import (
     register_creator_plugin_path,
@@ -28,7 +28,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
+class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     name = "max"
     menu = None
