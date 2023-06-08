@@ -18,7 +18,7 @@ OpenPype stores some of it's settings and configuration in local file system. Th
 
 
 ### OpenPype Mongo URL
-The **Mongo URL** is the database URL given by your Studio. More details [here](artist_getting_started#mongodb).
+The **Mongo URL** is the database URL given by your Studio. More details [here](artist_getting_started.md#mongodb).
 
 <br>
 
@@ -42,9 +42,9 @@ Local replacement of the environment data of each software and additional intern
 <br>
 
 ### Applications
-Local override of software paths and their versions. More details [here](admin_settings_system/#applications).
+Local override of software paths and their versions. More details [here](admin_settings_system.md#applications).
 
 <br>
 
 ### Project Settings
-The **Project Settings** allows to determine the root folder. More details [here](module_site_sync/#local-settings).
+The **Project Settings** allows to determine the root folder. More details [here](module_site_sync.md#local-settings).
