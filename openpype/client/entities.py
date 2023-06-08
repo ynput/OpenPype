@@ -855,12 +855,13 @@ def get_output_link_versions(project_name, version_id, fields=None):
     return conn.find(query_filter, _prepare_fields(fields))
 
 
-def get_last_versions(project_name, subset_ids, fields=None):
+def get_last_versions(project_name, subset_ids, active=None, fields=None):
     """Latest versions for entered subset_ids.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
         subset_ids (Iterable[Union[str, ObjectId]]): List of subset ids.
+        active (Optional[bool]): If True only active versions are returned.
         fields (Optional[Iterable[str]]): Fields that should be returned. All
             fields are returned if 'None' is passed.
 
@@ -899,12 +900,21 @@ def get_last_versions(project_name, subset_ids, fields=None):
     if name_needed:
         group_item["name"] = {"$last": "$name"}
 
+    aggregate_filter = {
+        "type": "version",
+        "parent": {"$in": subset_ids}
+    }
+    if active is False:
+        aggregate_filter["data.active"] = active
+    elif active is True:
+        aggregate_filter["$or"] = [
+            {"data.active": {"$exists": 0}},
+            {"data.active": active},
+        ]
+
     aggregation_pipeline = [
         # Find all versions of those subsets
-        {"$match": {
-            "type": "version",
-            "parent": {"$in": subset_ids}
-        }},
+        {"$match": aggregate_filter},
         # Sorting versions all together
         {"$sort": {"name": 1}},
         # Group them by "parent", but only take the last
