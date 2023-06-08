@@ -155,7 +155,7 @@ def _convert_general(ayon_settings, output, default_settings):
         "log_to_server": False,
         "studio_name": core_settings["studio_name"],
         "studio_code": core_settings["studio_code"],
-        "environments": environments
+        "environment": environments
     })
     output["general"] = general
 
