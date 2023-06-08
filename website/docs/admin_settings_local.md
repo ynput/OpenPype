@@ -15,36 +15,22 @@ OpenPype stores some of it's settings and configuration in local file system. Th
 
 ## Categories
 
-
-
 ### OpenPype Mongo URL
 The **Mongo URL** is the database URL given by your Studio. More details [here](artist_getting_started.md#mongodb).
-
-<br>
 
 ### General
 **OpenPype Username** : enter your username (it can also take by default the computer session username). It signs your actions on **OpenPype**.
 
-<br>
-
 **Admin permissions** : on checked, no need to enter a password (if defined) to access to the **Admin** section.
-
-<br>
 
 ### Experimental tools
 Futur version of existing tools or new ones.
 
-<br>
-
 ### Environments
 Local replacement of the environment data of each software and additional internal data necessary to be loaded correctly.
 
-<br>
-
 ### Applications
 Local override of software paths and their versions. More details [here](admin_settings_system.md#applications).
-
-<br>
 
 ### Project Settings
 The **Project Settings** allows to determine the root folder. More details [here](module_site_sync.md#local-settings).
