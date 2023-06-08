@@ -109,7 +109,7 @@ class UnpauseSyncServer(pyblish.api.ContextPlugin):
                 result = future.result().decode()
 
                 # Iterate through matched errors
-                if errors_stack := re.finditer(match_tb, result):
+                if errors_stack := list(re.finditer(match_tb, result)):
                     # Match file path
                     blend_file = re.search(match_blend_file, result)
 
