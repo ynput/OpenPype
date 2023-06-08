@@ -507,6 +507,15 @@
                     "status_name": "Render"
                 }
             ]
+        },
+        "ftrack_task_status_local_publish": {
+            "status_profiles": []
+        },
+        "ftrack_task_status_on_farm_publish": {
+            "status_profiles": []
+        },
+        "IntegrateFtrackTaskStatus": {
+            "after_version_statuses": true
         }
     }
 }
