@@ -282,10 +282,26 @@ def deliver_sequence(
     delivery_folder = os.path.dirname(delivery_path)
     dst_head, dst_tail = delivery_path.split(frame_indicator)
     dst_padding = src_collection.padding
+    dsp_indexes = set()
+    if renumber_frame:
+        for idx in src_collection.indexes:
+            dsp_list = []
+            dsp_idx = (re_frame_value - int(idx)) + 1
+            if dsp_idx < 0:
+                msg = "Renumber frame has a smaller number than original frame"     # noqa
+                report_items[msg].append(dsp_idx)
+                log.warning("{} <{}>".format(msg, context))
+                return report_items, 0
+            dsp_list.append(dsp_idx)
+            dsp_indexes.add(dsp_list)
+    else:
+        dsp_indexes = set([idx for idx in src_collection.indexes])
+
     dst_collection = clique.Collection(
         head=dst_head,
         tail=dst_tail,
-        padding=dst_padding
+        padding=dst_padding,
+        indexes=dsp_indexes
     )
 
     if not os.path.exists(delivery_folder):
@@ -294,32 +310,34 @@ def deliver_sequence(
     src_head = src_collection.head
     src_tail = src_collection.tail
     uploaded = 0
-    for index in src_collection.indexes:
-        src_padding = src_collection.format("{padding}") % index
-        src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
-        src = os.path.normpath(
-            os.path.join(dir_path, src_file_name)
-        )
-
-        if renumber_frame:
-            dsp_index = (re_frame_value - int(index)) + 1
-            if dsp_index < 0:
-                msg = "Renumber frame has a smaller number than original frame"     # noqa
-                report_items[msg].append(src_file_name)
-                log.warning("{} <{}>".format(msg, context))
-                return report_items, 0
-
-            dst_padding = dst_collection.format("{padding}") % dsp_index
+    if renumber_frame:
+        for (src_idx, dst_idx) in zip(
+            src_collection.indexes, dst_collection.indexes):
+            src_padding = src_collection.format("{padding}") % src_idx
+            src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
+            src = os.path.normpath(
+                os.path.join(dir_path, src_file_name)
+            )
+            dst_padding = dst_collection.format("{padding}") % dst_idx
             dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
             dst = os.path.normpath(
                 os.path.join(delivery_folder, dst)
             )
-
+            log.debug("Copying single: {} -> {}".format(src, dst))
             _copy_file(src, dst)
+    else:
+        for index in src_collection.indexes:
+            src_padding = src_collection.format("{padding}") % index
+            src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
+            src = os.path.normpath(
+                os.path.join(dir_path, src_file_name)
+            )
 
-        else:
             dst_padding = dst_collection.format("{padding}") % index
             dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+            dst = os.path.normpath(
+                os.path.join(delivery_folder, dst)
+            )
             log.debug("Copying single: {} -> {}".format(src, dst))
             _copy_file(src, dst)
 
