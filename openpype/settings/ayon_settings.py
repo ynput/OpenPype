@@ -740,8 +740,9 @@ def _convert_nuke_project_settings(ayon_settings, output):
                 "sync_workfile_version_on_product_types"))
 
     # TODO 'ExtractThumbnail' does not have ideal schema in v3
+    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
     new_thumbnail_nodes = {}
-    for item in ayon_publish["ExtractThumbnail"]["nodes"]:
+    for item in ayon_extract_thumbnail["nodes"]:
         name = item["nodeclass"]
         value = []
         for knob in _convert_nuke_knobs(item["knobs"]):
@@ -754,7 +755,11 @@ def _convert_nuke_project_settings(ayon_settings, output):
             value.append([knob_name, knob_value])
         new_thumbnail_nodes[name] = value
 
-    ayon_publish["ExtractThumbnail"]["nodes"] = new_thumbnail_nodes
+    ayon_extract_thumbnail["nodes"] = new_thumbnail_nodes
+
+    if "reposition_nodes" in ayon_extract_thumbnail:
+        for item in ayon_extract_thumbnail["reposition_nodes"]:
+            item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     # --- ImageIO ---
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
@@ -856,14 +861,6 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     extract_sequence_setting["review_bg"] = _convert_color(
         extract_sequence_setting["review_bg"]
     )
-
-    # TODO remove when removed from OpenPype schema
-    #   this is unused setting
-    ayon_tvpaint["publish"]["ExtractSequence"]["families_to_review"] = [
-        "review",
-        "renderlayer",
-        "renderscene"
-    ]
 
     output["tvpaint"] = ayon_tvpaint
 
