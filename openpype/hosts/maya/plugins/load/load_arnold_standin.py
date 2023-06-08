@@ -6,10 +6,11 @@ import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
+    legacy_io,
     get_representation_path
 )
 from openpype.hosts.maya.api.lib import (
-    unique_namespace, get_attribute_input, maintained_selection
+    unique_namespace, get_attribute_input, maintained_selection, convert_to_maya_fps
 )
 from openpype.hosts.maya.api.pipeline import containerise
 
@@ -23,6 +24,17 @@ def is_sequence(files):
     if collections:
         sequence = True
     return sequence
+
+#get the fps from the project itself
+def get_fps(standin_shape):
+
+    fps = convert_to_maya_fps(
+            float(legacy_io.Session.get("AVALON_FPS", 25))
+        )
+    return fps
+
+    
+
 
 
 class ArnoldStandinLoader(load.LoaderPlugin):
@@ -85,7 +97,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.setAttr(standin_shape + ".dso", path, type="string")
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
-            cmds.setAttr(standin_shape + ".abcFPS", 30)
+
+            cmds.setAttr(standin_shape + ".dso", path, type="string")
+            matching_fps = get_fps(os.listdir(os.path.dirname(self.fname)))
+            cmds.setAttr(standin_shape + ".abcFPS", matching_fps)
 
         nodes = [root, standin, standin_shape]
         if operator is not None:
