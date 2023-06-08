@@ -27,6 +27,7 @@ def is_sequence(files):
         sequence = True
     return sequence
 
+
 def get_current_fps():
     session_fps = float(legacy_io.Session.get('AVALON_FPS', 25))
     return convert_to_maya_fps(session_fps)
