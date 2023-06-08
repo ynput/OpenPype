@@ -10,9 +10,9 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.maya.api.lib import (
-    unique_namespace, 
-    get_attribute_input, 
-    maintained_selection, 
+    unique_namespace,
+    get_attribute_input,
+    maintained_selection,
     convert_to_maya_fps
 )
 from openpype.hosts.maya.api.pipeline import containerise
