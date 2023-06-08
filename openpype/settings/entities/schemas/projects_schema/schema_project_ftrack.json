@@ -1058,7 +1058,7 @@
                 {
                     "type": "dict",
                     "key": "IntegrateFtrackFarmStatus",
-                    "label": "Ftrack Status Send to Farm",
+                    "label": "Ftrack Status To Farm",
                     "children": [
                         {
                             "type": "label",
