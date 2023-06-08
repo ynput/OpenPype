@@ -825,7 +825,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             ).format(source))
 
         family = "render"
-        if "prerender" in instance.data["families"]:
+        if ("prerender" in instance.data["families"] or
+                "prerender.farm" in instance.data["families"]):
             family = "prerender"
         families = [family]
 
