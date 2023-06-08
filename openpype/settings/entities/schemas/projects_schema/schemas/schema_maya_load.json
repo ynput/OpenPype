@@ -111,6 +111,14 @@
                 {
                     "type": "label",
                     "label": "Here's a link to the doc where you can find explanations about customing the naming of referenced assets: https://openpype.io/docs/admin_hosts_maya#load-plugins"
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "boolean",
+                    "key": "display_handle",
+                    "label": "Display Handle On Load References"
                 }
             ]
         }

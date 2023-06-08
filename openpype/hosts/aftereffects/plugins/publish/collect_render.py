@@ -66,19 +66,19 @@ class CollectAERender(publish.AbstractCollectRender):
 
             comp_id = int(inst.data["members"][0])
 
-            work_area_info = CollectAERender.get_stub().get_work_area(comp_id)
+            comp_info = CollectAERender.get_stub().get_comp_properties(
+                comp_id)
 
-            if not work_area_info:
+            if not comp_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                inst_id = inst.get("instance_id") or str(comp_id)
+                inst_id = inst.data.get("instance_id") or str(comp_id)
                 CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
-            frame_start = work_area_info.workAreaStart
-            frame_end = round(work_area_info.workAreaStart +
-                              float(work_area_info.workAreaDuration) *
-                              float(work_area_info.frameRate)) - 1
-            fps = work_area_info.frameRate
+            frame_start = comp_info.frameStart
+            frame_end = round(comp_info.frameStart +
+                              comp_info.framesDuration) - 1
+            fps = comp_info.frameRate
             # TODO add resolution when supported by extension
 
             task_name = inst.data.get("task")  # legacy
@@ -88,10 +88,11 @@ class CollectAERender(publish.AbstractCollectRender):
                 raise ValueError("No file extension set in Render Queue")
             render_item = render_q[0]
 
+            instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family="render",
-                families=inst.data.get("families", []),
+                families=instance_families,
                 version=version,
                 time="",
                 source=current_file,
@@ -109,6 +110,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 tileRendering=False,
                 tilesX=0,
                 tilesY=0,
+                review="review" in instance_families,
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
@@ -139,6 +141,9 @@ class CollectAERender(publish.AbstractCollectRender):
                 instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
+                if "review" in instance.families:
+                    # to skip ExtractReview locally
+                    instance.families.remove("review")
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -217,16 +222,5 @@ class CollectAERender(publish.AbstractCollectRender):
         fam = "render.local"
         if fam not in instance.families:
             instance.families.append(fam)
-
-        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        reviewable_subset_filter = (settings["deadline"]
-                                    ["publish"]
-                                    ["ProcessSubmittedJobOnFarm"]
-                                    ["aov_filter"].get(self.hosts[0]))
-        for aov_pattern in reviewable_subset_filter:
-            if re.match(aov_pattern, instance.subset):
-                instance.families.append("review")
-                instance.review = True
-                break
 
         return instance

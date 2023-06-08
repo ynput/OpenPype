@@ -304,7 +304,7 @@ If source representation has suffix **"h264"** and burnin suffix is **"client"**
   | resolution_height | Resolution height. |
   | fps | Fps of an output. |
   | timecode | Timecode by frame start and fps. |
-  | focalLength | **Only available in Maya**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
+  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
 
 :::warning
 `timecode` is specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)

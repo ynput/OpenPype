@@ -255,7 +255,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         # Store original uv set
         original_current_uv_set = cmds.polyUVSet(mesh,
                                                  query=True,
-                                                 currentUVSet=True)
+                                                 currentUVSet=True)[0]
 
         overlapping_faces = []
         for uv_set in cmds.polyUVSet(mesh, query=True, allUVSets=True):

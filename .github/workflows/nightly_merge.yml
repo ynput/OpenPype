@@ -25,5 +25,5 @@ jobs:
     - name: Invoke pre-release workflow
       uses: benc-uk/workflow-dispatch@v1
       with:
-        workflow: Nightly Prerelease
+        workflow: prerelease.yml
         token: ${{ secrets.YNPUT_BOT_TOKEN }}

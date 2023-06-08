@@ -33,6 +33,28 @@
             "label": "Delete assets that are not matched"
         },
         {
+            "type": "text",
+            "key": "render_config_path",
+            "label": "Render Config Path"
+        },
+        {
+            "type": "number",
+            "key": "preroll_frames",
+            "label": "Pre-roll frames"
+        },
+        {
+            "key": "render_format",
+            "label": "Render format",
+            "type": "enum",
+            "multiselection": false,
+            "enum_items": [
+                {"png": "PNG"},
+                {"exr": "EXR"},
+                {"jpg": "JPG"},
+                {"bmp": "BMP"}
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "project_setup",

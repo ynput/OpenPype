@@ -370,6 +370,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cmds.setAttr("defaultRenderGlobals.animation", True)
 
             # Repair prefix
+            if renderer == "arnold":
+                multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                if multipart:
+                    separator_variations = [
+                        "_<RenderPass>",
+                        "<RenderPass>_",
+                        "<RenderPass>",
+                    ]
+                    for variant in separator_variations:
+                        default_prefix = default_prefix.replace(variant, "")
+
             if renderer != "renderman":
                 node = render_attrs["node"]
                 prefix_attr = render_attrs["prefix"]

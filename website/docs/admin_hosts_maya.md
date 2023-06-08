@@ -200,6 +200,16 @@ Most settings to override in the viewport are self explanatory and can be found 
 These options are set on the camera shape when publishing the review. They correspond to attributes on the Maya camera shape node.
 
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
+## Include/exclude handles by task type
+You can include or exclude handles, globally or by task type.
+
+The "Include handles by default" defines whether by default handles are included. Additionally you can add a per task type override whether you want to include or exclude handles.
+
+For example, in this image you can see that handles are included by default in all task types, except for the 'Lighting' task, where the toggle is disabled.
+![Include/exclude handles](assets/maya-admin_exclude_handles.png)
+
+And here you can see that the handles are disabled by default, except in 'Animation' task where it's enabled.
+![Custom menu definition](assets/maya-admin_include_handles.png)
 
 
 ## Custom Menu
@@ -237,15 +247,24 @@ Fill in the necessary fields (the optional fields are regex filters)
 ![new place holder](assets/maya-placeholder_new.png)
 
 
-    - Builder type: Whether the the placeholder should load current asset representations or linked assets representations
+  - ***Builder type***: Whether the the placeholder should load current asset representations or linked assets representations
 
-    - Representation: Representation that will be loaded (ex: ma, abc, png, etc...)
+  - ***Representation***: Representation that will be loaded (ex: ma, abc, png, etc...)
 
-    - Family: Family of the representation to load (main, look, image, etc ...)
+  - ***Family***: Family of the representation to load (main, look, image, etc ...)
 
-    - Loader: Placeholder loader name that will be used to load corresponding representations
+  - ***Loader***: Placeholder loader name that will be used to load corresponding representations
 
-    - Order: Priority for current placeholder loader (priority is lowest first, highet last)
+  - ***Order***: Priority for current placeholder loader (priority is lowest first, highest last)
+
+  - ***Loader arguments***: Loader arguments dictionary can be used to pass optional data to loaders.
+  One use case is to define a custom Subset name for the animation instances created while loading Rig references.This follows the custom namespace system used by loaders.
+
+    **Example**
+      ```
+      {"animationSubsetName": "{asset_name}_animation_{subset}_##_"}
+      ```
+
 
 - **Save your template**
 
@@ -264,3 +283,14 @@ Fill in the necessary fields (the optional fields are regex filters)
 - Build your workfile
 
 ![maya build template](assets/maya-build_workfile_from_template.png)
+
+## Explicit Plugins Loading
+You can define which plugins to load on launch of Maya here; `project_settings/maya/explicit_plugins_loading`. This can help improve Maya's launch speed, if you know which plugins are needed.
+
+By default only the required plugins are enabled. You can also add any plugin to the list to enable on launch.
+
+:::note technical
+When enabling this feature, the workfile will be launched post initialization no matter the setting on `project_settings/maya/open_workfile_post_initialization`. This is to avoid any issues with references needing plugins.
+
+Renderfarm integration is not supported for this feature.
+:::

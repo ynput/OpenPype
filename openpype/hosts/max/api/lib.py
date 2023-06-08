@@ -128,7 +128,14 @@ def get_all_children(parent, node_type=None):
 
 
 def get_current_renderer():
-    """get current renderer"""
+    """
+    Notes:
+        Get current renderer for Max
+
+    Returns:
+        "{Current Renderer}:{Current Renderer}"
+        e.g. "Redshift_Renderer:Redshift_Renderer"
+    """
     return rt.renderers.production
 
 
@@ -138,7 +145,7 @@ def get_default_render_folder(project_setting=None):
                            ["default_render_image_folder"])
 
 
-def set_framerange(start_frame, end_frame):
+def set_render_frame_range(start_frame, end_frame):
     """
     Note:
         Frame range can be specified in different types. Possible values are:
@@ -150,10 +157,10 @@ def set_framerange(start_frame, end_frame):
     Todo:
         Current type is hard-coded, there should be a custom setting for this.
     """
-    rt.rendTimeType = 4
+    rt.rendTimeType = 3
     if start_frame is not None and end_frame is not None:
-        frame_range = "{0}-{1}".format(start_frame, end_frame)
-        rt.rendPickupFrames = frame_range
+        rt.rendStart = int(start_frame)
+        rt.rendEnd = int(end_frame)
 
 
 def get_multipass_setting(project_setting=None):
@@ -173,9 +180,15 @@ def set_scene_resolution(width: int, height: int):
         None
 
     """
+    # make sure the render dialog is closed
+    # for the update of resolution
+    # Changing the Render Setup dialog settingsshould be done
+    # with the actual Render Setup dialog in a closed state.
+    if rt.renderSceneDialog.isOpen():
+        rt.renderSceneDialog.close()
+
     rt.renderWidth = width
     rt.renderHeight = height
-
 
 def reset_scene_resolution():
     """Apply the scene resolution from the project definition
@@ -239,10 +252,15 @@ def reset_frame_range(fps: bool = True):
         fps_number = float(data_fps["data"]["fps"])
         rt.frameRate = fps_number
     frame_range = get_frame_range()
-    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
-    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    frange_cmd = f"animationRange = interval {frame_start} {frame_end}"
+    frame_start_handle = frame_range["frameStart"] - int(
+        frame_range["handleStart"]
+    )
+    frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frange_cmd = (
+        f"animationRange = interval {frame_start_handle} {frame_end_handle}"
+    )
     rt.execute(frange_cmd)
+    set_render_frame_range(frame_start_handle, frame_end_handle)
 
 
 def set_context_setting():
@@ -259,6 +277,7 @@ def set_context_setting():
         None
     """
     reset_scene_resolution()
+    reset_frame_range()
 
 
 def get_max_version():

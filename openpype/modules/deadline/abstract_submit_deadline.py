@@ -534,8 +534,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         template_data["comment"] = None
 
         anatomy = instance.context.data['anatomy']
-        anatomy_filled = anatomy.format(template_data)
-        template_filled = anatomy_filled["publish"]["path"]
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        template_filled = template_obj.format_strict(template_data)
         file_path = os.path.normpath(template_filled)
 
         self.log.info("Using published scene for render {}".format(file_path))
@@ -582,7 +582,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             metadata_folder = metadata_folder.replace(orig_scene,
                                                       new_scene)
             instance.data["publishRenderMetadataFolder"] = metadata_folder
-
         self.log.info("Scene name was switched {} -> {}".format(
             orig_scene, new_scene
         ))
@@ -663,7 +662,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
             # test if there is instance of workfile waiting
             # to be published.
-            assert i.data["publish"] is True, (
+            assert i.data.get("publish", True) is True, (
                 "Workfile (scene) must be published along")
 
             return i

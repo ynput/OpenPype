@@ -1,18 +1,11 @@
 import os
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
+from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
-)
+from openpype.hosts.max.api import maintained_selection, get_all_children
 
 
-class ExtractCameraFbx(publish.Extractor,
-                       OptionalPyblishPluginMixin):
+class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
     """
     Extract Camera with FbxExporter
     """
@@ -33,43 +26,35 @@ class ExtractCameraFbx(publish.Extractor,
         filename = "{name}.fbx".format(**instance.data)
 
         filepath = os.path.join(stagingdir, filename)
-        self.log.info("Writing fbx file '%s' to '%s'" % (filename,
-                                                         filepath))
+        self.log.info("Writing fbx file '%s' to '%s'" % (filename, filepath))
 
-        # Need to export:
-        # Animation = True
-        # Cameras = True
-        # AxisConversionMethod
-        fbx_export_cmd = (
-            f"""
-
-FBXExporterSetParam "Animation" true
-FBXExporterSetParam "Cameras" true
-FBXExporterSetParam "AxisConversionMethod" "Animation"
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-exportFile @"{filepath}" #noPrompt selectedOnly:true using:FBXEXP
-
-            """)
-
-        self.log.debug(f"Executing command: {fbx_export_cmd}")
+        rt.FBXExporterSetParam("Animation", True)
+        rt.FBXExporterSetParam("Cameras", True)
+        rt.FBXExporterSetParam("AxisConversionMethod", "Animation")
+        rt.FBXExporterSetParam("UpAxis", "Y")
+        rt.FBXExporterSetParam("Preserveinstances", True)
 
         with maintained_selection():
             # select and export
             rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(fbx_export_cmd)
+            rt.exportFile(
+                filepath,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.FBXEXP,
+            )
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'fbx',
-            'ext': 'fbx',
-            'files': filename,
+            "name": "fbx",
+            "ext": "fbx",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          filepath))
+        self.log.info(
+            "Extracted instance '%s' to: %s" % (instance.name, filepath)
+        )

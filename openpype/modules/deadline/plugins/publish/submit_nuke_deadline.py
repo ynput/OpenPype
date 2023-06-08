@@ -86,7 +86,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         instance.data["attributeValues"] = self.get_attr_values_from_data(

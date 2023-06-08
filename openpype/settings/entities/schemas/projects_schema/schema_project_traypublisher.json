@@ -26,7 +26,7 @@
             "type": "list",
             "collapsible": true,
             "key": "simple_creators",
-            "label": "Creator plugins",
+            "label": "Simple Create Plugins",
             "use_label_wrap": true,
             "collapsible_key": true,
             "object_type": {
@@ -292,40 +292,48 @@
             ]
         },
         {
+            "key": "create",
+            "label": "Create plugins",
             "type": "dict",
             "collapsible": true,
-            "key": "BatchMovieCreator",
-            "label": "Batch Movie Creator",
-            "collapsible_key": true,
             "children": [
                 {
-                    "type": "label",
-                    "label": "Allows to publish multiple video files in one go. <br />Name of matching asset is parsed from file names ('asset.mov', 'asset_v001.mov', 'my_asset_to_publish.mov')"
-                },
-                {
-                    "type": "list",
-                    "key": "default_variants",
-                    "label": "Default variants",
-                    "object_type": {
-                        "type": "text"
-                    }
-                },
-                {
-                    "type": "list",
-                    "key": "default_tasks",
-                    "label": "Default tasks",
-                    "object_type": {
-                        "type": "text"
-                    }
-                },
-                {
-                    "type": "list",
-                    "key": "extensions",
-                    "label": "Extensions",
-                    "use_label_wrap": true,
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "BatchMovieCreator",
+                    "label": "Batch Movie Creator",
                     "collapsible_key": true,
-                    "collapsed": false,
-                    "object_type": "text"
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Allows to publish multiple video files in one go. <br />Name of matching asset is parsed from file names ('asset.mov', 'asset_v001.mov', 'my_asset_to_publish.mov')"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_tasks",
+                            "label": "Default tasks",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "extensions",
+                            "label": "Extensions",
+                            "use_label_wrap": true,
+                            "collapsible_key": true,
+                            "collapsed": false,
+                            "object_type": "text"
+                        }
+                    ]
                 }
             ]
         },

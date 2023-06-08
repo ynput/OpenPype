@@ -43,6 +43,10 @@ Create an Xgen instance to publish. This needs to contain only **one Xgen collec
 
 You can create multiple Xgen instances if you have multiple collections to publish.
 
+:::note
+The Xgen publishing requires a namespace on the Xgen collection (palette) and the geometry used.
+:::
+
 ### Publish
 
 The publishing process will grab geometry used for Xgen along with any external files used in the collection's descriptions. This creates an isolated Maya file with just the Xgen collection's dependencies, so you can use any nested geometry when creating the Xgen description. An Xgen version will consist of:

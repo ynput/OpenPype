@@ -46,6 +46,10 @@
             "enabled": false,
             "families": []
         },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -82,7 +86,8 @@
                         "png": {
                             "ext": "png",
                             "tags": [
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
@@ -251,15 +256,18 @@
                     }
                 },
                 {
-                    "families": [],
+                    "families": [
+                        "review"
+                    ],
                     "hosts": [
-                        "maya"
+                        "maya",
+                        "houdini"
                     ],
                     "task_types": [],
                     "task_names": [],
                     "subsets": [],
                     "burnins": {
-                        "maya_burnin": {
+                        "focal_length_burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
                             "TOP_CENTERED": "{focalLength:.2f} mm",
                             "TOP_RIGHT": "{anatomy[version]}",

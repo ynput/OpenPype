@@ -43,7 +43,24 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             ))
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
-        new_nodes = cmds.file(path, i=True, returnNewNodes=True)
+        new_nodes = cmds.file(
+            path,
+            i=True,
+            returnNewNodes=True,
+            preserveReferences=True,
+            loadReferenceDepth="all",
+        )
+
+        # make default cameras non-renderable
+        default_cameras = [cam for cam in cmds.ls(cameras=True)
+                           if cmds.camera(cam, query=True, startupCamera=True)]
+        for cam in default_cameras:
+            if not cmds.attributeQuery("renderable", node=cam, exists=True):
+                self.log.debug(
+                    "Camera {} has no attribute 'renderable'".format(cam)
+                )
+                continue
+            cmds.setAttr("{}.renderable".format(cam), 0)
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
 
@@ -234,26 +251,10 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def cleanup_placeholder(self, placeholder, failed):
-        """Hide placeholder, parent them to root
-        add them to placeholder set and register placeholder's parent
-        to keep placeholder info available for future use
+        """Hide placeholder, add them to placeholder set
         """
-
         node = placeholder._scene_identifier
-        node_parent = placeholder.data["parent"]
-        if node_parent:
-            cmds.setAttr(node + ".parent", node_parent, type="string")
 
-        if cmds.getAttr(node + ".index") < 0:
-            cmds.setAttr(node + ".index", placeholder.data["index"])
-
-        holding_sets = cmds.listSets(object=node)
-        if holding_sets:
-            for set in holding_sets:
-                cmds.sets(node, remove=set)
-
-        if cmds.listRelatives(node, p=True):
-            node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
@@ -286,8 +287,6 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             elif not cmds.sets(root, q=True):
                 return
 
-        if placeholder.data["parent"]:
-            cmds.parent(nodes_to_parent, placeholder.data["parent"])
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_form = cmds.xform(
             placeholder.scene_identifier,

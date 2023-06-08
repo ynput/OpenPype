@@ -19,6 +19,7 @@ from openpype.lib import (
     should_convert_for_ffmpeg
 )
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractBurnin(publish.Extractor):
@@ -49,7 +50,8 @@ class ExtractBurnin(publish.Extractor):
         "webpublisher",
         "aftereffects",
         "photoshop",
-        "flame"
+        "flame",
+        "houdini"
         # "resolve"
     ]
 
@@ -78,9 +80,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
@@ -351,6 +354,8 @@ class ExtractBurnin(publish.Extractor):
                 # Add new representation to instance
                 instance.data["representations"].append(new_repre)
 
+                add_repre_files_for_cleanup(instance, new_repre)
+
             # Cleanup temp staging dir after procesisng of output definitions
             if do_convert:
                 temp_dir = repre["stagingDir"]
@@ -515,8 +520,8 @@ class ExtractBurnin(publish.Extractor):
         """
 
         if "burnin" not in (repre.get("tags") or []):
-            self.log.info((
-                "Representation \"{}\" don't have \"burnin\" tag. Skipped."
+            self.log.debug((
+                "Representation \"{}\" does not have \"burnin\" tag. Skipped."
             ).format(repre["name"]))
             return False
 
