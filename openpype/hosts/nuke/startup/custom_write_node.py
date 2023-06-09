@@ -119,8 +119,8 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
 
         for setting in settings:
             if setting["nukeNodeClass"] == "Write" and setting["subsets"]:
-                    for knob in setting["subsets"]:
-                        knobs_value.append(knob)
+                for knob in setting["subsets"]:
+                    knobs_value.append(knob)
 
         return knobs_value, knobs_nodes
 
