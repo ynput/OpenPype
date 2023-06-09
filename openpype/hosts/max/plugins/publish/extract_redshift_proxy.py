@@ -2,7 +2,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import get_all_children, maintained_selection
+from openpype.hosts.max.api import maintained_selection
 
 
 class ExtractRedshiftProxy(publish.Extractor):
@@ -30,7 +30,8 @@ class ExtractRedshiftProxy(publish.Extractor):
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             # Redshift rsProxy command
             # rsProxy fp selected compress connectivity startFrame endFrame
             # camera warnExisting transformPivotToOrigin

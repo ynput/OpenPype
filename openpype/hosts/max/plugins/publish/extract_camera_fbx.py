@@ -3,7 +3,7 @@ import os
 import pyblish.api
 from pymxs import runtime as rt
 
-from openpype.hosts.max.api import get_all_children, maintained_selection
+from openpype.hosts.max.api import maintained_selection
 from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
@@ -36,7 +36,8 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
 
         with maintained_selection():
             # select and export
-            rt.Select(get_all_children(rt.GetNodeByName(container)))
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             rt.ExportFile(
                 filepath,
                 rt.Name("noPrompt"),
