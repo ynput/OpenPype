@@ -43,7 +43,6 @@ from openpype.pipeline.context_tools import (
     get_current_task_name
 )
 from openpype.lib.profiles_filtering import filter_profiles
-from .workfile_template_builder import build_workfile_template
 
 
 self = sys.modules[__name__]
@@ -2395,6 +2394,7 @@ def build_first_workfile_from_template_builder():
             is_create_first_version = profile['create_first_version']
 
             if (is_task_name or is_task_type) and is_create_first_version:
+                from .workfile_template_builder import build_workfile_template
                 build_workfile_template()
 
 
