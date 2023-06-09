@@ -67,10 +67,9 @@ class ImageLoader(plugin.AssetLoader):
         auto creation of theses datablocks.
         """
         container, datablocks = super().load(*args, **kwargs)
-        img = datablocks[0]
 
         # Set container metadata to image datablock
-        img[AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
+        datablocks[0][AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
 
         return container, datablocks
 

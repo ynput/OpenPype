@@ -68,10 +68,9 @@ class AudioLoader(plugin.AssetLoader):
         auto creation of theses datablocks.
         """
         container, datablocks = super().load(*args, **kwargs)
-        sound = datablocks[0]
 
         # Set container metadata to sound datablock
-        sound[AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
+        datablocks[0][AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
 
         return container, datablocks
 
