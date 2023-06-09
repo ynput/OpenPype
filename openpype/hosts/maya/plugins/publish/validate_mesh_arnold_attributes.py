@@ -16,6 +16,7 @@ from openpype.pipeline.publish import (
     PublishValidationError
 )
 
+
 class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
                                    OptionalPyblishPluginMixin):
     """Validate the mesh has default Arnold attributes.

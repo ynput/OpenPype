@@ -1,17 +1,12 @@
 from collections import defaultdict
 
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
-)
-
+    OptionalPyblishPluginMixin, PublishValidationError, RepairAction,
+    ValidateContentsOrder)
 
 
 class ValidateAttributes(pyblish.api.InstancePlugin,

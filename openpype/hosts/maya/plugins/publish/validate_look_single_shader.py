@@ -1,11 +1,9 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    PublishValidationError
-)
+    PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateSingleShader(pyblish.api.InstancePlugin):
@@ -26,9 +24,9 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Found shapes which don't have a single shader "
-                               "assigned: "
-                               "\n{}".format(invalid))
+            raise PublishValidationError(
+                ("Found shapes which don't have a single shader "
+                  "assigned:\n{}").format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):

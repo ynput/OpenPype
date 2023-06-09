@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
 """Validate model nodes names."""
 import os
-import re
 import platform
+import re
 
+import gridfs
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    OptionalPyblishPluginMixin
-    PublishValidationError
-)
-
-
 import openpype.hosts.maya.api.action
+from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
-from openpype.client.mongo import OpenPypeMongoConnection
-import gridfs
+from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateModelName(pyblish.api.InstancePlugin,
@@ -161,4 +156,5 @@ class ValidateModelName(pyblish.api.InstancePlugin,
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise PublishValidationError("Model naming is invalid. See the log.")
+            raise PublishValidationError(
+                "Model naming is invalid. See the log.")

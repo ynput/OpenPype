@@ -1,15 +1,10 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateMeshOrder,
-    PublishValidationError
-)
-
-
 from openpype.hosts.maya.api.lib import len_flattened
+from openpype.pipeline.publish import (
+    PublishValidationError, RepairAction, ValidateMeshOrder)
 
 
 class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
@@ -43,8 +38,9 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
 
         # This fix only works in Maya 2016 EXT2 and newer
         if float(cmds.about(version=True)) <= 2016.0:
-            raise PublishValidationError("Repair not supported in Maya version below "
-                               "2016 EXT 2")
+            raise PublishValidationError(
+                ("Repair not supported in Maya version below "
+                 "2016 EXT 2"))
 
         invalid = cls.get_invalid(instance)
         for node in invalid:
@@ -79,5 +75,6 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Meshes found in instance with vertices that "
-                               "have no edges: %s" % invalid)
+            raise PublishValidationError(
+                ("Meshes found in instance with vertices that "
+                 "have no edges: {}").format(invalid))

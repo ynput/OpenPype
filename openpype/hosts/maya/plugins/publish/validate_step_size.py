@@ -2,8 +2,8 @@ import pyblish.api
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    ValidateContentsOrder
 )
 
 
@@ -43,4 +43,5 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Invalid instances found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Invalid instances found: {0}".format(invalid))

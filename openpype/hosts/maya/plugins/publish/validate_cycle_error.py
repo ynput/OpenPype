@@ -1,14 +1,10 @@
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
-)
+    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateCycleError(pyblish.api.InstancePlugin,
@@ -28,7 +24,8 @@ class ValidateCycleError(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Nodes produce a cycle error: %s" % invalid)
+            raise PublishValidationError(
+                "Nodes produce a cycle error: {}".format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):

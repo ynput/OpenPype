@@ -1,11 +1,11 @@
 from collections import defaultdict
 
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidatePipelineOrder,
-    PublishValidationError
-)
+    PublishValidationError, ValidatePipelineOrder)
+
 
 class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
     """Validate the relational nodes of the look data to ensure every node is
@@ -35,8 +35,9 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Members found without non-unique IDs: "
-                               "{0}".format(invalid))
+            raise PublishValidationError(
+                ("Members found without non-unique IDs: "
+                 "{0}").format(invalid))
 
     @staticmethod
     def get_invalid(instance):

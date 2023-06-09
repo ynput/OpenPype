@@ -1,11 +1,9 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    PublishValidationError
-)
+    PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateCameraAttributes(pyblish.api.InstancePlugin):
@@ -68,4 +66,5 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise PublishValidationError("Invalid camera attributes: %s" % invalid)
+            raise PublishValidationError(
+                "Invalid camera attributes: {}".format(invalid))

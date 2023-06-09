@@ -1,9 +1,9 @@
 import os
 import re
+
 import pyblish.api
-from openpype.pipeline.publish import (
-    PublishValidationError
-)
+
+from openpype.pipeline.publish import PublishValidationError
 
 VERBOSE = False
 
@@ -167,5 +167,6 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
 
         if invalid:
             self.log.error("Invalid nodes: {0}".format(invalid))
-            raise PublishValidationError("Invalid particle caches in instance. "
-                               "See logs for details.")
+            raise PublishValidationError(
+                ("Invalid particle caches in instance. "
+                 "See logs for details."))
