@@ -871,7 +871,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "useSequenceForReview": data.get("useSequenceForReview", True),
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
-            "colorspace": instance.data['colorspace']
+            "colorspace": instance.data.get("colorspace")
         }
 
         # skip locking version if we are creating v01
