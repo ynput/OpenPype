@@ -67,10 +67,10 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         knobs_value, _ = self.get_node_knobs_setting()
         # create knobs
 
-        self.selected_preset_name  = nuke.Enumeration_Knob(
+        self.selected_preset_name = nuke.Enumeration_Knob(
             'preset_selector', 'presets', knobs_value)
         # add knobs to panel
-        self.addKnob(self.selected_preset_name )
+        self.addKnob(self.selected_preset_name)
 
     def process(self):
         """ Process the panel values. """
@@ -80,18 +80,20 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         node_knobs = self.selected_preset_name.value()
         ext = None
         knobs = knobs_setting["knobs"]
-        knobs_value, node_knobs_settings = self.get_node_knobs_setting(node_knobs)
+        knobs_value, node_knobs_settings = (
+            self.get_node_knobs_setting(node_knobs)
+            )
         if node_knobs and knobs_value:
             if not node_knobs_settings:
                 nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
             else:
                 knobs = node_knobs_settings
 
-        ext_knob_list = [knob for knob in knobs if knob["name"]== "file_type"]
+        ext_knob_list = [knob for knob in knobs if knob["name"] == "file_type"]
         if not ext_knob_list:
             for knob in knobs_setting["knobs"]:
                 ext = knob["value"]
-            nuke.message("No file type found in the subset's knobs.Default file_type value will be used..")
+            nuke.message("No file type found in the subset's knobs.\nDefault file_type value will be used..")   # noqa
         else:
             for knob in ext_knob_list:
                 ext = knob["value"]
