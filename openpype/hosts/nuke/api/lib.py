@@ -3116,14 +3116,3 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
-
-
-def get_app_version_info():
-    """ Return dict of Nuke's version semantic info"""
-    dot_split = nuke.NUKE_VERSION_STRING.split(".")
-    v_spit = dot_split[1].split("v")
-    return {
-        "major": int(dot_split[0]),
-        "minor": int(v_spit[0]),
-        "patch": int(v_spit[1])
-    }

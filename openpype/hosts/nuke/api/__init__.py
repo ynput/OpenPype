@@ -43,8 +43,7 @@ from .lib import (
     get_node_data,
     set_node_data,
     update_node_data,
-    create_write_node,
-    get_app_version_info
+    create_write_node
 )
 from .utils import (
     colorspace_exists_on_node,
@@ -91,7 +90,6 @@ __all__ = (
     "set_node_data",
     "update_node_data",
     "create_write_node",
-    "get_app_version_info",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"
