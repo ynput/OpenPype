@@ -422,9 +422,14 @@ The custom staging folder uses a path template configured in `project_anatomy/te
 ## Project Folder Structure
 
 ## Site Sync (beta testing)
+Aim of the Site Sync [here](/users_roaming/skacmazbelhaine/OpenPype/website/docs/module_site_sync.md).
+
+![Site Sync](assets/site_sync_beta_testing.png)
+
 #### Config
 
 #### Sites
+*empty*
 
 ### Additional Project Plugin Paths
 
