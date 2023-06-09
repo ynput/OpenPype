@@ -1481,10 +1481,7 @@ class PlaceholderLoadMixin(object):
             }
         else:
             if builder_type != "all_assets":
-                print(97, self)
-                print(98, builder_type)
                 self.project_name = builder_type
-                print(99, self.project_name, self.builder.project_name)
             context_filters = {
                 "asset": [re.compile(placeholder.data["asset"])],
                 "subset": [re.compile(placeholder.data["subset"])],
