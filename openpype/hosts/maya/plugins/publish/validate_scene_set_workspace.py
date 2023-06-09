@@ -1,13 +1,10 @@
 import os
 
 import maya.cmds as cmds
-
 import pyblish.api
 
 from openpype.pipeline.publish import (
-    ValidatePipelineOrder,
-    PublishValidationError
-)
+    PublishValidationError, ValidatePipelineOrder)
 
 
 def is_subdir(path, root_dir):
@@ -40,10 +37,11 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
         scene_name = cmds.file(query=True, sceneName=True)
         if not scene_name:
-            raise PublishValidationError("Scene hasn't been saved. Workspace can't be "
-                               "validated.")
+            raise PublishValidationError(
+                "Scene hasn't been saved. Workspace can't be validated.")
 
         root_dir = cmds.workspace(query=True, rootDirectory=True)
 
         if not is_subdir(scene_name, root_dir):
-            raise PublishValidationError("Maya workspace is not set correctly.")
+            raise PublishValidationError(
+                "Maya workspace is not set correctly.")

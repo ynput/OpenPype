@@ -1,13 +1,9 @@
 import pyblish.api
+from maya import cmds
+
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    RepairAction,
-    PublishValidationError
-)
-
-
-from maya import cmds
+    PublishValidationError, RepairAction, ValidateContentsOrder)
 
 
 class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
@@ -47,8 +43,9 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
         # If distributed rendering is enabled but it is *not* set to ignore
         # during batch mode we invalidate the instance
         if not lib.get_attr_in_layer(self.ignored_attr, layer=renderlayer):
-            raise PublishValidationError("Renderlayer has distributed rendering enabled "
-                               "but is not set to ignore in batch mode.")
+            raise PublishValidationError(
+                ("Renderlayer has distributed rendering enabled "
+                 "but is not set to ignore in batch mode."))
 
     @classmethod
     def repair(cls, instance):

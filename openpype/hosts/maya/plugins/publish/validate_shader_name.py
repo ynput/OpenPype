@@ -1,14 +1,11 @@
 import re
-from maya import cmds
 
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
-)
+    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateShaderName(pyblish.api.InstancePlugin,
@@ -33,9 +30,9 @@ class ValidateShaderName(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Found shapes with invalid shader names "
-                               "assigned: "
-                               "\n{}".format(invalid))
+            raise PublishValidationError(
+                ("Found shapes with invalid shader names "
+                 "assigned:\n{}").format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):

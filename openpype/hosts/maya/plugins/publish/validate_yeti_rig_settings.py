@@ -1,7 +1,7 @@
 import pyblish.api
-from openpype.pipeline.publish import (
-    PublishValidationError
-)
+
+from openpype.pipeline.publish import PublishValidationError
+
 
 class ValidateYetiRigSettings(pyblish.api.InstancePlugin):
     """Validate Yeti Rig Settings have collected input connections.
@@ -20,8 +20,9 @@ class ValidateYetiRigSettings(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Detected invalid Yeti Rig data. (See log) "
-                               "Tip: Save the scene")
+            raise PublishValidationError(
+                ("Detected invalid Yeti Rig data. (See log) "
+                 "Tip: Save the scene"))
 
     @classmethod
     def get_invalid(cls, instance):

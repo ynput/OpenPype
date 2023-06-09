@@ -26,7 +26,7 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
         if invalid:
             raise PublishValidationError(
                 ("Found shapes which don't have a single shader "
-                  "assigned:\n{}").format(invalid))
+                 "assigned:\n{}").format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):
