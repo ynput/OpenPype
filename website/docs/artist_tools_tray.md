@@ -14,6 +14,7 @@ Click on the **OpenPype** logo to open the tray and find the major informations 
 *Enable it in the [Studio Settings](admin_settings_system.md).*
 ### Credentials
 The **Credentials** contains the studio's **Ftrack URL**, your **Username** and the **API Key** given by your studio. 
+More details [here](artist_ftrack.md#login-to-ftrack-module-in-openpype-best-case-scenario.md).
 
 ### Action server
 Delete or stop [Action](manager_ftrack_actions.md) server.
@@ -27,8 +28,8 @@ Access to **Ftrack**'s website and sign in.
 Select your working context. Once choosen, you can see all the files, assets and its associated **Tasks**. You can also filter your assets for a more efficient research. Click on a task and select one of the softwares to open it.
 
 ## Loader
-Loader loads published subsets into your current scene or script.
-More details [here](artist_tools_loader).
+The loader loads or performs an action on published subsets from outside DCC.
+More details [here](artist_tools_loader.md).
 
 ## Logging
 *Enable it in the [Studio Settings](admin_settings_system.md).*
@@ -60,7 +61,7 @@ Find here your projects library and there informations. You can add new projects
 ![Project Manager](assets/tools/tools_project_manager_beta.png)
 
 ### Console
-OpenPype console.
+The OpenPype console allows running scripts in the OpenPype environment.
 
 ## Services
 
