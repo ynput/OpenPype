@@ -75,12 +75,10 @@ BUILTIN_EXCEPTIONS = {
     "UnicodeWarning",
     "UserWarning",
 }
-
-
-def all_subclasses(cls):
-    return set(cls.__subclasses__()).union(
-        [s for c in cls.__subclasses__() for s in all_subclasses(c)]
-    )
+REGEX_BUILTIN_EXCEPTIONS = re.compile(
+    "|".join(f"Traceback.*{e}: .*?\n" for e in BUILTIN_EXCEPTIONS), re.DOTALL
+)
+REGEX_BLEND_FILE = re.compile("Read blend:(.*)")
 
 
 class UnpauseSyncServer(pyblish.api.ContextPlugin):
@@ -93,13 +91,6 @@ class UnpauseSyncServer(pyblish.api.ContextPlugin):
         sync_server_module = manager.modules_by_name["sync_server"]
         sync_server_module.unpause_server()
 
-        # Compile match patterns
-        match_tb = re.compile(
-            "|".join(f"Traceback.*{e}: .*?\n" for e in BUILTIN_EXCEPTIONS),
-            re.DOTALL,
-        )
-        match_blend_file = re.compile("Read blend:(.*)")
-
         # Wait for all started futures to finish
         subprocess_errors = False
         for instance in context:
@@ -109,14 +100,17 @@ class UnpauseSyncServer(pyblish.api.ContextPlugin):
                 result = future.result().decode()
 
                 # Iterate through matched errors
-                if errors_stack := list(re.finditer(match_tb, result)):
+                if errors_stack := list(
+                    re.finditer(REGEX_BUILTIN_EXCEPTIONS, result)
+                ):
                     # Match file path
-                    blend_file = re.search(match_blend_file, result)
+                    blend_file = re.search(REGEX_BLEND_FILE, result)
 
                     # Notify matched erros in log
                     for stack in errors_stack:
                         self.log.error(
-                            f"Blend file: {blend_file[1]}\n\n{stack[0]}"
+                            f"Blend file: {blend_file[1]}\n\n{stack[0]}\n"
+                            f"~~~~~\n\n{result}"
                         )
                     subprocess_errors = True
                 else:
