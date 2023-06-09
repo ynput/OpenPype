@@ -19,7 +19,7 @@ Projects always use default project values unless they have [project override](.
 OpenPype distributes its own OCIO configs. Those can be found in `{openpype install dir}/{version}/vendor/bin/ocioconfig/OpenColorIOConfigs`. Windows example: `C:\Program Files (x86)\OpenPype\3.14.0\vendor\bin\ocioconfig\OpenColorIOConfigs`
 :::
 
-### Using OCIO config
+### OCIO config
 Global config path is set by default to OpenPype distributed configs. At the moment there are only two - **aces_1.2** and **nuke-default**. Since this path input is not platform specific it is required to use at least an environment variable do platform specific config root directory. Order of paths matter so first path found and existing first served.
 
 Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`.
@@ -36,7 +36,7 @@ If config path is defined to particular shot target with following path inputs:
 
 Procedure of resolving path (from above example) will look first into path 1st and if the path is not existing then it will try 2nd and if even that is not existing then it will fall back to global default.
 
-### Using File rules
+### File rules
 File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Each rule has a unique name which can be overridden by host-specific _File rules_ (example: `project_settings/nuke/imageio/file_rules/rules`).
 
 The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator format publish template path, make sure the pattern is working or any work render path.
@@ -44,6 +44,37 @@ The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](http
 :::warning Colorspace name input
 The **colorspace name** value is a raw string input and no validation is run after saving project settings. We recommend to open the specified `config.ocio` file and copy pasting the exact colorspace names.
 :::
+
+## Publish plugins
+
+Publish plugins used across all integrations.
+
+### Collect Anatomy Instance Data
+
+
+### Collect Audio
+
+
+### Collect Version from Workfile
+
+
+### Collect comment per instance
+
+
+### Collect Frames to Fix
+
+
+### Validate Editorial Asset Name
+
+
+### Validate Version
+
+
+### Validate Intent
+
+
+### ExtractThumbnail
+
 
 ### Extract OIIO Transcode
 OIIOTools transcoder plugin with configurable output presets. Any incoming representation with `colorspaceData` is convertible to single or multiple representations with different target colorspaces or display and viewer names found in linked **config.ocio** file.
@@ -63,33 +94,8 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
+
 ![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
-
-## Profile filters
-
-Many of the settings are using a concept of **Profile filters**
-
-You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a
-profile with filters matching the current context the most, is used.
-
-You can define profile without any filters and use it as **default**.
-
-Only **one or none** profile will be returned per context.
-
-All context filters are lists which may contain strings or Regular expressions (RegEx).
-- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
-- **`families`** - Main family of processed subset. `["plate", "model"]`
-- **`tasks`** - Currently processed task. `["modeling", "animation"]`
-
-:::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
-(The order the profiles in settings doesn't matter, only the precision of matching does.)
-:::
-
-## Publish plugins
-
-Publish plugins used across all integrations.
-
 
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
@@ -259,25 +265,10 @@ suffix is **"client"** then the final suffix is **"h264_client"**.
 `timecode` is a specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
 :::
 
+### Override Integrate Thumbnail Representations
 
-### IntegrateAssetNew
 
-Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
-#### Template name profiles
-
-Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published.
-
-For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
-[Profile filtering](#profile-filters) is used to select between appropriate template for each context of published subsets.
-
-Applicable context filters:
-- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
-- **`tasks`** - Current task. `["modeling", "animation"]`
-
-    ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
-
-(This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
-
+### Integrate Subset Group
 #### Subset grouping profiles
 
 Published subsets might be grouped together for cleaner and easier selection in the **[Subset Manager](artist_tools_subset_manager)**
@@ -293,11 +284,66 @@ Applicable context filters:
 
 (This image shows use case where only assets published from 'photoshop', for all families for all tasks should be marked as grouped with a capitalized name of Task where they are published from.)
 
+### IntegrateAsset (Legacy)
+#### Subset grouping profiles (DEPRECATED)
+*NOTE: Subset grouping profiles settings were moved to Integrate Subset Group. Please move values there.*
+
+#### Template name profiles (DEPRECATED)
+*NOTE: Publish template profiles settings were moved to Tools/Publish/Template name profiles. Please move values there.*
+
+Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published.
+
+For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
+[Profile filtering](#profile-filters) is used to select between appropriate template for each context of published subsets.
+
+Applicable context filters:
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`tasks`** - Current task. `["modeling", "animation"]`
+
+    ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
+
+(This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
+
+### Integrate Asset
+#### Skip hosts and families
+
+Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
+
+### IntegrateHeroVersion
+
+#### Template name profiles (DEPRECATED)
+*NOTE: Hero publish template profiles settings were moved to Tools/Publish/Hero template name profiles. Please move values there.*
+
+Many of the settings are using a concept of **Profile filters**
+
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a
+profile with filters matching the current context the most, is used.
+
+You can define profile without any filters and use it as **default**.
+
+Only **one or none** profile will be returned per context.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`tasks`** - Currently processed task. `["modeling", "animation"]`
+
+:::important Filtering
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
+:::
+
+### Clean up
+
+### Clean up Farm
+
 ## Tools
 Settings for OpenPype tools.
 
 ### Creator
 Settings related to [Creator tool](artist_tools_creator).
+
+#### Families smart select
 
 #### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
@@ -328,10 +374,38 @@ Template may look like `"{family}{Task}{Variant}"`.
 
 Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
 
+### Workfiles
+All settings related to Workfile tool.
 
-### Publish
+#### Worfile template profiles
+**Open last workfile at launch**
 
-#### Custom Staging Directory Profiles
+This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
+
+![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
+
+
+ ***Known issues***
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
+
+#### Open last workfiles on launch
+
+#### Extra work folders
+
+#### Workfile lock profiles
+
+### Loader
+#### Family filtering
+
+#### Publish
+
+**Template name profiles**
+
+**Hero template name profiles**
+
+**Custom Staging Directory Profiles**
 With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
 
 ![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
@@ -345,15 +419,18 @@ In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering pa
 
 The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
 
-##### Known issues
-- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
-- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
-- Each node on the rendering farm must have access to configured custom staging folder!
+## Project Folder Structure
 
-### Workfiles
-All settings related to Workfile tool.
+## Site Sync (beta testing)
+#### Config
 
-#### Open last workfile at launch
-This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
+#### Sites
 
-![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
+### Additional Project Plugin Paths
+
+### Additional Project Environments (set on application launch)
+
+## Additional Project Plugin Paths
+
+## Additional Project Environments (set on applicaton launch)
+
