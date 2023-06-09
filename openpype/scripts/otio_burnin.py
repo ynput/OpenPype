@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 import subprocess
 import platform
 import json
@@ -253,21 +252,36 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                     CURRENT_FRAME_SPLITTER, MISSING_KEY_VALUE)
             text = text.replace(CURRENT_FRAME_SPLITTER, expr)
 
-        longest_list = max([len(values) for values in listed_keys.values()])
+        longest_list = max([len(item["values"]) for item in listed_keys.values()])
         new_listed_keys = [{} for _ in range(longest_list)]
         longest_value_by_key = {}
-        for key, values in listed_keys.items():
+        for key, item in listed_keys.items():
+            values = item["values"]
+            last_value = values[-1] if values else ""
             for _ in range(longest_list - len(values)):
-                values.append("")
+                values.append(last_value)
+
+            item_keys = list(item["keys"])
+            fill_data = {}
+            sub_value = fill_data
+            last_item_key = item_keys.pop(-1)
+            for item_key in item_keys:
+                sub_value[item_key] = {}
+                sub_value = sub_value[item_key]
             key_max_len = 0
             key_max_value = ""
-            for _value, _new_value in zip(values, new_listed_keys):
-                _value = str(_value)
-                _value_len = len(_value)
-                if _value_len > key_max_len:
-                    key_max_value = _value
-                    key_max_len = _value_len
-                _new_value[key] = _value
+            for value, new_values in zip(values, new_listed_keys):
+                sub_value[last_item_key] = value
+                try:
+                    value = key.format(**sub_value)
+                except (TypeError, KeyError, ValueError):
+                    value = MISSING_KEY_VALUE
+                new_values[key] = value
+
+                value_len = len(value)
+                if value_len > key_max_len:
+                    key_max_value = value
+                    key_max_len = value_len
             longest_value_by_key[key] = key_max_value
 
         for key, value in longest_value_by_key.items():
@@ -646,25 +660,33 @@ def burnins_from_data(
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
         # Failsafe for missing keys.
-        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
         missing_keys = []
         listed_keys = {}
         fill_values = {}
-        for group in key_pattern.findall(value):
-            keys_str = group[1:-1]
-            keys = [item.rstrip("]") for item in keys_str.split("[")]
+        for item in Formatter().parse(value):
+            _, field_name, format_spec, conversion = item
+            if not field_name:
+                continue
+            keys = [key.rstrip("]") for key in field_name.split("[")]
+            conversion = "!{}".format(conversion) if conversion else ""
+            format_spec = ":{}".format(format_spec) if format_spec else ""
+            # Calculate original full key for replacement
+            orig_key = "{{{}{}{}}}".format(
+                field_name, conversion, format_spec)
+
             key_value = data
             try:
                 for key in keys:
                     key_value = key_value[key]
 
                 if isinstance(key_value, list):
-                    listed_keys[group] = key_value
+                    listed_keys[orig_key] = {
+                        "values": key_value,
+                        "keys": keys}
                 else:
-                    fill_values[group] = key_value
-                    group.format(**data)
+                    fill_values[orig_key] = orig_key.format(**data)
             except (KeyError, TypeError):
-                missing_keys.append(group)
+                missing_keys.append(orig_key)
                 continue
 
         missing_keys = list(set(missing_keys))
