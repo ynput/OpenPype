@@ -490,8 +490,11 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
     # get file rules from global and host_name
     frules_global = imageio_global["file_rules"]
-    activate_global_rules = frules_global.get(
-        "activate_global_file_rules", False)
+    activate_global_rules = (
+        frules_global.get("activate_global_file_rules", False)
+        # TODO: remove this in future - backward compatibility
+        or frules_global.get("enabled")
+    )
     global_rules = frules_global["rules"]
 
     if not activate_global_rules:
@@ -504,7 +507,11 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     frules_host = imageio_host.get("file_rules", {})
 
     # compile file rules dictionary
-    activate_host_rules = frules_host.get("activate_host_rules")
+    activate_host_rules = (
+        frules_host.get("activate_host_rules")
+        # TODO: remove this in future - backward compatibility
+        or frules_host.get("enabled")
+    )
 
     # return host rules if activated or global rules
     return frules_host["rules"] if activate_host_rules else global_rules
