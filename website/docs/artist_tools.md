@@ -8,7 +8,7 @@ sidebar_label: Tools
 
 OpenPype offers a collection of core tools in tandem with the Integrations:
 
-- [Tray](artis_tools_tray)
+- [Tray](artist_tools_tray.md)
 - [Context Manager](artist_tools_context_manager)
 - [Creator](artist_tools_creator)
 - [Loader](artist_tools_loader)
