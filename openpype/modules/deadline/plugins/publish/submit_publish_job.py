@@ -600,7 +600,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files, do_not_add_review):
+    def _get_representations(self, instance_data, exp_files,
+                             do_not_add_review):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
@@ -608,7 +609,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         most cases, but if not - we create representation from each of them.
 
         Arguments:
-            instance (dict): instance data for which we are
+            instance_data (dict): instance.data for which we are
                              setting representations
             exp_files (list): list of expected files
             do_not_add_review (bool): explicitly skip review
@@ -630,9 +631,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             #   expected files contains more explicitly and from what
             #   should be review made.
             # - "review" tag is never added when is set to 'False'
-            if instance["useSequenceForReview"]:
+            if instance_data["useSequenceForReview"]:
                 # toggle preview on if multipart is on
-                if instance.get("multipartExr", False):
+                if instance_data.get("multipartExr", False):
                     self.log.debug(
                         "Adding preview tag because its multipartExr"
                     )
@@ -657,8 +658,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     " This may cause issues on farm."
                 ).format(staging))
 
-            frame_start = int(instance.get("frameStartHandle"))
-            if instance.get("slate"):
+            frame_start = int(instance_data.get("frameStartHandle"))
+            if instance_data.get("slate"):
                 frame_start -= 1
 
             preview = preview and not do_not_add_review
@@ -667,10 +668,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(collection)],
                 "frameStart": frame_start,
-                "frameEnd": int(instance.get("frameEndHandle")),
+                "frameEnd": int(instance_data.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
-                "fps": instance.get("fps"),
+                "fps": instance_data.get("fps"),
                 "tags": ["review"] if preview else [],
             }
 
@@ -678,17 +679,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if ext in self.skip_integration_repre_list:
                 rep["tags"].append("delete")
 
-            if instance.get("multipartExr", False):
+            if instance_data.get("multipartExr", False):
                 rep["tags"].append("multipartExr")
 
             # support conversion from tiled to scanline
-            if instance.get("convertToScanline"):
+            if instance_data.get("convertToScanline"):
                 self.log.info("Adding scanline conversion.")
                 rep["tags"].append("toScanline")
 
             representations.append(rep)
 
-            self._solve_families(instance, preview)
+            self._solve_families(instance_data, preview)
 
         # add remainders as representations
         for remainder in remainders:
@@ -719,13 +720,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             preview = preview and not do_not_add_review
             if preview:
                 rep.update({
-                    "fps": instance.get("fps"),
+                    "fps": instance_data.get("fps"),
                     "tags": ["review"]
                 })
-            self._solve_families(instance, preview)
+            self._solve_families(instance_data, preview)
 
             already_there = False
-            for repre in instance.get("representations", []):
+            for repre in instance_data.get("representations", []):
                 # might be added explicitly before by publish_on_farm
                 already_there = repre.get("files") == rep["files"]
                 if already_there:
@@ -739,7 +740,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             # inject colorspace data
             self.set_representation_colorspace(
                 rep, self.context,
-                colorspace=instance["colorspace"]
+                colorspace=instance_data["colorspace"]
             )
 
         return representations
