@@ -228,6 +228,18 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         listed_keys,
         options=None
     ):
+        """Add text that changes per frame.
+
+        Args:
+            text (str): Template string with unfilled keys that are changed
+                per frame.
+            align (str): Alignment of text.
+            frame_start (int): Starting frame for burnins current frame.
+            frame_end (int): Ending frame for burnins current frame.
+            listed_keys (list): List of keys that are changed per frame.
+            options (Optional[dict]): Options to affect style of burnin.
+        """
+
         if not options:
             options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
 
@@ -252,17 +264,25 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                     CURRENT_FRAME_SPLITTER, MISSING_KEY_VALUE)
             text = text.replace(CURRENT_FRAME_SPLITTER, expr)
 
-        longest_list = max(
-            {len(item["values"]) for item in listed_keys.values()}
+        # Find longest list with values
+        longest_list_len = max(
+            len(item["values"]) for item in listed_keys.values()
         )
-        new_listed_keys = [{} for _ in range(longest_list)]
+        # Where to store formatted values per frame by key
+        new_listed_keys = [{} for _ in range(longest_list_len)]
+        # Find the longest value per fill key.
+        #   The longest value is used to determine size of burnin box.
         longest_value_by_key = {}
         for key, item in listed_keys.items():
             values = item["values"]
+            # Fill the missing values from the longest list with the last
+            #   value to make sure all values have same "frame cound"
             last_value = values[-1] if values else ""
-            for _ in range(longest_list - len(values)):
+            for _ in range(longest_list_len - len(values)):
                 values.append(last_value)
 
+            # Prepare dictionary structure for nestes values
+            # - last key is overriden on each frame loop
             item_keys = list(item["keys"])
             fill_data = {}
             sub_value = fill_data
@@ -270,6 +290,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             for item_key in item_keys:
                 sub_value[item_key] = {}
                 sub_value = sub_value[item_key]
+
+            # Fill value per frame
             key_max_len = 0
             key_max_value = ""
             for value, new_values in zip(values, new_listed_keys):
@@ -284,11 +306,16 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                 if value_len > key_max_len:
                     key_max_value = value
                     key_max_len = value_len
+
+            # Store the longest value
             longest_value_by_key[key] = key_max_value
 
+        # Make sure the longest value of each key is replaced for text size
+        #   calculation
         for key, value in longest_value_by_key.items():
             text_for_size = text_for_size.replace(key, value)
 
+        # Create temp file with instructions for each frame of text
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
             path = temp.name
             lines = []
