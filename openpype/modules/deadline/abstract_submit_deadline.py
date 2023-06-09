@@ -662,7 +662,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
             # test if there is instance of workfile waiting
             # to be published.
-            assert i.data["publish"] is True, (
+            assert i.data.get("publish", True) is True, (
                 "Workfile (scene) must be published along")
 
             return i

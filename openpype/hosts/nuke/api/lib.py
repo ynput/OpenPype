@@ -1403,8 +1403,6 @@ def create_write_node(
     # adding write to read button
     add_button_clear_rendered(GN, os.path.dirname(fpath))
 
-    GN.addKnob(nuke.Text_Knob('', ''))
-
     # set tile color
     tile_color = next(
         iter(

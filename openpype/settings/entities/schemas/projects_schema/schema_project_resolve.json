@@ -6,6 +6,11 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "launch_openpype_menu_on_start",
+            "label": "Launch OpenPype menu on start of Resolve"
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (remapped to OCIO)",

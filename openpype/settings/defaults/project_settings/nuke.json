@@ -218,6 +218,20 @@
                 "title": "OpenPype Docs",
                 "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
                 "tooltip": "Open the OpenPype Nuke user doc page"
+            },
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "Set Frame Start (Read Node)",
+                "command": "from openpype.hosts.nuke.startup.frame_setting_for_read_nodes import main;main();",
+                "tooltip": "Set frame start for read node(s)"
+            },
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "Set non publish output for Write Node",
+                "command": "from openpype.hosts.nuke.startup.custom_write_node import main;main();",
+                "tooltip": "Open the OpenPype Nuke user doc page"
             }
         ]
     },
