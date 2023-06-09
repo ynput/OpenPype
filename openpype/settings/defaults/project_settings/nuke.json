@@ -9,12 +9,13 @@
         }
     },
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         },
         "viewer": {
@@ -26,11 +27,6 @@
         "workfile": {
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
-            "customOCIOConfigPath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "workingSpaceLUT": "linear",
             "monitorLut": "sRGB",
             "int8Lut": "sRGB",
