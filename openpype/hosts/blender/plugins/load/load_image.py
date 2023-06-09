@@ -7,6 +7,7 @@ import bpy
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.lib import get_selection
 from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.hosts.blender.api.utils import AVALON_PROPERTY
 
 
 class ImageLoader(plugin.AssetLoader):
@@ -25,7 +26,7 @@ class ImageLoader(plugin.AssetLoader):
     order = 0
     color = "orange"
 
-    load_type = "LINK" # TODO meaningless here, must be refactored
+    load_type = "LINK"  # TODO meaningless here, must be refactored
 
     def _load_library_datablocks(
         self,
@@ -57,6 +58,20 @@ class ImageLoader(plugin.AssetLoader):
         container = self._containerize_datablocks(
             container_name, datablocks, container
         )
+        return container, datablocks
+
+    def load(self, *args, **kwargs):
+        """OVERRIDE.
+
+        Keep container metadata in image datablock to allow container
+        auto creation of theses datablocks.
+        """
+        container, datablocks = super().load(*args, **kwargs)
+        img = datablocks[0]
+
+        # Set container metadata to image datablock
+        img[AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
+
         return container, datablocks
 
 
@@ -156,11 +171,11 @@ class BackgroundLoader(ImageLoader):
                 bpy.context.scene.frame_end - bpy.context.scene.frame_start
             )
             # Append audio in the sequencer
-            bpy.context.scene.sequence_editor.sequences.new_sound(
-                img.name,
-                img.filepath,
-                1,
-                bpy.context.scene.frame_start
+            sound_seq = bpy.context.scene.sequence_editor.sequences.new_sound(
+                img.name, img.filepath, 1, bpy.context.scene.frame_start
             )
+
+            # Add container metadata to sound
+            sound_seq.sound[AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
 
         return container, datablocks
