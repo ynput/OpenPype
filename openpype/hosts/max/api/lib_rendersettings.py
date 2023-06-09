@@ -35,15 +35,8 @@ class RenderSettings(object):
             )
 
     def set_render_camera(self, selection):
-        for sel in selection:
-            # to avoid Attribute Error from pymxs wrapper
-            found = False
-            if rt.classOf(sel) in rt.Camera.classes:
-                found = True
-                rt.viewport.setCamera(sel)
-                break
-            if not found:
-                raise RuntimeError("Camera not found")
+        # to avoid Attribute Error from pymxs wrapper
+        return rt.viewport.setCamera(selection[0])
 
     def render_output(self, container):
         folder = rt.maxFilePath

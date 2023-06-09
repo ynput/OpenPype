@@ -212,6 +212,17 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_data["RenderOutput"] = beauty_name
         # as 3dsmax has version with different languages
         plugin_data["Language"] = "ENU"
+        render_cameras = instance.data["cameras"]
+        if render_cameras:
+            for i, camera in enumerate(render_cameras):
+                cam_name = "Camera%s" % (i + 1)
+                plugin_data[cam_name] = camera.name
+            # set the default camera
+            plugin_data["Camera"] = render_cameras[0].name
+            # set empty camera of Camera 0 for the '
+            # correct parameter submission
+            plugin_data["Camera0"] = None
+
         renderer_class = get_current_renderer()
 
         renderer = str(renderer_class).split(":")[0]

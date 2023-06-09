@@ -14,7 +14,10 @@ class CreateRender(plugin.MaxCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
-        sel_obj = list(rt.selection)
+        sel_obj = [
+            c for c in rt.Objects
+            if rt.classOf(c) in rt.Camera.classes]
+
         file = rt.maxFileName
         filename, _ = os.path.splitext(file)
         instance_data["AssetName"] = filename
@@ -24,11 +27,20 @@ class CreateRender(plugin.MaxCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
         container_name = instance.data.get("instance_node")
-        container = rt.getNodeByName(container_name)
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
-        for obj in sel_obj:
-            obj.parent = container
+        if self.selected_nodes:
+            # set viewport camera for
+            # rendering(mandatory for deadline)
+            sel_obj = [
+                c for c in rt.getCurrentSelection()
+                if rt.classOf(c) in rt.Camera.classes]
+
+        if not sel_obj:
+            raise RuntimeError("Please add at least one camera to the scene "
+                               "before creating the render instance")
+
+        RenderSettings().set_render_camera(sel_obj)
         # for additional work on the node:
         # instance_node = rt.getNodeByName(instance.get("instance_node"))
 
@@ -37,7 +49,5 @@ class CreateRender(plugin.MaxCreator):
         # Changing the Render Setup dialog settings should be done
         # with the actual Render Setup dialog in a closed state.
 
-        # set viewport camera for rendering(mandatory for deadline)
-        RenderSettings().set_render_camera(sel_obj)
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)

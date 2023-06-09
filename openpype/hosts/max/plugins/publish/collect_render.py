@@ -48,6 +48,10 @@ class CollectRender(pyblish.api.InstancePlugin):
                                                       instance.name,
                                                       asset_id)
         self.log.debug("version_doc: {0}".format(version_doc))
+        sel_obj = [
+            c for c in rt.Objects
+            if rt.classOf(c) in rt.Camera.classes]
+
         version_int = 1
         if version_doc:
             version_int += int(version_doc["name"])
@@ -78,6 +82,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
+            "cameras": sel_obj,
             "frameStart": int(rt.rendStart),
             "frameEnd": int(rt.rendEnd),
             "version": version_int,
