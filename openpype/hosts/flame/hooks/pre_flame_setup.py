@@ -47,7 +47,11 @@ class FlamePrelaunch(PreLaunchHook):
 
         imageio_flame = project_settings["flame"]["imageio"]
 
-        # get host imageio settings enabled key if exists
+        # Check whether 'enabled' key from host imageio settings exists
+        # so we can tell if host is using the new colormanagement framework.
+        # If the 'enabled' isn't found we want 'colormanaged' set to True
+        # because prior to the key existing we always did colormanagement for
+        # Flame
         colormanaged = imageio_flame.get("enabled")
         # if key was not found, set to True
         # ensuring backward compatibility
