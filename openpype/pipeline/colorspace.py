@@ -357,8 +357,12 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    activate_color_management = imageio_global.get(
-        "activate_global_color_management", False)
+    activate_color_management = (
+        imageio_global.get("activate_global_color_management", False)
+        # for already saved overrides from previous version
+        # TODO: remove this in future - backward compatibility
+        or imageio_host.get("ocio_config").get("enabled")
+    )
 
     if not activate_color_management:
         # if global settings are disabled return empty dict because
@@ -391,7 +395,12 @@ def get_imageio_config(
     # depending on override flag
     # TODO: in future rewrite this to be more explicit
     config_data = None
-    override_global_config = config_host.get("override_global_config")
+    override_global_config = (
+        config_host.get("override_global_config")
+        # for already saved overrides from previous version
+        # TODO: remove this in future - backward compatibility
+        or config_host.get("enabled")
+    )
     if override_global_config:
         config_data = _get_config_data(
             config_host["filepath"], formatting_data
