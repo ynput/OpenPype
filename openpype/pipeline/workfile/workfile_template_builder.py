@@ -123,11 +123,15 @@ class AbstractTemplateBuilder(object):
         self._linked_asset_docs = None
         self._task_type = None
 
+        self._project_name = legacy_io.active_project()
+
     @property
     def project_name(self):
-        if isinstance(self._host, HostBase):
-            return self._host.get_current_project_name()
-        return os.getenv("AVALON_PROJECT")
+        return self._project_name
+
+    @project_name.setter
+    def project_name(self, name):
+        self._project_name = name
 
     @property
     def current_asset_name(self):
@@ -159,16 +163,14 @@ class AbstractTemplateBuilder(object):
     @property
     def project_settings(self):
         if self._project_settings is None:
-            self._project_settings = get_project_settings(
-                self.current_project_name
-            )
+            self._project_settings = get_project_settings(self.project_name)
         return self._project_settings
 
     @property
     def current_asset_doc(self):
         if self._current_asset_doc is None:
             self._current_asset_doc = get_asset_by_name(
-                self.current_project_name, self.current_asset_name
+                self.project_name, self.current_asset_name
             )
         return self._current_asset_doc
 
@@ -176,7 +178,7 @@ class AbstractTemplateBuilder(object):
     def linked_asset_docs(self):
         if self._linked_asset_docs is None:
             self._linked_asset_docs = get_linked_assets(
-                self.current_project_name, self.current_asset_doc
+                self.project_name, self.current_asset_doc
             )
         return self._linked_asset_docs
 
@@ -761,7 +763,7 @@ class AbstractTemplateBuilder(object):
         """
 
         host_name = self.host_name
-        project_name = self.current_project_name
+        project_name = self.project_name
         task_name = self.current_task_name
         task_type = self.current_task_type
 
@@ -868,6 +870,7 @@ class PlaceholderPlugin(object):
 
     def __init__(self, builder):
         self._builder = builder
+        self._project_name = self.builder.project_name
 
     @property
     def builder(self):
@@ -880,8 +883,12 @@ class PlaceholderPlugin(object):
         return self._builder
 
     @property
-    def current_project_name(self):
-        return self._builder.current_project_name
+    def project_name(self):
+        return self._project_name
+
+    @project_name.setter
+    def project_name(self, name):
+        self._project_name = name
 
     @property
     def log(self):
@@ -1443,7 +1450,7 @@ class PlaceholderLoadMixin(object):
                 from placeholder data.
         """
 
-        project_name = self.builder.current_project_name
+        self.project_name = self.builder.project_name
         current_asset_doc = self.builder.current_asset_doc
         linked_asset_docs = self.builder.linked_asset_docs
 
@@ -1474,7 +1481,10 @@ class PlaceholderLoadMixin(object):
             }
         else:
             if builder_type != "all_assets":
-                project_name = builder_type
+                print(97, self)
+                print(98, builder_type)
+                self.project_name = builder_type
+                print(99, self.project_name, self.builder.project_name)
             context_filters = {
                 "asset": [re.compile(placeholder.data["asset"])],
                 "subset": [re.compile(placeholder.data["subset"])],
@@ -1484,7 +1494,7 @@ class PlaceholderLoadMixin(object):
             }
 
         return list(get_representations(
-            project_name,
+            self.project_name,
             context_filters=context_filters
         ))
 
@@ -1563,7 +1573,7 @@ class PlaceholderLoadMixin(object):
             return
 
         repre_load_contexts = get_contexts_for_repre_docs(
-            self.current_project_name, filtered_representations
+            self.project_name, filtered_representations
         )
         loaders_by_name = self.builder.get_loaders_by_name()
         for repre_load_context in repre_load_contexts.values():
@@ -1573,7 +1583,7 @@ class PlaceholderLoadMixin(object):
                 placeholder, representation
             )
             self.log.info(
-                "Loading {} from {} with loader {}\n"
+                "Loading {} from {} with loader {} with"
                 "Loader arguments used : {}".format(
                     repre_context["subset"],
                     repre_context["asset"],
