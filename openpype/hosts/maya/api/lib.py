@@ -2365,17 +2365,17 @@ def set_context_settings():
     # Set colorspace
     set_colorspace()
 
+
+def build_first_workfile_from_template_builder():
     open_last_workfile = os.environ.get("AVALON_OPEN_LAST_WORKFILE")
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     if not last_workfile_path:
         return
 
-    if not os.path.exists(last_workfile_path) and open_last_workfile:
-        build_first_workfile_from_template_builder()
+    if  os.path.exists(last_workfile_path) and not open_last_workfile:
+        return
 
-
-def build_first_workfile_from_template_builder():
     project_name = get_current_project_name()
     project_settings = get_project_settings(project_name)
 
