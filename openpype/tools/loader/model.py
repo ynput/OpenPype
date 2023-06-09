@@ -446,6 +446,7 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
         last_versions_by_subset_id = get_last_versions(
             project_name,
             subset_ids,
+            active=True,
             fields=["_id", "parent", "name", "type", "data", "schema"]
         )
 
