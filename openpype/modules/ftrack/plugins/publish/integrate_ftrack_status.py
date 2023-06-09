@@ -341,7 +341,7 @@ class IntegrateFtrackTaskStatus(pyblish.api.ContextPlugin):
     # Use order of Integrate Ftrack Api plugin and offset it before or after
     base_order = pyblish.api.IntegratorOrder + 0.499
     # By default is after Integrate Ftrack Api
-    order = base_order + 0.001
+    order = base_order + 0.0001
     label = "Integrate Ftrack Task Status"
 
     @classmethod
