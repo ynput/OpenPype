@@ -2,6 +2,7 @@
 import os
 import nuke
 import nukescripts
+from openpype.pipeline import Anatomy
 from openpype.hosts.nuke.api.lib import (
     set_node_knobs_from_settings,
     get_nuke_imageio_settings
@@ -66,30 +67,43 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         knobs_value, _ = self.get_node_knobs_setting()
         # create knobs
 
-        self.typeKnob = nuke.Enumeration_Knob(
-            'override_subsets', 'override subsets', knobs_value)
+        self.selected_preset_name  = nuke.Enumeration_Knob(
+            'preset_selector', 'presets', knobs_value)
         # add knobs to panel
-        self.addKnob(self.typeKnob)
+        self.addKnob(self.selected_preset_name )
 
     def process(self):
         """ Process the panel values. """
         write_selected_nodes = [
             s for s in nuke.selectedNodes() if s.Class() == "Write"]
 
-        node_knobs = self.typeKnob.value()
+        node_knobs = self.selected_preset_name.value()
         ext = None
         knobs = knobs_setting["knobs"]
-
-        if node_knobs:
-            _, node_knobs_settings = self.get_node_knobs_setting(node_knobs)
+        knobs_value, node_knobs_settings = self.get_node_knobs_setting(node_knobs)
+        if node_knobs and knobs_value:
             if not node_knobs_settings:
                 nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
             else:
                 knobs = node_knobs_settings
 
-        for knob in knobs:
-            if knob["name"] == "file_type":
+        ext_knob_list = [knob for knob in knobs if knob["name"]== "file_type"]
+        if not ext_knob_list:
+            for knob in knobs_setting["knobs"]:
                 ext = knob["value"]
+            nuke.message("No file type found in the subset's knobs.Default file_type value will be used..")
+        else:
+            for knob in ext_knob_list:
+                ext = knob["value"]
+
+
+        anatomy = Anatomy()
+
+        frame_padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding"
+            )
+        )
         for write_node in write_selected_nodes:
             # data for mapping the path
             data = {
