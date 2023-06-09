@@ -11,6 +11,7 @@ class OCIOEnvHook(PreLaunchHook):
 
     order = 0
     hosts = [
+        "substancepainter",
         "fusion",
         "blender",
         "aftereffects",
@@ -48,3 +49,5 @@ class OCIOEnvHook(PreLaunchHook):
                 f"Setting OCIO environment to config path: {ocio_path}")
 
             self.launch_context.env["OCIO"] = ocio_path
+        else:
+            self.log.debug("OCIO not set or enabled")
