@@ -252,7 +252,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                     CURRENT_FRAME_SPLITTER, MISSING_KEY_VALUE)
             text = text.replace(CURRENT_FRAME_SPLITTER, expr)
 
-        longest_list = max([len(item["values"]) for item in listed_keys.values()])
+        longest_list = max(
+            {len(item["values"]) for item in listed_keys.values()}
+        )
         new_listed_keys = [{} for _ in range(longest_list)]
         longest_value_by_key = {}
         for key, item in listed_keys.items():
