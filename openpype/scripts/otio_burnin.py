@@ -512,6 +512,51 @@ def example(input_path, output_path):
     burnin.render(output_path, overwrite=True)
 
 
+def prepare_fill_values(burnin_template, data):
+    """Prepare values that will be filled instead of burnin template.
+
+    Args:
+        burnin_template (str): Burnin template string.
+        data (dict[str, Any]): Data that will be used to fill template.
+
+    Returns:
+        tuple[dict[str, dict[str, Any]], dict[str, Any], set[str]]: Filled
+            values that can be used as are, listed values that have different
+            value per frame and missing keys that are not present in data.
+    """
+
+    fill_values = {}
+    listed_keys = {}
+    missing_keys = set()
+    for item in Formatter().parse(burnin_template):
+        _, field_name, format_spec, conversion = item
+        if not field_name:
+            continue
+        # Calculate nested keys '{project[name]}' -> ['project', 'name']
+        keys = [key.rstrip("]") for key in field_name.split("[")]
+        # Calculate original full key for replacement
+        conversion = "!{}".format(conversion) if conversion else ""
+        format_spec = ":{}".format(format_spec) if format_spec else ""
+        orig_key = "{{{}{}{}}}".format(
+            field_name, conversion, format_spec)
+
+        key_value = data
+        try:
+            for key in keys:
+                key_value = key_value[key]
+
+            if isinstance(key_value, list):
+                listed_keys[orig_key] = {
+                    "values": key_value,
+                    "keys": keys}
+            else:
+                fill_values[orig_key] = orig_key.format(**data)
+        except (KeyError, TypeError):
+            missing_keys.add(orig_key)
+            continue
+    return fill_values, listed_keys, missing_keys
+
+
 def burnins_from_data(
     input_path, output_path, data,
     codec_data=None, options=None, burnin_values=None, overwrite=True,
@@ -662,36 +707,10 @@ def burnins_from_data(
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
         # Failsafe for missing keys.
-        missing_keys = []
-        listed_keys = {}
-        fill_values = {}
-        for item in Formatter().parse(value):
-            _, field_name, format_spec, conversion = item
-            if not field_name:
-                continue
-            keys = [key.rstrip("]") for key in field_name.split("[")]
-            conversion = "!{}".format(conversion) if conversion else ""
-            format_spec = ":{}".format(format_spec) if format_spec else ""
-            # Calculate original full key for replacement
-            orig_key = "{{{}{}{}}}".format(
-                field_name, conversion, format_spec)
+        fill_values, listed_keys, missing_keys = prepare_fill_values(
+            value, data
+        )
 
-            key_value = data
-            try:
-                for key in keys:
-                    key_value = key_value[key]
-
-                if isinstance(key_value, list):
-                    listed_keys[orig_key] = {
-                        "values": key_value,
-                        "keys": keys}
-                else:
-                    fill_values[orig_key] = orig_key.format(**data)
-            except (KeyError, TypeError):
-                missing_keys.append(orig_key)
-                continue
-
-        missing_keys = list(set(missing_keys))
         for key in missing_keys:
             value = value.replace(key, MISSING_KEY_VALUE)
 
