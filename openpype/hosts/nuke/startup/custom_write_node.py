@@ -63,7 +63,7 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
     def __init__(self):
         nukescripts.PythonPanel.__init__(self, "Set Knobs Value(Write Node)")
 
-        knobs_value = self.get_node_knobs_override()
+        knobs_value, _ = self.get_node_knobs_setting()
         # create knobs
 
         self.typeKnob = nuke.Enumeration_Knob(
@@ -78,56 +78,51 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
 
         node_knobs = self.typeKnob.value()
         ext = None
-        knobs = None
+        knobs = knobs_setting["knobs"]
+
         if node_knobs:
-            knobs = self.get_node_knobs_setting(node_knobs)
-            if not knobs:
+            _, node_knobs_settings = self.get_node_knobs_setting(node_knobs)
+            if not node_knobs_settings:
                 nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
-                knobs = knobs_setting["knobs"]
-        else:
-            knobs = knobs_setting["knobs"]
+            else:
+                knobs = node_knobs_settings
 
         for knob in knobs:
             if knob["name"] == "file_type":
                 ext = knob["value"]
-        for w in write_selected_nodes:
+        for write_node in write_selected_nodes:
             # data for mapping the path
             data = {
                 "work": os.getenv("AVALON_WORKDIR"),
-                "subset": w["name"].value(),
+                "subset": write_node["name"].value(),
                 "frame": "#" * frame_padding,
                 "ext": ext
             }
             file_path = temp_rendering_path_template.format(**data)
             file_path = file_path.replace("\\", "/")
-            w["file"].setValue(file_path)
-            set_node_knobs_from_settings(w, knobs)
+            write_node["file"].setValue(file_path)
+            set_node_knobs_from_settings(write_node, knobs)
 
-    def get_node_knobs_setting(self, value):
+    def get_node_knobs_setting(self, value=None):
+        knobs_value = []
+        knobs_nodes = []
         settings = [
             node
             for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
         ]
         if not settings:
             return
+
         for i, _ in enumerate(settings):
             if value in settings[i]["subsets"]:
-                return settings[i]["knobs"]
-
-    def get_node_knobs_override(self):
-        knobs_value = []
-        settings = [
-            node
-            for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
-        ]
-        if not settings:
-            return
+                knobs_nodes = settings[i]["knobs"]
 
         for setting in settings:
             if setting["nukeNodeClass"] == "Write" and setting["subsets"]:
-                for knob in setting["subsets"]:
-                    knobs_value.append(knob)
-        return knobs_value
+                    for knob in setting["subsets"]:
+                        knobs_value.append(knob)
+
+        return knobs_value, knobs_nodes
 
 
 def main():
