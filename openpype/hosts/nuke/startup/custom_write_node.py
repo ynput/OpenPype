@@ -92,7 +92,7 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
 
         ext_knob_list = [knob for knob in knobs if knob["name"] == "file_type"]
         if not ext_knob_list:
-            nuke.message("No file type found in the subset's knobs.\nPlease add one...")   # noqa
+            nuke.message("ERROR: No file type found in the subset's knobs.\nPlease add one to complete setting up the node")   # noqa
             return
         else:
             for knob in ext_knob_list:
