@@ -169,6 +169,8 @@ def update_scene_containers() -> List[OpenpypeContainer]:
         if (
             entity in datablocks_to_skip
             or user_map.get(entity) <= datablocks_to_skip
+            if user_map.get(entity)
+            else False
         ):
             continue
 
