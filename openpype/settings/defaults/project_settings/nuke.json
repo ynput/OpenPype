@@ -144,7 +144,7 @@
                 },
                 {
                     "plugins": [
-                        "CreateWriteStill"
+                        "CreateWriteImage"
                     ],
                     "nukeNodeClass": "Write",
                     "knobs": [
@@ -559,15 +559,7 @@
     "load": {
         "LoadImage": {
             "enabled": true,
-            "_representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "psd",
-                "tiff"
-            ],
+            "_representations": [],
             "node_name_template": "{class_name}_{ext}"
         },
         "LoadClip": {
