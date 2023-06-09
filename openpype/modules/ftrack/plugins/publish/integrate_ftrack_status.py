@@ -179,8 +179,9 @@ class IntegrateFtrackStatusBase(pyblish.api.InstancePlugin):
     def is_valid_instance(self, context, instance):
         """Filter instances that should be processed.
 
-        Ignore instances that are not enabled for publishing or don't have filled
-        task. Also skip instances with tasks that already have defined status.
+        Ignore instances that are not enabled for publishing or don't have
+        filled task. Also skip instances with tasks that already have defined
+        status.
 
         Plugin should do more filtering which is custom for plugin logic.
 
