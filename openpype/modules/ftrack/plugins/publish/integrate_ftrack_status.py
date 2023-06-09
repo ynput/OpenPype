@@ -81,9 +81,6 @@ class CollectFtrackTaskStatuses(pyblish.api.ContextPlugin):
 class IntegrateFtrackStatusBase(pyblish.api.InstancePlugin):
     """Base plugin for status collection.
 
-    Instance which has set "farm" key in data to 'True' is considered as will
-    be rendered on farm thus it's status should be changed.
-
     Requirements:
         projectName (str): Name of the project.
         hostName (str): Name of the host.
