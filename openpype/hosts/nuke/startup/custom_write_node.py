@@ -82,7 +82,8 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         knobs = knobs_setting["knobs"]
         knobs_value, node_knobs_settings = (
             self.get_node_knobs_setting(node_knobs)
-            )
+        )
+
         if node_knobs and knobs_value:
             if not node_knobs_settings:
                 nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
@@ -97,7 +98,6 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         else:
             for knob in ext_knob_list:
                 ext = knob["value"]
-
 
         anatomy = Anatomy()
 
