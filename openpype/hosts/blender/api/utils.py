@@ -345,6 +345,40 @@ def transfer_stack(
                 )
 
 
+def get_datablocks_with_filepath(
+    absolute=True, relative=True
+) -> Set[bpy.types.ID]:
+    """Get all datablocks with filepaths.
+
+    Args:
+        absolute (bool, optional): Get datablocks with absolute paths.
+            Defaults to True.
+        relative (bool, optional): Get datablocks with relative paths.
+            Defaults to True.
+
+    Returns:
+        Set[bpy.types.ID]: Datablocks with filepaths.
+    """
+    datablocks = set()
+    for data_name in dir(bpy.data):
+        data_collection = getattr(bpy.data, data_name)
+        if not isinstance(data_collection, bpy.types.bpy_prop_collection):
+            continue
+        for datablock in data_collection.values():
+            if (
+                datablock
+                and hasattr(datablock, "filepath")
+                and not datablock.is_property_readonly("filepath")
+                and not datablock.library
+                and not datablock.is_library_indirect
+            ):
+                if relative and datablock.filepath.startswith("//"):
+                    datablocks.add(datablock)
+                elif absolute:
+                    datablocks.add(datablock)
+    return datablocks
+
+
 def make_paths_absolute(source_filepath: Path = None):
     """Make all paths absolute for datablock in current blend file.
 
@@ -356,42 +390,26 @@ def make_paths_absolute(source_filepath: Path = None):
     Returns:
         Set[bpy.types.ID]: Remapped datablocks.
     """
-
-    relative_datablocks = set()
-    for data_name in dir(bpy.data):
-        data_collection = getattr(bpy.data, data_name)
-        if not isinstance(data_collection, bpy.types.bpy_prop_collection):
-            continue
-        for datablock in data_collection.values():
-            if (
-                hasattr(datablock, "filepath")
-                and not datablock.is_property_readonly("filepath")
-                and isinstance(datablock.filepath, str)
-                and datablock.filepath.startswith("//")
-            ):
-                relative_datablocks.add((datablock, datablock.filepath))
-
+    relative_datablocks = get_datablocks_with_filepath(absolute=False)
+    remapped_datablocks = set()
     if source_filepath:
-        for datablock, filepath in relative_datablocks:
+        for d in relative_datablocks:
             try:
-                datablock.filepath = str(
+                d.filepath = str(
                     Path(
                         bpy.path.abspath(
-                            filepath,
+                            d.filepath,
                             start=source_filepath.parent,
                         )
                     ).resolve()
                 )
+                remapped_datablocks.add(d)
             except (RuntimeError, ReferenceError, OSError) as err:
                 print(err)
 
     bpy.ops.file.make_paths_absolute()
 
-    return {
-        datablock
-        for datablock, filepath in relative_datablocks
-        if datablock.filepath != filepath
-    }
+    return remapped_datablocks
 
 
 def get_root_datablocks(
