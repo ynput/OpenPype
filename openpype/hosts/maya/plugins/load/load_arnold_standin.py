@@ -25,7 +25,7 @@ def is_sequence(files):
     return sequence
 
 
-def get_current_fps():
+def get_current_session_fps():
     session_fps = float(legacy_io.Session.get('AVALON_FPS', 25))
     return convert_to_maya_fps(session_fps)
 
@@ -90,7 +90,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-            fps = float(version["data"].get("fps")) or get_current_fps()
+            fps = float(version["data"].get("fps")) or get_current_session_fps()
             cmds.setAttr(standin_shape + ".abcFPS", fps)
 
         nodes = [root, standin, standin_shape]
