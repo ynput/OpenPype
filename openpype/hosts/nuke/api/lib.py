@@ -1302,10 +1302,7 @@ def create_write_node(
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
     fpath = data["fpath_template"].format(
         work=fdir,
-        version=data["version"],
-        subset=data["subset"],
-        frame=data["frame"],
-        ext=ext
+        **data,
     )
 
     # create directory
