@@ -1728,23 +1728,34 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     data["env"]["AVALON_APP"] = app.host_name
     data["env"]["AVALON_WORKDIR"] = workdir
 
-    _prepare_last_workfile(data, workdir, modules_manager)
+    # Allow `AVALON_SCENEDIR` environment variable to define a subfolder
+    # for the work files to be stored in the work directory.
+    scene_dir = workdir
+    scene_subfolder = data["env"].get("AVALON_SCENEDIR")
+    if scene_subfolder:
+        scene_dir = os.path.join(workdir, scene_subfolder)
+
+    _prepare_last_workfile(data, scene_dir, modules_manager)
 
 
-def _prepare_last_workfile(data, workdir, modules_manager):
+def _prepare_last_workfile(data, scene_dir, modules_manager):
     """last workfile workflow preparation.
 
-    Function check if should care about last workfile workflow and tries
-    to find the last workfile. Both information are stored to `data` and
+    Function checks if last workfile workflow is enabled for this context and
+    tries to find the last workfile. Both information are stored to `data` and
     environments.
 
-    Last workfile is filled always (with version 1) even if any workfile
+    Last workfile is filled always (with version 1) even if no workfile
     exists yet.
+
+    This function also determines the value for OPENPYPE_WORKFILE_TOOL_ON_START
+    to define whether the workfiles tool should open on launch too.
 
     Args:
         data (EnvironmentPrepData): Dictionary where result and intermediate
             result will be stored.
-        workdir (str): Path to folder where workfiles should be stored.
+        scene_dir (str): Path to folder where workfiles should be stored.
+        modules_manager (ModulesManager): Initialized modules manager.
     """
 
     from openpype.modules import ModulesManager
@@ -1831,12 +1842,12 @@ def _prepare_last_workfile(data, workdir, modules_manager):
             })
 
             last_workfile_path = get_last_workfile(
-                workdir, file_template, workdir_data, extensions, True
+                scene_dir, file_template, workdir_data, extensions, True
             )
 
-    if os.path.exists(last_workfile_path):
+    if not os.path.exists(last_workfile_path):
         log.debug((
-            "Workfiles for launch context does not exists"
+            "Workfile for launch context does not exist"
             " yet but path will be set."
         ))
     log.debug(
