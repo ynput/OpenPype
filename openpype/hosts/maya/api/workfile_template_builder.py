@@ -226,7 +226,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             if placeholder_data.get("plugin_identifier") != self.identifier:
                 continue
 
-            # TODO do data validations and maybe updgrades if are invalid
+            # TODO do data validations and maybe upgrades if they are invalid
             output.append(
                 LoadPlaceholderItem(node_name, placeholder_data, self)
             )
