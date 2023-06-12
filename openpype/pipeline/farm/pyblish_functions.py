@@ -550,14 +550,19 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             if len(cols) != 1:
                 raise ValueError("Only one image sequence type is expected.")  # noqa: E501
             ext = cols[0].tail.lstrip(".")
-            col = cols[0].head
+            col = list(cols[0])
 
         # create subset name `familyTaskSubset_AOV`
         group_name = 'render{}{}{}{}'.format(
             task[0].upper(), task[1:],
             subset[0].upper(), subset[1:])
 
-        cam = [c for c in cameras if c in col]
+        # if there are multiple cameras, we need to add camera name
+        if isinstance(col, (list, tuple)):
+            cam = [c for c in cameras if c in col[0]]
+        else:
+            # in case of single frame
+            cam = [c for c in cameras if c in col]
         if cam:
             if aov:
                 subset_name = '{}_{}_{}'.format(group_name, cam, aov)
