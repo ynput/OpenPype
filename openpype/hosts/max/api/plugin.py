@@ -35,6 +35,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
         (
             current_selection = selectByName title:"Select Objects to add to
             the Container" buttontext:"Add"
+            if current_selection == undefined then return False
             temp_arr = #()
             i_node_arr = #()
             for c in current_selection do
@@ -52,8 +53,10 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
         (
             current_selection = selectByName title:"Select Objects to remove
             from the Container" buttontext:"Remove"
+            if current_selection == undefined then return False
             temp_arr = #()
             i_node_arr = #()
+
             for c in current_selection do
             (
                 node_ref = NodeTransformMonitor node:c
