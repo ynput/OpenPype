@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint
+from .lib import read, imprint, get_main_window
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -319,8 +319,9 @@ def update_workfile_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder)
-    window.exec_()
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
+    window.show()
 
 
 def update_placeholder(*args):
@@ -343,6 +344,7 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()
