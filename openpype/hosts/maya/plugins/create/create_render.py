@@ -162,9 +162,10 @@ class CreateRender(plugin.Creator):
                                                  render_layer_name))
                     prev_render_layer = cmds.ls(type="renderLayer")
                     for layer in layers:
-                        if prev_render_layer and render_layer_name in layer.name():
+                        if prev_render_layer and \
+                            render_layer_name in layer.name():
                             self.log.debug("there is already a render layer"
-                                        " for dl render setting...")
+                                           " for dl render setting...")
                             continue
                     render_layer = rs.createRenderLayer(render_layer_name)
                     collection = render_layer.createCollection(
