@@ -161,31 +161,19 @@ class CreateRender(plugin.Creator):
                         "  Created {}/{}".format(dl_render_setting,
                                                  render_layer_name))
                     prev_render_layer = cmds.ls(type="renderLayer")
-                    if prev_render_layer:
-                        for l in prev_render_layer:
-                            if not l.endswith("_RL"):
-                                cmds.delete(l)
+                    for layer in layers:
+                        if prev_render_layer and render_layer_name in layer.name():
+                            self.log.debug("there is already a render layer"
+                                        " for dl render setting...")
+                            continue
                     render_layer = rs.createRenderLayer(render_layer_name)
                     collection = render_layer.createCollection(
                         "defaultCollection")
                     collection.getSelector().setPattern('*')
-                    object_set = cmds.ls(type="objectSet")
-                    if object_set:
-                        for obj in object_set:
-                            if render_layer_name in obj:
-                                try:
-                                    self.log.info("Renaming..")
-                                    new_name = "{}:{}".format(namespace,
-                                                              render_layer_name)            # noqa
-                                    cmds.rename(obj, new_name)
-                                except RuntimeError:
-                                    continue
-
             else:
                 if use_selection:
                     self.log.info("Processing existing layers")
                     sets = []
-
                     for layer in layers:
                         if "dlRenderSettings" in layer.name():
                             self.log.info("dl_render_setting "
