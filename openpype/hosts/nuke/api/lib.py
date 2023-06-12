@@ -2051,7 +2051,7 @@ class WorkfileSettings(object):
             self._root_node["colorManagement"].setValue("OCIO")
 
         # we dont need the key anymore
-        workfile_settings.pop("customOCIOConfigPath")
+        workfile_settings.pop("customOCIOConfigPath", None)
         workfile_settings.pop("colorManagement")
         workfile_settings.pop("OCIO_config")
 
