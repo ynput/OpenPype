@@ -7,7 +7,6 @@ import json
 
 from typing import List
 
-import openpype
 from distutils import dir_util
 import subprocess
 import re

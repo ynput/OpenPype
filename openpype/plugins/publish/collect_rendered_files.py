@@ -13,6 +13,7 @@ import json
 import pyblish.api
 
 from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -89,6 +90,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # now we can just add instances from json file and we are done
         for instance_data in data.get("instances"):
+
             self.log.info("  - processing instance for {}".format(
                 instance_data.get("subset")))
             instance = self._context.create_instance(
@@ -106,6 +108,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
+
+                add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 
@@ -157,6 +161,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     os.environ.update(session_data)
                     session_is_set = True
                 self._process_path(data, anatomy)
+                context.data["cleanupFullPaths"].append(path)
+                context.data["cleanupEmptyDirs"].append(os.path.dirname(path))
         except Exception as e:
             self.log.error(e, exc_info=True)
             raise Exception("Error") from e

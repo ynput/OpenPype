@@ -410,31 +410,28 @@
         ]
     },
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
+        },
+        "workfile": {
+            "enabled": false,
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference_v2": {
             "enabled": true,
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "renderSpace": "ACEScg",
             "displayName": "sRGB",
             "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference": {
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "renderSpace": "scene-linear Rec 709/sRGB",
             "viewTransform": "sRGB gamma"
         }
@@ -455,6 +452,10 @@
             "source-path": [],
             "destination-path": []
         }
+    },
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
     },
     "scriptsmenu": {
         "name": "OpenPype Tools",
@@ -734,6 +735,7 @@
         "ValidateShaderName": {
             "enabled": false,
             "optional": true,
+            "active": true,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
@@ -1554,10 +1556,6 @@
                 ]
             }
         ]
-    },
-    "include_handles": {
-        "include_handles_default": false,
-        "per_task_type": []
     },
     "templated_workfile_build": {
         "profiles": []

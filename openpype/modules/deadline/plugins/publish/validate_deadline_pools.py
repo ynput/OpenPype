@@ -26,7 +26,7 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
 
     def process(self, instance):
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         # get default deadline webservice url from deadline module

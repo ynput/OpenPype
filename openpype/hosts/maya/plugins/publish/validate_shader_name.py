@@ -50,7 +50,8 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
         asset_name = instance.data.get("asset", None)
 
         # Check the number of connected shadingEngines per shape
-        r = re.compile(cls.regex)
+        regex_compile = re.compile(cls.regex)
+        error_message = "object {0} has invalid shader name {1}"
         for shape in shapes:
             shading_engines = cmds.listConnections(shape,
                                                    destination=True,
@@ -60,19 +61,18 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
             )
 
             for shader in shaders:
-                m = r.match(cls.regex, shader)
+                m = regex_compile.match(shader)
                 if m is None:
                     invalid.append(shape)
-                    cls.log.error(
-                        "object {0} has invalid shader name {1}".format(shape,
-                                                                        shader)
-                    )
+                    cls.log.error(error_message.format(shape, shader))
                 else:
-                    if 'asset' in r.groupindex:
+                    if 'asset' in regex_compile.groupindex:
                         if m.group('asset') != asset_name:
                             invalid.append(shape)
-                            cls.log.error(("object {0} has invalid "
-                                           "shader name {1}").format(shape,
-                                                                     shader))
+                            message = error_message
+                            message += " with missing asset name \"{2}\""
+                            cls.log.error(
+                                message.format(shape, shader, asset_name)
+                            )
 
         return invalid

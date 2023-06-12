@@ -28,18 +28,37 @@ class ValidateWorkfilePaths(
         if not self.is_active(instance.data):
             return
         invalid = self.get_invalid()
-        self.log.info(
-            "node types to check: {}".format(", ".join(self.node_types)))
-        self.log.info(
-            "prohibited vars: {}".format(", ".join(self.prohibited_vars))
+        self.log.debug(
+            "Checking node types: {}".format(", ".join(self.node_types)))
+        self.log.debug(
+            "Searching prohibited vars: {}".format(
+                ", ".join(self.prohibited_vars)
+            )
         )
-        if invalid:
-            for param in invalid:
-                self.log.error(
-                    "{}: {}".format(param.path(), param.unexpandedString()))
 
-            raise PublishValidationError(
-                "Invalid paths found", title=self.label)
+        if invalid:
+            all_container_vars = set()
+            for param in invalid:
+                value = param.unexpandedString()
+                contained_vars = [
+                    var for var in self.prohibited_vars
+                    if var in value
+                ]
+                all_container_vars.update(contained_vars)
+
+                self.log.error(
+                    "Parm {} contains prohibited vars {}: {}".format(
+                        param.path(),
+                        ", ".join(contained_vars),
+                        value)
+                )
+
+            message = (
+                "Prohibited vars {} found in parameter values".format(
+                    ", ".join(all_container_vars)
+                )
+            )
+            raise PublishValidationError(message, title=self.label)
 
     @classmethod
     def get_invalid(cls):
@@ -63,7 +82,7 @@ class ValidateWorkfilePaths(
     def repair(cls, instance):
         invalid = cls.get_invalid()
         for param in invalid:
-            cls.log.info("processing: {}".format(param.path()))
+            cls.log.info("Processing: {}".format(param.path()))
             cls.log.info("Replacing {} for {}".format(
                 param.unexpandedString(),
                 hou.text.expandString(param.unexpandedString())))

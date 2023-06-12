@@ -89,50 +89,26 @@ class ExistingLayoutLoader(plugin.Loader):
         raise NotImplementedError(
             f"Unreal version {ue_major} not supported")
 
-    def _get_transform(self, ext, import_data, lasset):
-        conversion = unreal.Matrix.IDENTITY.transform()
-        fbx_tuning = unreal.Matrix.IDENTITY.transform()
+    def _transform_from_basis(self, transform, basis):
+        """Transform a transform from a basis to a new basis."""
+        # Get the basis matrix
+        basis_matrix = unreal.Matrix(
+            basis[0],
+            basis[1],
+            basis[2],
+            basis[3]
+        )
+        transform_matrix = unreal.Matrix(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3]
+        )
 
-        basis = unreal.Matrix(
-            lasset.get('basis')[0],
-            lasset.get('basis')[1],
-            lasset.get('basis')[2],
-            lasset.get('basis')[3]
-        ).transform()
-        transform = unreal.Matrix(
-            lasset.get('transform_matrix')[0],
-            lasset.get('transform_matrix')[1],
-            lasset.get('transform_matrix')[2],
-            lasset.get('transform_matrix')[3]
-        ).transform()
+        new_transform = (
+            basis_matrix.get_inverse() * transform_matrix * basis_matrix)
 
-        # Check for the conversion settings. We cannot access
-        # the alembic conversion settings, so we assume that
-        # the maya ones have been applied.
-        if ext == '.fbx':
-            loc = import_data.import_translation
-            rot = import_data.import_rotation.to_vector()
-            scale = import_data.import_uniform_scale
-            conversion = unreal.Transform(
-                location=[loc.x, loc.y, loc.z],
-                rotation=[rot.x, rot.y, rot.z],
-                scale=[-scale, scale, scale]
-            )
-            fbx_tuning = unreal.Transform(
-                rotation=[180.0, 0.0, 90.0],
-                scale=[1.0, 1.0, 1.0]
-            )
-        elif ext == '.abc':
-            # This is the standard conversion settings for
-            # alembic files from Maya.
-            conversion = unreal.Transform(
-                location=[0.0, 0.0, 0.0],
-                rotation=[0.0, 0.0, 0.0],
-                scale=[1.0, -1.0, 1.0]
-            )
-
-        new_transform = (basis.inverse() * transform * basis)
-        return fbx_tuning * conversion.inverse() * new_transform
+        return new_transform.transform()
 
     def _spawn_actor(self, obj, lasset):
         actor = EditorLevelLibrary.spawn_actor_from_object(
@@ -140,16 +116,13 @@ class ExistingLayoutLoader(plugin.Loader):
         )
 
         actor.set_actor_label(lasset.get('instance_name'))
-        smc = actor.get_editor_property('static_mesh_component')
-        mesh = smc.get_editor_property('static_mesh')
-        import_data = mesh.get_editor_property('asset_import_data')
-        filename = import_data.get_first_filename()
-        path = Path(filename)
 
-        transform = self._get_transform(
-            path.suffix, import_data, lasset)
+        transform = lasset.get('transform_matrix')
+        basis = lasset.get('basis')
 
-        actor.set_actor_transform(transform, False, True)
+        computed_transform = self._transform_from_basis(transform, basis)
+
+        actor.set_actor_transform(computed_transform, False, True)
 
     @staticmethod
     def _get_fbx_loader(loaders, family):
@@ -320,9 +293,12 @@ class ExistingLayoutLoader(plugin.Loader):
                 containers.append(container)
 
                 # Set the transform for the actor.
-                transform = self._get_transform(
-                    path.suffix, import_data, lasset)
-                actor.set_actor_transform(transform, False, True)
+                transform = lasset.get('transform_matrix')
+                basis = lasset.get('basis')
+
+                computed_transform = self._transform_from_basis(
+                    transform, basis)
+                actor.set_actor_transform(computed_transform, False, True)
 
                 actors_matched.append(actor)
                 found = True

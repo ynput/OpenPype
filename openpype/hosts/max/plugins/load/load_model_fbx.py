@@ -1,8 +1,5 @@
 import os
-from openpype.pipeline import (
-    load,
-    get_representation_path
-)
+from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
@@ -21,26 +18,22 @@ class FbxModelLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         filepath = os.path.normpath(self.fname)
+        rt.FBXImporterSetParam("Animation", False)
+        rt.FBXImporterSetParam("Cameras", False)
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
-        fbx_import_cmd = (
-            f"""
+        container = rt.getNodeByName(f"{name}")
+        if not container:
+            container = rt.container()
+            container.name = f"{name}"
 
-FBXImporterSetParam "Animation" false
-FBXImporterSetParam "Cameras" false
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-importFile @"{filepath}" #noPrompt using:FBXIMP
-        """)
-
-        self.log.debug(f"Executing command: {fbx_import_cmd}")
-        rt.execute(fbx_import_cmd)
-
-        asset = rt.getNodeByName(f"{name}")
+        for selection in rt.getCurrentSelection():
+            selection.Parent = container
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
@@ -48,24 +41,21 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
         rt.select(node.Children)
-        fbx_reimport_cmd = (
-            f"""
-FBXImporterSetParam "Animation" false
-FBXImporterSetParam "Cameras" false
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
 
-importFile @"{path}" #noPrompt using:FBXIMP
-        """)
-        rt.execute(fbx_reimport_cmd)
+        rt.FBXImporterSetParam("Animation", False)
+        rt.FBXImporterSetParam("Cameras", False)
+        rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("UpAxis", "Y")
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
 
         with maintained_selection():
             rt.select(node)
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)

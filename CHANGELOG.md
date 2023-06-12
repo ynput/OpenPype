@@ -1,6 +1,1329 @@
 # Changelog
 
 
+## [3.15.10](https://github.com/ynput/OpenPype/tree/3.15.10)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.9...3.15.10)
+
+### **🆕 New features**
+
+
+<details>
+<summary>ImageIO: Adding ImageIO activation toggle to all hosts <a href="https://github.com/ynput/OpenPype/pull/4700">#4700</a></summary>
+
+Colorspace management can now be enabled at the project level, although it is disabled by default. Once enabled, all hosts will use the OCIO config file defined in the settings. If settings are disabled, the system switches to DCC's native color space management, and we do not store colorspace information at the representative level.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Redshift Proxy Support in 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4625">#4625</a></summary>
+
+Redshift Proxy Support for 3dsMax.
+- [x] Creator
+- [x] Loader
+- [x] Extractor
+- [x] Validator
+- [x]  Add documentation
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini farm publishing and rendering <a href="https://github.com/ynput/OpenPype/pull/4825">#4825</a></summary>
+
+Deadline Farm publishing and Rendering for Houdini
+- [x] Mantra
+- [x] Karma(including usd renders)
+- [x] Arnold
+- [x] Elaborate Redshift ROP for deadline submission
+- [x]  fix the existing bug in Redshift ROP
+- [x] Vray
+- [x] add docs
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Feature: Blender hook to execute python scripts at launch <a href="https://github.com/ynput/OpenPype/pull/4905">#4905</a></summary>
+
+Hook to allow hooks to add path to a python script that will be executed when Blender starts.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Feature: Resolve: Open last workfile on launch through .scriptlib  <a href="https://github.com/ynput/OpenPype/pull/5047">#5047</a></summary>
+
+Added implementation to Resolve integration to open last workfile on launch.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Remove default windowFlags from publisher <a href="https://github.com/ynput/OpenPype/pull/5089">#5089</a></summary>
+
+The default windowFlags is making the publisher window (in Linux at least) only show the close button and it's frustrating as many times you just want to minimize the window and get back to the validation after. Removing that line I get what I'd expect.**Before:****After:**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Show user who created the workfile on the details pane of workfile manager <a href="https://github.com/ynput/OpenPype/pull/5093">#5093</a></summary>
+
+New PR for https://github.com/ynput/OpenPype/pull/5087, which was closed after merging `next-minor` branch and then realizing we don't need to target it as it was decided it's not required to support windows. More info on that PR discussion.Small addition to add name of the `user` who created the workfile on the details pane of the workfile manager:
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Loader: Hide inactive versions in UI <a href="https://github.com/ynput/OpenPype/pull/5100">#5100</a></summary>
+
+Hide versions with `active` set to `False` in Loader UI.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Repair RenderPass token when merging AOVs. <a href="https://github.com/ynput/OpenPype/pull/5055">#5055</a></summary>
+
+Validator was flagging that `<RenderPass>` was in the image prefix, but did not repair the issue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Improve error feedback when no renderable cameras exist for ASS family. <a href="https://github.com/ynput/OpenPype/pull/5092">#5092</a></summary>
+
+When collecting cameras for `ass` family, this improves the error message when no cameras are renderable.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Custom script to set frame range of read nodes <a href="https://github.com/ynput/OpenPype/pull/5039">#5039</a></summary>
+
+Adding option to set frame range specifically for the read nodes in Openpype Panel. User can set up their preferred frame range with the frame range dialog, which can be showed after clicking `Set Frame Range (Read Node)` in Openpype Tools
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Update extract review letterbox docs <a href="https://github.com/ynput/OpenPype/pull/5074">#5074</a></summary>
+
+Update Extract Review - Letter Box section in Docs. Letterbox type description is removed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Project pack: Documents only skips roots validation <a href="https://github.com/ynput/OpenPype/pull/5082">#5082</a></summary>
+
+Single roots validation is skipped if only documents are extracted.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: custom settings for write node without publish <a href="https://github.com/ynput/OpenPype/pull/5084">#5084</a></summary>
+
+Set Render Output and other settings to write nodes for non-publish purposes.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Deadline servers <a href="https://github.com/ynput/OpenPype/pull/5052">#5052</a></summary>
+
+Fix working with multiple Deadline servers in Maya.
+- Pools (primary and secondary) attributes were not recreated correctly.
+- Order of collector plugins were wrong, so collected data was not injected into render instances.
+- Server attribute was not converted to string so comparing with settings was incorrect.
+- Improve debug logging for where the webservice url is getting fetched from.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix Load Reference. <a href="https://github.com/ynput/OpenPype/pull/5091">#5091</a></summary>
+
+Fix bug introduced with https://github.com/ynput/OpenPype/pull/4751 where `cmds.ls` returns a list.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: Publishing Deadline jobs from RedShift  <a href="https://github.com/ynput/OpenPype/pull/4960">#4960</a></summary>
+
+Fix the bug of being uable to publish deadline jobs from RedshiftUse Current File instead of Published Scene for just Redshift.
+- add save scene before rendering to ensure the scene is saved after the modification.
+- add separated aov files option to allow users to choose to have aovs in render output
+- add validator for render publish to aovid overriding the previous renders
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Fix missing frame range for pointcache and camera exports <a href="https://github.com/ynput/OpenPype/pull/5026">#5026</a></summary>
+
+Fix missing frame range for pointcache and camera exports on published version.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: collect_frame_fix plugin fix and cleanup <a href="https://github.com/ynput/OpenPype/pull/5064">#5064</a></summary>
+
+Previous implementation https://github.com/ynput/OpenPype/pull/5036 was broken this is fixing the issue where attribute is found in instance data although the settings were disabled for the plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Fix apply settings Clip Load <a href="https://github.com/ynput/OpenPype/pull/5073">#5073</a></summary>
+
+Changed `apply_settings` to classmethod which fixes the issue with settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: Make sure scripts dir exists <a href="https://github.com/ynput/OpenPype/pull/5078">#5078</a></summary>
+
+Make sure the scripts directory exists before looping over it's content.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>removing info knob from nuke creators <a href="https://github.com/ynput/OpenPype/pull/5083">#5083</a></summary>
+
+- removing instance node if removed via publisher
+- removing info knob since it is not needed any more (was there only for the transition phase)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Tray: Fix restart arguments on update <a href="https://github.com/ynput/OpenPype/pull/5085">#5085</a></summary>
+
+Fix arguments on restart.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: bug fix on repair action in Arnold Scene Source CBID Validator <a href="https://github.com/ynput/OpenPype/pull/5096">#5096</a></summary>
+
+Fix the bug of not being able to use repair action  in Arnold Scene Source CBID Validator
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: batch of small fixes <a href="https://github.com/ynput/OpenPype/pull/5103">#5103</a></summary>
+
+- default settings for `imageio.requiredNodes` **CreateWriteImage**
+- default settings for **LoadImage** representations
+- **Create** and **Publish** menu items with `parent=main_window` (version > 14)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: make prerender check safer <a href="https://github.com/ynput/OpenPype/pull/5104">#5104</a></summary>
+
+Prerender wasn't correctly recognized and was replaced with just 'render' family.In Nuke it is correctly `prerender.farm` in families, which wasn't handled here. It resulted into using `render` in templates even if `render` and `prerender` templates were split.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Sort launcher actions alphabetically <a href="https://github.com/ynput/OpenPype/pull/5106">#5106</a></summary>
+
+The launcher actions weren't being sorted by its label but its name (which on the case of the apps it's the version number) and thus the order wasn't consistent and we kept getting a different order on every launch. From my debugging session, this was the result of what the `actions` variable held after the `filter_compatible_actions` function before these changes:
+```
+(Pdb) for p in actions: print(p.order, p.name)
+0 14-02
+0 14-02
+0 14-02
+0 14-02
+0 14-02
+0 19-5-493
+0 2023
+0 3-41
+0 6-01
+```This caused already a couple bugs from our artists thinking they had launched Nuke X and instead launched Nuke and telling us their Nuke was missing nodes**Before:****After:**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Editorial video stream discovery <a href="https://github.com/ynput/OpenPype/pull/5120">#5120</a></summary>
+
+Editorial create plugin in traypublisher does not expect that first stream in input is video.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>3dsmax: Move from deprecated interface <a href="https://github.com/ynput/OpenPype/pull/5117">#5117</a></summary>
+
+`INewPublisher` interface is deprecated, this PR is changing the use to `IPublishHost` instead.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>add movalex as a contributor for code <a href="https://github.com/ynput/OpenPype/pull/5076">#5076</a></summary>
+
+Adds @movalex as a contributor for code.
+
+This was requested by mkolar [in this comment](https://github.com/ynput/OpenPype/pull/4916#issuecomment-1571498425)
+
+[skip ci]
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: refactor load plugins <a href="https://github.com/ynput/OpenPype/pull/5079">#5079</a></summary>
+
+
+___
+
+</details>
+
+
+
+
+## [3.15.9](https://github.com/ynput/OpenPype/tree/3.15.9)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.8...3.15.9)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Blender: Implemented Loading of Alembic Camera <a href="https://github.com/ynput/OpenPype/pull/4990">#4990</a></summary>
+
+Implemented loading of Alembic cameras in Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Implemented Creator, Loader and Extractor for Levels <a href="https://github.com/ynput/OpenPype/pull/5008">#5008</a></summary>
+
+Creator, Loader and Extractor for Unreal Levels have been implemented.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Blender: Added setting for base unit scale <a href="https://github.com/ynput/OpenPype/pull/4987">#4987</a></summary>
+
+A setting for the base unit scale has been added for Blender.The unit scale is automatically applied when opening a file or creating a new one.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Changed naming and path of Camera Levels <a href="https://github.com/ynput/OpenPype/pull/5010">#5010</a></summary>
+
+The levels created for the camera in Unreal now include `_camera` in the name, to be better identifiable, and are placed in the camera folder.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings: Added option to nest settings templates <a href="https://github.com/ynput/OpenPype/pull/5022">#5022</a></summary>
+
+It is possible to nest settings templates in another templates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement/publisher: Remove "hit play to continue" label on continue <a href="https://github.com/ynput/OpenPype/pull/5029">#5029</a></summary>
+
+Remove "hit play to continue" message on continue so that it doesn't show anymore when play was clicked.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Limit number of ftrack events to query at once <a href="https://github.com/ynput/OpenPype/pull/5033">#5033</a></summary>
+
+Limit the amount of ftrack events received from mongo at once to 100.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Small code cleanups <a href="https://github.com/ynput/OpenPype/pull/5034">#5034</a></summary>
+
+Small code cleanup and updates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: collect frames to fix with settings <a href="https://github.com/ynput/OpenPype/pull/5036">#5036</a></summary>
+
+Settings for `Collect Frames to Fix` will allow disable per project the plugin. Also `Rewriting latest version` attribute is hiddable from settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Publish plugin apply settings can expect only project settings <a href="https://github.com/ynput/OpenPype/pull/5037">#5037</a></summary>
+
+Only project settings are passed to optional `apply_settings` method, if the method expects only one argument.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Load Assembly fix invalid imports  <a href="https://github.com/ynput/OpenPype/pull/4859">#4859</a></summary>
+
+Refactors imports so they are now correct.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Skipping rendersetup for members. <a href="https://github.com/ynput/OpenPype/pull/4973">#4973</a></summary>
+
+When publishing a `rendersetup`, the objectset is and should be empty.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Validate Rig Output IDs <a href="https://github.com/ynput/OpenPype/pull/5016">#5016</a></summary>
+
+Absolute names of node were not used, so plugin did not fetch the nodes properly.Also missed pymel command.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: escape rootless path in publish job <a href="https://github.com/ynput/OpenPype/pull/4910">#4910</a></summary>
+
+If the publish path on Deadline job contains spaces or other characters, command was failing because the path wasn't properly escaped. This is fixing it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Company name and URL changed <a href="https://github.com/ynput/OpenPype/pull/4974">#4974</a></summary>
+
+The current records were obsolete in inno_setup, changed to the up-to-date.
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix usage of 'get_full_path' function <a href="https://github.com/ynput/OpenPype/pull/5014">#5014</a></summary>
+
+This PR changes all the occurrences of `get_full_path` functions to alternatives to get the path of the objects.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix sequence frames validator to use correct data <a href="https://github.com/ynput/OpenPype/pull/5021">#5021</a></summary>
+
+Fix sequence frames validator to use clipIn and clipOut data instead of frameStart and frameEnd.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix render instances collection to use correct data <a href="https://github.com/ynput/OpenPype/pull/5023">#5023</a></summary>
+
+Fix render instances collection to use `frameStart` and `frameEnd` from the Project Manager, instead of the sequence's ones.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: loader is opening even if no timeline in project <a href="https://github.com/ynput/OpenPype/pull/5025">#5025</a></summary>
+
+Loader is opening now even no timeline is available in a project.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>nuke: callback for dirmapping is on demand <a href="https://github.com/ynput/OpenPype/pull/5030">#5030</a></summary>
+
+Nuke was slowed down on processing due this callback. Since it is disabled by default it made sense to add it only on demand.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: UI works with instances without label <a href="https://github.com/ynput/OpenPype/pull/5032">#5032</a></summary>
+
+Publisher UI does not crash if instance don't have filled 'label' key in instance data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Call explicitly prepared tab methods <a href="https://github.com/ynput/OpenPype/pull/5044">#5044</a></summary>
+
+It is not possible to go to Create tab during publishing from OpenPype menu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Role names are not case sensitive in ftrack event server status action <a href="https://github.com/ynput/OpenPype/pull/5058">#5058</a></summary>
+
+Event server status action is not case sensitive for role names of user.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix border widget <a href="https://github.com/ynput/OpenPype/pull/5063">#5063</a></summary>
+
+Fixed border lines in Publisher UI to be painted correctly with correct indentation and size.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix Commandlet Project and Permissions <a href="https://github.com/ynput/OpenPype/pull/5066">#5066</a></summary>
+
+Fix problem when creating an Unreal Project when Commandlet Project is in a protected location.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Added verification for Unreal app name format <a href="https://github.com/ynput/OpenPype/pull/5070">#5070</a></summary>
+
+The Unreal app name is used to determine the Unreal version folder, so it is necessary that if follows the format `x-x`, where `x` is any integer. This PR adds a verification that the app name follows that format.
+
+
+___
+
+</details>
+
+### **📃 Documentation**
+
+
+<details>
+<summary>Docs: Display wrong image in ExtractOIIOTranscode <a href="https://github.com/ynput/OpenPype/pull/5045">#5045</a></summary>
+
+Wrong image display in `https://openpype.io/docs/project_settings/settings_project_global#extract-oiio-transcode`.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Drop-down menu to list all families in create placeholder <a href="https://github.com/ynput/OpenPype/pull/4928">#4928</a></summary>
+
+Currently in the create placeholder window, we need to write the family manually. This replace the text field by an enum field with all families for the current software.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>add sync to specific projects or listen only <a href="https://github.com/ynput/OpenPype/pull/4919">#4919</a></summary>
+
+Extend kitsu sync service with additional arguments to sync specific projects.
+
+
+___
+
+</details>
+
+
+
+
+## [3.15.8](https://github.com/ynput/OpenPype/tree/3.15.8)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.7...3.15.8)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Publisher: Show instances in report page <a href="https://github.com/ynput/OpenPype/pull/4915">#4915</a></summary>
+
+Show publish instances in report page. Also added basic log view with logs grouped by instance. Validation error detail now have 2 colums, one with erro details second with logs. Crashed state shows fast access to report action buttons. Success will show only logs. Publish frame is shrunked automatically on publish stop.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion - Loader plugins updates <a href="https://github.com/ynput/OpenPype/pull/4920">#4920</a></summary>
+
+Update to some Fusion loader plugins:The sequence loader can now load footage from the image and online family.The FBX loader can now import all formats Fusions FBX node can read.You can now import the content of another workfile into your current comp with the workfile loader.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: deadline farm rendering <a href="https://github.com/ynput/OpenPype/pull/4955">#4955</a></summary>
+
+Enabling Fusion for deadline farm rendering.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: set frame range and resolution <a href="https://github.com/ynput/OpenPype/pull/4983">#4983</a></summary>
+
+Frame information (frame start, duration, fps) and resolution (width and height) is applied to selected composition from Asset Management System (Ftrack or DB) automatically when published instance is created.It is also possible explicitly propagate both values from DB to selected composition by newly added menu buttons.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publish: Enhance automated publish plugin settings <a href="https://github.com/ynput/OpenPype/pull/4986">#4986</a></summary>
+
+Added plugins option to define settings category where to look for settings of a plugin and added public helper functions to apply settings `get_plugin_settings` and `apply_plugin_settings_automatically`.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Load Rig References - Change Rig to Animation in Animation instance <a href="https://github.com/ynput/OpenPype/pull/4877">#4877</a></summary>
+
+We are using the template builder to build an animation scene. All the rig placeholders are imported correctly, but the automatically created animation instances retain the rig family in their names and subsets. In our example, we need animationMain instead of rigMain, because this name will be used in the following steps like lighting.Here is the result we need. I checked, and it's not a template builder problem, because even if I load a rig as a reference, the result is the same. For me, since we are in the animation instance, it makes more sense to have animation instead of rig in the name. The naming is just fine if we use create from the Openpype menu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: Resolve prelaunch code refactoring and update defaults <a href="https://github.com/ynput/OpenPype/pull/4916">#4916</a></summary>
+
+The main reason of this PR is wrong default settings in `openpype/settings/defaults/system_settings/applications.json` for Resolve host. The `bin` folder should not be a part of the macos and Linux `RESOLVE_PYTHON3_PATH` variable.The rest of this PR is some code cleanups for Resolve prelaunch hook to simplify further development.Also added a .gitignore for vscode workspace files.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: 🚚 move Unreal plugin to separate repository <a href="https://github.com/ynput/OpenPype/pull/4980">#4980</a></summary>
+
+To support Epic Marketplace have to move AYON Unreal integration plugins to separate repository. This is replacing current files with git submodule, so the change should be functionally without impact.New repository lives here: https://github.com/ynput/ayon-unreal-plugin
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Lib code cleanup <a href="https://github.com/ynput/OpenPype/pull/5003">#5003</a></summary>
+
+Small cleanup in lib files in openpype.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Allow to open with djv by extension instead of representation name <a href="https://github.com/ynput/OpenPype/pull/5004">#5004</a></summary>
+
+Filter open in djv action by extension instead of representation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>DJV open action `extensions` as `set` <a href="https://github.com/ynput/OpenPype/pull/5005">#5005</a></summary>
+
+Change `extensions` attribute to `set`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: extract thumbnail with multiple reposition nodes <a href="https://github.com/ynput/OpenPype/pull/5011">#5011</a></summary>
+
+Added support for multiple reposition nodes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: Improve logging levels and messages for artist facing publish reports <a href="https://github.com/ynput/OpenPype/pull/5018">#5018</a></summary>
+
+Tweak the logging levels and messages to try and only show those logs that an artist should see and could understand. Move anything that's slightly more involved into a "debug" message instead.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Bugfix/frame variable fix <a href="https://github.com/ynput/OpenPype/pull/4978">#4978</a></summary>
+
+Renamed variables to match OpenPype terminology to reduce confusion and add consistency.
+___
+
+</details>
+
+
+<details>
+<summary>Global: plugins cleanup plugin will leave beauty rendered files <a href="https://github.com/ynput/OpenPype/pull/4790">#4790</a></summary>
+
+Attempt to mark more files to be cleaned up explicitly in intermediate `renders` folder in work area for farm jobs.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix: Download last workfile doesn't work if not already downloaded <a href="https://github.com/ynput/OpenPype/pull/4942">#4942</a></summary>
+
+Some optimization condition is messing with the feature: if the published workfile is not already downloaded, it won't download it...
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix transform when loading layout to match existing assets <a href="https://github.com/ynput/OpenPype/pull/4972">#4972</a></summary>
+
+Fixed transform when loading layout to match existing assets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>fix the bug of fbx loaders in Max <a href="https://github.com/ynput/OpenPype/pull/4977">#4977</a></summary>
+
+bug fix of fbx loaders for not being able to parent to the CON instances while importing cameras(and models) which is published from other DCCs such as Maya.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: allow returning stub with not saved workfile <a href="https://github.com/ynput/OpenPype/pull/4984">#4984</a></summary>
+
+Allows to use Workfile app to Save first empty workfile.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix Alembic loading <a href="https://github.com/ynput/OpenPype/pull/4985">#4985</a></summary>
+
+Fixed problem occurring when trying to load an Alembic model in Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Addon Py2 compatibility <a href="https://github.com/ynput/OpenPype/pull/4994">#4994</a></summary>
+
+Fixed Python 2 compatibility of unreal addon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: fixed missing files key in representation <a href="https://github.com/ynput/OpenPype/pull/4999">#4999</a></summary>
+
+Issue with missing keys once rendering target set to existing frames is fixed. Instance has to be evaluated in validation for missing files.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix the frame range when loading camera <a href="https://github.com/ynput/OpenPype/pull/5002">#5002</a></summary>
+
+The keyframes of the camera, when loaded, were not using the correct frame range.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: fixing frame range targeting <a href="https://github.com/ynput/OpenPype/pull/5013">#5013</a></summary>
+
+Frame range targeting at Rendering instances is now following configured options.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: fix selection from multiple webservices <a href="https://github.com/ynput/OpenPype/pull/5015">#5015</a></summary>
+
+Multiple different DL webservice could be configured. First they must by configured in System Settings., then they could be configured per project in `project_settings/deadline/deadline_servers`.Only single webservice could be a target of publish though.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>3dsmax: Refactored publish plugins to use proper implementation of pymxs <a href="https://github.com/ynput/OpenPype/pull/4988">#4988</a></summary>
+
+
+___
+
+</details>
+
+
+
+
+## [3.15.7](https://github.com/ynput/OpenPype/tree/3.15.7)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.6...3.15.7)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Addons directory <a href="https://github.com/ynput/OpenPype/pull/4893">#4893</a></summary>
+
+This adds a directory for Addons, for easier distribution of studio specific code.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu - Add "image", "online" and "plate" to review families <a href="https://github.com/ynput/OpenPype/pull/4923">#4923</a></summary>
+
+This PR adds "image", "online" and "plate" to the review families so they also can be uploaded to Kitsu.It also adds the `Add review to Kitsu` tag to the default png review. Without it the user would manually need to add it for single image uploads to Kitsu and might confuse users (it confused me first for a while as movies did work).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Feature/remove and load inv action <a href="https://github.com/ynput/OpenPype/pull/4930">#4930</a></summary>
+
+Added the ability to remove and load a container, as a way to reset it.This can be useful in cases where a container breaks in a way that can be fixed by removing it, then reloading it.Also added the ability to add `InventoryAction` plugins by placing them in `openpype/plugins/inventory`.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Load Rig References - Change Rig to Animation in Animation instance <a href="https://github.com/ynput/OpenPype/pull/4877">#4877</a></summary>
+
+We are using the template builder to build an animation scene. All the rig placeholders are imported correctly, but the automatically created animation instances retain the rig family in their names and subsets. In our example, we need animationMain instead of rigMain, because this name will be used in the following steps like lighting.Here is the result we need. I checked, and it's not a template builder problem, because even if I load a rig as a reference, the result is the same. For me, since we are in the animation instance, it makes more sense to have animation instead of rig in the name. The naming is just fine if we use create from the Openpype menu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya template builder - preserve all references when importing a template <a href="https://github.com/ynput/OpenPype/pull/4797">#4797</a></summary>
+
+When building a template with Maya template builder, we import the template and also the references inside the template file. This causes some problems:
+- We cannot use the references to version assets imported by the template.
+- When we import the file, the internal reference files are also imported. As a side effect, Maya complains about a reference that no longer exists.`// Error: file: /xxx/maya/2023.3/linux/scripts/AETemplates/AEtransformRelated.mel line 58: Reference node 'turntable_mayaSceneMain_01_RN' is not associated with a reference file.`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Renaming the integration plugin to Ayon. <a href="https://github.com/ynput/OpenPype/pull/4646">#4646</a></summary>
+
+Renamed the .h, and .cpp files to Ayon. Also renamed the classes to with the Ayon keyword.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsMax: render dialogue needs to be closed <a href="https://github.com/ynput/OpenPype/pull/4729">#4729</a></summary>
+
+Make sure the render setup dialog is in a closed state for the update of resolution and other render settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya Template Builder - Remove default cameras from renderable cameras <a href="https://github.com/ynput/OpenPype/pull/4815">#4815</a></summary>
+
+When we build an asset workfile with build workfile from template inside Maya, we load our turntable camera. But then we end up with 2 renderables camera : **persp** the one imported from the template.We need to remove the **persp** camera (or any other default camera) from renderable cameras when building the work file.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Validators for Frame Range in Max <a href="https://github.com/ynput/OpenPype/pull/4914">#4914</a></summary>
+
+Switch Render Frame Range Type to 3 for specific ranges (initial setup for the range type is 4)Reset Frame Range will also set the frame range for render settingsRender Collector won't take the frame range from context data but take the range directly from render settingAdd validators for render frame range type and frame range respectively with repair action
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Saver creator settings <a href="https://github.com/ynput/OpenPype/pull/4943">#4943</a></summary>
+
+Adding Saver creator settings and enhanced rendering path with template.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Project Anatomy on creators <a href="https://github.com/ynput/OpenPype/pull/4962">#4962</a></summary>
+
+Anatomy object of current project is available on `CreateContext` and create plugins.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Validate shader name - OP-5903 <a href="https://github.com/ynput/OpenPype/pull/4971">#4971</a></summary>
+
+Running the plugin would error with:
+```
+// TypeError: 'str' object cannot be interpreted as an integer
+```Fixed and added setting `active`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Fix slow Houdini launch due to shelves generation <a href="https://github.com/ynput/OpenPype/pull/4829">#4829</a></summary>
+
+Shelf generation during Houdini startup would add an insane amount of delay for the Houdini UI to launch correctly. By deferring the shelf generation this takes away the 5+ minutes of delay for the Houdini UI to launch.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion - Fixed "optional validation" <a href="https://github.com/ynput/OpenPype/pull/4912">#4912</a></summary>
+
+Added OptionalPyblishPluginMixin and is_active checks for all publish tools that should be optional
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: add missing `pyblish.util` import <a href="https://github.com/ynput/OpenPype/pull/4937">#4937</a></summary>
+
+remote publishing was missing import of `remote_publish`. This is adding it back.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix missing 'object_path' property <a href="https://github.com/ynput/OpenPype/pull/4938">#4938</a></summary>
+
+Epic removed the `object_path` property from `AssetData`. This PR fixes usages of that property.Fixes #4936
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Remove obsolete global validator <a href="https://github.com/ynput/OpenPype/pull/4939">#4939</a></summary>
+
+Removing `Validate Sequence Frames` validator from global plugins as it wasn't handling correctly many things and was by mistake enabled, breaking functionality on Deadline.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: fix build_workfile get_linked_assets missing project_name arg <a href="https://github.com/ynput/OpenPype/pull/4940">#4940</a></summary>
+
+Linked assets collection don't work within `build_workfile` because `get_linked_assets` function call has a missing `project_name`argument.
+- Added the `project_name` arg to the `get_linked_assets` function call.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: fix Scene Inventory switch version error dialog missing parent arg on init <a href="https://github.com/ynput/OpenPype/pull/4941">#4941</a></summary>
+
+QuickFix for the switch version error dialog to set inventory widget as parent.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix camera frame range <a href="https://github.com/ynput/OpenPype/pull/4956">#4956</a></summary>
+
+Fix the frame range of the level sequence for the Camera in Unreal.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix missing parameter when updating Alembic StaticMesh <a href="https://github.com/ynput/OpenPype/pull/4957">#4957</a></summary>
+
+Fix an error when updating an Alembic StaticMesh in Unreal, due to a missing parameter in a function call.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix render extraction <a href="https://github.com/ynput/OpenPype/pull/4963">#4963</a></summary>
+
+Fix a problem with the extraction of renders in Unreal.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Remove Python 3.8 syntax from addon <a href="https://github.com/ynput/OpenPype/pull/4965">#4965</a></summary>
+
+Removed Python 3.8 syntax from addon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Fix editorial task creation <a href="https://github.com/ynput/OpenPype/pull/4966">#4966</a></summary>
+
+Fix key assignment on instance data during editorial publishing in ftrack hierarchy integration.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Add "shortcut" to Scripts Menu Definition <a href="https://github.com/ynput/OpenPype/pull/4927">#4927</a></summary>
+
+Add the possibility to associate a shorcut for an entry in the script menu definition with the key "shortcut"
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.6](https://github.com/ynput/OpenPype/tree/3.15.6)
 
 
