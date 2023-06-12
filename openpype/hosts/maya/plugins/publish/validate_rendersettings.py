@@ -280,16 +280,18 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
-        for attribute, data in cls.get_nodes(instance, renderer).items():
+        for data in cls.get_nodes(instance, renderer):
             for node in data["nodes"]:
                 try:
                     render_value = cmds.getAttr(
-                        "{}.{}".format(node, attribute)
+                        "{}.{}".format(node, data["attribute"])
                     )
                 except RuntimeError:
                     invalid = True
                     cls.log.error(
-                        "Cannot get value of {}.{}".format(node, attribute)
+                        "Cannot get value of {}.{}".format(
+                            node, data["attribute"]
+                        )
                     )
                 else:
                     if render_value not in data["values"]:
@@ -297,7 +299,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         cls.log.error(
                             "Invalid value {} set on {}.{}. Expecting "
                             "{}".format(
-                                render_value, node, attribute, data["values"]
+                                render_value,
+                                node,
+                                data["attribute"],
+                                data["values"]
                             )
                         )
 
@@ -311,7 +316,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 "{}_render_attributes".format(renderer)
             ) or []
         )
-        result = {}
+        result = []
         for attr, values in OrderedDict(validation_settings).items():
             values = [convert_to_int_or_float(v) for v in values if v]
 
@@ -341,7 +346,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 )
                 continue
 
-            result[attribute_name] = {"nodes": nodes, "values": values}
+            result.append(
+                {
+                    "attribute": attribute_name,
+                    "nodes": nodes,
+                    "values": values
+                }
+            )
 
         return result
 
@@ -356,11 +367,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_")
         )
 
-        for attribute, data in cls.get_nodes(instance, renderer).items():
+        for data in cls.get_nodes(instance, renderer):
             if not data["values"]:
                 continue
             for node in data["nodes"]:
-                lib.set_attribute(attribute, data["values"][0], node)
+                lib.set_attribute(data["attribute"], data["values"][0], node)
 
         with lib.renderlayer(layer_node):
             default = lib.RENDER_ATTRS['default']
