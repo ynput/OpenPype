@@ -26,7 +26,7 @@ log = Logger.get_logger()
 def get_reference_node(*args, **kwargs):
     """
     Deprecated:
-        This funcation was moved ... and will be removed in 3.16.x.
+        This function was moved and will be removed in 3.16.x.
     """
     msg = "Function 'get_reference_node' has been moved."
     log.warning(msg)
@@ -37,7 +37,7 @@ def get_reference_node(*args, **kwargs):
 def get_reference_node_parents(*args, **kwargs):
     """
     Deprecated:
-        This funcation was moved ... and will be removed in 3.16.x.
+        This function was moved and will be removed in 3.16.x.
     """
     msg = "Function 'get_reference_node_parents' has been moved."
     log.warning(msg)
