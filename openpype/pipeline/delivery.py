@@ -177,8 +177,8 @@ def deliver_sequence(
     format_dict,
     report_items,
     log,
-    renumber_frame=True,
-    re_frame_value=12
+    renumber_frame=False,
+    re_frame_value=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
         contain files.
