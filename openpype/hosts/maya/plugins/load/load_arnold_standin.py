@@ -19,10 +19,7 @@ from openpype.hosts.maya.api.pipeline import containerise
 
 def is_sequence(files):
     sequence = False
-    if len(files) == 1:
-        collections, remainder = clique.assemble(files, minimum_items=1)
-    else:
-        collections, remainder = clique.assemble(files)
+    collections, remainder = clique.assemble(files, minimum_items=1)
     if collections:
         sequence = True
     return sequence
@@ -93,9 +90,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-            fps = float(version["data"].get("fps"))
-            if fps is None:
-                fps = get_current_fps()
+            fps = float(version["data"].get("fps"), get_current_fps())
             cmds.setAttr(standin_shape + ".abcFPS", fps)
 
         nodes = [root, standin, standin_shape]
@@ -161,7 +156,6 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             type="string"
         )
 
-        # Object name value
         cmds.connectAttr(
             string_replace_operator + ".out",
             "{}.inputs[{}]".format(
