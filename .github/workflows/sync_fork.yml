@@ -1,4 +1,4 @@
-name: Sync Fork
+name: 🔄 Sync Fork
 
 on:
   schedule:
@@ -14,6 +14,6 @@ jobs:
       - uses: tgymnich/fork-sync@v1.8
         with:
           token: ${{ secrets.PERSONAL_TOKEN }}
-          owner: llvm
-          base: master
-          head: master
+          base: develop
+          head: develop
+          merge_method: rebase
