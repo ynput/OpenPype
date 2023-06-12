@@ -162,8 +162,7 @@ class CreateRender(plugin.Creator):
                                                  render_layer_name))
                     prev_render_layer = cmds.ls(type="renderLayer")
                     for layer in layers:
-                        if prev_render_layer and \
-                            render_layer_name in layer.name():
+                        if prev_render_layer and render_layer_name in layer.name():             # noqa
                             self.log.debug("there is already a render layer"
                                            " for dl render setting...")
                             continue
