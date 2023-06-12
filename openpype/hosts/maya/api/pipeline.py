@@ -627,6 +627,10 @@ def on_new():
         cmds.evalDeferred(
             "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
+        cmds.evalDeferred(
+            "from openpype.hosts.maya.api import lib;"
+            "lib.build_first_workfile_from_template_builder()"
+        )
         lib.set_context_settings()
     _remove_workfile_lock()
 

@@ -31,5 +31,5 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
         # remove lockfile before saving
         if is_workfile_lock_enabled("maya", project_name, project_settings):
             remove_workfile_lock(current)
-        self.log.info("Saving current file..")
+        self.log.info("Saving current file: {}".format(current))
         cmds.file(save=True, force=True)

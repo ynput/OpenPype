@@ -17,6 +17,8 @@ class FusionRenderInstance(RenderInstance):
     tool = attr.ib(default=None)
     workfileComp = attr.ib(default=None)
     publish_attributes = attr.ib(default={})
+    frameStartHandle = attr.ib(default=None)
+    frameEndHandle = attr.ib(default=None)
 
 
 class CollectFusionRender(
@@ -83,8 +85,8 @@ class CollectFusionRender(
                 frameEnd=inst.data["frameEnd"],
                 handleStart=inst.data["handleStart"],
                 handleEnd=inst.data["handleEnd"],
-                ignoreFrameHandleCheck=(
-                    inst.data["frame_range_source"] == "render_range"),
+                frameStartHandle=inst.data["frameStartHandle"],
+                frameEndHandle=inst.data["frameEndHandle"],
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,
