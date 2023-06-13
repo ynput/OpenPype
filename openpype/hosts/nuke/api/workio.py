@@ -28,7 +28,7 @@ def open_file(filepath):
     nuke.scriptClear()
     headless = QtWidgets.QApplication.instance() is None
     if not headless:
-        autosave = "{}.autosave".format(filepath)
+        autosave = nuke.toNode("preferences")["AutoSaveName"].evaluate()
         autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
         if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
             filepath = autosave
