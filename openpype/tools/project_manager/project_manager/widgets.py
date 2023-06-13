@@ -149,7 +149,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_height_input = NumScrollWidget(0, 9999999)
         project_fps_input = FloatScrollWidget(1, 9999999, decimals=3, step=1)
         project_aspect_input = FloatScrollWidget(
-            0, 9999999, decimals=1, step=0.1
+            0, 9999999, decimals=2, step=0.1
         )
         project_frame_start_input = NumScrollWidget(-9999999, 9999999)
         project_frame_end_input = NumScrollWidget(-9999999, 9999999)
