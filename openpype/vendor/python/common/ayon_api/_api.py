@@ -531,6 +531,53 @@ def download_addon_private_file(*args, **kwargs):
     return con.download_addon_private_file(*args, **kwargs)
 
 
+def get_info(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_info(*args, **kwargs)
+
+
+def get_server_version(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_server_version(*args, **kwargs)
+
+
+def get_server_version_tuple(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_server_version_tuple(*args, **kwargs)
+
+
+# Installers
+def get_installers(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_installers(*args, **kwargs)
+
+
+def create_installer(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.create_installer(*args, **kwargs)
+
+
+def update_installer(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.update_installer(*args, **kwargs)
+
+
+def delete_installer(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete_installer(*args, **kwargs)
+
+
+def download_installer(*args, **kwargs):
+    con = get_server_api_connection()
+    con.download_installer(*args, **kwargs)
+
+
+def upload_installer(*args, **kwargs):
+    con = get_server_api_connection()
+    con.upload_installer(*args, **kwargs)
+
+
+# Dependency packages
 def get_dependencies_info(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_dependencies_info(*args, **kwargs)
@@ -551,6 +598,21 @@ def upload_dependency_package(*args, **kwargs):
     return con.upload_dependency_package(*args, **kwargs)
 
 
+def get_dependency_packages(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_dependency_packages(*args, **kwargs)
+
+
+def create_dependency_package(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.create_dependency_package(*args, **kwargs)
+
+
+def update_dependency_package(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.update_dependency_package(*args, **kwargs)
+
+
 def delete_dependency_package(*args, **kwargs):
     con = get_server_api_connection()
     return con.delete_dependency_package(*args, **kwargs)
@@ -559,6 +621,26 @@ def delete_dependency_package(*args, **kwargs):
 def get_project_anatomy_presets(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_project_anatomy_presets(*args, **kwargs)
+
+
+def get_bundles(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_bundles(*args, **kwargs)
+
+
+def create_bundle(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.create_bundle(*args, **kwargs)
+
+
+def update_bundle(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.update_bundle(*args, **kwargs)
+
+
+def delete_bundle(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete_bundle(*args, **kwargs)
 
 
 def get_project_anatomy_preset(*args, **kwargs):
@@ -619,6 +701,11 @@ def get_addons_project_settings(*args, **kwargs):
 def get_addons_settings(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_addons_settings(*args, **kwargs)
+
+
+def get_project_names(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_project_names(*args, **kwargs)
 
 
 def get_project(*args, **kwargs):
@@ -799,6 +886,11 @@ def create_project(
         library_project,
         preset_name
     )
+
+
+def update_project(project_name, *args, **kwargs):
+    con = get_server_api_connection()
+    return con.update_project(project_name, *args, **kwargs)
 
 
 def delete_project(project_name):
