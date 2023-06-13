@@ -2,7 +2,7 @@ name: 🔄 Sync Fork
 
 on:
   schedule:
-    - cron: '0 0 * * *' # all days at 00:00
+    - cron: '0 0 * * 1-5' # Monday to friday at 00:00
   workflow_dispatch:
 
 jobs:
