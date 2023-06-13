@@ -1,4 +1,5 @@
 import re
+import platform
 
 from openpype.client import get_projects, create_project
 from .constants import (
@@ -148,7 +149,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_height_input = NumScrollWidget(0, 9999999)
         project_fps_input = FloatScrollWidget(1, 9999999, decimals=3, step=1)
         project_aspect_input = FloatScrollWidget(
-            0, 9999999, decimals=2, step=0.01
+            0, 9999999, decimals=1, step=0.1
         )
         project_frame_start_input = NumScrollWidget(-9999999, 9999999)
         project_frame_end_input = NumScrollWidget(-9999999, 9999999)
@@ -496,6 +497,11 @@ class NumScrollWidget(SpinBoxScrollFixed):
         self.setMaximum(maximum)
         self.setMinimum(minimum)
         self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        if platform.system() == "Darwin":
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Maximum
+            )
+            self.setMinimumWidth(100)
 
 
 class FloatScrollWidget(DoubleSpinBoxScrollFixed):
@@ -507,3 +513,8 @@ class FloatScrollWidget(DoubleSpinBoxScrollFixed):
         if step is not None:
             self.setSingleStep(step)
         self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        if platform.system() == "Darwin":
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Maximum
+            )
+            self.setMinimumWidth(100)
