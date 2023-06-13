@@ -1215,6 +1215,12 @@ class AssetLoader(Loader):
             ):
                 old_datablock.user_remap(new_datablock)
 
+                # Transfer transforms
+                if isinstance(old_datablock, bpy.types.Object):
+                    new_datablock.location = old_datablock.location
+                    new_datablock.rotation_euler = old_datablock.rotation_euler
+                    new_datablock.scale = old_datablock.scale
+
                 # Ensure action relink
                 if (
                     hasattr(old_datablock, "animation_data")
