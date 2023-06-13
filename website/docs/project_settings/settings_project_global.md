@@ -336,8 +336,7 @@ Integrate the Hero version of the indicated families.
 
 Many of the settings are using a concept of **Profile filters**
 
-You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a
-profile with filters matching the current context the most, is used.
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a profile with filters matching the current context the most, is used.
 
 You can define profile without any filters and use it as **default**.
 
@@ -408,9 +407,10 @@ Some creators may have other keys as their context may require more information 
 
 ### Workfiles
 All settings related to Workfile tool.
-![Workfiles](assets/global_Tools_Workfiles.png)
-#### Workfile template profiles
 
+![Workfiles](assets/global_Tools_Workfiles.png)
+
+#### Workfile template profiles
 Set up definition for the templates.
 
 #### Open last workfiles on launch
@@ -429,16 +429,37 @@ Open the workfile window at software's launch.
 
 #### Extra work folders
 Create other folders into the Workfile.
+
 #### Workfile lock profiles
 Block the access of the Workfile if a profile is already working on it.
+
 ### Loader
 #### Family filtering
+Create family filters to show or hide in the loader.
 
 #### Publish
 
 **Template name profiles**
+Many of the settings are using a concept of **Profile filters**
+
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a profile with filters matching the current context the most, is used.
+
+You can define profile without any filters and use it as **default**.
+
+Only **one or none** profile will be returned per context.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`tasks`** - Currently processed task. `["modeling", "animation"]`
+
+:::important Filtering
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
+:::
 
 **Hero template name profiles**
+Same as the Template name profiles but for the Hero publishing.
 
 **Custom Staging Directory Profiles**
 With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
@@ -457,6 +478,7 @@ The custom staging folder uses a path template configured in `project_anatomy/te
 ## Project Folder Structure
 
 ## Site Sync (beta testing)
+#### Config
 Aim of the Site Sync [here](module_site_sync/#google-drive).
 
 ![Site Sync](assets/site_sync_beta_testing.png)
@@ -467,8 +489,6 @@ Aim of the Site Sync [here](module_site_sync/#google-drive).
 **User Default Active Site** : default site for users (here, studio).
 
 **User Default Remote Site** : default site for remote (here, studio).
-
-#### Config
 
 #### Sites
 *empty*
