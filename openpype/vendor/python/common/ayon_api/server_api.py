@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import collections
+import datetime
 import platform
 import copy
 import uuid
@@ -68,6 +69,14 @@ JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
 PROJECT_NAME_REGEX = re.compile(
     "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
+
+VERSION_REGEX = re.compile(
+    r"(?P<major>0|[1-9]\d*)"
+    r"\.(?P<minor>0|[1-9]\d*)"
+    r"\.(?P<patch>0|[1-9]\d*)"
+    r"(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?"
+    r"(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?"
 )
 
 
@@ -329,6 +338,8 @@ class ServerAPI(object):
         self._access_token_is_service = None
         self._token_is_valid = None
         self._server_available = None
+        self._server_version = None
+        self._server_version_tuple = None
 
         self._session = None
 
@@ -631,11 +642,51 @@ class ServerAPI(object):
             Use this method for validation of token instead of 'get_user'.
 
         Returns:
-            Dict[str, Any]: Information from server.
+            dict[str, Any]: Information from server.
         """
 
         response = self.get("info")
         return response.data
+
+    def get_server_version(self):
+        """Get server version.
+
+        Version should match semantic version (https://semver.org/).
+
+        Returns:
+            str: Server version.
+        """
+
+        if self._server_version is None:
+            self._server_version = self.get_info()["version"]
+        return self._server_version
+
+    def get_server_version_tuple(self):
+        """Get server version as tuple.
+
+        Version should match semantic version (https://semver.org/).
+
+        This function only returns first three numbers of version.
+
+        Returns:
+            Tuple[int, int, int, Union[str, None], Union[str, None]]: Server
+                version.
+        """
+
+        if self._server_version_tuple is None:
+            re_match = VERSION_REGEX.fullmatch(
+                self.get_server_version())
+            self._server_version_tuple = (
+                int(re_match.group("major")),
+                int(re_match.group("minor")),
+                int(re_match.group("patch")),
+                re_match.group("prerelease"),
+                re_match.group("buildmetadata")
+            )
+        return self._server_version_tuple
+
+    server_version = property(get_server_version)
+    server_version_tuple = property(get_server_version_tuple)
 
     def _get_user_info(self):
         if self._access_token is None:
@@ -869,7 +920,7 @@ class ServerAPI(object):
             event_id (str): Id of event.
 
         Returns:
-            Dict[str, Any]: Full event data.
+            dict[str, Any]: Full event data.
         """
 
         response = self.get("events/{}".format(event_id))
@@ -902,7 +953,7 @@ class ServerAPI(object):
                 for each event.
 
         Returns:
-            Generator[Dict[str, Any]]: Available events matching filters.
+            Generator[dict[str, Any]]: Available events matching filters.
         """
 
         filters = {}
@@ -1269,7 +1320,7 @@ class ServerAPI(object):
             Cache schema - How to find out it is outdated?
 
         Returns:
-            Dict[str, Any]: Full server schema.
+            dict[str, Any]: Full server schema.
         """
 
         url = "{}/openapi.json".format(self._base_url)
@@ -1287,7 +1338,7 @@ class ServerAPI(object):
         e.g. 'config' has just object definition without reference schema.
 
         Returns:
-            Dict[str, Any]: Component schemas.
+            dict[str, Any]: Component schemas.
         """
 
         server_schema = self.get_server_schema()
@@ -1395,7 +1446,7 @@ class ServerAPI(object):
                 received.
 
         Returns:
-            Dict[str, Dict[str, Any]]: Attribute schemas that are available
+            dict[str, dict[str, Any]]: Attribute schemas that are available
                 for entered entity type.
         """
         attributes = self._entity_type_attributes_cache.get(entity_type)
@@ -1563,6 +1614,148 @@ class ServerAPI(object):
         )
         return dst_filepath
 
+    def get_installers(self, version=None, platform_name=None):
+        """Information about desktop application installers on server.
+
+        Desktop application installers are helpers to download/update AYON
+        desktop application for artists.
+
+        Args:
+            version (Optional[str]): Filter installers by version.
+            platform_name (Optional[str]): Filter installers by platform name.
+
+        Returns:
+            list[dict[str, Any]]:
+        """
+
+        query_fields = [
+            "{}={}".format(key, value)
+            for key, value in (
+                ("version", version),
+                ("platform", platform_name),
+            )
+            if value
+        ]
+        query = ""
+        if query_fields:
+            query = "?{}".format(",".join(query_fields))
+
+        response = self.get("desktop/installers{}".format(query))
+        response.raise_for_status()
+        return response.data
+
+    def create_installer(
+        self,
+        filename,
+        version,
+        python_version,
+        platform_name,
+        python_modules,
+        checksum,
+        checksum_type,
+        file_size,
+        sources=None,
+    ):
+        """Create new installer information on server.
+
+        This step will create only metadata. Make sure to upload installer
+            to the server using 'upload_installer' method.
+
+        Args:
+            filename (str): Installer filename.
+            version (str): Version of installer.
+            python_version (str): Version of Python.
+            platform_name (str): Name of platform.
+            python_modules (dict[str, str]): Python modules that are available
+                in installer.
+            checksum (str): Installer file checksum.
+            checksum_type (str): Type of checksum used to create checksum.
+            file_size (int): File size.
+            sources (Optional[list[dict[str, Any]]]): List of sources that
+                can be used to download file.
+        """
+
+        body = {
+            "filename": filename,
+            "version": version,
+            "pythonVersion": python_version,
+            "platform": platform_name,
+            "pythonModules": python_modules,
+            "checksum": checksum,
+            "checksumType": checksum_type,
+            "size": file_size,
+        }
+        if sources:
+            body["sources"] = sources
+
+        response = self.post("desktop/installers", **body)
+        response.raise_for_status()
+
+    def update_installer(self, filename, sources):
+        """Update installer information on server.
+
+        Args:
+            filename (str): Installer filename.
+            sources (list[dict[str, Any]]): List of sources that
+                can be used to download file. Fully replaces existing sources.
+        """
+
+        response = self.post(
+            "desktop/installers/{}".format(filename),
+            sources=sources
+        )
+        response.raise_for_status()
+
+    def delete_installer(self, filename):
+        """Delete installer from server.
+
+        Args:
+            filename (str): Installer filename.
+        """
+
+        response = self.delete("dekstop/installers/{}".format(filename))
+        response.raise_for_status()
+
+    def download_installer(
+        self,
+        filename,
+        dst_filepath,
+        chunk_size=None,
+        progress=None
+    ):
+        """Download installer file from server.
+
+        Args:
+            filename (str): Installer filename.
+            dst_filepath (str): Destination filepath.
+            chunk_size (Optional[int]): Download chunk size.
+            progress (Optional[TransferProgress]): Object that gives ability
+                to track download progress.
+        """
+
+        self.download_file(
+            "desktop/installers/{}".format(filename),
+            dst_filepath,
+            chunk_size=chunk_size,
+            progress=progress
+        )
+
+    def upload_installer(self, src_filepath, dst_filename, progress=None):
+        """Upload installer file to server.
+
+        Args:
+            src_filepath (str): Source filepath.
+            dst_filename (str): Destination filename.
+            progress (Optional[TransferProgress]): Object that gives ability
+                to track download progress.
+        """
+
+        self.upload_file(
+            "desktop/installers/{}".format(dst_filename),
+            src_filepath,
+            progress=progress
+        )
+
     def get_dependencies_info(self):
         """Information about dependency packages on server.
 
@@ -1581,13 +1774,22 @@ class ServerAPI(object):
                 "productionPackage": str
             }
 
+        Deprecated:
+            Deprecated since server version 0.2.1. Use
+                'get_dependency_packages' instead.
+
         Returns:
             dict[str, Any]: Information about dependency packages known for
                 server.
         """
 
-        result = self.get("dependencies")
-        return result.data
+        major, minor, patch, _, _ = self.server_version_tuple
+        if major == 0 and (minor < 2 or (minor == 2 and patch < 1)):
+            result = self.get("dependencies")
+            return result.data
+        packages = self.get_dependency_packages()
+        packages["productionPackage"] = None
+        return packages
 
     def update_dependency_info(
         self,
@@ -1604,21 +1806,26 @@ class ServerAPI(object):
 
         The endpoint can be used to create or update dependency package.
 
+
+        Deprecated:
+            Deprecated for server version 0.2.1. Use
+                'create_dependency_pacakge' instead.
+
         Args:
             name (str): Name of dependency package.
-            platform_name (Literal["windows", "linux", "darwin"]): Platform for
-                which is dependency package targeted.
+            platform_name (Literal["windows", "linux", "darwin"]): Platform
+                for which is dependency package targeted.
             size (int): Size of dependency package in bytes.
             checksum (str): Checksum of archive file where dependencies are.
             checksum_algorithm (Optional[str]): Algorithm used to calculate
                 checksum. By default, is used 'md5' (defined by server).
-            supported_addons (Optional[Dict[str, str]]): Name of addons for
+            supported_addons (Optional[dict[str, str]]): Name of addons for
                 which was the package created.
                 '{"<addon name>": "<addon version>", ...}'
-            python_modules (Optional[Dict[str, str]]): Python modules in
+            python_modules (Optional[dict[str, str]]): Python modules in
                 dependencies package.
                 '{"<module name>": "<module version>", ...}'
-            sources (Optional[List[Dict[str, Any]]]): Information about
+            sources (Optional[list[dict[str, Any]]]): Information about
                 sources where dependency package is available.
         """
 
@@ -1645,27 +1852,153 @@ class ServerAPI(object):
             raise ServerError("Failed to create/update dependency")
         return response.data
 
+    def get_dependency_packages(self):
+        """Information about dependency packages on server.
+
+        To download dependency package, use 'download_dependency_package'
+        method and pass in 'filename'.
+
+        Example data structure:
+            {
+                "packages": [
+                    {
+                        "filename": str,
+                        "platform": str,
+                        "checksum": str,
+                        "checksumAlgorithm": str,
+                        "size": int,
+                        "sources": list[dict[str, Any]],
+                        "supportedAddons": dict[str, str],
+                        "pythonModules": dict[str, str]
+                    }
+                ]
+            }
+
+        Returns:
+            dict[str, Any]: Information about dependency packages known for
+                server.
+        """
+
+        result = self.get("desktop/dependency_packages")
+        result.raise_for_status()
+        return result.data
+
+    def create_dependency_package(
+        self,
+        filename,
+        python_modules,
+        source_addons,
+        installer_version,
+        checksum,
+        checksum_algorithm,
+        file_size,
+        sources=None,
+        platform_name=None,
+    ):
+        """Create dependency package on server.
+
+        The package will be created on a server, it is also required to upload
+        the package archive file (using 'upload_dependency_package').
+
+        Args:
+            filename (str): Filename of dependency package.
+            python_modules (dict[str, str]): Python modules in dependency
+                package.
+                '{"<module name>": "<module version>", ...}'
+            source_addons (dict[str, str]): Name of addons for which is
+                dependency package created.
+                '{"<addon name>": "<addon version>", ...}'
+            installer_version (str): Version of installer for which was
+                package created.
+            checksum (str): Checksum of archive file where dependencies are.
+            checksum_algorithm (str): Algorithm used to calculate checksum.
+            file_size (Optional[int]): Size of file.
+            sources (Optional[list[dict[str, Any]]]): Information about
+                sources from where it is possible to get file.
+            platform_name (Optional[str]): Name of platform for which is
+                dependency package targeted. Default value is
+                current platform.
+        """
+
+        post_body = {
+            "filename": filename,
+            "pythonModules": python_modules,
+            "sourceAddons": source_addons,
+            "installerVersion": installer_version,
+            "checksum": checksum,
+            "checksumAlgorithm": checksum_algorithm,
+            "size": file_size,
+            "platform": platform_name or platform.system().lower(),
+        }
+        if sources:
+            post_body["sources"] = sources
+
+        response = self.post("desktop/dependency_packages", **post_body)
+        response.raise_for_status()
+
+    def update_dependency_package(self, filename, sources):
+        """Update dependency package metadata on server.
+
+        Args:
+            filename (str): Filename of dependency package.
+            sources (list[dict[str, Any]]): Information about
+                sources from where it is possible to get file. Fully replaces
+                existing sources.
+        """
+
+        response = self.patch(
+            "desktop/dependency_packages/{}".format(filename),
+            sources=sources
+        )
+        response.raise_for_status()
+
+    def delete_dependency_package(self, filename, platform_name=None):
+        """Remove dependency package for specific platform.
+
+        Args:
+            filename (str): Filename of dependency package. Or name of package
+                for server version 0.2.0 or lower.
+            platform_name (Optional[str]): Which platform of the package
+                should be removed. Current platform is used if not passed.
+                Deprecated since version 0.2.1
+        """
+
+        major, minor, patch, _, _ = self.server_version_tuple
+        if major == 0 and (minor < 2 or (minor == 2 and patch < 1)):
+            if platform_name is None:
+                platform_name = platform.system().lower()
+            url = "dependencies/{}/{}".format(filename, platform_name)
+        else:
+            url = "desktop/dependency_packages/{}".format(filename)
+
+        response = self.delete(url)
+        if response.status != 200:
+            raise ServerError("Failed to delete dependency file")
+        return response.data
+
     def download_dependency_package(
         self,
-        package_name,
+        src_filename,
         dst_directory,
-        filename,
+        dst_filename,
         platform_name=None,
         chunk_size=None,
         progress=None,
     ):
         """Download dependency package from server.
 
-        This method requires to have authorized token available. The package is
-        only downloaded.
+        This method requires to have authorized token available. The package
+        is only downloaded.
 
         Args:
-            package_name (str): Name of package to download.
+            src_filename (str): Filename of dependency pacakge.
+                For server version 0.2.0 and lower it is name of package
+                to download.
             dst_directory (str): Where the file should be downloaded.
-            filename (str): Name of destination filename.
+            dst_filename (str): Name of destination filename.
             platform_name (Optional[str]): Name of platform for which the
                 dependency package is targeted. Default value is
-                current platform.
+                current platform. Deprecated since server version 0.2.1.
             chunk_size (Optional[int]): Download chunk size.
             progress (Optional[TransferProgress]): Object that gives ability
                 to track download progress.
@@ -1673,12 +2006,18 @@ class ServerAPI(object):
         Returns:
             str: Filepath to downloaded file.
        """
-        if platform_name is None:
-            platform_name = platform.system().lower()
 
-        package_filepath = os.path.join(dst_directory, filename)
+        major, minor, patch, _, _ = self.server_version_tuple
+        if major == 0 and (minor < 2 or (minor == 2 and patch < 1)):
+            if platform_name is None:
+                platform_name = platform.system().lower()
+            url = "dependencies/{}/{}".format(src_filename, platform_name)
+        else:
+            url = "desktop/dependency_packages/{}".format(src_filename)
+
+        package_filepath = os.path.join(dst_directory, dst_filename)
         self.download_file(
-            "dependencies/{}/{}".format(package_name, platform_name),
+            url,
             package_filepath,
             chunk_size=chunk_size,
             progress=progress
@@ -1686,46 +2025,169 @@ class ServerAPI(object):
         return package_filepath
 
     def upload_dependency_package(
-        self, filepath, package_name, platform_name=None, progress=None
+        self, src_filepath, dst_filename, platform_name=None, progress=None
     ):
         """Upload dependency package to server.
 
         Args:
-            filepath (str): Path to a package file.
-            package_name (str): Name of package. Must be unique.
+            src_filepath (str): Path to a package file.
+            dst_filename (str): Dependency package filename or name of package
+                for server version 0.2.0 or lower. Must be unique.
             platform_name (Optional[str]): For which platform is the
-                package targeted.
+                package targeted. Deprecated since server version 0.2.1.
             progress (Optional[TransferProgress]): Object to keep track about
                 upload state.
         """
 
-        if platform_name is None:
-            platform_name = platform.system().lower()
+        major, minor, patch, _, _ = self.server_version_tuple
+        if major == 0 and (minor < 2 or (minor == 2 and patch < 1)):
+            if platform_name is None:
+                platform_name = platform.system().lower()
+            url = "dependencies/{}/{}".format(dst_filename, platform_name)
+        else:
+            url = "desktop/dependency_packages/{}".format(dst_filename)
 
-        self.upload_file(
-            "dependencies/{}/{}".format(package_name, platform_name),
-            filepath,
-            progress=progress
-        )
+        self.upload_file(url, src_filepath, progress=progress)
 
-    def delete_dependency_package(self, package_name, platform_name=None):
-        """Remove dependency package for specific platform.
+    def create_dependency_package_basename(self, platform_name=None):
+        """Create basename for dependency package file.
 
         Args:
-            package_name (str): Name of package to remove.
-            platform_name (Optional[str]): Which platform of the package
-                should be removed. Current platform is used if not passed.
+            platform_name (Optional[str]): Name of platform for which the
+                bundle is targeted. Default value is current platform.
+
+        Returns:
+            str: Dependency package name with timestamp and platform.
         """
 
         if platform_name is None:
             platform_name = platform.system().lower()
 
-        response = self.delete(
-            "dependencies/{}/{}".format(package_name, platform_name),
-        )
-        if response.status != 200:
-            raise ServerError("Failed to delete dependency file")
+        now_date = datetime.datetime.now()
+        time_stamp = now_date.strftime("%y%m%d%H%M")
+        return "ayon_{}_{}".format(time_stamp, platform_name)
+
+    def get_bundles(self):
+        """Server bundles with basic information.
+
+        Example output:
+            {
+                "bundles": [
+                    {
+                        "name": "my_bundle",
+                        "createdAt": "2023-06-12T15:37:02.420260",
+                        "installerVersion": "1.0.0",
+                        "addons": {
+                            "core": "1.2.3"
+                        },
+                        "dependencyPackages": {
+                            "windows": "a_windows_package123.zip",
+                            "linux": "a_linux_package123.zip",
+                            "darwin": "a_mac_package123.zip"
+                        },
+                        "isProduction": False,
+                        "isStaging": False
+                    }
+                ],
+                "productionBundle": "my_bundle",
+                "stagingBundle": "test_bundle"
+            }
+
+        Returns:
+            dict[str, Any]: Server bundles with basic information.
+        """
+
+        response = self.get("desktop/bundles")
+        response.raise_for_status()
         return response.data
+
+    def create_bundle(
+        self,
+        name,
+        addon_versions,
+        installer_version,
+        dependency_packages=None,
+        is_production=None,
+        is_staging=None
+    ):
+        """Create bundle on server.
+
+        Bundle cannot be changed once is created. Only isProduction, isStaging
+        and dependency packages can change after creation.
+
+        Args:
+            name (str): Name of bundle.
+            addon_versions (dict[str, str]): Addon versions.
+            installer_version (Union[str, None]): Installer version.
+            dependency_packages (Optional[dict[str, str]]): Dependency
+                package names. Keys are platform names and values are name of
+                packages.
+            is_production (Optional[bool]): Bundle will be marked as
+                production.
+            is_staging (Optional[bool]): Bundle will be marked as staging.
+        """
+
+        body = {
+            "name": name,
+            "installerVersion": installer_version,
+            "addons": addon_versions,
+        }
+        for key, value in (
+            ("dependencyPackages", dependency_packages),
+            ("isProduction", is_production),
+            ("isStaging", is_staging),
+        ):
+            if value is not None:
+                body[key] = value
+
+        response = self.post("desktop/bundles", **body)
+        response.raise_for_status()
+
+    def update_bundle(
+        self,
+        bundle_name,
+        dependency_packages=None,
+        is_production=None,
+        is_staging=None
+    ):
+        """Update bundle on server.
+
+        Dependency packages can be update only for single platform. Others
+        will be left untouched. Use 'None' value to unset dependency package
+        from bundle.
+
+        Args:
+            bundle_name (str): Name of bundle.
+            dependency_packages (Optional[dict[str, str]]): Dependency pacakge
+                names that should be used with the bundle.
+            is_production (Optional[bool]): Bundle will be marked as
+                production.
+            is_staging (Optional[bool]): Bundle will be marked as staging.
+        """
+
+        body = {
+            key: value
+            for key, value in (
+                ("dependencyPackages", dependency_packages),
+                ("isProduction", is_production),
+                ("isStaging", is_staging),
+            )
+            if value is not None
+        }
+        response = self.patch(
+            "desktop/bundles/{}".format(bundle_name), **body
+        )
+        response.raise_for_status()
+
+    def delete_bundle(self, bundle_name):
+        """Delete bundle from server.
+
+        Args:
+            bundle_name (str): Name of bundle to delete.
+        """
+
+        response = self.delete("desktop/bundles/{}".format(bundle_name))
+        response.raise_for_status()
 
     # Anatomy presets
     def get_project_anatomy_presets(self):
@@ -2150,7 +2612,7 @@ class ServerAPI(object):
             project_name (str): Name of project.
 
         Returns:
-            Union[Dict[str, Any], None]: Project entity data or 'None' if
+            Union[dict[str, Any], None]: Project entity data or 'None' if
                 project was not found.
         """
 
@@ -2174,7 +2636,7 @@ class ServerAPI(object):
                 are returned if 'None' is passed.
 
         Returns:
-            Generator[Dict[str, Any]]: Available projects.
+            Generator[dict[str, Any]]: Available projects.
         """
 
         for project_name in self.get_project_names(active, library):
@@ -2235,7 +2697,7 @@ class ServerAPI(object):
                 are returned if 'None' is passed.
 
         Returns:
-            List[str]: List of available project names.
+            list[str]: List of available project names.
         """
 
         query_keys = {}
@@ -2276,7 +2738,7 @@ class ServerAPI(object):
                 not explicitly set on entity will have 'None' value.
 
         Returns:
-            Generator[Dict[str, Any]]: Queried projects.
+            Generator[dict[str, Any]]: Queried projects.
         """
 
         if fields is None:
@@ -2316,7 +2778,7 @@ class ServerAPI(object):
                 not explicitly set on entity will have 'None' value.
 
         Returns:
-            Union[Dict[str, Any], None]: Project entity data or None
+            Union[dict[str, Any], None]: Project entity data or None
                 if project was not found.
         """
 
@@ -3112,7 +3574,7 @@ class ServerAPI(object):
                 not explicitly set on entity will have 'None' value.
 
         Returns:
-            Generator[Dict[str, Any]]: Queried version entities.
+            Generator[dict[str, Any]]: Queried version entities.
         """
 
         if not fields:
@@ -3570,7 +4032,7 @@ class ServerAPI(object):
                 not explicitly set on entity will have 'None' value.
 
         Returns:
-            Generator[Dict[str, Any]]: Queried representation entities.
+            Generator[dict[str, Any]]: Queried representation entities.
         """
 
         if not fields:
@@ -4253,7 +4715,7 @@ class ServerAPI(object):
             ValueError: When project name already exists.
 
         Returns:
-            Dict[str, Any]: Created project entity.
+            dict[str, Any]: Created project entity.
         """
 
         if self.get_project(project_name):
@@ -4285,6 +4747,70 @@ class ServerAPI(object):
             ))
 
         return self.get_project(project_name)
+
+    def update_project(
+        self,
+        project_name,
+        library=None,
+        folder_types=None,
+        task_types=None,
+        link_types=None,
+        statuses=None,
+        tags=None,
+        config=None,
+        attrib=None,
+        data=None,
+        active=None,
+        project_code=None,
+        **changes
+    ):
+        """Update project entity on server.
+
+        Args:
+            project_name (str): Name of project.
+            library (Optional[bool]): Change library state.
+            folder_types (Optional[list[dict[str, Any]]]): Folder type
+                definitions.
+            task_types (Optional[list[dict[str, Any]]]): Task type
+                definitions.
+            link_types (Optional[list[dict[str, Any]]]): Link type
+                definitions.
+            statuses (Optional[list[dict[str, Any]]]): Status definitions.
+            tags (Optional[list[dict[str, Any]]]): List of tags available to
+                set on entities.
+            config (Optional[dict[dict[str, Any]]]): Project anatomy config
+                with templates and roots.
+            attrib (Optional[dict[str, Any]]): Project attributes to change.
+            data (Optional[dict[str, Any]]): Custom data of a project. This
+                value will 100% override project data.
+            active (Optional[bool]): Change active state of a project.
+            project_code (Optional[str]): Change project code. Not recommended
+                during production.
+            **changes: Other changed keys based on Rest API documentation.
+        """
+
+        changes.update({
+            key: value
+            for key, value in (
+                ("library", library),
+                ("folderTypes", folder_types),
+                ("taskTypes", task_types),
+                ("linkTypes", link_types),
+                ("statuses", statuses),
+                ("tags", tags),
+                ("config", config),
+                ("attrib", attrib),
+                ("data", data),
+                ("active", active),
+                ("code", project_code),
+            )
+            if value is not None
+        })
+        response = self.patch(
+            "projects/{}".format(project_name),
+            **changes
+        )
+        response.raise_for_status()
 
     def delete_project(self, project_name):
         """Delete project from server.

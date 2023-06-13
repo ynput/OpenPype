@@ -59,13 +59,31 @@ from ._api import (
     get_addon_url,
     download_addon_private_file,
 
+    get_installers,
+    create_installer,
+    update_installer,
+    delete_installer,
+    download_installer,
+    upload_installer,
+
     get_dependencies_info,
     update_dependency_info,
+    get_dependency_packages,
+    create_dependency_package,
+    update_dependency_package,
+    delete_dependency_package,
 
     download_dependency_package,
     upload_dependency_package,
-    delete_dependency_package,
 
+    get_bundles,
+    create_bundle,
+    update_bundle,
+    delete_bundle,
+
+    get_info,
+    get_server_version,
+    get_server_version_tuple,
     get_user,
     get_users,
 
@@ -87,9 +105,11 @@ from ._api import (
     get_addons_project_settings,
     get_addons_settings,
 
+    get_project_names,
     get_projects,
     get_project,
     create_project,
+    update_project,
     delete_project,
 
     get_folder_by_id,
@@ -218,13 +238,31 @@ __all__ = (
     "get_addon_url",
     "download_addon_private_file",
 
+    "get_installers",
+    "create_installer",
+    "update_installer",
+    "delete_installer",
+    "download_installer",
+    "upload_installer",
+
     "get_dependencies_info",
     "update_dependency_info",
+    "get_dependency_packages",
+    "create_dependency_package",
+    "update_dependency_package",
+    "delete_dependency_package",
 
     "download_dependency_package",
     "upload_dependency_package",
-    "delete_dependency_package",
 
+    "get_bundles",
+    "create_bundle",
+    "update_bundle",
+    "delete_bundle",
+
+    "get_info",
+    "get_server_version",
+    "get_server_version_tuple",
     "get_user",
     "get_users",
 
@@ -245,9 +283,11 @@ __all__ = (
     "get_addons_project_settings",
     "get_addons_settings",
 
+    "get_project_names",
     "get_projects",
     "get_project",
     "create_project",
+    "update_project",
     "delete_project",
 
     "get_folder_by_id",

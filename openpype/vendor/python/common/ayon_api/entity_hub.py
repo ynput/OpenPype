@@ -683,12 +683,91 @@ class EntityHub(object):
             "entityId": entity.id
         }
 
+    def _pre_commit_types_changes(
+        self, project_changes, orig_types, changes_key, post_changes
+    ):
+        """Compare changes of types on a project.
+
+        Compare old and new types. Change project changes content if some old
+        types were removed. In that case the  final change of types will
+        happen when all other entities have changed.
+
+        Args:
+            project_changes (dict[str, Any]): Project changes.
+            orig_types (list[dict[str, Any]]): Original types.
+            changes_key (Literal[folderTypes, taskTypes]): Key of type changes
+                in project changes.
+            post_changes (dict[str, Any]): An object where post changes will
+                be stored.
+        """
+
+        if changes_key not in project_changes:
+            return
+
+        new_types = project_changes[changes_key]
+
+        orig_types_by_name = {
+            type_info["name"]: type_info
+            for type_info in orig_types
+        }
+        new_names = {
+            type_info["name"]
+            for type_info in new_types
+        }
+        diff_names = set(orig_types_by_name) - new_names
+        if not diff_names:
+            return
+
+        # Create copy of folder type changes to post changes
+        #   - post changes will be commited at the end
+        post_changes[changes_key] = copy.deepcopy(new_types)
+
+        for type_name in diff_names:
+            new_types.append(orig_types_by_name[type_name])
+
+    def _pre_commit_project(self):
+        """Some project changes cannot be committed before hierarchy changes.
+
+        It is not possible to change folder types or task types if there are
+        existing hierarchy items using the removed types. For that purposes
+        is first committed union of all old and new types and post changes
+        are prepared when all existing entities are changed.
+
+        Returns:
+            dict[str, Any]: Changes that will be committed after hierarchy
+                changes.
+        """
+
+        project_changes = self.project_entity.changes
+
+        post_changes = {}
+        if not project_changes:
+            return post_changes
+
+        self._pre_commit_types_changes(
+            project_changes,
+            self.project_entity.get_orig_folder_types(),
+            "folderType",
+            post_changes
+        )
+        self._pre_commit_types_changes(
+            project_changes,
+            self.project_entity.get_orig_task_types(),
+            "taskType",
+            post_changes
+        )
+        self._connection.update_project(self.project_name, **project_changes)
+        return post_changes
+
     def commit_changes(self):
         """Commit any changes that happened on entities.
 
         Todos:
             Use Operations Session instead of known operations body.
         """
+
+        post_project_changes = self._pre_commit_project()
+        self.project_entity.lock()
 
         project_changes = self.project_entity.changes
         if project_changes:
@@ -760,6 +839,9 @@ class EntityHub(object):
         self._connection.send_batch_operations(
             self.project_name, operations_body
         )
+        if post_project_changes:
+            self._connection.update_project(
+                self.project_name, **post_project_changes)
 
         self.lock()
 
@@ -1463,6 +1545,9 @@ class ProjectEntity(BaseEntity):
 
     parent = property(get_parent, set_parent)
 
+    def get_orig_folder_types(self):
+        return copy.deepcopy(self._orig_folder_types)
+
     def get_folder_types(self):
         return copy.deepcopy(self._folder_types)
 
@@ -1473,6 +1558,9 @@ class ProjectEntity(BaseEntity):
                 folder_type["icon"] = self.default_folder_type_icon
             new_folder_types.append(folder_type)
         self._folder_types = new_folder_types
+
+    def get_orig_task_types(self):
+        return copy.deepcopy(self._orig_task_types)
 
     def get_task_types(self):
         return copy.deepcopy(self._task_types)
