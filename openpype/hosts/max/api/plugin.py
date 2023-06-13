@@ -72,13 +72,13 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                     DeleteItem list_node.items idx
                 )
             )
-            all_handles = join i_node_arr all_handles
-            list_node.items = join temp_arr list_node.items
+            all_handles = i_node_arr
+            list_node.items = temp_arr
         )
 
         on OPparams open do
         (
-            if all_handles.count != 0 do
+            if all_handles.count != 0 then
             (
                 temp_arr = #()
                 for x in all_handles do
