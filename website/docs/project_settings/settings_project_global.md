@@ -50,31 +50,45 @@ The **colorspace name** value is a raw string input and no validation is run aft
 Publish plugins used across all integrations.
 
 ### Collect Anatomy Instance Data
+Switch on the **Follow worfile version** to copy the version data of the workfile project to the published one.
 
+![Collect Anatomy Data](assets/global_publishPlugins_collectAnatomy_Data.png)
 
 ### Collect Audio
+Enable it to collect the audio datas and add it a variant name. 
 
+![Collect Audio](assets/global_publishPlugins_collectAudio.png)
 
 ### Collect Version from Workfile
+1. Collect the version from Workfile while working on the indicated softwares.
+2. Skip the version collect if it's a headless publish for the indicated softwares.
 
-
+![Collect version from Workfile](assets/global_publishPlugins_CollectVersionFromWorkfile.png)
 ### Collect comment per instance
+Enable it to collect the written comments for each instance. You can also add families to collect their comments.
 
-
+![Collect comment per instance](assets/global_publishPlugins_collectCommentPerInstance.png)
 ### Collect Frames to Fix
+Collect the frames which hasn't rendered a render them again.
 
+![Collect frames to fix](assets/global_publishPlugins_collectFramesToFix.png)
 
 ### Validate Editorial Asset Name
+Checks if the asset names in the scene are correct.
 
-
+![Validate Editorial Asset Name](assets/global_publishPlugins_ValidateEditorialAssetName.png)
 ### Validate Version
+Checks if the published version doesn't already exist. 
+If **optional** isn't enabled, it will inevitably check it. If it's enabled, you can choose later before publishing if you want it to be checked or not.
 
-
+![Validate Version](assets/global_publishPlugins_ValidateVersion.png)
 ### Validate Intent
-
+//
 
 ### ExtractThumbnail
+Extract the thumbnail, for example, from a video. You can add arguments to extract it.
 
+![Extract Thumbnail](assets/global_publishPlugins_ExtractThumbnail.png)
 
 ### Extract OIIO Transcode
 OIIOTools transcoder plugin with configurable output presets. Any incoming representation with `colorspaceData` is convertible to single or multiple representations with different target colorspaces or display and viewer names found in linked **config.ocio** file.
@@ -266,8 +280,9 @@ suffix is **"client"** then the final suffix is **"h264_client"**.
 :::
 
 ### Override Integrate Thumbnail Representations
-
-
+#### Integrate profiles
+Enable or exclude the thumbnail integration according to the profile set up
+![OverrideIntegrateThumbnailRepresentations](assets/global_publishPlugins_OverrideIntegrateThumbnailRepresentations.png)
 ### Integrate Subset Group
 #### Subset grouping profiles
 
@@ -300,16 +315,21 @@ Applicable context filters:
 - **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
 - **`tasks`** - Current task. `["modeling", "animation"]`
 
-    ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
+![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
 
 (This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
 
 ### Integrate Asset
-#### Skip hosts and families
-
 Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
 
+![Integrate Asset](assets/global_publishPlugins_IntegrateAsset.png)
+#### Skip hosts and families
+Skip the saving according to the defined **host** or **family**. 
+
 ### IntegrateHeroVersion
+Integrate the Hero version of the indicated families.
+
+![Integrate Hero Version](assets/global_publishPlugins_IntegrateHeroVersion.png)
 
 #### Template name profiles (DEPRECATED)
 *NOTE: Hero publish template profiles settings were moved to Tools/Publish/Hero template name profiles. Please move values there.*
@@ -334,16 +354,28 @@ Filters are optional. In case when multiple profiles match current context, prof
 :::
 
 ### Clean up
+Cleans up the staging directory after a successful publish. This will also clean published renders and delete their parent directories.
 
+![Clean Up](assets/global_publishPlugins_CleanUp.png)
 ### Clean up Farm
+Cleans up the staging directory on a farm after a successful publish. This will also clean published renders and delete their parent directories.
 
+![Clean up Farm](assets/global_publishPlugins_CleanUpFarm.png)
 ## Tools
 Settings for OpenPype tools.
 
 ### Creator
-Settings related to [Creator tool](artist_tools_creator).
+Settings related to [Creator tool](artist_tools_creator.).
 
 #### Families smart select
+**Families smart select** selects automatically an attributed **Family** on a specific task.
+1. Add (+) or delete (-) a family.
+2. Add (+) or delete (-) a task.
+3. Switch position.
+
+For example, when you work on a *light* or *render* task. Go on the [**Creator**](artist_tools_creator.md) and the **Family** will be automatically positionned on **Render**.
+
+![Families smart select](assets/tools_creator_familiesSmartSelect.png)
 
 #### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
@@ -376,10 +408,12 @@ Some creators may have other keys as their context may require more information 
 
 ### Workfiles
 All settings related to Workfile tool.
+![Workfiles](assets/global_Tools_Workfiles.png)
+#### Workfile template profiles
 
-#### Worfile template profiles
-**Open last workfile at launch**
+Set up definition for the templates.
 
+#### Open last workfiles on launch
 This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
 
 ![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
@@ -390,12 +424,13 @@ This feature allows you to define a rule for each task/host or toggle the featur
 - If studio uses Site Sync remote artists need to have access to configured custom staging folder!
 - Each node on the rendering farm must have access to configured custom staging folder!
 
-#### Open last workfiles on launch
+#### Open workfile tool on launch
+Open the workfile window at software's launch.
 
 #### Extra work folders
-
+Create other folders into the Workfile.
 #### Workfile lock profiles
-
+Block the access of the Workfile if a profile is already working on it.
 ### Loader
 #### Family filtering
 
@@ -422,18 +457,21 @@ The custom staging folder uses a path template configured in `project_anatomy/te
 ## Project Folder Structure
 
 ## Site Sync (beta testing)
-Aim of the Site Sync [here](/users_roaming/skacmazbelhaine/OpenPype/website/docs/module_site_sync.md).
+Aim of the Site Sync [here](module_site_sync/#google-drive).
 
 ![Site Sync](assets/site_sync_beta_testing.png)
+
+**Retry Count** : If sending or receptionning a file fails, it will retry the amount of time you program (here, 3 times).
+**Loop Delay** : The retry will be each seconds you program (here, 60 seconds).
+
+**User Default Active Site** : default site for users (here, studio).
+
+**User Default Remote Site** : default site for remote (here, studio).
 
 #### Config
 
 #### Sites
 *empty*
-
-### Additional Project Plugin Paths
-
-### Additional Project Environments (set on application launch)
 
 ## Additional Project Plugin Paths
 
