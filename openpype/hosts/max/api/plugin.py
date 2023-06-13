@@ -56,6 +56,8 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             if current_selection == undefined then return False
             temp_arr = #()
             i_node_arr = #()
+            new_temp_arr = #()
+            new_i_node_arr = #()
 
             for c in current_selection do
             (
@@ -65,15 +67,17 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 if idx do
                 (
                     DeleteItem all_nodes idx
+                    for i in all_nodes do append new_i_node_arr i
                 )
                 idx = finditem list_node.items handle_name
                 if idx do
                 (
                     DeleteItem list_node.items idx
+                    for i in list_node.items do append new_temp_arr i
                 )
             )
-            all_handles = i_node_arr
-            list_node.items = temp_arr
+            all_handles = new_i_node_arr
+            list_node.items = new_temp_arr
         )
 
         on OPparams open do
