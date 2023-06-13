@@ -134,6 +134,16 @@ def append_user_scripts():
         traceback.print_exc()
 
 
+def set_app_templates_path():
+    # Blender requires the app templates to be in `BLENDER_USER_SCRIPTS`.
+    # After running Blender, we set that variable to our custom path, so
+    # that the user can use their custom app templates.
+    app_templates_path = os.environ.get("OPENPYPE_APP_TEMPLATES_PATH")
+
+    if app_templates_path and os.path.isdir(app_templates_path):
+        os.environ["BLENDER_USER_SCRIPTS"] = app_templates_path
+
+
 def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     r"""Write `data` to `node` as userDefined attributes
 
