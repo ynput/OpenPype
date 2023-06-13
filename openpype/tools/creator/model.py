@@ -54,8 +54,8 @@ class CreatorsModel(QtGui.QStandardItemModel):
             item_id = index.data(ITEM_ID_ROLE)
             creator_plugin = self._creators_by_id.get(item_id)
             if creator_plugin and (
-                creator_plugin.label.lower() == family.lower() or
-                creator_plugin.family.lower() == family.lower()
+                creator_plugin.label.lower() == family.lower()
+                or creator_plugin.family.lower() == family.lower()
             ):
                 indexes.append(index)
         return indexes
