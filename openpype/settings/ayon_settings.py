@@ -424,7 +424,7 @@ def _convert_fusion_project_settings(ayon_settings, output):
 
         ayon_ocio_setting["configFilePath"] = paths
         ayon_imageio_fusion["ocio"] = ayon_ocio_setting
-    else:
+    elif "ocio" in ayon_imageio_fusion:
         paths = ayon_imageio_fusion["ocio"].pop("configFilePath")
         for key, value in tuple(paths.items()):
             new_value = []
