@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import filecmp
 
@@ -196,9 +195,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Copy resources to the local resources directory
         for file in workfile_representation['files']:
-            resource_main_path = re.sub(
-                r"\{root\[main\]\}", str(anatomy.roots['main']), file['path']
+            resource_main_path = file['path'].replace(
+                '{root[main]}', str(anatomy.roots['main'])
             )
+
             # Only copy if the resource file exists, and it's not the workfile
             if (
                 os.path.exists(resource_main_path)
