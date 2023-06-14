@@ -1,6 +1,399 @@
 # Changelog
 
 
+## [3.15.10](https://github.com/ynput/OpenPype/tree/3.15.10)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.9...3.15.10)
+
+### **🆕 New features**
+
+
+<details>
+<summary>ImageIO: Adding ImageIO activation toggle to all hosts <a href="https://github.com/ynput/OpenPype/pull/4700">#4700</a></summary>
+
+Colorspace management can now be enabled at the project level, although it is disabled by default. Once enabled, all hosts will use the OCIO config file defined in the settings. If settings are disabled, the system switches to DCC's native color space management, and we do not store colorspace information at the representative level.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Redshift Proxy Support in 3dsMax <a href="https://github.com/ynput/OpenPype/pull/4625">#4625</a></summary>
+
+Redshift Proxy Support for 3dsMax.
+- [x] Creator
+- [x] Loader
+- [x] Extractor
+- [x] Validator
+- [x]  Add documentation
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini farm publishing and rendering <a href="https://github.com/ynput/OpenPype/pull/4825">#4825</a></summary>
+
+Deadline Farm publishing and Rendering for Houdini
+- [x] Mantra
+- [x] Karma(including usd renders)
+- [x] Arnold
+- [x] Elaborate Redshift ROP for deadline submission
+- [x]  fix the existing bug in Redshift ROP
+- [x] Vray
+- [x] add docs
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Feature: Blender hook to execute python scripts at launch <a href="https://github.com/ynput/OpenPype/pull/4905">#4905</a></summary>
+
+Hook to allow hooks to add path to a python script that will be executed when Blender starts.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Feature: Resolve: Open last workfile on launch through .scriptlib  <a href="https://github.com/ynput/OpenPype/pull/5047">#5047</a></summary>
+
+Added implementation to Resolve integration to open last workfile on launch.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Remove default windowFlags from publisher <a href="https://github.com/ynput/OpenPype/pull/5089">#5089</a></summary>
+
+The default windowFlags is making the publisher window (in Linux at least) only show the close button and it's frustrating as many times you just want to minimize the window and get back to the validation after. Removing that line I get what I'd expect.**Before:****After:**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Show user who created the workfile on the details pane of workfile manager <a href="https://github.com/ynput/OpenPype/pull/5093">#5093</a></summary>
+
+New PR for https://github.com/ynput/OpenPype/pull/5087, which was closed after merging `next-minor` branch and then realizing we don't need to target it as it was decided it's not required to support windows. More info on that PR discussion.Small addition to add name of the `user` who created the workfile on the details pane of the workfile manager:
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Loader: Hide inactive versions in UI <a href="https://github.com/ynput/OpenPype/pull/5100">#5100</a></summary>
+
+Hide versions with `active` set to `False` in Loader UI.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Repair RenderPass token when merging AOVs. <a href="https://github.com/ynput/OpenPype/pull/5055">#5055</a></summary>
+
+Validator was flagging that `<RenderPass>` was in the image prefix, but did not repair the issue.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Improve error feedback when no renderable cameras exist for ASS family. <a href="https://github.com/ynput/OpenPype/pull/5092">#5092</a></summary>
+
+When collecting cameras for `ass` family, this improves the error message when no cameras are renderable.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Custom script to set frame range of read nodes <a href="https://github.com/ynput/OpenPype/pull/5039">#5039</a></summary>
+
+Adding option to set frame range specifically for the read nodes in Openpype Panel. User can set up their preferred frame range with the frame range dialog, which can be showed after clicking `Set Frame Range (Read Node)` in Openpype Tools
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Update extract review letterbox docs <a href="https://github.com/ynput/OpenPype/pull/5074">#5074</a></summary>
+
+Update Extract Review - Letter Box section in Docs. Letterbox type description is removed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Project pack: Documents only skips roots validation <a href="https://github.com/ynput/OpenPype/pull/5082">#5082</a></summary>
+
+Single roots validation is skipped if only documents are extracted.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: custom settings for write node without publish <a href="https://github.com/ynput/OpenPype/pull/5084">#5084</a></summary>
+
+Set Render Output and other settings to write nodes for non-publish purposes.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Deadline servers <a href="https://github.com/ynput/OpenPype/pull/5052">#5052</a></summary>
+
+Fix working with multiple Deadline servers in Maya.
+- Pools (primary and secondary) attributes were not recreated correctly.
+- Order of collector plugins were wrong, so collected data was not injected into render instances.
+- Server attribute was not converted to string so comparing with settings was incorrect.
+- Improve debug logging for where the webservice url is getting fetched from.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix Load Reference. <a href="https://github.com/ynput/OpenPype/pull/5091">#5091</a></summary>
+
+Fix bug introduced with https://github.com/ynput/OpenPype/pull/4751 where `cmds.ls` returns a list.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: Publishing Deadline jobs from RedShift  <a href="https://github.com/ynput/OpenPype/pull/4960">#4960</a></summary>
+
+Fix the bug of being uable to publish deadline jobs from RedshiftUse Current File instead of Published Scene for just Redshift.
+- add save scene before rendering to ensure the scene is saved after the modification.
+- add separated aov files option to allow users to choose to have aovs in render output
+- add validator for render publish to aovid overriding the previous renders
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Fix missing frame range for pointcache and camera exports <a href="https://github.com/ynput/OpenPype/pull/5026">#5026</a></summary>
+
+Fix missing frame range for pointcache and camera exports on published version.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Global: collect_frame_fix plugin fix and cleanup <a href="https://github.com/ynput/OpenPype/pull/5064">#5064</a></summary>
+
+Previous implementation https://github.com/ynput/OpenPype/pull/5036 was broken this is fixing the issue where attribute is found in instance data although the settings were disabled for the plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: Fix apply settings Clip Load <a href="https://github.com/ynput/OpenPype/pull/5073">#5073</a></summary>
+
+Changed `apply_settings` to classmethod which fixes the issue with settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: Make sure scripts dir exists <a href="https://github.com/ynput/OpenPype/pull/5078">#5078</a></summary>
+
+Make sure the scripts directory exists before looping over it's content.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>removing info knob from nuke creators <a href="https://github.com/ynput/OpenPype/pull/5083">#5083</a></summary>
+
+- removing instance node if removed via publisher
+- removing info knob since it is not needed any more (was there only for the transition phase)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Tray: Fix restart arguments on update <a href="https://github.com/ynput/OpenPype/pull/5085">#5085</a></summary>
+
+Fix arguments on restart.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: bug fix on repair action in Arnold Scene Source CBID Validator <a href="https://github.com/ynput/OpenPype/pull/5096">#5096</a></summary>
+
+Fix the bug of not being able to use repair action  in Arnold Scene Source CBID Validator
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: batch of small fixes <a href="https://github.com/ynput/OpenPype/pull/5103">#5103</a></summary>
+
+- default settings for `imageio.requiredNodes` **CreateWriteImage**
+- default settings for **LoadImage** representations
+- **Create** and **Publish** menu items with `parent=main_window` (version > 14)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: make prerender check safer <a href="https://github.com/ynput/OpenPype/pull/5104">#5104</a></summary>
+
+Prerender wasn't correctly recognized and was replaced with just 'render' family.In Nuke it is correctly `prerender.farm` in families, which wasn't handled here. It resulted into using `render` in templates even if `render` and `prerender` templates were split.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Sort launcher actions alphabetically <a href="https://github.com/ynput/OpenPype/pull/5106">#5106</a></summary>
+
+The launcher actions weren't being sorted by its label but its name (which on the case of the apps it's the version number) and thus the order wasn't consistent and we kept getting a different order on every launch. From my debugging session, this was the result of what the `actions` variable held after the `filter_compatible_actions` function before these changes:
+```
+(Pdb) for p in actions: print(p.order, p.name)
+0 14-02
+0 14-02
+0 14-02
+0 14-02
+0 14-02
+0 19-5-493
+0 2023
+0 3-41
+0 6-01
+```This caused already a couple bugs from our artists thinking they had launched Nuke X and instead launched Nuke and telling us their Nuke was missing nodes**Before:****After:**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: Editorial video stream discovery <a href="https://github.com/ynput/OpenPype/pull/5120">#5120</a></summary>
+
+Editorial create plugin in traypublisher does not expect that first stream in input is video.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>3dsmax: Move from deprecated interface <a href="https://github.com/ynput/OpenPype/pull/5117">#5117</a></summary>
+
+`INewPublisher` interface is deprecated, this PR is changing the use to `IPublishHost` instead.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>add movalex as a contributor for code <a href="https://github.com/ynput/OpenPype/pull/5076">#5076</a></summary>
+
+Adds @movalex as a contributor for code.
+
+This was requested by mkolar [in this comment](https://github.com/ynput/OpenPype/pull/4916#issuecomment-1571498425)
+
+[skip ci]
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: refactor load plugins <a href="https://github.com/ynput/OpenPype/pull/5079">#5079</a></summary>
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.9](https://github.com/ynput/OpenPype/tree/3.15.9)
 
 
