@@ -1,5 +1,3 @@
-import collections
-
 from openpype.client import (
     get_assets,
     get_subsets,
