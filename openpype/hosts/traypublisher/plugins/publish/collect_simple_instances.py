@@ -108,7 +108,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
         creator_attributes = instance.data["creator_attributes"]
         use_next_version = creator_attributes.get("use_next_version", True)
-        version_to_use = creator_attributes.get("version_to_use")
+        # If 'version_to_use' is '0' it means that next version should be used
+        version_to_use = creator_attributes.get("version_to_use", 0)
         if use_next_version or not version_to_use:
             return
         instance.data["version"] = version_to_use
