@@ -5,7 +5,7 @@ from pymxs import runtime as rt
 
 
 class CollectMembers(pyblish.api.InstancePlugin):
-    """Collect Render for Deadline."""
+    """Collect Set Members."""
 
     order = pyblish.api.CollectorOrder + 0.01
     label = "Collect Instance Members"
