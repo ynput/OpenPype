@@ -51,7 +51,7 @@ IMAGE_EXTENSIONS = {
     ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
     ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
     ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr", ".ras",
     ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
     ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
     ".xpm", ".xwd"
