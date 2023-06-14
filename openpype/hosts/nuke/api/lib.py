@@ -2163,7 +2163,7 @@ class WorkfileSettings(object):
 
         log.debug(changes)
         if changes:
-            msg = "Read nodes are not set to correct colospace:\n\n"
+            msg = "Read nodes are not set to correct colorspace:\n\n"
             for nname, knobs in changes.items():
                 msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
