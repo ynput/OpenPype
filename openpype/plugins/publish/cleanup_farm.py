@@ -14,6 +14,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder + 11
     label = "Clean Up Farm"
     enabled = True
+    optional = True
 
     # Keep "filesequence" for backwards compatibility of older jobs
     targets = ["filesequence", "farm"]

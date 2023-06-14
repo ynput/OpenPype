@@ -1108,11 +1108,22 @@
             "key": "CleanUp",
             "label": "Clean Up",
             "is_group": true,
+            "checkbox_key": "enabled",
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
                 {
                     "type": "list",
                     "key": "paterns",
-                    "label": "Paterrns (regex)",
+                    "label": "Patterns (regex)",
                     "object_type": {
                         "type": "text"
                     }
@@ -1127,18 +1138,43 @@
         },
         {
           "type": "dict",
-          "collapsible": false,
+          "collapsible": true,
           "key": "CleanUpFarm",
           "label": "Clean Up Farm",
           "is_group": true,
           "checkbox_key": "enabled",
           "children": [
-              {
-                  "type": "boolean",
-                  "key": "enabled",
-                  "label": "Enabled"
-              }
-          ]
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExplicitCleanUp",
+            "label": "Explicit Clean Up",
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
         }
     ]
 }

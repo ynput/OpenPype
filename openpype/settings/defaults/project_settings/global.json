@@ -397,11 +397,18 @@
             ]
         },
         "CleanUp": {
+            "enabled": true,
+            "optional": true,
             "paterns": [],
             "remove_temp_renders": false
         },
         "CleanUpFarm": {
-            "enabled": false
+            "enabled": false,
+            "optional": true
+        },
+        "ExplicitCleanUp": {
+            "enabled": false,
+            "optional": true
         }
     },
     "tools": {

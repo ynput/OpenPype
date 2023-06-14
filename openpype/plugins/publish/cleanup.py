@@ -41,8 +41,8 @@ class CleanUp(pyblish.api.InstancePlugin):
     active = True
 
     # Presets
-    paterns = None  # list of regex paterns
-    remove_temp_renders = True
+    patterns = None  # list of regex patterns
+    remove_temp_renders = False
 
     def process(self, instance):
         """Plugin entry point."""
@@ -114,10 +114,10 @@ class CleanUp(pyblish.api.InstancePlugin):
             src = os.path.normpath(src)
             dest = os.path.normpath(dest)
 
-            # add src dir into clearing dir paths (regex paterns)
+            # add src dir into clearing dir paths (regex patterns)
             transfers_dirs.append(os.path.dirname(src))
 
-            # add dest dir into clearing dir paths (regex paterns)
+            # add dest dir into clearing dir paths (regex patterns)
             transfers_dirs.append(os.path.dirname(dest))
 
             if src in skip_cleanup_filepaths:
@@ -140,13 +140,13 @@ class CleanUp(pyblish.api.InstancePlugin):
                     # add dir for cleanup
                     dirnames.append(os.path.dirname(src))
 
-        # clean by regex paterns
+        # clean by regex patterns
         # make unique set
         transfers_dirs = set(transfers_dirs)
 
         self.log.debug("__ transfers_dirs: `{}`".format(transfers_dirs))
-        self.log.debug("__ self.paterns: `{}`".format(self.paterns))
-        if self.paterns:
+        self.log.debug("__ self.patterns: `{}`".format(self.patterns))
+        if self.patterns:
             files = list()
             # get list of all available content of dirs
             for _dir in transfers_dirs:
@@ -163,7 +163,7 @@ class CleanUp(pyblish.api.InstancePlugin):
                 if os.path.normpath(f) in skip_cleanup_filepaths:
                     continue
 
-                for p in self.paterns:
+                for p in self.patterns:
                     patern = re.compile(p)
                     if not patern.findall(f):
                         continue
