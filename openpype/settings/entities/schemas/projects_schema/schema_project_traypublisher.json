@@ -352,6 +352,10 @@
                         {
                             "key": "ValidateFrameRange",
                             "label": "Validate frame range"
+                        },
+                        {
+                            "key": "ValidateExistingVersion",
+                            "label": "Validate Existing Version"
                         }
                     ]
                 }

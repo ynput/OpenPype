@@ -333,6 +333,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateExistingVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }
