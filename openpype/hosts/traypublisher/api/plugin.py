@@ -120,8 +120,7 @@ class SettingsCreator(TrayPublishCreator):
             subset_docs_by_asset_id = self._prepare_next_versions(
                 [asset_name], [subset_name])
             version = subset_docs_by_asset_id[asset_name].get(subset_name)
-            if version is not None:
-                pre_create_data["version_to_use"] = version
+            pre_create_data["version_to_use"] = version
             data["_previous_last_version"] = version
 
         data["creator_attributes"] = pre_create_data
@@ -151,7 +150,14 @@ class SettingsCreator(TrayPublishCreator):
                 and subset names.
         """
 
-        subset_docs_by_asset_id = collections.defaultdict(dict)
+        # Prepare all versions for all combinations to '1'
+        subset_docs_by_asset_id = {
+            asset_name: {
+                subset_name: 1
+                for subset_name in subset_names
+            }
+            for asset_name in asset_names
+        }
         if not asset_names or not subset_names:
             return subset_docs_by_asset_id
 
@@ -183,10 +189,10 @@ class SettingsCreator(TrayPublishCreator):
             subset_name = subset_doc["name"]
             subset_id = subset_doc["_id"]
             last_version = last_versions.get(subset_id)
-            version = None
+            version = 0
             if last_version is not None:
                 version = last_version["name"]
-            subset_docs_by_asset_id[asset_name][subset_name] = version + 1
+            subset_docs_by_asset_id[asset_name][subset_name] += version
         return subset_docs_by_asset_id
 
     def _fill_next_versions(self, instances_data):
@@ -224,9 +230,8 @@ class SettingsCreator(TrayPublishCreator):
         for instance in instances_data:
             asset_name = instance["asset"]
             subset_name = instance["subset"]
-            version = subset_docs_by_asset_id[asset_name].get(subset_name)
-            if version is not None:
-                instance["creator_attributes"]["version_to_use"] = version
+            version = subset_docs_by_asset_id[asset_name][subset_name]
+            instance["creator_attributes"]["version_to_use"] = version
             instance["_previous_last_version"] = version
 
     def collect_instances(self):
