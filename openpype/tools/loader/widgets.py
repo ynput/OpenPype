@@ -1057,12 +1057,8 @@ class FamilyListView(QtWidgets.QListView):
         family_model.dataChanged.connect(self._on_data_change)
         self.customContextMenuRequested.connect(self._on_context_menu)
 
-
         self._family_model = family_model
         self._proxy_model = proxy_model
-
-        # self.set_last_families(self._last_families_setting)
-
 
     def set_enabled_families(self, families):
         self._proxy_model.set_enabled_families(families)
@@ -1132,8 +1128,6 @@ class FamilyListView(QtWidgets.QListView):
         else:
             state = QtCore.Qt.Unchecked
 
-        # self.blockSignals(True)
-
         for index in indexes:
             index_state = checkstate_int_to_enum(
                 index.data(QtCore.Qt.CheckStateRole)
@@ -1149,8 +1143,6 @@ class FamilyListView(QtWidgets.QListView):
                     new_state = QtCore.Qt.Checked
 
             index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
-
-        # self.blockSignals(False)
 
         self.active_changed.emit(self.get_enabled_families())
 
