@@ -1040,7 +1040,7 @@ class FamilyListView(QtWidgets.QListView):
             settings = None
 
         self._settings = settings
-        self._last_families_setting = self._settings.value('enabled_families') or []
+        self._last_families_setting = self._settings.value('enabled_families')
 
         print("settings: ", settings.allKeys())
         print("enabled_families", settings.value('enabled_families'))
@@ -1099,8 +1099,7 @@ class FamilyListView(QtWidgets.QListView):
             index = model.index(row, 0)
             family = index.data(QtCore.Qt.DisplayRole)
             new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked 
-            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
-            
+            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)  
         self.blockSignals(False)
 
     def set_all_unchecked(self):
