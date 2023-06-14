@@ -5,7 +5,7 @@ sidebar_label: Settings Project Ftrack
 ---
 
 # Server Actions/Events
-## Sync to avalon 
+## Sync to avalon
 More informations [here](module_ftrack/#sync-to-avalon.md).
 
 ## Prepare Project
@@ -52,14 +52,14 @@ More informations [here](module_ftrack/#update-status-on-next-task.md).
 Set the users who can transfer hierarchical attributes values.
 
 ## Create daily review session
-On enabled: create review sessions based on settings (attribute it to a role, automate the daily review's creation everyday, set an hour and a template).  
+On enabled: create review sessions based on settings (attribute it to a role, automate the daily review's creation everyday, set an hour and a template).
 If a review session already exists with the same name, then the process is skiped. If a review session for the current day does not exist, but yesterday's review exists and is empty then yesterday's is renamed, otherwise it creates a new review session.
 
 # User Actions/Events
 ## Application - Status change on launch
-On enabled : Change the task status on launch. 
+On enabled : Change the task status on launch.
 
-Settings : 
+Settings :
 1. You can exclude the status change if the task has a specific one.
 2. Change task's status to left side if current task status is in list on right side.
 
@@ -128,13 +128,14 @@ Enable it to validate the Ftrack attributes. You can add custom attributes to va
 Set the correspondance between the task name on Ftrack (at the right), and the family on Openpype (at the left).
 
 #### Make subset name as first asset name
-On enabled, it will apply to the Ftrack task the asset name (in the case when there are several subsets). 
+On enabled, it will apply to the Ftrack task the asset name (in the case when there are several subsets).
 
 ### AssetVersion status on publish
 Status to be set in Ftrack on publishing.
 You can organize the status names according to the hosts, task types and families. You can also add metadata keys on components.
 
 #### Upload reviewable with origin name
+**???**
 
 ## Integrate Ftrack Farm Status
 ### Farm status profiles
