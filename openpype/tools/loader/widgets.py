@@ -1033,7 +1033,6 @@ class FamilyListView(QtWidgets.QListView):
     def __init__(self, dbcon, family_config_cache, parent=None):
         super(FamilyListView, self).__init__(parent=parent)
 
-        from Qt import QtCore, QtWidgets
         try:
             settings = QtCore.QSettings("OpenPype", "FamilyList")
         except Exception:
@@ -1041,9 +1040,6 @@ class FamilyListView(QtWidgets.QListView):
 
         self._settings = settings
         self._last_families_setting = self._settings.value('enabled_families')
-
-        print("settings: ", settings.allKeys())
-        print("enabled_families", settings.value('enabled_families'))
 
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
@@ -1093,13 +1089,14 @@ class FamilyListView(QtWidgets.QListView):
     def set_last_families(self, families):
         if not families:
             return
+        self.blockSignals(True)
 
         model = self._family_model
         for row in range(model.rowCount()):
             index = model.index(row, 0)
             family = index.data(QtCore.Qt.DisplayRole)
-            new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked 
-            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)  
+            new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked
+            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
         self.blockSignals(False)
 
     def set_all_unchecked(self):
