@@ -69,8 +69,6 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                     tmp = i as string
                     append tmp_all_handles tmp
                 )
-                print all_handles
-                print node_ref
                 idx = finditem tmp_all_handles node_ref
                 if idx do
                 (
