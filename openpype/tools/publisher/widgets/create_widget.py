@@ -828,6 +828,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if success:
             self._set_creator(self._selected_creator)
+            self.variant_input.setText(variant)
             self._controller.emit_card_message("Creation finished...")
             self._last_thumbnail_path = None
             self._thumbnail_widget.set_current_thumbnails()
