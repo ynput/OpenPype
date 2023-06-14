@@ -57,25 +57,34 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             temp_arr = #()
             i_node_arr = #()
             new_i_node_arr = #()
+            new_temp_arr = #()
 
             for c in current_selection do
             (
-                node_ref = NodeTransformMonitor node:c
+                node_ref = NodeTransformMonitor node:c as string
                 handle_name = node_to_name c
-                idx = finditem all_handles node_ref
+                tmp_all_handles = #()
+                for i in all_handles do
+                (
+                    tmp = i as string
+                    append tmp_all_handles tmp
+                )
+                print all_handles
+                print node_ref
+                idx = finditem tmp_all_handles node_ref
                 if idx do
                 (
-                    DeleteItem all_nodes idx
-                    for i in all_nodes do append new_i_node_arr i
+                    new_i_node_arr = DeleteItem all_handles idx
+
                 )
                 idx = finditem list_node.items handle_name
                 if idx do
                 (
-                    DeleteItem list_node.items idx
+                    new_temp_arr = DeleteItem list_node.items idx
                 )
             )
-            all_handles = new_i_node_arr
-            list_node.items = temp_arr
+            all_handles = join i_node_arr new_i_node_arr
+            list_node.items = join temp_arr new_temp_arr
         )
 
         on OPparams open do
