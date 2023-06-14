@@ -41,7 +41,7 @@ class CleanUp(pyblish.api.InstancePlugin):
     active = True
 
     # Presets
-    patterns = None  # list of regex patterns
+    paterns = None  # list of regex patterns
     remove_temp_renders = False
 
     def process(self, instance):
@@ -145,8 +145,8 @@ class CleanUp(pyblish.api.InstancePlugin):
         transfers_dirs = set(transfers_dirs)
 
         self.log.debug("__ transfers_dirs: `{}`".format(transfers_dirs))
-        self.log.debug("__ self.patterns: `{}`".format(self.patterns))
-        if self.patterns:
+        self.log.debug("__ self.paterns: `{}`".format(self.paterns))
+        if self.paterns:
             files = list()
             # get list of all available content of dirs
             for _dir in transfers_dirs:
@@ -158,12 +158,12 @@ class CleanUp(pyblish.api.InstancePlugin):
 
             self.log.debug("__ files: `{}`".format(files))
 
-            # remove all files which match regex patern
+            # remove all files which match regex pattern
             for f in files:
                 if os.path.normpath(f) in skip_cleanup_filepaths:
                     continue
 
-                for p in self.patterns:
+                for p in self.paterns:
                     patern = re.compile(p)
                     if not patern.findall(f):
                         continue
