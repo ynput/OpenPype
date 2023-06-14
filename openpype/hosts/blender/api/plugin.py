@@ -1194,26 +1194,35 @@ class AssetLoader(Loader):
             container=container,
         )
 
+        # Sort with source datablocks at the end
+        datablocks.discard(None)
+        datablocks_to_remap = sorted(
+            datablocks, key=lambda d: 1 if d.library else 0
+        )
+
         # Old datablocks remap
-        for old_datablock in old_datablocks:
+        for old_datablock in sorted(
+            old_datablocks, key=lambda d: 1 if d.library else 0
+        ):
             # Match new datablock by name
             if new_datablock := next(
-                iter(
-                    sorted(
-                        (
-                            d
-                            for d in datablocks
-                            if type(d) is type(old_datablock)
-                            and old_datablock.get("source_name")
-                            == d.get("source_name")
-                        ),
-                        # Put source datablocks at the end
-                        key=lambda d: 1 if d.library else 0,
-                    )
+                (
+                    d
+                    for d in datablocks_to_remap
+                    if type(d) is type(old_datablock)
+                    and old_datablock.get("source_name")
+                    == d.get("source_name")
                 ),
                 None,
             ):
                 old_datablock.user_remap(new_datablock)
+
+                # Remove remapped datablock
+                datablocks_to_remap.remove(new_datablock)
+
+                # Skip if pure link because changes won't be saved
+                if new_datablock.library:
+                    continue
 
                 # Transfer transforms
                 if isinstance(old_datablock, bpy.types.Object):
@@ -1272,6 +1281,10 @@ class AssetLoader(Loader):
                                     .targets[k]
                                     .id
                                 )
+            else:
+                # Remove .old
+                if old_datablock.name.endswith(".old"):
+                    old_datablock.name = old_datablock.name.replace(".old", "")
 
         # Restore parent collection if existing
         for (
