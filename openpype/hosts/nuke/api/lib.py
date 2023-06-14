@@ -2060,6 +2060,9 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value_, dict):
                 continue
+            # skip empty values
+            if not value_:
+                continue
             if self._root_node[knob].value() not in value_:
                 self._root_node[knob].setValue(str(value_))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
