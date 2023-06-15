@@ -23,6 +23,9 @@ class ValidateExistingVersion(
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         version = instance.data.get("version")
         if version is None:
             return
