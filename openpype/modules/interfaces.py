@@ -410,13 +410,11 @@ class ITrayService(ITrayModule):
 
 
 class ISettingsChangeListener(OpenPypeInterface):
-    """Module has plugin paths to return.
+    """Module tries to listen to settings changes.
 
-    Expected result is dictionary with keys "publish", "create", "load",
-    "actions" or "inventory" and values as list or string.
-    {
-        "publish": ["path/to/publish_plugins"]
-    }
+    Only settings changes in the current process are propagated.
+    Changes made in other processes or machines won't  trigger the callbacks.
+
     """
 
     @abstractmethod
