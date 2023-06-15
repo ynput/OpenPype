@@ -4,10 +4,8 @@ import nuke
 import pyblish.api
 
 from openpype.pipeline import publish
-from openpype.hosts.nuke.api import (
-    maintained_selection,
-    get_view_process_node
-)
+from openpype.hosts.nuke import api as napi
+from openpype.hosts.nuke.api.lib import set_node_knobs_from_settings
 
 
 if sys.version_info[0] >= 3:
@@ -32,13 +30,13 @@ class ExtractThumbnail(publish.Extractor):
     bake_viewer_process = True
     bake_viewer_input_process = True
     nodes = {}
-
+    reposition_nodes = None
 
     def process(self, instance):
-        if "render.farm" in instance.data["families"]:
+        if instance.data.get("farm"):
             return
 
-        with maintained_selection():
+        with napi.maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
@@ -69,7 +67,7 @@ class ExtractThumbnail(publish.Extractor):
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
 
-        node = instance[0]  # group node
+        node = instance.data["transientData"]["node"]  # group node
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
@@ -127,24 +125,38 @@ class ExtractThumbnail(publish.Extractor):
             temporary_nodes.append(rnode)
             previous_node = rnode
 
-        reformat_node = nuke.createNode("Reformat")
-        ref_node = self.nodes.get("Reformat", None)
-        if ref_node:
-            for k, v in ref_node:
-                self.log.debug("k, v: {0}:{1}".format(k, v))
-                if isinstance(v, unicode):
-                    v = str(v)
-                reformat_node[k].setValue(v)
+        if self.reposition_nodes is None:
+            # [deprecated] create reformat node old way
+            reformat_node = nuke.createNode("Reformat")
+            ref_node = self.nodes.get("Reformat", None)
+            if ref_node:
+                for k, v in ref_node:
+                    self.log.debug("k, v: {0}:{1}".format(k, v))
+                    if isinstance(v, unicode):
+                        v = str(v)
+                    reformat_node[k].setValue(v)
 
-        reformat_node.setInput(0, previous_node)
-        previous_node = reformat_node
-        temporary_nodes.append(reformat_node)
+            reformat_node.setInput(0, previous_node)
+            previous_node = reformat_node
+            temporary_nodes.append(reformat_node)
+        else:
+            # create reformat node new way
+            for repo_node in self.reposition_nodes:
+                node_class = repo_node["node_class"]
+                knobs = repo_node["knobs"]
+                node = nuke.createNode(node_class)
+                set_node_knobs_from_settings(node, knobs)
+
+                # connect in order
+                node.setInput(0, previous_node)
+                previous_node = node
+                temporary_nodes.append(node)
 
         # only create colorspace baking if toggled on
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # get input process and connect it to baking
-                ipn = get_view_process_node()
+                ipn = napi.get_view_process_node()
                 if ipn is not None:
                     ipn.setInput(0, previous_node)
                     previous_node = ipn

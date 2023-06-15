@@ -14,6 +14,11 @@ But many tests should yet be created!
 - installed DCC you want to test
 - `mongorestore` on a PATH
 
+You could check that `mongorestore` is available by running this in console (or cmd), it shouldn't fail and you should see version of utility:
+```commandline
+mongorestore --version
+```
+
 If you would like just to experiment with provided integration tests, and have particular DCC installed on your machine, you could run test for this host by:
 
 - From source:
@@ -23,7 +28,7 @@ If you would like just to experiment with provided integration tests, and have p
 ```
 - From build:
 ```
-- ${OPENPYPE_BUILD}/openpype_console run {ABSOLUTE_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
+- ${OPENPYPE_BUILD}/openpype_console runtests {ABSOLUTE_PATH_OPENPYPE_ROOT}/tests/integration/hosts/nuke`
 ```
 Modify tests path argument to limit which tests should be run (`../tests/integration` will run all implemented integration tests).
 
@@ -52,7 +57,7 @@ Content:
 
 Contains end to end testing in a DCC. Currently it is setup to start DCC application with prepared worfkile, run publish process and compare results in DB and file system automatically.
 This approach is implemented as it should work in any DCC application and should cover most common use cases. Not all hosts allow "real headless" publishing, but all hosts should allow to trigger 
-publish process programatically when UI of host is actually running.
+publish process programmatically when UI of host is actually running.
 
 There will be eventually also possibility to build workfile and publish it programmatically, this would work only in DCCs that support it (Maya, Nuke).
 

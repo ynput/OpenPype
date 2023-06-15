@@ -255,7 +255,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
     Searches through the overrides finding all material overrides. From there
     it extracts the shading group and then finds all texture files in the
     shading group network. It also checks for mipmap versions of texture files
-    and adds them to the resouces to get published.
+    and adds them to the resources to get published.
 
     """
 

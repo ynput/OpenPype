@@ -1,7 +1,7 @@
 /*jslint vars: true, plusplus: true, devel: true, nomen: true, regexp: true,
 indent: 4, maxerr: 50 */
 /*global $, Folder*/
-#include "../js/libs/json.js";
+//@include "../js/libs/json.js"
 
 /* All public API function should return JSON! */
 
@@ -29,13 +29,13 @@ function getEnv(variable){
 function getMetadata(){
     /**
      *  Returns payload in 'Label' field of project's metadata
-     * 
+     *
      **/
     if (ExternalObject.AdobeXMPScript === undefined){
         ExternalObject.AdobeXMPScript =
             new ExternalObject('lib:AdobeXMPScript');
     }
-    
+
     var proj = app.project;
     var meta = new XMPMeta(app.project.xmpPacket);
     var schemaNS = XMPMeta.getNamespaceURI("xmp");
@@ -53,7 +53,7 @@ function getMetadata(){
 function imprint(payload){
     /**
      * Stores payload in 'Label' field of project's metadata
-     * 
+     *
      * Args:
      *     payload (string): json content
      */
@@ -61,14 +61,14 @@ function imprint(payload){
         ExternalObject.AdobeXMPScript =
             new ExternalObject('lib:AdobeXMPScript');
     }
-    
+
     var proj = app.project;
     var meta = new XMPMeta(app.project.xmpPacket);
     var schemaNS = XMPMeta.getNamespaceURI("xmp");
     var label = "xmp:Label";
 
     meta.setProperty(schemaNS, label, payload);
-    
+
     app.project.xmpPacket = meta.serialize();
 
 }
@@ -116,14 +116,14 @@ function getItems(comps, folders, footages){
     /**
      * Returns JSON representation of compositions and
      * if 'collectLayers' then layers in comps too.
-     * 
+     *
      * Args:
      *     comps (bool): return selected compositions
      *     folders (bool): return folders
      *     footages (bool): return FootageItem
      * Returns:
      *     (list) of JSON items
-     */    
+     */
     var items = []
     for (i = 1; i <= app.project.items.length; ++i){
         var item = app.project.items[i];
@@ -142,14 +142,14 @@ function getItems(comps, folders, footages){
 function getSelectedItems(comps, folders, footages){
     /**
      * Returns list of selected items from Project menu
-     * 
+     *
      * Args:
      *     comps (bool): return selected compositions
      *     folders (bool): return folders
      *     footages (bool): return FootageItem
      * Returns:
      *     (list) of JSON items
-     */    
+     */
     var items = []
     for (i = 0; i < app.project.selection.length; ++i){
         var item = app.project.selection[i];
@@ -166,9 +166,9 @@ function getSelectedItems(comps, folders, footages){
 
 function _getItem(item, comps, folders, footages){
     /**
-     * Auxiliary function as project items and selections 
+     * Auxiliary function as project items and selections
      * are indexed in different way :/
-     * Refactor 
+     * Refactor
      */
     var item_type = '';
     if (item instanceof FolderItem){
@@ -189,7 +189,7 @@ function _getItem(item, comps, folders, footages){
             return "{}";
         }
     }
-        
+
     var item = {"name": item.name,
                 "id": item.id,
                 "type": item_type};
@@ -200,7 +200,7 @@ function importFile(path, item_name, import_options){
     /**
      * Imports file (image tested for now) as a FootageItem.
      * Creates new composition
-     * 
+     *
      * Args:
      *    path (string): absolute path to image file
      *    item_name (string): label for composition
@@ -218,7 +218,7 @@ function importFile(path, item_name, import_options){
     app.beginUndoGroup("Import File");
     fp = new File(path);
     if (fp.exists){
-        try { 
+        try {
             im_opt = new ImportOptions(fp);
             importAsType = import_options["ImportAsType"];
 
@@ -234,18 +234,18 @@ function importFile(path, item_name, import_options){
                 }
                 if (importAsType.indexOf('PROJECT') > 0){
                     im_opt.importAs = ImportAsType.PROJECT;
-                }  
-                             
+                }
+
             }
             if ('sequence' in import_options){
                 im_opt.sequence = true;
             }
-            
+
             comp = app.project.importFile(im_opt);
 
             if (app.project.selection.length == 2 &&
                 app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]   
+                 comp.parentFolder = app.project.selection[0]
             }
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
@@ -283,14 +283,14 @@ function setLabelColor(comp_id, color_idx){
 function replaceItem(comp_id, path, item_name){
     /**
      * Replaces loaded file with new file and updates name
-     * 
+     *
      * Args:
      *    comp_id (int): id of composition, not a index!
      *    path (string): absolute path to new file
      *    item_name (string): new composition name
      */
     app.beginUndoGroup("Replace File");
-    
+
     fp = new File(path);
     if (!fp.exists){
         return _prepareError("File " + path + " not found.");
@@ -303,7 +303,7 @@ function replaceItem(comp_id, path, item_name){
             }else{
                 item.replace(fp);
             }
-            
+
             item.name = item_name;
         } catch (error) {
             return _prepareError(error.toString() + path);
@@ -319,7 +319,7 @@ function replaceItem(comp_id, path, item_name){
 function renameItem(item_id, new_name){
     /**
      * Renames item with 'item_id' to 'new_name'
-     * 
+     *
      * Args:
      *    item_id (int): id to search item
      *    new_name (str)
@@ -335,7 +335,7 @@ function renameItem(item_id, new_name){
 function deleteItem(item_id){
     /**
      *  Delete any 'item_id'
-     * 
+     *
      *  Not restricted only to comp, it could delete
      *  any item with 'id'
      */
@@ -347,38 +347,76 @@ function deleteItem(item_id){
     }
 }
 
-function getWorkArea(comp_id){
+function getCompProperties(comp_id){
     /**
-     * Returns information about workarea - are that will be
-     * rendered. All calculation will be done in OpenPype,
-     * easier to modify without redeploy of extension.
-     * 
+     * Returns information about composition - are that will be
+     * rendered.
+     *
      * Returns
      *     (dict)
      */
-    var item = app.project.itemByID(comp_id);
-    if (item){
-        return JSON.stringify({
-            "workAreaStart": item.displayStartFrame, 
-            "workAreaDuration": item.duration,
-            "frameRate": item.frameRate});
-    }else{
+    var comp = app.project.itemByID(comp_id);
+    if (!comp){
         return _prepareError("There is no composition with "+ comp_id);
     }
+
+    return JSON.stringify({
+        "id": comp.id,
+        "name": comp.name,
+        "frameStart": comp.displayStartFrame,
+        "framesDuration": comp.duration * comp.frameRate,
+        "frameRate": comp.frameRate,
+        "width": comp.width,
+        "height": comp.height});
 }
 
-function setWorkArea(comp_id, workAreaStart, workAreaDuration, frameRate){
+function setCompProperties(comp_id, frameStart, framesCount, frameRate,
+                           width, height){
     /**
      * Sets work area info from outside (from Ftrack via OpenPype)
      */
-    var item = app.project.itemByID(comp_id);
-    if (item){
-        item.displayStartTime = workAreaStart;
-        item.duration = workAreaDuration;
-        item.frameRate = frameRate;
-    }else{
+    var comp = app.project.itemByID(comp_id);
+    if (!comp){
         return _prepareError("There is no composition with "+ comp_id);
     }
+
+    app.beginUndoGroup('change comp properties');
+        if (frameStart && framesCount && frameRate){
+            comp.displayStartFrame = frameStart;
+            comp.duration = framesCount / frameRate;
+            comp.frameRate = frameRate;
+        }
+        if (width && height){
+            var widthOld = comp.width;
+            var widthNew = width;
+            var widthDelta = widthNew - widthOld;
+
+            var heightOld = comp.height;
+            var heightNew = height;
+            var heightDelta = heightNew - heightOld;
+
+            var offset = [widthDelta / 2, heightDelta / 2];
+
+            comp.width = widthNew;
+            comp.height = heightNew;
+
+            for (var i = 1, il = comp.numLayers; i <= il; i++) {
+                var layer = comp.layer(i);
+                var positionProperty = layer.property('ADBE Transform Group').property('ADBE Position');
+
+                if (positionProperty.numKeys > 0) {
+                    for (var j = 1, jl = positionProperty.numKeys; j <= jl; j++) {
+                        var keyValue = positionProperty.keyValue(j);
+                        positionProperty.setValueAtKey(j, keyValue + offset);
+                    }
+                } else {
+                    var positionValue = positionProperty.value;
+                    positionProperty.setValue(positionValue + offset);
+                }
+            }
+        }
+
+    app.endUndoGroup();
 }
 
 function save(){
@@ -395,41 +433,84 @@ function saveAs(path){
     app.project.save(fp = new File(path));
 }
 
-function getRenderInfo(){
+function getRenderInfo(comp_id){
     /***
         Get info from render queue.
-        Currently pulls only file name to parse extension and 
+        Currently pulls only file name to parse extension and
         if it is sequence in Python
+    Args:
+        comp_id (int): id of composition
+     Return:
+        (list) [{file_name:"xx.png", width:00, height:00}]
     **/
+    var item = app.project.itemByID(comp_id);
+    if (!item){
+        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
+    }
+
+    var comp_name = item.name;
+    var output_metadata = []
     try{
-        var render_item = app.project.renderQueue.item(1);
-        if (render_item.status == RQItemStatus.DONE){
-            render_item.duplicate();  // create new, cannot change status if DONE
-            render_item.remove();  // remove existing to limit duplications
-            render_item = app.project.renderQueue.item(1);
+        // render_item.duplicate() should create new item on renderQueue
+        // BUT it works only sometimes, there are some weird synchronization issue
+        // this method will be called always before render, so prepare items here
+        // for render to spare the hassle
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+
+            if (render_item.status == RQItemStatus.DONE){
+                render_item.duplicate();  // create new, cannot change status if DONE
+                render_item.remove();  // remove existing to limit duplications
+                continue;
+            }
         }
 
-        render_item.render = true; // always set render queue to render
-        var item = render_item.outputModule(1);
+        // properly validate as `numItems` won't change magically
+        var comp_id_count = 0;
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+            comp_id_count += 1;
+            var item = render_item.outputModule(1);
+
+            for (j = 1; j<= render_item.numOutputModules; ++j){
+                var file_url = item.file.toString();
+                output_metadata.push(
+                    JSON.stringify({
+                        "file_name": file_url,
+                        "width": render_item.comp.width,
+                        "height": render_item.comp.height
+                    })
+                );
+            }
+        }
     } catch (error) {
         return _prepareError("There is no render queue, create one");
     }
-    var file_url = item.file.toString();
 
-    return JSON.stringify({
-        "file_name": file_url,
-        "width": render_item.comp.width,
-	    "height": render_item.comp.height
-    })
+    if (comp_id_count > 1){
+        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
+    }
+
+    if (comp_id_count == 0){
+        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
+    }
+
+    return '[' + output_metadata.join() + ']';
 }
 
 function getAudioUrlForComp(comp_id){
     /**
      * Searches composition for audio layer
-     * 
+     *
      * Only single AVLayer is expected!
      * Used for collecting Audio
-     * 
+     *
      * Args:
      *    comp_id (int): id of composition
      * Return:
@@ -457,7 +538,7 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
     /**
      * Adds already imported FootageItem ('item_id') as a new
      * layer to composition ('comp_id').
-     * 
+     *
      * Args:
      *  comp_id (int): id of target composition
      *  item_id (int): FootageItem.id
@@ -480,17 +561,17 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
 function importBackground(comp_id, composition_name, files_to_import){
     /**
      * Imports backgrounds images to existing or new composition.
-     * 
+     *
      * If comp_id is not provided, new composition is created, basic
      * values (width, heights, frameRatio) takes from first imported
      * image.
-     * 
+     *
      * Args:
      *   comp_id (int): id of existing composition (null if new)
-     *   composition_name (str): used when new composition 
+     *   composition_name (str): used when new composition
      *   files_to_import (list): list of absolute paths to import and
      *      add as layers
-     * 
+     *
      * Returns:
      *  (str): json representation (id, name, members)
      */
@@ -512,7 +593,7 @@ function importBackground(comp_id, composition_name, files_to_import){
             }
         }
     }
-       
+
     if (files_to_import){
         for (i = 0; i < files_to_import.length; ++i){
             item = _importItem(files_to_import[i]);
@@ -524,8 +605,8 @@ function importBackground(comp_id, composition_name, files_to_import){
             if (!comp){
                 folder = app.project.items.addFolder(composition_name);
                 imported_ids.push(folder.id);
-                comp = app.project.items.addComp(composition_name, item.width, 
-                    item.height, item.pixelAspect, 
+                comp = app.project.items.addComp(composition_name, item.width,
+                    item.height, item.pixelAspect,
                     1, 26.7);  // hardcode defaults
                 imported_ids.push(comp.id);
                 comp.parentFolder = folder;
@@ -534,7 +615,7 @@ function importBackground(comp_id, composition_name, files_to_import){
             item.parentFolder = folder;
 
             addItemAsLayerToComp(comp.id, item.id, comp);
-        }       
+        }
     }
     var item = {"name": comp.name,
                 "id": folder.id,
@@ -545,19 +626,19 @@ function importBackground(comp_id, composition_name, files_to_import){
 function reloadBackground(comp_id, composition_name, files_to_import){
     /**
      * Reloads existing composition.
-     * 
+     *
      * It deletes complete composition with encompassing folder, recreates
      * from scratch via 'importBackground' functionality.
-     * 
+     *
      * Args:
      *   comp_id (int): id of existing composition (null if new)
-     *   composition_name (str): used when new composition 
+     *   composition_name (str): used when new composition
      *   files_to_import (list): list of absolute paths to import and
      *      add as layers
-     * 
+     *
      * Returns:
      *  (str): json representation (id, name, members)
-     * 
+     *
      */
     var imported_ids = []; // keep track of members of composition
     comp = app.project.itemByID(comp_id);
@@ -620,7 +701,7 @@ function reloadBackground(comp_id, composition_name, files_to_import){
 function _get_file_name(file_url){
     /**
      * Returns file name without extension from 'file_url'
-     * 
+     *
      * Args:
      *    file_url (str): full absolute url
      * Returns:
@@ -635,7 +716,7 @@ function _delete_obsolete_items(folder, new_filenames){
     /***
      * Goes through 'folder' and removes layers not in new
      * background
-     * 
+     *
      * Args:
      *   folder (FolderItem)
      *   new_filenames (array): list of layer names in new bg
@@ -660,14 +741,14 @@ function _delete_obsolete_items(folder, new_filenames){
 function _importItem(file_url){
     /**
      * Imports 'file_url' as new FootageItem
-     * 
+     *
      * Args:
      *    file_url (str): file url with content
      * Returns:
      *    (FootageItem)
      */
     file_name = _get_file_name(file_url);
-    
+
     //importFile prepared previously to return json
     item_json = importFile(file_url, file_name, JSON.stringify({"ImportAsType":"FOOTAGE"}));
     item_json = JSON.parse(item_json);
@@ -689,30 +770,42 @@ function isFileSequence (item){
     return false;
 }
 
-function render(target_folder){
+function render(target_folder, comp_id){
     var out_dir = new Folder(target_folder);
     var out_dir = out_dir.fsName;
     for (i = 1; i <= app.project.renderQueue.numItems; ++i){
         var render_item = app.project.renderQueue.item(i);
-        var om1 = app.project.renderQueue.item(i).outputModule(1);
-        var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
-        
-        var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
+        var composition = render_item.comp;
+        if (composition.id == comp_id){
+            if (render_item.status == RQItemStatus.DONE){
+                var new_item = render_item.duplicate();
+                render_item.remove();
+                render_item = new_item;
+            }
 
-        if (render_item.status == RQItemStatus.DONE){
-            render_item.duplicate();
-            render_item.remove();
-            continue;
+            render_item.render = true;
+
+            var om1 = app.project.renderQueue.item(i).outputModule(1);
+            var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+
+            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
+
+            var targetFolder = new Folder(target_folder);
+            if (!targetFolder.exists) {
+                targetFolder.create();
+            }
+
+            om1.file = new File(targetFolder.fsName + '/' + file_name);
+        }else{
+            if (render_item.status != RQItemStatus.DONE){
+                render_item.render = false;
+            }
         }
 
-        var targetFolder = new Folder(target_folder);
-        if (!targetFolder.exists) {
-          targetFolder.create();
-        }
-
-        om1.file = new File(targetFolder.fsName + '/' + file_name);
     }
+    app.beginSuppressDialogs();
     app.project.renderQueue.render();
+    app.endSuppressDialogs(false);
 }
 
 function close(){
@@ -722,6 +815,10 @@ function close(){
 
 function getAppVersion(){
     return _prepareSingleValue(app.version);
+}
+
+function printMsg(msg){
+    alert(msg);
 }
 
 function _prepareSingleValue(value){

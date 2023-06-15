@@ -46,18 +46,17 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     follow_workfile_version = False
 
     def process(self, context):
-        self.log.info("Collecting anatomy data for all instances.")
+        self.log.debug("Collecting anatomy data for all instances.")
 
         project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
-        self.fill_instance_data_from_asset(context)
         self.fill_latest_versions(context, project_name)
         self.fill_anatomy_data(context)
 
-        self.log.info("Anatomy Data collection finished.")
+        self.log.debug("Anatomy Data collection finished.")
 
     def fill_missing_asset_docs(self, context, project_name):
-        self.log.debug("Qeurying asset documents for instances.")
+        self.log.debug("Querying asset documents for instances.")
 
         context_asset_doc = context.data.get("assetEntity")
 
@@ -115,23 +114,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "Not found asset documents with names \"{}\"."
             ).format(joined_asset_names))
 
-    def fill_instance_data_from_asset(self, context):
-        for instance in context:
-            asset_doc = instance.data.get("assetEntity")
-            if not asset_doc:
-                continue
-
-            asset_data = asset_doc["data"]
-            for key in (
-                "fps",
-                "frameStart",
-                "frameEnd",
-                "handleStart",
-                "handleEnd",
-            ):
-                if key not in instance.data and key in asset_data:
-                    instance.data[key] = asset_data[key]
-
     def fill_latest_versions(self, context, project_name):
         """Try to find latest version for each instance's subset.
 
@@ -144,7 +126,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             None
 
         """
-        self.log.debug("Qeurying latest versions for instances.")
+        self.log.debug("Querying latest versions for instances.")
 
         hierarchy = {}
         names_by_asset_ids = collections.defaultdict(set)
@@ -153,7 +135,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             latest_version = instance.data.get("latestVersion")
             instance.data["latestVersion"] = latest_version
 
-            # Skip instances withou "assetEntity"
+            # Skip instances without "assetEntity"
             asset_doc = instance.data.get("assetEntity")
             if not asset_doc:
                 continue
@@ -162,7 +144,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             asset_id = asset_doc["_id"]
             subset_name = instance.data["subset"]
 
-            # Prepare instance hiearchy for faster filling latest versions
+            # Prepare instance hierarchy for faster filling latest versions
             if asset_id not in hierarchy:
                 hierarchy[asset_id] = {}
             if subset_name not in hierarchy[asset_id]:
@@ -226,7 +208,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "version": version_number
             }
 
-            # Hiearchy
+            # Hierarchy
             asset_doc = instance.data.get("assetEntity")
             if (
                 asset_doc
@@ -289,7 +271,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             instance_name = instance.data["name"]
             instance_label = instance.data.get("label")
             if instance_label:
-                instance_name += "({})".format(instance_label)
+                instance_name += " ({})".format(instance_label)
             self.log.debug("Anatomy data for instance {}: {}".format(
                 instance_name,
                 json.dumps(anatomy_data, indent=4)

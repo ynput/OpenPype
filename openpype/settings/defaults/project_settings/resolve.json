@@ -1,4 +1,19 @@
 {
+    "launch_openpype_menu_on_start": false,
+    "imageio": {
+        "activate_host_color_management": true,
+        "remapping": {
+            "rules": []
+        },
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",

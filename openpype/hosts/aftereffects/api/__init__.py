@@ -4,36 +4,21 @@ Anything that isn't defined here is INTERNAL and unreliable for external use.
 
 """
 
-from .launch_logic import (
+from .ws_stub import (
     get_stub,
-    stub,
 )
 
 from .pipeline import (
+    AfterEffectsHost,
     ls,
-    get_asset_settings,
-    install,
-    uninstall,
-    list_instances,
-    remove_instance,
-    containerise,
-    get_context_data,
-    update_context_data,
-    get_context_title
-)
-
-from .workio import (
-    file_extensions,
-    has_unsaved_changes,
-    save_file,
-    open_file,
-    current_file,
-    work_root,
+    containerise
 )
 
 from .lib import (
     maintained_selection,
-    get_extension_manifest_path
+    get_extension_manifest_path,
+    get_asset_settings,
+    set_settings
 )
 
 from .plugin import (
@@ -42,32 +27,18 @@ from .plugin import (
 
 
 __all__ = [
-    # launch_logic
+    # ws_stub
     "get_stub",
-    "stub",
 
     # pipeline
     "ls",
-    "get_asset_settings",
-    "install",
-    "uninstall",
-    "list_instances",
-    "remove_instance",
     "containerise",
-    "get_context_data",
-    "update_context_data",
-    "get_context_title",
-
-    "file_extensions",
-    "has_unsaved_changes",
-    "save_file",
-    "open_file",
-    "current_file",
-    "work_root",
 
     # lib
     "maintained_selection",
     "get_extension_manifest_path",
+    "get_asset_settings",
+    "set_settings",
 
     # plugin
     "AfterEffectsLoader"

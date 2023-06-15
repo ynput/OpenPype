@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa E402
-"""Pype module API."""
+"""OpenPype lib functions."""
 # add vendor to sys path based on Python version
 import sys
 import os
@@ -30,7 +30,7 @@ from .vendor_bin_utils import (
 )
 
 from .attribute_definitions import (
-    AbtractAttrDef,
+    AbstractAttrDef,
 
     UIDef,
     UISeparatorDef,
@@ -82,9 +82,6 @@ from .mongo import (
     validate_mongo_connection,
     OpenPypeMongoConnection
 )
-from .anatomy import (
-    Anatomy
-)
 
 from .dateutils import (
     get_datetime_data,
@@ -97,7 +94,8 @@ from .python_module_tools import (
     modules_from_path,
     recursive_bases_from_class,
     classes_from_module,
-    import_module_from_dirpath
+    import_module_from_dirpath,
+    is_func_signature_supported,
 )
 
 from .profiles_filtering import (
@@ -119,35 +117,18 @@ from .transcoding import (
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
-    PROJECT_NAME_ALLOWED_SYMBOLS,
-    PROJECT_NAME_REGEX,
     create_project,
-    is_latest,
-    any_outdated,
-    get_asset,
-    get_linked_assets,
-    get_latest_version,
-    get_system_general_anatomy_data,
 
     get_workfile_template_key,
     get_workfile_template_key_from_context,
-    get_workdir_data,
-    get_workdir,
-    get_workdir_with_workdir_data,
     get_last_workfile_with_version,
     get_last_workfile,
-
-    create_workfile_doc,
-    save_workfile_data_to_doc,
-    get_workfile_doc,
 
     BuildWorkfile,
 
     get_creator_by_name,
 
     get_custom_workfile_template,
-
-    change_timer_to_current_context,
 
     get_custom_workfile_template_by_context,
     get_custom_workfile_template_by_string_context,
@@ -186,8 +167,6 @@ from .plugin_tools import (
     get_subset_name,
     get_subset_name_with_asset_doc,
     prepare_template_data,
-    filter_pyblish_plugins,
-    set_plugin_attributes_from_settings,
     source_hash,
 )
 
@@ -246,7 +225,7 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
 
-    "AbtractAttrDef",
+    "AbstractAttrDef",
 
     "UIDef",
     "UISeparatorDef",
@@ -265,6 +244,7 @@ __all__ = [
     "recursive_bases_from_class",
     "classes_from_module",
     "import_module_from_dirpath",
+    "is_func_signature_supported",
 
     "get_transcode_temp_directory",
     "should_convert_for_ffmpeg",
@@ -278,33 +258,16 @@ __all__ = [
     "convert_ffprobe_fps_to_float",
 
     "CURRENT_DOC_SCHEMAS",
-    "PROJECT_NAME_ALLOWED_SYMBOLS",
-    "PROJECT_NAME_REGEX",
     "create_project",
-    "is_latest",
-    "any_outdated",
-    "get_asset",
-    "get_linked_assets",
-    "get_latest_version",
-    "get_system_general_anatomy_data",
 
     "get_workfile_template_key",
     "get_workfile_template_key_from_context",
-    "get_workdir_data",
-    "get_workdir",
-    "get_workdir_with_workdir_data",
     "get_last_workfile_with_version",
     "get_last_workfile",
-
-    "create_workfile_doc",
-    "save_workfile_data_to_doc",
-    "get_workfile_doc",
 
     "BuildWorkfile",
 
     "get_creator_by_name",
-
-    "change_timer_to_current_context",
 
     "get_custom_workfile_template_by_context",
     "get_custom_workfile_template_by_string_context",
@@ -338,8 +301,6 @@ __all__ = [
     "TaskNotSetError",
     "get_subset_name",
     "get_subset_name_with_asset_doc",
-    "filter_pyblish_plugins",
-    "set_plugin_attributes_from_settings",
     "source_hash",
 
     "format_file_size",
@@ -357,8 +318,6 @@ __all__ = [
     "FormatObject",
 
     "terminal",
-
-    "Anatomy",
 
     "get_datetime_data",
     "get_formatted_current_time",

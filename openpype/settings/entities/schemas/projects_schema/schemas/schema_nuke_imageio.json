@@ -1,15 +1,13 @@
 {
     "key": "imageio",
     "type": "dict",
-    "label": "Color Management (ImageIO)",
-    "checkbox_key": "enabled",
+    "label": "Color Management (OCIO managed)",
     "collapsible": true,
     "is_group": true,
     "children": [
         {
-            "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "type": "template",
+            "name": "template_host_color_management_ocio"
         },
         {
             "key": "viewer",
@@ -68,40 +66,36 @@
                                     "nuke-default": "nuke-default"
                                 },
                                 {
-                                    "spi-vfx": "spi-vfx"
+                                    "spi-vfx": "spi-vfx (11)"
                                 },
                                 {
-                                    "spi-anim": "spi-anim"
+                                    "spi-anim": "spi-anim (11)"
                                 },
                                 {
-                                    "aces_0.1.1": "aces_0.1.1"
+                                    "aces_0.1.1": "aces_0.1.1 (11)"
                                 },
                                 {
-                                    "aces_0.7.1": "aces_0.7.1"
+                                    "aces_0.7.1": "aces_0.7.1 (11)"
                                 },
                                 {
-                                    "aces_1.0.1": "aces_1.0.1"
+                                    "aces_1.0.1": "aces_1.0.1 (11)"
                                 },
                                 {
-                                    "aces_1.0.3": "aces_1.0.3"
+                                    "aces_1.0.3": "aces_1.0.3 (11, 12)"
                                 },
                                 {
-                                    "aces_1.1": "aces_1.1"
+                                    "aces_1.1": "aces_1.1 (12, 13)"
                                 },
                                 {
-                                    "aces_1.2": "aces_1.2"
+                                    "aces_1.2": "aces_1.2 (13, 14)"
                                 },
                                 {
-                                    "custom": "custom"
+                                    "studio-config-v1.0.0_aces-v1.3_ocio-v2.1": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
+                                },
+                                {
+                                    "cg-config-v1.0.0_aces-v1.3_ocio-v2.1": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
                                 }
                             ]
-                        },
-                        {
-                            "type": "path",
-                            "key": "customOCIOConfigPath",
-                            "label": "Custom OCIO config path",
-                            "multiplatform": true,
-                            "multipath": true
                         },
                         {
                             "type": "text",

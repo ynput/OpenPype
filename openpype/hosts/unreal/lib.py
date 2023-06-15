@@ -4,6 +4,9 @@
 import os
 import platform
 import json
+
+from typing import List
+
 from distutils import dir_util
 import subprocess
 import re
@@ -18,6 +21,8 @@ def get_engine_versions(env=None):
     This will try to detect location and versions of installed Unreal Engine.
     Location can be overridden by `UNREAL_ENGINE_LOCATION` environment
     variable.
+
+    .. deprecated:: 3.15.4
 
     Args:
         env (dict, optional): Environment to use.
@@ -73,7 +78,7 @@ def get_engine_versions(env=None):
     return OrderedDict()
 
 
-def get_editor_executable_path(engine_path: Path, engine_version: str) -> Path:
+def get_editor_exe_path(engine_path: Path, engine_version: str) -> Path:
     """Get UE Editor executable path."""
     ue_path = engine_path / "Engine/Binaries"
     if platform.system().lower() == "windows":
@@ -99,6 +104,8 @@ def _win_get_engine_versions():
     This file is JSON file listing installed stuff, Unreal engines
     are marked with `"AppName" = "UE_X.XX"`` like `UE_4.24`
 
+    .. deprecated:: 3.15.4
+
     Returns:
         dict: version as a key and path as a value.
 
@@ -117,6 +124,8 @@ def _darwin_get_engine_version() -> dict:
     """Get Unreal Engine versions on MacOS.
 
     It works the same as on Windows, just JSON file location is different.
+
+    .. deprecated:: 3.15.4
 
     Returns:
         dict: version as a key and path as a value.
@@ -139,6 +148,8 @@ def _darwin_get_engine_version() -> dict:
 
 def _parse_launcher_locations(install_json_path: str) -> dict:
     """This will parse locations from json file.
+
+    .. deprecated:: 3.15.4
 
     Args:
         install_json_path (str): Path to `LauncherInstalled.dat`.
@@ -177,7 +188,7 @@ def create_unreal_project(project_name: str,
 
     As there is no way I know to create a project via command line, this is
     easiest option. Unreal project file is basically a JSON file. If we find
-    the `OPENPYPE_UNREAL_PLUGIN` environment variable we assume this is the
+    the `AYON_UNREAL_PLUGIN` environment variable we assume this is the
     location of the Integration Plugin and we copy its content to the project
     folder and enable this plugin.
 
@@ -191,8 +202,7 @@ def create_unreal_project(project_name: str,
             sources. This will trigger automatically if `Binaries`
             directory is not found in plugin folders as this indicates
             this is only source distribution of the plugin. Dev mode
-            is also set by preset file `unreal/project_setup.json` in
-            **OPENPYPE_CONFIG**.
+            is also set in Settings.
         env (dict, optional): Environment to use. If not set, `os.environ`.
 
     Throws:
@@ -214,77 +224,71 @@ def create_unreal_project(project_name: str,
     # created in different UE4 version. When user convert such project
     # to his UE4 version, Engine ID is replaced in uproject file. If some
     # other user tries to open it, it will present him with similar error.
-    ue_modules = Path()
-    if platform.system().lower() == "windows":
-        ue_modules_path = engine_path / "Engine/Binaries/Win64"
-        if ue_version.split(".")[0] == "4":
-            ue_modules_path /= "UE4Editor.modules"
-        elif ue_version.split(".")[0] == "5":
-            ue_modules_path /= "UnrealEditor.modules"
-        ue_modules = Path(ue_modules_path)
 
-    if platform.system().lower() == "linux":
-        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
-                                        "Linux", "UE4Editor.modules"))
+    # engine_path should be the location of UE_X.X folder
 
-    if platform.system().lower() == "darwin":
-        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
-                                        "Mac", "UE4Editor.modules"))
+    ue_editor_exe: Path = get_editor_exe_path(engine_path, ue_version)
+    cmdlet_project: Path = get_path_to_cmdlet_project(ue_version)
 
-    if ue_modules.exists():
-        print("--- Loading Engine ID from modules file ...")
-        with open(ue_modules, "r") as mp:
-            loaded_modules = json.load(mp)
+    project_file = pr_dir / f"{project_name}.uproject"
 
-        if loaded_modules.get("BuildId"):
-            ue_id = "{" + loaded_modules.get("BuildId") + "}"
-
-    plugins_path = None
-    if os.path.isdir(env.get("OPENPYPE_UNREAL_PLUGIN", "")):
-        # copy plugin to correct path under project
-        plugins_path = pr_dir / "Plugins"
-        openpype_plugin_path = plugins_path / "OpenPype"
-        if not openpype_plugin_path.is_dir():
-            openpype_plugin_path.mkdir(parents=True, exist_ok=True)
-            dir_util._path_created = {}
-            dir_util.copy_tree(os.environ.get("OPENPYPE_UNREAL_PLUGIN"),
-                               openpype_plugin_path.as_posix())
-
-            if not (openpype_plugin_path / "Binaries").is_dir() \
-                    or not (openpype_plugin_path / "Intermediate").is_dir():
-                dev_mode = True
-
-    # data for project file
-    data = {
-        "FileVersion": 3,
-        "EngineAssociation": ue_id,
-        "Category": "",
-        "Description": "",
-        "Plugins": [
-            {"Name": "PythonScriptPlugin", "Enabled": True},
-            {"Name": "EditorScriptingUtilities", "Enabled": True},
-            {"Name": "SequencerScripting", "Enabled": True},
-            {"Name": "MovieRenderPipeline", "Enabled": True},
-            {"Name": "OpenPype", "Enabled": True}
-        ]
-    }
+    print("--- Generating a new project ...")
+    commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
+                      f'{cmdlet_project.as_posix()}',
+                      f'-run=AyonGenerateProject',
+                      f'{project_file.resolve().as_posix()}']
 
     if dev_mode or preset["dev_mode"]:
-        # this will add the project module and necessary source file to
-        # make it a C++ project and to (hopefully) make Unreal Editor to
-        # compile all # sources at start
+        commandlet_cmd.append('-GenerateCode')
 
-        data["Modules"] = [{
-            "Name": project_name,
-            "Type": "Runtime",
-            "LoadingPhase": "Default",
-            "AdditionalDependencies": ["Engine"],
-        }]
+    gen_process = subprocess.Popen(commandlet_cmd,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
-    # write project file
-    project_file = pr_dir / f"{project_name}.uproject"
-    with open(project_file, mode="w") as pf:
-        json.dump(data, pf, indent=4)
+    for line in gen_process.stdout:
+        print(line.decode(), end='')
+    gen_process.stdout.close()
+    return_code = gen_process.wait()
+
+    if return_code and return_code != 0:
+        raise RuntimeError(f'Failed to generate \'{project_name}\' project! '
+                           f'Exited with return code {return_code}')
+
+    print("--- Project has been generated successfully.")
+
+    with open(project_file.as_posix(), mode="r+") as pf:
+        pf_json = json.load(pf)
+        pf_json["EngineAssociation"] = get_build_id(engine_path, ue_version)
+        pf.seek(0)
+        json.dump(pf_json, pf, indent=4)
+        pf.truncate()
+        print(f'--- Engine ID has been written into the project file')
+
+    if dev_mode or preset["dev_mode"]:
+        u_build_tool = get_path_to_ubt(engine_path, ue_version)
+
+        arch = "Win64"
+        if platform.system().lower() == "windows":
+            arch = "Win64"
+        elif platform.system().lower() == "linux":
+            arch = "Linux"
+        elif platform.system().lower() == "darwin":
+            # we need to test this out
+            arch = "Mac"
+
+        command1 = [u_build_tool.as_posix(), "-projectfiles",
+                    f"-project={project_file}", "-progress"]
+
+        subprocess.run(command1)
+
+        command2 = [u_build_tool.as_posix(),
+                    f"-ModuleWithSuffix={project_name},3555", arch,
+                    "Development", "-TargetType=Editor",
+                    f'-Project={project_file}',
+                    f'{project_file}',
+                    "-IgnoreJunk"]
+
+        subprocess.run(command2)
 
     # ensure we have PySide2 installed in engine
     python_path = None
@@ -307,176 +311,193 @@ def create_unreal_project(project_name: str,
     subprocess.check_call(
         [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
 
-    if dev_mode or preset["dev_mode"]:
-        _prepare_cpp_project(project_file, engine_path, ue_version)
+
+def get_path_to_uat(engine_path: Path) -> Path:
+    if platform.system().lower() == "windows":
+        return engine_path / "Engine/Build/BatchFiles/RunUAT.bat"
+
+    if platform.system().lower() in ["linux", "darwin"]:
+        return engine_path / "Engine/Build/BatchFiles/RunUAT.sh"
 
 
-def _prepare_cpp_project(
-        project_file: Path, engine_path: Path, ue_version: str) -> None:
-    """Prepare CPP Unreal Project.
+def get_compatible_integration(
+        ue_version: str, integration_root: Path) -> List[Path]:
+    """Get path to compatible version of integration plugin.
 
-    This function will add source files needed for project to be
-    rebuild along with the OpenPype integration plugin.
-
-    There seems not to be automated way to do it from command line.
-    But there might be way to create at least those target and build files
-    by some generator. This needs more research as manually writing
-    those files is rather hackish. :skull_and_crossbones:
-
+    This will try to get the closest compatible versions to the one
+    specified in sorted list.
 
     Args:
-        project_file (str): Path to .uproject file.
-        engine_path (str): Path to unreal engine associated with project.
+        ue_version (str): version of the current Unreal Engine.
+        integration_root (Path): path to built-in integration plugins.
+
+    Returns:
+        list of Path: Sorted list of paths closest to the specified
+            version.
 
     """
-    project_name = project_file.stem
-    project_dir = project_file.parent
-    targets_dir = project_dir / "Source"
-    sources_dir = targets_dir / project_name
+    major, minor = ue_version.split(".")
+    integration_paths = [p for p in integration_root.iterdir()
+                         if p.is_dir()]
 
-    sources_dir.mkdir(parents=True, exist_ok=True)
-    (project_dir / "Content").mkdir(parents=True, exist_ok=True)
+    compatible_versions = []
+    for i in integration_paths:
+        # parse version from path
+        try:
+            i_major, i_minor = re.search(
+                r"(?P<major>\d+).(?P<minor>\d+)$", i.name).groups()
+        except AttributeError:
+            # in case there is no match, just skip to next
+            continue
 
-    module_target = '''
-using UnrealBuildTool;
-using System.Collections.Generic;
+        # consider versions with different major so different that they
+        # are incompatible
+        if int(major) != int(i_major):
+            continue
 
-public class {0}Target : TargetRules
-{{
-    public {0}Target( TargetInfo Target) : base(Target)
-    {{
-        Type = TargetType.Game;
-        ExtraModuleNames.AddRange( new string[] {{ "{0}" }} );
-    }}
-}}
-'''.format(project_name)
+        compatible_versions.append(i)
 
-    editor_module_target = '''
-using UnrealBuildTool;
-using System.Collections.Generic;
+    sorted(set(compatible_versions))
+    return compatible_versions
 
-public class {0}EditorTarget : TargetRules
-{{
-    public {0}EditorTarget( TargetInfo Target) : base(Target)
-    {{
-        Type = TargetType.Editor;
 
-        ExtraModuleNames.AddRange( new string[] {{ "{0}" }} );
-    }}
-}}
-'''.format(project_name)
+def get_path_to_cmdlet_project(ue_version: str) -> Path:
+    cmd_project = Path(
+        os.path.abspath(os.getenv("OPENPYPE_ROOT")))
 
-    module_build = '''
-using UnrealBuildTool;
-public class {0} : ModuleRules
-{{
-    public {0}(ReadOnlyTargetRules Target) : base(Target)
-    {{
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new string[] {{ "Core",
-            "CoreUObject", "Engine", "InputCore" }});
-        PrivateDependencyModuleNames.AddRange(new string[] {{  }});
-    }}
-}}
-'''.format(project_name)
+    # For now, only tested on Windows (For Linux and Mac
+    # it has to be implemented)
+    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
 
-    module_cpp = '''
-#include "{0}.h"
-#include "Modules/ModuleManager.h"
+    # if the integration doesn't exist for current engine version
+    # try to find the closest to it.
+    if cmd_project.exists():
+        return cmd_project / "CommandletProject/CommandletProject.uproject"
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, {0}, "{0}" );
-'''.format(project_name)
+    if compatible_versions := get_compatible_integration(
+        ue_version, cmd_project.parent
+    ):
+        return compatible_versions[-1] / "CommandletProject/CommandletProject.uproject"  # noqa: E501
+    else:
+        raise RuntimeError(
+            ("There are no compatible versions of Unreal "
+             "integration plugin compatible with running version "
+             f"of Unreal Engine {ue_version}"))
 
-    module_header = '''
-#pragma once
-#include "CoreMinimal.h"
-'''
 
-    game_mode_cpp = '''
-#include "{0}GameModeBase.h"
-'''.format(project_name)
-
-    game_mode_h = '''
-#pragma once
-
-#include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
-#include "{0}GameModeBase.generated.h"
-
-UCLASS()
-class {1}_API A{0}GameModeBase : public AGameModeBase
-{{
-    GENERATED_BODY()
-}};
-'''.format(project_name, project_name.upper())
-
-    with open(targets_dir / f"{project_name}.Target.cs", mode="w") as f:
-        f.write(module_target)
-
-    with open(targets_dir / f"{project_name}Editor.Target.cs", mode="w") as f:
-        f.write(editor_module_target)
-
-    with open(sources_dir / f"{project_name}.Build.cs", mode="w") as f:
-        f.write(module_build)
-
-    with open(sources_dir / f"{project_name}.cpp", mode="w") as f:
-        f.write(module_cpp)
-
-    with open(sources_dir / f"{project_name}.h", mode="w") as f:
-        f.write(module_header)
-
-    with open(sources_dir / f"{project_name}GameModeBase.cpp", mode="w") as f:
-        f.write(game_mode_cpp)
-
-    with open(sources_dir / f"{project_name}GameModeBase.h", mode="w") as f:
-        f.write(game_mode_h)
-
+def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
     u_build_tool_path = engine_path / "Engine/Binaries/DotNET"
+
     if ue_version.split(".")[0] == "4":
         u_build_tool_path /= "UnrealBuildTool.exe"
     elif ue_version.split(".")[0] == "5":
         u_build_tool_path /= "UnrealBuildTool/UnrealBuildTool.exe"
-    u_build_tool = Path(u_build_tool_path)
-    u_header_tool = None
 
-    arch = "Win64"
+    return Path(u_build_tool_path)
+
+
+def get_build_id(engine_path: Path, ue_version: str) -> str:
+    ue_modules = Path()
     if platform.system().lower() == "windows":
-        arch = "Win64"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Win64/UnrealHeaderTool.exe")
-    elif platform.system().lower() == "linux":
-        arch = "Linux"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Linux/UnrealHeaderTool")
-    elif platform.system().lower() == "darwin":
-        # we need to test this out
-        arch = "Mac"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Mac/UnrealHeaderTool")
+        ue_modules_path = engine_path / "Engine/Binaries/Win64"
+        if ue_version.split(".")[0] == "4":
+            ue_modules_path /= "UE4Editor.modules"
+        elif ue_version.split(".")[0] == "5":
+            ue_modules_path /= "UnrealEditor.modules"
+        ue_modules = Path(ue_modules_path)
 
-    if not u_header_tool:
-        raise NotImplementedError("Unsupported platform")
+    if platform.system().lower() == "linux":
+        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+                                       "Linux", "UE4Editor.modules"))
 
-    command1 = [u_build_tool.as_posix(), "-projectfiles",
-                f"-project={project_file}", "-progress"]
+    if platform.system().lower() == "darwin":
+        ue_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+                                       "Mac", "UE4Editor.modules"))
 
-    subprocess.run(command1)
+    if ue_modules.exists():
+        print("--- Loading Engine ID from modules file ...")
+        with open(ue_modules, "r") as mp:
+            loaded_modules = json.load(mp)
 
-    command2 = [u_build_tool.as_posix(),
-                f"-ModuleWithSuffix={project_name},3555", arch,
-                "Development", "-TargetType=Editor",
-                f'-Project={project_file}',
-                f'{project_file}',
-                "-IgnoreJunk"]
+        if loaded_modules.get("BuildId"):
+            return "{" + loaded_modules.get("BuildId") + "}"
 
-    subprocess.run(command2)
 
-    """
-    uhtmanifest = os.path.join(os.path.dirname(project_file),
-                               f"{project_name}.uhtmanifest")
+def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
+    env = env or os.environ
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
 
-    command3 = [u_header_tool, f'"{project_file}"', f'"{uhtmanifest}"',
-                "-Unattended", "-WarningsAsErrors", "-installed"]
+    if not os.path.isdir(integration_plugin_path):
+        raise RuntimeError("Path to the integration plugin is null!")
 
-    subprocess.run(command3)
-    """
+    # Create a path to the plugin in the engine
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
+
+    if not op_plugin_path.is_dir():
+        return False
+
+    if not (op_plugin_path / "Binaries").is_dir() \
+            or not (op_plugin_path / "Intermediate").is_dir():
+        return False
+
+    return True
+
+
+def try_installing_plugin(engine_path: Path, env: dict = None) -> None:
+    env = env or os.environ
+
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
+
+    if not os.path.isdir(integration_plugin_path):
+        raise RuntimeError("Path to the integration plugin is null!")
+
+    # Create a path to the plugin in the engine
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
+
+    if not op_plugin_path.is_dir():
+        op_plugin_path.mkdir(parents=True, exist_ok=True)
+
+        engine_plugin_config_path: Path = op_plugin_path / "Config"
+        engine_plugin_config_path.mkdir(exist_ok=True)
+
+        dir_util._path_created = {}
+
+    if not (op_plugin_path / "Binaries").is_dir() \
+            or not (op_plugin_path / "Intermediate").is_dir():
+        _build_and_move_plugin(engine_path, op_plugin_path, env)
+
+
+def _build_and_move_plugin(engine_path: Path,
+                           plugin_build_path: Path,
+                           env: dict = None) -> None:
+    uat_path: Path = get_path_to_uat(engine_path)
+
+    env = env or os.environ
+    integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
+
+    if uat_path.is_file():
+        temp_dir: Path = integration_plugin_path.parent / "Temp"
+        temp_dir.mkdir(exist_ok=True)
+        uplugin_path: Path = integration_plugin_path / "Ayon.uplugin"
+
+        # in order to successfully build the plugin,
+        # It must be built outside the Engine directory and then moved
+        build_plugin_cmd: List[str] = [f'{uat_path.as_posix()}',
+                                       'BuildPlugin',
+                                       f'-Plugin={uplugin_path.as_posix()}',
+                                       f'-Package={temp_dir.as_posix()}']
+        subprocess.run(build_plugin_cmd)
+
+        # Copy the contents of the 'Temp' dir into the
+        # 'Ayon' directory in the engine
+        dir_util.copy_tree(temp_dir.as_posix(), plugin_build_path.as_posix())
+
+        # We need to also copy the config folder.
+        # The UAT doesn't include the Config folder in the build
+        plugin_install_config_path: Path = plugin_build_path / "Config"
+        integration_plugin_config_path = integration_plugin_path / "Config"
+
+        dir_util.copy_tree(integration_plugin_config_path.as_posix(),
+                           plugin_install_config_path.as_posix())
+
+        dir_util.remove_tree(temp_dir.as_posix())

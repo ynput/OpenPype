@@ -1,7 +1,7 @@
 {
   "name": "openharmony",
   "version": "0.0.1",
-  "description": "An Open Source Imlementation of a Document Object Model for the Toonboom Harmony scripting interface",
+  "description": "An Open Source Implementation of a Document Object Model for the Toonboom Harmony scripting interface",
   "main": "openHarmony.js",
   "scripts": {
     "test": "$",

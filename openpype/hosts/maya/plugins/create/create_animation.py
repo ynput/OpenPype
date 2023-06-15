@@ -7,12 +7,20 @@ from openpype.hosts.maya.api import (
 class CreateAnimation(plugin.Creator):
     """Animation output for character rigs"""
 
+    # We hide the animation creator from the UI since the creation of it
+    # is automated upon loading a rig. There's an inventory action to recreate
+    # it for loaded rigs if by chance someone deleted the animation instance.
+    # Note: This setting is actually applied from project settings
+    enabled = False
+
     name = "animationDefault"
     label = "Animation"
     family = "animation"
     icon = "male"
     write_color_sets = False
     write_face_sets = False
+    include_parent_hierarchy = False
+    include_user_defined_attributes = False
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -36,7 +44,7 @@ class CreateAnimation(plugin.Creator):
         self.data["visibleOnly"] = False
 
         # Include the groups above the out_SET content
-        self.data["includeParentHierarchy"] = False  # Include parent groups
+        self.data["includeParentHierarchy"] = self.include_parent_hierarchy
 
         # Default to exporting world-space
         self.data["worldSpace"] = True
@@ -47,3 +55,6 @@ class CreateAnimation(plugin.Creator):
 
         # Default to write normals.
         self.data["writeNormals"] = True
+
+        value = self.include_user_defined_attributes
+        self.data["includeUserDefinedAttributes"] = value

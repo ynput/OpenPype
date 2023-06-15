@@ -4,7 +4,7 @@
 //                            openHarmony Library
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney
+//         Developed by Mathieu Chaptel, Chris Fourney
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -426,7 +426,7 @@ Object.defineProperty($.oDrawing.prototype, 'drawingData', {
 /**
  * Import a given file into an existing drawing.
  * @param   {$.oFile} file                  The path to the file
- * @param   {bool}    [convertToTvg=false]  Wether to convert the bitmap to the tvg format (this doesn't vectorise the drawing)
+ * @param   {bool}    [convertToTvg=false]  Whether to convert the bitmap to the tvg format (this doesn't vectorise the drawing)
  *
  * @return { $.oFile }   the oFile object pointing to the drawing file after being it has been imported into the element folder.
  */
@@ -878,8 +878,8 @@ $.oArtLayer.prototype.drawCircle = function(center, radius, lineStyle, fillStyle
  * @param {$.oVertex[]}    path         an array of $.oVertex objects that describe a path.
  * @param {$.oLineStyle}   [lineStyle]  the line style to draw with. (By default, will use the current stencil selection)
  * @param {$.oFillStyle}   [fillStyle]  the fill information for the path. (By default, will use the current palette selection)
- * @param {bool}   [polygon]            Wether bezier handles should be created for the points in the path (ignores "onCurve" properties of oVertex from path)
- * @param {bool}   [createUnderneath]   Wether the new shape will appear on top or underneath the contents of the layer. (not working yet)
+ * @param {bool}   [polygon]            Whether bezier handles should be created for the points in the path (ignores "onCurve" properties of oVertex from path)
+ * @param {bool}   [createUnderneath]   Whether the new shape will appear on top or underneath the contents of the layer. (not working yet)
  */
 $.oArtLayer.prototype.drawShape = function(path, lineStyle, fillStyle, polygon, createUnderneath){
   if (typeof fillStyle === 'undefined') var fillStyle = new this.$.oFillStyle();
@@ -959,7 +959,7 @@ $.oArtLayer.prototype.drawContour = function(path, fillStyle){
  * @param {float}        width      the width of the rectangle.
  * @param {float}        height     the height of the rectangle.
  * @param {$.oLineStyle} lineStyle  a line style to use for the rectangle stroke.
- * @param {$.oFillStyle} fillStyle  a fill style to use for the rectange fill.
+ * @param {$.oFillStyle} fillStyle  a fill style to use for the rectangle fill.
  * @returns {$.oShape} the shape containing the added stroke.
  */
 $.oArtLayer.prototype.drawRectangle = function(x, y, width, height, lineStyle, fillStyle){
@@ -1514,7 +1514,7 @@ Object.defineProperty($.oStroke.prototype, "path", {
 
 
 /**
- * The oVertex that are on the stroke (Bezier handles exluded.)
+ * The oVertex that are on the stroke (Bezier handles excluded.)
  * The first is repeated at the last position when the stroke is closed.
  * @name $.oStroke#points
  * @type {$.oVertex[]}
@@ -1583,7 +1583,7 @@ Object.defineProperty($.oStroke.prototype, "style", {
 
 
 /**
- * wether the stroke is a closed shape.
+ * whether the stroke is a closed shape.
  * @name $.oStroke#closed
  * @type {bool}
  */
@@ -1919,7 +1919,7 @@ $.oContour.prototype.toString = function(){
  * @constructor
  * @classdesc
  * The $.oVertex class represents a single control point on a stroke. This class is used to get the index of the point in the stroke path sequence, as well as its position as a float along the stroke's length.
- * The onCurve property describes wether this control point is a bezier handle or a point on the curve.
+ * The onCurve property describes whether this control point is a bezier handle or a point on the curve.
  *
  * @param {$.oStroke} stroke   the stroke that this vertex belongs to
  * @param {float}     x        the x coordinate of the vertex, in drawing space

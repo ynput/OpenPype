@@ -3,13 +3,7 @@ from datetime import datetime
 import logging
 import numbers
 
-import Qt
-from Qt import QtWidgets, QtGui, QtCore
-
-if Qt.__binding__ == "PySide":
-    from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
-    from PyQt4.QtGui import QStyleOptionViewItemV4
+from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.client import (
     get_versions,
@@ -36,9 +30,11 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
     def displayText(self, value, locale):
         if isinstance(value, HeroVersionType):
             return lib.format_version(value, True)
-        assert isinstance(value, numbers.Integral), (
-            "Version is not integer. \"{}\" {}".format(value, str(type(value)))
-        )
+        if not isinstance(value, numbers.Integral):
+            # For cases where no version is resolved like NOT FOUND cases
+            # where a representation might not exist in current database
+            return
+
         return lib.format_version(value)
 
     def paint(self, painter, option, index):
@@ -60,7 +56,10 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
             style = QtWidgets.QApplication.style()
 
         style.drawControl(
-            style.CE_ItemViewItem, option, painter, option.widget
+            QtWidgets.QStyle.CE_ItemViewItem,
+            option,
+            painter,
+            option.widget
         )
 
         painter.save()
@@ -72,9 +71,12 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         pen.setColor(fg_color)
         painter.setPen(pen)
 
-        text_rect = style.subElementRect(style.SE_ItemViewItemText, option)
+        text_rect = style.subElementRect(
+            QtWidgets.QStyle.SE_ItemViewItemText,
+            option
+        )
         text_margin = style.proxy().pixelMetric(
-            style.PM_FocusFrameHMargin, option, option.widget
+            QtWidgets.QStyle.PM_FocusFrameHMargin, option, option.widget
         ) + 1
 
         painter.drawText(
@@ -121,10 +123,14 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         project_name = self.dbcon.active_project()
         # Add all available versions to the editor
         parent_id = item["version_document"]["parent"]
-        version_docs = list(sorted(
-            get_versions(project_name, subset_ids=[parent_id]),
-            key=lambda item: item["name"]
-        ))
+        version_docs = [
+            version_doc
+            for version_doc in sorted(
+                get_versions(project_name, subset_ids=[parent_id]),
+                key=lambda item: item["name"]
+            )
+            if version_doc["data"].get("active", True)
+        ]
 
         hero_versions = list(
             get_hero_versions(

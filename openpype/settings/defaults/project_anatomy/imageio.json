@@ -156,7 +156,7 @@
                 },
                 {
                     "plugins": [
-                        "CreateWriteStill"
+                        "CreateWriteImage"
                     ],
                     "nukeNodeClass": "Write",
                     "knobs": [

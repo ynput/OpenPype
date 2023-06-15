@@ -1,4 +1,15 @@
 {
+    "imageio": {
+        "activate_host_color_management": true,
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
     "simple_creators": [
         {
             "family": "workfile",
@@ -293,16 +304,18 @@
             ]
         }
     },
-    "BatchMovieCreator": {
-        "default_variants": [
-            "Main"
-        ],
-        "default_tasks": [
-            "Compositing"
-        ],
-        "extensions": [
-            ".mov"
-        ]
+    "create": {
+        "BatchMovieCreator": {
+            "default_variants": [
+                "Main"
+            ],
+            "default_tasks": [
+                "Compositing"
+            ],
+            "extensions": [
+                ".mov"
+            ]
+        }
     },
     "publish": {
         "ValidateFrameRange": {

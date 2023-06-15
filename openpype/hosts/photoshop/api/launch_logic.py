@@ -10,10 +10,20 @@ from wsrpc_aiohttp import (
 
 from qtpy import QtCore
 
-from openpype.lib import Logger
-from openpype.pipeline import legacy_io
+from openpype.lib import Logger, StringTemplate
+from openpype.pipeline import (
+    registered_host,
+    Anatomy,
+)
+from openpype.pipeline.workfile import (
+    get_workfile_template_key_from_context,
+    get_last_workfile,
+)
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool
+from openpype.pipeline.context_tools import change_current_context
+from openpype.client import get_asset_by_name
 
 from .ws_stub import PhotoshopServerStub
 
@@ -56,11 +66,11 @@ class MainThreadItem:
         return self._result
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         log.debug("Executing process in main thread")
         if self.done:
@@ -310,23 +320,28 @@ class PhotoshopRoute(WebSocketRoute):
     # client functions
     async def set_context(self, project, asset, task):
         """
-            Sets 'project' and 'asset' to envs, eg. setting context
+            Sets 'project' and 'asset' to envs, eg. setting context.
 
-            Args:
-                project (str)
-                asset (str)
+        Opens last workile from that context if exists.
+
+        Args:
+            project (str)
+            asset (str)
+            task (str
         """
         log.info("Setting context change")
-        log.info("project {} asset {} ".format(project, asset))
-        if project:
-            legacy_io.Session["AVALON_PROJECT"] = project
-            os.environ["AVALON_PROJECT"] = project
-        if asset:
-            legacy_io.Session["AVALON_ASSET"] = asset
-            os.environ["AVALON_ASSET"] = asset
-        if task:
-            legacy_io.Session["AVALON_TASK"] = task
-            os.environ["AVALON_TASK"] = task
+        log.info(f"project {project} asset {asset} task {task}")
+
+        asset_doc = get_asset_by_name(project, asset)
+        change_current_context(asset_doc, task)
+
+        last_workfile_path = self._get_last_workfile_path(project,
+                                                          asset,
+                                                          task)
+        if last_workfile_path and os.path.exists(last_workfile_path):
+            ProcessLauncher.execute_in_main_thread(
+                lambda: stub().open(last_workfile_path))
+
 
     async def read(self):
         log.debug("photoshop.read client calls server server calls "
@@ -334,9 +349,6 @@ class PhotoshopRoute(WebSocketRoute):
         return await self.socket.call('photoshop.read')
 
     # panel routes for tools
-    async def creator_route(self):
-        self._tool_route("creator")
-
     async def workfiles_route(self):
         self._tool_route("workfiles")
 
@@ -344,13 +356,10 @@ class PhotoshopRoute(WebSocketRoute):
         self._tool_route("loader")
 
     async def publish_route(self):
-        self._tool_route("publish")
+        self._tool_route("publisher")
 
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
-
-    async def subsetmanager_route(self):
-        self._tool_route("subsetmanager")
 
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
@@ -362,3 +371,35 @@ class PhotoshopRoute(WebSocketRoute):
 
         # Required return statement.
         return "nothing"
+
+    def _get_last_workfile_path(self, project_name, asset_name, task_name):
+        """Returns last workfile path if exists"""
+        host = registered_host()
+        host_name = "photoshop"
+        template_key = get_workfile_template_key_from_context(
+            asset_name,
+            task_name,
+            host_name,
+            project_name=project_name
+        )
+        anatomy = Anatomy(project_name)
+
+        data = get_template_data_with_names(
+            project_name, asset_name, task_name, host_name
+        )
+        data["root"] = anatomy.roots
+
+        file_template = anatomy.templates[template_key]["file"]
+
+        # Define saving file extension
+        extensions = host.get_workfile_extensions()
+
+        folder_template = anatomy.templates[template_key]["folder"]
+        work_root = StringTemplate.format_strict_template(
+            folder_template, data
+        )
+        last_workfile_path = get_last_workfile(
+            work_root, file_template, data, extensions, True
+        )
+
+        return last_workfile_path

@@ -37,8 +37,8 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
 
         project_name = legacy_io.active_project()
         asset_doc = instance.data["assetEntity"]
-        render_passses = instance.data.get("renderPasses", [])
-        for render_pass in render_passses:
+        render_passes = instance.data.get("renderPasses", [])
+        for render_pass in render_passes:
             is_valid = self.validate_subset_registered(
                 project_name, asset_doc, render_pass
             )

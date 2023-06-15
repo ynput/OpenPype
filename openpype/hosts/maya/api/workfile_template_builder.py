@@ -2,7 +2,7 @@ import json
 
 from maya import cmds
 
-from openpype.pipeline import registered_host
+from openpype.pipeline import registered_host, get_current_asset_name
 from openpype.pipeline.workfile.workfile_template_builder import (
     TemplateAlreadyImported,
     AbstractTemplateBuilder,
@@ -22,6 +22,8 @@ PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 class MayaTemplateBuilder(AbstractTemplateBuilder):
     """Concrete implementation of AbstractTemplateBuilder for maya"""
 
+    use_legacy_creators = True
+
     def import_template(self, path):
         """Import template into current scene.
         Block if a template is already loaded.
@@ -31,7 +33,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             get_template_preset implementation)
 
         Returns:
-            bool: Wether the template was succesfully imported or not
+            bool: Whether the template was successfully imported or not
         """
 
         if cmds.objExists(PLACEHOLDER_SET):
@@ -41,9 +43,43 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             ))
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
-        cmds.file(path, i=True, returnNewNodes=True)
+        new_nodes = cmds.file(
+            path,
+            i=True,
+            returnNewNodes=True,
+            preserveReferences=True,
+            loadReferenceDepth="all",
+        )
+
+        # make default cameras non-renderable
+        default_cameras = [cam for cam in cmds.ls(cameras=True)
+                           if cmds.camera(cam, query=True, startupCamera=True)]
+        for cam in default_cameras:
+            if not cmds.attributeQuery("renderable", node=cam, exists=True):
+                self.log.debug(
+                    "Camera {} has no attribute 'renderable'".format(cam)
+                )
+                continue
+            cmds.setAttr("{}.renderable".format(cam), 0)
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
+
+        imported_sets = cmds.ls(new_nodes, set=True)
+        if not imported_sets:
+            return True
+
+        # update imported sets information
+        asset_name = get_current_asset_name()
+        for node in imported_sets:
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                continue
+            if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
+                continue
+            if not cmds.attributeQuery("asset", node=node, exists=True):
+                continue
+
+            cmds.setAttr(
+                "{}.asset".format(node), asset_name, type="string")
 
         return True
 
@@ -97,7 +133,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         placeholder_name_parts = placeholder_data["builder_type"].split("_")
 
         pos = 1
-        # add famlily in any
+        # add family in any
         placeholder_family = placeholder_data["family"]
         if placeholder_family:
             placeholder_name_parts.insert(pos, placeholder_family)
@@ -215,26 +251,10 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def cleanup_placeholder(self, placeholder, failed):
-        """Hide placeholder, parent them to root
-        add them to placeholder set and register placeholder's parent
-        to keep placeholder info available for future use
+        """Hide placeholder, add them to placeholder set
         """
-
         node = placeholder._scene_identifier
-        node_parent = placeholder.data["parent"]
-        if node_parent:
-            cmds.setAttr(node + ".parent", node_parent, type="string")
 
-        if cmds.getAttr(node + ".index") < 0:
-            cmds.setAttr(node + ".index", placeholder.data["index"])
-
-        holding_sets = cmds.listSets(object=node)
-        if holding_sets:
-            for set in holding_sets:
-                cmds.sets(node, remove=set)
-
-        if cmds.listRelatives(node, p=True):
-            node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
@@ -267,8 +287,6 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             elif not cmds.sets(root, q=True):
                 return
 
-        if placeholder.data["parent"]:
-            cmds.parent(nodes_to_parent, placeholder.data["parent"])
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_form = cmds.xform(
             placeholder.scene_identifier,

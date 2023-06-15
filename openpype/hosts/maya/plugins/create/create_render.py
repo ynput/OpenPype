@@ -54,6 +54,7 @@ class CreateRender(plugin.Creator):
         tileRendering (bool): Instance is set to tile rendering mode. We
             won't submit actual render, but we'll make publish job to wait
             for Tile Assembly job done and then publish.
+        strict_error_checking (bool): Enable/disable error checking on DL
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -180,16 +181,34 @@ class CreateRender(plugin.Creator):
 
         primary_pool = pool_setting["primary_pool"]
         sorted_pools = self._set_default_pool(list(pools), primary_pool)
-        cmds.addAttr(self.instance, longName="primaryPool",
-                     attributeType="enum",
-                     enumName=":".join(sorted_pools))
+        cmds.addAttr(
+            self.instance,
+            longName="primaryPool",
+            attributeType="enum",
+            enumName=":".join(sorted_pools)
+        )
+        cmds.setAttr(
+            "{}.primaryPool".format(self.instance),
+            0,
+            keyable=False,
+            channelBox=True
+        )
 
         pools = ["-"] + pools
         secondary_pool = pool_setting["secondary_pool"]
         sorted_pools = self._set_default_pool(list(pools), secondary_pool)
-        cmds.addAttr("{}.secondaryPool".format(self.instance),
-                     attributeType="enum",
-                     enumName=":".join(sorted_pools))
+        cmds.addAttr(
+            self.instance,
+            longName="secondaryPool",
+            attributeType="enum",
+            enumName=":".join(sorted_pools)
+        )
+        cmds.setAttr(
+            "{}.secondaryPool".format(self.instance),
+            0,
+            keyable=False,
+            channelBox=True
+        )
 
     def _create_render_settings(self):
         """Create instance settings."""
@@ -259,6 +278,12 @@ class CreateRender(plugin.Creator):
                                                default_priority)
             self.data["tile_priority"] = tile_priority
 
+            strict_error_checking = maya_submit_dl.get("strict_error_checking",
+                                                       True)
+            self.data["strict_error_checking"] = strict_error_checking
+
+            # Pool attributes should be last since they will be recreated when
+            # the deadline server changes.
             pool_setting = (self._project_settings["deadline"]
                                                   ["publish"]
                                                   ["CollectDeadlinePools"])

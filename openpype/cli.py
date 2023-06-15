@@ -16,14 +16,15 @@ from .pype_commands import PypeCommands
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
 @click.option("--list-versions", is_flag=True, expose_value=False,
-              help=("list all detected versions. Use With `--use-staging "
-                    "to list staging versions."))
+              help="list all detected versions.")
 @click.option("--validate-version", expose_value=False,
               help="validate given version integrity")
 @click.option("--debug", is_flag=True, expose_value=False,
-              help=("Enable debug"))
+              help="Enable debug")
 @click.option("--verbose", expose_value=False,
               help=("Change OpenPype log level (debug - critical or 0-50)"))
+@click.option("--automatic-tests", is_flag=True, expose_value=False,
+              help=("Run in automatic tests mode"))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -366,11 +367,15 @@ def run(script):
               "--timeout",
               help="Provide specific timeout value for test case",
               default=None)
+@click.option("-so",
+              "--setup_only",
+              help="Only create dbs, do not run tests",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout):
+             timeout, setup_only):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout)
+                             persist, app_variant, timeout, setup_only)
 
 
 @main.command()
@@ -410,11 +415,12 @@ def repack_version(directory):
 @main.command()
 @click.option("--project", help="Project name")
 @click.option(
-    "--dirpath", help="Directory where package is stored", default=None
-)
-def pack_project(project, dirpath):
+    "--dirpath", help="Directory where package is stored", default=None)
+@click.option(
+    "--dbonly", help="Store only Database data", default=False, is_flag=True)
+def pack_project(project, dirpath, dbonly):
     """Create a package of project with all files and database dump."""
-    PypeCommands().pack_project(project, dirpath)
+    PypeCommands().pack_project(project, dirpath, dbonly)
 
 
 @main.command()
@@ -422,27 +428,27 @@ def pack_project(project, dirpath):
 @click.option(
     "--root", help="Replace root which was stored in project", default=None
 )
-def unpack_project(zipfile, root):
+@click.option(
+    "--dbonly", help="Store only Database data", default=False, is_flag=True)
+def unpack_project(zipfile, root, dbonly):
     """Create a package of project with all files and database dump."""
-    PypeCommands().unpack_project(zipfile, root)
+    PypeCommands().unpack_project(zipfile, root, dbonly)
 
 
 @main.command()
 def interactive():
-    """Interative (Python like) console.
+    """Interactive (Python like) console.
 
-    Helpfull command not only for development to directly work with python
+    Helpful command not only for development to directly work with python
     interpreter.
 
     Warning:
-        Executable 'openpype_gui' on windows won't work.
+        Executable 'openpype_gui' on Windows won't work.
     """
 
     from openpype.version import __version__
 
-    banner = "OpenPype {}\nPython {} on {}".format(
-        __version__, sys.version, sys.platform
-    )
+    banner = f"OpenPype {__version__}\nPython {sys.version} on {sys.platform}"
     code.interact(banner)
 
 

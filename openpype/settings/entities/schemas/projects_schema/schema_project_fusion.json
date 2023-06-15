@@ -8,27 +8,78 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
             "collapsible": true,
+            "is_group": true,
             "children": [
                 {
-                    "key": "ocio",
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "copy_fusion_settings",
+            "collapsible": true,
+            "label": "Local Fusion profile settings",
+            "children": [
+                {
+                    "key": "copy_path",
+                    "type": "path",
+                    "label": "Local Fusion profile directory"
+                },
+                {
+                    "type": "boolean",
+                    "key": "copy_status",
+                    "label": "Copy profile on first launch"
+                },
+                {
+                    "key":"force_sync",
+                    "type": "boolean",
+                    "label": "Resync profile on each launch"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
                     "type": "dict",
-                    "label": "OpenColorIO (OCIO)",
                     "collapsible": true,
-                    "checkbox_key": "enabled",
+                    "key": "CreateSaver",
+                    "label": "Create Saver",
+                    "is_group": true,
                     "children": [
                         {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Set OCIO variable for Fusion"
+                            "type": "text",
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "key": "instance_attributes",
+                            "label": "Instance attributes",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {
+                                    "reviewable": "Reviewable"
+                                },
+                                {
+                                    "farm_rendering": "Farm rendering"
+                                }
+                            ]
                         }
                     ]
                 }

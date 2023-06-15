@@ -1,56 +1,51 @@
-import nuke
-from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import (
-    select_nodes,
-    set_avalon_knob_data
+from nukescripts import autoBackdrop
+
+from openpype.hosts.nuke.api import (
+    NukeCreator,
+    maintained_selection,
+    select_nodes
 )
 
 
-class CreateBackdrop(plugin.OpenPypeCreator):
+class CreateBackdrop(NukeCreator):
     """Add Publishable Backdrop"""
 
-    name = "nukenodes"
-    label = "Create Backdrop"
+    identifier = "create_backdrop"
+    label = "Nukenodes (backdrop)"
     family = "nukenodes"
     icon = "file-archive-o"
-    defaults = ["Main"]
+    maintain_selection = True
 
-    def __init__(self, *args, **kwargs):
-        super(CreateBackdrop, self).__init__(*args, **kwargs)
-        self.nodes = nuke.selectedNodes()
-        self.node_color = "0xdfea5dff"
-        return
+    # plugin attributes
+    node_color = "0xdfea5dff"
 
-    def process(self):
-        from nukescripts import autoBackdrop
-        nodes = list()
-        if (self.options or {}).get("useSelection"):
-            nodes = self.nodes
+    def create_instance_node(
+        self,
+        node_name,
+        knobs=None,
+        parent=None,
+        node_type=None
+    ):
+        with maintained_selection():
+            if len(self.selected_nodes) >= 1:
+                select_nodes(self.selected_nodes)
 
-            if len(nodes) >= 1:
-                select_nodes(nodes)
-                bckd_node = autoBackdrop()
-                bckd_node["name"].setValue("{}_BDN".format(self.name))
-                bckd_node["tile_color"].setValue(int(self.node_color, 16))
-                bckd_node["note_font_size"].setValue(24)
-                bckd_node["label"].setValue("[{}]".format(self.name))
-                # add avalon knobs
-                instance = set_avalon_knob_data(bckd_node, self.data)
+            created_node = autoBackdrop()
+            created_node["name"].setValue(node_name)
+            created_node["tile_color"].setValue(int(self.node_color, 16))
+            created_node["note_font_size"].setValue(24)
+            created_node["label"].setValue("[{}]".format(node_name))
 
-                return instance
-            else:
-                msg = str("Please select nodes you "
-                          "wish to add to a container")
-                self.log.error(msg)
-                nuke.message(msg)
-                return
-        else:
-            bckd_node = autoBackdrop()
-            bckd_node["name"].setValue("{}_BDN".format(self.name))
-            bckd_node["tile_color"].setValue(int(self.node_color, 16))
-            bckd_node["note_font_size"].setValue(24)
-            bckd_node["label"].setValue("[{}]".format(self.name))
-            # add avalon knobs
-            instance = set_avalon_knob_data(bckd_node, self.data)
+            return created_node
 
-            return instance
+    def create(self, subset_name, instance_data, pre_create_data):
+        # make sure subset name is unique
+        self.check_existing_subset(subset_name)
+
+        instance = super(CreateBackdrop, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
+
+        return instance

@@ -6,6 +6,19 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (remapped to OCIO)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "template",
+                    "name": "template_host_color_management_remapped"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -14,14 +27,124 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CreateImage",
+                    "key": "ImageCreator",
                     "label": "Create Image",
+                    "checkbox_key": "enabled",
                     "children": [
                         {
+                            "type": "label",
+                            "label": "Manually create instance from layer or group of layers. \n Separate review could be created for this image to be sent to Asset Management System."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active_on_create",
+                            "label": "Active by default"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "mark_for_review",
+                            "label": "Review by default"
+                        },
+                        {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Default Subsets",
+                            "key": "default_variants",
+                            "label": "Default Variants",
                             "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "AutoImageCreator",
+                    "label": "Create Flatten Image",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create image for all visible layers, used for simplified processing. \n Separate review could be created for this image to be sent to Asset Management System."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active_on_create",
+                            "label": "Active by default"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "mark_for_review",
+                            "label": "Review by default"
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_variant",
+                            "label": "Default variant"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ReviewCreator",
+                    "label": "Create Review",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create review instance containing all published image instances or visible layers if no image instance."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active_on_create",
+                            "label": "Active by default"
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_variant",
+                            "label": "Default variant"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "WorkfileCreator",
+                    "label": "Create Workfile",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Auto create workfile instance"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active_on_create",
+                            "label": "Active by default"
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_variant",
+                            "label": "Default variant"
                         }
                     ]
                 }
@@ -39,10 +162,17 @@
                     "is_group": true,
                     "key": "CollectColorCodedInstances",
                     "label": "Collect Color Coded Instances",
+                    "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "label",
                             "label": "Set color for publishable layers, set its resulting family and template for subset name. \nCan create flatten image from published instances.(Applicable only for remote publishing!)"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
                         },
                         {
                             "key": "create_flatten_image",
@@ -117,37 +247,23 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CollectInstances",
-                    "label": "Collect Instances",
-                    "children": [
-                        {
-                            "type": "label",
-                            "label": "Name for flatten image created if no image instance present"
-                        },
-                        {
-                            "type": "text",
-                            "key": "flatten_subset_template",
-                            "label": "Subset template for flatten image"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "CollectReview",
                     "label": "Collect Review",
+                    "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "boolean",
-                            "key": "publish",
-                            "label": "Active"
-                         }
-                     ]
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        }
+                    ]
                  },
                  {
                     "type": "dict",
                     "key": "CollectVersion",
                     "label": "Collect Version",
+                     "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "label",

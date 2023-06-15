@@ -1,6 +1,6 @@
 import uuid
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 
@@ -127,8 +127,7 @@ class OverlayMessageWidget(QtWidgets.QFrame):
         if timeout:
             self._timeout_timer.setInterval(timeout)
 
-        if message_type:
-            set_style_property(self, "type", message_type)
+        set_style_property(self, "type", message_type)
 
         self._timeout_timer.start()
 

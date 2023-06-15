@@ -14,7 +14,7 @@ CURRENT_FILE = os.path.abspath(__file__)
 
 def show_error_messagebox(title, message, detail_message=None):
     """Function will show message and process ends after closing it."""
-    from Qt import QtWidgets, QtCore
+    from qtpy import QtWidgets, QtCore
     from openpype import style
 
     app = QtWidgets.QApplication([])
@@ -81,9 +81,10 @@ def main(argv):
 
     host_name = os.environ["AVALON_APP"].lower()
     if host_name == "photoshop":
+        # TODO refactor launch logic according to AE
         from openpype.hosts.photoshop.api.lib import main
     elif host_name == "aftereffects":
-        from openpype.hosts.aftereffects.api.lib import main
+        from openpype.hosts.aftereffects.api.launch_logic import main
     elif host_name == "harmony":
         from openpype.hosts.harmony.api.lib import main
     else:

@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .border_label_widget import BorderedLabelWidget
 
@@ -17,6 +17,7 @@ class OverviewWidget(QtWidgets.QFrame):
     active_changed = QtCore.Signal()
     instance_context_changed = QtCore.Signal()
     create_requested = QtCore.Signal()
+    convert_requested = QtCore.Signal()
 
     anim_end_value = 200
     anim_duration = 200
@@ -133,6 +134,9 @@ class OverviewWidget(QtWidgets.QFrame):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
+            "controller.reset.started", self._on_controller_reset_start
+        )
+        controller.event_system.add_callback(
             "publish.reset.finished", self._on_publish_reset
         )
         controller.event_system.add_callback(
@@ -146,6 +150,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._subset_list_view = subset_list_view
         self._subset_views_layout = subset_views_layout
 
+        self._create_btn = create_btn
         self._delete_btn = delete_btn
 
         self._subset_attributes_widget = subset_attributes_widget
@@ -172,7 +177,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._current_state = new_state
 
         anim_is_running = (
-            self._change_anim.state() == self._change_anim.Running
+            self._change_anim.state() == QtCore.QAbstractAnimation.Running
         )
         if not animate:
             self._change_visibility_for_state()
@@ -184,9 +189,9 @@ class OverviewWidget(QtWidgets.QFrame):
             self._max_widget_width = self._subset_views_widget.maximumWidth()
 
         if new_state == "create":
-            direction = self._change_anim.Backward
+            direction = QtCore.QAbstractAnimation.Backward
         else:
-            direction = self._change_anim.Forward
+            direction = QtCore.QAbstractAnimation.Forward
         self._change_anim.setDirection(direction)
 
         if not anim_is_running:
@@ -335,12 +340,30 @@ class OverviewWidget(QtWidgets.QFrame):
         self.instance_context_changed.emit()
 
     def _on_convert_requested(self):
-        _, _, convertor_identifiers = self.get_selected_items()
-        self._controller.trigger_convertor_items(convertor_identifiers)
+        self.convert_requested.emit()
 
     def get_selected_items(self):
+        """Selected items in current view widget.
+
+        Returns:
+            tuple[list[str], bool, list[str]]: Selected items. List of
+                instance ids, context is selected, list of selected legacy
+                convertor plugins.
+        """
+
         view = self._subset_views_layout.currentWidget()
         return view.get_selected_items()
+
+    def get_selected_legacy_convertors(self):
+        """Selected legacy convertor identifiers.
+
+        Returns:
+            list[str]: Selected legacy convertor identifiers.
+                Example: ['io.openpype.creators.houdini.legacy']
+        """
+
+        _, _, convertor_identifiers = self.get_selected_items()
+        return convertor_identifiers
 
     def _change_view_type(self):
         idx = self._subset_views_layout.currentIndex()
@@ -388,11 +411,23 @@ class OverviewWidget(QtWidgets.QFrame):
     def _on_publish_start(self):
         """Publish started."""
 
+        self._create_btn.setEnabled(False)
         self._subset_attributes_wrap.setEnabled(False)
+        for idx in range(self._subset_views_layout.count()):
+            widget = self._subset_views_layout.widget(idx)
+            widget.set_active_toggle_enabled(False)
+
+    def _on_controller_reset_start(self):
+        """Controller reset started."""
+
+        for idx in range(self._subset_views_layout.count()):
+            widget = self._subset_views_layout.widget(idx)
+            widget.set_active_toggle_enabled(True)
 
     def _on_publish_reset(self):
-        """Context in controller has been refreshed."""
+        """Context in controller has been reseted."""
 
+        self._create_btn.setEnabled(True)
         self._subset_attributes_wrap.setEnabled(True)
         self._subset_content_widget.setEnabled(self._controller.host_is_valid)
 

@@ -1,6 +1,9 @@
+import os
+import json
+import time
 import collections
 import copy
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import (
     resources,
@@ -13,17 +16,20 @@ from openpype.tools.utils import (
     PixmapLabel,
 )
 
+from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
+from .control import CardMessageTypes
 from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
-    ValidationsWidget,
+    ReportPageWidget,
     PublishFrame,
 
     PublisherTabsWidget,
 
-    StopBtn,
+    SaveBtn,
     ResetBtn,
+    StopBtn,
     ValidateBtn,
     PublishBtn,
 
@@ -44,6 +50,8 @@ class PublisherWindow(QtWidgets.QDialog):
     def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
+        self.setObjectName("PublishWindow")
+
         self.setWindowTitle("OpenPype publisher")
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
@@ -58,8 +66,7 @@ class PublisherWindow(QtWidgets.QDialog):
             on_top_flag = QtCore.Qt.Dialog
 
         self.setWindowFlags(
-            self.windowFlags()
-            | QtCore.Qt.WindowTitleHint
+            QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
@@ -121,6 +128,7 @@ class PublisherWindow(QtWidgets.QDialog):
             "Attach a comment to your publish"
         )
 
+        save_btn = SaveBtn(footer_widget)
         reset_btn = ResetBtn(footer_widget)
         stop_btn = StopBtn(footer_widget)
         validate_btn = ValidateBtn(footer_widget)
@@ -129,6 +137,7 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_bottom_layout = QtWidgets.QHBoxLayout(footer_bottom_widget)
         footer_bottom_layout.setContentsMargins(0, 0, 0, 0)
         footer_bottom_layout.addStretch(1)
+        footer_bottom_layout.addWidget(save_btn, 0)
         footer_bottom_layout.addWidget(reset_btn, 0)
         footer_bottom_layout.addWidget(stop_btn, 0)
         footer_bottom_layout.addWidget(validate_btn, 0)
@@ -176,7 +185,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ValidationsWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, parent)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -250,7 +259,11 @@ class PublisherWindow(QtWidgets.QDialog):
         overview_widget.create_requested.connect(
             self._on_create_request
         )
+        overview_widget.convert_requested.connect(
+            self._on_convert_requested
+        )
 
+        save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
@@ -277,6 +290,9 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
+            "publish.finished.changed", self._on_publish_finished_change
+        )
+        controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
@@ -300,6 +316,13 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.event_system.add_callback(
             "convertors.find.failed", self._on_convertor_error
         )
+        controller.event_system.add_callback(
+            "export_report.request", self._export_report
+        )
+        controller.event_system.add_callback(
+            "copy_report.request", self._copy_report
+        )
+
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -330,8 +353,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._comment_input = comment_input
         self._footer_spacer = footer_spacer
 
-        self._stop_btn = stop_btn
+        self._save_btn = save_btn
         self._reset_btn = reset_btn
+        self._stop_btn = stop_btn
         self._validate_btn = validate_btn
         self._publish_btn = publish_btn
 
@@ -366,7 +390,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def make_sure_is_visible(self):
         if self._window_is_visible:
-            self.setWindowState(QtCore.Qt.ActiveWindow)
+            self.setWindowState(QtCore.Qt.WindowActive)
 
         else:
             self.show()
@@ -388,9 +412,15 @@ class PublisherWindow(QtWidgets.QDialog):
     def closeEvent(self, event):
         self._window_is_visible = False
         self._uninstall_app_event_listener()
-        self.save_changes()
+        # TODO capture changes and ask user if wants to save changes on close
+        if not self._controller.host_context_has_changed:
+            self._save_changes(False)
+        self._comment_input.setText("")  # clear comment
         self._reset_on_show = True
         self._controller.clear_thumbnail_temp_dir_path()
+        # Trigger custom event that should be captured only in UI
+        #   - backend (controller) must not be dependent on this event topic!!!
+        self._controller.event_system.emit("main.window.closed", {}, "window")
         super(PublisherWindow, self).closeEvent(event)
 
     def leaveEvent(self, event):
@@ -421,6 +451,30 @@ class PublisherWindow(QtWidgets.QDialog):
         if event.key() == QtCore.Qt.Key_Escape:
             event.accept()
             return
+
+        save_match = event.matches(QtGui.QKeySequence.Save)
+        if save_match == QtGui.QKeySequence.ExactMatch:
+            if not self._controller.publish_has_started:
+                self._save_changes(True)
+            event.accept()
+            return
+
+        # PySide6 Support
+        if hasattr(event, "keyCombination"):
+            reset_match_result = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.keyCombination())
+            )
+        else:
+            reset_match_result = ResetKeySequence.matches(
+                QtGui.QKeySequence(event.modifiers() | event.key())
+            )
+
+        if reset_match_result == QtGui.QKeySequence.ExactMatch:
+            if not self.controller.publish_is_running:
+                self.reset()
+            event.accept()
+            return
+
         super(PublisherWindow, self).keyPressEvent(event)
 
     def _on_overlay_message(self, event):
@@ -455,8 +509,65 @@ class PublisherWindow(QtWidgets.QDialog):
             self._reset_on_show = False
             self.reset()
 
-    def save_changes(self):
-        self._controller.save_changes()
+    def _checks_before_save(self, explicit_save):
+        """Save of changes may trigger some issues.
+
+        Check if context did change and ask user if he is really sure the
+        save should happen. A dialog can be shown during this method.
+
+        Args:
+            explicit_save (bool): Method was called when user explicitly asked
+                for save. Value affects shown message.
+
+        Returns:
+            bool: Save can happen.
+        """
+
+        if not self._controller.host_context_has_changed:
+            return True
+
+        title = "Host context changed"
+        if explicit_save:
+            message = (
+                "Context has changed since Publisher window was refreshed last"
+                " time.\n\nAre you sure you want to save changes?"
+            )
+        else:
+            message = (
+                "Your action requires save of changes but context has changed"
+                " since Publisher window was refreshed last time.\n\nAre you"
+                " sure you want to continue and save changes?"
+            )
+
+        result = QtWidgets.QMessageBox.question(
+            self,
+            title,
+            message,
+            QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Cancel
+        )
+        return result == QtWidgets.QMessageBox.Save
+
+    def _save_changes(self, explicit_save):
+        """Save changes of Creation part.
+
+        All possible triggers of save changes were moved to main window (here),
+        so it can handle possible issues with save at one place. Do checks,
+        so user don't accidentally save changes to different file or using
+        different context.
+        Moving responsibility to this place gives option to show the dialog and
+        wait for user's response without breaking action he wanted to do.
+
+        Args:
+            explicit_save (bool): Method was called when user explicitly asked
+                for save. Value affects shown message.
+
+        Returns:
+            bool: Save happened successfully.
+        """
+
+        if not self._checks_before_save(explicit_save):
+            return False
+        return self._controller.save_changes()
 
     def reset(self):
         self._controller.reset()
@@ -491,15 +602,18 @@ class PublisherWindow(QtWidgets.QDialog):
         self._help_dialog.show()
 
         window = self.window()
-        desktop = QtWidgets.QApplication.desktop()
-        screen_idx = desktop.screenNumber(window)
-        screen = desktop.screen(screen_idx)
-        screen_rect = screen.geometry()
+        if hasattr(QtWidgets.QApplication, "desktop"):
+            desktop = QtWidgets.QApplication.desktop()
+            screen_idx = desktop.screenNumber(window)
+            screen_geo = desktop.screenGeometry(screen_idx)
+        else:
+            screen = window.screen()
+            screen_geo = screen.geometry()
 
         window_geo = window.geometry()
         dialog_x = window_geo.x() + window_geo.width()
         dialog_right = (dialog_x + self._help_dialog.width()) - 1
-        diff = dialog_right - screen_rect.right()
+        diff = dialog_right - screen_geo.right()
         if diff > 0:
             dialog_x -= diff
 
@@ -549,11 +663,27 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_create_request(self):
         self._go_to_create_tab()
 
+    def _on_convert_requested(self):
+        if not self._save_changes(False):
+            return
+        convertor_identifiers = (
+            self._overview_widget.get_selected_legacy_convertors()
+        )
+        self._controller.trigger_convertor_items(convertor_identifiers)
+
     def _set_current_tab(self, identifier):
         self._tabs_widget.set_current_tab(identifier)
 
     def set_current_tab(self, tab):
-        self._set_current_tab(tab)
+        if tab == "create":
+            self._go_to_create_tab()
+        elif tab == "publish":
+            self._go_to_publish_tab()
+        elif tab == "report":
+            self._go_to_report_tab()
+        elif tab == "details":
+            self._go_to_details_tab()
+
         if not self._window_is_visible:
             self.set_tab_on_reset(tab)
 
@@ -561,16 +691,23 @@ class PublisherWindow(QtWidgets.QDialog):
         return self._tabs_widget.is_current_tab(identifier)
 
     def _go_to_create_tab(self):
-        self._set_current_tab("create")
+        if self._create_tab.isEnabled():
+            self._set_current_tab("create")
+            return
+
+        self._overlay_object.add_message(
+            "Can't switch to Create tab because publishing is paused.",
+            message_type="info"
+        )
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
 
-    def _go_to_details_tab(self):
-        self._set_current_tab("details")
-
     def _go_to_report_tab(self):
         self._set_current_tab("report")
+
+    def _go_to_details_tab(self):
+        self._set_current_tab("details")
 
     def _is_on_create_tab(self):
         return self._is_current_tab("create")
@@ -578,11 +715,11 @@ class PublisherWindow(QtWidgets.QDialog):
     def _is_on_publish_tab(self):
         return self._is_current_tab("publish")
 
-    def _is_on_details_tab(self):
-        return self._is_current_tab("details")
-
     def _is_on_report_tab(self):
         return self._is_current_tab("report")
+
+    def _is_on_details_tab(self):
+        return self._is_current_tab("details")
 
     def _set_publish_overlay_visibility(self, visible):
         if visible:
@@ -598,8 +735,10 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_frame.setVisible(visible)
         self._update_publish_frame_rect()
 
+    def _on_save_clicked(self):
+        self._save_changes(True)
+
     def _on_reset_clicked(self):
-        self.save_changes()
         self.reset()
 
     def _on_stop_clicked(self):
@@ -609,14 +748,17 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
-        self._set_publish_comment()
-        self._controller.validate()
+        if self._save_changes(False):
+            self._set_publish_comment()
+            self._controller.validate()
 
     def _on_publish_clicked(self):
-        self._set_publish_comment()
-        self._controller.publish()
+        if self._save_changes(False):
+            self._set_publish_comment()
+            self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
+        self._save_btn.setEnabled(True)
         self._reset_btn.setEnabled(True)
         if enabled:
             self._stop_btn.setEnabled(False)
@@ -647,16 +789,10 @@ class PublisherWindow(QtWidgets.QDialog):
         #   otherwise 'create' is used
         # - this happens only on first show
         if first_reset:
-            if self._overview_widget.has_items():
-                self._go_to_publish_tab()
-            else:
-                self._go_to_create_tab()
+            self._go_to_create_tab()
 
-        elif (
-            not self._is_on_create_tab()
-            and not self._is_on_publish_tab()
-        ):
-            # If current tab is not 'Create' or 'Publish' go to 'Publish'
+        elif self._is_on_report_tab():
+            # Go to 'Publish' tab if is on 'Details' tab
             #   - this can happen when publishing started and was reset
             #       at that moment it doesn't make sense to stay at publish
             #       specific tabs.
@@ -683,6 +819,11 @@ class PublisherWindow(QtWidgets.QDialog):
         if event["value"]:
             self._validate_btn.setEnabled(False)
 
+    def _on_publish_finished_change(self, event):
+        if event["value"]:
+            # Successful publish, remove comment from UI
+            self._comment_input.setText("")
+
     def _on_publish_stop(self):
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
@@ -707,6 +848,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
+
+        if not publish_enabled:
+            self._publish_frame.set_shrunk_state(True)
 
         self._update_publish_details_widget()
 
@@ -823,6 +967,46 @@ class PublisherWindow(QtWidgets.QDialog):
             widget_x = widget_geo.left() + (widget_geo.width() * 0.5)
             under_mouse = widget_x < global_pos.x()
         self._create_overlay_button.set_under_mouse(under_mouse)
+
+    def _copy_report(self):
+        logs = self._controller.get_publish_report()
+        logs_string = json.dumps(logs, indent=4)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(logs_string)
+        QtWidgets.QApplication.instance().clipboard().setMimeData(
+            mime_data
+        )
+        self._controller.emit_card_message(
+            "Report added to clipboard",
+            CardMessageTypes.info)
+
+    def _export_report(self):
+        default_filename = "publish-report-{}".format(
+            time.strftime("%y%m%d-%H-%M")
+        )
+        default_filepath = os.path.join(
+            os.path.expanduser("~"),
+            default_filename
+        )
+        new_filepath, ext = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save report", default_filepath, ".json"
+        )
+        if not ext or not new_filepath:
+            return
+
+        logs = self._controller.get_publish_report()
+        full_path = new_filepath + ext
+        dir_path = os.path.dirname(full_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        with open(full_path, "w") as file_stream:
+            json.dump(logs, file_stream)
+
+        self._controller.emit_card_message(
+            "Report saved",
+            CardMessageTypes.info)
 
 
 class ErrorsMessageBox(ErrorMessageBox):

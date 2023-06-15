@@ -4,6 +4,7 @@ Basic avalon integration
 import os
 import sys
 import logging
+import contextlib
 
 import pyblish.api
 from qtpy import QtCore
@@ -17,14 +18,13 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
     register_inventory_action_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
-    deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.tools.utils import host_tools
+
 
 from .lib import (
     get_current_comp,
@@ -66,94 +66,98 @@ class FusionLogHandler(logging.Handler):
         self.print(entry)
 
 
-def install():
-    """Install fusion-specific functionality of OpenPype.
+class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
+    name = "fusion"
 
-    This is where you install menus and register families, data
-    and loaders into fusion.
+    def install(self):
+        """Install fusion-specific functionality of OpenPype.
 
-    It is called automatically when installing via
-    `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
+        This is where you install menus and register families, data
+        and loaders into fusion.
 
-    See the Maya equivalent for inspiration on how to implement this.
+        It is called automatically when installing via
+        `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
 
-    """
-    # Remove all handlers associated with the root logger object, because
-    # that one always logs as "warnings" incorrectly.
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+        See the Maya equivalent for inspiration on how to implement this.
 
-    # Attach default logging handler that prints to active comp
-    logger = logging.getLogger()
-    formatter = logging.Formatter(fmt="%(message)s\n")
-    handler = FusionLogHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+        """
+        # Remove all handlers associated with the root logger object, because
+        # that one always logs as "warnings" incorrectly.
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
 
-    pyblish.api.register_host("fusion")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering Fusion plug-ins..")
+        # Attach default logging handler that prints to active comp
+        logger = logging.getLogger()
+        formatter = logging.Formatter(fmt="%(message)s\n")
+        handler = FusionLogHandler()
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
 
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-    register_inventory_action_path(INVENTORY_PATH)
+        pyblish.api.register_host("fusion")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        log.info("Registering Fusion plug-ins..")
 
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
 
-    # Register events
-    register_event_callback("open", on_after_open)
-    register_event_callback("save", on_save)
-    register_event_callback("new", on_new)
+        # Register events
+        register_event_callback("open", on_after_open)
+        register_event_callback("save", on_save)
+        register_event_callback("new", on_new)
 
+    # region workfile io api
+    def has_unsaved_changes(self):
+        comp = get_current_comp()
+        return comp.GetAttrs()["COMPB_Modified"]
 
-def uninstall():
-    """Uninstall all that was installed
+    def get_workfile_extensions(self):
+        return [".comp"]
 
-    This is where you undo everything that was done in `install()`.
-    That means, removing menus, deregistering families and  data
-    and everything. It should be as though `install()` was never run,
-    because odds are calling this function means the user is interested
-    in re-installing shortly afterwards. If, for example, he has been
-    modifying the menu or registered families.
+    def save_workfile(self, dst_path=None):
+        comp = get_current_comp()
+        comp.Save(dst_path)
 
-    """
-    pyblish.api.deregister_host("fusion")
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    log.info("Deregistering Fusion plug-ins..")
+    def open_workfile(self, filepath):
+        # Hack to get fusion, see
+        #   openpype.hosts.fusion.api.pipeline.get_current_comp()
+        fusion = getattr(sys.modules["__main__"], "fusion", None)
 
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
-    deregister_inventory_action_path(INVENTORY_PATH)
+        return fusion.LoadComp(filepath)
 
-    pyblish.api.deregister_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+    def get_current_workfile(self):
+        comp = get_current_comp()
+        current_filepath = comp.GetAttrs()["COMPS_FileName"]
+        if not current_filepath:
+            return None
 
+        return current_filepath
 
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle saver tool passthrough states on instance toggles."""
-    comp = instance.context.data.get("currentComp")
-    if not comp:
-        return
+    def work_root(self, session):
+        work_dir = session["AVALON_WORKDIR"]
+        scene_dir = session.get("AVALON_SCENEDIR")
+        if scene_dir:
+            return os.path.join(work_dir, scene_dir)
+        else:
+            return work_dir
+    # endregion
 
-    savers = [tool for tool in instance if
-              getattr(tool, "ID", None) == "Saver"]
-    if not savers:
-        return
+    @contextlib.contextmanager
+    def maintained_selection(self):
+        from .lib import maintained_selection
+        return maintained_selection()
 
-    # Whether instances should be passthrough based on new value
-    passthrough = not new_value
-    with comp_lock_and_undo_chunk(comp,
-                                  undo_queue_name="Change instance "
-                                                  "active state"):
-        for tool in savers:
-            attrs = tool.GetAttrs()
-            current = attrs["TOOLB_PassThrough"]
-            if current != passthrough:
-                tool.SetAttrs({"TOOLB_PassThrough": passthrough})
+    def get_containers(self):
+        return ls()
+
+    def update_context_data(self, data, changes):
+        comp = get_current_comp()
+        comp.SetData("openpype", data)
+
+    def get_context_data(self):
+        comp = get_current_comp()
+        return comp.GetData("openpype") or {}
 
 
 def on_new(event):
@@ -283,9 +287,51 @@ def parse_container(tool):
     return container
 
 
+# TODO: Function below is currently unused prototypes
+def list_instances(creator_id=None):
+    """Return created instances in current workfile which will be published.
+    Returns:
+        (list) of dictionaries matching instances format
+    """
+
+    comp = get_current_comp()
+    tools = comp.GetToolList(False).values()
+
+    instance_signature = {
+        "id": "pyblish.avalon.instance",
+        "identifier": creator_id
+    }
+    instances = []
+    for tool in tools:
+
+        data = tool.GetData('openpype')
+        if not isinstance(data, dict):
+            continue
+
+        if data.get("id") != instance_signature["id"]:
+            continue
+
+        if creator_id and data.get("identifier") != creator_id:
+            continue
+
+        instances.append(tool)
+
+    return instances
+
+
+# TODO: Function below is currently unused prototypes
+def remove_instance(instance):
+    """Remove instance from current workfile.
+
+    Args:
+        instance (dict): instance representation from subsetmanager model
+    """
+    # Assume instance is a Fusion tool directly
+    instance["tool"].Delete()
+
+
 class FusionEventThread(QtCore.QThread):
     """QThread which will periodically ping Fusion app for any events.
-
     The fusion.UIManager must be set up to be notified of events before they'll
     be reported by this thread, for example:
         fusion.UIManager.AddNotify("Comp_Save", None)

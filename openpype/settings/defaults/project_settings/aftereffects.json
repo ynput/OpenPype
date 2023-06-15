@@ -1,12 +1,27 @@
 {
+    "imageio": {
+        "activate_host_color_management": true,
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
     "create": {
         "RenderCreator": {
             "defaults": [
                 "Main"
-            ]
+            ],
+            "mark_for_review": true
         }
     },
     "publish": {
+        "CollectReview": {
+            "enabled": true
+        },
         "ValidateSceneSettings": {
             "enabled": true,
             "optional": true,

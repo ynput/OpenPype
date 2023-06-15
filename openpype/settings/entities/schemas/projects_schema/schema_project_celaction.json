@@ -6,6 +6,44 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (derived to OCIO)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "template",
+                    "name": "template_host_color_management_derived"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "workfile",
+            "label": "Workfile",
+            "children": [
+                {
+                    "key": "submission_overrides",
+                    "label": "Submission workfile overrides",
+                    "type": "enum",
+                    "multiselection": true,
+                    "enum_items": [
+                        {
+                            "render_chunk": "Pass chunk size"
+                        },
+                        {
+                            "frame_range": "Pass frame range"
+                        },
+                        {
+                            "resolution": "Pass resolution"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

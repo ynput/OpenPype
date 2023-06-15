@@ -184,7 +184,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
-            self.log.info(exp_files)
+            self.log.info(
+                "expected files: {}".format(
+                    json.dumps(exp_files, indent=4, sort_keys=True)
+                )
+            )
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -265,7 +269,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
-
+            colorspace_data = lib.get_color_management_preferences()
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
@@ -318,6 +322,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
+                ),
+                "colorspaceConfig": colorspace_data["config"],
+                "colorspaceDisplay": colorspace_data["display"],
+                "colorspaceView": colorspace_data["view"],
+                "strict_error_checking": render_instance.data.get(
+                    "strict_error_checking", True
                 )
             }
 
@@ -326,7 +336,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 context.data["system_settings"]["modules"]["deadline"]
             )
             if deadline_settings["enabled"]:
-                data["deadlineUrl"] = render_instance.data.get("deadlineUrl")
+                data["deadlineUrl"] = render_instance.data["deadlineUrl"]
 
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]

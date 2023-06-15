@@ -1,37 +1,36 @@
 import pyblish.api
 
 
-class CollectOutputFrameRange(pyblish.api.ContextPlugin):
+class CollectOutputFrameRange(pyblish.api.InstancePlugin):
     """Collect frame start/end from context.
 
     When instances are collected context does not contain `frameStart` and
     `frameEnd` keys yet. They are collected in global plugin
     `CollectContextEntities`.
     """
+
     label = "Collect output frame range"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.4999
     hosts = ["tvpaint"]
+    families = ["review", "render"]
 
-    def process(self, context):
-        for instance in context:
-            frame_start = instance.data.get("frameStart")
-            frame_end = instance.data.get("frameEnd")
-            if frame_start is not None and frame_end is not None:
-                self.log.debug(
-                    "Instance {} already has set frames {}-{}".format(
-                        str(instance), frame_start, frame_end
-                    )
-                )
-                return
+    def process(self, instance):
+        asset_doc = instance.data.get("assetEntity")
+        if not asset_doc:
+            return
 
-            frame_start = context.data.get("frameStart")
-            frame_end = context.data.get("frameEnd")
+        context = instance.context
 
-            instance.data["frameStart"] = frame_start
-            instance.data["frameEnd"] = frame_end
-
-            self.log.info(
-                "Set frames {}-{} on instance {} ".format(
-                    frame_start, frame_end, str(instance)
-                )
+        frame_start = asset_doc["data"]["frameStart"]
+        fps = asset_doc["data"]["fps"]
+        frame_end = frame_start + (
+            context.data["sceneMarkOut"] - context.data["sceneMarkIn"]
+        )
+        instance.data["fps"] = fps
+        instance.data["frameStart"] = frame_start
+        instance.data["frameEnd"] = frame_end
+        self.log.info(
+            "Set frames {}-{} on instance {} ".format(
+                frame_start, frame_end, instance.data["subset"]
             )
+        )

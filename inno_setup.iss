@@ -14,10 +14,10 @@ AppId={{B9E9DF6A-5BDA-42DD-9F35-C09D564C4D93}
 AppName={#MyAppName}
 AppVersion={#AppVer}
 AppVerName={#MyAppName} version {#AppVer}
-AppPublisher=Orbi Tools s.r.o
-AppPublisherURL=http://pype.club
-AppSupportURL=http://pype.club
-AppUpdatesURL=http://pype.club
+AppPublisher=Ynput s.r.o
+AppPublisherURL=https://ynput.io
+AppSupportURL=https://ynput.io
+AppUpdatesURL=https://ynput.io
 DefaultDirName={autopf}\{#MyAppName}\{#AppVer}
 UsePreviousAppDir=no
 DisableProgramGroupPage=yes
@@ -48,8 +48,8 @@ Source: "build\{#build}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
+Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent

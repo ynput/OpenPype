@@ -20,7 +20,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
         )
 
         if host.has_unsaved_changes():
-            self.log.info("Saving current file {}...".format(current_file))
+            self.log.info("Saving current file: {}".format(current_file))
             host.save_workfile(current_file)
         else:
             self.log.debug("No unsaved changes, skipping file save..")

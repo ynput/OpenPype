@@ -1,6 +1,6 @@
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qargparse
 import qtawesome
 
@@ -8,12 +8,61 @@ from openpype.style import (
     get_objected_colors,
     get_style_image_path
 )
-from openpype.lib.attribute_definitions import AbtractAttrDef
+from openpype.lib.attribute_definitions import AbstractAttrDef
 
 log = logging.getLogger(__name__)
 
 
-class CustomTextComboBox(QtWidgets.QComboBox):
+class FocusSpinBox(QtWidgets.QSpinBox):
+    """QSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusSpinBox, self).wheelEvent(event)
+
+
+class FocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+    """QDoubleSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusDoubleSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusDoubleSpinBox, self).wheelEvent(event)
+
+
+class ComboBox(QtWidgets.QComboBox):
+    """Base of combobox with pre-implement changes used in tools.
+
+    Combobox is using styled delegate by default so stylesheets are propagated.
+
+    Items are not changed on scroll until the combobox is in focus.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self._delegate = delegate
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return super(ComboBox, self).wheelEvent(event)
+
+
+class CustomTextComboBox(ComboBox):
     """Combobox which can have different text showed."""
 
     def __init__(self, *args, **kwargs):
@@ -50,6 +99,46 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
                 color
             )
             self.setPalette(filter_palette)
+
+
+class ExpandingTextEdit(QtWidgets.QTextEdit):
+    """QTextEdit which does not have sroll area but expands height."""
+
+    def __init__(self, parent=None):
+        super(ExpandingTextEdit, self).__init__(parent)
+
+        size_policy = self.sizePolicy()
+        size_policy.setHeightForWidth(True)
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Preferred)
+        self.setSizePolicy(size_policy)
+
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        doc = self.document()
+        doc.contentsChanged.connect(self._on_doc_change)
+
+    def _on_doc_change(self):
+        self.updateGeometry()
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        margins = self.contentsMargins()
+
+        document_width = 0
+        if width >= margins.left() + margins.right():
+            document_width = width - margins.left() - margins.right()
+
+        document = self.document().clone()
+        document.setTextWidth(document_width)
+
+        return margins.top() + document.size().height() + margins.bottom()
+
+    def sizeHint(self):
+        width = super(ExpandingTextEdit, self).sizeHint().width()
+        return QtCore.QSize(width, self.heightForWidth(width))
 
 
 class BaseClickableFrame(QtWidgets.QFrame):
@@ -112,19 +201,34 @@ class ClickableLabel(QtWidgets.QLabel):
 
 class ExpandBtnLabel(QtWidgets.QLabel):
     """Label showing expand icon meant for ExpandBtn."""
+    state_changed = QtCore.Signal()
+
+
     def __init__(self, parent):
         super(ExpandBtnLabel, self).__init__(parent)
-        self._source_collapsed_pix = QtGui.QPixmap(
-            get_style_image_path("branch_closed")
-        )
-        self._source_expanded_pix = QtGui.QPixmap(
-            get_style_image_path("branch_open")
-        )
+        self._source_collapsed_pix = self._create_collapsed_pixmap()
+        self._source_expanded_pix = self._create_expanded_pixmap()
 
         self._current_image = self._source_collapsed_pix
         self._collapsed = True
 
-    def set_collapsed(self, collapsed):
+    def _create_collapsed_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("branch_closed")
+        )
+
+    def _create_expanded_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("branch_open")
+        )
+
+    @property
+    def collapsed(self):
+        return self._collapsed
+
+    def set_collapsed(self, collapsed=None):
+        if collapsed is None:
+            collapsed = not self._collapsed
         if self._collapsed == collapsed:
             return
         self._collapsed = collapsed
@@ -133,6 +237,7 @@ class ExpandBtnLabel(QtWidgets.QLabel):
         else:
             self._current_image = self._source_expanded_pix
         self._set_resized_pix()
+        self.state_changed.emit()
 
     def resizeEvent(self, event):
         self._set_resized_pix()
@@ -154,19 +259,53 @@ class ExpandBtnLabel(QtWidgets.QLabel):
 
 
 class ExpandBtn(ClickableFrame):
+    state_changed = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(ExpandBtn, self).__init__(parent)
 
-        pixmap_label = ExpandBtnLabel(self)
+        pixmap_label = self._create_pix_widget(self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(pixmap_label)
 
+        pixmap_label.state_changed.connect(self.state_changed)
+
         self._pixmap_label = pixmap_label
 
-    def set_collapsed(self, collapsed):
+    def _create_pix_widget(self, parent=None):
+        if parent is None:
+            parent = self
+        return ExpandBtnLabel(parent)
+
+    @property
+    def collapsed(self):
+        return self._pixmap_label.collapsed
+
+    def set_collapsed(self, collapsed=None):
         self._pixmap_label.set_collapsed(collapsed)
+
+
+class ClassicExpandBtnLabel(ExpandBtnLabel):
+    def _create_collapsed_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("right_arrow")
+        )
+
+    def _create_expanded_pixmap(self):
+        return QtGui.QPixmap(
+            get_style_image_path("down_arrow")
+        )
+
+
+class ClassicExpandBtn(ExpandBtn):
+    """Same as 'ExpandBtn' but with arrow images."""
+
+    def _create_pix_widget(self, parent=None):
+        if parent is None:
+            parent = self
+        return ClassicExpandBtnLabel(parent)
 
 
 class ImageButton(QtWidgets.QPushButton):
@@ -225,6 +364,9 @@ class PixmapLabel(QtWidgets.QLabel):
         self._empty_pixmap = QtGui.QPixmap(0, 0)
         self._source_pixmap = pixmap
 
+        self._last_width = 0
+        self._last_height = 0
+
     def set_source_pixmap(self, pixmap):
         """Change source image."""
         self._source_pixmap = pixmap
@@ -234,6 +376,12 @@ class PixmapLabel(QtWidgets.QLabel):
         size = self.fontMetrics().height()
         size += size % 2
         return size, size
+
+    def minimumSizeHint(self):
+        width, height = self._get_pix_size()
+        if width != self._last_width or height != self._last_height:
+            self._set_resized_pix()
+        return QtCore.QSize(width, height)
 
     def _set_resized_pix(self):
         if self._source_pixmap is None:
@@ -248,6 +396,8 @@ class PixmapLabel(QtWidgets.QLabel):
                 QtCore.Qt.SmoothTransformation
             )
         )
+        self._last_width = width
+        self._last_height = height
 
     def resizeEvent(self, event):
         self._set_resized_pix()
@@ -283,11 +433,14 @@ class PixmapButtonPainter(QtWidgets.QWidget):
             painter.end()
             return
 
-        painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.HighQualityAntialiasing
+        render_hints = (
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+        if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+            render_hints |= QtGui.QPainter.HighQualityAntialiasing
+
+        painter.setRenderHints(render_hints)
         if self._cached_pixmap is None:
             self._cache_pixmap()
 
@@ -403,7 +556,7 @@ class OptionalAction(QtWidgets.QWidgetAction):
 
     def set_option_tip(self, options):
         sep = "\n\n"
-        if not options or not isinstance(options[0], AbtractAttrDef):
+        if not options or not isinstance(options[0], AbstractAttrDef):
             mak = (lambda opt: opt["name"] + " :\n    " + opt["help"])
             self.option_tip = sep.join(mak(opt) for opt in options)
             return

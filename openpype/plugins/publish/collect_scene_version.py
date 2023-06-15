@@ -2,6 +2,7 @@ import os
 import pyblish.api
 
 from openpype.lib import get_version_from_path
+from openpype.tests.lib import is_in_tests
 
 
 class CollectSceneVersion(pyblish.api.ContextPlugin):
@@ -36,7 +37,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         # tests should be close to regular publish as possible
         if (
             os.environ.get("HEADLESS_PUBLISH")
-            and not os.environ.get("IS_TEST")
+            and not is_in_tests()
             and context.data["hostName"] in self.skip_hosts_headless_publish):
             self.log.debug("Skipping for headless publishing")
             return
@@ -47,10 +48,13 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if '<shell>' in filename:
             return
 
+        self.log.debug(
+            "Collecting scene version from filename: {}".format(filename)
+        )
+
         version = get_version_from_path(filename)
         assert version, "Cannot determine version"
 
         rootVersion = int(version)
         context.data['version'] = rootVersion
-        self.log.info("{}".format(type(rootVersion)))
         self.log.info('Scene Version: %s' % context.data.get('version'))

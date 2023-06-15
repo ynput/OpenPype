@@ -6,6 +6,45 @@
     "is_file": true,
     "children": [
         {
+            "key": "unit_scale_settings",
+            "type": "dict",
+            "label": "Set Unit Scale",
+            "collapsible": true,
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "apply_on_opening",
+                    "type": "boolean",
+                    "label": "Apply on Opening Existing Files"
+                },
+                {
+                    "key": "base_file_unit_scale",
+                    "type": "number",
+                    "label": "Base File Unit Scale",
+                    "decimal": 10
+                }
+            ]
+        },
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_workfile_options",
             "skip_paths": [

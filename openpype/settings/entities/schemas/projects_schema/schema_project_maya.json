@@ -6,30 +6,67 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "open_workfile_post_initialization",
+            "label": "Open Workfile Post Initialization"
+        },
+        {
+            "type": "dict",
+            "key": "explicit_plugins_loading",
+            "label": "Explicit Plugins Loading",
+            "collapsible": true,
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "plugins_to_load",
+                    "label": "Plugins To Load",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                          {
+                              "type": "boolean",
+                              "key": "enabled",
+                              "label": "Enabled"
+                          },
+                          {
+                              "type": "text",
+                              "key": "name",
+                              "label": "Name"
+                          }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
             "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "key": "colorManagementPreference_v2",
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
+                },
+                {
+                    "key": "workfile",
                     "type": "dict",
-                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "label": "Workfile",
                     "collapsible": true,
                     "checkbox_key": "enabled",
                     "children": [
                         {
                             "type": "boolean",
                             "key": "enabled",
-                            "label": "Use Color Management Preference v2"
-                        },
-                        {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
+                            "label": "Enabled"
                         },
                         {
                             "type": "text",
@@ -49,27 +86,57 @@
                     ]
                 },
                 {
-                    "key": "colorManagementPreference",
-                    "type": "dict",
-                    "label": "Color Management Preference (legacy)",
+                    "type": "collapsible-wrap",
+                    "label": "<b>[Deprecated] please migrate all to 'Workfile' and enable it.</b>",
                     "collapsible": true,
+                    "collapsed": true,
                     "children": [
                         {
-                            "type": "path",
-                            "key": "configFilePath",
-                            "label": "OCIO Config File Path",
-                            "multiplatform": true,
-                            "multipath": true
+                            "key": "colorManagementPreference_v2",
+                            "type": "dict",
+                            "label": "[DEPRECATED] Color Management Preference v2 (Maya 2022+)",
+                            "collapsible": true,
+                            "checkbox_key": "enabled",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Use Color Management Preference v2"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "renderSpace",
+                                    "label": "Rendering Space"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "displayName",
+                                    "label": "Display"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "viewName",
+                                    "label": "View"
+                                }
+                            ]
                         },
                         {
-                            "type": "text",
-                            "key": "renderSpace",
-                            "label": "Rendering Space"
-                        },
-                        {
-                            "type": "text",
-                            "key": "viewTransform",
-                            "label": "Viewer Transform"
+                            "key": "colorManagementPreference",
+                            "type": "dict",
+                            "label": "[DEPRECATED] Color Management Preference (legacy)",
+                            "collapsible": true,
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "renderSpace",
+                                    "label": "Rendering Space"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "viewTransform",
+                                    "label": "Viewer Transform (workfile/viewName)"
+                                }
+                            ]
                         }
                     ]
                 }
@@ -127,6 +194,40 @@
                             "label": "Destination Path"
                         }
                     ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "include_handles",
+            "collapsible": true,
+            "label": "Include/Exclude Handles in default playback & render range",
+            "children": [
+                {
+                    "key": "include_handles_default",
+                    "label": "Include handles by default",
+                    "type": "boolean"
+                },
+                {
+                    "type": "list",
+                    "key": "per_task_type",
+                    "label": "Include/exclude handles by task type",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "task-types-enum",
+                                "key": "task_type",
+                                "label": "Task types"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "include_handles",
+                                "label": "Include handles"
+                            }
+                        ]
+                    }
                 }
             ]
         },

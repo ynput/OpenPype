@@ -19,7 +19,7 @@ PS> .\create_env.ps1 --verbose
 #>
 
 $arguments=$ARGS
-$poetry_verbosity=""
+$poetry_verbosity=$null
 if($arguments -eq "--verbose") {
     $poetry_verbosity="-vvv"
 }
@@ -68,7 +68,7 @@ function Install-Poetry() {
     }
 
     $env:POETRY_HOME="$openpype_root\.poetry"
-    $env:POETRY_VERSION="1.1.15"
+    $env:POETRY_VERSION="1.3.2"
     (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | & $($python) -
 }
 
@@ -100,14 +100,14 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
       Set-Location -Path $current_dir
       Exit-WithCode 1
     }
-    # We are supporting python 3.7 only
-    if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+    # We are supporting python 3.9 only
+    if (([int]$matches[1] -lt 3) -or ([int]$matches[2] -lt 9)) {
       Write-Color -Text "FAILED ", "Version ", "[", $p ,"]",  "is old and unsupported" -Color Red, Yellow, Cyan, White, Cyan, Yellow
       Set-Location -Path $current_dir
       Exit-WithCode 1
-    } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
+    } elseif (([int]$matches[1] -eq 3) -and ([int]$matches[2] -gt 9)) {
         Write-Color -Text "WARNING Version ", "[",  $p, "]",  " is unsupported, use at your own risk." -Color Yellow, Cyan, White, Cyan, Yellow
-        Write-Color -Text "*** ", "OpenPype supports only Python 3.7" -Color Yellow, White
+        Write-Color -Text "*** ", "OpenPype supports only Python 3.9" -Color Yellow, White
     } else {
         Write-Color "OK ", "[",  $p, "]" -Color Green, Cyan, White, Cyan
     }
@@ -179,6 +179,14 @@ if ($LASTEXITCODE -ne 0) {
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
+Write-Color -Text ">>> ", "Installing pre-commit hooks ..." -Color Green, White
+& "$env:POETRY_HOME\bin\poetry" run pre-commit install
+if ($LASTEXITCODE -ne 0) {
+    Write-Color -Text "!!! ", "Installation of pre-commit hooks failed." -Color Red, Yellow
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+}
+
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
 try

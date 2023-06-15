@@ -6,7 +6,8 @@ import collections
 import uuid
 import tempfile
 import shutil
-from abc import ABCMeta, abstractmethod, abstractproperty
+import inspect
+from abc import ABCMeta, abstractmethod
 
 import six
 import pyblish.api
@@ -18,6 +19,7 @@ from openpype.client import (
 )
 from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import (
+    UIDef,
     serialize_attr_defs,
     deserialize_attr_defs,
 )
@@ -25,8 +27,8 @@ from openpype.pipeline import (
     PublishValidationError,
     KnownPublishError,
     registered_host,
-    legacy_io,
     get_process_id,
+    OptionalPyblishPluginMixin,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -38,6 +40,7 @@ from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
     ConvertorsOperationFailed,
 )
+from openpype.pipeline.publish import get_publish_instance_label
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -45,6 +48,7 @@ PLUGIN_ORDER_OFFSET = 0.5
 
 class CardMessageTypes:
     standard = None
+    info = "info"
     error = "error"
 
 
@@ -161,7 +165,7 @@ class AssetDocsCache:
         return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
-class PublishReport:
+class PublishReportMaker:
     """Report for single publishing process.
 
     Report keeps current state of publishing and currently processed plugin.
@@ -169,6 +173,8 @@ class PublishReport:
 
     def __init__(self, controller):
         self.controller = controller
+        self._create_discover_result = None
+        self._convert_discover_result = None
         self._publish_discover_result = None
         self._plugin_data = []
         self._plugin_data_with_plugin = []
@@ -181,6 +187,10 @@ class PublishReport:
     def reset(self, context, create_context):
         """Reset report and clear all data."""
 
+        self._create_discover_result = create_context.creator_discover_result
+        self._convert_discover_result = (
+            create_context.convertor_discover_result
+        )
         self._publish_discover_result = create_context.publish_discover_result
         self._plugin_data = []
         self._plugin_data_with_plugin = []
@@ -212,7 +222,12 @@ class PublishReport:
 
     def _add_plugin_data_item(self, plugin):
         if plugin in self._stored_plugins:
-            raise ValueError("Plugin is already stored")
+            # A plugin would be processed more than once. What can cause it:
+            #   - there is a bug in controller
+            #   - plugin class is imported into multiple files
+            #       - this can happen even with base classes from 'pyblish'
+            raise ValueError(
+                "Plugin '{}' is already stored".format(str(plugin)))
 
         self._stored_plugins.append(plugin)
 
@@ -231,6 +246,7 @@ class PublishReport:
             label = plugin.label
 
         return {
+            "id": plugin.id,
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
@@ -293,9 +309,19 @@ class PublishReport:
                 if plugin not in self._stored_plugins:
                     plugins_data.append(self._create_plugin_data_item(plugin))
 
-        crashed_file_paths = {}
+        reports = []
+        if self._create_discover_result is not None:
+            reports.append(self._create_discover_result)
+
+        if self._convert_discover_result is not None:
+            reports.append(self._convert_discover_result)
+
         if self._publish_discover_result is not None:
-            items = self._publish_discover_result.crashed_file_paths.items()
+            reports.append(self._publish_discover_result)
+
+        crashed_file_paths = {}
+        for report in reports:
+            items = report.crashed_file_paths.items()
             for filepath, exc_info in items:
                 crashed_file_paths[filepath] = "".join(
                     traceback.format_exception(*exc_info)
@@ -306,7 +332,7 @@ class PublishReport:
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
-            "id": str(uuid.uuid4()),
+            "id": uuid.uuid4().hex,
             "report_version": "1.0.0"
         }
 
@@ -321,10 +347,12 @@ class PublishReport:
     def _extract_instance_data(self, instance, exists):
         return {
             "name": instance.data.get("name"),
-            "label": instance.data.get("label"),
+            "label": get_publish_instance_label(instance),
             "family": instance.data["family"],
             "families": instance.data.get("families") or [],
-            "exists": exists
+            "exists": exists,
+            "creator_identifier": instance.data.get("creator_identifier"),
+            "instance_id": instance.data.get("instance_id"),
         }
 
     def _extract_instance_log_items(self, result):
@@ -370,8 +398,11 @@ class PublishReport:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+            # Action result does not have 'is_validation_error'
+            is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
+                "is_validation_error": is_validation_error,
                 "msg": str(exception),
                 "filename": str(fname),
                 "lineno": str(line_no),
@@ -408,13 +439,15 @@ class PublishPluginsProxy:
             plugin_id = plugin.id
             plugins_by_id[plugin_id] = plugin
 
-            action_ids = set()
+            action_ids = []
             action_ids_by_plugin_id[plugin_id] = action_ids
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
                 action_id = action.id
-                action_ids.add(action_id)
+                if action_id in actions_by_id:
+                    continue
+                action_ids.append(action_id)
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
@@ -443,7 +476,7 @@ class PublishPluginsProxy:
         return plugin.id
 
     def get_plugin_action_items(self, plugin_id):
-        """Get plugin action items for plugin by it's id.
+        """Get plugin action items for plugin by its id.
 
         Args:
             plugin_id (str): Publish plugin id.
@@ -550,7 +583,7 @@ class ValidationErrorItem:
         context_validation,
         title,
         description,
-        detail,
+        detail
     ):
         self.instance_id = instance_id
         self.instance_label = instance_label
@@ -659,6 +692,8 @@ class PublishValidationErrorsReport:
 
             for title in titles:
                 grouped_error_items.append({
+                    "id": uuid.uuid4().hex,
+                    "plugin_id": plugin_id,
                     "plugin_action_items": list(plugin_action_items),
                     "error_items": error_items_by_title[title],
                     "title": title
@@ -766,6 +801,13 @@ class PublishValidationErrors:
 
         # Make sure the cached report is cleared
         plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        if not error.title:
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
+            else:
+                plugin_label = plugin.__name__
+            error.title = plugin_label
+
         self._error_items.append(
             ValidationErrorItem.from_result(plugin_id, error, instance)
         )
@@ -826,14 +868,14 @@ class CreatorItem:
         label,
         group_label,
         icon,
-        instance_attributes_defs,
         description,
         detailed_description,
         default_variant,
         default_variants,
         create_allow_context_change,
         create_allow_thumbnail,
-        pre_create_attributes_defs
+        show_order,
+        pre_create_attributes_defs,
     ):
         self.identifier = identifier
         self.creator_type = creator_type
@@ -847,11 +889,8 @@ class CreatorItem:
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
         self.create_allow_thumbnail = create_allow_thumbnail
-        self.instance_attributes_defs = instance_attributes_defs
+        self.show_order = show_order
         self.pre_create_attributes_defs = pre_create_attributes_defs
-
-    def get_instance_attr_defs(self):
-        return self.instance_attributes_defs
 
     def get_group_label(self):
         return self.group_label
@@ -874,6 +913,7 @@ class CreatorItem:
         pre_create_attr_defs = None
         create_allow_context_change = None
         create_allow_thumbnail = None
+        show_order = creator.order
         if creator_type is CreatorTypes.artist:
             description = creator.get_description()
             detail_description = creator.get_detail_description()
@@ -882,6 +922,7 @@ class CreatorItem:
             pre_create_attr_defs = creator.get_pre_create_attr_defs()
             create_allow_context_change = creator.create_allow_context_change
             create_allow_thumbnail = creator.create_allow_thumbnail
+            show_order = creator.show_order
 
         identifier = creator.identifier
         return cls(
@@ -891,26 +932,20 @@ class CreatorItem:
             creator.label or identifier,
             creator.get_group_label(),
             creator.get_icon(),
-            creator.get_instance_attr_defs(),
             description,
             detail_description,
             default_variant,
             default_variants,
             create_allow_context_change,
             create_allow_thumbnail,
-            pre_create_attr_defs
+            show_order,
+            pre_create_attr_defs,
         )
 
     def to_data(self):
-        instance_attributes_defs = None
-        if self.instance_attributes_defs is not None:
-            instance_attributes_defs = serialize_attr_defs(
-                self.instance_attributes_defs
-            )
-
         pre_create_attributes_defs = None
         if self.pre_create_attributes_defs is not None:
-            instance_attributes_defs = serialize_attr_defs(
+            pre_create_attributes_defs = serialize_attr_defs(
                 self.pre_create_attributes_defs
             )
 
@@ -927,18 +962,12 @@ class CreatorItem:
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
             "create_allow_thumbnail": self.create_allow_thumbnail,
-            "instance_attributes_defs": instance_attributes_defs,
+            "show_order": self.show_order,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
 
     @classmethod
     def from_data(cls, data):
-        instance_attributes_defs = data["instance_attributes_defs"]
-        if instance_attributes_defs is not None:
-            data["instance_attributes_defs"] = deserialize_attr_defs(
-                instance_attributes_defs
-            )
-
         pre_create_attributes_defs = data["pre_create_attributes_defs"]
         if pre_create_attributes_defs is not None:
             data["pre_create_attributes_defs"] = deserialize_attr_defs(
@@ -960,7 +989,8 @@ class AbstractPublisherController(object):
     access objects directly but by using wrappers that can be serialized.
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def log(self):
         """Controller's logger object.
 
@@ -970,13 +1000,15 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def event_system(self):
         """Inner event system for publisher controller."""
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def project_name(self):
         """Current context project name.
 
@@ -986,7 +1018,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def current_asset_name(self):
         """Current context asset name.
 
@@ -996,7 +1029,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def current_task_name(self):
         """Current context task name.
 
@@ -1006,7 +1040,21 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
+    def host_context_has_changed(self):
+        """Host context changed after last reset.
+
+        'CreateContext' has this option available using 'context_has_changed'.
+
+        Returns:
+            bool: Context has changed.
+        """
+
+        pass
+
+    @property
+    @abstractmethod
     def host_is_valid(self):
         """Host is valid for creation part.
 
@@ -1019,7 +1067,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def instances(self):
         """Collected/created instances.
 
@@ -1130,7 +1179,13 @@ class AbstractPublisherController(object):
 
     @abstractmethod
     def save_changes(self):
-        """Save changes in create context."""
+        """Save changes in create context.
+
+        Save can crash because of unexpected errors.
+
+        Returns:
+            bool: Save was successful.
+        """
 
         pass
 
@@ -1141,7 +1196,19 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
+    def publish_has_started(self):
+        """Has publishing finished.
+
+        Returns:
+            bool: If publishing finished and all plugins were iterated.
+        """
+
+        pass
+
+    @property
+    @abstractmethod
     def publish_has_finished(self):
         """Has publishing finished.
 
@@ -1151,7 +1218,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_is_running(self):
         """Publishing is running right now.
 
@@ -1161,7 +1229,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_validated(self):
         """Publish validation passed.
 
@@ -1171,7 +1240,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_crashed(self):
         """Publishing crashed for any reason.
 
@@ -1181,7 +1251,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_has_validation_errors(self):
         """During validation happened at least one validation error.
 
@@ -1191,7 +1262,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_max_progress(self):
         """Get maximum possible progress number.
 
@@ -1201,7 +1273,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_progress(self):
         """Current progress number.
 
@@ -1211,7 +1284,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def publish_error_msg(self):
         """Current error message which cause fail of publishing.
 
@@ -1263,7 +1337,8 @@ class AbstractPublisherController(object):
 
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def convertor_items(self):
         pass
 
@@ -1352,6 +1427,7 @@ class BasePublisherController(AbstractPublisherController):
         self._publish_has_validation_errors = False
         self._publish_has_crashed = False
         # All publish plugins are processed
+        self._publish_has_started = False
         self._publish_has_finished = False
         self._publish_max_progress = 0
         self._publish_progress = 0
@@ -1382,7 +1458,8 @@ class BasePublisherController(AbstractPublisherController):
             "show.card.message" - Show card message request (UI related).
             "instances.refresh.finished" - Instances are refreshed.
             "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Publish context reset finished.
+            "publish.reset.finished" - Reset finished.
+            "controller.reset.started" - Controller reset started.
             "controller.reset.finished" - Controller reset finished.
             "publish.process.started" - Publishing started. Can be started from
                 paused state.
@@ -1421,7 +1498,16 @@ class BasePublisherController(AbstractPublisherController):
     def _set_host_is_valid(self, value):
         if self._host_is_valid != value:
             self._host_is_valid = value
-            self._emit_event("publish.host_is_valid.changed", {"value": value})
+            self._emit_event(
+                "publish.host_is_valid.changed", {"value": value}
+            )
+
+    def _get_publish_has_started(self):
+        return self._publish_has_started
+
+    def _set_publish_has_started(self, value):
+        if value != self._publish_has_started:
+            self._publish_has_started = value
 
     def _get_publish_has_finished(self):
         return self._publish_has_finished
@@ -1445,7 +1531,9 @@ class BasePublisherController(AbstractPublisherController):
     def _set_publish_has_validated(self, value):
         if self._publish_has_validated != value:
             self._publish_has_validated = value
-            self._emit_event("publish.has_validated.changed", {"value": value})
+            self._emit_event(
+                "publish.has_validated.changed", {"value": value}
+            )
 
     def _get_publish_has_crashed(self):
         return self._publish_has_crashed
@@ -1493,6 +1581,9 @@ class BasePublisherController(AbstractPublisherController):
     host_is_valid = property(
         _get_host_is_valid, _set_host_is_valid
     )
+    publish_has_started = property(
+        _get_publish_has_started, _set_publish_has_started
+    )
     publish_has_finished = property(
         _get_publish_has_finished, _set_publish_has_finished
     )
@@ -1521,10 +1612,8 @@ class BasePublisherController(AbstractPublisherController):
     def _reset_attributes(self):
         """Reset most of attributes that can be reset."""
 
-        # Reset creator items
-        self._creator_items = None
-
         self.publish_is_running = False
+        self.publish_has_started = False
         self.publish_has_validated = False
         self.publish_has_crashed = False
         self.publish_has_validation_errors = False
@@ -1589,20 +1678,19 @@ class PublisherController(BasePublisherController):
     Handle both creation and publishing parts.
 
     Args:
-        dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
     _log = None
 
-    def __init__(self, dbcon=None, headless=False):
+    def __init__(self, headless=False):
         super(PublisherController, self).__init__()
 
         self._host = registered_host()
         self._headless = headless
 
         self._create_context = CreateContext(
-            self._host, dbcon, headless=headless, reset=False
+            self._host, headless=headless, reset=False
         )
 
         self._publish_plugins_proxy = None
@@ -1610,7 +1698,7 @@ class PublisherController(BasePublisherController):
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
-        self._publish_report = PublishReport(self)
+        self._publish_report = PublishReportMaker(self)
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
 
@@ -1645,10 +1733,7 @@ class PublisherController(BasePublisherController):
             str: Project name.
         """
 
-        if not hasattr(self._host, "get_current_context"):
-            return legacy_io.active_project()
-
-        return self._host.get_current_context()["project_name"]
+        return self._create_context.get_current_project_name()
 
     @property
     def current_asset_name(self):
@@ -1658,10 +1743,7 @@ class PublisherController(BasePublisherController):
             Union[str, None]: Asset name or None if asset is not set.
         """
 
-        if not hasattr(self._host, "get_current_context"):
-            return legacy_io.Session["AVALON_ASSET"]
-
-        return self._host.get_current_context()["asset_name"]
+        return self._create_context.get_current_asset_name()
 
     @property
     def current_task_name(self):
@@ -1671,10 +1753,11 @@ class PublisherController(BasePublisherController):
             Union[str, None]: Task name or None if task is not set.
         """
 
-        if not hasattr(self._host, "get_current_context"):
-            return legacy_io.Session["AVALON_TASK"]
+        return self._create_context.get_current_task_name()
 
-        return self._host.get_current_context()["task_name"]
+    @property
+    def host_context_has_changed(self):
+        return self._create_context.context_has_changed
 
     @property
     def instances(self):
@@ -1751,12 +1834,14 @@ class PublisherController(BasePublisherController):
         """Reset everything related to creation and publishing."""
         self.stop_publish()
 
+        self._emit_event("controller.reset.started")
+
         self.host_is_valid = self._create_context.host_is_valid
 
         self._create_context.reset_preparation()
 
         # Reset avalon context
-        self._create_context.reset_avalon_context()
+        self._create_context.reset_current_context()
 
         self._asset_docs_cache.reset()
 
@@ -1779,6 +1864,8 @@ class PublisherController(BasePublisherController):
         self._resetting_plugins = True
 
         self._create_context.reset_plugins()
+        # Reset creator items
+        self._creator_items = None
 
         self._resetting_plugins = False
 
@@ -1879,12 +1966,12 @@ class PublisherController(BasePublisherController):
                 which should be attribute definitions returned.
         """
 
+        # NOTE it would be great if attrdefs would have hash method implemented
+        #   so they could be used as keys in dictionary
         output = []
         _attr_defs = {}
         for instance in instances:
-            creator_identifier = instance.creator_identifier
-            creator_item = self.creator_items[creator_identifier]
-            for attr_def in creator_item.instance_attributes_defs:
+            for attr_def in instance.creator_attribute_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
                     if attr_def == _attr_def:
@@ -1937,6 +2024,8 @@ class PublisherController(BasePublisherController):
                 plugin_values = all_plugin_values[plugin_name]
 
                 for attr_def in attr_defs:
+                    if isinstance(attr_def, UIDef):
+                        continue
                     if attr_def.key not in plugin_values:
                         plugin_values[attr_def.key] = []
                     attr_values = plugin_values[attr_def.key]
@@ -1988,7 +2077,15 @@ class PublisherController(BasePublisherController):
         )
 
     def trigger_convertor_items(self, convertor_identifiers):
-        self.save_changes()
+        """Trigger legacy item convertors.
+
+        This functionality requires to save and reset CreateContext. The reset
+        is needed so Creators can collect converted items.
+
+        Args:
+            convertor_identifiers (list[str]): Identifiers of convertor
+                plugins.
+        """
 
         success = True
         try:
@@ -2018,9 +2115,10 @@ class PublisherController(BasePublisherController):
 
         success = True
         try:
-            self._create_context.create(
+            self._create_context.create_with_unified_error(
                 creator_identifier, subset_name, instance_data, options
             )
+
         except CreatorsOperationFailed as exc:
             success = False
             self._emit_event(
@@ -2034,13 +2132,33 @@ class PublisherController(BasePublisherController):
         self._on_create_instance_change()
         return success
 
-    def save_changes(self):
-        """Save changes happened during creation."""
+    def save_changes(self, show_message=True):
+        """Save changes happened during creation.
+
+        Trigger save of changes using host api. This functionality does not
+        validate anything. It is required to do checks before this method is
+        called to be able to give user actionable response e.g. check of
+        context using 'host_context_has_changed'.
+
+        Args:
+            show_message (bool): Show message that changes were
+                saved successfully.
+
+        Returns:
+            bool: Save of changes was successful.
+        """
+
         if not self._create_context.host_is_valid:
-            return
+            # TODO remove
+            # Fake success save when host is not valid for CreateContext
+            #   this is for testing as experimental feature
+            return True
 
         try:
             self._create_context.save_changes()
+            if show_message:
+                self.emit_card_message("Saved changes..")
+            return True
 
         except CreatorsOperationFailed as exc:
             self._emit_event(
@@ -2051,16 +2169,17 @@ class PublisherController(BasePublisherController):
                 }
             )
 
+        return False
+
     def remove_instances(self, instance_ids):
         """Remove instances based on instance ids.
 
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # QUESTION Expect that instances are really removed? In that case save
-        #   reset is not required and save changes too.
-        self.save_changes()
 
+        # QUESTION Expect that instances are really removed? In that case reset
+        #    is not required.
         self._remove_instances_from_context(instance_ids)
 
         self._on_create_instance_change()
@@ -2131,12 +2250,22 @@ class PublisherController(BasePublisherController):
             self._publish_comment_is_set = True
 
     def publish(self):
-        """Run publishing."""
+        """Run publishing.
+
+        Make sure all changes are saved before method is called (Call
+        'save_changes' and check output).
+        """
+
         self._publish_up_validation = False
         self._start_publish()
 
     def validate(self):
-        """Run publishing and stop after Validation."""
+        """Run publishing and stop after Validation.
+
+        Make sure all changes are saved before method is called (Call
+        'save_changes' and check output).
+        """
+
         if self.publish_has_validated:
             return
         self._publish_up_validation = True
@@ -2147,10 +2276,8 @@ class PublisherController(BasePublisherController):
         if self.publish_is_running:
             return
 
-        # Make sure changes are saved
-        self.save_changes()
-
         self.publish_is_running = True
+        self.publish_has_started = True
 
         self._emit_event("publish.process.started")
 
@@ -2205,6 +2332,37 @@ class PublisherController(BasePublisherController):
     def _process_main_thread_item(self, item):
         item()
 
+    def _is_publish_plugin_active(self, plugin):
+        """Decide if publish plugin is active.
+
+        This is hack because 'active' is mis-used in mixin
+        'OptionalPyblishPluginMixin' where 'active' is used for default value
+        of optional plugins. Because of that is 'active' state of plugin
+        which inherit from 'OptionalPyblishPluginMixin' ignored. That affects
+        headless publishing inside host, potentially remote publishing.
+
+        We have to change that to match pyblish base, but we can do that
+        only when all hosts use Publisher because the change requires
+        change of settings schemas.
+
+        Args:
+            plugin (pyblish.Plugin): Plugin which should be checked if is
+                active.
+
+        Returns:
+            bool: Is plugin active.
+        """
+
+        if plugin.active:
+            return True
+
+        if not plugin.optional:
+            return False
+
+        if OptionalPyblishPluginMixin in inspect.getmro(plugin):
+            return True
+        return False
+
     def _publish_iterator(self):
         """Main logic center of publishing.
 
@@ -2213,11 +2371,9 @@ class PublisherController(BasePublisherController):
         states of currently processed publish plugin and instance. Also
         change state of processed orders like validation order has passed etc.
 
-        Also stops publishing if should stop on validation.
-
-        QUESTION:
-        Does validate button still make sense?
+        Also stops publishing, if should stop on validation.
         """
+
         for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
@@ -2240,7 +2396,13 @@ class PublisherController(BasePublisherController):
                 yield MainThreadItem(self.stop_publish)
 
             # Add plugin to publish report
-            self._publish_report.add_plugin_iter(plugin, self._publish_context)
+            self._publish_report.add_plugin_iter(
+                plugin, self._publish_context)
+
+            # WARNING This is hack fix for optional plugins
+            if not self._is_publish_plugin_active(plugin):
+                self._publish_report.set_plugin_skipped()
+                continue
 
             # Trigger callback that new plugin is going to be processed
             plugin_label = plugin.__name__
@@ -2317,14 +2479,14 @@ class PublisherController(BasePublisherController):
             plugin, self._publish_context, instance
         )
 
-        self._publish_report.add_result(result)
-
         exception = result.get("error")
         if exception:
+            has_validation_error = False
             if (
                 isinstance(exception, PublishValidationError)
                 and not self.publish_has_validated
             ):
+                has_validation_error = True
                 self._add_validation_error(result)
 
             else:
@@ -2338,6 +2500,10 @@ class PublisherController(BasePublisherController):
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True
 
+            result["is_validation_error"] = has_validation_error
+
+        self._publish_report.add_result(result)
+
         self._publish_next_process()
 
 
@@ -2348,7 +2514,11 @@ def collect_families_from_instances(instances, only_active=False):
         instances(list<pyblish.api.Instance>): List of publish instances from
             which are families collected.
         only_active(bool): Return families only for active instances.
+
+    Returns:
+        list[str]: Families available on instances.
     """
+
     all_families = set()
     for instance in instances:
         if only_active:

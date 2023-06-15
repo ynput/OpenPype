@@ -1,4 +1,3 @@
-import os
 import pyblish.api
 from openpype.pipeline import PublishXmlValidationError
 
@@ -16,15 +15,15 @@ class ValidateWorkfileProjectName(pyblish.api.ContextPlugin):
     def process(self, context):
         workfile_context = context.data.get("workfile_context")
         # If workfile context is missing than project is matching to
-        #   `AVALON_PROJECT` value for 100%
+        #   global project
         if not workfile_context:
             self.log.info(
                 "Workfile context (\"workfile_context\") is not filled."
             )
             return
 
-        workfile_project_name = workfile_context["project"]
-        env_project_name = os.environ["AVALON_PROJECT"]
+        workfile_project_name = workfile_context["project_name"]
+        env_project_name = context.data["projectName"]
         if workfile_project_name == env_project_name:
             self.log.info((
                 "Both workfile project and environment project are same. {}"

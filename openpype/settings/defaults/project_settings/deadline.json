@@ -23,7 +23,7 @@
             "enabled": true,
             "optional": false,
             "active": true,
-            "tile_assembler_plugin": "OpenPypeTileAssembler",
+            "tile_assembler_plugin": "DraftTileAssembler",
             "use_published": true,
             "import_reference": false,
             "asset_dependencies": true,
@@ -33,13 +33,31 @@
             "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
-            "scene_patches": []
+            "scene_patches": [],
+            "strict_error_checking": true
+        },
+        "MaxSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "use_published": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "group": "none"
+        },
+        "FusionSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "concurrent_tasks": 1,
+            "group": ""
         },
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,
-            "use_published": true,
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
@@ -101,6 +119,12 @@
                     ".*"
                 ],
                 "harmony": [
+                    ".*"
+                ],
+                "max": [
+                    ".*"
+                ],
+                "fusion": [
                     ".*"
                 ]
             }

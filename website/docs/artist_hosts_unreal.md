@@ -33,11 +33,11 @@ OpenPype global tools can be found in Unreal's toolbar and in the *Tools* main m
 
 ![Unreal OpenPype Menu](assets/unreal_openpype_tools.png)
 
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Static Mesh
 

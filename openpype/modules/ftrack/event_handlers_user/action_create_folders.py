@@ -51,7 +51,7 @@ class CreateFolders(BaseAction):
             },
             {
                 "type": "label",
-                "value": "With all chilren entities"
+                "value": "With all children entities"
             },
             {
                 "name": "children_included",

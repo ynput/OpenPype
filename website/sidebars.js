@@ -8,7 +8,24 @@ module.exports = {
                 "artist_getting_started",
                 "artist_concepts",
                 "artist_publish",
-                "artist_tools",
+                {
+                    type: "category",
+                    collapsed: true,
+                    label: "Tools",
+                    link: {type: 'doc', id: 'artist_tools'},
+                    items: [
+                        "artist_tools_context_manager",
+                        "artist_tools_creator",
+                        "artist_tools_loader",
+                        "artist_tools_library_loader",
+                        "artist_tools_publisher",
+                        "artist_tools_inventory",
+                        "artist_tools_workfiles",
+                        "artist_tools_look_assigner",
+                        "artist_tools_subset_manager",
+                        "artist_tools_sync_queue"
+                    ],
+                },
                 "artist_install"
             ],
         },
@@ -27,11 +44,13 @@ module.exports = {
                         "artist_hosts_maya_multiverse",
                         "artist_hosts_maya_yeti",
                         "artist_hosts_maya_xgen",
+                        "artist_hosts_maya_arnold",
                         "artist_hosts_maya_vray",
                         "artist_hosts_maya_redshift",
                     ],
                 },
                 "artist_hosts_blender",
+                "artist_hosts_3dsmax",
                 "artist_hosts_harmony",
                 "artist_hosts_houdini",
                 "artist_hosts_aftereffects",
@@ -68,6 +87,7 @@ module.exports = {
             type: "category",
             label: "Configuration",
             items: [
+                "admin_environment",
                 "admin_settings",
                 "admin_settings_system",
                 "admin_settings_project_anatomy",
@@ -106,6 +126,7 @@ module.exports = {
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
+                "admin_hosts_photoshop",
                 "admin_hosts_aftereffects",
                 "admin_hosts_tvpaint"
             ],
@@ -158,6 +179,8 @@ module.exports = {
                 "dev_publishing"
             ]
         },
-        "dev_deadline"
+        "dev_deadline",
+        "dev_blender",
+        "dev_colorspace"
     ]
 };

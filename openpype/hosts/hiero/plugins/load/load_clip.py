@@ -6,6 +6,10 @@ from openpype.pipeline import (
     legacy_io,
     get_representation_path,
 )
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 import openpype.hosts.hiero.api as phiero
 
 
@@ -17,7 +21,10 @@ class LoadClip(phiero.SequenceLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip"
     order = -10
@@ -33,6 +40,38 @@ class LoadClip(phiero.SequenceLoader):
     clip_color = "red"
 
     clip_name_template = "{asset}_{subset}_{representation}"
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        plugin_type_settings = (
+            project_settings
+            .get("hiero", {})
+            .get("load", {})
+        )
+
+        if not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                print("  - is disabled by preset")
+            elif option == "representations":
+                continue
+            else:
+                print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
+
 
     def load(self, context, name, namespace, options):
         # add clip name template to options

@@ -309,8 +309,6 @@ class QtTVPaintRpc(BaseTVPaintRpc):
         self.add_methods(
             (route_name, self.workfiles_tool),
             (route_name, self.loader_tool),
-            (route_name, self.creator_tool),
-            (route_name, self.subset_manager_tool),
             (route_name, self.publish_tool),
             (route_name, self.scene_inventory_tool),
             (route_name, self.library_loader_tool),
@@ -330,21 +328,9 @@ class QtTVPaintRpc(BaseTVPaintRpc):
         self._execute_in_main_thread(item)
         return
 
-    async def creator_tool(self):
-        log.info("Triggering Creator tool")
-        item = MainThreadItem(self.tools_helper.show_creator)
-        await self._async_execute_in_main_thread(item, wait=False)
-
-    async def subset_manager_tool(self):
-        log.info("Triggering Subset Manager tool")
-        item = MainThreadItem(self.tools_helper.show_subset_manager)
-        # Do not wait for result of callback
-        self._execute_in_main_thread(item, wait=False)
-        return
-
     async def publish_tool(self):
         log.info("Triggering Publish tool")
-        item = MainThreadItem(self.tools_helper.show_publish)
+        item = MainThreadItem(self.tools_helper.show_publisher_tool)
         self._execute_in_main_thread(item)
         return
 
@@ -403,11 +389,11 @@ class MainThreadItem:
         self.kwargs = kwargs
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         log.debug("Executing process in main thread")
         if self.done:
@@ -860,10 +846,6 @@ class QtCommunicator(BaseCommunicator):
                 "label": "Load",
                 "help": "Open loader tool"
             }, {
-                "callback": "creator_tool",
-                "label": "Create",
-                "help": "Open creator tool"
-            }, {
                 "callback": "scene_inventory_tool",
                 "label": "Scene inventory",
                 "help": "Open scene inventory tool"
@@ -875,10 +857,6 @@ class QtCommunicator(BaseCommunicator):
                 "callback": "library_loader_tool",
                 "label": "Library",
                 "help": "Open library loader tool"
-            }, {
-                "callback": "subset_manager_tool",
-                "label": "Subset Manager",
-                "help": "Open subset manager tool"
             }, {
                 "callback": "experimental_tools",
                 "label": "Experimental tools",

@@ -156,8 +156,10 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         if selected_index and \
            selected_index.isValid() and \
            not self._selection_changed:
-            mode = QtCore.QItemSelectionModel.Select | \
-                QtCore.QItemSelectionModel.Rows
+            mode = (
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
+            )
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
@@ -271,8 +273,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         for selected_id in self._selected_ids:
             index = self.model.get_index(selected_id)
             if index and index.isValid():
-                mode = QtCore.QItemSelectionModel.Select | \
-                    QtCore.QItemSelectionModel.Rows
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows
+                )
                 self.selection_model.select(index, mode)
                 existing_ids.add(selected_id)
 

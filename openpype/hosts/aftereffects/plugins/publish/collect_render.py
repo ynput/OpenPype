@@ -22,7 +22,7 @@ class AERenderInstance(RenderInstance):
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
     publish_attributes = attr.ib(default={})
-    file_name = attr.ib(default=None)
+    file_names = attr.ib(default=[])
 
 
 class CollectAERender(publish.AbstractCollectRender):
@@ -64,34 +64,35 @@ class CollectAERender(publish.AbstractCollectRender):
             if family not in ["render", "renderLocal"]:  # legacy
                 continue
 
-            item_id = inst.data["members"][0]
+            comp_id = int(inst.data["members"][0])
 
-            work_area_info = CollectAERender.get_stub().get_work_area(
-                int(item_id))
+            comp_info = CollectAERender.get_stub().get_comp_properties(
+                comp_id)
 
-            if not work_area_info:
+            if not comp_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                inst_id = inst.get("instance_id") or item_id
+                inst_id = inst.data.get("instance_id") or str(comp_id)
                 CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
-            frame_start = work_area_info.workAreaStart
-            frame_end = round(work_area_info.workAreaStart +
-                              float(work_area_info.workAreaDuration) *
-                              float(work_area_info.frameRate)) - 1
-            fps = work_area_info.frameRate
+            frame_start = comp_info.frameStart
+            frame_end = round(comp_info.frameStart +
+                              comp_info.framesDuration) - 1
+            fps = comp_info.frameRate
             # TODO add resolution when supported by extension
 
             task_name = inst.data.get("task")  # legacy
 
-            render_q = CollectAERender.get_stub().get_render_info()
+            render_q = CollectAERender.get_stub().get_render_info(comp_id)
             if not render_q:
                 raise ValueError("No file extension set in Render Queue")
+            render_item = render_q[0]
 
+            instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
                 family="render",
-                families=inst.data.get("families", []),
+                families=instance_families,
                 version=version,
                 time="",
                 source=current_file,
@@ -103,28 +104,29 @@ class CollectAERender(publish.AbstractCollectRender):
                 setMembers='',
                 publish=True,
                 name=subset_name,
-                resolutionWidth=render_q.width,
-                resolutionHeight=render_q.height,
+                resolutionWidth=render_item.width,
+                resolutionHeight=render_item.height,
                 pixelAspect=1,
                 tileRendering=False,
                 tilesX=0,
                 tilesY=0,
+                review="review" in instance_families,
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
                 fps=fps,
                 app_version=app_version,
                 publish_attributes=inst.data.get("publish_attributes", {}),
-                file_name=render_q.file_name
+                file_names=[item.file_name for item in render_q]
             )
 
-            comp = compositions_by_id.get(int(item_id))
+            comp = compositions_by_id.get(comp_id)
             if not comp:
                 raise ValueError("There is no composition for item {}".
-                                 format(item_id))
+                                 format(comp_id))
             instance.outputDir = self._get_output_dir(instance)
             instance.comp_name = comp.name
-            instance.comp_id = item_id
+            instance.comp_id = comp_id
 
             is_local = "renderLocal" in inst.data["family"]  # legacy
             if inst.data.get("creator_attributes"):
@@ -139,6 +141,9 @@ class CollectAERender(publish.AbstractCollectRender):
                 instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
+                if "review" in instance.families:
+                    # to skip ExtractReview locally
+                    instance.families.remove("review")
 
             instances.append(instance)
             instances_to_remove.append(inst)
@@ -163,28 +168,30 @@ class CollectAERender(publish.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        _, ext = os.path.splitext(os.path.basename(render_instance.file_name))
-
         base_dir = self._get_output_dir(render_instance)
         expected_files = []
-        if "#" not in render_instance.file_name:  # single frame (mov)W
-            path = os.path.join(base_dir, "{}_{}_{}.{}".format(
-                render_instance.asset,
-                render_instance.subset,
-                "v{:03d}".format(render_instance.version),
-                ext.replace('.', '')
-            ))
-            expected_files.append(path)
-        else:
-            for frame in range(start, end + 1):
-                path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+        for file_name in render_instance.file_names:
+            _, ext = os.path.splitext(os.path.basename(file_name))
+            ext = ext.replace('.', '')
+            version_str = "v{:03d}".format(render_instance.version)
+            if "#" not in file_name:  # single frame (mov)W
+                path = os.path.join(base_dir, "{}_{}_{}.{}".format(
                     render_instance.asset,
                     render_instance.subset,
-                    "v{:03d}".format(render_instance.version),
-                    str(frame).zfill(self.padding_width),
-                    ext.replace('.', '')
+                    version_str,
+                    ext
                 ))
                 expected_files.append(path)
+            else:
+                for frame in range(start, end + 1):
+                    path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+                        render_instance.asset,
+                        render_instance.subset,
+                        version_str,
+                        str(frame).zfill(self.padding_width),
+                        ext
+                    ))
+                    expected_files.append(path)
         return expected_files
 
     def _get_output_dir(self, render_instance):
@@ -215,16 +222,5 @@ class CollectAERender(publish.AbstractCollectRender):
         fam = "render.local"
         if fam not in instance.families:
             instance.families.append(fam)
-
-        settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        reviewable_subset_filter = (settings["deadline"]
-                                    ["publish"]
-                                    ["ProcessSubmittedJobOnFarm"]
-                                    ["aov_filter"].get(self.hosts[0]))
-        for aov_pattern in reviewable_subset_filter:
-            if re.match(aov_pattern, instance.subset):
-                instance.families.append("review")
-                instance.review = True
-                break
 
         return instance

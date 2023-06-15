@@ -1,17 +1,16 @@
-import os
 import contextlib
 
-from openpype.client import get_version_by_id
-from openpype.pipeline import (
-    load,
-    legacy_io,
-    get_representation_path,
+import openpype.pipeline.load as load
+from openpype.pipeline.load import (
+    get_representation_context,
+    get_representation_path_from_context,
 )
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
-    comp_lock_and_undo_chunk
+    comp_lock_and_undo_chunk,
 )
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
 comp = get_current_comp()
 
@@ -55,20 +54,23 @@ def preserve_trim(loader, log=None):
     try:
         yield
     finally:
-
         length = loader.GetAttrs()["TOOLIT_Clip_Length"][1] - 1
         if trim_from_start > length:
             trim_from_start = length
             if log:
-                log.warning("Reducing trim in to %d "
-                            "(because of less frames)" % trim_from_start)
+                log.warning(
+                    "Reducing trim in to %d "
+                    "(because of less frames)" % trim_from_start
+                )
 
         remainder = length - trim_from_start
         if trim_from_end > remainder:
             trim_from_end = remainder
             if log:
-                log.warning("Reducing trim in to %d "
-                            "(because of less frames)" % trim_from_end)
+                log.warning(
+                    "Reducing trim in to %d "
+                    "(because of less frames)" % trim_from_end
+                )
 
         loader["ClipTimeStart"][time] = trim_from_start
         loader["ClipTimeEnd"][time] = length - trim_from_end
@@ -107,11 +109,15 @@ def loader_shift(loader, frame, relative=True):
     # Shifting global in will try to automatically compensate for the change
     # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
     # input values to "just shift" the clip
-    with preserve_inputs(loader, inputs=["ClipTimeStart",
-                                         "ClipTimeEnd",
-                                         "HoldFirstFrame",
-                                         "HoldLastFrame"]):
-
+    with preserve_inputs(
+        loader,
+        inputs=[
+            "ClipTimeStart",
+            "ClipTimeEnd",
+            "HoldFirstFrame",
+            "HoldLastFrame",
+        ],
+    ):
         # GlobalIn cannot be set past GlobalOut or vice versa
         # so we must apply them in the order of the shift.
         if shift > 0:
@@ -127,8 +133,18 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review", "render", "plate"]
+    families = [
+        "imagesequence",
+        "review",
+        "render",
+        "plate",
+        "image",
+        "onilne",
+    ]
     representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load sequence"
     order = -10
@@ -138,15 +154,14 @@ class FusionLoadSequence(load.LoaderPlugin):
     def load(self, context, name, namespace, data):
         # Fallback to asset name when namespace is None
         if namespace is None:
-            namespace = context['asset']['name']
+            namespace = context["asset"]["name"]
 
         # Use the first file for now
-        path = self._get_first_image(os.path.dirname(self.fname))
+        path = get_representation_path_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
-
             args = (-32768, -32768)
             tool = comp.AddTool("Loader", *args)
             tool["Clip"] = path
@@ -155,11 +170,13 @@ class FusionLoadSequence(load.LoaderPlugin):
             start = self._get_start(context["version"], tool)
             loader_shift(tool, start, relative=False)
 
-            imprint_container(tool,
-                              name=name,
-                              namespace=namespace,
-                              context=context,
-                              loader=self.__class__.__name__)
+            imprint_container(
+                tool,
+                name=name,
+                namespace=namespace,
+                context=context,
+                loader=self.__class__.__name__,
+            )
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -210,33 +227,35 @@ class FusionLoadSequence(load.LoaderPlugin):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = os.path.dirname(get_representation_path(representation))
-        path = self._get_first_image(root)
+        context = get_representation_context(representation)
+        path = get_representation_path_from_context(context)
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
-        version = get_version_by_id(project_name, representation["parent"])
-        start = self._get_start(version, tool)
+        start = self._get_start(context["version"], tool)
 
         with comp_lock_and_undo_chunk(comp, "Update Loader"):
-
             # Update the loader's path whilst preserving some values
             with preserve_trim(tool, log=self.log):
-                with preserve_inputs(tool,
-                                     inputs=("HoldFirstFrame",
-                                             "HoldLastFrame",
-                                             "Reverse",
-                                             "Depth",
-                                             "KeyCode",
-                                             "TimeCodeOffset")):
+                with preserve_inputs(
+                    tool,
+                    inputs=(
+                        "HoldFirstFrame",
+                        "HoldLastFrame",
+                        "Reverse",
+                        "Depth",
+                        "KeyCode",
+                        "TimeCodeOffset",
+                    ),
+                ):
                     tool["Clip"] = path
 
             # Set the global in to the start frame of the sequence
             global_in_changed = loader_shift(tool, start, relative=False)
             if global_in_changed:
                 # Log this change to the user
-                self.log.debug("Changed '%s' global in: %d" % (tool.Name,
-                                                               start))
+                self.log.debug(
+                    "Changed '%s' global in: %d" % (tool.Name, start)
+                )
 
             # Update the imprinted representation
             tool.SetData("avalon.representation", str(representation["_id"]))
@@ -248,11 +267,6 @@ class FusionLoadSequence(load.LoaderPlugin):
 
         with comp_lock_and_undo_chunk(comp, "Remove Loader"):
             tool.Delete()
-
-    def _get_first_image(self, root):
-        """Get first file in representation root"""
-        files = sorted(os.listdir(root))
-        return os.path.join(root, files[0])
 
     def _get_start(self, version_doc, tool):
         """Return real start frame of published files (incl. handles)"""
@@ -266,9 +280,11 @@ class FusionLoadSequence(load.LoaderPlugin):
         # Get frame start without handles
         start = data.get("frameStart")
         if start is None:
-            self.log.warning("Missing start frame for version "
-                             "assuming starts at frame 0 for: "
-                             "{}".format(tool.Name))
+            self.log.warning(
+                "Missing start frame for version "
+                "assuming starts at frame 0 for: "
+                "{}".format(tool.Name)
+            )
             return 0
 
         # Use `handleStart` if the data is available

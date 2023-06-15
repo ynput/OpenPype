@@ -76,10 +76,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.00001
     families = ["workfile",
                 "pointcache",
+                "pointcloud",
                 "proxyAbc",
                 "camera",
                 "animation",
                 "model",
+                "maxScene",
                 "mayaAscii",
                 "mayaScene",
                 "setdress",
@@ -146,7 +148,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data.get("processedWithNewIntegrator"):
-            self.log.info("Instance was already processed with new integrator")
+            self.log.debug(
+                "Instance was already processed with new integrator"
+            )
             return
 
         for ef in self.exclude_families:
@@ -273,7 +277,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
@@ -479,8 +483,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     else:
                         template_data["udim"] = src_padding_exp % i
 
-                    anatomy_filled = anatomy.format(template_data)
-                    template_filled = anatomy_filled[template_name]["path"]
+                    template_obj = anatomy.templates_obj[template_name]["path"]
+                    template_filled = template_obj.format_strict(template_data)
                     if repre_context is None:
                         repre_context = template_filled.used_values
                     test_dest_files.append(
@@ -586,8 +590,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if repre.get("udim"):
                     template_data["udim"] = repre["udim"][0]
                 src = os.path.join(stagingdir, fname)
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled[template_name]["path"]
+                template_obj = anatomy.templates_obj[template_name]["path"]
+                template_filled = template_obj.format_strict(template_data)
                 repre_context = template_filled.used_values
                 dst = os.path.normpath(template_filled)
 
@@ -599,9 +603,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             if not instance.data.get("publishDir"):
                 instance.data["publishDir"] = (
-                    anatomy_filled
-                    [template_name]
-                    ["folder"]
+                    anatomy.templates_obj[template_name]["folder"]
+                        .format_strict(template_data)
                 )
             if repre.get("udim"):
                 repre_context["udim"] = repre.get("udim")  # store list
@@ -986,7 +989,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "frameStart", "frameEnd", "step", "handles",
+            "frameStart", "frameEnd", "step",
             "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:

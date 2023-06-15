@@ -8,10 +8,10 @@ class CollectSlate(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.09
     label = "Collect Slate Node"
     hosts = ["nuke"]
-    families = ["render", "render.local", "render.farm"]
+    families = ["render"]
 
     def process(self, instance):
-        node = instance[0]
+        node = instance.data["transientData"]["node"]
 
         slate = next((n for n in nuke.allNodes()
                       if "slate" in n.name().lower()
@@ -35,7 +35,6 @@ class CollectSlate(pyblish.api.InstancePlugin):
                 instance.data["slateNode"] = slate_node
                 instance.data["slate"] = True
                 instance.data["families"].append("slate")
-                instance.data["versionData"]["families"].append("slate")
                 self.log.info(
                     "Slate node is in node graph: `{}`".format(slate.name()))
                 self.log.debug(

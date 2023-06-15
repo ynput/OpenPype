@@ -1,86 +1,119 @@
 import nuke
+import sys
+import six
 
-from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import (
-    create_write_node, create_write_node_legacy)
+from openpype.pipeline import (
+    CreatedInstance
+)
+from openpype.lib import (
+    BoolDef
+)
+from openpype.hosts.nuke import api as napi
 
 
-class CreateWriteRender(plugin.AbstractWriteRender):
-    # change this to template preset
-    name = "WriteRender"
-    label = "Create Write Render"
-    hosts = ["nuke"]
-    n_class = "Write"
+class CreateWriteRender(napi.NukeWriteCreator):
+    identifier = "create_write_render"
+    label = "Render (write)"
     family = "render"
     icon = "sign-out"
 
-    # settings
-    fpath_template = "{work}/render/nuke/{subset}/{subset}.{frame}.{ext}"
-    defaults = ["Main", "Mask"]
-    prenodes = {
-        "Reformat01": {
-            "nodeclass": "Reformat",
-            "dependent": None,
-            "knobs": [
-                {
-                    "type": "text",
-                    "name": "resize",
-                    "value": "none"
-                },
-                {
-                    "type": "bool",
-                    "name": "black_outside",
-                    "value": True
-                }
-            ]
-        }
-    }
+    instance_attributes = [
+        "reviewable"
+    ]
+    default_variants = [
+        "Main",
+        "Mask"
+    ]
+    temp_rendering_path_template = (
+        "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}")
 
-    def __init__(self, *args, **kwargs):
-        super(CreateWriteRender, self).__init__(*args, **kwargs)
+    def get_pre_create_attr_defs(self):
+        attr_defs = [
+            BoolDef(
+                "use_selection",
+                default=not self.create_context.headless,
+                label="Use selection"
+            ),
+            self._get_render_target_enum()
+        ]
+        return attr_defs
 
-    def _create_write_node(self, selected_node, inputs, outputs, write_data):
+    def create_instance_node(self, subset_name, instance_data):
         # add fpath_template
-        write_data["fpath_template"] = self.fpath_template
+        write_data = {
+            "creator": self.__class__.__name__,
+            "subset": subset_name,
+            "fpath_template": self.temp_rendering_path_template
+        }
 
-        # add reformat node to cut off all outside of format bounding box
+        write_data.update(instance_data)
+
         # get width and height
-        try:
-            width, height = (selected_node.width(), selected_node.height())
-        except AttributeError:
+        if self.selected_node:
+            width, height = (
+                self.selected_node.width(), self.selected_node.height())
+        else:
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
 
-        if not self.is_legacy():
-            return create_write_node(
-                self.data["subset"],
-                write_data,
-                input=selected_node,
-                prenodes=self.prenodes,
-                **{
-                    "width": width,
-                    "height": height
-                }
-            )
-        else:
-            _prenodes = [
-                {
-                    "name": "Reformat01",
-                    "class": "Reformat",
-                    "knobs": [
-                        ("resize", 0),
-                        ("black_outside", 1),
-                    ],
-                    "dependent": None
-                }
+        created_node = napi.create_write_node(
+            subset_name,
+            write_data,
+            input=self.selected_node,
+            prenodes=self.prenodes,
+            **{
+                "width": width,
+                "height": height
+            }
+        )
+
+        self.integrate_links(created_node, outputs=False)
+
+        return created_node
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # pass values from precreate to instance
+        self.pass_pre_attributes_to_instance(
+            instance_data,
+            pre_create_data,
+            [
+                "render_target"
             ]
+        )
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
 
-            return create_write_node_legacy(
-                self.data["subset"],
-                write_data,
-                input=selected_node,
-                prenodes=_prenodes
+        # make sure subset name is unique
+        self.check_existing_subset(subset_name)
+
+        instance_node = self.create_instance_node(
+            subset_name,
+            instance_data
+        )
+
+        try:
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self
             )
 
-    def _modify_write_node(self, write_node):
-        return write_node
+            instance.transient_data["node"] = instance_node
+
+            self._add_instance_to_context(instance)
+
+            napi.set_node_data(
+                instance_node,
+                napi.INSTANCE_DATA_KNOB,
+                instance.data_to_store()
+            )
+
+            return instance
+
+        except Exception as er:
+            six.reraise(
+                napi.NukeCreatorError,
+                napi.NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2]
+            )

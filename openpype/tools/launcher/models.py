@@ -19,6 +19,7 @@ from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
     ApplicationManager
 )
+from openpype.settings import get_project_settings
 from openpype.pipeline import discover_launcher_actions
 from openpype.tools.utils.lib import (
     DynamicQThread,
@@ -94,6 +95,8 @@ class ActionModel(QtGui.QStandardItemModel):
         if not project_doc:
             return actions
 
+        project_settings = get_project_settings(project_name)
+        only_available = project_settings["applications"]["only_available"]
         self.application_manager.refresh()
         for app_def in project_doc["config"]["apps"]:
             app_name = app_def["name"]
@@ -102,6 +105,9 @@ class ActionModel(QtGui.QStandardItemModel):
                 continue
 
             if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
+                continue
+
+            if only_available and not app.find_executable():
                 continue
 
             # Get from app definition, if not there from app in project
@@ -267,7 +273,7 @@ class ActionModel(QtGui.QStandardItemModel):
         # Sort by order and name
         return sorted(
             compatible,
-            key=lambda action: (action.order, action.name)
+            key=lambda action: (action.order, lib.get_action_label(action))
         )
 
     def update_force_not_open_workfile_settings(self, is_checked, action_id):

@@ -3,16 +3,30 @@
     <error id="main">
         <title>Knobs values</title>
         <description>
-## Invalid node's knobs values
+            ## Invalid node's knobs values
 
-Following write node knobs needs to be repaired:
+            Following write node knobs needs to be repaired:
 
-{xml_msg}
+            {xml_msg}
 
-### How to repair?
+            ### How to repair?
 
-1. Use Repair button.
-2. Hit Reload button on the publisher.
+            1. Use Repair button.
+            2. Hit Reload button on the publisher.
+        </description>
+    </error>
+    <error id="legacy">
+        <title>Legacy knob types</title>
+        <description>
+            ## Knobs are in obsolete configuration
+
+            Settings needs to be fixed.
+
+            ### How to repair?
+
+            Contact your supervisor or fix it in project settings at
+            'project_settings/nuke/imageio/nodes/requiredNodes' at knobs.
+            Each '__legacy__' type has to be defined accordingly to its type.
         </description>
     </error>
 </root>

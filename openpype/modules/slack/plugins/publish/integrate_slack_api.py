@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import time
 
 from openpype.client import OpenPypeMongoConnection
+from openpype.pipeline.publish import get_publish_repre_path
 from openpype.lib.plugin_tools import prepare_template_data
 
 
@@ -39,6 +40,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         token = instance.data["slack_token"]
         if additional_message:
             message = "{} \n".format(additional_message)
+        users = groups = None
         for message_profile in instance.data["slack_channel_message_profiles"]:
             message += self._get_filled_message(message_profile["message"],
                                                 instance,
@@ -60,8 +62,18 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 else:
                     client = SlackPython3Operations(token, self.log)
 
-                users, groups = client.get_users_and_groups()
-                message = self._translate_users(message, users, groups)
+                if "@" in message:
+                    cache_key = "__cache_slack_ids"
+                    slack_ids = instance.context.data.get(cache_key, None)
+                    if slack_ids is None:
+                        users, groups = client.get_users_and_groups()
+                        instance.context.data[cache_key] = {}
+                        instance.context.data[cache_key]["users"] = users
+                        instance.context.data[cache_key]["groups"] = groups
+                    else:
+                        users = slack_ids["users"]
+                        groups = slack_ids["groups"]
+                    message = self._translate_users(message, users, groups)
 
                 msg_id, file_ids = client.send_message(channel,
                                                        message,
@@ -156,9 +168,8 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         thumbnail_path = None
         for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
-                repre_thumbnail_path = (
-                    repre.get("published_path") or
-                    os.path.join(repre["stagingDir"], repre["files"])
+                repre_thumbnail_path = get_publish_repre_path(
+                    instance, repre, False
                 )
                 if os.path.exists(repre_thumbnail_path):
                     thumbnail_path = repre_thumbnail_path
@@ -173,11 +184,10 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if (repre.get("review")
                     or "review" in tags
                     or "burnin" in tags):
-                repre_review_path = (
-                    repre.get("published_path") or
-                    os.path.join(repre["stagingDir"], repre["files"])
+                repre_review_path = get_publish_repre_path(
+                    instance, repre, False
                 )
-                if os.path.exists(repre_review_path):
+                if repre_review_path and os.path.exists(repre_review_path):
                     review_path = repre_review_path
                 if "burnin" in tags:  # burnin has precedence if exists
                     break
@@ -212,7 +222,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _translate_users(self, message, users, groups):
         """Replace all occurences of @mentions with proper <@name> format."""
-        matches = re.findall(r"(?<!<)@[^ ]+", message)
+        matches = re.findall(r"(?<!<)@\S+", message)
         in_quotes = re.findall(r"(?<!<)(['\"])(@[^'\"]+)", message)
         for item in in_quotes:
             matches.append(item[1])

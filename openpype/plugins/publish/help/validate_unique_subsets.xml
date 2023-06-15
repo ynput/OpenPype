@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Subset not unique</title>
+<description>
+## Clashing subset names found
+
+Multiples instances from your scene are set to publish into the same asset > subset.
+
+    Non unique subset names: '{non_unique}'
+
+### How to repair?
+
+Remove the offending instances or rename to have a unique name.
+</description>
+</error>
+</root>

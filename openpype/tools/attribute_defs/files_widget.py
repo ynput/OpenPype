@@ -3,7 +3,7 @@ import collections
 import uuid
 import json
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.lib import FileDefItem
 from openpype.tools.utils import (
@@ -198,29 +198,33 @@ class DropEmpty(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
-        painter = QtGui.QPainter(self)
+
         pen = QtGui.QPen()
-        pen.setWidth(1)
         pen.setBrush(QtCore.Qt.darkGray)
         pen.setStyle(QtCore.Qt.DashLine)
-        painter.setPen(pen)
-        content_margins = self.layout().contentsMargins()
+        pen.setWidth(1)
 
-        left_m = content_margins.left()
-        top_m = content_margins.top()
-        rect = QtCore.QRect(
+        content_margins = self.layout().contentsMargins()
+        rect = self.rect()
+        left_m = content_margins.left() + pen.width()
+        top_m = content_margins.top() + pen.width()
+        new_rect = QtCore.QRect(
             left_m,
             top_m,
             (
-                self.rect().width()
+                rect.width()
                 - (left_m + content_margins.right() + pen.width())
             ),
             (
-                self.rect().height()
+                rect.height()
                 - (top_m + content_margins.bottom() + pen.width())
             )
         )
-        painter.drawRect(rect)
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.drawRect(new_rect)
 
 
 class FilesModel(QtGui.QStandardItemModel):
@@ -599,14 +603,14 @@ class FilesView(QtWidgets.QListView):
     def __init__(self, *args, **kwargs):
         super(FilesView, self).__init__(*args, **kwargs)
 
-        self.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setAcceptDrops(True)
         self.setDragEnabled(True)
-        self.setDragDropMode(self.InternalMove)
+        self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 
         remove_btn = InViewButton(self)
         pix_enabled = paint_image_with_color(
@@ -616,7 +620,7 @@ class FilesView(QtWidgets.QListView):
             get_image(filename="delete.png"), QtCore.Qt.gray
         )
         icon = QtGui.QIcon(pix_enabled)
-        icon.addPixmap(pix_disabled, icon.Disabled, icon.Off)
+        icon.addPixmap(pix_disabled, QtGui.QIcon.Disabled, QtGui.QIcon.Off)
         remove_btn.setIcon(icon)
         remove_btn.setEnabled(False)
 
@@ -734,7 +738,7 @@ class FilesWidget(QtWidgets.QFrame):
 
         layout = QtWidgets.QStackedLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setStackingMode(layout.StackAll)
+        layout.setStackingMode(QtWidgets.QStackedLayout.StackAll)
         layout.addWidget(empty_widget)
         layout.addWidget(files_view)
         layout.setCurrentWidget(empty_widget)

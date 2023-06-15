@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 
@@ -14,32 +14,44 @@ class _VLineWidget(QtWidgets.QWidget):
 
     It is expected that parent widget will set width.
     """
-    def __init__(self, color, left, parent):
+    def __init__(self, color, line_size, left, parent):
         super(_VLineWidget, self).__init__(parent)
         self._color = color
         self._left = left
+        self._line_size = line_size
+
+    def set_line_size(self, line_size):
+        self._line_size = line_size
 
     def paintEvent(self, event):
         if not self.isVisible():
             return
 
-        if self._left:
-            pos_x = 0
-        else:
-            pos_x = self.width()
+        pos_x = self._line_size * 0.5
+        if not self._left:
+            pos_x = self.width() - pos_x
+
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+
         if self._color:
             pen = QtGui.QPen(self._color)
         else:
             pen = painter.pen()
-        pen.setWidth(1)
+        pen.setWidth(self._line_size)
         painter.setPen(pen)
         painter.setBrush(QtCore.Qt.transparent)
-        painter.drawLine(pos_x, 0, pos_x, self.height())
+        painter.drawRect(
+            QtCore.QRectF(
+                pos_x,
+                -self._line_size,
+                pos_x + (self.width() * 2),
+                self.height() + (self._line_size * 2)
+            )
+        )
         painter.end()
 
 
@@ -56,34 +68,46 @@ class _HBottomLineWidget(QtWidgets.QWidget):
 
     It is expected that parent widget will set height and radius.
     """
-    def __init__(self, color, parent):
+    def __init__(self, color, line_size, parent):
         super(_HBottomLineWidget, self).__init__(parent)
         self._color = color
         self._radius = 0
+        self._line_size = line_size
 
     def set_radius(self, radius):
         self._radius = radius
+
+    def set_line_size(self, line_size):
+        self._line_size = line_size
 
     def paintEvent(self, event):
         if not self.isVisible():
             return
 
-        rect = QtCore.QRect(
-            0, -self._radius, self.width(), self.height() + self._radius
+        x_offset = self._line_size * 0.5
+        rect = QtCore.QRectF(
+            x_offset,
+            -self._radius,
+            self.width() - (2 * x_offset),
+            (self.height() + self._radius) - x_offset
         )
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+
         if self._color:
             pen = QtGui.QPen(self._color)
         else:
             pen = painter.pen()
-        pen.setWidth(1)
+        pen.setWidth(self._line_size)
         painter.setPen(pen)
         painter.setBrush(QtCore.Qt.transparent)
-        painter.drawRoundedRect(rect, self._radius, self._radius)
+        if self._radius:
+            painter.drawRoundedRect(rect, self._radius, self._radius)
+        else:
+            painter.drawRect(rect)
         painter.end()
 
 
@@ -102,46 +126,57 @@ class _HTopCornerLineWidget(QtWidgets.QWidget):
 
     It is expected that parent widget will set height and radius.
     """
-    def __init__(self, color, left_side, parent):
+
+    def __init__(self, color, line_size, left_side, parent):
         super(_HTopCornerLineWidget, self).__init__(parent)
         self._left_side = left_side
+        self._line_size = line_size
         self._color = color
         self._radius = 0
 
     def set_radius(self, radius):
         self._radius = radius
 
+    def set_line_size(self, line_size):
+        self._line_size = line_size
+
     def paintEvent(self, event):
         if not self.isVisible():
             return
 
-        pos_y = self.height() / 2
-
+        pos_y = self.height() * 0.5
+        x_offset = self._line_size * 0.5
         if self._left_side:
-            rect = QtCore.QRect(
-                0, pos_y, self.width() + self._radius, self.height()
+            rect = QtCore.QRectF(
+                x_offset,
+                pos_y,
+                self.width() + self._radius + x_offset,
+                self.height()
             )
         else:
-            rect = QtCore.QRect(
-                -self._radius,
+            rect = QtCore.QRectF(
+                (-self._radius),
                 pos_y,
-                self.width() + self._radius,
+                (self.width() + self._radius) - x_offset,
                 self.height()
             )
 
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
         if self._color:
             pen = QtGui.QPen(self._color)
         else:
             pen = painter.pen()
-        pen.setWidth(1)
+        pen.setWidth(self._line_size)
         painter.setPen(pen)
         painter.setBrush(QtCore.Qt.transparent)
-        painter.drawRoundedRect(rect, self._radius, self._radius)
+        if self._radius:
+            painter.drawRoundedRect(rect, self._radius, self._radius)
+        else:
+            painter.drawRect(rect)
         painter.end()
 
 
@@ -163,8 +198,10 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         if color_value:
             color = color_value.get_qcolor()
 
-        top_left_w = _HTopCornerLineWidget(color, True, self)
-        top_right_w = _HTopCornerLineWidget(color, False, self)
+        line_size = 1
+
+        top_left_w = _HTopCornerLineWidget(color, line_size, True, self)
+        top_right_w = _HTopCornerLineWidget(color, line_size, False, self)
 
         label_widget = QtWidgets.QLabel(label, self)
 
@@ -175,10 +212,10 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         top_layout.addWidget(label_widget, 0)
         top_layout.addWidget(top_right_w, 1)
 
-        left_w = _VLineWidget(color, True, self)
-        right_w = _VLineWidget(color, False, self)
+        left_w = _VLineWidget(color, line_size, True, self)
+        right_w = _VLineWidget(color, line_size, False, self)
 
-        bottom_w = _HBottomLineWidget(color, self)
+        bottom_w = _HBottomLineWidget(color, line_size, self)
 
         center_layout = QtWidgets.QHBoxLayout()
         center_layout.setContentsMargins(5, 5, 5, 5)
@@ -201,6 +238,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._widget = None
 
         self._radius = 0
+        self._line_size = line_size
 
         self._top_left_w = top_left_w
         self._top_right_w = top_right_w
@@ -216,14 +254,38 @@ class BorderedLabelWidget(QtWidgets.QFrame):
             value, value, value, value
         )
 
+    def set_line_size(self, line_size):
+        if self._line_size == line_size:
+            return
+        self._line_size = line_size
+        for widget in (
+            self._top_left_w,
+            self._top_right_w,
+            self._left_w,
+            self._right_w,
+            self._bottom_w
+        ):
+            widget.set_line_size(line_size)
+        self._recalculate_sizes()
+
     def showEvent(self, event):
         super(BorderedLabelWidget, self).showEvent(event)
+        self._recalculate_sizes()
 
+    def _recalculate_sizes(self):
         height = self._label_widget.height()
-        radius = (height + (height % 2)) / 2
+        radius = int((height + (height % 2)) / 2)
         self._radius = radius
 
-        side_width = 1 + radius
+        radius_size = self._line_size + 1
+        if radius_size < radius:
+            radius_size = radius
+
+        if radius:
+            side_width = self._line_size + radius
+        else:
+            side_width = self._line_size + 1
+
         # Don't use fixed width/height as that would set also set
         #   the other size (When fixed width is set then is also set
         #   fixed height).
@@ -231,8 +293,8 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._left_w.setMaximumWidth(side_width)
         self._right_w.setMinimumWidth(side_width)
         self._right_w.setMaximumWidth(side_width)
-        self._bottom_w.setMinimumHeight(radius)
-        self._bottom_w.setMaximumHeight(radius)
+        self._bottom_w.setMinimumHeight(radius_size)
+        self._bottom_w.setMaximumHeight(radius_size)
         self._bottom_w.set_radius(radius)
         self._top_right_w.set_radius(radius)
         self._top_left_w.set_radius(radius)

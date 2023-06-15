@@ -106,7 +106,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
 
         # define chunk and priority
         chunk_size = instance.context.data.get("chunk")
-        if chunk_size == 0:
+        if not chunk_size:
             chunk_size = self.deadline_chunk_size
 
         # search for %02d pattern in name, and padding number

@@ -28,6 +28,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.host import IWorkfileHost
 from openpype.host import HostBase
 from openpype.lib import (
     Logger,
@@ -42,8 +43,10 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
+
 from openpype.pipeline.create import (
-    discover_legacy_creator_plugins
+    discover_legacy_creator_plugins,
+    CreateContext,
 )
 
 
@@ -91,6 +94,7 @@ class AbstractTemplateBuilder(object):
     """
 
     _log = None
+    use_legacy_creators = False
 
     def __init__(self, host):
         # Get host name
@@ -110,6 +114,7 @@ class AbstractTemplateBuilder(object):
         self._placeholder_plugins = None
         self._loaders_by_name = None
         self._creators_by_name = None
+        self._create_context = None
 
         self._system_settings = None
         self._project_settings = None
@@ -154,7 +159,7 @@ class AbstractTemplateBuilder(object):
     def linked_asset_docs(self):
         if self._linked_asset_docs is None:
             self._linked_asset_docs = get_linked_assets(
-                self.current_asset_doc
+                self.project_name, self.current_asset_doc
             )
         return self._linked_asset_docs
 
@@ -170,6 +175,16 @@ class AbstractTemplateBuilder(object):
             .get(self.current_task_name, {})
             .get("type")
         )
+
+    @property
+    def create_context(self):
+        if self._create_context is None:
+            self._create_context = CreateContext(
+                self.host,
+                discover_publish_plugins=False,
+                headless=True
+            )
+        return self._create_context
 
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
@@ -235,16 +250,29 @@ class AbstractTemplateBuilder(object):
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
 
+    def _collect_legacy_creators(self):
+        creators_by_name = {}
+        for creator in discover_legacy_creator_plugins():
+            if not creator.enabled:
+                continue
+            creator_name = creator.__name__
+            if creator_name in creators_by_name:
+                raise KeyError(
+                    "Duplicated creator name {} !".format(creator_name)
+                )
+            creators_by_name[creator_name] = creator
+        self._creators_by_name = creators_by_name
+
+    def _collect_creators(self):
+        self._creators_by_name = dict(self.create_context.creators)
+
     def get_creators_by_name(self):
         if self._creators_by_name is None:
-            self._creators_by_name = {}
-            for creator in discover_legacy_creator_plugins():
-                creator_name = creator.__name__
-                if creator_name in self._creators_by_name:
-                    raise KeyError(
-                        "Duplicated creator name {} !".format(creator_name)
-                    )
-                self._creators_by_name[creator_name] = creator
+            if self.use_legacy_creators:
+                self._collect_legacy_creators()
+            else:
+                self._collect_creators()
+
         return self._creators_by_name
 
     def get_shared_data(self, key):
@@ -414,7 +442,9 @@ class AbstractTemplateBuilder(object):
         self,
         template_path=None,
         level_limit=None,
-        keep_placeholders=None
+        keep_placeholders=None,
+        create_first_version=None,
+        workfile_creation_enabled=False
     ):
         """Main callback for building workfile from template path.
 
@@ -431,6 +461,11 @@ class AbstractTemplateBuilder(object):
             keep_placeholders (bool): Add flag to placeholder data for
                 hosts to decide if they want to remove
                 placeholder after it is used.
+            create_first_version (bool): create first version of a workfile
+            workfile_creation_enabled (bool): If True, it might create
+                                              first version but ignore
+                                              process if version is created
+
         """
         template_preset = self.get_template_preset()
 
@@ -439,6 +474,30 @@ class AbstractTemplateBuilder(object):
 
         if keep_placeholders is None:
             keep_placeholders = template_preset["keep_placeholder"]
+        if create_first_version is None:
+            create_first_version = template_preset["create_first_version"]
+
+        # check if first version is created
+        created_version_workfile = self.create_first_workfile_version()
+
+        # if first version is created, import template
+        # and populate placeholders
+        if (
+            create_first_version
+            and workfile_creation_enabled
+            and created_version_workfile
+        ):
+            self.import_template(template_path)
+            self.populate_scene_placeholders(
+                level_limit, keep_placeholders)
+
+            # save workfile after template is populated
+            self.save_workfile(created_version_workfile)
+
+        # ignore process if first workfile is enabled
+        # but a version is already created
+        if workfile_creation_enabled:
+            return
 
         self.import_template(template_path)
         self.populate_scene_placeholders(
@@ -489,6 +548,39 @@ class AbstractTemplateBuilder(object):
         """
 
         pass
+
+    def create_first_workfile_version(self):
+        """
+        Create first version of workfile.
+
+        Should load the content of template into scene so
+        'populate_scene_placeholders' can be started.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+        self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
+        if os.path.exists(last_workfile_path):
+            # ignore in case workfile existence
+            self.log.info("Workfile already exists, skipping creation.")
+            return False
+
+        # Create first version
+        self.log.info("Creating first version of workfile.")
+        self.save_workfile(last_workfile_path)
+
+        # Confirm creation of first version
+        return last_workfile_path
+
+    def save_workfile(self, workfile_path):
+        """Save workfile in current host."""
+        # Save current scene, continue to open file
+        if isinstance(self.host, IWorkfileHost):
+            self.host.save_workfile(workfile_path)
+        else:
+            self.host.save_file(workfile_path)
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.
@@ -673,6 +765,8 @@ class AbstractTemplateBuilder(object):
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
+        create_first_version = profile.get("create_first_version")
+
         # backward compatibility, since default is True
         if keep_placeholder is None:
             keep_placeholder = True
@@ -706,7 +800,8 @@ class AbstractTemplateBuilder(object):
             self.log.info("Found template at: '{}'".format(path))
             return {
                 "path": path,
-                "keep_placeholder": keep_placeholder
+                "keep_placeholder": keep_placeholder,
+                "create_first_version": create_first_version
             }
 
         solved_path = None
@@ -735,7 +830,8 @@ class AbstractTemplateBuilder(object):
 
         return {
             "path": solved_path,
-            "keep_placeholder": keep_placeholder
+            "keep_placeholder": keep_placeholder,
+            "create_first_version": create_first_version
         }
 
 
@@ -840,7 +936,8 @@ class PlaceholderPlugin(object):
         """Placeholder options for data showed.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions of placeholder options.
+            List[AbstractAttrDef]: Attribute definitions of
+                placeholder options.
         """
 
         return []
@@ -1055,13 +1152,10 @@ class PlaceholderItem(object):
         return self._log
 
     def __repr__(self):
-        name = None
-        if hasattr("name", self):
-            name = self.name
-        if hasattr("_scene_identifier ", self):
-            name = self._scene_identifier
-
-        return "< {} {} >".format(self.__class__.__name__, name)
+        return "< {} {} >".format(
+            self.__class__.__name__,
+            self._scene_identifier
+        )
 
     @property
     def order(self):
@@ -1141,18 +1235,28 @@ class PlaceholderLoadMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for load
+            List[AbstractAttrDef]: Attribute definitions common for load
                 plugins.
         """
 
         loaders_by_name = self.builder.get_loaders_by_name()
         loader_items = [
-            (loader_name, loader.label or loader_name)
+            {"value": loader_name, "label": loader.label or loader_name}
             for loader_name, loader in loaders_by_name.items()
         ]
 
-        loader_items = list(sorted(loader_items, key=lambda i: i[1]))
+        loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
+
+        # Get families from all loaders excluding "*"
+        families = set()
+        for loader in loaders_by_name.values():
+            families.update(loader.families)
+        families.discard("*")
+
+        # Sort for readability
+        families = list(sorted(families))
+
         return [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
@@ -1163,9 +1267,9 @@ class PlaceholderLoadMixin(object):
                 label="Asset Builder Type",
                 default=options.get("builder_type"),
                 items=[
-                    ("context_asset", "Current asset"),
-                    ("linked_asset", "Linked assets"),
-                    ("all_assets", "All assets")
+                    {"label": "Current asset", "value": "context_asset"},
+                    {"label": "Linked assets", "value": "linked_asset"},
+                    {"label": "All assets", "value": "all_assets"},
                 ],
                 tooltip=(
                     "Asset Builder Type\n"
@@ -1179,11 +1283,11 @@ class PlaceholderLoadMixin(object):
                     " field \"inputLinks\""
                 )
             ),
-            attribute_definitions.TextDef(
+            attribute_definitions.EnumDef(
                 "family",
                 label="Family",
                 default=options.get("family"),
-                placeholder="model, look, ..."
+                items=families
             ),
             attribute_definitions.TextDef(
                 "representation",
@@ -1323,16 +1427,7 @@ class PlaceholderLoadMixin(object):
                 "family": [placeholder.data["family"]]
             }
 
-        elif builder_type != "linked_asset":
-            context_filters = {
-                "asset": [re.compile(placeholder.data["asset"])],
-                "subset": [re.compile(placeholder.data["subset"])],
-                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
-                "representation": [placeholder.data["representation"]],
-                "family": [placeholder.data["family"]]
-            }
-
-        else:
+        elif builder_type == "linked_asset":
             asset_regex = re.compile(placeholder.data["asset"])
             linked_asset_names = []
             for asset_doc in linked_asset_docs:
@@ -1346,6 +1441,15 @@ class PlaceholderLoadMixin(object):
                 "hierarchy": [re.compile(placeholder.data["hierarchy"])],
                 "representation": [placeholder.data["representation"]],
                 "family": [placeholder.data["family"]],
+            }
+
+        else:
+            context_filters = {
+                "asset": [re.compile(placeholder.data["asset"])],
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representation": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]]
             }
 
         return list(get_representations(
@@ -1511,7 +1615,7 @@ class PlaceholderCreateMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for create
+            List[AbstractAttrDef]: Attribute definitions common for create
                 plugins.
         """
 
@@ -1576,6 +1680,8 @@ class PlaceholderCreateMixin(object):
             placeholder (PlaceholderItem): Placeholder item with information
                 about requested publishable instance.
         """
+
+        legacy_create = self.builder.use_legacy_creators
         creator_name = placeholder.data["creator"]
         create_variant = placeholder.data["create_variant"]
 
@@ -1586,17 +1692,28 @@ class PlaceholderCreateMixin(object):
         task_name = legacy_io.Session["AVALON_TASK"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
 
-        # get asset id
-        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
-        assert asset_doc, "No current asset found in Session"
-        asset_id = asset_doc['_id']
+        if legacy_create:
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["_id"]
+            )
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc["_id"],
+                project_name
+            )
 
-        subset_name = creator_plugin.get_subset_name(
-            create_variant,
-            task_name,
-            asset_id,
-            project_name
-        )
+        else:
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            assert asset_doc, "No current asset found in Session"
+            subset_name = creator_plugin.get_subset_name(
+                create_variant,
+                task_name,
+                asset_doc,
+                project_name,
+                self.builder.host_name
+            )
 
         creator_data = {
             "creator_name": creator_name,
@@ -1609,12 +1726,20 @@ class PlaceholderCreateMixin(object):
 
         # compile subset name from variant
         try:
-            creator_instance = creator_plugin(
-                subset_name,
-                asset_name
-            ).process()
+            if legacy_create:
+                creator_instance = creator_plugin(
+                    subset_name,
+                    asset_name
+                ).process()
+            else:
+                creator_instance = self.builder.create_context.create(
+                    creator_plugin.identifier,
+                    create_variant,
+                    asset_doc,
+                    task_name=task_name
+                )
 
-        except Exception:
+        except:  # noqa: E722
             failed = True
             self.create_failed(placeholder, creator_data)
 

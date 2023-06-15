@@ -12,7 +12,7 @@ from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
 
 class TransferHierarchicalValues(ServerAction):
-    """Transfer values across hierarhcical attributes.
+    """Transfer values across hierarchical attributes.
 
     Aalso gives ability to convert types meanwhile. That is limited to
     conversions between numbers and strings
@@ -67,7 +67,7 @@ class TransferHierarchicalValues(ServerAction):
                     "type": "label",
                     "value": (
                         "Didn't found custom attributes"
-                        " that can be transfered."
+                        " that can be transferred."
                     )
                 }]
             }

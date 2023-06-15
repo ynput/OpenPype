@@ -1,5 +1,5 @@
 from math import ceil
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -76,11 +76,11 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
         super(PluginLoadReportWidget, self).__init__(parent)
 
         view = QtWidgets.QTreeView(self)
-        view.setEditTriggers(view.NoEditTriggers)
+        view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setTextElideMode(QtCore.Qt.ElideLeft)
         view.setHeaderHidden(True)
         view.setAlternatingRowColors(True)
-        view.setVerticalScrollMode(view.ScrollPerPixel)
+        view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         model = PluginLoadReportModel()
         view.setModel(model)
@@ -163,7 +163,11 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
             super(ZoomPlainText, self).wheelEvent(event)
             return
 
-        degrees = float(event.delta()) / 8
+        if hasattr(event, "angleDelta"):
+            delta = event.angleDelta().y()
+        else:
+            delta = event.delta()
+        degrees = float(delta) / 8
         steps = int(ceil(degrees / 5))
         self._scheduled_scalings += steps
         if (self._scheduled_scalings * steps < 0):
@@ -372,8 +376,10 @@ class PublishReportViewerWidget(QtWidgets.QFrame):
         instances_view.setModel(instances_proxy)
         instances_view.setIndentation(0)
         instances_view.setHeaderHidden(True)
-        instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        instances_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        instances_view.setEditTriggers(
+            QtWidgets.QAbstractItemView.NoEditTriggers)
+        instances_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
         instances_view.setExpandsOnDoubleClick(False)
 
         instances_delegate = GroupItemDelegate(instances_view)
@@ -393,8 +399,10 @@ class PublishReportViewerWidget(QtWidgets.QFrame):
         plugins_view.setModel(plugins_proxy)
         plugins_view.setIndentation(0)
         plugins_view.setHeaderHidden(True)
-        plugins_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
-        plugins_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        plugins_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
+        plugins_view.setEditTriggers(
+            QtWidgets.QAbstractItemView.NoEditTriggers)
         plugins_view.setExpandsOnDoubleClick(False)
 
         plugins_delegate = GroupItemDelegate(plugins_view)

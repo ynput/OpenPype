@@ -1,55 +1,66 @@
 import nuke
-from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import (
-    set_avalon_knob_data
+from openpype.hosts.nuke.api import (
+    NukeCreator,
+    NukeCreatorError,
+    maintained_selection
 )
 
 
-class CreateCamera(plugin.OpenPypeCreator):
-    """Add Publishable Backdrop"""
+class CreateCamera(NukeCreator):
+    """Add Publishable Camera"""
 
-    name = "camera"
-    label = "Create 3d Camera"
+    identifier = "create_camera"
+    label = "Camera (3d)"
     family = "camera"
     icon = "camera"
-    defaults = ["Main"]
 
-    def __init__(self, *args, **kwargs):
-        super(CreateCamera, self).__init__(*args, **kwargs)
-        self.nodes = nuke.selectedNodes()
-        self.node_color = "0xff9100ff"
-        return
+    # plugin attributes
+    node_color = "0xff9100ff"
 
-    def process(self):
-        nodes = list()
-        if (self.options or {}).get("useSelection"):
-            nodes = self.nodes
-
-            if len(nodes) >= 1:
-                # loop selected nodes
-                for n in nodes:
-                    data = self.data.copy()
-                    if len(nodes) > 1:
-                        # rename subset name only if more
-                        # then one node are selected
-                        subset = self.family + n["name"].value().capitalize()
-                        data["subset"] = subset
-
-                    # change node color
-                    n["tile_color"].setValue(int(self.node_color, 16))
-                    # add avalon knobs
-                    set_avalon_knob_data(n, data)
-                return True
+    def create_instance_node(
+        self,
+        node_name,
+        knobs=None,
+        parent=None,
+        node_type=None
+    ):
+        with maintained_selection():
+            if self.selected_nodes:
+                node = self.selected_nodes[0]
+                if node.Class() != "Camera3":
+                    raise NukeCreatorError(
+                        "Creator error: Select only camera node type")
+                created_node = self.selected_nodes[0]
             else:
-                msg = str("Please select nodes you "
-                          "wish to add to a container")
-                self.log.error(msg)
-                nuke.message(msg)
-                return
+                created_node = nuke.createNode("Camera2")
+
+            created_node["tile_color"].setValue(
+                int(self.node_color, 16))
+
+            created_node["name"].setValue(node_name)
+
+            return created_node
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # make sure subset name is unique
+        self.check_existing_subset(subset_name)
+
+        instance = super(CreateCamera, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
+
+        return instance
+
+    def set_selected_nodes(self, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            self.selected_nodes = nuke.selectedNodes()
+            if self.selected_nodes == []:
+                raise NukeCreatorError(
+                    "Creator error: No active selection")
+            elif len(self.selected_nodes) > 1:
+                raise NukeCreatorError(
+                    "Creator error: Select only one camera node")
         else:
-            # if selected is off then create one node
-            camera_node = nuke.createNode("Camera2")
-            camera_node["tile_color"].setValue(int(self.node_color, 16))
-            # add avalon knobs
-            instance = set_avalon_knob_data(camera_node, self.data)
-            return instance
+            self.selected_nodes = []

@@ -8,6 +8,8 @@ import tempfile
 from .log import Logger
 from .vendor_bin_utils import find_executable
 
+from .openpype_version import is_running_from_build
+
 # MSDN process creation flag (Windows only)
 CREATE_NO_WINDOW = 0x08000000
 
@@ -81,11 +83,14 @@ def run_subprocess(*args, **kwargs):
 
     Entered arguments and keyword arguments are passed to subprocess Popen.
 
+    On windows are 'creationflags' filled with flags that should cause ignore
+    creation of new window.
+
     Args:
-        *args: Variable length arument list passed to Popen.
+        *args: Variable length argument list passed to Popen.
         **kwargs : Arbitrary keyword arguments passed to Popen. Is possible to
-            pass `logging.Logger` object under "logger" if want to use
-            different than lib's logger.
+            pass `logging.Logger` object under "logger" to use custom logger
+            for output.
 
     Returns:
         str: Full output of subprocess concatenated stdout and stderr.
@@ -94,6 +99,21 @@ def run_subprocess(*args, **kwargs):
         RuntimeError: Exception is raised if process finished with nonzero
             return code.
     """
+
+    # Modify creation flags on windows to hide console window if in UI mode
+    if (
+        platform.system().lower() == "windows"
+        and "creationflags" not in kwargs
+        # shell=True already tries to hide the console window
+        # and passing these creationflags then shows the window again
+        # so we avoid it for shell=True cases
+        and kwargs.get("shell") is not True
+    ):
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
@@ -107,22 +127,22 @@ def run_subprocess(*args, **kwargs):
         logger = Logger.get_logger("run_subprocess")
 
     # set overrides
-    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
-    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
-    kwargs['env'] = filtered_env
+    kwargs["stdout"] = kwargs.get("stdout", subprocess.PIPE)
+    kwargs["stderr"] = kwargs.get("stderr", subprocess.PIPE)
+    kwargs["stdin"] = kwargs.get("stdin", subprocess.PIPE)
+    kwargs["env"] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 
     full_output = ""
     _stdout, _stderr = proc.communicate()
     if _stdout:
-        _stdout = _stdout.decode("utf-8")
+        _stdout = _stdout.decode("utf-8", errors="backslashreplace")
         full_output += _stdout
         logger.debug(_stdout)
 
     if _stderr:
-        _stderr = _stderr.decode("utf-8")
+        _stderr = _stderr.decode("utf-8", errors="backslashreplace")
         # Add additional line break if output already contains stdout
         if full_output:
             full_output += "\n"
@@ -143,18 +163,20 @@ def run_subprocess(*args, **kwargs):
 
 
 def clean_envs_for_openpype_process(env=None):
-    """Modify environemnts that may affect OpenPype process.
+    """Modify environments that may affect OpenPype process.
 
     Main reason to implement this function is to pop PYTHONPATH which may be
     affected by in-host environments.
     """
     if env is None:
         env = os.environ
-    return {
-        key: value
-        for key, value in env.items()
-        if key not in ("PYTHONPATH",)
-    }
+
+    # Exclude some environment variables from a copy of the environment
+    env = env.copy()
+    for key in ["PYTHONPATH", "PYTHONHOME"]:
+        env.pop(key, None)
+
+    return env
 
 
 def run_openpype_process(*args, **kwargs):
@@ -168,7 +190,7 @@ def run_openpype_process(*args, **kwargs):
 
     Example:
     ```
-    run_openpype_process("run", "<path to .py script>")
+    run_detached_process("run", "<path to .py script>")
     ```
 
     Args:
@@ -182,6 +204,11 @@ def run_openpype_process(*args, **kwargs):
         # Skip envs that can affect OpenPype process
         # - fill more if you find more
         env = clean_envs_for_openpype_process(os.environ)
+
+    # Only keep OpenPype version if we are running from build.
+    if not is_running_from_build():
+        env.pop("OPENPYPE_VERSION", None)
+
     return run_subprocess(args, env=env, **kwargs)
 
 

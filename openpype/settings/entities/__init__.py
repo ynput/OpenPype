@@ -123,10 +123,7 @@ from .dict_conditional import (
 )
 
 from .anatomy_entities import AnatomyEntity
-from .op_version_entity import (
-    ProductionVersionsInputEntity,
-    StagingVersionsInputEntity
-)
+from .op_version_entity import VersionsInputEntity
 
 __all__ = (
     "DefaultsNotDefined",
@@ -188,6 +185,5 @@ __all__ = (
 
     "AnatomyEntity",
 
-    "ProductionVersionsInputEntity",
-    "StagingVersionsInputEntity"
+    "VersionsInputEntity",
 )

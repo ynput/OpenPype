@@ -6,6 +6,19 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
+                }
+            ]
+        },
+        {
             "type": "boolean",
             "key": "level_sequences_for_layouts",
             "label": "Generate level sequences when loading layouts"
@@ -14,6 +27,28 @@
             "type": "boolean",
             "key": "delete_unmatched_assets",
             "label": "Delete assets that are not matched"
+        },
+        {
+            "type": "text",
+            "key": "render_config_path",
+            "label": "Render Config Path"
+        },
+        {
+            "type": "number",
+            "key": "preroll_frames",
+            "label": "Pre-roll frames"
+        },
+        {
+            "key": "render_format",
+            "label": "Render format",
+            "type": "enum",
+            "multiselection": false,
+            "enum_items": [
+                {"png": "PNG"},
+                {"exr": "EXR"},
+                {"jpg": "JPG"},
+                {"bmp": "BMP"}
+            ]
         },
         {
             "type": "dict",

@@ -14,7 +14,7 @@ from openpype.settings import (
 from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.hosts.maya.api.commands import reset_frame_range
+from openpype.hosts.maya.api.lib import reset_frame_range
 
 
 class RenderSettings(object):
@@ -22,15 +22,24 @@ class RenderSettings(object):
     _image_prefix_nodes = {
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'renderman': 'rmanGlobals.imageFileFormat',
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_prefix"], # noqa
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
+    }
+
+    # Renderman only
+    _image_dir = {
+        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_dir"], # noqa
+        'cryptomatte': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["cryptomatte_dir"], # noqa
+        'imageDisplay': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["imageDisplay_dir"], # noqa
+        "watermark": get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["watermark_dir"] # noqa
     }
 
     _aov_chars = {
@@ -81,7 +90,6 @@ class RenderSettings(object):
                         prefix, type="string")  # noqa
         else:
             print("{0} isn't a supported renderer to autoset settings.".format(renderer)) # noqa
-
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
         height = asset_doc["data"].get("resolutionHeight")
@@ -96,6 +104,13 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
             mel.eval("redshiftUpdateActiveAovList")
+
+        if renderer == "renderman":
+            image_dir = self._image_dir["renderman"]
+            cmds.setAttr("rmanGlobals.imageOutputDir",
+                         image_dir, type="string")
+            self._set_renderman_settings(width, height,
+                                         aov_separator)
 
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
@@ -143,7 +158,7 @@ class RenderSettings(object):
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
         self._additional_attribs_setter(additional_options)
-        reset_frame_range()
+        reset_frame_range(playback=False, fps=False, render=True)
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
@@ -198,6 +213,66 @@ class RenderSettings(object):
 
         self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
+        cmds.setAttr("defaultResolution.width", width)
+        cmds.setAttr("defaultResolution.height", height)
+        self._additional_attribs_setter(additional_options)
+
+    def _set_renderman_settings(self, width, height, aov_separator):
+        """Sets settings for Renderman"""
+        rman_render_presets = (
+            self._project_settings
+            ["maya"]
+            ["RenderSettings"]
+            ["renderman_renderer"]
+        )
+        display_filters = rman_render_presets["display_filters"]
+        d_filters_number = len(display_filters)
+        for i in range(d_filters_number):
+            d_node = cmds.ls(typ=display_filters[i])
+            if len(d_node) > 0:
+                filter_nodes = d_node[0]
+            else:
+                filter_nodes = cmds.createNode(display_filters[i])
+
+            cmds.connectAttr(filter_nodes + ".message",
+                             "rmanGlobals.displayFilters[%i]" % i,
+                             force=True)
+            if filter_nodes.startswith("PxrImageDisplayFilter"):
+                imageDisplay_dir = self._image_dir["imageDisplay"]
+                imageDisplay_dir = imageDisplay_dir.replace("{aov_separator}",
+                                                            aov_separator)
+                cmds.setAttr(filter_nodes + ".filename",
+                             imageDisplay_dir, type="string")
+
+        sample_filters = rman_render_presets["sample_filters"]
+        s_filters_number = len(sample_filters)
+        for n in range(s_filters_number):
+            s_node = cmds.ls(typ=sample_filters[n])
+            if len(s_node) > 0:
+                filter_nodes = s_node[0]
+            else:
+                filter_nodes = cmds.createNode(sample_filters[n])
+
+            cmds.connectAttr(filter_nodes + ".message",
+                             "rmanGlobals.sampleFilters[%i]" % n,
+                             force=True)
+
+            if filter_nodes.startswith("PxrCryptomatte"):
+                matte_dir = self._image_dir["cryptomatte"]
+                matte_dir = matte_dir.replace("{aov_separator}",
+                                              aov_separator)
+                cmds.setAttr(filter_nodes + ".filename",
+                             matte_dir, type="string")
+            elif filter_nodes.startswith("PxrWatermarkFilter"):
+                watermark_dir = self._image_dir["watermark"]
+                watermark_dir = watermark_dir.replace("{aov_separator}",
+                                                      aov_separator)
+                cmds.setAttr(filter_nodes + ".filename",
+                             watermark_dir, type="string")
+
+        additional_options = rman_render_presets["additional_options"]
+
+        self._set_global_output_settings()
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
         self._additional_attribs_setter(additional_options)
@@ -261,7 +336,8 @@ class RenderSettings(object):
         )
 
         # Set render file format to exr
-        cmds.setAttr("{}.imageFormatStr".format(node), "exr", type="string")
+        ext = vray_render_presets["image_format"]
+        cmds.setAttr("{}.imageFormatStr".format(node), ext, type="string")
 
         # animType
         cmds.setAttr("{}.animType".format(node), 1)

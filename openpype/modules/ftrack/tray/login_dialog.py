@@ -1,5 +1,3 @@
-import os
-
 import requests
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -139,8 +137,7 @@ class CredentialsDialog(QtWidgets.QDialog):
         self.fill_ftrack_url()
 
     def fill_ftrack_url(self):
-        url = os.getenv("FTRACK_SERVER")
-        checked_url = self.check_url(url)
+        checked_url = self.check_url()
         if checked_url == self.ftsite_input.text():
             return
 
@@ -154,7 +151,7 @@ class CredentialsDialog(QtWidgets.QDialog):
         self.api_input.setEnabled(enabled)
         self.user_input.setEnabled(enabled)
 
-        if not url:
+        if not checked_url:
             self.btn_advanced.hide()
             self.btn_simple.hide()
             self.btn_ftrack_login.hide()
@@ -254,13 +251,13 @@ class CredentialsDialog(QtWidgets.QDialog):
             )
 
     def _on_ftrack_login_clicked(self):
-        url = self.check_url(self.ftsite_input.text())
+        url = self.check_url()
         if not url:
             return
 
         # If there is an existing server thread running we need to stop it.
         if self._login_server_thread:
-            if self._login_server_thread.isAlive():
+            if self._login_server_thread.is_alive():
                 self._login_server_thread.stop()
             self._login_server_thread.join()
             self._login_server_thread = None
@@ -302,21 +299,21 @@ class CredentialsDialog(QtWidgets.QDialog):
         if is_logged is not None:
             self.set_is_logged(is_logged)
 
-    def check_url(self, url):
-        if url is not None:
-            url = url.strip("/ ")
-
-        if not url:
+    def check_url(self):
+        settings_url = self._module.settings_ftrack_url
+        url = self._module.ftrack_url
+        if not settings_url:
             self.set_error(
                 "Ftrack URL is not defined in settings!"
             )
             return
 
-        if "http" not in url:
-            if url.endswith("ftrackapp.com"):
-                url = "https://" + url
-            else:
-                url = "https://{}.ftrackapp.com".format(url)
+        if url is None:
+            self.set_error(
+                "Specified URL does not lead to a valid Ftrack server."
+            )
+            return
+
         try:
             result = requests.get(
                 url,

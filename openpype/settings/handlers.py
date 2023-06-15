@@ -9,6 +9,7 @@ import six
 import openpype.version
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.client.entities import get_project_connection, get_project
+from openpype.lib.pype_info import get_workstation_info
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -181,7 +182,16 @@ class SettingsStateInfo:
 
 
 @six.add_metaclass(ABCMeta)
-class SettingsHandler:
+class SettingsHandler(object):
+    global_keys = {
+        "openpype_path",
+        "admin_password",
+        "log_to_server",
+        "disk_mapping",
+        "production_version",
+        "staging_version"
+    }
+
     @abstractmethod
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
@@ -223,6 +233,18 @@ class SettingsHandler:
             project_name(str, null): Project name for which overrides are
                 or None for global settings.
             data(dict): Data of project overrides with override metadata.
+        """
+        pass
+
+    @abstractmethod
+    def save_change_log(self, project_name, changes, settings_type):
+        """Stores changes to settings to separate logging collection.
+
+        Args:
+            project_name(str, null): Project name for which overrides are
+                or None for global settings.
+            changes(dict): Data of project overrides with override metadata.
+            settings_type (str): system|project|anatomy
         """
         pass
 
@@ -326,6 +348,19 @@ class SettingsHandler:
             None: If the version does not have system settings overrides.
             dict: Document with overrides data.
         """
+        pass
+
+    @abstractmethod
+    def get_global_settings(self):
+        """Studio global settings available across versions.
+
+        Output must contain all keys from 'global_keys'. If value is not set
+        the output value should be 'None'.
+
+        Returns:
+            Dict[str, Any]: Global settings same across versions.
+        """
+
         pass
 
     # Clear methods - per version
@@ -566,19 +601,9 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
-    global_general_keys = (
-        "openpype_path",
-        "admin_password",
-        "log_to_server",
-        "disk_mapping",
-        "production_version",
-        "staging_version"
-    )
     key_suffix = "_versioned"
     _version_order_key = "versions_order"
     _all_versions_keys = "all_versions"
-    _production_versions_key = "production_versions"
-    _staging_versions_key = "staging_versions"
 
     def __init__(self):
         # Get mongo connection
@@ -605,6 +630,7 @@ class MongoSettingsHandler(SettingsHandler):
 
         self.collection = settings_collection[database_name][collection_name]
 
+        self.global_settings_cache = CacheValues()
         self.system_settings_cache = CacheValues()
         self.project_settings_cache = collections.defaultdict(CacheValues)
         self.project_anatomy_cache = collections.defaultdict(CacheValues)
@@ -638,6 +664,23 @@ class MongoSettingsHandler(SettingsHandler):
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
+    def get_global_settings_doc(self):
+        if self.global_settings_cache.is_outdated:
+            global_settings_doc = self.collection.find_one({
+                "type": GLOBAL_SETTINGS_KEY
+            }) or {}
+            self.global_settings_cache.update_data(global_settings_doc, None)
+        return self.global_settings_cache.data_copy()
+
+    def get_global_settings(self):
+        global_settings_doc = self.get_global_settings_doc()
+        global_settings = global_settings_doc.get("data", {})
+        return {
+            key: global_settings[key]
+            for key in self.global_keys
+            if key in global_settings
+        }
+
     def _extract_global_settings(self, data):
         """Extract global settings data from system settings overrides.
 
@@ -654,7 +697,7 @@ class MongoSettingsHandler(SettingsHandler):
         general_data = data["general"]
 
         # Add predefined keys to global settings if are set
-        for key in self.global_general_keys:
+        for key in self.global_keys:
             if key not in general_data:
                 continue
             # Pop key from values
@@ -698,7 +741,7 @@ class MongoSettingsHandler(SettingsHandler):
         # Check if data contain any key from predefined keys
         any_key_found = False
         if globals_data:
-            for key in self.global_general_keys:
+            for key in self.global_keys:
                 if key in globals_data:
                     any_key_found = True
                     break
@@ -725,7 +768,7 @@ class MongoSettingsHandler(SettingsHandler):
             system_settings_data["general"] = system_general
 
         overridden_keys = system_general.get(M_OVERRIDDEN_KEY) or []
-        for key in self.global_general_keys:
+        for key in self.global_keys:
             if key not in globals_data:
                 continue
 
@@ -766,6 +809,10 @@ class MongoSettingsHandler(SettingsHandler):
         # Extract global settings from system settings
         global_settings = self._extract_global_settings(
             system_settings_data
+        )
+        self.global_settings_cache.update_data(
+            global_settings,
+            None
         )
 
         system_settings_doc = self.collection.find_one(
@@ -878,6 +925,32 @@ class MongoSettingsHandler(SettingsHandler):
                 data[new_key] = _value
 
         return data
+
+    def save_change_log(self, project_name, changes, settings_type):
+        """Log all settings changes to separate collection"""
+        if not changes:
+            return
+
+        if settings_type == "project" and not project_name:
+            project_name = "default"
+
+        host_info = get_workstation_info()
+
+        document = {
+            "local_id": host_info["local_id"],
+            "username": host_info["username"],
+            "hostname": host_info["hostname"],
+            "hostip": host_info["hostip"],
+            "system_name": host_info["system_name"],
+            "date_created": datetime.datetime.now(),
+            "project": project_name,
+            "settings_type": settings_type,
+            "changes": changes
+        }
+        collection_name = "settings_log"
+        collection = (self.settings_collection[self.database_name]
+                                              [collection_name])
+        collection.insert_one(document)
 
     def _save_project_anatomy_data(self, project_name, data_cache):
         # Create copy of data as they will be modified during save
@@ -997,10 +1070,7 @@ class MongoSettingsHandler(SettingsHandler):
             return
         self._version_order_checked = True
 
-        from openpype.lib.openpype_version import (
-            get_OpenPypeVersion,
-            is_running_staging
-        )
+        from openpype.lib.openpype_version import get_OpenPypeVersion
 
         OpenPypeVersion = get_OpenPypeVersion()
         # Skip if 'OpenPypeVersion' is not available
@@ -1012,25 +1082,11 @@ class MongoSettingsHandler(SettingsHandler):
         if not doc:
             doc = {"type": self._version_order_key}
 
-        if self._production_versions_key not in doc:
-            doc[self._production_versions_key] = []
-
-        if self._staging_versions_key not in doc:
-            doc[self._staging_versions_key] = []
-
         if self._all_versions_keys not in doc:
             doc[self._all_versions_keys] = []
 
-        if is_running_staging():
-            versions_key = self._staging_versions_key
-        else:
-            versions_key = self._production_versions_key
-
         # Skip if current version is already available
-        if (
-            self._current_version in doc[self._all_versions_keys]
-            and self._current_version in doc[versions_key]
-        ):
+        if self._current_version in doc[self._all_versions_keys]:
             return
 
         if self._current_version not in doc[self._all_versions_keys]:
@@ -1045,18 +1101,6 @@ class MongoSettingsHandler(SettingsHandler):
 
             doc[self._all_versions_keys] = [
                 str(version) for version in sorted(all_objected_versions)
-            ]
-
-        if self._current_version not in doc[versions_key]:
-            objected_versions = [
-                OpenPypeVersion(version=self._current_version)
-            ]
-            for version_str in doc[versions_key]:
-                objected_versions.append(OpenPypeVersion(version=version_str))
-
-            # Update versions list and push changes to Mongo
-            doc[versions_key] = [
-                str(version) for version in sorted(objected_versions)
             ]
 
         self.collection.replace_one(
@@ -1298,9 +1342,7 @@ class MongoSettingsHandler(SettingsHandler):
     def get_studio_system_settings_overrides(self, return_version):
         """Studio overrides of system settings."""
         if self.system_settings_cache.is_outdated:
-            globals_document = self.collection.find_one({
-                "type": GLOBAL_SETTINGS_KEY
-            })
+            globals_document = self.get_global_settings_doc()
             document, version = self._get_system_settings_overrides_doc()
 
             last_saved_info = SettingsStateInfo.from_document(

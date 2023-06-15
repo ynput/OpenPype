@@ -1,5 +1,17 @@
 {
     "imageio": {
+        "activate_host_color_management": true,
+        "remapping": {
+            "rules": []
+        },
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        },
         "project": {
             "colourPolicy": "ACES 1.1",
             "frameDepth": "16-bit fp",
@@ -106,17 +118,6 @@
                 "render",
                 "review"
             ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
-            ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
             "clip_name_template": "{asset}_{subset}<_{output}>",
@@ -134,17 +135,6 @@
                 "plate",
                 "render",
                 "review"
-            ],
-            "representations": [
-                "exr",
-                "dpx",
-                "jpg",
-                "jpeg",
-                "png",
-                "h264",
-                "mov",
-                "mp4",
-                "exr16fpdwaa"
             ],
             "reel_name": "OP_LoadedReel",
             "clip_name_template": "{batch}_{asset}_{subset}<_{output}>",

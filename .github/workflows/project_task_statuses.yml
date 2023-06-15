@@ -1,0 +1,70 @@
+name: 📊 Project task statuses
+
+on:
+  pull_request_review:
+    types: [submitted]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+
+  pr_review_started:
+    name: pr_review_started
+    runs-on: ubuntu-latest
+    # -----------------------------
+    # conditions are:
+    #   - PR issue comment which is not form Ynbot
+    #   - PR review comment which is not Hound (or any other bot)
+    #   - PR review submitted which is not from Hound (or any other bot) and is not 'Changes requested'
+    #   - make sure it only runs if not forked repo
+    # -----------------------------
+    if: |
+      (github.event_name == 'issue_comment' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.comment.user.id != 82967070) ||
+      (github.event_name == 'pull_request_review_comment' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.comment.user.type != 'Bot') ||
+      (github.event_name == 'pull_request_review' &&
+      github.event.pull_request.head.repo.owner.login == 'ynput' &&
+      github.event.review.state != 'changes_requested' &&
+      github.event.review.state != 'approved' &&
+      github.event.review.user.type != 'Bot')
+    steps:
+      - name: Move PR to 'Review In Progress'
+        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
+        with:
+          gh_token: ${{ secrets.YNPUT_BOT_TOKEN }}
+          organization: ynput
+          project_id: 11
+          resource_node_id: ${{ github.event.pull_request.node_id || github.event.issue.node_id }}
+          status_value: Review In Progress
+
+  pr_review_requested:
+    # -----------------------------
+    # Resets Clickup Task status to 'In Progress' after 'Changes Requested' were submitted to PR
+    # It only runs if custom clickup task id was found in ref branch of PR
+    # -----------------------------
+    name: pr_review_requested
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_review' && github.event.pull_request.head.repo.owner.login == 'ynput' && github.event.review.state == 'changes_requested'
+    steps:
+      - name: Set branch env
+        run: echo "BRANCH_NAME=${{ github.event.pull_request.head.ref}}" >> $GITHUB_ENV
+      - name: Get ClickUp ID from ref head name
+        id: get_cuID
+        run: |
+          echo ${{ env.BRANCH_NAME }}
+          echo "cuID=$(echo $BRANCH_NAME | sed 's/.*\/\(OP\-[0-9]\{4\}\).*/\1/')" >> $GITHUB_OUTPUT
+
+      - name: Print ClickUp ID
+        run: echo ${{ steps.get_cuID.outputs.cuID }}
+
+      - name: Move found Clickup task to 'Review in Progress'
+        if: steps.get_cuID.outputs.cuID
+        run: |
+         curl -i -X PUT \
+          'https://api.clickup.com/api/v2/task/${{ steps.get_cuID.outputs.cuID }}?custom_task_ids=true&team_id=${{secrets.CLICKUP_TEAM_ID}}' \
+          -H 'Authorization: ${{secrets.CLICKUP_API_KEY}}' \
+          -H 'Content-Type: application/json' \
+          -d '{
+             "status": "in progress"
+           }'

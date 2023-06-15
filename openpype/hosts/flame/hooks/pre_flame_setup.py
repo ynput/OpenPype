@@ -47,6 +47,17 @@ class FlamePrelaunch(PreLaunchHook):
 
         imageio_flame = project_settings["flame"]["imageio"]
 
+        # Check whether 'enabled' key from host imageio settings exists
+        # so we can tell if host is using the new colormanagement framework.
+        # If the 'enabled' isn't found we want 'colormanaged' set to True
+        # because prior to the key existing we always did colormanagement for
+        # Flame
+        colormanaged = imageio_flame.get("enabled")
+        # if key was not found, set to True
+        # ensuring backward compatibility
+        if colormanaged is None:
+            colormanaged = True
+
         # get user name and host name
         user_name = get_openpype_username()
         user_name = user_name.replace(".", "_")
@@ -68,9 +79,7 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameWidth": int(width),
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
-            "FrameRate": self._get_flame_fps(fps),
-            "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
-            "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
+            "FrameRate": self._get_flame_fps(fps)
         }
 
         data_to_script = {
@@ -78,13 +87,22 @@ class FlamePrelaunch(PreLaunchHook):
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
             "volume_name": volume_name,
             "group_name": _env.get("FLAME_WIRETAP_GROUP"),
-            "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
             # from project
             "project_name": project_name,
             "user_name": user_name,
             "project_data": project_data
         }
+
+        # add color management data
+        if colormanaged:
+            project_data.update({
+                "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
+                "FieldDominance": str(
+                    imageio_flame["project"]["fieldDominance"])
+            })
+            data_to_script["color_policy"] = str(
+                imageio_flame["project"]["colourPolicy"])
 
         self.log.info(pformat(dict(_env)))
         self.log.info(pformat(data_to_script))
@@ -153,7 +171,7 @@ class FlamePrelaunch(PreLaunchHook):
     def _add_pythonpath(self):
         pythonpath = self.launch_context.env.get("PYTHONPATH")
 
-        # separate it explicity by `;` that is what we use in settings
+        # separate it explicitly by `;` that is what we use in settings
         new_pythonpath = self.flame_pythonpath.split(os.pathsep)
         new_pythonpath += pythonpath.split(os.pathsep)
 

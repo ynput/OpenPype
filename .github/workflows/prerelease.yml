@@ -1,4 +1,4 @@
-name: Nightly Prerelease
+name: ⏳ Nightly Prerelease
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.9
 
     - name: Install Python requirements
       run: pip install gitpython semver PyGithub
@@ -25,43 +25,15 @@ jobs:
     - name: 🔎 Determine next version type
       id: version_type
       run: |
-        TYPE=$(python ./tools/ci_tools.py --bump --github_token ${{ secrets.GITHUB_TOKEN }})
-
-        echo ::set-output name=type::$TYPE
+        TYPE=$(python ./tools/ci_tools.py --bump --github_token ${{ secrets.YNPUT_BOT_TOKEN }})
+        echo "type=${TYPE}" >> $GITHUB_OUTPUT
 
     - name: 💉 Inject new version into files
       id: version
       if: steps.version_type.outputs.type != 'skip'
       run: |
-        RESULT=$(python ./tools/ci_tools.py --nightly --github_token ${{ secrets.GITHUB_TOKEN }})
-
-        echo ::set-output name=next_tag::$RESULT
-
-    # - name: "✏️ Generate full changelog"
-    #   if: steps.version_type.outputs.type != 'skip'
-    #   id: generate-full-changelog
-    #   uses: heinrichreimer/github-changelog-generator-action@v2.3
-    #   with:
-    #     token: ${{ secrets.ADMIN_TOKEN }}
-    #     addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
-    #     issues: false
-    #     issuesWoLabels: false
-    #     sinceTag: "3.12.0"
-    #     maxIssues: 100
-    #     pullRequests: true
-    #     prWoLabels: false
-    #     author: false
-    #     unreleased: true
-    #     compareLink: true
-    #     stripGeneratorNotice: true
-    #     verbose: true
-    #     unreleasedLabel: ${{ steps.version.outputs.next_tag }}
-    #     excludeTagsRegex: "CI/.+"
-    #     releaseBranch: "main"
-
-    - name: "🖨️ Print changelog to console"
-      if: steps.version_type.outputs.type != 'skip'
-      run: cat CHANGELOG.md
+        NEW_VERSION_TAG=$(python ./tools/ci_tools.py --nightly --github_token ${{ secrets.YNPUT_BOT_TOKEN }})
+        echo "next_tag=${NEW_VERSION_TAG}" >> $GITHUB_OUTPUT
 
     - name: 💾 Commit and Tag
       id: git_commit
@@ -80,7 +52,7 @@ jobs:
     - name: Push to protected main branch
       uses: CasperWA/push-protected@v2.10.0
       with:
-        token: ${{ secrets.ADMIN_TOKEN }}
+        token: ${{ secrets.YNPUT_BOT_TOKEN }}
         branch: main
         tags: true
         unprotect_reviews: true
@@ -89,7 +61,13 @@ jobs:
       uses: everlytic/branch-merge@1.1.0
       if: steps.version_type.outputs.type != 'skip'
       with:
-        github_token: ${{ secrets.ADMIN_TOKEN }}
+        github_token: ${{ secrets.YNPUT_BOT_TOKEN }}
         source_ref: 'main'
         target_branch: 'develop'
         commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'
+
+    - name: Invoke Update bug report workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: update_bug_report.yml
+        token: ${{ secrets.YNPUT_BOT_TOKEN }}

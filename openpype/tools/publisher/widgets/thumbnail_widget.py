@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.lib import (
@@ -75,6 +75,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         painter = QtGui.QPainter()
         painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
 
@@ -126,11 +127,14 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         new_pix.fill(QtCore.Qt.transparent)
         pix_painter = QtGui.QPainter()
         pix_painter.begin(new_pix)
-        pix_painter.setRenderHints(
-            pix_painter.Antialiasing
-            | pix_painter.SmoothPixmapTransform
-            | pix_painter.HighQualityAntialiasing
+        render_hints = (
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+        if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+            render_hints |= QtGui.QPainter.HighQualityAntialiasing
+
+        pix_painter.setRenderHints(render_hints)
         pix_painter.drawPixmap(pos_x, pos_y, scaled_pix)
         pix_painter.end()
         return new_pix
@@ -159,11 +163,13 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             new_pix.fill(QtCore.Qt.transparent)
             pix_painter = QtGui.QPainter()
             pix_painter.begin(new_pix)
-            pix_painter.setRenderHints(
-                pix_painter.Antialiasing
-                | pix_painter.SmoothPixmapTransform
-                | pix_painter.HighQualityAntialiasing
+            render_hints = (
+                QtGui.QPainter.Antialiasing
+                | QtGui.QPainter.SmoothPixmapTransform
             )
+            if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+                render_hints |= QtGui.QPainter.HighQualityAntialiasing
+            pix_painter.setRenderHints(render_hints)
 
             tiled_rect = QtCore.QRectF(
                 pos_x, pos_y, scaled_pix.width(), scaled_pix.height()
@@ -177,6 +183,18 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             pix_painter.end()
             backgrounded_images.append(new_pix)
         return backgrounded_images
+
+    def _paint_dash_line(self, painter, rect):
+        pen = QtGui.QPen()
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
+
+        new_rect = rect.adjusted(1, 1, -1, -1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        # painter.drawRect(rect)
+        painter.drawRect(new_rect)
 
     def _cache_pix(self):
         rect = self.rect()
@@ -239,11 +257,15 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         final_painter = QtGui.QPainter()
         final_painter.begin(final_pix)
-        final_painter.setRenderHints(
-            final_painter.Antialiasing
-            | final_painter.SmoothPixmapTransform
-            | final_painter.HighQualityAntialiasing
+        render_hints = (
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+        if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+            render_hints |= QtGui.QPainter.HighQualityAntialiasing
+
+        final_painter.setRenderHints(render_hints)
+
         final_painter.setBrush(QtGui.QBrush(self.thumbnail_bg_color))
         final_painter.setPen(bg_pen)
         final_painter.drawRect(rect)
@@ -255,13 +277,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         # Draw drop enabled dashes
         if used_default_pix:
-            pen = QtGui.QPen()
-            pen.setWidth(1)
-            pen.setBrush(QtCore.Qt.darkGray)
-            pen.setStyle(QtCore.Qt.DashLine)
-            final_painter.setPen(pen)
-            final_painter.setBrush(QtCore.Qt.transparent)
-            final_painter.drawRect(rect)
+            self._paint_dash_line(final_painter, rect)
 
         final_painter.end()
 

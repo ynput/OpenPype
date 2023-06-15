@@ -1,5 +1,3 @@
-import re
-
 from maya import cmds
 
 import pyblish.api
@@ -8,37 +6,7 @@ from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
 )
-
-
-def len_flattened(components):
-    """Return the length of the list as if it was flattened.
-
-    Maya will return consecutive components as a single entry
-    when requesting with `maya.cmds.ls` without the `flatten`
-    flag. Though enabling `flatten` on a large list (e.g. millions)
-    will result in a slow result. This command will return the amount
-    of entries in a non-flattened list by parsing the result with
-    regex.
-
-    Args:
-        components (list): The non-flattened components.
-
-    Returns:
-        int: The amount of entries.
-
-    """
-    assert isinstance(components, (list, tuple))
-    n = 0
-
-    pattern = re.compile(r"\[(\d+):(\d+)\]")
-    for c in components:
-        match = pattern.search(c)
-        if match:
-            start, end = match.groups()
-            n += int(end) - int(start) + 1
-        else:
-            n += 1
-    return n
+from openpype.hosts.maya.api.lib import len_flattened
 
 
 class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
@@ -63,7 +31,6 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
-    category = 'geometry'
     label = 'Mesh Vertices Have Edges'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]
@@ -87,6 +54,13 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
         meshes = cmds.ls(instance, type="mesh", long=True)
         for mesh in meshes:
             num_vertices = cmds.polyEvaluate(mesh, vertex=True)
+
+            if num_vertices == 0:
+                cls.log.warning(
+                    "Skipping \"{}\", cause it does not have any "
+                    "vertices.".format(mesh)
+                )
+                continue
 
             # Vertices from all edges
             edges = "%s.e[*]" % mesh

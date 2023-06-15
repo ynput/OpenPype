@@ -31,9 +31,12 @@ from .lib import (
     lsattrs,
     read,
     maintained_selection,
+    maintained_time,
     get_selection,
     # unique_name,
 )
+
+from .capture import capture
 
 
 __all__ = [
@@ -56,9 +59,11 @@ __all__ = [
 
     # Utility functions
     "maintained_selection",
+    "maintained_time",
     "lsattr",
     "lsattrs",
     "read",
     "get_selection",
+    "capture",
     # "unique_name",
 ]

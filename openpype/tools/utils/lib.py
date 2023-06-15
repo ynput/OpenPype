@@ -4,7 +4,7 @@ import contextlib
 import collections
 import traceback
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
@@ -20,14 +20,44 @@ from openpype.lib import filter_profiles, Logger
 from openpype.settings import get_project_settings
 from openpype.pipeline import registered_host
 
+from .constants import CHECKED_INT, UNCHECKED_INT
+
 log = Logger.get_logger(__name__)
+
+
+def checkstate_int_to_enum(state):
+    if not isinstance(state, int):
+        return state
+    if state == CHECKED_INT:
+        return QtCore.Qt.Checked
+
+    if state == UNCHECKED_INT:
+        return QtCore.Qt.Unchecked
+    return QtCore.Qt.PartiallyChecked
+
+
+def checkstate_enum_to_int(state):
+    if isinstance(state, int):
+        return state
+    if state == QtCore.Qt.Checked:
+        return 0
+    if state == QtCore.Qt.PartiallyChecked:
+        return 1
+    return 2
+
 
 
 def center_window(window):
     """Move window to center of it's screen."""
-    desktop = QtWidgets.QApplication.desktop()
-    screen_idx = desktop.screenNumber(window)
-    screen_geo = desktop.screenGeometry(screen_idx)
+
+    if hasattr(QtWidgets.QApplication, "desktop"):
+        desktop = QtWidgets.QApplication.desktop()
+        screen_idx = desktop.screenNumber(window)
+        screen_geo = desktop.screenGeometry(screen_idx)
+    else:
+        screen = window.screen()
+        screen_geo = screen.geometry()
+
     geo = window.frameGeometry()
     geo.moveCenter(screen_geo.center())
     if geo.y() < screen_geo.y():
@@ -79,11 +109,15 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
-    painter.setRenderHints(
-        painter.Antialiasing
-        | painter.SmoothPixmapTransform
-        | painter.HighQualityAntialiasing
+    render_hints = (
+        QtGui.QPainter.Antialiasing
+        | QtGui.QPainter.SmoothPixmapTransform
     )
+    # Deprecated since 5.14
+    if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+        render_hints |= QtGui.QPainter.HighQualityAntialiasing
+    painter.setRenderHints(render_hints)
+
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
@@ -168,20 +202,52 @@ def get_project_icon(project_doc):
 
 
 def get_asset_icon_name(asset_doc, has_children=True):
-    icon_name = asset_doc["data"].get("icon")
+    icon_name = get_asset_icon_name_from_doc(asset_doc)
     if icon_name:
         return icon_name
+    return get_default_asset_icon_name(has_children)
 
+
+def get_asset_icon_color(asset_doc):
+    icon_color = get_asset_icon_color_from_doc(asset_doc)
+    if icon_color:
+        return icon_color
+    return get_default_entity_icon_color()
+
+
+def get_default_asset_icon_name(has_children):
     if has_children:
         return "fa.folder"
     return "fa.folder-o"
 
 
-def get_asset_icon_color(asset_doc):
-    icon_color = asset_doc["data"].get("color")
+def get_asset_icon_name_from_doc(asset_doc):
+    if asset_doc:
+        return asset_doc["data"].get("icon")
+    return None
+
+
+def get_asset_icon_color_from_doc(asset_doc):
+    if asset_doc:
+        return asset_doc["data"].get("color")
+    return None
+
+
+def get_asset_icon_by_name(icon_name, icon_color, has_children=False):
+    if not icon_name:
+        icon_name = get_default_asset_icon_name(has_children)
+
     if icon_color:
-        return icon_color
-    return get_default_entity_icon_color()
+        icon_color = QtGui.QColor(icon_color)
+    else:
+        icon_color = get_default_entity_icon_color()
+    icon = get_qta_icon_by_name_and_color(icon_name, icon_color)
+    if icon is not None:
+        return icon
+    return get_qta_icon_by_name_and_color(
+        get_default_asset_icon_name(has_children),
+        icon_color
+    )
 
 
 def get_asset_icon(asset_doc, has_children=False):
@@ -329,7 +395,10 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
         role = QtCore.Qt.DisplayRole
     model = tree_view.model()
     selection_model = tree_view.selectionModel()
-    flags = selection_model.Select | selection_model.Rows
+    flags = (
+        QtCore.QItemSelectionModel.Select
+        | QtCore.QItemSelectionModel.Rows
+    )
 
     if current_index:
         current_index_value = tree_view.currentIndex().data(role)
@@ -793,17 +862,16 @@ class WrappedCallbackItem:
         return self._result
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         if self.done:
             self.log.warning("- item is already processed")
             return
 
-        self.log.debug("Running callback: {}".format(str(self._callback)))
         try:
             result = self._callback(*self._args, **self._kwargs)
             self._result = result

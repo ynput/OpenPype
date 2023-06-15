@@ -16,6 +16,10 @@ from Deadline.Scripting import (
     FileUtils, RepositoryUtils, SystemUtils)
 
 
+version_major = 1
+version_minor = 0
+version_patch = 0
+version_string = "{}.{}.{}".format(version_major, version_minor, version_patch)
 STRING_TAGS = {
     "format"
 }
@@ -204,10 +208,10 @@ def info_about_input(oiiotool_path, filepath):
     _stdout, _stderr = popen.communicate()
     output = ""
     if _stdout:
-        output += _stdout.decode("utf-8")
+        output += _stdout.decode("utf-8", errors="backslashreplace")
 
     if _stderr:
-        output += _stderr.decode("utf-8")
+        output += _stderr.decode("utf-8", errors="backslashreplace")
 
     output = output.replace("\r\n", "\n")
     xml_started = False
@@ -264,6 +268,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
 
     def initialize_process(self):
         """Initialization."""
+        self.LogInfo("Plugin version: {}".format(version_string))
         self.SingleFramesOnly = True
         self.StdoutHandling = True
         self.renderer = self.GetPluginInfoEntryWithDefault(
@@ -320,12 +325,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
         output_file = data["ImageFileName"]
         output_file = RepositoryUtils.CheckPathMapping(output_file)
         output_file = self.process_path(output_file)
-        """
-        _, ext = os.path.splitext(output_file)
-        if "exr" not in ext:
-            self.FailRender(
-                "[{}] Only EXR format is supported for now.".format(ext))
-        """
+
         tile_info = []
         for tile in range(int(data["TileCount"])):
             tile_info.append({
@@ -335,11 +335,6 @@ class OpenPypeTileAssembler(DeadlinePlugin):
                 "height": int(data["Tile{}Height".format(tile)]),
                 "width": int(data["Tile{}Width".format(tile)])
             })
-
-        # FFMpeg doesn't support tile coordinates at the moment.
-        # arguments = self.tile_completer_ffmpeg_args(
-        #     int(data["ImageWidth"]), int(data["ImageHeight"]),
-        #     tile_info, output_file)
 
         arguments = self.tile_oiio_args(
             int(data["ImageWidth"]), int(data["ImageHeight"]),
@@ -362,20 +357,20 @@ class OpenPypeTileAssembler(DeadlinePlugin):
     def pre_render_tasks(self):
         """Load config file and do remapping."""
         self.LogInfo("OpenPype Tile Assembler starting...")
-        scene_filename = self.GetDataFilename()
+        config_file = self.GetPluginInfoEntry("ConfigFile")
 
         temp_scene_directory = self.CreateTempDirectory(
             "thread" + str(self.GetThreadNumber()))
-        temp_scene_filename = Path.GetFileName(scene_filename)
+        temp_scene_filename = Path.GetFileName(config_file)
         self.config_file = Path.Combine(
             temp_scene_directory, temp_scene_filename)
 
         if SystemUtils.IsRunningOnWindows():
             RepositoryUtils.CheckPathMappingInFileAndReplaceSeparator(
-                scene_filename, self.config_file, "/", "\\")
+                config_file, self.config_file, "/", "\\")
         else:
             RepositoryUtils.CheckPathMappingInFileAndReplaceSeparator(
-                scene_filename, self.config_file, "\\", "/")
+                config_file, self.config_file, "\\", "/")
             os.chmod(self.config_file, os.stat(self.config_file).st_mode)
 
     def post_render_tasks(self):
@@ -459,75 +454,3 @@ class OpenPypeTileAssembler(DeadlinePlugin):
         args.append(output_path)
 
         return args
-
-    def tile_completer_ffmpeg_args(
-            self, output_width, output_height, tiles_info, output_path):
-        """Generate ffmpeg arguments for tile assembly.
-
-        Expected inputs are tiled images.
-
-        Args:
-            output_width (int): Width of output image.
-            output_height (int): Height of output image.
-            tiles_info (list): List of tile items, each item must be
-                dictionary with `filepath`, `pos_x` and `pos_y` keys
-                representing path to file and x, y coordinates on output
-                image where top-left point of tile item should start.
-            output_path (str): Path to file where should be output stored.
-
-        Returns:
-            (list): ffmpeg arguments.
-
-        """
-        previous_name = "base"
-        ffmpeg_args = []
-        filter_complex_strs = []
-
-        filter_complex_strs.append("nullsrc=size={}x{}[{}]".format(
-            output_width, output_height, previous_name
-        ))
-
-        new_tiles_info = {}
-        for idx, tile_info in enumerate(tiles_info):
-            # Add input and store input index
-            filepath = tile_info["filepath"]
-            ffmpeg_args.append("-i \"{}\"".format(filepath.replace("\\", "/")))
-
-            # Prepare initial filter complex arguments
-            index_name = "input{}".format(idx)
-            filter_complex_strs.append(
-                "[{}]setpts=PTS-STARTPTS[{}]".format(idx, index_name)
-            )
-            tile_info["index"] = idx
-            new_tiles_info[index_name] = tile_info
-
-        # Set frames to 1
-        ffmpeg_args.append("-frames 1")
-
-        # Concatenation filter complex arguments
-        global_index = 1
-        total_index = len(new_tiles_info)
-        for index_name, tile_info in new_tiles_info.items():
-            item_str = (
-                "[{previous_name}][{index_name}]overlay={pos_x}:{pos_y}"
-            ).format(
-                previous_name=previous_name,
-                index_name=index_name,
-                pos_x=tile_info["pos_x"],
-                pos_y=tile_info["pos_y"]
-            )
-            new_previous = "tmp{}".format(global_index)
-            if global_index != total_index:
-                item_str += "[{}]".format(new_previous)
-            filter_complex_strs.append(item_str)
-            previous_name = new_previous
-            global_index += 1
-
-        joined_parts = ";".join(filter_complex_strs)
-        filter_complex_str = "-filter_complex \"{}\"".format(joined_parts)
-
-        ffmpeg_args.append(filter_complex_str)
-        ffmpeg_args.append("-y")
-        ffmpeg_args.append("\"{}\"".format(output_path))
-
-        return ffmpeg_args

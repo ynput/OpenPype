@@ -423,6 +423,93 @@
                   }
               }
             ]
-        }
+        },
+        {
+          "type": "dict",
+          "collapsible": true,
+          "key": "renderman_renderer",
+          "label": "Renderman Renderer",
+          "is_group": true,
+          "children": [
+            {
+                "key": "image_prefix",
+                "label": "Image prefix template",
+                "type": "text"
+            },
+            {
+              "key": "image_dir",
+              "label": "Image Output Directory",
+              "type": "text"
+            },
+            {
+              "key": "display_filters",
+              "label": "Display Filters",
+              "type": "enum",
+              "multiselection": true,
+              "defaults": "empty",
+              "enum_items": [
+                {"PxrBackgroundDisplayFilter": "PxrBackgroundDisplayFilter"},
+                {"PxrCopyAOVDisplayFilter": "PxrCopyAOVDisplayFilter"},
+                {"PxrEdgeDetect":"PxrEdgeDetect"},
+                {"PxrFilmicTonemapperDisplayFilter": "PxrFilmicTonemapperDisplayFilter"},
+                {"PxrGradeDisplayFilter": "PxrGradeDisplayFilter"},
+                {"PxrHalfBufferErrorFilter": "PxrHalfBufferErrorFilter"},
+                {"PxrImageDisplayFilter": "PxrImageDisplayFilter"},
+                {"PxrLightSaturation": "PxrLightSaturation"},
+                {"PxrShadowDisplayFilter": "PxrShadowDisplayFilter"},
+                {"PxrStylizedHatching": "PxrStylizedHatching"},
+                {"PxrStylizedLines": "PxrStylizedLines"},
+                {"PxrStylizedToon": "PxrStylizedToon"},
+                {"PxrWhitePointDisplayFilter": "PxrWhitePointDisplayFilter"}
+              ]
+            },
+            {
+              "key": "imageDisplay_dir",
+              "label": "Image Display Filter Directory",
+              "type": "text"
+            },
+            {
+              "key": "sample_filters",
+              "label": "Sample Filters",
+              "type": "enum",
+              "multiselection": true,
+              "defaults": "empty",
+              "enum_items": [
+                {"PxrBackgroundSampleFilter": "PxrBackgroundSampleFilter"},
+                {"PxrCopyAOVSampleFilter": "PxrCopyAOVSampleFilter"},
+                {"PxrCryptomatte": "PxrCryptomatte"},
+                {"PxrFilmicTonemapperSampleFilter": "PxrFilmicTonemapperSampleFilter"},
+                {"PxrGradeSampleFilter": "PxrGradeSampleFilter"},
+                {"PxrShadowFilter": "PxrShadowFilter"},
+                {"PxrWatermarkFilter": "PxrWatermarkFilter"},
+                {"PxrWhitePointSampleFilter": "PxrWhitePointSampleFilter"}
+              ]
+            },
+            {
+              "key": "cryptomatte_dir",
+              "label": "Cryptomatte Output Directory",
+              "type": "text"
+            },
+            {
+              "key": "watermark_dir",
+              "label": "Watermark Filter Directory",
+              "type": "text"
+            },
+            {
+                "type": "label",
+                "label": "Add additional options - put attribute and value, like <code>Ci</code>"
+            },
+            {
+                "type": "dict-modifiable",
+                "store_as_list": true,
+                "key": "additional_options",
+                "label": "Additional Renderer Options",
+                "use_label_wrap": true,
+                "object_type": {
+                      "type": "text"
+                }
+            }
+          ]
+      }
     ]
 }

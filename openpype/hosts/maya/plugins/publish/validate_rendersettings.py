@@ -13,6 +13,22 @@ from openpype.pipeline.publish import (
 from openpype.hosts.maya.api import lib
 
 
+def convert_to_int_or_float(string_value):
+    # Order of types are important here since float can convert string
+    # representation of integer.
+    types = [int, float]
+    for t in types:
+        try:
+            result = t(string_value)
+        except ValueError:
+            continue
+        else:
+            return result
+
+    # Neither integer or float.
+    return string_value
+
+
 def get_redshift_image_format_labels():
     """Return nice labels for Redshift image formats."""
     var = "$g_redshiftImageFormatLabels"
@@ -242,10 +258,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
 
         # load validation definitions from settings
-        validation_settings = (
-            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
-                "{}_render_attributes".format(renderer)) or []
-        )
         settings_lights_flag = instance.context.data["project_settings"].get(
             "maya", {}).get(
             "RenderSettings", {}).get(
@@ -253,15 +265,68 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         instance_lights_flag = instance.data.get("renderSetupIncludeLights")
         if settings_lights_flag != instance_lights_flag:
-            cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag)) # noqa
+            cls.log.warning(
+                "Instance flag for \"Render Setup Include Lights\" is set to "
+                "{} and Settings flag is set to {}".format(
+                    instance_lights_flag, settings_lights_flag
+                )
+            )
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
-        for attr, value in OrderedDict(validation_settings).items():
-            cls.log.debug("{}: {}".format(attr, value))
+        for data in cls.get_nodes(instance, renderer):
+            for node in data["nodes"]:
+                try:
+                    render_value = cmds.getAttr(
+                        "{}.{}".format(node, data["attribute"])
+                    )
+                except RuntimeError:
+                    invalid = True
+                    cls.log.error(
+                        "Cannot get value of {}.{}".format(
+                            node, data["attribute"]
+                        )
+                    )
+                else:
+                    if render_value not in data["values"]:
+                        invalid = True
+                        cls.log.error(
+                            "Invalid value {} set on {}.{}. Expecting "
+                            "{}".format(
+                                render_value,
+                                node,
+                                data["attribute"],
+                                data["values"]
+                            )
+                        )
+
+        return invalid
+
+    @classmethod
+    def get_nodes(cls, instance, renderer):
+        maya_settings = instance.context.data["project_settings"]["maya"]
+        validation_settings = (
+            maya_settings["publish"]["ValidateRenderSettings"].get(
+                "{}_render_attributes".format(renderer)
+            ) or []
+        )
+        result = []
+        for attr, values in OrderedDict(validation_settings).items():
+            values = [convert_to_int_or_float(v) for v in values if v]
+
+            # Validate the settings has values.
+            if not values:
+                cls.log.error(
+                    "Settings for {} is missing values.".format(attr)
+                )
+                continue
+
+            cls.log.debug("{}: {}".format(attr, values))
             if "." not in attr:
-                cls.log.warning("Skipping invalid attribute defined in "
-                                "validation settings: '{}'".format(attr))
+                cls.log.warning(
+                    "Skipping invalid attribute defined in validation "
+                    "settings: \"{}\"".format(attr)
+                )
                 continue
 
             node_type, attribute_name = attr.split(".", 1)
@@ -271,28 +336,19 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
             if not nodes:
                 cls.log.warning(
-                    "No nodes of type '{}' found.".format(node_type))
+                    "No nodes of type \"{}\" found.".format(node_type)
+                )
                 continue
 
-            for node in nodes:
-                try:
-                    render_value = cmds.getAttr(
-                        "{}.{}".format(node, attribute_name))
-                except RuntimeError:
-                    invalid = True
-                    cls.log.error(
-                        "Cannot get value of {}.{}".format(
-                            node, attribute_name))
-                else:
-                    if str(value) != str(render_value):
-                        invalid = True
-                        cls.log.error(
-                            ("Invalid value {} set on {}.{}. "
-                             "Expecting {}").format(
-                                render_value, node, attribute_name, value)
-                        )
+            result.append(
+                {
+                    "attribute": attribute_name,
+                    "nodes": nodes,
+                    "values": values
+                }
+            )
 
-        return invalid
+        return result
 
     @classmethod
     def repair(cls, instance):
@@ -305,6 +361,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_")
         )
 
+        for data in cls.get_nodes(instance, renderer):
+            if not data["values"]:
+                continue
+            for node in data["nodes"]:
+                lib.set_attribute(data["attribute"], data["values"][0], node)
+
         with lib.renderlayer(layer_node):
             default = lib.RENDER_ATTRS['default']
             render_attrs = lib.RENDER_ATTRS.get(renderer, default)
@@ -313,6 +375,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cmds.setAttr("defaultRenderGlobals.animation", True)
 
             # Repair prefix
+            if renderer == "arnold":
+                multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                if multipart:
+                    separator_variations = [
+                        "_<RenderPass>",
+                        "<RenderPass>_",
+                        "<RenderPass>",
+                    ]
+                    for variant in separator_variations:
+                        default_prefix = default_prefix.replace(variant, "")
+
             if renderer != "renderman":
                 node = render_attrs["node"]
                 prefix_attr = render_attrs["prefix"]

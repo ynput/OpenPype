@@ -4,6 +4,7 @@ from maya import cmds
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 from openpype.hosts.maya.api.lib_rendersetup import (
     get_attr_overrides,
@@ -49,7 +50,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         frame_start_handle = int(context.data.get("frameStartHandle"))
         frame_end_handle = int(context.data.get("frameEndHandle"))
-        handles = int(context.data.get("handles"))
         handle_start = int(context.data.get("handleStart"))
         handle_end = int(context.data.get("handleEnd"))
         frame_start = int(context.data.get("frameStart"))
@@ -57,35 +57,50 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         inst_start = int(instance.data.get("frameStartHandle"))
         inst_end = int(instance.data.get("frameEndHandle"))
+        inst_frame_start = int(instance.data.get("frameStart"))
+        inst_frame_end = int(instance.data.get("frameEnd"))
+        inst_handle_start = int(instance.data.get("handleStart"))
+        inst_handle_end = int(instance.data.get("handleEnd"))
 
         # basic sanity checks
         assert frame_start_handle <= frame_end_handle, (
             "start frame is lower then end frame")
-
-        assert handles >= 0, ("handles cannot have negative values")
 
         # compare with data on instance
         errors = []
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
-        if(inst_start != frame_start_handle):
+        if (inst_start != frame_start_handle):
             errors.append("Instance start frame [ {} ] doesn't "
-                          "match the one set on instance [ {} ]: "
+                          "match the one set on asset [ {} ]: "
                           "{}/{}/{}/{} (handle/start/end/handle)".format(
                               inst_start,
                               frame_start_handle,
                               handle_start, frame_start, frame_end, handle_end
                           ))
 
-        if(inst_end != frame_end_handle):
+        if (inst_end != frame_end_handle):
             errors.append("Instance end frame [ {} ] doesn't "
-                          "match the one set on instance [ {} ]: "
+                          "match the one set on asset [ {} ]: "
                           "{}/{}/{}/{} (handle/start/end/handle)".format(
                               inst_end,
                               frame_end_handle,
                               handle_start, frame_start, frame_end, handle_end
                           ))
+
+        checks = {
+            "frame start": (frame_start, inst_frame_start),
+            "frame end": (frame_end, inst_frame_end),
+            "handle start": (handle_start, inst_handle_start),
+            "handle end": (handle_end, inst_handle_end)
+        }
+        for label, values in checks.items():
+            if values[0] != values[1]:
+                errors.append(
+                    "{} on instance ({}) does not match with the asset "
+                    "({}).".format(label.title(), values[1], values[0])
+                )
 
         for e in errors:
             self.log.error(e)
