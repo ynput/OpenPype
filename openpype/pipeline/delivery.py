@@ -171,28 +171,12 @@ def deliver_single_file(
 
         src_collection = src_collections[0]
         src_indexes = list(src_collection.indexes)
-        # Use last frame for minimum padding
-        #   - that should cover both 'udim' and 'frame' minimum padding
-
-        # If the representation has `frameStart` set it renumbers the
-        # frame indices of the published collection. It will start from
-        # that `frameStart` index instead. Thus if that frame start
-        # differs from the collection we want to shift the destination
-        # frame indices from the source collection.
-        # In case source are published in place we need to
-        # skip renumbering
 
         destination_indexes = [
             re_frame_value + idx
             for idx in range(len(src_indexes))
         ]
 
-        # To construct the destination template with anatomy we require
-        # a Frame or UDIM tile set for the template data. We use the first
-        # index of the destination for that because that could've shifted
-        # from the source indexes, etc.
-
-        # Construct destination collection from template
         dst_filepaths = []
         for index in destination_indexes:
             template_data = copy.deepcopy(anatomy_data)

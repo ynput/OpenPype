@@ -210,7 +210,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 optional_args = [
                     renumber_frame,
                     frame_offset
-                    ]
+                ]
                 args.extend(optional_args)
 
             if repre.get("files"):
