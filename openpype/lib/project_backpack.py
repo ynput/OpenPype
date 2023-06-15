@@ -113,6 +113,12 @@ def pack_project(
             project_name
         ))
 
+    if only_documents and not destination_dir:
+        raise ValueError((
+            "Destination directory must be defined"
+            " when only documents should be packed."
+        ))
+
     root_path = None
     source_root = {}
     project_source_path = None
@@ -142,11 +148,6 @@ def pack_project(
         destination_dir = root_path
 
     if not destination_dir:
-        if only_documents:
-            raise ValueError((
-                "Destination dir must be passed."
-                " Use '--dirpath {output dir path}' if using command line."
-            ))
         raise ValueError(
             "Project {} does not have any roots.".format(project_name)
         )
