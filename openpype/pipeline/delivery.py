@@ -186,13 +186,8 @@ def deliver_single_file(
                 template_data
             )
             dst_filepaths.append(template_filled)
-        # Make sure context contains frame
-        # NOTE: Frame would not be available only if template does not
-        #   contain '{frame}' in template -> Do we want support it?
 
-        # Update the destination indexes and padding
         dst_collection = clique.assemble(dst_filepaths)[0][0]
-
 
         for src_file_name, dst in zip(src_collection, dst_collection):
             src_path = os.path.join(src_dir, src_file_name)
