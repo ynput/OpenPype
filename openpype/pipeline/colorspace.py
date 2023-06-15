@@ -532,7 +532,7 @@ def get_remapped_colorspace_to_native(
         remapping_rules = imageio_host_settings["remapping"]["rules"]
         CashedData.remapping[host_name] = {
             "to_native": {
-                rule["ocio_name"]: input["host_native_name"]
+                rule["ocio_name"]: rule["host_native_name"]
                 for rule in remapping_rules
             }
         }
@@ -556,7 +556,7 @@ def get_remapped_colorspace_from_native(
         remapping_rules = imageio_host_settings["remapping"]["rules"]
         CashedData.remapping[host_name] = {
             "from_native": {
-                input["host_native_name"]: rule["ocio_name"]
+                rule["host_native_name"]: rule["ocio_name"]
                 for rule in remapping_rules
             }
         }
