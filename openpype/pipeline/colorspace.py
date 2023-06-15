@@ -511,7 +511,8 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
 
 def get_remapped_colorspace_to_native(
-    ocio_colorspace_name, host_name, imageio_host_settings):
+    ocio_colorspace_name, host_name, imageio_host_settings
+):
     """Return native colorspace name.
 
     Args:
@@ -536,7 +537,8 @@ def get_remapped_colorspace_to_native(
 
 
 def get_remapped_colorspace_from_native(
-    host_native_colorspace_name, host_name, imageio_host_settings):
+    host_native_colorspace_name, host_name, imageio_host_settings
+):
     """Return ocio colorspace name remapped from host native used name.
 
     Args:
