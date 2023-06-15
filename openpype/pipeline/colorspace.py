@@ -516,18 +516,19 @@ def get_remapped_colorspace_to_native(
 
     Args:
         ocio_colorspace_name (str | None): ocio colorspace name
+        host_name (str): Host name.
+        imageio_host_settings (dict[str, Any]): ImageIO host settings.
 
     Returns:
-        str: native colorspace name defined in remapping or None
+        Union[str, None]: native colorspace name defined in remapping or None
     """
 
-    if not CashedData.remapping.get(host_name, {}).get("to_native"):
+    CashedData.remapping.setdefault(host_name, {})
+    if CashedData.remapping[host_name].get("to_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name] = {
-            "to_native": {
-                rule["ocio_name"]: rule["host_native_name"]
-                for rule in remapping_rules
-            }
+        CashedData.remapping[host_name]["to_native"] = {
+            rule["ocio_name"]: rule["host_native_name"]
+            for rule in remapping_rules
         }
 
     return CashedData.remapping[host_name]["to_native"].get(
@@ -535,23 +536,24 @@ def get_remapped_colorspace_to_native(
 
 
 def get_remapped_colorspace_from_native(
-        host_native_colorspace_name, host_name, imageio_host_settings):
+    host_native_colorspace_name, host_name, imageio_host_settings):
     """Return ocio colorspace name remapped from host native used name.
 
     Args:
         host_native_colorspace_name (str): host native colorspace name
+        host_name (str): Host name.
+        imageio_host_settings (dict[str, Any]): ImageIO host settings.
 
     Returns:
-        str: ocio colorspace name defined in remapping or None
+        Union[str, None]: Ocio colorspace name defined in remapping or None.
     """
 
-    if not CashedData.remapping.get(host_name, {}).get("from_native"):
+    CashedData.remapping.setdefault(host_name, {})
+    if CashedData.remapping[host_name].get("from_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name] = {
-            "from_native": {
-                rule["host_native_name"]: rule["ocio_name"]
-                for rule in remapping_rules
-            }
+        CashedData.remapping[host_name]["from_native"] = {
+            rule["host_native_name"]: rule["ocio_name"]
+            for rule in remapping_rules
         }
 
     return CashedData.remapping[host_name]["from_native"].get(
