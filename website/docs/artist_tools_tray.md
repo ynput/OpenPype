@@ -64,6 +64,7 @@ Find here your projects library and there informations. You can add new projects
 The OpenPype console allows running scripts in the OpenPype environment.
 
 ## Services
+Service section shows running openpype services, differs depending on active modules.
 
 ## OpenPype version
 Gives informations about your **OpenPype** version, your **Workstation**, the **Local settings** and your **Environments**.
