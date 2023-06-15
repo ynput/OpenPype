@@ -141,6 +141,16 @@ def pack_project(
     if not destination_dir:
         destination_dir = root_path
 
+    if not destination_dir:
+        if only_documents:
+            raise ValueError((
+                "Destination dir must be passed."
+                " Use '--dirpath {output dir path}' if using command line."
+            ))
+        raise ValueError(
+            "Project {} does not have any roots.".format(project_name)
+        )
+
     destination_dir = os.path.normpath(destination_dir)
     if not os.path.exists(destination_dir):
         os.makedirs(destination_dir)
