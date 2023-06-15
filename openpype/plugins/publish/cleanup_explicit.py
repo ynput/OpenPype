@@ -18,7 +18,6 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder + 10
     label = "Explicit Clean Up"
-    optional = True
     active = True
 
     def process(self, context):

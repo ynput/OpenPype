@@ -37,7 +37,6 @@ class CleanUp(pyblish.api.InstancePlugin):
         "shell"
     ]
     exclude_families = ["clip"]
-    optional = True
     active = True
 
     # Presets
