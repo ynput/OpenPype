@@ -725,8 +725,9 @@ class AssetLoader(Loader):
         datablocks = set()
         i = 0
         for datacol_name in loaded_data_collections:
+            loaded_datablocks = getattr(data_to, datacol_name)
             # Assign original datablocks names to avoid name conflicts
-            for datablock in getattr(data_to, datacol_name):
+            for datablock in loaded_datablocks:
                 datablock["source_name"] = loaded_names[i]
                 i += 1
 
@@ -783,7 +784,8 @@ class AssetLoader(Loader):
                     d.override_library.is_system_override = False
 
                 # Set source_name
-                d["source_name"] = d.override_library.reference.name
+                if d.override_library:
+                    d["source_name"] = d.override_library.reference.name
 
                 # Override armature
                 if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
@@ -1267,6 +1269,7 @@ class AssetLoader(Loader):
                     and old_datablock.data
                     and old_datablock.data.shape_keys
                     and old_datablock.data.shape_keys.animation_data
+                    and old_datablock.data.shape_keys.animation_data.drivers
                 ):
                     for i, driver in enumerate(
                         new_datablock.data.shape_keys.animation_data.drivers
