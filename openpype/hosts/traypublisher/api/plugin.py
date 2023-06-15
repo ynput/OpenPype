@@ -225,7 +225,7 @@ class SettingsCreator(TrayPublishCreator):
         subset_docs_by_asset_id = self._prepare_next_versions(
             asset_names, subset_names
         )
-        for instance in instances_data:
+        for instance in filtered_instance_data:
             asset_name = instance["asset"]
             subset_name = instance["subset"]
             version = subset_docs_by_asset_id[asset_name][subset_name]
