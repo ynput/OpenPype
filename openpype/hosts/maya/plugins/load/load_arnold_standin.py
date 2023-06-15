@@ -24,6 +24,10 @@ def is_sequence(files):
 
 
 def post_process():
+    """
+    Make sure mtoa script finished loading
+    before the loader doing any action
+    """
     import maya.utils
     from qtpy import QtWidgets
 
