@@ -369,6 +369,7 @@ def get_datablocks_with_filepath(
                 datablock
                 and hasattr(datablock, "filepath")
                 and not datablock.is_property_readonly("filepath")
+                and not datablock.filepath == ""
                 and not datablock.library
                 and not datablock.is_library_indirect
             ):
