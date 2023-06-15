@@ -312,6 +312,20 @@ function main(websocket_url){
             });
     });
 
+    RPC.addRoute('AfterEffects.add_placeholder', function (data) {
+        log.warn('Server called client route "add_placeholder":', data);
+        var escapedName = EscapeStringForJSX(data.name);
+        return runEvalScript("addPlaceholder('" + escapedName +"', "+
+                                              data.width + ',' +
+                                              data.height + ',' +
+                                              data.fps + ',' +
+                                              data.duration + ")")
+            .then(function(result){
+                log.warn("add_placeholder: " + result);
+                return result;
+            });
+    });
+
      RPC.addRoute('AfterEffects.close', function (data) {
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");

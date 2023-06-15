@@ -821,6 +821,17 @@ function printMsg(msg){
     alert(msg);
 }
 
+function addPlaceholder(name, width, height, fps, duration){
+    app.beginUndoGroup('change comp properties');
+    try{
+        item = app.project.importPlaceholder(name, width, height, fps, duration);
+
+        return _prepareSingleValue(item.id);
+    }catch (error) {
+        writeLn(_prepareError("Cannot add placeholder " + error.toString()));
+    }
+}
+
 function _prepareSingleValue(value){
     return JSON.stringify({"result": value})
 }

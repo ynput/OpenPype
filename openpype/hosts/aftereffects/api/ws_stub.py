@@ -35,6 +35,7 @@ class AEItem(object):
     instance_id = attr.ib(default=None)  # New Publisher
     width = attr.ib(default=None)
     height = attr.ib(default=None)
+    is_placeholder = attr.ib(default=False)
 
 
 class AfterEffectsServerStub():
@@ -534,6 +535,30 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
+    def add_placeholder(self, name, width, height, fps, duration):
+        """
+            Adds new FootageItem as a placeholder for workfile builder
+
+            Placeholder requires width etc, currently probably only hardcoded
+            values.
+
+            Args:
+                name (str)
+                width (int)
+                height (int)
+                fps (float)
+                duration (int)
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_placeholder',
+                                         name=name,
+                                         width=width,
+                                         height=height,
+                                         fps=fps,
+                                         duration=duration))
+
+        return self._handle_return(res)
+
     def render(self, folder_url, comp_id):
         """
             Render all renderqueueitem to 'folder_url'
@@ -632,7 +657,8 @@ class AfterEffectsServerStub():
                           d.get('file_name'),
                           d.get("instance_id"),
                           d.get("width"),
-                          d.get("height"))
+                          d.get("height"),
+                          d.get("is_placeholder"))
 
             ret.append(item)
         return ret
