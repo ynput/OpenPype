@@ -2,6 +2,7 @@ import os
 import clique
 
 import maya.cmds as cmds
+import maya.utils
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
@@ -23,19 +24,6 @@ def is_sequence(files):
     return sequence
 
 
-def post_process():
-    """
-    Make sure mtoa script finished loading
-    before the loader doing any action
-    """
-    import maya.utils
-    from qtpy import QtWidgets
-
-    cmds.refresh(force=True)
-    maya.utils.processIdleEvents()
-    QtWidgets.QApplication.instance().processEvents()
-
-
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
 
@@ -48,18 +36,15 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
-        # Make sure user has loaded arnold
-        # before importing `mtoa.ui.arnoldmenu`
-        # and getting attribute from defaultArnoldRenderOption.operator
-        # Otherwises standins will not be loaded successfully for
-        # every first time using this loader after the build
-        """
         if not cmds.pluginInfo("mtoa", query=True, loaded=True):
-            raise RuntimeError("Plugin 'mtoa' must be loaded"
-                               " before using this loader")
-        """
-        cmds.loadPlugin("mtoa", quiet=True)
-        post_process()
+            # Allow mtoa plugin load to process all its events
+            # because otherwise `defaultArnoldRenderOptions.operator`
+            # does not exist yet and some connections to the standin
+            # can't be correctly generated on create resulting in an error
+            cmds.loadPlugin("mtoa")
+            cmds.refresh(force=True)
+            maya.utils.processIdleEvents()
+
         import mtoa.ui.arnoldmenu
 
         version = context['version']
