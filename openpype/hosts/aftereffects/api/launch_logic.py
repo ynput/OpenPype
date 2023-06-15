@@ -357,3 +357,13 @@ class AfterEffectsRoute(WebSocketRoute):
 
         # Required return statement.
         return "nothing"
+
+    def create_placeholder_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            create_placeholder
+        partial_method = functools.partial(create_placeholder)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
