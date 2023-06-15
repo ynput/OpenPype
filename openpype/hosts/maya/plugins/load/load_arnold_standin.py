@@ -1,5 +1,6 @@
 import os
 import clique
+import time
 
 import maya.cmds as cmds
 
@@ -35,9 +36,14 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
-
-        # Make sure to load arnold before importing `mtoa.ui.arnoldmenu`
-        cmds.loadPlugin("mtoa", quiet=True)
+        # Make sure user has loaded arnold before importing `mtoa.ui.arnoldmenu`
+        # and getting attribute from defaultArnoldRenderOption.operator
+        # Otherwises standins will not be loaded successfully for
+        # every first time using this loader after the build
+        if not cmds.pluginInfo("mtoa", query=True, loaded=True):
+            raise RuntimeError("Plugin 'mtoa' must be loaded"
+                               " before using this loader")
+        # cmds.loadPlugin("mtoa", quiet=True)
         import mtoa.ui.arnoldmenu
 
         version = context['version']
