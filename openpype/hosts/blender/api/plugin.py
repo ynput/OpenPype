@@ -725,8 +725,9 @@ class AssetLoader(Loader):
         datablocks = set()
         i = 0
         for datacol_name in loaded_data_collections:
+            loaded_datablocks = getattr(data_to, datacol_name)
             # Assign original datablocks names to avoid name conflicts
-            for datablock in getattr(data_to, datacol_name):
+            for datablock in loaded_datablocks:
                 datablock["source_name"] = loaded_names[i]
                 i += 1
 
