@@ -23,6 +23,20 @@ def is_sequence(files):
     return sequence
 
 
+def post_process():
+    import maya.utils
+    from qtpy import QtWidgets
+
+    # I'm not sure this would work, but it'd be the simplest trick to try
+    cmds.refresh(force=True)
+
+    # I suspect this might work
+    maya.utils.processIdleEvents()
+
+    # I suspect this one might work too but it's might be a hard to track whether it solves all cases (and whether the events were already submitted to Qt at that time this command starts to run) So I'd always try to avoid this when possible.
+    QtWidgets.QApplication.instance().processEvents()
+
+
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
 
@@ -40,10 +54,13 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         # and getting attribute from defaultArnoldRenderOption.operator
         # Otherwises standins will not be loaded successfully for
         # every first time using this loader after the build
+        """
         if not cmds.pluginInfo("mtoa", query=True, loaded=True):
             raise RuntimeError("Plugin 'mtoa' must be loaded"
                                " before using this loader")
-        # cmds.loadPlugin("mtoa", quiet=True)
+        """
+        cmds.loadPlugin("mtoa", quiet=True)
+        post_process()
         import mtoa.ui.arnoldmenu
 
         version = context['version']
