@@ -2020,11 +2020,11 @@ class WorkfileSettings(object):
             # TODO: backward compatibility for old projects - remove later
             # perhaps old project overrides is having it set to older version
             # with use of `customOCIOConfigPath`
+            resolved_path = None
             if workfile_settings.get("customOCIOConfigPath"):
                 unresolved_path = workfile_settings["customOCIOConfigPath"]
                 ocio_paths = unresolved_path[platform.system().lower()]
 
-                resolved_path = None
                 for ocio_p in ocio_paths:
                     resolved_path = str(ocio_p).format(**os.environ)
                     if not os.path.exists(resolved_path):
