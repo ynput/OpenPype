@@ -115,6 +115,17 @@
             });
     </script>
 
+        <script type=text/javascript>
+            $(function() {
+              $("a#create-placeholder-button").bind("click", function() {
+                RPC.call('AfterEffects.create_placeholder_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+
 
 </head>
 
@@ -130,6 +141,7 @@
             <div><a href=# id=setresolution-button><button class="hostFontSize">Set Resolution</button></a></div>
             <div><a href=# id=setframes-button><button class="hostFontSize">Set Frame Range</button></a></div>
             <div><a href=# id=setall-button><button class="hostFontSize">Apply All Settings</button></a></div>
+            <div><a href=# id=create-placeholder-button><button class="hostFontSize">Create placeholder</button></a></div>
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
         </div>
 
