@@ -120,7 +120,9 @@ def deliver_single_file(
     anatomy_data,
     format_dict,
     report_items,
-    log
+    log,
+    renumber_frame=False,
+    re_frame_value=0
 ):
     """Copy single file to calculated path based on template
 
@@ -162,8 +164,62 @@ def deliver_single_file(
     if not os.path.exists(delivery_folder):
         os.makedirs(delivery_folder)
 
-    log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
-    _copy_file(src_path, delivery_path)
+    if renumber_frame:
+        src_dir = os.path.dirname(src_path)
+        src_filepaths = os.listdir(src_dir)
+        src_collections, remainders = clique.assemble(src_filepaths)
+
+        src_collection = src_collections[0]
+        src_indexes = list(src_collection.indexes)
+        # Use last frame for minimum padding
+        #   - that should cover both 'udim' and 'frame' minimum padding
+
+        # If the representation has `frameStart` set it renumbers the
+        # frame indices of the published collection. It will start from
+        # that `frameStart` index instead. Thus if that frame start
+        # differs from the collection we want to shift the destination
+        # frame indices from the source collection.
+        # In case source are published in place we need to
+        # skip renumbering
+
+        destination_indexes = [
+            re_frame_value + idx
+            for idx in range(len(src_indexes))
+        ]
+
+        # To construct the destination template with anatomy we require
+        # a Frame or UDIM tile set for the template data. We use the first
+        # index of the destination for that because that could've shifted
+        # from the source indexes, etc.
+
+        # Construct destination collection from template
+        dst_filepaths = []
+        for index in destination_indexes:
+            template_data = copy.deepcopy(anatomy_data)
+            template_data["frame"] = index
+            template_obj = anatomy.templates_obj["delivery"][template_name]
+            template_filled = template_obj.format_strict(
+                template_data
+            )
+            dst_filepaths.append(template_filled)
+        # Make sure context contains frame
+        # NOTE: Frame would not be available only if template does not
+        #   contain '{frame}' in template -> Do we want support it?
+
+        # Update the destination indexes and padding
+        dst_collection = clique.assemble(dst_filepaths)[0][0]
+
+
+        for src_file_name, dst in zip(src_collection, dst_collection):
+            src_path = os.path.join(src_dir, src_file_name)
+            delivery_path = os.path.join(delivery_folder, dst)
+            log.debug("Copying single: {} -> {}".format(
+                src_path, delivery_path))
+            _copy_file(src_path, delivery_path)
+    else:
+        log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
+        _copy_file(src_path, delivery_path)
+
 
     return report_items, 1
 

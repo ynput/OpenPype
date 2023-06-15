@@ -206,6 +206,13 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 self.log
             ]
 
+            if renumber_frame:
+                optional_args = [
+                    renumber_frame,
+                    frame_offset
+                    ]
+                args.extend(optional_args)
+
             if repre.get("files"):
                 src_paths = []
                 for repre_file in repre["files"]:
@@ -228,11 +235,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
-                    optional_args = [
-                        renumber_frame,
-                        frame_offset
-                    ]
-                    args.extend(optional_args)
                     new_report_items, uploaded = deliver_sequence(*args)
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
