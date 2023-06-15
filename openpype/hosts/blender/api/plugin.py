@@ -714,9 +714,9 @@ class AssetLoader(Loader):
                     loaded_datablocks,
                 )
 
-                # Keep collection with datablocks
+                # Keep collection name
                 loaded_data_collections.append(
-                    (data_collection_name, loaded_datablocks)
+                    data_collection_name
                 )
 
                 # Keep loaded datablocks names
@@ -724,9 +724,9 @@ class AssetLoader(Loader):
 
         datablocks = set()
         i = 0
-        for collection_name, loaded_datablocks in loaded_data_collections:
+        for datacol_name in loaded_data_collections:
             # Assign original datablocks names to avoid name conflicts
-            for datablock in loaded_datablocks:
+            for datablock in getattr(data_to, datacol_name):
                 datablock["source_name"] = loaded_names[i]
                 i += 1
 
@@ -734,7 +734,7 @@ class AssetLoader(Loader):
             datablocks.update(loaded_datablocks)
 
             # Remove fake user from loaded datablocks
-            datacol = getattr(bpy.data, collection_name)
+            datacol = getattr(bpy.data, datacol_name)
             seq = [
                 False if d in datablocks else d.use_fake_user for d in datacol
             ]
