@@ -33,7 +33,7 @@ class BlendLoader(plugin.AssetLoader):
         return None
 
     def _process_data(self, libpath, group_name):
-                # Append all the data from the .blend file
+        # Append all the data from the .blend file
         with bpy.data.libraries.load(
             libpath, link=False, relative=False
         ) as (data_from, data_to):
@@ -88,6 +88,10 @@ class BlendLoader(plugin.AssetLoader):
         container = self._process_data(libpath, group_name)
 
         avalon_container.objects.link(container)
+
+        # Remove the library from the blend file
+        library = bpy.data.libraries.get(bpy.path.basename(libpath))
+        bpy.data.libraries.remove(library)
 
         container[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
