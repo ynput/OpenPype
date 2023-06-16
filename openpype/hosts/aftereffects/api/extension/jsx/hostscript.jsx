@@ -280,12 +280,12 @@ function setLabelColor(comp_id, color_idx){
     }
 }
 
-function replaceItem(comp_id, path, item_name){
+function replaceItem(item_id, path, item_name){
     /**
      * Replaces loaded file with new file and updates name
      *
      * Args:
-     *    comp_id (int): id of composition, not a index!
+     *    item_id (int): id of composition, not a index!
      *    path (string): absolute path to new file
      *    item_name (string): new composition name
      */
@@ -295,7 +295,7 @@ function replaceItem(comp_id, path, item_name){
     if (!fp.exists){
         return _prepareError("File " + path + " not found.");
     }
-    var item = app.project.itemByID(comp_id);
+    var item = app.project.itemByID(item_id);
     if (item){
         try{
             if (isFileSequence(item)) {
@@ -311,7 +311,7 @@ function replaceItem(comp_id, path, item_name){
             fp.close();
         }
     }else{
-        return _prepareError("There is no composition with "+ comp_id);
+        return _prepareError("There is no item with "+ item_id);
     }
     app.endUndoGroup();
 }
@@ -838,3 +838,22 @@ function _prepareSingleValue(value){
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
+
+
+// writeLn(ret.id);
+
+// var item = app.project.itemByID(ret.id);
+// item.comment = "Placeholder comment with more data ";
+// fp = new File("C:\\projects\\testing\\sh010\\publish\\render\\renderAnimationMain\\v021\\testing_sh010_renderAnimationMain_v021.mov");
+// if (item){
+//     try{
+//         if (isFileSequence(item)) {
+//             item.replaceWithSequence(fp, false);
+//         }else{
+//             item.replace(fp);
+//         }
+
+//     } catch (error) {
+//         writeLn(_prepareError(error.toString() + path));
+//     }
+// }
