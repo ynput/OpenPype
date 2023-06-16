@@ -1,16 +1,19 @@
 import collections
+import uuid
 
 from openpype.pipeline import registered_host
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
-
 from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
     PlaceholderPlugin,
+    LoadPlaceholderItem,
+    CreatePlaceholderItem,
+    PlaceholderLoadMixin,
+    PlaceholderCreateMixin
 )
 from openpype.hosts.aftereffects.api import get_stub
-
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -37,34 +40,59 @@ class AETemplateBuilder(AbstractTemplateBuilder):
 
 
 class AEPlaceholderPlugin(PlaceholderPlugin):
-    node_color = 4278190335
+    """Contains generic methods for all PlaceholderPlugins.
+
+    Cannot inherit from `PlaceholderPlugin` as it is actually not implementing
+    all methods.
+    """
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
-        placeholder_nodes = self.builder.get_shared_populate_data(
-            "placeholder_nodes"
+        # Returns list of dicts
+        placeholder_items = self.builder.get_shared_populate_data(
+            "placeholder_items"
         )
-        if placeholder_nodes is None:
-            placeholder_nodes = {}
-            all_groups = collections.deque()
-
-            for item in get_stub().get
+        if not placeholder_items:
+            placeholder_items = []
+            for item in get_stub().get_metadata():
+                if not item.get("is_placeholder"):
+                    continue
+                placeholder_items.append(item)
 
             self.builder.set_shared_populate_data(
-                "placeholder_nodes", placeholder_nodes
+                "placeholder_items", placeholder_items
             )
-        return placeholder_nodes
+        return placeholder_items
+
+    def collect_placeholders(self):
+        output = []
+        scene_placeholders = self._collect_scene_placeholders()
+        for item in scene_placeholders:
+            if item.get("plugin_identifier") != self.identifier:
+                continue
+
+            output.append(
+                LoadPlaceholderItem(item["scene_identifier"],
+                                    item["data"],
+                                    self)
+            )
+
+        return output
+
+
+class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
+    identifier = "aftereffects.load"
+    label = "AfterEffects load"
 
     def create_placeholder(self, placeholder_data):
-        placeholder_data["plugin_identifier"] = self.identifier
 
         stub = get_stub()
-
-        placeholder_id = stub.create_placeholder("PLACEHOLDER",
-                                                       1920,
-                                                       1060,
-                                                       25,
-                                                       10)
+        name = "LOADERPLACEHOLDER"
+        placeholder_id = stub.add_placeholder(name,
+                                              1920,
+                                              1060,
+                                              25,
+                                              10)
 
         if not placeholder_id:
             raise ValueError("Couldn't create a placeholder")
@@ -72,29 +100,31 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
         container_data = {
             "schema": "openpype:container-2.0",
             "id": "openpype.placeholder",
-            "name": "PLACEHOLDER",
-            "namespace": "PLACEHOLDER",
+            "name": name,
             "is_placeholder": True,
+            "plugin_identifier": self.identifier,
+            "scene_identifier": str(uuid.uuid4()),
+            "data": placeholder_data,
             "members": [placeholder_id]
         }
 
         stub.imprint(placeholder_id, container_data)
 
+    def populate_placeholder(self, placeholder):
+        self.populate_load_placeholder(placeholder)
+        errors = placeholder.get_errors()
+        if errors:
+            get_stub().print_msg("\n".join(errors))
+
+    def repopulate_placeholder(self, placeholder):
+        repre_ids = self._get_loaded_repre_ids()
+        self.populate_load_placeholder(placeholder, repre_ids)
+
     def update_placeholder(self, placeholder_item, placeholder_data):
-        # node = nuke.toNode(placeholder_item.scene_identifier)
-        # imprint(node, placeholder_data)
-        pass
+        self.log.info("Wont implement for now")
 
-    def _parse_placeholder_node_data(self, node):
-        placeholder_data = {}
-        for key in self.get_placeholder_keys():
-            knob = node.knob(key)
-            value = None
-            if knob is not None:
-                value = knob.getValue()
-            placeholder_data[key] = value
-        return placeholder_data
-
+    def get_placeholder_options(self, options=None):
+        return self.get_load_plugin_options(options)
 
 
 def build_workfile_template(*args, **kwargs):
@@ -122,10 +152,6 @@ def update_placeholder(*args):
         for placeholder_item in builder.get_placeholders()
     }
     placeholder_items = []
-    for node in nuke.selectedNodes():
-        node_name = node.fullName()
-        if node_name in placeholder_items_by_id:
-            placeholder_items.append(placeholder_items_by_id[node_name])
 
     # TODO show UI at least
     if len(placeholder_items) == 0:
