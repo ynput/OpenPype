@@ -56,10 +56,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if reset_on_show is None:
             reset_on_show = True
 
-        if parent is None:
-            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
-        else:
-            on_top_flag = QtCore.Qt.Dialog
+        on_top_flag = QtCore.Qt.Dialog
 
         self.setWindowFlags(
             self.windowFlags()
