@@ -20,7 +20,7 @@ from openpype.hosts.blender.api.pipeline import (
 class BlendLoader(plugin.AssetLoader):
     """Load assets from a .blend file."""
 
-    families = ["model", "rig", "layout"]
+    families = ["model", "rig", "layout", "camera"]
     representations = ["blend"]
 
     label = "Load Blend"
