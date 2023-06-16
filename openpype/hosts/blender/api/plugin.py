@@ -201,7 +201,7 @@ class BlenderCreator(Creator):
             for col in bpy.data.collections:
                 avalon_prop = col.get(AVALON_PROPERTY, {})
                 if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                    creaor_id = avalon_prop.get('creator_identifier')
+                    creator_id = avalon_prop.get('creator_identifier')
 
                     if creator_id:
                         # Creator instance
