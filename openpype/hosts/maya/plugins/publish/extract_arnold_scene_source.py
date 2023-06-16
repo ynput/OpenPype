@@ -190,7 +190,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     self.log.info(
                         "Extracting ass sequence with: {}".format(kwargs)
                     )
-                    # arnoldExportAss -selected needs an active selection or a list of objects
+
                     exported_files = cmds.arnoldExportAss(**kwargs)
 
                     for file in exported_files:
