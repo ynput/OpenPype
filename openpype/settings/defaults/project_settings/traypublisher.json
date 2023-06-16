@@ -318,6 +318,11 @@
         }
     },
     "publish": {
+        "CollectAnatomyFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateFrameRange": {
             "enabled": true,
             "optional": true,
