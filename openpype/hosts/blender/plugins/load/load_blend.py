@@ -1,11 +1,14 @@
 from typing import Dict, List, Optional
+from pathlib import Path
 
 import bpy
 
 from openpype.pipeline import (
+    get_representation_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.lib import imprint
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
@@ -93,7 +96,7 @@ class BlendLoader(plugin.AssetLoader):
         library = bpy.data.libraries.get(bpy.path.basename(libpath))
         bpy.data.libraries.remove(library)
 
-        container[AVALON_PROPERTY] = {
+        data = {
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": name,
@@ -107,9 +110,11 @@ class BlendLoader(plugin.AssetLoader):
             "objectName": group_name
         }
 
+        container[AVALON_PROPERTY] = data
+
         objects = [
             obj for obj in bpy.data.objects
-            if f"{group_name}:" in obj.name
+            if obj.name.startswith(f"{group_name}:")
         ]
 
         self[:] = objects
@@ -119,10 +124,58 @@ class BlendLoader(plugin.AssetLoader):
         """
         Update the loaded asset.
         """
-        raise NotImplementedError()
+        group_name = container["objectName"]
+        asset_group = bpy.data.objects.get(group_name)
+        libpath = Path(get_representation_path(representation)).as_posix()
+
+        assert asset_group, (
+            f"The asset is not loaded: {container['objectName']}"
+        )
+
+        transform = asset_group.matrix_basis.copy()
+        old_data = dict(asset_group.get(AVALON_PROPERTY))
+
+        self.exec_remove(container)
+
+        asset_group = self._process_data(libpath, group_name)
+
+        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+        avalon_container.objects.link(asset_group)
+
+        # Remove the library from the blend file
+        library = bpy.data.libraries.get(bpy.path.basename(libpath))
+        bpy.data.libraries.remove(library)
+
+        asset_group.matrix_basis = transform
+
+        asset_group[AVALON_PROPERTY] = old_data
+
+        new_data = {
+            "libpath": libpath,
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"]),
+        }
+
+        imprint(asset_group, new_data)
 
     def exec_remove(self, container: Dict) -> bool:
         """
         Remove an existing container from a Blender scene.
         """
-        raise NotImplementedError()
+        group_name = container["objectName"]
+        asset_group = bpy.data.objects.get(group_name)
+
+        attrs = [
+            attr for attr in dir(bpy.data)
+            if isinstance(
+                getattr(bpy.data, attr),
+                bpy.types.bpy_prop_collection
+            )
+        ]
+
+        for attr in attrs:
+            for data in getattr(bpy.data, attr):
+                if data.name.startswith(f"{group_name}:"):
+                    getattr(bpy.data, attr).remove(data)
+
+        bpy.data.objects.remove(asset_group)
