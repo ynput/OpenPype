@@ -105,20 +105,31 @@
     </script>
 
     <script type=text/javascript>
+      $(function() {
+        $("a#create-placeholder-button").bind("click", function() {
+          RPC.call('AfterEffects.create_placeholder_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
+      $(function() {
+        $("a#build-workfile-button").bind("click", function() {
+          RPC.call('AfterEffects.build_workfile_template_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
             $(function() {
               $("a#experimental-button").bind("click", function() {
                 RPC.call('AfterEffects.experimental_tools_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-
-        <script type=text/javascript>
-            $(function() {
-              $("a#create-placeholder-button").bind("click", function() {
-                RPC.call('AfterEffects.create_placeholder_route').then(function (data) {
                 }, function (error) {
                     alert(error);
                 });
@@ -142,6 +153,7 @@
             <div><a href=# id=setframes-button><button class="hostFontSize">Set Frame Range</button></a></div>
             <div><a href=# id=setall-button><button class="hostFontSize">Apply All Settings</button></a></div>
             <div><a href=# id=create-placeholder-button><button class="hostFontSize">Create placeholder</button></a></div>
+            <div><a href=# id=build-workfile-button><button class="hostFontSize">Build Workfile from template</button></a></div>
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
         </div>
 
