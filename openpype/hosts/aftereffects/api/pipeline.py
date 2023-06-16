@@ -11,7 +11,6 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.hosts.aftereffects.api.workfile_template_builder import (
-    AEPlaceholderPlugin,
     AEPlaceholderLoadPlugin,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -122,8 +121,7 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def get_workfile_build_placeholder_plugins(self):
         return [
-            AEPlaceholderLoadPlugin,
-            AEPlaceholderPlugin
+            AEPlaceholderLoadPlugin
         ]
 
     # created instances section
