@@ -10,7 +10,7 @@ class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.491
     label = "Collect Anatomy Frame Range"
     families = ["plate", "pointcache",
-                "vdbcache","online",
+                "vdbcache", "online",
                 "render"]
     hosts = ["traypublisher"]
 
