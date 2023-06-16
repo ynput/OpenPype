@@ -37,8 +37,29 @@ The **source path** will be replaced by the **destination path**.
 ![Include/Exclude Handles](assets/settings_project_maya_extension_handles.png)
 
 # Scripts Menu Definition
-Add a menu in Maya (expliquer ce qui est écrit (action, menu... ))
+Build a menu in Maya.
+![Script Menu Definition](assets/settings_project_maya_ScriptMenuDefinition.png)
 
+For exemple here : 
+- **Menu Name :** Write your menu name
+- **Menu Definition :**
+
+→ "type": define the button type. Here, it's an action because when you click on it, it directly loads another window or commit any other action you defined in your script. 
+*(if you define the type as a "menu", you can unfold the button to see other buttons and define them as actions).*
+
+![Menu](assets/settings_project_maya_PublishGUIFilters_Menu.png)
+
+→ "command": define the command to implement the script in the button.
+
+→ "sourcetype": define the programmation langage of the script.
+
+→ "title": define the button title (here it's "Edit shader name definitions")
+
+→ "tooltip": pass your cursor on the "Edit shader name definitions" to have a tip written at the bottom of Maya's interface.
+
+![Tool Tip](assets/settings_project_maya_ScriptMenuDefinition_ToolTip.png)
+
+→ "tags": keywords to type on the search bar to find an option. Here, type "pipeline" or "shader" to find the "Edit shader name definition".
 
 # Render Settings
 Pre-define your render settings.
@@ -85,6 +106,11 @@ Builder profiles are set of rules allowing artist Load any available versions fo
 Same as above (Workfile Build Settings) but it builds the Workfile from a template.
 
 # Publish GUI Filters
+Define here presets to find on publishing.
+For exemple, if you select the "preset 1", the option "ValidateNoAnimation" and "ValidateShapeDefaultNames" is disabled (*false means inactive*).
 
-publish preset à trouver en haut à droite quand on clique sur publish.
+![Publish GUI FIlters](assets/settings_project_maya_PublishGUIFilters.png)
 
+Select it here in the Maya's Publish window.
+
+![Presets Maya](assets/settings_project_maya_PresetsPyblish.png)
