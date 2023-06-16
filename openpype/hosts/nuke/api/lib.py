@@ -2020,11 +2020,11 @@ class WorkfileSettings(object):
             # TODO: backward compatibility for old projects - remove later
             # perhaps old project overrides is having it set to older version
             # with use of `customOCIOConfigPath`
+            resolved_path = None
             if workfile_settings.get("customOCIOConfigPath"):
                 unresolved_path = workfile_settings["customOCIOConfigPath"]
                 ocio_paths = unresolved_path[platform.system().lower()]
 
-                resolved_path = None
                 for ocio_p in ocio_paths:
                     resolved_path = str(ocio_p).format(**os.environ)
                     if not os.path.exists(resolved_path):
@@ -2054,9 +2054,9 @@ class WorkfileSettings(object):
             self._root_node["colorManagement"].setValue("OCIO")
 
         # we dont need the key anymore
-        workfile_settings.pop("customOCIOConfigPath")
-        workfile_settings.pop("colorManagement")
-        workfile_settings.pop("OCIO_config")
+        workfile_settings.pop("customOCIOConfigPath", None)
+        workfile_settings.pop("colorManagement", None)
+        workfile_settings.pop("OCIO_config", None)
 
         # then set the rest
         for knob, value_ in workfile_settings.items():
