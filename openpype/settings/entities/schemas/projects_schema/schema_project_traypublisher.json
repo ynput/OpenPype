@@ -86,6 +86,12 @@
                         "type": "boolean"
                     },
                     {
+                        "type": "boolean",
+                        "key": "allow_version_control",
+                        "label": "Allow version control",
+                        "default": false
+                    },
+                    {
                         "type": "list",
                         "key": "extensions",
                         "label": "Extensions",
@@ -346,6 +352,10 @@
                         {
                             "key": "ValidateFrameRange",
                             "label": "Validate frame range"
+                        },
+                        {
+                            "key": "ValidateExistingVersion",
+                            "label": "Validate Existing Version"
                         }
                     ]
                 }
