@@ -10,6 +10,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 class CreateReview(plugin.BlenderCreator):
     """Single baked camera"""
 
+    identifier = "io.openpype.creators.blender.review"
     name = "reviewDefault"
     label = "Review"
     family = "review"

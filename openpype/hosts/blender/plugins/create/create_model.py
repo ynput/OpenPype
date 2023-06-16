@@ -10,6 +10,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 class CreateModel(plugin.BlenderCreator):
     """Polygonal static geometry"""
 
+    identifier = "io.openpype.creators.blender.model"
     name = "modelMain"
     label = "Model"
     family = "model"

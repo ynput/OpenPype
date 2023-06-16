@@ -10,6 +10,7 @@ from openpype.hosts.blender.api import lib
 class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
     """Action output for character rigs"""
 
+    identifier = "io.openpype.creators.blender.action"
     name = "actionMain"
     label = "Action"
     family = "action"

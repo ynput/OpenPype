@@ -264,7 +264,7 @@ class BlenderCreator(Creator):
                 )
 
                 # Add instance to create context
-                self.add_instance_to_context(instance)
+                self._add_instance_to_context(instance)
 
 
     def update_instances(self, update_list):

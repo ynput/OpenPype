@@ -10,6 +10,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 class CreateCamera(plugin.BlenderCreator):
     """Polygonal static geometry"""
 
+    identifier = "io.openpype.creators.blender.camera"
     name = "cameraMain"
     label = "Camera"
     family = "camera"
