@@ -36,7 +36,7 @@ def requests_post(*args, **kwargs):
 
     Warning:
         Disabling SSL certificate validation is defeating one line
-        of defense SSL is providing and it is not recommended.
+        of defense SSL is providing, and it is not recommended.
 
     """
     if 'verify' not in kwargs:
@@ -57,7 +57,7 @@ def requests_get(*args, **kwargs):
 
     Warning:
         Disabling SSL certificate validation is defeating one line
-        of defense SSL is providing and it is not recommended.
+        of defense SSL is providing, and it is not recommended.
 
     """
     if 'verify' not in kwargs:

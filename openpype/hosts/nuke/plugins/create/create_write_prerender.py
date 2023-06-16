@@ -74,7 +74,6 @@ class CreateWritePrerender(napi.NukeWriteCreator):
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
 
         self._add_frame_range_limit(created_node)
 
