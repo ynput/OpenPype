@@ -25,11 +25,18 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                 members = cmds.ls(members, long=True)
                 children = get_all_children(members)
                 instance.data["contentMembers"] = children
+                # TODO: include another instance.data for content members
+                instance.data["contentMembersTransform"] = members
                 self.log.debug("content members: {}".format(children))
+                self.log.debug("content members Transform : {}".format(members))
             elif objset.endswith("proxy_SET"):
-                set_members = get_all_children(cmds.ls(members, long=True))
+                proxy_members = cmds.ls(members, long=True)
+                set_members = get_all_children(proxy_members)
                 instance.data["proxy"] = set_members
+                instance.data["proxyTransform"] = proxy_members
+                # TODO: include another instance.data for proxy
                 self.log.debug("proxy members: {}".format(set_members))
+                self.log.debug("proxy members Transform: {}".format(proxy_members))
 
         # Use camera in object set if present else default to render globals
         # camera.
