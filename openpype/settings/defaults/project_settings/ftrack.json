@@ -493,7 +493,29 @@
             "upload_reviewable_with_origin_name": false
         },
         "IntegrateFtrackFarmStatus": {
-            "farm_status_profiles": []
+            "farm_status_profiles": [
+                {
+                    "hosts": [
+                        "celaction"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "families": [
+                        "render"
+                    ],
+                    "subsets": [],
+                    "status_name": "Render"
+                }
+            ]
+        },
+        "ftrack_task_status_local_publish": {
+            "status_profiles": []
+        },
+        "ftrack_task_status_on_farm_publish": {
+            "status_profiles": []
+        },
+        "IntegrateFtrackTaskStatus": {
+            "after_version_statuses": true
         }
     }
 }
