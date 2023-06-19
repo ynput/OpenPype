@@ -42,8 +42,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             # does not exist yet and some connections to the standin
             # can't be correctly generated on create resulting in an error
             cmds.loadPlugin("mtoa")
-            cmds.refresh(force=True)
-            maya.utils.processIdleEvents()
+            # create defaultArnoldRenderOptions for
+            # `defaultArnoldRenderOptions.operator``
+            from mtoa.core import createOptions
+            createOptions()
 
         import mtoa.ui.arnoldmenu
 
