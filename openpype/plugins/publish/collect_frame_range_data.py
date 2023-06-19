@@ -2,9 +2,7 @@ import pyblish.api
 
 
 class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
-    """Collect Frame Range  data.
-
-    Plugin is running for all instances even not active ones.
+    """Collect Frame Range data.
     """
 
     order = pyblish.api.CollectorOrder + 0.491
