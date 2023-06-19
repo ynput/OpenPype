@@ -15,13 +15,15 @@ class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
     hosts = ["traypublisher"]
 
     def process(self, instance):
-        self.log.info("Collecting Anatomy frame range.")
+        self.log.debug("Collecting Anatomy frame range.")
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
-            self.log.info("Missing required data..")
+            self.log.debug("Instance has no asset entity set."
+                           " Skipping collecting frame range data.")
             return
 
         asset_data = asset_doc["data"]
+        key_sets = []
         for key in (
             "fps",
             "frameStart",
@@ -30,7 +32,8 @@ class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
             "handleEnd"
         ):
             if key not in instance.data and key in asset_data:
-                value = asset_data[key]
-                instance.data[key] = value
+                instance.data[key] = asset_data[key]
+                key_sets.append(key)
 
-        self.log.info("Anatomy frame range collection finished.")
+        self.log.debug(f"Anatomy frame range data {key_sets} "
+                       "has been collected from asset entity.")
