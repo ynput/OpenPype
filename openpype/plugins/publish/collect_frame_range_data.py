@@ -1,12 +1,12 @@
 import pyblish.api
 
 
-class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
+class CollectFrameRangeData(pyblish.api.InstancePlugin):
     """Collect Frame Range data.
     """
 
     order = pyblish.api.CollectorOrder + 0.491
-    label = "Collect Anatomy Frame Range"
+    label = "Collect Frame Range from Asset Entity"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
                 "render"]
