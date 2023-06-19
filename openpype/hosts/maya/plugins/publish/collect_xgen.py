@@ -30,12 +30,13 @@ class CollectXgen(pyblish.api.InstancePlugin):
         if data["xgmPalettes"]:
             data["xgmPalette"] = data["xgmPalettes"][0]
 
-        data["xgenConnections"] = {}
+        data["xgenConnections"] = []
         for node in data["xgmSubdPatches"]:
-            data["xgenConnections"][node] = {}
-            for attr in ["transform", "geometry"]:
-                input = get_attribute_input("{}.{}".format(node, attr))
-                data["xgenConnections"][node][attr] = input
+            connected_transform = get_attribute_input(
+                node + ".transform"
+            ).split(".")[0]
+            if connected_transform not in data["xgenConnections"]:
+                data["xgenConnections"].append(connected_transform)
 
         # Collect all files under palette root as resources.
         import xgenm
