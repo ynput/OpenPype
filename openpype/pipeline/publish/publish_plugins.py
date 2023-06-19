@@ -331,6 +331,11 @@ class ColormanagedPyblishPluginMixin(object):
             project_settings=project_settings_,
             anatomy_data=anatomy_data
         )
+
+        # in case host color management is not enabled
+        if not config_data:
+            return None
+
         file_rules = get_imageio_file_rules(
             project_name, host_name,
             project_settings=project_settings_
@@ -386,6 +391,11 @@ class ColormanagedPyblishPluginMixin(object):
 
         if colorspace_settings is None:
             colorspace_settings = self.get_colorspace_settings(context)
+
+        # in case host color management is not enabled
+        if not colorspace_settings:
+            self.log.warning("Host's colorspace management is disabled.")
+            return
 
         # unpack colorspace settings
         config_data, file_rules = colorspace_settings

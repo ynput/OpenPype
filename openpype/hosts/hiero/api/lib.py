@@ -23,10 +23,16 @@ except ImportError:
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import (
+    get_current_project_name, legacy_io, Anatomy
+)
 from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
+
+from openpype.pipeline.colorspace import (
+    get_imageio_config
+)
 
 
 class DeprecatedWarning(DeprecationWarning):
@@ -1046,6 +1052,18 @@ def apply_colorspace_project():
     # get presets for hiero
     imageio = get_project_settings(project_name)["hiero"]["imageio"]
     presets = imageio.get("workfile")
+
+    # backward compatibility layer
+    # TODO: remove this after some time
+    config_data = get_imageio_config(
+        project_name=get_current_project_name(),
+        host_name="hiero"
+    )
+
+    if config_data:
+        presets.update({
+            "ocioConfigName": "custom"
+        })
 
     # save the workfile as subversion "comment:_colorspaceChange"
     split_current_file = os.path.splitext(current_file)

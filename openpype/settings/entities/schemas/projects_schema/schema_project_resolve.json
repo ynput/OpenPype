@@ -13,18 +13,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (remapped to OCIO)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_remapped"
                 }
-
             ]
         },
         {
