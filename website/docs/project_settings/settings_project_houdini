@@ -12,20 +12,25 @@ Import or create [Shelves](https://www.sidefx.com/docs/houdini/shelf/index.html)
 
 ![Shelves Creation](assets/settings_project_houdini_shelves.png)
 
-1. **Shelf set name:** Enter the name of the **shelf set** you want to import or create.
-2. **Shelf Set Path (optional):** Enter the Shelf set path (on Windows, MacOs or Linux) (optional).
-3. **(+/-) :** Add or delete a **shelf set**.
-4. **(+/-) :** Add a **shelf** to the **shelf set**.
-5. **(+/-) :** Add a **tool** to this shelf.
-6. **Shelf Name:** Enter the **shelf**'s name you want to create.
-7. **Name:** Enter the **tool** name you want to add to this **shelf**.
-8. **Script:** Enter the tool's script to import it.
-9. **Icon:** Add the tool's icon.
-10. **Help:** Add a help text to the tool. It shows when you rest the cursor on the tool
-11. **⇅:** Change the **shelf** order into the **shelf set**.
-12.  **⇅:** Change the **tool** order in it **shelf**.
+1. **Shelf set name:** enter the name of the **shelf set** you want to import or create.
+2. **Shelf Set Path (optional):** enter the Shelf set path (on Windows, MacOs or Linux) (optional).
+3. **(+/-) :** add or delete a **shelf set**.
+4. **(+/-) :** add a **shelf** to the **shelf set**.
+5. **(+/-) :** add a **tool** to this shelf.
+6. **Shelf Name:** enter the **shelf**'s name you want to create.
+7. **Name:** enter the **tool** name you want to add to this **shelf**.
+8. **Script:** enter the tool's script to import it.
+9. **Icon:** add the tool's icon.
+10. **Help:** add a help text to the tool. It shows when you rest the cursor on the tool
+11. **⇅:** change the **shelf** order into the **shelf set**.
+12.  **⇅:** change the **tool** order in it **shelf**.
 
 # Creator plugins
+Enable or disable the plugins. Some of them have extra options such as defining the default subsets names.
 
+**Plugins list:** Create Arnold Ass, Create Alembic Camera, Create Composite (Image Sequence), Create Point Cache, Create Redshift ROP, Create Remote Publish, Create VDB Cache, Create USD, Create USD Model, Create USD Shading Workspace, Create USD Render.
 
 # Publish plugings
+Enable or disable the plugins executed at publishing.
+
+**Publish plugins list:** Validate Workfile Paths, ValidateContainers.
