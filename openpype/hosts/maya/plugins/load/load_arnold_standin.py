@@ -35,9 +35,15 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
+        if not cmds.pluginInfo("mtoa", query=True, loaded=True):
+            cmds.loadPlugin("mtoa")
+            # Create defaultArnoldRenderOptions before creating aiStandin
+            # which tries to connect it. Since we load the plugin and directly
+            # create aiStandin without the defaultArnoldRenderOptions,
+            # we need to create the render options for aiStandin creation.
+            from mtoa.core import createOptions
+            createOptions()
 
-        # Make sure to load arnold before importing `mtoa.ui.arnoldmenu`
-        cmds.loadPlugin("mtoa", quiet=True)
         import mtoa.ui.arnoldmenu
 
         version = context['version']
