@@ -9,10 +9,12 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     PlaceholderPlugin,
     LoadPlaceholderItem,
     PlaceholderLoadMixin,
+    PlaceholderCreateMixin
 )
 from openpype.hosts.aftereffects.api import get_stub
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
+PLACEHOLDER_ID = "openpype.placeholder"
 
 
 class AETemplateBuilder(AbstractTemplateBuilder):
@@ -42,6 +44,36 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
     Cannot inherit from `PlaceholderPlugin` as it is actually not implementing
     all methods.
     """
+    def collect_placeholders(self):
+        output = []
+        scene_placeholders = self._collect_scene_placeholders()
+        for item in scene_placeholders:
+            if item.get("plugin_identifier") != self.identifier:
+                continue
+
+            output.append(
+                LoadPlaceholderItem(item["uuid"],
+                                    item["data"],
+                                    self)
+            )
+
+        return output
+
+    def update_placeholder(self, placeholder_item, placeholder_data):
+        stub = get_stub()
+        placeholder_uuid = placeholder_item.scene_identifier
+        item_id = None
+        for metadata_item in stub.get_metadata():
+            if not metadata_item.get("is_placeholder"):
+                continue
+            if placeholder_uuid in metadata_item.get("uuid"):
+                item_id = metadata_item["members"][0]
+                break
+        if not item_id:
+            stub.print_msg(f"Cannot find item for {placeholder_uuid}")
+            return
+        metadata_item["data"] = placeholder_data
+        stub.imprint(item_id, metadata_item)
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
@@ -61,20 +93,42 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
             )
         return placeholder_items
 
-    def collect_placeholders(self):
-        output = []
-        scene_placeholders = self._collect_scene_placeholders()
-        for item in scene_placeholders:
-            if item.get("plugin_identifier") != self.identifier:
-                continue
+    def _imprint_item(self, item_id, name, placeholder_data, stub):
+        if not item_id:
+            raise ValueError("Couldn't create a placeholder")
+        container_data = {
+            "id": "openpype.placeholder",
+            "name": name,
+            "is_placeholder": True,
+            "plugin_identifier": self.identifier,
+            "uuid": str(uuid.uuid4()),  # scene_identifier
+            "data": placeholder_data,
+            "members": [item_id]
+        }
+        stub.imprint(item_id, container_data)
 
-            output.append(
-                LoadPlaceholderItem(item["uuid"],
-                                    item["data"],
-                                    self)
-            )
 
-        return output
+class AEPlaceholderCreatePlugin(AEPlaceholderPlugin, PlaceholderCreateMixin):
+    """Adds Create placeholder.
+
+    This adds composition and runs Create
+    """
+    identifier = "aftereffects.create"
+    label = "AfterEffects create"
+
+    def create_placeholder(self, placeholder_data):
+
+        stub = get_stub()
+        name = "CREATEPLACEHOLDER"
+        item_id = stub.add_item(name, "COMP")
+
+        self._imprint_item(item_id, name, placeholder_data, stub)
+
+    def populate_placeholder(self, placeholder):
+        pass
+
+    def get_placeholder_options(self, options=None):
+        return self.get_create_plugin_options(options)
 
 
 class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
@@ -87,20 +141,7 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
         name = "LOADERPLACEHOLDER"
         item_id = stub.add_placeholder(name, 1920, 1060, 25, 10)
 
-        if not item_id:
-            raise ValueError("Couldn't create a placeholder")
-
-        container_data = {
-            "id": "openpype.placeholder",
-            "name": name,
-            "is_placeholder": True,
-            "plugin_identifier": self.identifier,
-            "uuid": str(uuid.uuid4()),  # scene_identifier
-            "data": placeholder_data,
-            "members": [item_id]
-        }
-
-        stub.imprint(item_id, container_data)
+        self._imprint_item(item_id, name, placeholder_data, stub)
 
     def populate_placeholder(self, placeholder):
         self.populate_load_placeholder(placeholder)
@@ -112,25 +153,13 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
             if not placeholder.data["keep_placeholder"]:
                 metadata = stub.get_metadata()
                 for item in metadata:
+                    if not item.get("is_placeholder"):
+                        continue
                     scene_identifier = item.get("uuid")
                     if (scene_identifier and
                             scene_identifier == placeholder.scene_identifier):
                         stub.delete_item(item["members"][0])
                 stub.remove_instance(placeholder.scene_identifier, metadata)
-
-    def update_placeholder(self, placeholder_item, placeholder_data):
-        stub = get_stub()
-        placeholder_uuid = placeholder_item.scene_identifier
-        item_id = None
-        for metadata_item in stub.get_metadata():
-            if placeholder_uuid in metadata_item.get("uuid"):
-                item_id = metadata_item["members"][0]
-                break
-        if not item_id:
-            stub.print_msg(f"Cannot find item for {placeholder_uuid}")
-            return
-        metadata_item["data"] = placeholder_data
-        stub.imprint(item_id, metadata_item)
 
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
@@ -158,7 +187,7 @@ def update_placeholder(*args):
     builder = AETemplateBuilder(host)
 
     stub = get_stub()
-    selected_items = stub.get_selected_items(False, False, True)
+    selected_items = stub.get_selected_items(True, True, True)
 
     if len(selected_items) != 1:
         stub.print_msg("Please select just 1 placeholder")
@@ -172,6 +201,8 @@ def update_placeholder(*args):
         for placeholder_item in builder.get_placeholders()
     }
     for metadata_item in stub.get_metadata():
+        if not metadata_item.get("is_placeholder"):
+            continue
         if selected_id in metadata_item.get("members"):
             placeholder_item = placeholder_items_by_id.get(
                 metadata_item["uuid"])

@@ -112,6 +112,32 @@ function getActiveDocumentFullName(){
     return _prepareError("No file open currently");
 }
 
+
+function addItem(name, item_type){
+    /**
+     * Adds comp or folder to project items.
+     *
+     * Could be called when creating publishable instance to prepare
+     * composition (and render queue).
+     *
+     * Args:
+     *      name (str): composition name
+     *      item_type (str): COMP|FOLDER
+     * Returns:
+     *      SingleItemValue: eg {"result": VALUE}
+     */
+    if (item_type == "COMP"){
+        // dummy values, will be rewritten later
+        item = app.project.items.addComp(name, 1920, 1060, 1, 10, 25);
+    }else if (item_type == "FOLDER"){
+        item = app.project.items.addFolder(name);
+    }else{
+        return _prepareError("Only 'COMP' or 'FOLDER' can be created");
+    }
+    return _prepareSingleValue(item.id);
+
+}
+
 function getItems(comps, folders, footages){
     /**
      * Returns JSON representation of compositions and

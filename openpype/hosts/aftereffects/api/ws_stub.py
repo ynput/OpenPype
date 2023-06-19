@@ -36,6 +36,7 @@ class AEItem(object):
     width = attr.ib(default=None)
     height = attr.ib(default=None)
     is_placeholder = attr.ib(default=False)
+    uuid = attr.ib(default=False)
 
 
 class AfterEffectsServerStub():
@@ -240,6 +241,21 @@ class AfterEffectsServerStub():
                                          footages=footages)
                                         )
         return self._to_records(self._handle_return(res))
+
+    def add_item(self, name, item_type):
+        """
+            Adds either composition or folder to project item list.
+
+            Args:
+                name (str)
+                item_type (str): COMP|FOLDER
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item',
+                                         name=name,
+                                         item_type=item_type))
+
+        return self._handle_return(res)
 
     def get_item(self, item_id):
         """
