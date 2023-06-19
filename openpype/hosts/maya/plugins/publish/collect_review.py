@@ -30,12 +30,13 @@ class CollectReview(pyblish.api.InstancePlugin):
         camera = cameras[0] if cameras else None
 
         context = instance.context
-        objectset = context.data['objectsets']
+        objectset = {
+            i.data.get("instance_node") for i in context
+        }
 
-        # Convert enum attribute index to string for Display Lights.
-        index = instance.data.get("displayLights", 0)
-        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
-        if display_lights == "project_settings":
+        # Collect display lights.
+        display_lights = instance.data.get("displayLights", "default")
+        if instance.data.get("displayLights") == "project_settings":
             settings = instance.context.data["project_settings"]
             settings = settings["maya"]["publish"]["ExtractPlayblast"]
             settings = settings["capture_preset"]["Viewport Options"]
@@ -56,7 +57,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             burninDataMembers["focalLength"] = focal_length
 
         # Account for nested instances like model.
-        reviewable_subsets = list(set(members) & set(objectset))
+        reviewable_subsets = list(set(members) & objectset)
         if reviewable_subsets:
             if len(reviewable_subsets) > 1:
                 raise KnownPublishError(
