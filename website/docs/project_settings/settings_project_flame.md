@@ -8,7 +8,7 @@ sidebar_label: Flame
 //
 
 # Create plugins
-Enable or disable the plugins and adjust their settings. 
+Enable or disable the plugins and adjust their settings.
 
 **Plugins list:** Create Short Clip.
 
@@ -20,4 +20,4 @@ Enable or disable the plugins executed at publishing and adjust their settings.
 # Loader plugins
 Enable or disable the plugins executed on loading and adjust their settings.
 
-**Loader plugins list:** Load Clip, Load as clip to corrent batch.
+**Loader plugins list:** Load Clip, Load as clip to current batch.
