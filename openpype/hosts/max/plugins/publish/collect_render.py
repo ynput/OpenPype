@@ -49,7 +49,7 @@ class CollectRender(pyblish.api.InstancePlugin):
                                                       asset_id)
         self.log.debug("version_doc: {0}".format(version_doc))
         sel_obj = [
-            c for c in rt.Objects
+            c.name for c in rt.Objects
             if rt.classOf(c) in rt.Camera.classes]
 
         version_int = 1

@@ -216,9 +216,9 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if render_cameras:
             for i, camera in enumerate(render_cameras):
                 cam_name = "Camera%s" % (i + 1)
-                plugin_data[cam_name] = camera.name
-            # set the default camera
-            plugin_data["Camera"] = render_cameras[0].name
+                plugin_data[cam_name] = camera
+                # set the default camera
+                plugin_data["Camera"] = camera
             # set empty camera of Camera 0 for the '
             # correct parameter submission
             plugin_data["Camera0"] = None
