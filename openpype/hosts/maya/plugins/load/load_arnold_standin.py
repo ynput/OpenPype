@@ -2,7 +2,6 @@ import os
 import clique
 
 import maya.cmds as cmds
-import maya.utils
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
