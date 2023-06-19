@@ -1,0 +1,20 @@
+name: 🔄 Sync Fork
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5' # Monday to friday at 00:00
+  workflow_dispatch:
+
+jobs:
+  sync:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.QUAD__PUBLIC_GITHUB_TOKEN }}
+          base: develop
+          head: develop
+          pr_message: Automatic synchronization requires conflict resolution.
+          merge_method: rebase
