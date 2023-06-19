@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Version already exists</title>
+<description>
+## Version already exists
+
+Version {version} you have set on instance '{subset_name}' under '{asset_name}' already exists. This validation is enabled by default to prevent accidental override of existing versions.
+
+### How to repair?
+- Click on 'Repair' action -> this will change version to next available.
+- Disable validation on the instance if you are sure you want to override the version.
+- Reset publishing and manually change the version number.
+</description>
+</error>
+</root>
