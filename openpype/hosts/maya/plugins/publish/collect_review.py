@@ -36,7 +36,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         # Collect display lights.
         display_lights = instance.data.get("displayLights", "default")
-        if instance.data.get("displayLights") == "project_settings":
+        if display_lights == "project_settings":
             settings = instance.context.data["project_settings"]
             settings = settings["maya"]["publish"]["ExtractPlayblast"]
             settings = settings["capture_preset"]["Viewport Options"]
