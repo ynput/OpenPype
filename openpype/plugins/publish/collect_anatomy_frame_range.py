@@ -15,7 +15,6 @@ class CollectAnatomyFrameRange(pyblish.api.InstancePlugin):
     hosts = ["traypublisher"]
 
     def process(self, instance):
-        self.log.debug("Collecting Anatomy frame range.")
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
             self.log.debug("Instance has no asset entity set."
