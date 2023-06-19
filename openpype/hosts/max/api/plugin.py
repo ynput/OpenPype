@@ -110,7 +110,7 @@ class MaxCreatorBase(object):
 
     @staticmethod
     def cache_subsets(shared_data):
-        if shared_data.get("max_cached_subsets"):
+        if shared_data.get("max_cached_subsets") is not None:
             return shared_data
 
         shared_data["max_cached_subsets"] = {}
