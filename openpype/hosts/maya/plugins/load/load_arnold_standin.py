@@ -37,10 +37,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     def load(self, context, name, namespace, options):
         if not cmds.pluginInfo("mtoa", query=True, loaded=True):
             cmds.loadPlugin("mtoa")
-            # create defaultArnoldRenderOptions before creating aiStandin
-            # which tried to connect it. Since we load the plugin and directly
+            # Create defaultArnoldRenderOptions before creating aiStandin
+            # which tries to connect it. Since we load the plugin and directly
             # create aiStandin without the defaultArnoldRenderOptions,
-            # here needs to create the render options for aiStandin creation.
+            # we need to create the render options for aiStandin creation.
             from mtoa.core import createOptions
             createOptions()
 
