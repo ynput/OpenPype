@@ -30,7 +30,7 @@ class CollectXgen(pyblish.api.InstancePlugin):
         if data["xgmPalettes"]:
             data["xgmPalette"] = data["xgmPalettes"][0]
 
-        data["xgenConnections"] = []
+        data["xgenConnections"] = set()
         for node in data["xgmSubdPatches"]:
             connected_transform = get_attribute_input(
                 node + ".transform"
