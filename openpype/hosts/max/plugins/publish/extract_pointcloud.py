@@ -138,9 +138,9 @@ class ExtractPointCloud(publish.Extractor):
                 sub_anim = rt.GetSubAnim(obj, anim_name)
                 boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 if boolean:
-                    event_name = sub_anim.Name
-                    opt = f"${member.Name}.{event_name}.export_particles"
-                    opt_list.append(opt)
+                        event_name = sub_anim.Name
+                        opt = f"${member.Name}.{event_name}.export_particles"
+                        opt_list.append(opt)
 
         return opt_list
 
