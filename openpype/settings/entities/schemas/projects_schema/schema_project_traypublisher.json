@@ -8,18 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (derived to OCIO)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_derived"
                 }
-
             ]
         },
         {
@@ -88,6 +84,12 @@
                         "key": "allow_multiple_items",
                         "label": "Allow multiple items",
                         "type": "boolean"
+                    },
+                    {
+                        "type": "boolean",
+                        "key": "allow_version_control",
+                        "label": "Allow version control",
+                        "default": false
                     },
                     {
                         "type": "list",
@@ -350,6 +352,10 @@
                         {
                             "key": "ValidateFrameRange",
                             "label": "Validate frame range"
+                        },
+                        {
+                            "key": "ValidateExistingVersion",
+                            "label": "Validate Existing Version"
                         }
                     ]
                 }

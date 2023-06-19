@@ -1,12 +1,27 @@
 from openpype.lib import PreLaunchHook
 
-from openpype.pipeline.colorspace import get_imageio_config
+from openpype.pipeline.colorspace import (
+    get_imageio_config
+)
 from openpype.pipeline.template_data import get_template_data_with_names
 
 
-class FusionPreLaunchOCIO(PreLaunchHook):
-    """Set OCIO environment variable for Fusion"""
-    app_groups = ["fusion"]
+class OCIOEnvHook(PreLaunchHook):
+    """Set OCIO environment variable for hosts that use OpenColorIO."""
+
+    order = 0
+    hosts = [
+        "substancepainter",
+        "fusion",
+        "blender",
+        "aftereffects",
+        "max",
+        "houdini",
+        "maya",
+        "nuke",
+        "hiero",
+        "resolve"
+    ]
 
     def execute(self):
         """Hook entry method."""
@@ -26,7 +41,13 @@ class FusionPreLaunchOCIO(PreLaunchHook):
             anatomy_data=template_data,
             anatomy=self.data["anatomy"]
         )
-        ocio_path = config_data["path"]
 
-        self.log.info(f"Setting OCIO config path: {ocio_path}")
-        self.launch_context.env["OCIO"] = ocio_path
+        if config_data:
+            ocio_path = config_data["path"]
+
+            self.log.info(
+                f"Setting OCIO environment to config path: {ocio_path}")
+
+            self.launch_context.env["OCIO"] = ocio_path
+        else:
+            self.log.debug("OCIO not set or enabled")
