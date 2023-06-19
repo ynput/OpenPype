@@ -317,7 +317,7 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def remove_instance(self, instance_id):
+    def remove_instance(self, instance_id, metadata=None):
         """
             Removes instance with 'instance_id' from file's metadata and
             saves them.
@@ -329,7 +329,10 @@ class AfterEffectsServerStub():
         """
         cleaned_data = []
 
-        for instance in self.get_metadata():
+        if metadata is None:
+            metadata = self.get_metadata()
+
+        for instance in metadata:
             inst_id = instance.get("instance_id") or instance.get("uuid")
             if inst_id != instance_id:
                 cleaned_data.append(instance)
@@ -534,6 +537,7 @@ class AfterEffectsServerStub():
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
+
 
     def add_placeholder(self, name, width, height, fps, duration):
         """

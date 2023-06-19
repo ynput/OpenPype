@@ -1,4 +1,3 @@
-import collections
 import uuid
 
 from openpype.pipeline import registered_host
@@ -9,9 +8,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
     PlaceholderPlugin,
     LoadPlaceholderItem,
-    CreatePlaceholderItem,
     PlaceholderLoadMixin,
-    PlaceholderCreateMixin
 )
 from openpype.hosts.aftereffects.api import get_stub
 
@@ -72,7 +69,7 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
                 continue
 
             output.append(
-                LoadPlaceholderItem(item["scene_identifier"],
+                LoadPlaceholderItem(item["uuid"],
                                     item["data"],
                                     self)
             )
@@ -98,12 +95,11 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
             raise ValueError("Couldn't create a placeholder")
 
         container_data = {
-            "schema": "openpype:container-2.0",
             "id": "openpype.placeholder",
             "name": name,
             "is_placeholder": True,
             "plugin_identifier": self.identifier,
-            "scene_identifier": str(uuid.uuid4()),
+            "uuid": str(uuid.uuid4()),  # scene_identifier
             "data": placeholder_data,
             "members": [placeholder_id]
         }
@@ -115,10 +111,16 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
         errors = placeholder.get_errors()
         if errors:
             get_stub().print_msg("\n".join(errors))
-
-    def repopulate_placeholder(self, placeholder):
-        repre_ids = self._get_loaded_repre_ids()
-        self.populate_load_placeholder(placeholder, repre_ids)
+        else:
+            stub = get_stub()
+            if not placeholder.data["keep_placeholder"]:
+                metadata = stub.get_metadata()
+                for item in metadata:
+                    scene_identifier = item.get("uuid")
+                    if (scene_identifier and
+                            scene_identifier == placeholder.scene_identifier):
+                        stub.delete_item(item["members"][0])
+                stub.remove_instance(placeholder.scene_identifier, metadata)
 
     def update_placeholder(self, placeholder_item, placeholder_data):
         self.log.info("Wont implement for now")
@@ -147,20 +149,26 @@ def create_placeholder(*args):
 def update_placeholder(*args):
     host = registered_host()
     builder = AETemplateBuilder(host)
-    placeholder_items_by_id = {
-        placeholder_item.scene_identifier: placeholder_item
-        for placeholder_item in builder.get_placeholders()
-    }
-    placeholder_items = []
 
-    # TODO show UI at least
-    if len(placeholder_items) == 0:
-        raise ValueError("No node selected")
+    stub = get_stub()
+    selected_items = stub.get_selected_items(False, False, True)
 
-    if len(placeholder_items) > 1:
-        raise ValueError("Too many selected nodes")
+    if len(selected_items) != 1:
+        stub.print_msg("Please select just 1 placeholder")
+        return
 
-    placeholder_item = placeholder_items[0]
+    selected_id = selected_items[0].id
+    placeholder_item = None
+    for item in builder.get_placeholders():
+        if selected_id in item.members:
+            placeholder_item = item
+            break
+
+    if not placeholder_item:
+        stub.print_msg("Didn't find placeholder metadata. "
+                       "Remove and re-create placeholder.")
+        return
+
     window = WorkfileBuildPlaceholderDialog(host, builder)
     window.set_update_mode(placeholder_item)
     window.exec_()

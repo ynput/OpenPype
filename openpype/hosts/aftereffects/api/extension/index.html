@@ -117,6 +117,17 @@
 
     <script type=text/javascript>
       $(function() {
+        $("a#update-placeholder-button").bind("click", function() {
+          RPC.call('AfterEffects.update_placeholder_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
+      $(function() {
         $("a#build-workfile-button").bind("click", function() {
           RPC.call('AfterEffects.build_workfile_template_route').then(function (data) {
           }, function (error) {
@@ -153,6 +164,7 @@
             <div><a href=# id=setframes-button><button class="hostFontSize">Set Frame Range</button></a></div>
             <div><a href=# id=setall-button><button class="hostFontSize">Apply All Settings</button></a></div>
             <div><a href=# id=create-placeholder-button><button class="hostFontSize">Create placeholder</button></a></div>
+            <div><a href=# id=update-placeholder-button><button class="hostFontSize">Update placeholder</button></a></div>
             <div><a href=# id=build-workfile-button><button class="hostFontSize">Build Workfile from template</button></a></div>
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
         </div>
