@@ -1,4 +1,5 @@
 import re
+import platform
 
 from openpype.client import get_projects, create_project
 from .constants import (
@@ -8,13 +9,16 @@ from .constants import (
 from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX,
+    OperationsSession,
 )
 from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import (
     PlaceholderLineEdit,
-    get_warning_pixmap
+    get_warning_pixmap,
+    PixmapLabel,
 )
+from openpype.settings.lib import get_default_anatomy_settings
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -35,7 +39,7 @@ class NameTextEdit(QtWidgets.QLineEdit):
         sub_regex = "[^{}]+".format(NAME_ALLOWED_SYMBOLS)
         new_before_text = re.sub(sub_regex, "", before_text)
         new_after_text = re.sub(sub_regex, "", after_text)
-        idx -= (len(before_text) - len(new_before_text))
+        idx -= len(before_text) - len(new_before_text)
 
         self.setText(new_before_text + new_after_text)
         self.setCursorPosition(idx)
@@ -141,13 +145,40 @@ class CreateProjectDialog(QtWidgets.QDialog):
         inputs_widget = QtWidgets.QWidget(self)
         project_name_input = QtWidgets.QLineEdit(inputs_widget)
         project_code_input = QtWidgets.QLineEdit(inputs_widget)
+        project_width_input = NumScrollWidget(0, 9999999)
+        project_height_input = NumScrollWidget(0, 9999999)
+        project_fps_input = FloatScrollWidget(1, 9999999, decimals=3, step=1)
+        project_aspect_input = FloatScrollWidget(
+            0, 9999999, decimals=2, step=0.1
+        )
+        project_frame_start_input = NumScrollWidget(-9999999, 9999999)
+        project_frame_end_input = NumScrollWidget(-9999999, 9999999)
+
+        default_project_data = self.get_default_attributes()
+        project_width_input.setValue(default_project_data["resolutionWidth"])
+        project_height_input.setValue(default_project_data["resolutionHeight"])
+        project_fps_input.setValue(default_project_data["fps"])
+        project_aspect_input.setValue(default_project_data["pixelAspect"])
+        project_frame_start_input.setValue(default_project_data["frameStart"])
+        project_frame_end_input.setValue(default_project_data["frameEnd"])
+
         library_project_input = QtWidgets.QCheckBox(inputs_widget)
 
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
+        if platform.system() == "Darwin":
+            inputs_layout.setFieldGrowthPolicy(
+                QtWidgets.QFormLayout.AllNonFixedFieldsGrow
+            )
         inputs_layout.setContentsMargins(0, 0, 0, 0)
         inputs_layout.addRow("Project name:", project_name_input)
         inputs_layout.addRow("Project code:", project_code_input)
         inputs_layout.addRow("Library project:", library_project_input)
+        inputs_layout.addRow("Width:", project_width_input)
+        inputs_layout.addRow("Height:", project_height_input)
+        inputs_layout.addRow("FPS:", project_fps_input)
+        inputs_layout.addRow("Aspect:", project_aspect_input)
+        inputs_layout.addRow("Frame Start:", project_frame_start_input)
+        inputs_layout.addRow("Frame End:", project_frame_end_input)
 
         project_name_label = QtWidgets.QLabel(self)
         project_code_label = QtWidgets.QLabel(self)
@@ -183,12 +214,22 @@ class CreateProjectDialog(QtWidgets.QDialog):
         self.project_name_input = project_name_input
         self.project_code_input = project_code_input
         self.library_project_input = library_project_input
+        self.project_width_input = project_width_input
+        self.project_height_input = project_height_input
+        self.project_fps_input = project_fps_input
+        self.project_aspect_input = project_aspect_input
+        self.project_frame_start_input = project_frame_start_input
+        self.project_frame_end_input = project_frame_end_input
 
         self.ok_btn = ok_btn
 
     @property
     def project_name(self):
         return self.project_name_input.text()
+
+    def get_default_attributes(self):
+        settings = get_default_anatomy_settings()
+        return settings["attributes"]
 
     def _on_project_name_change(self, value):
         if self._project_code_value is None:
@@ -215,12 +256,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
             is_valid = False
 
         elif value in self.invalid_project_names:
-            message = "Project name \"{}\" already exist".format(value)
+            message = 'Project name "{}" already exist'.format(value)
             is_valid = False
 
         elif not PROJECT_NAME_REGEX.match(value):
             message = (
-                "Project name \"{}\" contain not supported symbols"
+                'Project name "{}" contain not supported symbols'
             ).format(value)
             is_valid = False
 
@@ -237,12 +278,12 @@ class CreateProjectDialog(QtWidgets.QDialog):
             is_valid = False
 
         elif value in self.invalid_project_names:
-            message = "Project code \"{}\" already exist".format(value)
+            message = 'Project code "{}" already exist'.format(value)
             is_valid = False
 
         elif not PROJECT_NAME_REGEX.match(value):
             message = (
-                "Project code \"{}\" contain not supported symbols"
+                'Project code "{}" contain not supported symbols'
             ).format(value)
             is_valid = False
 
@@ -264,9 +305,35 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
-        library_project = self.library_project_input.isChecked()
-        create_project(project_name, project_code, library_project)
+        project_width = self.project_width_input.value()
+        project_height = self.project_height_input.value()
+        project_fps = self.project_fps_input.value()
+        project_aspect = self.project_aspect_input.value()
+        project_frame_start = self.project_frame_start_input.value()
+        project_frame_end = self.project_frame_end_input.value()
 
+        library_project = self.library_project_input.isChecked()
+        project_doc = create_project(
+            project_name,
+            project_code,
+            library_project,
+        )
+        update_data = {
+            "data.resolutionWidth": project_width,
+            "data.resolutionHeight": project_height,
+            "data.fps": project_fps,
+            "data.pixelAspect": project_aspect,
+            "data.frameStart": project_frame_start,
+            "data.frameEnd": project_frame_end,
+        }
+        session = OperationsSession()
+        session.update_entity(
+            project_name,
+            project_doc["type"],
+            project_doc["_id"],
+            update_data,
+        )
+        session.commit()
         self.done(1)
 
     def _get_existing_projects(self):
@@ -288,45 +355,15 @@ class CreateProjectDialog(QtWidgets.QDialog):
         return project_names, project_codes
 
 
-# TODO PixmapLabel should be moved to 'utils' in other future PR so should be
-#   imported from there
-class PixmapLabel(QtWidgets.QLabel):
-    """Label resizing image to height of font."""
-    def __init__(self, pixmap, parent):
-        super(PixmapLabel, self).__init__(parent)
-        self._empty_pixmap = QtGui.QPixmap(0, 0)
-        self._source_pixmap = pixmap
-
-    def set_source_pixmap(self, pixmap):
-        """Change source image."""
-        self._source_pixmap = pixmap
-        self._set_resized_pix()
-
+class ProjectManagerPixmapLabel(PixmapLabel):
     def _get_pix_size(self):
         size = self.fontMetrics().height() * 4
         return size, size
 
-    def _set_resized_pix(self):
-        if self._source_pixmap is None:
-            self.setPixmap(self._empty_pixmap)
-            return
-        width, height = self._get_pix_size()
-        self.setPixmap(
-            self._source_pixmap.scaled(
-                width,
-                height,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
-        )
-
-    def resizeEvent(self, event):
-        self._set_resized_pix()
-        super(PixmapLabel, self).resizeEvent(event)
-
 
 class ConfirmProjectDeletion(QtWidgets.QDialog):
     """Dialog which confirms deletion of a project."""
+
     def __init__(self, project_name, parent):
         super(ConfirmProjectDeletion, self).__init__(parent)
 
@@ -335,23 +372,26 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
         top_widget = QtWidgets.QWidget(self)
 
         warning_pixmap = get_warning_pixmap()
-        warning_icon_label = PixmapLabel(warning_pixmap, top_widget)
+        warning_icon_label = ProjectManagerPixmapLabel(
+            warning_pixmap, top_widget
+        )
 
         message_label = QtWidgets.QLabel(top_widget)
         message_label.setWordWrap(True)
         message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
-        message_label.setText((
-            "<b>WARNING: This cannot be undone.</b><br/><br/>"
-            "Project <b>\"{}\"</b> with all related data will be"
-            " permanently removed from the database. (This action won't remove"
-            " any files on disk.)"
-        ).format(project_name))
+        message_label.setText(
+            (
+                "<b>WARNING: This cannot be undone.</b><br/><br/>"
+                'Project <b>"{}"</b> with all related data will be'
+                " permanently removed from the database."
+                " (This action won't remove any files on disk.)"
+            ).format(project_name)
+        )
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.addWidget(
-            warning_icon_label, 0,
-            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+            warning_icon_label, 0, QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
         )
         top_layout.addWidget(message_label, 1)
 
@@ -359,7 +399,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
         confirm_input = PlaceholderLineEdit(self)
         confirm_input.setPlaceholderText(
-            "Type \"{}\" to confirm...".format(project_name)
+            'Type "{}" to confirm...'.format(project_name)
         )
 
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
@@ -429,6 +469,7 @@ class ConfirmProjectDeletion(QtWidgets.QDialog):
 
 class SpinBoxScrollFixed(QtWidgets.QSpinBox):
     """QSpinBox which only allow edits change with scroll wheel when active"""
+
     def __init__(self, *args, **kwargs):
         super(SpinBoxScrollFixed, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -442,6 +483,7 @@ class SpinBoxScrollFixed(QtWidgets.QSpinBox):
 
 class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
     """QDoubleSpinBox which only allow edits with scroll wheel when active"""
+
     def __init__(self, *args, **kwargs):
         super(DoubleSpinBoxScrollFixed, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -451,3 +493,22 @@ class DoubleSpinBoxScrollFixed(QtWidgets.QDoubleSpinBox):
             event.ignore()
         else:
             super(DoubleSpinBoxScrollFixed, self).wheelEvent(event)
+
+
+class NumScrollWidget(SpinBoxScrollFixed):
+    def __init__(self, minimum, maximum):
+        super(NumScrollWidget, self).__init__()
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+
+
+class FloatScrollWidget(DoubleSpinBoxScrollFixed):
+    def __init__(self, minimum, maximum, decimals, step=None):
+        super(FloatScrollWidget, self).__init__()
+        self.setMaximum(maximum)
+        self.setMinimum(minimum)
+        self.setDecimals(decimals)
+        if step is not None:
+            self.setSingleStep(step)
+        self.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
