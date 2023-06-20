@@ -10,8 +10,7 @@ on:
 
 jobs:
   build-zip-patch:
-    runs-on: self-hosted
-    # runs-on: ubuntu-latest
+    runs-on: self-hosted, ubuntu
     strategy:
       matrix:
         python-version: [3.9.16]
