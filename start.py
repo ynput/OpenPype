@@ -9,6 +9,9 @@ import site
 import traceback
 import contextlib
 
+
+from version import __version__
+
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
     expected_values = (
@@ -48,28 +51,48 @@ if "--verbose" in sys.argv:
         ))
 
     os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
+    os.environ["AYON_LOG_LEVEL"] = str(log_level)
+
+os.environ["AYON_VERSION"] = __version__
 
 # Enable debug mode, may affect log level if log level is not defined
 if "--debug" in sys.argv:
     sys.argv.remove("--debug")
+    os.environ["AYON_DEBUG"] = "1"
     os.environ["OPENPYPE_DEBUG"] = "1"
 
-if "--automatic-tests" in sys.argv:
-    sys.argv.remove("--automatic-tests")
-    os.environ["IS_TEST"] = "1"
+SKIP_HEADERS = False
+if "--skip-headers" in sys.argv:
+    sys.argv.remove("--skip-headers")
+    SKIP_HEADERS = True
 
 if "--use-staging" in sys.argv:
     sys.argv.remove("--use-staging")
+    os.environ["AYON_USE_STAGING"] = "1"
     os.environ["OPENPYPE_USE_STAGING"] = "1"
 
 if "--headless" in sys.argv:
+    os.environ["AYON_HEADLESS_MODE"] = "1"
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
     sys.argv.remove("--headless")
-elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+
+elif (
+    os.getenv("AYON_HEADLESS_MODE") != "1"
+    or os.getenv("OPENPYPE_HEADLESS_MODE") != "1"
+):
+    os.environ.pop("AYON_HEADLESS_MODE", None)
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+elif (
+    os.getenv("AYON_HEADLESS_MODE")
+    != os.getenv("OPENPYPE_HEADLESS_MODE")
+):
+    os.environ["OPENPYPE_HEADLESS_MODE"] = (
+        os.environ["AYON_HEADLESS_MODE"]
+    )
+
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
-HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
+HEADLESS_MODE_ENABLED = os.getenv("AYON_HEADLESS_MODE") == "1"
 
 _pythonpath = os.getenv("PYTHONPATH", "")
 _python_paths = _pythonpath.split(os.pathsep)
@@ -96,47 +119,19 @@ sys.path.insert(0, os.path.join(AYON_ROOT, "vendor", "python"))
 # - common contains common code for bootstraping and OpenPype processes
 sys.path.insert(0, os.path.join(AYON_ROOT, "common"))
 
-# This is content of 'core' addon which is ATM part of build
-common_python_vendor = os.path.join(
-    AYON_ROOT,
-    "openpype",
-    "vendor",
-    "python",
-    "common"
-)
-# Add tools dir to sys path for pyblish UI discovery
-tools_dir = os.path.join(AYON_ROOT, "openpype", "tools")
-for path in (AYON_ROOT, common_python_vendor, tools_dir):
-    while path in _python_paths:
-        _python_paths.remove(path)
-
-    while path in sys.path:
-        sys.path.remove(path)
-
-    _python_paths.insert(0, path)
-    sys.path.insert(0, path)
-
 os.environ["PYTHONPATH"] = os.pathsep.join(_python_paths)
 
 # enabled AYON state
 os.environ["USE_AYON_SERVER"] = "1"
 # Set this to point either to `python` from venv in case of live code
 #    or to `ayon` or `ayon_console` in case of frozen code
+os.environ["AYON_EXECUTABLE"] = sys.executable
 os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
 os.environ["AYON_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
+os.environ["AYON_MENU_LABEL"] = "AYON"
 os.environ["AVALON_LABEL"] = "AYON"
-# Set name of pyblish UI import
-os.environ["PYBLISH_GUI"] = "pyblish_pype"
-# Set builtin OCIO root
-os.environ["BUILTIN_OCIO_ROOT"] = os.path.join(
-    AYON_ROOT,
-    "vendor",
-    "bin",
-    "ocioconfig",
-    "OpenColorIOConfigs"
-)
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
@@ -293,33 +288,14 @@ def _check_and_update_from_ayon_server():
 
 
 def boot():
-    """Bootstrap OpenPype."""
+    """Bootstrap AYON."""
 
-    from openpype.version import __version__
-
-    # TODO load version
-    os.environ["OPENPYPE_VERSION"] = __version__
-    os.environ["AYON_VERSION"] = __version__
-
-    use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
+    use_staging = os.environ.get("AYON_USE_STAGING") == "1"
 
     _connect_to_ayon_server()
     _check_and_update_from_ayon_server()
 
-    # delete OpenPype module and it's submodules from cache so it is used from
-    # specific version
-    modules_to_del = [
-        sys.modules.pop(module_name)
-        for module_name in tuple(sys.modules)
-        if module_name == "openpype" or module_name.startswith("openpype.")
-    ]
-
-    for module_name in modules_to_del:
-        with contextlib.suppress(AttributeError, KeyError):
-            del sys.modules[module_name]
-
     from openpype import cli
-    from openpype.lib import terminal as t
 
     _print(">>> loading environments ...")
     _print("  - global AYON ...")
@@ -328,7 +304,7 @@ def boot():
     set_addons_environments()
 
     # print info when not running scripts defined in 'silent commands'
-    if not SILENT_MODE_ENABLED:
+    if not SKIP_HEADERS:
         info = get_info(use_staging)
         info.insert(0, f">>> Using AYON from [ {AYON_ROOT} ]")
 
@@ -340,7 +316,7 @@ def boot():
         info.insert(0, _header + "-" * (t_width - len(_header)))
 
         for i in info:
-            t.echo(i)
+            _print(i)
 
     try:
         cli.main(obj={}, prog_name="ayon")
@@ -359,6 +335,7 @@ def get_info(use_staging=None) -> list:
         inf.append(("AYON variant", "staging"))
     else:
         inf.append(("AYON variant", "production"))
+    inf.append(("AYON bundle", os.getenv("AYON_BUNDLE")))
 
     # NOTE add addons information
 
