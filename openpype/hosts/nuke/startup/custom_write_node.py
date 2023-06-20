@@ -74,24 +74,29 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
     def process(self):
         """ Process the panel values. """
         write_selected_nodes = [
-            s for s in nuke.selectedNodes() if s.Class() == "Write"]
+            selected_nodes for selected_nodes in nuke.selectedNodes()
+            if selected_nodes.Class() == "Write"]
 
-        node_knobs = self.selected_preset_name.value()
+        selected_preset = self.selected_preset_name.value()
         ext = None
         knobs = knobs_setting["knobs"]
-        preset_name, node_knobs_settings = (
-            self.get_node_knobs_setting(node_knobs)
+        preset_name, node_knobs_presets = (
+            self.get_node_knobs_setting(selected_preset)
         )
 
-        if node_knobs and preset_name:
-            if not node_knobs_settings:
-                nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
+        if selected_preset and preset_name:
+            if not node_knobs_presets:
+                nuke.message(
+                    "No knobs value found in subset group.."
+                    "\nDefault setting will be used..")
             else:
-                knobs = node_knobs_settings
+                knobs = node_knobs_presets
 
         ext_knob_list = [knob for knob in knobs if knob["name"] == "file_type"]
         if not ext_knob_list:
-            nuke.message("ERROR: No file type found in the subset's knobs.\nPlease add one to complete setting up the node")   # noqa
+            nuke.message(
+                "ERROR: No file type found in the subset's knobs."
+                "\nPlease add one to complete setting up the node")
             return
         else:
             for knob in ext_knob_list:
@@ -117,24 +122,24 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
             write_node["file"].setValue(file_path)
             set_node_knobs_from_settings(write_node, knobs)
 
-    def get_node_knobs_setting(self, value=None):
+    def get_node_knobs_setting(self, selected_preset=None):
         preset_name = []
         knobs_nodes = []
         settings = [
-            node
-            for node in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
+            node_settings
+            for node_settings in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
+            if node_settings["nukeNodeClass"] == "Write" and node_settings["subsets"]
         ]
         if not settings:
             return
 
         for i, _ in enumerate(settings):
-            if value in settings[i]["subsets"]:
+            if selected_preset in settings[i]["subsets"]:
                 knobs_nodes = settings[i]["knobs"]
 
         for setting in settings:
-            if setting["nukeNodeClass"] == "Write" and setting["subsets"]:
-                for knob in setting["subsets"]:
-                    preset_name.append(knob)
+            for subset in setting["subsets"]:
+                preset_name.append(subset)
 
         return preset_name, knobs_nodes
 
