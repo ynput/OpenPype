@@ -128,7 +128,8 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         settings = [
             node_settings for node_settings
             in get_nuke_imageio_settings()["nodes"]["overrideNodes"]
-            if node_settings["nukeNodeClass"] == "Write" and node_settings["subsets"]
+            if node_settings["nukeNodeClass"] == "Write"
+            and node_settings["subsets"]
         ]
         if not settings:
             return
