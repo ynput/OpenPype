@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Fetch, verify and process third-party dependencies of OpenPype.
+"""Fetch, verify and process third-party dependencies of AYON.
 
-Those should be defined in `pyproject.toml` in OpenPype sources root.
+Those should be defined in `pyproject.toml` in AYON sources root.
 
 """
 import os
@@ -67,7 +67,7 @@ def _print(msg: str, message_type: int = 0) -> None:
     print(f"{header}{msg}")
 
 
-def _pip_install(openpype_root, package, version=None):
+def _pip_install(repo_root, package, version=None):
     arg = None
     if package and version:
         arg = f"{package}=={version}"
@@ -80,7 +80,7 @@ def _pip_install(openpype_root, package, version=None):
 
     _print(f"We'll install {arg}")
 
-    python_vendor_dir = openpype_root / "vendor" / "python"
+    python_vendor_dir = repo_root / "vendor" / "python"
     try:
         subprocess.run(
             [
@@ -97,17 +97,18 @@ def _pip_install(openpype_root, package, version=None):
         sys.exit(1)
 
 
-def install_qtbinding(pyproject, openpype_root, platform_name):
+def install_qtbinding(pyproject, repo_root, platform_name):
     _print("Handling Qt binding framework ...")
-    qtbinding_def = pyproject["openpype"]["qtbinding"][platform_name]
+    qtbinding_def = pyproject["ayon"]["qtbinding"][platform_name]
     package = qtbinding_def["package"]
     version = qtbinding_def.get("version")
-    _pip_install(openpype_root, package, version)
+    _pip_install(repo_root, package, version)
 
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of
     #   dependency
     if platform_name == "darwin":
+        python_vendor_dir = repo_root / "vendor" / "python"
         sqldrivers_dir = (
             python_vendor_dir / package / "Qt" / "plugins" / "sqldrivers"
         )
@@ -115,25 +116,25 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
             os.remove(str(filepath))
 
 
-def install_opencolorio(pyproject, openpype_root):
+def install_opencolorio(pyproject, repo_root):
     _print("Installing PyOpenColorIO")
-    opencolorio_def = pyproject["openpype"]["opencolorio"]
+    opencolorio_def = pyproject["ayon"]["opencolorio"]
     package = opencolorio_def["package"]
     version = opencolorio_def.get("version")
-    _pip_install(openpype_root, package, version)
+    _pip_install(repo_root, package, version)
 
 
-def install_thirdparty(pyproject, openpype_root, platform_name):
+def install_thirdparty(pyproject, repo_root, platform_name):
     _print("Processing third-party dependencies ...")
     try:
-        thirdparty = pyproject["openpype"]["thirdparty"]
+        thirdparty = pyproject["ayon"]["thirdparty"]
     except AttributeError:
         _print("No third-party libraries specified in pyproject.toml", 1)
         sys.exit(1)
 
     for k, v in thirdparty.items():
         _print(f"processing {k}")
-        destination_path = openpype_root / "vendor" / "bin" / k
+        destination_path = repo_root / "vendor" / "bin" / k
 
         if not v.get(platform_name):
             _print(("missing definition for current "
@@ -228,12 +229,12 @@ def install_thirdparty(pyproject, openpype_root, platform_name):
 
 def main():
     start_time = time.time_ns()
-    openpype_root = Path(os.path.dirname(__file__)).parent
-    pyproject = toml.load(openpype_root / "pyproject.toml")
+    repo_root = Path(os.path.dirname(__file__)).parent
+    pyproject = toml.load(repo_root / "pyproject.toml")
     platform_name = platform.system().lower()
-    install_qtbinding(pyproject, openpype_root, platform_name)
-    install_opencolorio(pyproject, openpype_root)
-    install_thirdparty(pyproject, openpype_root, platform_name)
+    install_qtbinding(pyproject, repo_root, platform_name)
+    # install_opencolorio(pyproject, repo_root)
+    # install_thirdparty(pyproject, repo_root, platform_name)
     end_time = time.time_ns()
     total_time = (end_time - start_time) / 1000000000
     _print(f"Downloading and extracting took {total_time} secs.")

@@ -26,11 +26,11 @@ if($arguments -eq "--verbose") {
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
+$repo_root = (Get-Item $script_dir).parent.FullName
 
 & git submodule update --init --recursive
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($repo_root)\tools\modules\powershell"
 
 
 function Exit-WithCode($exitcode) {
@@ -56,7 +56,7 @@ function Install-Poetry() {
     Write-Color -Text ">>> ", "Installing Poetry ... " -Color Green, Gray
     $python = "python"
     if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
-        if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\.python-version")) {
+        if (-not (Test-Path -PathType Leaf -Path "$($repo_root)\.python-version")) {
             $result = & pyenv global
             if ($result -eq "no global version configured") {
                 Write-Color -Text "!!! ", "Using pyenv but having no local or global version of Python set." -Color Red, Yellow
@@ -67,7 +67,7 @@ function Install-Poetry() {
 
     }
 
-    $env:POETRY_HOME="$openpype_root\.poetry"
+    $env:POETRY_HOME="$repo_root\.poetry"
     $env:POETRY_VERSION="1.3.2"
     (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | & $($python) -
 }
@@ -114,11 +114,11 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 }
 
 if (-not (Test-Path 'env:POETRY_HOME')) {
-    $env:POETRY_HOME = "$openpype_root\.poetry"
+    $env:POETRY_HOME = "$repo_root\.poetry"
 }
 
 
-Set-Location -Path $openpype_root
+Set-Location -Path $repo_root
 
 $art = @"
 
@@ -146,16 +146,6 @@ if (-not (Test-Path 'env:_INSIDE_OPENPYPE_TOOL')) {
 # Enable if PS 7.x is needed.
 # Show-PSWarning
 
-$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$openpype_version = $result[0].Groups['version'].Value
-if (-not $openpype_version) {
-  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Red, Yellow
-  Set-Location -Path $current_dir
-  Exit-WithCode 1
-}
-Write-Color -Text ">>> ", "Found OpenPype version ", "[ ", $($openpype_version), " ]" -Color Green, Gray, Cyan, White, Cyan
-
 Test-Python
 
 Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
@@ -167,7 +157,7 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "OK" -Color Green
 }
 
-if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
+if (-not (Test-Path -PathType Leaf -Path "$($repo_root)\poetry.lock")) {
     Write-Color -Text ">>> ", "Installing virtual environment and creating lock." -Color Green, Gray
 } else {
     Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
@@ -191,6 +181,6 @@ $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
 try
 {
-    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Virtual environment created.", "All done in $( $endTime - $startTime ) secs."
+    New-BurntToastNotification -AppLogo "$repo_root/common/ayon_common/resources/AYON.png" -Text "OpenPype", "Virtual environment created.", "All done in $( $endTime - $startTime ) secs."
 } catch {}
 Write-Color -Text ">>> ", "Virtual environment created." -Color Green, White

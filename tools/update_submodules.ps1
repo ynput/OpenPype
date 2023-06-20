@@ -39,9 +39,9 @@ function Exit-WithCode($exitcode) {
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
+$repo_root = (Get-Item $script_dir).parent.FullName
 
-Set-Location -Path $openpype_root
+Set-Location -Path $repo_root
 
 git submodule update --recursive --remote
 

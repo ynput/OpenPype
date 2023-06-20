@@ -30,10 +30,10 @@ if($arguments -eq "--no-submodule-update") {
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
+$repo_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($repo_root)\tools\modules\powershell"
 
 function Start-Progress {
     param([ScriptBlock]$code)
@@ -87,7 +87,7 @@ function Show-PSWarning() {
 
 function Install-Poetry() {
     Write-Color -Text ">>> ", "Installing Poetry ... " -Color Green, Gray
-    $env:POETRY_HOME="$openpype_root\.poetry"
+    $env:POETRY_HOME="$repo_root\.poetry"
     (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 }
 
@@ -117,12 +117,12 @@ Write-Host $art -ForegroundColor DarkGreen
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
 if (-not (Test-Path 'env:POETRY_HOME')) {
-    $env:POETRY_HOME = "$openpype_root\.poetry"
+    $env:POETRY_HOME = "$repo_root\.poetry"
 }
 
-Set-Location -Path $openpype_root
+Set-Location -Path $repo_root
 
-$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
+$version_file = Get-Content -Path "$($repo_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
@@ -131,13 +131,13 @@ if (-not $openpype_version) {
 }
 
 # Create build directory if not exist
-if (-not (Test-Path -PathType Container -Path "$($openpype_root)\build")) {
-    New-Item -ItemType Directory -Force -Path "$($openpype_root)\build"
+if (-not (Test-Path -PathType Container -Path "$($repo_root)\build")) {
+    New-Item -ItemType Directory -Force -Path "$($repo_root)\build"
 }
 
 Write-Color -Text "--- ", "Cleaning build directory ..." -Color Yellow, Gray
 try {
-    Remove-Item -Recurse -Force "$($openpype_root)\build\*"
+    Remove-Item -Recurse -Force "$($repo_root)\build\*"
 }
 catch {
     Write-Color -Text "!!! ", "Cannot clean build directory, possibly because process is using it." -Color Red, Gray
@@ -157,33 +157,33 @@ Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "NOT FOUND" -Color Yellow
     Write-Color -Text "*** ", "We need to install Poetry create virtual env first ..." -Color Yellow, Gray
-    & "$openpype_root\tools\create_env.ps1"
+    & "$repo_root\tools\create_env.ps1"
 } else {
     Write-Color -Text "OK" -Color Green
 }
 
 Write-Color -Text ">>> ", "Cleaning cache files ... " -Color Green, Gray -NoNewline
-Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
+Get-ChildItem $repo_root -Filter "*.pyc" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
+Get-ChildItem $repo_root -Filter "*.pyo" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
+Get-ChildItem $repo_root -Filter "__pycache__" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
 Write-Color -Text "OK" -Color green
 
 Write-Color -Text ">>> ", "Building OpenPype ..." -Color Green, White
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
 $out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
-Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
+Set-Content -Path "$($repo_root)\build\build.log" -Value $out
 if ($LASTEXITCODE -ne 0)
 {
     Write-Color -Text "------------------------------------------" -Color Red
-    Get-Content "$($openpype_root)\build\build.log"
+    Get-Content "$($repo_root)\build\build.log"
     Write-Color -Text "------------------------------------------" -Color Yellow
     Write-Color -Text "!!! ", "Build failed. Check the log: ", ".\build\build.log" -Color Red, Yellow, White
     Exit-WithCode $LASTEXITCODE
 }
 
-Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
-& "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\build_dependencies.py"
+Set-Content -Path "$($repo_root)\build\build.log" -Value $out
+& "$($env:POETRY_HOME)\bin\poetry" run python "$($repo_root)\tools\build_dependencies.py"
 
 Write-Color -Text ">>> ", "Restoring current directory" -Color Green, Gray
 Set-Location -Path $current_dir
@@ -191,6 +191,6 @@ Set-Location -Path $current_dir
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 try
 {
-    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done in $( $endTime - $startTime ) secs. You will find OpenPype and build log in build directory."
+    New-BurntToastNotification -AppLogo "$repo_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done in $( $endTime - $startTime ) secs. You will find OpenPype and build log in build directory."
 } catch {}
 Write-Color -Text "*** ", "All done in ", $($endTime - $startTime), " secs. You will find OpenPype and build log in ", "'.\build'", " directory." -Color Green, Gray, White, Gray, White, Gray

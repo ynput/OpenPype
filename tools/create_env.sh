@@ -108,7 +108,7 @@ detect_python () {
 
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
-  export POETRY_HOME="$openpype_root/.poetry"
+  export POETRY_HOME="$repo_root/.poetry"
   export POETRY_VERSION="1.3.2"
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
   curl -sSL https://install.python-poetry.org/ | python -
@@ -125,7 +125,7 @@ install_poetry () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$openpype_root
+  path=$repo_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -154,14 +154,14 @@ main () {
   detect_python || return 1
 
   # Directories
-  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  repo_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
   if [[ -z $POETRY_HOME ]]; then
-    export POETRY_HOME="$openpype_root/.poetry"
+    export POETRY_HOME="$repo_root/.poetry"
   fi
 
 
-  pushd "$openpype_root" > /dev/null || return > /dev/null
+  pushd "$repo_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$POETRY_HOME/bin/poetry" ]; then
@@ -171,7 +171,7 @@ main () {
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
   fi
 
-  if [ -f "$openpype_root/poetry.lock" ]; then
+  if [ -f "$repo_root/poetry.lock" ]; then
     echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
   else
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
@@ -190,7 +190,7 @@ main () {
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
   echo -e "${BIGreen}>>>${RST} Post-venv creation fixes ..."
-  local openpype_index=$("$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/parse_pyproject.py" tool.poetry.source.0.url)
+  local openpype_index=$("$POETRY_HOME/bin/poetry" run python "$repo_root/tools/parse_pyproject.py" tool.poetry.source.0.url)
   echo -e "${BIGreen}-   ${RST} Using index: ${BIWhite}$openpype_index${RST}"
   "$POETRY_HOME/bin/poetry" run python -m pip install --disable-pip-version-check --force-reinstall pip
   echo -e "${BIGreen}>>>${RST} Installing pre-commit hooks ..."

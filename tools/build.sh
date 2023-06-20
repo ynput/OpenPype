@@ -121,7 +121,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$openpype_root
+  path=$repo_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
 
@@ -149,22 +149,23 @@ main () {
   detect_python || return 1
 
   # Directories
-  openpype_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
-  pushd "$openpype_root" > /dev/null || return > /dev/null
+  repo_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
+  pushd "$repo_root" > /dev/null || return > /dev/null
 
-  version_command="import os;import re;version={};exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read(), version);print(re.search(r'(\d+\.\d+.\d+).*', version['__version__'])[1]);"
-  openpype_version="$(python <<< ${version_command})"
+  version_command="import os;import re;version={};exec(open(os.path.join('$repo_root', 'version.py')).read(), version);print(re.search(r'(\d+\.\d+.\d+).*', version['__version__'])[1]);"
+  ayon_version="$(python <<< ${version_command})"
+  app_filename="AYON ${ayon_version}.app"
 
   _inside_openpype_tool="1"
 
   if [[ -z $POETRY_HOME ]]; then
-    export POETRY_HOME="$openpype_root/.poetry"
+    export POETRY_HOME="$repo_root/.poetry"
   fi
 
   echo -e "${BIYellow}---${RST} Cleaning build directory ..."
-  rm -rf "$openpype_root/build" && mkdir "$openpype_root/build" > /dev/null
+  rm -rf "$repo_root/build" && mkdir "$repo_root/build" > /dev/null
 
-  echo -e "${BIGreen}>>>${RST} Building OpenPype ${BIWhite}[${RST} ${BIGreen}$openpype_version${RST} ${BIWhite}]${RST}"
+  echo -e "${BIGreen}>>>${RST} Building AYON ${BIWhite}[${RST} ${BIGreen}$ayon_version${RST} ${BIWhite}]${RST}"
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
 
@@ -174,7 +175,7 @@ main () {
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
-    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
+    . "$repo_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
   fi
 
 if [ "$disable_submodule_update" == 1 ]; then
@@ -185,34 +186,33 @@ if [ "$disable_submodule_update" == 1 ]; then
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
+    "$POETRY_HOME/bin/poetry" run python "$repo_root/setup.py" build &> "$repo_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$repo_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
+    "$POETRY_HOME/bin/poetry" run python "$repo_root/setup.py" bdist_mac &> "$repo_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$repo_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   fi
-  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py" || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Failed to process dependencies${RST}"; return 1; }
+  "$POETRY_HOME/bin/poetry" run python "$repo_root/tools/build_dependencies.py" || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Failed to process dependencies${RST}"; return 1; }
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix cx_Freeze libs issue
     echo -e "${BIGreen}>>>${RST} Fixing libs ..."
-    mv "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/dependencies/cx_Freeze" "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/"  || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Can't move cx_Freeze libs${RST}"; return 1; }
+    mv "$repo_root/build/$app_filename/Contents/MacOS/dependencies/cx_Freeze" "$repo_root/build/$app_filename/Contents/MacOS/lib/"  || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Can't move cx_Freeze libs${RST}"; return 1; }
 
     # force hide icon from Dock
-    defaults write "$openpype_root/build/OpenPype $openpype_version.app/Contents/Info" LSUIElement 1
+    defaults write "$repo_root/build/$app_filename/Contents/Info" LSUIElement 1
 
     # fix code signing issue
     echo -e "${BIGreen}>>>${RST} Fixing code signatures ...\c"
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console" || { echo -e "${BIRed}FAILED${RST}"; return 1; }
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui" || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+    codesign --remove-signature "$repo_root/build/$app_filename/Contents/MacOS/ayon" || { echo -e "${BIRed}FAILED${RST}"; return 1; }
     echo -e "${BIGreen}DONE${RST}"
     if command -v create-dmg > /dev/null 2>&1; then
       echo -e "${BIGreen}>>>${RST} Creating dmg image ...\c"
       create-dmg \
-        --volname "OpenPype $openpype_version Installer" \
+        --volname "AYON $ayon_version Installer" \
         --window-pos 200 120 \
         --window-size 600 300 \
         --app-drop-link 100 50 \
-        "$openpype_root/build/OpenPype-Installer-$openpype_version.dmg" \
-        "$openpype_root/build/OpenPype $openpype_version.app"
+        "$repo_root/build/AYON-Installer-$ayon_version.dmg" \
+        "$repo_root/build/$app_filename"
 
       test $? -eq 0 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
       echo -e "${BIGreen}DONE${RST}"
@@ -221,8 +221,8 @@ if [ "$disable_submodule_update" == 1 ]; then
     fi
   fi
 
-  echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
-  echo -e "${BIWhite}$openpype_root/build${RST} directory."
+  echo -e "${BICyan}>>>${RST} All done. You will find AYON and build log in \c"
+  echo -e "${BIWhite}$repo_root/build${RST} directory."
 }
 
 return_code=0

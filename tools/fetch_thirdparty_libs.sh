@@ -75,12 +75,12 @@ main () {
   echo -e "${RST}"
 
   # Directories
-  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  repo_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
   _inside_openpype_tool="1"
 
   if [[ -z $POETRY_HOME ]]; then
-    export POETRY_HOME="$openpype_root/.poetry"
+    export POETRY_HOME="$repo_root/.poetry"
   fi
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
@@ -89,13 +89,13 @@ main () {
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
-    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+    . "$repo_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
-  pushd "$openpype_root" > /dev/null || return > /dev/null
+  pushd "$repo_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Running Pype tool ..."
-  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/fetch_thirdparty_libs.py"
+  "$POETRY_HOME/bin/poetry" run python "$repo_root/tools/fetch_thirdparty_libs.py"
 }
 
 main
