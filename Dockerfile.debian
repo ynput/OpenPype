@@ -1,16 +1,16 @@
 # Build Pype docker image
 FROM debian:bullseye AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.9.12
+ARG PYTHON_VERSION=3.9.12
 ARG BUILD_DATE
 ARG VERSION
 
 LABEL maintainer="info@openpype.io"
 LABEL description="Docker Image to build and run OpenPype under Ubuntu 20.04"
-LABEL org.opencontainers.image.name="pypeclub/openpype"
-LABEL org.opencontainers.image.title="OpenPype Docker Image"
-LABEL org.opencontainers.image.url="https://openpype.io/"
-LABEL org.opencontainers.image.source="https://github.com/pypeclub/OpenPype"
-LABEL org.opencontainers.image.documentation="https://openpype.io/docs/system_introduction"
+LABEL org.opencontainers.image.name="ynput/desktop"
+LABEL org.opencontainers.image.title="AYON Desktop Docker Image"
+LABEL org.opencontainers.image.url="https://ayon.ynput.io/"
+LABEL org.opencontainers.image.source="https://github.com/ynput/OpenPype"
+LABEL org.opencontainers.image.documentation="https://ayon.ynput.io"
 LABEL org.opencontainers.image.created=$BUILD_DATE
 LABEL org.opencontainers.image.version=$VERSION
 
@@ -47,7 +47,7 @@ RUN apt-get update \
 SHELL ["/bin/bash", "-c"]
 
 
-RUN mkdir /opt/openpype
+RUN mkdir /opt/ayon
 
 # download and install pyenv
 RUN curl https://pyenv.run | bash \
@@ -58,24 +58,24 @@ RUN curl https://pyenv.run | bash \
 
 # install python with pyenv
 RUN source $HOME/init_pyenv.sh \
-    && pyenv install ${OPENPYPE_PYTHON_VERSION}
+    && pyenv install ${PYTHON_VERSION}
 
-COPY . /opt/openpype/
+COPY . /opt/ayon/
 
-RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
+RUN chmod +x /opt/ayon/tools/create_env.sh && chmod +x /opt/ayon/tools/build.sh
 
-WORKDIR /opt/openpype
+WORKDIR /opt/ayon
 
 # set local python version
-RUN cd /opt/openpype \
+RUN cd /opt/ayon \
     && source $HOME/init_pyenv.sh \
-    && pyenv local ${OPENPYPE_PYTHON_VERSION}
+    && pyenv local ${PYTHON_VERSION}
 
 # fetch third party tools/libraries
 RUN source $HOME/init_pyenv.sh \
     && ./tools/create_env.sh \
     && ./tools/fetch_thirdparty_libs.sh
 
-# build openpype
+# build ayon desktop
 RUN source $HOME/init_pyenv.sh \
     && bash ./tools/build.sh

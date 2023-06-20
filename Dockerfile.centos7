@@ -1,12 +1,13 @@
 # Build Pype docker image
 FROM centos:7 AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.9.12
+ARG PYTHON_VERSION=3.9.12
 
-LABEL org.opencontainers.image.name="pypeclub/openpype"
-LABEL org.opencontainers.image.title="OpenPype Docker Image"
-LABEL org.opencontainers.image.url="https://openpype.io/"
-LABEL org.opencontainers.image.source="https://github.com/pypeclub/pype"
-LABEL org.opencontainers.image.documentation="https://openpype.io/docs/system_introduction"
+LABEL description="Docker Image to build and run OpenPype under Ubuntu 20.04"
+LABEL org.opencontainers.image.name="ynput/desktop"
+LABEL org.opencontainers.image.title="AYON Desktop Docker Image"
+LABEL org.opencontainers.image.url="https://ayon.ynput.io/"
+LABEL org.opencontainers.image.source="https://github.com/ynput/OpenPype"
+LABEL org.opencontainers.image.documentation="https://ayon.ynput.io"
 LABEL org.opencontainers.image.created=$BUILD_DATE
 LABEL org.opencontainers.image.version=$VERSION
 
@@ -59,9 +60,9 @@ RUN git clone -b 0.17.0 --single-branch https://github.com/NixOS/patchelf.git . 
     && make \
     && make install
 
-RUN mkdir /opt/openpype
+RUN mkdir /opt/ayon
 # RUN useradd -m pype
-# RUN chown pype /opt/openpype
+# RUN chown pype /opt/ayon
 # USER pype
 
 RUN curl https://pyenv.run | bash
@@ -71,21 +72,21 @@ RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv init --path)"' >> $HOME/.bashrc
-RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
+RUN source $HOME/.bashrc && pyenv install ${PYTHON_VERSION}
 
-COPY . /opt/openpype/
-RUN rm -rf /openpype/.poetry || echo "No Poetry installed yet."
+COPY . /opt/ayon/
+RUN rm -rf /opt/ayon/.poetry || echo "No Poetry installed yet."
 # USER root
-# RUN chown -R pype /opt/openpype
-RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
+# RUN chown -R pype /opt/ayon
+RUN chmod +x /opt/ayon/tools/create_env.sh && chmod +x /opt/ayon/tools/build.sh
 
 # USER pype
 
-WORKDIR /opt/openpype
+WORKDIR /opt/ayon
 
-RUN cd /opt/openpype \
+RUN cd /opt/ayon \
     && source $HOME/.bashrc \
-    && pyenv local ${OPENPYPE_PYTHON_VERSION}
+    && pyenv local ${PYTHON_VERSION}
 
 RUN source $HOME/.bashrc \
     && ./tools/create_env.sh
@@ -99,8 +100,8 @@ RUN source $HOME/.bashrc \
 RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
-    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /root/.pyenv/versions/${PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.9/vendor/python/PySide2/Qt/lib
 
-RUN cd /opt/openpype \
+RUN cd /opt/ayon \
     rm -rf ./vendor/bin

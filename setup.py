@@ -1,70 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Setup info for building OpenPype 3.0."""
+"""Setup info for building AYON Desktop application."""
 import os
-import sys
 import re
 import platform
-import distutils.spawn
 from pathlib import Path
 
 from cx_Freeze import setup, Executable
-from sphinx.setup_command import BuildDoc
 
-openpype_root = Path(os.path.dirname(__file__))
-
-
-def validate_thirdparty_binaries():
-    """Check existence of thirdpart executables."""
-    low_platform = platform.system().lower()
-    binary_vendors_dir = os.path.join(
-        openpype_root,
-        "vendor",
-        "bin"
-    )
-
-    error_msg = (
-        "Missing binary dependency {}. Please fetch thirdparty dependencies."
-    )
-    # Validate existence of FFmpeg
-    ffmpeg_dir = os.path.join(binary_vendors_dir, "ffmpeg", low_platform)
-    if low_platform == "windows":
-        ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
-    ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
-    ffmpeg_result = distutils.spawn.find_executable(ffmpeg_executable)
-    if ffmpeg_result is None:
-        raise RuntimeError(error_msg.format("FFmpeg"))
-
-    # Validate existence of OpenImageIO (not on MacOs)
-    oiio_tool_path = None
-    if low_platform == "linux":
-        oiio_tool_path = os.path.join(
-            binary_vendors_dir,
-            "oiio",
-            low_platform,
-            "bin",
-            "oiiotool"
-        )
-    elif low_platform == "windows":
-        oiio_tool_path = os.path.join(
-            binary_vendors_dir,
-            "oiio",
-            low_platform,
-            "oiiotool"
-        )
-    oiio_result = None
-    if oiio_tool_path is not None:
-        oiio_result = distutils.spawn.find_executable(oiio_tool_path)
-        if oiio_result is None:
-            raise RuntimeError(error_msg.format("OpenImageIO"))
-
-
-# Give ability to skip vaidation
-if not os.getenv("SKIP_THIRD_PARTY_VALIDATION"):
-    validate_thirdparty_binaries()
+ayon_root = Path(os.path.dirname(__file__))
+resources_dir = ayon_root / "common" /  "ayon_common" / "resources"
 
 version = {}
 
-with open(openpype_root / "openpype" / "version.py") as fp:
+with open(ayon_root / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
@@ -87,22 +35,8 @@ install_requires = [
     "appdirs",
     "cx_Freeze",
     "keyring",
-    "clique",
-    "jsonschema",
-    "opentimelineio",
-    "pathlib2",
     "pkg_resources",
-    "PIL",
-    "pymongo",
-    "pynput",
-    "jinxed",
-    "blessed",
-    "Qt",
     "qtpy",
-    "speedcopy",
-    "googleapiclient",
-    "httplib2",
-    # Harmony implementation
     "filecmp",
     "dns",
     # Python defaults (cx_Freeze skip them by default)
@@ -113,21 +47,17 @@ install_requires = [
 ]
 
 includes = []
+excludes = []
 # WARNING: As of cx_freeze there is a bug?
 # when this is empty, its hooks will not kick in
 # and won't clean platform irrelevant modules
 # like dbm mentioned above.
-excludes = [
-    "openpype"
-]
+
 bin_includes = [
     "vendor"
 ]
 include_files = [
-    "igniter",
-    "openpype",
     "common",
-    "schema",
     "LICENSE",
     "README.md"
 ]
@@ -141,8 +71,8 @@ if IS_WINDOWS:
     ])
 
 
-icon_path = openpype_root / "igniter" / "openpype.ico"
-mac_icon_path = openpype_root / "igniter" / "openpype.icns"
+icon_path = resources_dir / "ayon.ico"
+mac_icon_path = resources_dir / "ayon.icns"
 
 build_exe_options = dict(
     packages=install_requires,
@@ -154,25 +84,13 @@ build_exe_options = dict(
 )
 
 bdist_mac_options = dict(
-    bundle_name=f"OpenPype {__version__}",
+    bundle_name=f"AYON {__version__}",
     iconfile=mac_icon_path
 )
 
 executables = [
     Executable(
         "start.py",
-        base=base,
-        target_name="openpype_gui",
-        icon=icon_path.as_posix()
-    ),
-    Executable(
-        "start.py",
-        base=None,
-        target_name="openpype_console",
-        icon=icon_path.as_posix()
-    ),
-    Executable(
-        "ayon_start.py",
         base=base,
         target_name="ayon",
         icon=icon_path.as_posix()
@@ -181,7 +99,7 @@ executables = [
 if IS_WINDOWS:
     executables.append(
         Executable(
-            "ayon_start.py",
+            "start.py",
             base=None,
             target_name="ayon_console",
             icon=icon_path.as_posix()
@@ -199,20 +117,12 @@ if IS_LINUX:
     )
 
 setup(
-    name="OpenPype",
+    name="AYON",
     version=__version__,
-    description="OpenPype",
-    cmdclass={"build_sphinx": BuildDoc},
+    description="AYON Desktop Client",
     options={
         "build_exe": build_exe_options,
         "bdist_mac": bdist_mac_options,
-        "build_sphinx": {
-            "project": "OpenPype",
-            "version": __version__,
-            "release": __version__,
-            "source_dir": (openpype_root / "docs" / "source").as_posix(),
-            "build_dir": (openpype_root / "docs" / "build").as_posix()
-        }
     },
     executables=executables,
     packages=[]

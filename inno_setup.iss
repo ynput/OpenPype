@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 
-#define MyAppName "OpenPype"
+#define MyAppName "AYON"
 #define Build GetEnv("BUILD_DIR")
 #define AppVer GetEnv("BUILD_VERSION")
 
@@ -26,7 +26,7 @@ AllowCancelDuringInstall=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
-SetupIconFile=igniter\openpype.ico
+SetupIconFile=common\ayon_common\resources\AYON.ico
 OutputDir=build\
 Compression=lzma2
 SolidCompression=yes
@@ -48,9 +48,9 @@ Source: "build\{#build}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
-Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName} {#AppVer}"; Filename: "{app}\ayon.exe"
+Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\ayon.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\ayon.exe"; Description: "{cm:LaunchProgram,AYON}"; Flags: nowait postinstall skipifsilent
 
