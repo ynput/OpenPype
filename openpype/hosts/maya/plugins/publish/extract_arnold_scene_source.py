@@ -72,7 +72,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
         # TODO: dont use instance.data["contentMembers"]
         # but use the new instance.data["contentMemberTransforms"]
         filenames, nodes_by_id = self._extract(
-            instance.data["contentMembersTransform"], attribute_data, kwargs
+            instance.data["contentMembers"], attribute_data, kwargs
         )
 
         if "representations" not in instance.data:
@@ -113,7 +113,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
         # TODO: dont use instance.data["proxy"]
         # but use the new instance.data["proxyTransforms"]
         filenames, _ = self._extract(
-            instance.data["proxyTransform"], attribute_data, kwargs
+            instance.data["proxy"], attribute_data, kwargs
         )
 
         representation = {

@@ -23,22 +23,44 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                 continue
             if objset.endswith("content_SET"):
                 members = cmds.ls(members, long=True)
+                members_list = []
+                for member in members:
+                    shape = cmds.listRelatives(
+                        member, shapes=True, fullPath=True)
+                    if not shape:
+                        continue
+                    members_list = members + shape
+                    group_name = "|{}".format(member)
+                    if group_name in members_list:
+                        members_list.remove(group_name)
+
                 children = get_all_children(members)
+
+                if members_list:
+                    children.extend(members_list)
                 instance.data["contentMembers"] = children
-                # TODO: include another instance.data for content members
-                instance.data["contentMembersTransform"] = members
                 self.log.debug("content members: {}".format(children))
-                self.log.debug(
-                    "content members transform : {}".format(members))
+
             elif objset.endswith("proxy_SET"):
                 proxy_members = cmds.ls(members, long=True)
+                proxy_list = []
+                for proxy in proxy_members:
+                    shape = cmds.listRelatives(
+                        proxy, shapes=True, fullPath=True)
+                    if not shape:
+                        continue
+                    proxy_list = proxy_members + shape
+                    group_name = "|{}".format(proxy)
+                    if group_name in proxy_list:
+                        proxy_list.remove(group_name)
+
                 set_members = get_all_children(proxy_members)
+                if proxy_list:
+                    set_members.extend(proxy_list)
+
                 instance.data["proxy"] = set_members
-                instance.data["proxyTransform"] = proxy_members
-                # TODO: include another instance.data for proxy
                 self.log.debug("proxy members: {}".format(set_members))
-                self.log.debug(
-                    "proxy members transform: {}".format(proxy_members))
+
 
         # Use camera in object set if present else default to render globals
         # camera.
