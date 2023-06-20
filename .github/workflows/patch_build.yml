@@ -13,7 +13,7 @@ jobs:
     runs-on: [self-hosted, ubuntu]
     strategy:
       matrix:
-        python-version: [3.9.16]
+        python-version: [3.9]
 
     steps:
     - name: 🚛 Checkout Code
@@ -27,9 +27,9 @@ jobs:
 #         command: pyenv global "${{ matrix.python }}"
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: "${{ matrix.python }}"
         
     - name: test python
       run: |
