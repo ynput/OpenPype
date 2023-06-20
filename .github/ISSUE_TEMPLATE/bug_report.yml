@@ -9,8 +9,8 @@ body:
       value: |
         Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.
   - type: markdown
-  attributes:
-    value: "## 1. Informations"
+    attributes:
+      value: "## 1. Informations"
   - type: dropdown
     attributes:
       label: Before posting a new ticket, have you looked through the documentation to find an answer?    
