@@ -30,7 +30,7 @@ jobs:
     - name: test python
       run: |
         pyenv versions
-        pyenv uninstall 3.9.16
+        # pyenv uninstall 3.9.16
         pyenv global 3.9.16
         python --version
         python3 --version
