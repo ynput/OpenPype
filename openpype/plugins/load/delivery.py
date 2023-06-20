@@ -91,7 +91,8 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         renumber_frame = QtWidgets.QCheckBox()
 
         renumber_frame_value = QtWidgets.QSpinBox()
-        renumber_frame_value.setMinimum(-(1 << 32) // 2)
+        max_int = (1 << 32) // 2
+        renumber_frame_value.setRange(-max_int, max_int - 1)
 
         root_line_edit = QtWidgets.QLineEdit()
 
