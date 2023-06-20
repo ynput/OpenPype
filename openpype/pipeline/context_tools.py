@@ -181,6 +181,11 @@ def install_openpype_plugins(project_name=None, host_name=None):
     for path in load_plugin_paths:
         register_loader_plugin_path(path)
 
+    inventory_action_paths = modules_manager.collect_inventory_action_paths(
+        host_name)
+    for path in inventory_action_paths:
+        register_inventory_action_path(path)
+
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
 
