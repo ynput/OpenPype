@@ -9,7 +9,6 @@ from openpype.hosts.nuke.api.lib import (
 )
 
 
-frame_padding = 5
 temp_rendering_path_template = (
     "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}")
 
@@ -62,7 +61,7 @@ knobs_setting = {
 class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
     """ Write Node's Knobs Settings Panel """
     def __init__(self):
-        nukescripts.PythonPanel.__init__(self, "Set Presets(Write Node)")
+        nukescripts.PythonPanel.__init__(self, "Set Preset(Write Node)")
 
         knobs_value, _ = self.get_node_knobs_setting()
         # create knobs
