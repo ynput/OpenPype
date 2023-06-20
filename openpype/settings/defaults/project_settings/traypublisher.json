@@ -1,11 +1,12 @@
 {
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },
@@ -22,6 +23,7 @@
             "detailed_description": "Workfiles are full scenes from any application that are directly edited by artists. They represent a state of work on a task at a given point and are usually not directly referenced into other scenes.",
             "allow_sequences": false,
             "allow_multiple_items": false,
+            "allow_version_control": false,
             "extensions": [
                 ".ma",
                 ".mb",
@@ -56,6 +58,7 @@
             "detailed_description": "Models should only contain geometry data, without any extras like cameras, locators or bones.\n\nKeep in mind that models published from tray publisher are not validated for correctness. ",
             "allow_sequences": false,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".ma",
                 ".mb",
@@ -81,6 +84,7 @@
             "detailed_description": "Alembic or bgeo cache of animated data",
             "allow_sequences": true,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".abc",
                 ".bgeo",
@@ -104,6 +108,7 @@
             "detailed_description": "Any type of image seqeuence coming from outside of the studio. Usually camera footage, but could also be animatics used for reference.",
             "allow_sequences": true,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".exr",
                 ".png",
@@ -126,6 +131,7 @@
             "detailed_description": "Sequence or single file renders",
             "allow_sequences": true,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".exr",
                 ".png",
@@ -149,6 +155,7 @@
             "detailed_description": "Ideally this should be only camera itself with baked animation, however, it can technically also include helper geometry.",
             "allow_sequences": false,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".abc",
                 ".ma",
@@ -173,6 +180,7 @@
             "detailed_description": "Any image data can be published as image family. References, textures, concept art, matte paints. This is a fallback 2d family for everything that doesn't fit more specific family.",
             "allow_sequences": false,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".exr",
                 ".jpg",
@@ -196,6 +204,7 @@
             "detailed_description": "Hierarchical data structure for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids",
             "allow_sequences": true,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": [
                 ".vdb"
             ]
@@ -214,6 +223,7 @@
             "detailed_description": "Script exported from matchmoving application to be later processed into a tracked camera with additional data",
             "allow_sequences": false,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": []
         },
         {
@@ -226,6 +236,7 @@
             "detailed_description": "CG rigged character or prop. Rig should be clean of any extra data and directly loadable into it's respective application\t",
             "allow_sequences": false,
             "allow_multiple_items": false,
+            "allow_version_control": false,
             "extensions": [
                 ".ma",
                 ".blend",
@@ -243,6 +254,7 @@
             "detailed_description": "Texture files with Unreal Engine naming conventions",
             "allow_sequences": false,
             "allow_multiple_items": true,
+            "allow_version_control": false,
             "extensions": []
         }
     ],
@@ -318,6 +330,11 @@
     },
     "publish": {
         "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateExistingVersion": {
             "enabled": true,
             "optional": true,
             "active": true
