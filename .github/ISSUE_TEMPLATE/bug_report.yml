@@ -6,7 +6,7 @@ labels:
 body:
   - type: markdown
     attributes:
-      value: Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.
+      value: "*Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.*"
   - type: markdown
     attributes:
       value: "## 1. Informations"
