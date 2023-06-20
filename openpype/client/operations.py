@@ -220,7 +220,6 @@ def new_representation_doc(
         "parent": version_id,
         "name": name,
         "data": data,
-
         # Imprint shortcut to context for performance reasons.
         "context": context
     }
@@ -708,7 +707,11 @@ class OperationsSession(object):
         return operation
 
 
-def create_project(project_name, project_code, library_project=False):
+def create_project(
+    project_name,
+    project_code,
+    library_project=False,
+):
     """Create project using OpenPype settings.
 
     This project creation function is not validating project document on
@@ -752,7 +755,7 @@ def create_project(project_name, project_code, library_project=False):
         "name": project_name,
         "data": {
             "code": project_code,
-            "library_project": library_project
+            "library_project": library_project,
         },
         "schema": CURRENT_PROJECT_SCHEMA
     }

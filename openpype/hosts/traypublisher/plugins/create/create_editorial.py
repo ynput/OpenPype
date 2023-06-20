@@ -487,7 +487,22 @@ or updating already created. Publishing will create OTIO file.
             )
 
             # get video stream data
-            video_stream = media_data["streams"][0]
+            video_streams = []
+            audio_streams = []
+            for stream in media_data["streams"]:
+                codec_type = stream.get("codec_type")
+                if codec_type == "audio":
+                    audio_streams.append(stream)
+
+                elif codec_type == "video":
+                    video_streams.append(stream)
+
+            if not video_streams:
+                raise ValueError(
+                    "Could not find video stream in source file."
+                )
+
+            video_stream = video_streams[0]
             return_data = {
                 "video": True,
                 "start_frame": 0,
@@ -500,12 +515,7 @@ or updating already created. Publishing will create OTIO file.
             }
 
             # get audio  streams data
-            audio_stream = [
-                stream for stream in media_data["streams"]
-                if stream["codec_type"] == "audio"
-            ]
-
-            if audio_stream:
+            if audio_streams:
                 return_data["audio"] = True
 
         except Exception as exc:
