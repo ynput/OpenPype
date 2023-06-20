@@ -19,17 +19,17 @@ jobs:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
 
-    - name: 🐍 Set up Python
-      uses: gabrielfalcao/pyenv-action@v14
-      with:
-        versions:  3.9.16
-        default: 3.9.16
-        command: pyenv global 3.9.16
-    
-#     - name: Set up Python
-#       uses: actions/setup-python@v4
+#     - name: 🐍 Set up Python
+#       uses: gabrielfalcao/pyenv-action@v14
 #       with:
-#         python-version: "${{ matrix.python }}"
+#         versions:  3.9.16
+#         default: 3.9.16
+#         command: pyenv global 3.9.16
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "${{ matrix.python }}"
         
 #     - name: test python
 #       run: |
