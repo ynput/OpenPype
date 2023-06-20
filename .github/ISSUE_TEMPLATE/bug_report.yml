@@ -15,13 +15,11 @@ body:
         You can fin the documentation in the fix wiki > fixwiki/drive/tools/openpype/decouverte_openpype/
       options:
         - Yes I have
-    required: true
   - type: dropdown
     attributes:
       label: Have you looked through the existing tickets to find any related issues?
       options:
         Yes I have
-    required: true
   - type: input
     attributes:
       label: 'Author of the bug'
