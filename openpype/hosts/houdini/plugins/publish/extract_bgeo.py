@@ -4,6 +4,7 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
+from openpype.hosts.houdini.api import lib
 
 import hou
 
@@ -35,12 +36,17 @@ class ExtractBGEO(publish.Extractor):
 
         output = instance.data["frames"]
 
+        _, ext = lib.splitext(
+            output[0], allowed_multidot_extensions=[
+                ".ass.gz", ".bgeo.sc", ".bgeo.gz",
+                ".bgeo.lzma", ".bgeo.bz2"])
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
             "name": "bgeo",
-            "ext": instance.data["bgeo_type"],
+            "ext": ext.lstrip("."),
             "files": output,
             "stagingDir": staging_dir,
             "frameStart": instance.data["frameStart"],

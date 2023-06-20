@@ -9,7 +9,7 @@ class CreateBGEO(plugin.HoudiniCreator):
     """BGEO pointcache creator."""
     identifier = "io.openpype.creators.houdini.bgeo"
     label = "BGEO PointCache"
-    family = "bgeo"
+    family = "pointcache"
     icon = "gears"
 
     def create(self, subset_name, instance_data, pre_create_data):
@@ -18,7 +18,10 @@ class CreateBGEO(plugin.HoudiniCreator):
         instance_data.pop("active", None)
 
         instance_data.update({"node_type": "geometry"})
-        instance_data["bgeo_type"] = pre_create_data.get("bgeo_type")
+
+        if not instance_data.get("families"):
+            instance_data["families"] = []
+        instance_data["families"] += ["bgeo"]
 
         instance = super(CreateBGEO, self).create(
             subset_name,
