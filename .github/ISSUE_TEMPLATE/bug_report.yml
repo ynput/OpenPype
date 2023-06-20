@@ -18,8 +18,7 @@ body:
       required: true
   - type: dropdown
     attributes:
-      label: Have you looked through the existing tickets to find any related issues?
-      required: true
+      label: Have you looked through the existing tickets to find any related issues ?
       options:
         - Yes I have
     validations:
