@@ -61,13 +61,13 @@ knobs_setting = {
 class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
     """ Write Node's Knobs Settings Panel """
     def __init__(self):
-        nukescripts.PythonPanel.__init__(self, "Set Preset(Write Node)")
+        nukescripts.PythonPanel.__init__(self,"Set Knobs Value(Write Node)")
 
-        knobs_value, _ = self.get_node_knobs_setting()
+        preset_name, _ = self.get_node_knobs_setting()
         # create knobs
 
         self.selected_preset_name = nuke.Enumeration_Knob(
-            'preset_selector', 'presets', knobs_value)
+            'preset_selector', 'presets', preset_name)
         # add knobs to panel
         self.addKnob(self.selected_preset_name)
 
@@ -79,11 +79,11 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         node_knobs = self.selected_preset_name.value()
         ext = None
         knobs = knobs_setting["knobs"]
-        knobs_value, node_knobs_settings = (
+        preset_name, node_knobs_settings = (
             self.get_node_knobs_setting(node_knobs)
         )
 
-        if node_knobs and knobs_value:
+        if node_knobs and preset_name:
             if not node_knobs_settings:
                 nuke.message("No knobs value found in subset group..\nDefault setting will be used..")  # noqa
             else:
@@ -118,7 +118,7 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
             set_node_knobs_from_settings(write_node, knobs)
 
     def get_node_knobs_setting(self, value=None):
-        knobs_value = []
+        preset_name = []
         knobs_nodes = []
         settings = [
             node
@@ -134,9 +134,9 @@ class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
         for setting in settings:
             if setting["nukeNodeClass"] == "Write" and setting["subsets"]:
                 for knob in setting["subsets"]:
-                    knobs_value.append(knob)
+                    preset_name.append(knob)
 
-        return knobs_value, knobs_nodes
+        return preset_name, knobs_nodes
 
 
 def main():
