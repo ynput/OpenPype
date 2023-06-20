@@ -11,16 +11,19 @@ body:
   - type: dropdown
     attributes:
       label: Before posting a new ticket, have you looked through the documentation to find an answer?    
-      required: true
       description: You can fin the documentation in the fix wiki > fixwiki/drive/tools/openpype/decouverte_openpype/
       options:
         - Yes I have
+    validations:
+      required: true
   - type: dropdown
     attributes:
       label: Have you looked through the existing tickets to find any related issues?
       required: true
       options:
         - Yes I have
+    validations:
+      required: true
   - type: input
     attributes:
       label: 'Author of the bug'
