@@ -61,7 +61,7 @@ knobs_setting = {
 class WriteNodeKnobSettingPanel(nukescripts.PythonPanel):
     """ Write Node's Knobs Settings Panel """
     def __init__(self):
-        nukescripts.PythonPanel.__init__(self,"Set Knobs Value(Write Node)")
+        nukescripts.PythonPanel.__init__(self, "Set Knobs Value(Write Node)")
 
         preset_name, _ = self.get_node_knobs_setting()
         # create knobs
