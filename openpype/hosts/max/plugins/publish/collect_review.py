@@ -3,7 +3,6 @@
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.hosts.max.api.lib import get_all_children
 from openpype.lib import BoolDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
@@ -12,14 +11,13 @@ class CollectReview(pyblish.api.InstancePlugin,
                     OpenPypePyblishPluginMixin):
     """Collect Review Data for Preview Animation"""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Collect Review Data"
     hosts = ['max']
     families = ["review"]
 
     def process(self, instance):
-        nodes = get_all_children(
-            rt.getNodeByName(instance.data["instance_node"]))
+        nodes = instance.data["members"]
         focal_length = None
         camera = None
         for node in nodes:
