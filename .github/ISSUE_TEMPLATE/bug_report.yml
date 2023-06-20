@@ -176,6 +176,8 @@ body:
   - type: input
     attributes:
       label: 'Which project / workfile / asset / ...'
+    validations:
+      required: true
   - type: textarea
     id: to-reproduce
     attributes:
