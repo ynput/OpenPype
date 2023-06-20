@@ -2,7 +2,7 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-28-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
-OpenPype
+AYON Desktop application
 ========
 
 [![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2022-lightgrey?labelColor=303846)
@@ -11,27 +11,26 @@ OpenPype
 Introduction
 ------------
 
-Open-source pipeline for visual effects and animation built on top of the [Avalon](https://getavalon.github.io/) framework, expanding it with extra features and integrations. OpenPype connects your DCCs, asset database, project management and time tracking into a single system. It has a tight integration with [ftrack](https://www.ftrack.com/en/), but can also run independently or be integrated into a different project management solution.
+Open-source pipeline for visual effects and animation built on top of the [Avalon](https://getavalon.github.io/) framework, expanding it with extra features and integrations. AYON connects your DCCs, asset database, project management and time tracking into a single system. It has a tight integration with [ftrack](https://www.ftrack.com/en/), but can also run independently or be integrated into a different project management solution.
 
-OpenPype provides a robust platform for your studio, without the worry of a vendor lock. You will always have full access to the source-code and your project database will run locally or in the cloud of your choice.
+AYON provides a robust platform for your studio, without the worry of a vendor lock. You will always have full access to the source-code and your project database will run locally or in the cloud of your choice.
 
 
-To get all the information about the project, go to [OpenPype.io](http://openpype.io)
+To get all the information about the project, go to [AYON.io](https://ayon.ynput.io)
 
 Requirements
 ------------
 
 We aim to closely follow [**VFX Reference Platform**](https://vfxplatform.com/)
 
-OpenPype is written in Python 3 with specific elements still running in Python2 until all DCCs are fully updated. To see the list of those, that are not quite there yet, go to [VFX Python3 tracker](https://vfxpy.com/)
+AYON is written in Python 3 with specific elements still running in Python2 until all DCCs are fully updated. To see the list of those, that are not quite there yet, go to [VFX Python3 tracker](https://vfxpy.com/)
 
-The main things you will need to run and build OpenPype are:
+The main things you will need to run and build AYON are:
 
 - **Terminal** in your OS
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
 - [**Python 3.9.6**](#python) or higher
-- [**MongoDB**](#database) (needed only for local development)
 
 
 It can be built and ran on all common platforms. We develop and test on the following:
@@ -44,12 +43,12 @@ It can be built and ran on all common platforms. We develop and test on the foll
     - **10.15** Catalina
     - **11.1** Big Sur (using Rosetta2)
 
-For more details on requirements visit [requirements documentation](https://openpype.io/docs/dev_requirements)
+For more details on requirements visit [requirements documentation](https://ayon.ynput.io/docs/dev_requirements)
 
-Building OpenPype
+Building AYON Desktop application
 -----------------
 
-To build OpenPype you currently need [Python 3.9](https://www.python.org/downloads/) as we are following
+To build AYON you currently need [Python 3.9](https://www.python.org/downloads/) as we are following
 [vfx platform](https://vfxplatform.com). Because of some Linux distros comes with newer Python version
 already, you need to install **3.9** version and make use of it. You can use perhaps [pyenv](https://github.com/pyenv/pyenv) for this on Linux.
 **Note**: We do not support 3.9.0 because of [this bug](https://github.com/python/cpython/pull/22670). Please, use higher versions of 3.9.x.
@@ -62,28 +61,22 @@ development tools like [CMake](https://cmake.org/) and [Visual Studio](https://v
 
 #### Clone repository:
 ```sh
-git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
+git clone --recurse-submodules git@github.com:ynput/OpenPype.git
+git checkout ayon/desktop-app
 ```
 
-#### To build OpenPype:
+#### To build AYON Desktop:
 
 1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`.
 2) Run `.\tools\fetch_thirdparty_libs.ps1` to download third-party dependencies like ffmpeg and oiio. Those will be included in build.
-3) Run `.\tools\build.ps1` to build OpenPype executables in `.\build\`.
+3) Run `.\tools\build.ps1` to build AYON executables in `.\build\`.
 
-To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
-create zip file with name `openpype-vx.x.x.zip` parsed from current OpenPype repository and
-copy it to user data dir, or you can specify `--path /path/to/zip` to force it there.
-
-You can then point **Igniter** - OpenPype setup tool - to directory containing this zip and
-it will install it on current computer.
-
-OpenPype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
+AYON is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
 
 ### macOS
 
 You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
-some OpenPype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
+some AYON dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
 
 Easy way of installing everything necessary is to use [Homebrew](https://brew.sh):
 
@@ -117,20 +110,20 @@ Easy way of installing everything necessary is to use [Homebrew](https://brew.sh
 
 5) Set local Python version:
    ```sh
-   # switch to OpenPype source directory
+   # switch to AYON source directory
    pyenv local 3.9.6
    ```
 
-#### To build OpenPype:
+#### To build AYON:
 
 1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
 2) Run `.\tools\fetch_thirdparty_libs.sh` to download third-party dependencies like ffmpeg and oiio. Those will be included in build.
-3) Run `.\tools\build.sh` to build OpenPype executables in `.\build\`
+3) Run `.\tools\build.sh` to build AYON executables in `.\build\`
 
 ### Linux
 
 #### Docker
-Easiest way to build OpenPype on Linux is using [Docker](https://www.docker.com/). Just run:
+Easiest way to build AYON on Linux is using [Docker](https://www.docker.com/). Just run:
 
 ```sh
 sudo ./tools/docker_build.sh
@@ -142,7 +135,7 @@ This will by default use Debian as base image. If you need to make Centos 7 comp
 sudo ./tools/docker_build.sh centos7
 ```
 
-If all is successful, you'll find built OpenPype in `./build/` folder.
+If all is successful, you'll find built AYON in `./build/` folder.
 
 #### Manual build
 You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
@@ -150,7 +143,7 @@ You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https
 To build Python related stuff, you need Python header files installed (`python3-dev` on Ubuntu for example).
 
 You'll need also other tools to build
-some OpenPype dependencies like [CMake](https://cmake.org/). Python 3 should be part of all modern distributions. You can use your package manager to install **git** and **cmake**.
+some AYON dependencies like [CMake](https://cmake.org/). Python 3 should be part of all modern distributions. You can use your package manager to install **git** and **cmake**.
 
 <details>
 <summary>Details for Ubuntu</summary>
@@ -161,7 +154,7 @@ sudo apt install build-essential checkinstall
 sudo apt install git cmake curl
 ```
 #### Note:
-In case you run in error about `xcb` when running OpenPype,
+In case you run in error about `xcb` when running AYON,
 you'll need also additional libraries for Qt5:
 
 ```sh
@@ -183,7 +176,7 @@ sudo yum install qit cmake
 ```
 
 #### Note:
-In case you run in error about `xcb` when running OpenPype,
+In case you run in error about `xcb` when running AYON,
 you'll need also additional libraries for Qt5:
 
 ```sh
@@ -192,7 +185,7 @@ sudo yum install qt5-qtbase-devel
 </details>
 
 <details>
-<summary>Use pyenv to install Python version for OpenPype build</summary>
+<summary>Use pyenv to install Python version for AYON build</summary>
 
 You will need **bzip2**, **readline**, **sqlite3** and other libraries.
 
@@ -225,8 +218,8 @@ exec $SHELL
 # install Python 3.9.x
 pyenv install -v 3.9.6
 
-# change path to OpenPype 3
-cd /path/to/openpype-3
+# change path to repository
+cd /path/to/OpenPype
 
 # set local python version
 pyenv local 3.9.6
@@ -234,58 +227,31 @@ pyenv local 3.9.6
 ```
 </details>
 
-#### To build OpenPype:
+#### To build AYON:
 
 1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
-2) Run `.\tools\build.sh` to build OpenPype executables in `.\build\`
+2) Run `.\tools\build.sh` to build AYON executables in `.\build\`
 
 
-Running OpenPype
+Running AYON Desktop application
 ----------------
 
-OpenPype can by executed either from live sources (this repository) or from
+AYON can be executed either from live sources (this repository) or from
 *"frozen code"* - executables that can be build using steps described above.
 
-If OpenPype is executed from live sources, it will use OpenPype version included in them. If
-it is executed from frozen code it will try to find latest OpenPype version installed locally
-on current computer and if it is not found, it will ask for its location. On that location
-OpenPype can be either in directories or zip files. OpenPype will try to find latest version and
-install it to user data directory (on Windows to `%LOCALAPPDATA%\pypeclub\openpype`, on Linux
-`~/.local/share/openpype` and on macOS in `~/Library/Application Support/openpype`).
-
 ### From sources
-OpenPype can be run directly from sources by activating virtual environment:
+AYON can be run directly from sources by activating virtual environment:
 
 ```sh
-poetry run python start.py tray
+poetry run python start.py &args
 ```
-
-This will use current OpenPype version with sources. You can override this with `--use-version=x.x.x` and
-then OpenPype will try to find locally installed specified version (present in user data directory).
 
 ### From frozen code
 
-You need to build OpenPype first. This will produce two executables - `openpype_gui(.exe)` and `openpype_console(.exe)`.
+You need to build AYON first. This will produce executable - `ayon(.exe)` and `ayon_console.exe` for window.
 First one will act as GUI application and will not create console (useful in production environments).
 The second one will create console and will write output there - useful for headless application and
-debugging purposes. If you need OpenPype version installed, just run `./tools/create_zip(.ps1|.sh)` without
-arguments and it will create zip file that OpenPype can use.
-
-
-Building documentation
-----------------------
-
-Top build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
-from current sources in `.\docs\build`.
-
-**Note that it needs existing virtual environment.**
-
-Running tests
--------------
-
-To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
-
-**Note that it needs existing virtual environment.**
+debugging purposes.
 
 
 Developer tools

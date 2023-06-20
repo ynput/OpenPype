@@ -1,8 +1,8 @@
-# Build Pype docker image
+# Build AYON desktop docker image
 FROM centos:7 AS builder
 ARG PYTHON_VERSION=3.9.12
 
-LABEL description="Docker Image to build and run OpenPype under Ubuntu 20.04"
+LABEL description="Docker Image to build and run AYON under Ubuntu 20.04"
 LABEL org.opencontainers.image.name="ynput/desktop"
 LABEL org.opencontainers.image.title="AYON Desktop Docker Image"
 LABEL org.opencontainers.image.url="https://ayon.ynput.io/"

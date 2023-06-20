@@ -73,9 +73,6 @@ package-lock.json
 package.json
 yarn.lock
 
-openpype/premiere/ppro/js/debug.log
-
-
 # IDEA
 ######
 .idea/
@@ -85,17 +82,6 @@ openpype/premiere/ppro/js/debug.log
 .env
 dump.sql
 test_localsystem.txt
-
-# website
-##########
-website/translated_docs
-website/build/
-website/node_modules
-website/i18n/*
-
-website/debug.log
-
-website/.docusaurus
 
 # Poetry
 ########
@@ -113,8 +99,3 @@ tools/dev_*
 
 .github_changelog_generator
 
-
-# Addons
-########
-/openpype/addons/*
-!/openpype/addons/README.md

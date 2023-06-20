@@ -5,7 +5,7 @@ ARG BUILD_DATE
 ARG VERSION
 
 LABEL maintainer="info@openpype.io"
-LABEL description="Docker Image to build and run OpenPype under Ubuntu 20.04"
+LABEL description="Docker Image to build and run AYON under Ubuntu 20.04"
 LABEL org.opencontainers.image.name="ynput/desktop"
 LABEL org.opencontainers.image.title="AYON Desktop Docker Image"
 LABEL org.opencontainers.image.url="https://ayon.ynput.io/"
