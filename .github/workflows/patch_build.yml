@@ -22,9 +22,9 @@ jobs:
     - name: 🐍 Set up Python
       uses: gabrielfalcao/pyenv-action@v14
       with:
-        versions:  "${{ matrix.python }}"
-        default: "${{ matrix.python }}"
-        command: pyenv global "${{ matrix.python }}"
+        versions:  3.9.16
+        default: 3.9.16
+        command: pyenv global 3.9.16
     
 #     - name: Set up Python
 #       uses: actions/setup-python@v4
