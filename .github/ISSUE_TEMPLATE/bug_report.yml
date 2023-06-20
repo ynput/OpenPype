@@ -6,11 +6,11 @@ labels:
 body:
   - type: markdown
     attributes:
-      value: |
-        Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.
+      value: Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.
   - type: markdown
     attributes:
       value: "## 1. Informations"
+      description: this help us to...
   - type: dropdown
     attributes:
       label: Before posting a new ticket, have you looked through the documentation to find an answer?    
@@ -153,6 +153,9 @@ body:
         - Linux / Ubuntu
         - Linux / RedHat
         - MacOS
+  - type: markdown
+    attributes:
+      value: "## 2. Bug behavior"
   - type: textarea
     attributes:
       label: 'Current Behavior:'
@@ -184,6 +187,9 @@ body:
         2. What type of action was made
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: "## 3. Other informations"
   - type: textarea
     id: logs
     attributes:
