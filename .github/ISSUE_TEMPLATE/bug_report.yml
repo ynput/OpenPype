@@ -19,7 +19,7 @@ body:
     attributes:
       label: Have you looked through the existing tickets to find any related issues?
       options:
-        Yes I have
+        - Yes I have
   - type: input
     attributes:
       label: 'Author of the bug'
