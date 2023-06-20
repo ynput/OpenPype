@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 class TestPipelinePublishPlugins(TestPipeline):
-    """ Testing Pipeline pubish_plugins.py
+    """ Testing Pipeline publish_plugins.py
 
     Example:
         cd to OpenPype repo root dir
@@ -37,7 +37,7 @@ class TestPipelinePublishPlugins(TestPipeline):
     # files are the same as those used in `test_pipeline_colorspace`
     TEST_FILES = [
         (
-            "1d7t9_cVKeZRVF0ppCHiE5MJTTtTlJgBe",
+            "1Lf-mFxev7xiwZCWfImlRcw7Fj8XgNQMh",
             "test_pipeline_colorspace.zip",
             ""
         )
@@ -140,7 +140,7 @@ class TestPipelinePublishPlugins(TestPipeline):
         config_data, file_rules = plugin.get_colorspace_settings(context)
 
         assert config_data["template"] == expected_config_template, (
-            "Returned config tempate is not "
+            "Returned config template is not "
             f"matching {expected_config_template}"
         )
         assert file_rules == expected_file_rules, (
@@ -193,11 +193,11 @@ class TestPipelinePublishPlugins(TestPipeline):
         colorspace_data_hiero = representation_hiero.get("colorspaceData")
 
         assert colorspace_data_nuke, (
-            "Colorspace data were not created in prepresentation"
+            "Colorspace data were not created in representation"
             f"matching {representation_nuke}"
         )
         assert colorspace_data_hiero, (
-            "Colorspace data were not created in prepresentation"
+            "Colorspace data were not created in representation"
             f"matching {representation_hiero}"
         )
 

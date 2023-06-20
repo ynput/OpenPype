@@ -75,20 +75,6 @@ class NukeCreator(NewCreator):
         for pass_key in keys:
             creator_attrs[pass_key] = pre_create_data[pass_key]
 
-    def add_info_knob(self, node):
-        if "OP_info" in node.knobs().keys():
-            return
-
-        # add info text
-        info_knob = nuke.Text_Knob("OP_info", "")
-        info_knob.setValue("""
-<span style=\"color:#fc0303\">
-<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>To remove it use Publisher gui.</p>
-</span>
-        """)
-        node.addKnob(info_knob)
-
     def check_existing_subset(self, subset_name):
         """Make sure subset name is unique.
 
@@ -152,8 +138,6 @@ class NukeCreator(NewCreator):
             with parent_node:
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
-
-                self.add_info_knob(created_node)
 
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
