@@ -1673,12 +1673,14 @@ class PlaceholderCreateMixin(object):
             )
         ]
 
-    def populate_create_placeholder(self, placeholder):
+    def populate_create_placeholder(self, placeholder, pre_create_data=None):
         """Create placeholder is going to create matching publishabe instance.
 
         Args:
             placeholder (PlaceholderItem): Placeholder item with information
                 about requested publishable instance.
+            pre_create_data (dict): dictionary of configuration from Creator
+                configuration in UI
         """
 
         legacy_create = self.builder.use_legacy_creators
@@ -1736,7 +1738,8 @@ class PlaceholderCreateMixin(object):
                     creator_plugin.identifier,
                     create_variant,
                     asset_doc,
-                    task_name=task_name
+                    task_name=task_name,
+                    pre_create_data=pre_create_data
                 )
 
         except:  # noqa: E722
