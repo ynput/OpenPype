@@ -19,6 +19,9 @@ jobs:
     steps:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
+    
+    - name: remove3916
+      run: pyenv uninstall 3.9.16
 
     - name: 🐍 Set up Python
       uses: gabrielfalcao/pyenv-action@v14
