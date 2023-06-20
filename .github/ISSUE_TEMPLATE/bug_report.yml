@@ -10,12 +10,13 @@ body:
         Thanks for taking the time to fill out this bug report! Please fill this form carefully in order to help us work more efficiently.
   - type: dropdown
     attributes:
+      required: true
       label: Before posting a new ticket, have you looked through the documentation to find an answer?
-      description: >-
-        You can fin the documentation in the fix wiki > fixwiki/drive/tools/openpype/decouverte_openpype/
+      description: You can fin the documentation in the fix wiki > fixwiki/drive/tools/openpype/decouverte_openpype/
       options:
         - Yes I have
   - type: dropdown
+    required: true
     attributes:
       label: Have you looked through the existing tickets to find any related issues?
       options:
