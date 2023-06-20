@@ -5,7 +5,7 @@ sidebar_label: Kitsu
 ---
 
 # Entities naming pattern
-Allows to organize hierarchically the Episodes, Sequences et Shots into their folders.
+Allows to organize hierarchically the Episodes, Sequences and Shots into their folders.
 ![Kitsu Naming Pattern](assets/settings_project_kitsu_NamingPattern.png)
 
 # Publish plugins
