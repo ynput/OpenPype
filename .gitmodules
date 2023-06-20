@@ -5,6 +5,3 @@
 [submodule "tools/modules/powershell/PSWriteColor"]
     path = tools/modules/powershell/PSWriteColor
     url = https://github.com/EvotecIT/PSWriteColor.git
-[submodule "openpype/hosts/unreal/integration"]
-	path = openpype/hosts/unreal/integration
-	url = https://github.com/ynput/ayon-unreal-plugin.git
