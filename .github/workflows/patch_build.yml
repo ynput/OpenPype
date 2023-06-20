@@ -13,33 +13,33 @@ jobs:
     runs-on: [self-hosted, ubuntu]
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.9.16]
 
     steps:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
 
-#     - name: 🐍 Set up Python
-#       uses: gabrielfalcao/pyenv-action@v14
-#       with:
-#         versions:  "${{ matrix.python }}"
-#         default: "${{ matrix.python }}"
-#         command: pyenv global "${{ matrix.python }}"
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: 🐍 Set up Python
+      uses: gabrielfalcao/pyenv-action@v14
       with:
-        python-version: "${{ matrix.python }}"
+        versions:  "${{ matrix.python }}"
+        default: "${{ matrix.python }}"
+        command: pyenv global "${{ matrix.python }}"
+    
+#     - name: Set up Python
+#       uses: actions/setup-python@v4
+#       with:
+#         python-version: "${{ matrix.python }}"
         
-    - name: test python
-      run: |
-        # pyenv versions
-        # pyenv uninstall 3.9.16
-        # pyenv global 3.9.16
-        python --version
-        python3 --version
-        python3.9 --version
-        python3 -m pip install -U pip
+#     - name: test python
+#       run: |
+#         # pyenv versions
+#         # pyenv uninstall 3.9.16
+#         # pyenv global 3.9.16
+#         python --version
+#         python3 --version
+#         python3.9 --version
+#         python3 -m pip install -U pip
 
 #     - name: 📝 Install Poetry
 #       uses: snok/install-poetry@v1
