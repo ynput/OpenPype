@@ -1,4 +1,6 @@
+import os.path
 import uuid
+import shutil
 
 from openpype.pipeline import registered_host
 from openpype.tools.workfile_template_build import (
@@ -32,9 +34,15 @@ class AETemplateBuilder(AbstractTemplateBuilder):
         Returns:
             bool: Whether the template was successfully imported or not
         """
+        stub = get_stub()
+        if not os.path.exists(path):
+            stub.print_msg(f"Template file on {path} doesn't exist.")
+            return
 
-        # TODO check if the template is already imported
-
+        stub.save()
+        workfile_path = stub.get_active_document_full_name()
+        shutil.copy2(path, workfile_path)
+        stub.open(workfile_path)
 
         return True
 
