@@ -10,4 +10,4 @@ Allows to organize hierarchically the Episodes, Sequences and Shots into their f
 
 # Publish plugins
 ## Integrate Kitsu Note & Status change conditions
-More informations [here](module_kitsu/#prepare-kitsu-for-openpype.md).
+On publish the Kitsu statuses can be changed and accompanying notes can be uploaded to Kitsu. For more information see [preparing Kitsu for OpenPype - Integrate Kitsu Note plugin.](module_kitsu/#prepare-kitsu-for-openpype.md).
