@@ -1,19 +1,19 @@
 import os
 import sys
-import types
 import inspect
 import copy
 import tempfile
 import xml.etree.ElementTree
 
-import six
+import pyblish.util
 import pyblish.plugin
 import pyblish.api
 
 from openpype.lib import (
     Logger,
     import_filepath,
-    filter_profiles
+    filter_profiles,
+    is_func_signature_supported,
 )
 from openpype.settings import (
     get_project_settings,
@@ -41,7 +41,9 @@ def get_template_name_profiles(
 
     Args:
         project_name (str): Name of project where to look for templates.
-        project_settings(Dic[str, Any]): Prepared project settings.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        logger (Optional[logging.Logger]): Logger object to be used instead
+            of default logger.
 
     Returns:
         List[Dict[str, Any]]: Publish template profiles.
@@ -102,7 +104,9 @@ def get_hero_template_name_profiles(
 
     Args:
         project_name (str): Name of project where to look for templates.
-        project_settings(Dic[str, Any]): Prepared project settings.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        logger (Optional[logging.Logger]): Logger object to be used instead
+            of default logger.
 
     Returns:
         List[Dict[str, Any]]: Publish template profiles.
@@ -171,9 +175,10 @@ def get_publish_template_name(
         project_name (str): Name of project where to look for settings.
         host_name (str): Name of host integration.
         family (str): Family for which should be found template.
-        task_name (str): Task name on which is intance working.
-        task_type (str): Task type on which is intance working.
-        project_setting (Dict[str, Any]): Prepared project settings.
+        task_name (str): Task name on which is instance working.
+        task_type (str): Task type on which is instance working.
+        project_settings (Dict[str, Any]): Prepared project settings.
+        hero (bool): Template is for hero version publishing.
         logger (logging.Logger): Custom logger used for 'filter_profiles'
             function.
 
@@ -263,19 +268,18 @@ def load_help_content_from_plugin(plugin):
 def publish_plugins_discover(paths=None):
     """Find and return available pyblish plug-ins
 
-    Overridden function from `pyblish` module to be able collect crashed files
-    and reason of their crash.
+    Overridden function from `pyblish` module to be able to collect
+        crashed files and reason of their crash.
 
     Arguments:
         paths (list, optional): Paths to discover plug-ins from.
             If no paths are provided, all paths are searched.
-
     """
 
     # The only difference with `pyblish.api.discover`
     result = DiscoverResult(pyblish.api.Plugin)
 
-    plugins = dict()
+    plugins = {}
     plugin_names = []
 
     allow_duplicates = pyblish.plugin.ALLOW_DUPLICATES
@@ -301,7 +305,7 @@ def publish_plugins_discover(paths=None):
 
             mod_name, mod_ext = os.path.splitext(fname)
 
-            if not mod_ext == ".py":
+            if mod_ext != ".py":
                 continue
 
             try:
@@ -319,6 +323,14 @@ def publish_plugins_discover(paths=None):
                 continue
 
             for plugin in pyblish.plugin.plugins_from_module(module):
+                # Ignore base plugin classes
+                # NOTE 'pyblish.api.discover' does not ignore them!
+                if (
+                    plugin is pyblish.api.Plugin
+                    or plugin is pyblish.api.ContextPlugin
+                    or plugin is pyblish.api.InstancePlugin
+                ):
+                    continue
                 if not allow_duplicates and plugin.__name__ in plugin_names:
                     result.duplicated_plugins.append(plugin)
                     log.debug("Duplicate plug-in found: %s", plugin)
@@ -354,29 +366,55 @@ def publish_plugins_discover(paths=None):
     return result
 
 
-def _get_plugin_settings(host_name, project_settings, plugin, log):
+def get_plugin_settings(plugin, project_settings, log, category=None):
     """Get plugin settings based on host name and plugin name.
 
+    Note:
+        Default implementation of automated settings is passing host name
+            into 'category'.
+
     Args:
-        host_name (str): Name of host.
+        plugin (pyblish.Plugin): Plugin where settings are applied.
         project_settings (dict[str, Any]): Project settings.
-        plugin (pyliblish.Plugin): Plugin where settings are applied.
         log (logging.Logger): Logger to log messages.
+        category (Optional[str]): Settings category key where to look
+            for plugin settings.
 
     Returns:
         dict[str, Any]: Plugin settings {'attribute': 'value'}.
     """
 
-    # Use project settings from host name category when available
-    try:
-        return (
-            project_settings
-            [host_name]
-            ["publish"]
-            [plugin.__name__]
-        )
-    except KeyError:
-        pass
+    # Plugin can define settings category by class attribute
+    # - it's impossible to set `settings_category` via settings because
+    #     obviously settings are not applied before it.
+    # - if `settings_category` is set the fallback category method is ignored
+    settings_category = getattr(plugin, "settings_category", None)
+    if settings_category:
+        try:
+            return (
+                project_settings
+                [settings_category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            log.warning((
+                "Couldn't find plugin '{}' settings"
+                " under settings category '{}'"
+            ).format(plugin.__name__, settings_category))
+            return {}
+
+    # Use project settings based on a category name
+    if category:
+        try:
+            return (
+                project_settings
+                [category]
+                ["publish"]
+                [plugin.__name__]
+            )
+        except KeyError:
+            pass
 
     # Settings category determined from path
     # - usually path is './<category>/plugins/publish/<plugin file>'
@@ -385,9 +423,10 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
 
     split_path = filepath.rsplit(os.path.sep, 5)
     if len(split_path) < 4:
-        log.warning(
-            'plugin path too short to extract host {}'.format(filepath)
-        )
+        log.debug((
+            "Plugin path is too short to automatically"
+            " extract settings category. {}"
+        ).format(filepath))
         return {}
 
     category_from_file = split_path[-4]
@@ -407,6 +446,28 @@ def _get_plugin_settings(host_name, project_settings, plugin, log):
     except KeyError:
         pass
     return {}
+
+
+def apply_plugin_settings_automatically(plugin, settings, logger=None):
+    """Automatically apply plugin settings to a plugin object.
+
+    Note:
+        This function was created to be able to use it in custom overrides of
+            'apply_settings' class method.
+
+    Args:
+        plugin (type[pyblish.api.Plugin]): Class of a plugin.
+        settings (dict[str, Any]): Plugin specific settings.
+        logger (Optional[logging.Logger]): Logger to log debug messages about
+            applied settings values.
+    """
+
+    for option, value in settings.items():
+        if logger:
+            logger.debug("Plugin {} - Attr: {} -> {}".format(
+                option, value, plugin.__name__
+            ))
+        setattr(plugin, option, value)
 
 
 def filter_pyblish_plugins(plugins):
@@ -436,12 +497,26 @@ def filter_pyblish_plugins(plugins):
     # iterate over plugins
     for plugin in plugins[:]:
         # Apply settings to plugins
-        if hasattr(plugin, "apply_settings"):
+
+        apply_settings_func = getattr(plugin, "apply_settings", None)
+        if apply_settings_func is not None:
             # Use classmethod 'apply_settings'
             # - can be used to target settings from custom settings place
             # - skip default behavior when successful
             try:
-                plugin.apply_settings(project_settings, system_settings)
+                # Support to pass only project settings
+                # - make sure that both settings are passed, when can be
+                #   - that covers cases when *args are in method parameters
+                both_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings, system_settings
+                )
+                project_supported = is_func_signature_supported(
+                    apply_settings_func, project_settings
+                )
+                if not both_supported and project_supported:
+                    plugin.apply_settings(project_settings)
+                else:
+                    plugin.apply_settings(project_settings, system_settings)
 
             except Exception:
                 log.warning(
@@ -452,13 +527,10 @@ def filter_pyblish_plugins(plugins):
                 )
         else:
             # Automated
-            plugin_settins = _get_plugin_settings(
-                host_name, project_settings, plugin, log
+            plugin_settins = get_plugin_settings(
+                plugin, project_settings, log, host_name
             )
-            for option, value in plugin_settins.items():
-                log.info("setting {}:{} on plugin {}".format(
-                    option, value, plugin.__name__))
-                setattr(plugin, option, value)
+            apply_plugin_settings_automatically(plugin, plugin_settins, log)
 
         # Remove disabled plugins
         if getattr(plugin, "enabled", True) is False:
@@ -478,10 +550,10 @@ def find_close_plugin(close_plugin_name, log):
 def remote_publish(log, close_plugin_name=None, raise_error=False):
     """Loops through all plugins, logs to console. Used for tests.
 
-        Args:
-            log (openpype.lib.Logger)
-            close_plugin_name (str): name of plugin with responsibility to
-                close host app
+    Args:
+        log (Logger)
+        close_plugin_name (str): name of plugin with responsibility to
+            close host app
     """
     # Error exit as soon as any error occurs.
     error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
@@ -790,3 +862,45 @@ def _validate_transient_template(project_name, template_name, anatomy):
         raise ValueError(("There is not set \"folder\" template in \"{}\" anatomy"  # noqa
                              " for project \"{}\"."
                          ).format(template_name, project_name))
+
+
+def add_repre_files_for_cleanup(instance, repre):
+    """ Explicitly mark repre files to be deleted.
+
+    Should be used on intermediate files (eg. review, thumbnails) to be
+    explicitly deleted.
+    """
+    files = repre["files"]
+    staging_dir = repre.get("stagingDir")
+    if not staging_dir:
+        return
+
+    if isinstance(files, str):
+        files = [files]
+
+    for file_name in files:
+        expected_file = os.path.join(staging_dir, file_name)
+        instance.context.data["cleanupFullPaths"].append(expected_file)
+
+
+def get_publish_instance_label(instance):
+    """Try to get label from pyblish instance.
+
+    First are used values in instance data under 'label' and 'name' keys. Then
+    is used string conversion of instance object -> 'instance._name'.
+
+    Todos:
+        Maybe 'subset' key could be used too.
+
+    Args:
+        instance (pyblish.api.Instance): Pyblish instance.
+
+    Returns:
+        str: Instance label.
+    """
+
+    return (
+        instance.data.get("label")
+        or instance.data.get("name")
+        or str(instance)
+    )

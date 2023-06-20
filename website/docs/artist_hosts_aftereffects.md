@@ -34,7 +34,7 @@ a correct name. You should use it instead of standard file saving dialog.
 
 In AfterEffects you'll find the tools in the `OpenPype` extension:
 
-![Extension](assets/photoshop_extension.png) <!-- same menu as in PS -->
+![Extension](assets/photoshop_extension.png)
 
 You can show the extension panel by going to `Window` > `Extensions` > `OpenPype`.
 
@@ -57,6 +57,9 @@ Name of publishable instance (eg. subset name) could be configured with a templa
 (This must be configured by admin who has access to Openpype Settings.)
 
 Trash icon under the list of instances allows to delete any selected `render` instance.
+
+Frame information (frame start, duration, fps) and resolution (width and height) is applied to selected composition from Asset Management System (Ftrack or DB) automatically!
+(Eg. number of rendered frames is controlled by settings inserted from supervisor. Artist can override this by disabling validation only in special cases.)
 
 Workfile instance will be automatically recreated though. If you do not want to publish it, use pill toggle on the instance item.
 
@@ -151,3 +154,25 @@ You can switch to a previous version of the image or update to the latest.
 
 ![Loader](assets/photoshop_manage_switch.gif)
 ![Loader](assets/photoshop_manage_update.gif)
+
+
+### Setting section
+
+Composition properties should be controlled by state in Asset Management System (Ftrack etc). Extension provides couple of buttons to trigger this propagation.
+
+#### Set Resolution
+
+Set width and height from AMS to composition.
+
+#### Set Frame Range
+
+Start frame and duration in workarea is set according to the settings in AMS. Handles are incorporated (not inclusive).
+It is expected that composition(s) is selected first before pushing this button!
+
+#### Apply All Settings
+
+Both previous settings are triggered at same time.
+
+### Experimental tools
+
+Currently empty. Could contain special tools available only for specific hosts for early access testing.

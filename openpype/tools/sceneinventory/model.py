@@ -199,90 +199,103 @@ class InventoryModel(TreeModel):
         """Refresh the model"""
 
         host = registered_host()
-        if not items:  # for debugging or testing, injecting items from outside
+        # for debugging or testing, injecting items from outside
+        if items is None:
             if isinstance(host, ILoadHost):
                 items = host.get_containers()
-            else:
+            elif hasattr(host, "ls"):
                 items = host.ls()
+            else:
+                items = []
 
         self.clear()
-
-        if self._hierarchy_view and selected:
-            if not hasattr(host.pipeline, "update_hierarchy"):
-                # If host doesn't support hierarchical containers, then
-                # cherry-pick only.
-                self.add_items((item for item in items
-                                if item["objectName"] in selected))
-                return
-
-            # Update hierarchy info for all containers
-            items_by_name = {item["objectName"]: item
-                             for item in host.pipeline.update_hierarchy(items)}
-
-            selected_items = set()
-
-            def walk_children(names):
-                """Select containers and extend to chlid containers"""
-                for name in [n for n in names if n not in selected_items]:
-                    selected_items.add(name)
-                    item = items_by_name[name]
-                    yield item
-
-                    for child in walk_children(item["children"]):
-                        yield child
-
-            items = list(walk_children(selected))  # Cherry-picked and extended
-
-            # Cut unselected upstream containers
-            for item in items:
-                if not item.get("parent") in selected_items:
-                    # Parent not in selection, this is root item.
-                    item["parent"] = None
-
-            parents = [self._root_item]
-
-            # The length of `items` array is the maximum depth that a
-            # hierarchy could be.
-            # Take this as an easiest way to prevent looping forever.
-            maximum_loop = len(items)
-            count = 0
-            while items:
-                if count > maximum_loop:
-                    self.log.warning("Maximum loop count reached, possible "
-                                     "missing parent node.")
-                    break
-
-                _parents = list()
-                for parent in parents:
-                    _unparented = list()
-
-                    def _children():
-                        """Child item provider"""
-                        for item in items:
-                            if item.get("parent") == parent.get("objectName"):
-                                # (NOTE)
-                                # Since `self._root_node` has no "objectName"
-                                # entry, it will be paired with root item if
-                                # the value of key "parent" is None, or not
-                                # having the key.
-                                yield item
-                            else:
-                                # Not current parent's child, try next
-                                _unparented.append(item)
-
-                    self.add_items(_children(), parent)
-
-                    items[:] = _unparented
-
-                    # Parents of next level
-                    for group_node in parent.children():
-                        _parents += group_node.children()
-
-                parents[:] = _parents
-                count += 1
-
-        else:
+        if not selected or not self._hierarchy_view:
             self.add_items(items)
+            return
+
+        if (
+            not hasattr(host, "pipeline")
+            or not hasattr(host.pipeline, "update_hierarchy")
+        ):
+            # If host doesn't support hierarchical containers, then
+            # cherry-pick only.
+            self.add_items((
+                item
+                for item in items
+                if item["objectName"] in selected
+            ))
+            return
+
+        # TODO find out what this part does. Function 'update_hierarchy' is
+        #   available only in 'blender' at this moment.
+
+        # Update hierarchy info for all containers
+        items_by_name = {
+            item["objectName"]: item
+            for item in host.pipeline.update_hierarchy(items)
+        }
+
+        selected_items = set()
+
+        def walk_children(names):
+            """Select containers and extend to chlid containers"""
+            for name in [n for n in names if n not in selected_items]:
+                selected_items.add(name)
+                item = items_by_name[name]
+                yield item
+
+                for child in walk_children(item["children"]):
+                    yield child
+
+        items = list(walk_children(selected))  # Cherry-picked and extended
+
+        # Cut unselected upstream containers
+        for item in items:
+            if not item.get("parent") in selected_items:
+                # Parent not in selection, this is root item.
+                item["parent"] = None
+
+        parents = [self._root_item]
+
+        # The length of `items` array is the maximum depth that a
+        # hierarchy could be.
+        # Take this as an easiest way to prevent looping forever.
+        maximum_loop = len(items)
+        count = 0
+        while items:
+            if count > maximum_loop:
+                self.log.warning("Maximum loop count reached, possible "
+                                 "missing parent node.")
+                break
+
+            _parents = list()
+            for parent in parents:
+                _unparented = list()
+
+                def _children():
+                    """Child item provider"""
+                    for item in items:
+                        if item.get("parent") == parent.get("objectName"):
+                            # (NOTE)
+                            # Since `self._root_node` has no "objectName"
+                            # entry, it will be paired with root item if
+                            # the value of key "parent" is None, or not
+                            # having the key.
+                            yield item
+                        else:
+                            # Not current parent's child, try next
+                            _unparented.append(item)
+
+                self.add_items(_children(), parent)
+
+                items[:] = _unparented
+
+                # Parents of next level
+                for group_node in parent.children():
+                    _parents += group_node.children()
+
+            parents[:] = _parents
+            count += 1
 
     def add_items(self, items, parent=None):
         """Add the items to the model.

@@ -325,6 +325,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info = copy.deepcopy(payload_job_info)
         plugin_info = copy.deepcopy(payload_plugin_info)
 
+        # Force plugin reload for vray cause the region does not get flushed
+        # between tile renders.
+        if plugin_info["Renderer"] == "vray":
+            job_info.ForceReloadPlugin = True
+
         # if we have sequence of files, we need to create tile job for
         # every frame
         job_info.TileJob = True
@@ -434,6 +439,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         assembly_payloads = []
         output_dir = self.job_info.OutputDirectory[0]
+        config_files = []
         for file in assembly_files:
             frame = re.search(R_FRAME_NUMBER, file).group("frame")
 
@@ -459,6 +465,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                     datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
                 )
             )
+            config_files.append(config_file)
             try:
                 if not os.path.isdir(output_dir):
                     os.makedirs(output_dir)
@@ -467,8 +474,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 self.log.warning("Path is unreachable: "
                                  "`{}`".format(output_dir))
 
-            assembly_plugin_info["ConfigFile"] = config_file
-
             with open(config_file, "w") as cf:
                 print("TileCount={}".format(tiles_count), file=cf)
                 print("ImageFileName={}".format(file), file=cf)
@@ -476,6 +481,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                     instance.data.get("resolutionWidth")), file=cf)
                 print("ImageHeight={}".format(
                     instance.data.get("resolutionHeight")), file=cf)
+
+            reversed_y = False
+            if plugin_info["Renderer"] == "arnold":
+                reversed_y = True
 
             with open(config_file, "a") as cf:
                 # Need to reverse the order of the y tiles, because image
@@ -487,7 +496,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                     instance.data.get("resolutionWidth"),
                     instance.data.get("resolutionHeight"),
                     payload_plugin_info["OutputFilePrefix"],
-                    reversed_y=True
+                    reversed_y=reversed_y
                 )[1]
                 for k, v in sorted(tiles.items()):
                     print("{}={}".format(k, v), file=cf)
@@ -515,6 +524,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             assembly_job_ids.append(assembly_job_id)
 
         instance.data["assemblySubmissionJobs"] = assembly_job_ids
+
+        # Remove config files to avoid confusion about where data is coming
+        # from in Deadline.
+        for config_file in config_files:
+            os.remove(config_file)
 
     def _get_maya_payload(self, data):
 
@@ -876,8 +890,6 @@ def _format_tiles(
             out["PluginInfo"]["RegionRight{}".format(tile)] = right
 
             # Tile config
-            cfg["Tile{}".format(tile)] = new_filename
-            cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = left
             cfg["Tile{}Y".format(tile)] = top

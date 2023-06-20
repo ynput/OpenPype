@@ -163,7 +163,11 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
             super(ZoomPlainText, self).wheelEvent(event)
             return
 
-        degrees = float(event.delta()) / 8
+        if hasattr(event, "angleDelta"):
+            delta = event.angleDelta().y()
+        else:
+            delta = event.delta()
+        degrees = float(delta) / 8
         steps = int(ceil(degrees / 5))
         self._scheduled_scalings += steps
         if (self._scheduled_scalings * steps < 0):

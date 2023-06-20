@@ -353,12 +353,19 @@ class PypeCommands:
         version_packer = VersionRepacker(directory)
         version_packer.process()
 
-    def pack_project(self, project_name, dirpath):
+    def pack_project(self, project_name, dirpath, database_only):
         from openpype.lib.project_backpack import pack_project
 
-        pack_project(project_name, dirpath)
+        if database_only and not dirpath:
+            raise ValueError((
+                "Destination dir must be defined when using --dbonly."
+                " Use '--dirpath {output dir path}' flag"
+                " to specify directory."
+            ))
 
-    def unpack_project(self, zip_filepath, new_root):
+        pack_project(project_name, dirpath, database_only)
+
+    def unpack_project(self, zip_filepath, new_root, database_only):
         from openpype.lib.project_backpack import unpack_project
 
-        unpack_project(zip_filepath, new_root)
+        unpack_project(zip_filepath, new_root, database_only)

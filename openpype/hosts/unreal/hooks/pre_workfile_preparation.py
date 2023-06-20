@@ -61,10 +61,10 @@ class UnrealPrelaunchHook(PreLaunchHook):
             project_name=project_doc["name"]
         )
         # Fill templates
-        filled_anatomy = anatomy.format(workdir_data)
+        template_obj = anatomy.templates_obj[workfile_template_key]["file"]
 
         # Return filename
-        return filled_anatomy[workfile_template_key]["file"]
+        return template_obj.format_strict(workdir_data)
 
     def exec_plugin_install(self, engine_path: Path, env: dict = None):
         # set up the QThread and worker with necessary signals
@@ -186,15 +186,15 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         project_path.mkdir(parents=True, exist_ok=True)
 
-        # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
+        # Set "AYON_UNREAL_PLUGIN" to current process environment for
         # execution of `create_unreal_project`
 
-        if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
+        if self.launch_context.env.get("AYON_UNREAL_PLUGIN"):
             self.log.info((
-                f"{self.signature} using OpenPype plugin from "
-                f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
+                f"{self.signature} using Ayon plugin from "
+                f"{self.launch_context.env.get('AYON_UNREAL_PLUGIN')}"
             ))
-        env_key = "OPENPYPE_UNREAL_PLUGIN"
+        env_key = "AYON_UNREAL_PLUGIN"
         if self.launch_context.env.get(env_key):
             os.environ[env_key] = self.launch_context.env[env_key]
 
@@ -213,7 +213,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                                      engine_path,
                                      project_path)
 
-        self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
+        self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")

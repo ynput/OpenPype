@@ -127,6 +127,11 @@
                     "label": "Optional"
                 },
                 {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
                     "type": "label",
                     "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
                 },

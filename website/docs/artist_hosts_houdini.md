@@ -71,6 +71,18 @@ their display flag is disabled in your scene.
 This part of documentation is still work in progress.
 :::
 
+## Publishing Render to Deadline
+Five Renderers(Arnold, Redshift, Mantra, Karma, VRay) are supported for Render Publishing.
+They are named with the suffix("_ROP")
+To submit render to deadline, you need to create a **Render** instance.
+Go to **Openpype -> Create** and select **Publish**. Before clicking **Create** button,
+you need select your preferred image rendering format. You can also enable the **Use selection** to
+select your render camera.
+![Houdini Create Render](assets/houdini_render_publish_creator.png)
+
+All the render outputs are stored in the pyblish/render directory within your project path.\
+For Karma-specific render, it also outputs the USD render as default.
+
 ## USD (experimental support)
 ### Publishing USD
 You can publish your Solaris Stage as USD file.

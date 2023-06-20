@@ -40,6 +40,7 @@ from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
     ConvertorsOperationFailed,
 )
+from openpype.pipeline.publish import get_publish_instance_label
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -47,6 +48,7 @@ PLUGIN_ORDER_OFFSET = 0.5
 
 class CardMessageTypes:
     standard = None
+    info = "info"
     error = "error"
 
 
@@ -163,7 +165,7 @@ class AssetDocsCache:
         return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
-class PublishReport:
+class PublishReportMaker:
     """Report for single publishing process.
 
     Report keeps current state of publishing and currently processed plugin.
@@ -220,7 +222,12 @@ class PublishReport:
 
     def _add_plugin_data_item(self, plugin):
         if plugin in self._stored_plugins:
-            raise ValueError("Plugin is already stored")
+            # A plugin would be processed more than once. What can cause it:
+            #   - there is a bug in controller
+            #   - plugin class is imported into multiple files
+            #       - this can happen even with base classes from 'pyblish'
+            raise ValueError(
+                "Plugin '{}' is already stored".format(str(plugin)))
 
         self._stored_plugins.append(plugin)
 
@@ -239,6 +246,7 @@ class PublishReport:
             label = plugin.label
 
         return {
+            "id": plugin.id,
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
@@ -324,7 +332,7 @@ class PublishReport:
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
-            "id": str(uuid.uuid4()),
+            "id": uuid.uuid4().hex,
             "report_version": "1.0.0"
         }
 
@@ -339,10 +347,12 @@ class PublishReport:
     def _extract_instance_data(self, instance, exists):
         return {
             "name": instance.data.get("name"),
-            "label": instance.data.get("label"),
+            "label": get_publish_instance_label(instance),
             "family": instance.data["family"],
             "families": instance.data.get("families") or [],
-            "exists": exists
+            "exists": exists,
+            "creator_identifier": instance.data.get("creator_identifier"),
+            "instance_id": instance.data.get("instance_id"),
         }
 
     def _extract_instance_log_items(self, result):
@@ -388,8 +398,11 @@ class PublishReport:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+            # Action result does not have 'is_validation_error'
+            is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
+                "is_validation_error": is_validation_error,
                 "msg": str(exception),
                 "filename": str(fname),
                 "lineno": str(line_no),
@@ -426,13 +439,15 @@ class PublishPluginsProxy:
             plugin_id = plugin.id
             plugins_by_id[plugin_id] = plugin
 
-            action_ids = set()
+            action_ids = []
             action_ids_by_plugin_id[plugin_id] = action_ids
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
                 action_id = action.id
-                action_ids.add(action_id)
+                if action_id in actions_by_id:
+                    continue
+                action_ids.append(action_id)
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
@@ -461,7 +476,7 @@ class PublishPluginsProxy:
         return plugin.id
 
     def get_plugin_action_items(self, plugin_id):
-        """Get plugin action items for plugin by it's id.
+        """Get plugin action items for plugin by its id.
 
         Args:
             plugin_id (str): Publish plugin id.
@@ -568,7 +583,7 @@ class ValidationErrorItem:
         context_validation,
         title,
         description,
-        detail,
+        detail
     ):
         self.instance_id = instance_id
         self.instance_label = instance_label
@@ -677,6 +692,8 @@ class PublishValidationErrorsReport:
 
             for title in titles:
                 grouped_error_items.append({
+                    "id": uuid.uuid4().hex,
+                    "plugin_id": plugin_id,
                     "plugin_action_items": list(plugin_action_items),
                     "error_items": error_items_by_title[title],
                     "title": title
@@ -784,6 +801,13 @@ class PublishValidationErrors:
 
         # Make sure the cached report is cleared
         plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        if not error.title:
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
+            else:
+                plugin_label = plugin.__name__
+            error.title = plugin_label
+
         self._error_items.append(
             ValidationErrorItem.from_result(plugin_id, error, instance)
         )
@@ -1674,7 +1698,7 @@ class PublisherController(BasePublisherController):
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
-        self._publish_report = PublishReport(self)
+        self._publish_report = PublishReportMaker(self)
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
 
@@ -2372,7 +2396,8 @@ class PublisherController(BasePublisherController):
                 yield MainThreadItem(self.stop_publish)
 
             # Add plugin to publish report
-            self._publish_report.add_plugin_iter(plugin, self._publish_context)
+            self._publish_report.add_plugin_iter(
+                plugin, self._publish_context)
 
             # WARNING This is hack fix for optional plugins
             if not self._is_publish_plugin_active(plugin):
@@ -2454,14 +2479,14 @@ class PublisherController(BasePublisherController):
             plugin, self._publish_context, instance
         )
 
-        self._publish_report.add_result(result)
-
         exception = result.get("error")
         if exception:
+            has_validation_error = False
             if (
                 isinstance(exception, PublishValidationError)
                 and not self.publish_has_validated
             ):
+                has_validation_error = True
                 self._add_validation_error(result)
 
             else:
@@ -2474,6 +2499,10 @@ class PublisherController(BasePublisherController):
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True
+
+            result["is_validation_error"] = has_validation_error
+
+        self._publish_report.add_result(result)
 
         self._publish_next_process()
 

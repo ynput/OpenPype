@@ -60,8 +60,8 @@ class CommentMatcher(object):
         temp_data["version"] = "<<version>>"
         temp_data["ext"] = "<<ext>>"
 
-        formatted = anatomy.format(temp_data)
-        fname_pattern = formatted[template_key]["file"]
+        template_obj = anatomy.templates_obj[template_key]["file"]
+        fname_pattern = template_obj.format_strict(temp_data)
         fname_pattern = re.escape(fname_pattern)
 
         # Replace comment and version with something we can match with regex
@@ -375,8 +375,8 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         data["ext"] = data["ext"].lstrip(".")
 
-        anatomy_filled = self.anatomy.format(data)
-        return anatomy_filled[self.template_key]["file"]
+        template_obj = self.anatomy.templates_obj[self.template_key]["file"]
+        return template_obj.format_strict(data)
 
     def refresh(self):
         extensions = list(self._extensions)

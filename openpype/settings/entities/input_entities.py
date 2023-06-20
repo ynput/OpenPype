@@ -442,7 +442,9 @@ class TextEntity(InputEntity):
 
     def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
-        self.value_on_not_set = ""
+        self.value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", "")
+        )
 
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)

@@ -65,9 +65,10 @@ class ExtractXgen(publish.Extractor):
                 )
                 cmds.delete(set(children) - set(shapes))
 
-                duplicate_transform = cmds.parent(
-                    duplicate_transform, world=True
-                )[0]
+                if cmds.listRelatives(duplicate_transform, parent=True):
+                    duplicate_transform = cmds.parent(
+                        duplicate_transform, world=True
+                    )[0]
 
                 duplicate_nodes.append(duplicate_transform)
 

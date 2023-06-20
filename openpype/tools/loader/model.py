@@ -123,7 +123,7 @@ class BaseRepresentationModel(object):
         self.remote_provider = remote_provider
 
 
-class SubsetsModel(TreeModel, BaseRepresentationModel):
+class SubsetsModel(BaseRepresentationModel, TreeModel):
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
@@ -446,6 +446,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         last_versions_by_subset_id = get_last_versions(
             project_name,
             subset_ids,
+            active=True,
             fields=["_id", "parent", "name", "type", "data", "schema"]
         )
 

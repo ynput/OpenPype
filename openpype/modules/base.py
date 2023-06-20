@@ -311,6 +311,7 @@ def _load_modules():
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
     module_dirs = get_module_dirs()
+
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -318,8 +319,11 @@ def _load_modules():
     module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
+    addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
+    module_dirs.append(addons_dir)
+
     processed_paths = set()
-    for dirpath in module_dirs:
+    for dirpath in frozenset(module_dirs):
         # Skip already processed paths
         if dirpath in processed_paths:
             continue
@@ -736,15 +740,16 @@ class ModulesManager:
         Unknown keys are logged out.
 
         Returns:
-            dict: Output is dictionary with keys "publish", "create", "load"
-                and "actions" each containing list of paths.
+            dict: Output is dictionary with keys "publish", "create", "load",
+                "actions" and "inventory" each containing list of paths.
         """
         # Output structure
         output = {
             "publish": [],
             "create": [],
             "load": [],
-            "actions": []
+            "actions": [],
+            "inventory": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -846,6 +851,21 @@ class ModulesManager:
 
         return self._collect_plugin_paths(
             "get_publish_plugin_paths",
+            host_name
+        )
+
+    def collect_inventory_action_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_inventory_action_paths",
             host_name
         )
 

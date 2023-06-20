@@ -872,7 +872,6 @@ class WrappedCallbackItem:
             self.log.warning("- item is already processed")
             return
 
-        self.log.debug("Running callback: {}".format(str(self._callback)))
         try:
             result = self._callback(*self._args, **self._kwargs)
             self._result = result
