@@ -1,0 +1,51 @@
+name: 📦 Build Zip Patch
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+      - '*.*.*-*'
+      - 'CI/*.*.*-*'
+  workflow_dispatch:
+
+jobs:
+  build-zip-patch:
+    runs-on: self-hosted
+    # runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9.16]
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v3
+
+    - name: 🐍 Set up Python
+      uses: gabrielfalcao/pyenv-action@v14
+      with:
+        versions:  "${{ matrix.python }}"
+        default: "${{ matrix.python }}"
+        command: pyenv global "${{ matrix.python }}"
+
+    - name: test python
+      run: |
+        pyenv versions
+        # pyenv install 3.9.16
+        pyenv global 3.9.16
+        python --version
+        python3 --version
+        python3.9 --version
+        python3 -m pip install -U pip
+
+#     - name: 📝 Install Poetry
+#       uses: snok/install-poetry@v1
+#       env:
+#         POETRY_HOME: ${PWD}/.poetry
+#       with:
+#         version: 1.3.2
+
+    - name: 🧵 Install Requirements
+      run: ./tools/create_env.sh && ./tools/fetch_thirdparty_libs.sh
+
+    - name: 🔨 Build
+      run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
