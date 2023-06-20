@@ -1,9 +1,0 @@
-{
-    "type": "dict-modifiable",
-    "collapsible": true,
-    "key": "filters",
-    "label": "Publish GUI Filters",
-    "object_type": {
-        "type": "raw-json"
-    }
-}

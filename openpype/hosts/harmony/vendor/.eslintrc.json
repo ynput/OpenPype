@@ -1,7 +1,0 @@
-{
-    "env": {
-        "browser": true
-    },
-    "extends": "eslint:recommended",
-    "ignorePatterns": ["**/*.js"]
-}

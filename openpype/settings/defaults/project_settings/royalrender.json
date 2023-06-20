@@ -1,7 +1,0 @@
-{
-    "publish": {
-        "CollectSequencesFromJob": {
-            "review": true
-        }
-    }
-}
