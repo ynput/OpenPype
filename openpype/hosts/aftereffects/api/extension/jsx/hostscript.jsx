@@ -165,6 +165,24 @@ function getItems(comps, folders, footages){
 
 }
 
+function selectItems(items){
+    /**
+     * Select all items from `items`, deselect other.
+     *
+     * Args:
+     *      items (list)
+     */
+    for (i = 1; i <= app.project.items.length; ++i){
+        item = app.project.items[i];
+        if (items.indexOf(item.id) > -1){
+            item.selected = true;
+        }else{
+            item.selected = false;
+        }
+    }
+
+}
+
 function getSelectedItems(comps, folders, footages){
     /**
      * Returns list of selected items from Project menu
@@ -864,22 +882,3 @@ function _prepareSingleValue(value){
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
-
-
-// writeLn(ret.id);
-
-// var item = app.project.itemByID(ret.id);
-// item.comment = "Placeholder comment with more data ";
-// fp = new File("C:\\projects\\testing\\sh010\\publish\\render\\renderAnimationMain\\v021\\testing_sh010_renderAnimationMain_v021.mov");
-// if (item){
-//     try{
-//         if (isFileSequence(item)) {
-//             item.replaceWithSequence(fp, false);
-//         }else{
-//             item.replace(fp);
-//         }
-
-//     } catch (error) {
-//         writeLn(_prepareError(error.toString() + path));
-//     }
-// }

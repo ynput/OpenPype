@@ -10,6 +10,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
     PlaceholderPlugin,
     LoadPlaceholderItem,
+    CreatePlaceholderItem,
     PlaceholderLoadMixin,
     PlaceholderCreateMixin
 )
@@ -48,27 +49,37 @@ class AETemplateBuilder(AbstractTemplateBuilder):
 
 
 class AEPlaceholderPlugin(PlaceholderPlugin):
-    """Contains generic methods for all PlaceholderPlugins.
+    """Contains generic methods for all PlaceholderPlugins."""
 
-    Cannot inherit from `PlaceholderPlugin` as it is actually not implementing
-    all methods.
-    """
     def collect_placeholders(self):
+        """Collect info from file metadata about created placeholders.
+
+        Returns:
+            (list) (LoadPlaceholderItem)
+        """
         output = []
         scene_placeholders = self._collect_scene_placeholders()
         for item in scene_placeholders:
             if item.get("plugin_identifier") != self.identifier:
                 continue
 
-            output.append(
-                LoadPlaceholderItem(item["uuid"],
-                                    item["data"],
-                                    self)
-            )
+            if isinstance(self, AEPlaceholderLoadPlugin):
+                item = LoadPlaceholderItem(item["uuid"],
+                                           item["data"],
+                                           self)
+            elif isinstance(self, AEPlaceholderCreatePlugin):
+                item = CreatePlaceholderItem(item["uuid"],
+                                             item["data"],
+                                             self)
+            else:
+                raise NotImplementedError(f"Not implemented for {type(self)}")
+
+            output.append(item)
 
         return output
 
     def update_placeholder(self, placeholder_item, placeholder_data):
+        """Resave changed properties for placeholders"""
         item_id, metadata_item = self._get_item(placeholder_item)
         stub = get_stub()
         if not item_id:
@@ -90,8 +101,10 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
         return None, None
 
     def _collect_scene_placeholders(self):
-        # Cache placeholder data to shared data
-        # Returns list of dicts
+        """" Cache placeholder data to shared data.
+        Returns:
+            (list) of dicts
+        """
         placeholder_items = self.builder.get_shared_populate_data(
             "placeholder_items"
         )
@@ -131,7 +144,6 @@ class AEPlaceholderCreatePlugin(AEPlaceholderPlugin, PlaceholderCreateMixin):
     label = "AfterEffects create"
 
     def create_placeholder(self, placeholder_data):
-
         stub = get_stub()
         name = "CREATEPLACEHOLDER"
         item_id = stub.add_item(name, "COMP")
@@ -139,7 +151,14 @@ class AEPlaceholderCreatePlugin(AEPlaceholderPlugin, PlaceholderCreateMixin):
         self._imprint_item(item_id, name, placeholder_data, stub)
 
     def populate_placeholder(self, placeholder):
-        pre_create_data = {"use_selection": False}
+        """Replace 'placeholder' with publishable instance.
+
+        Renames prepared composition name, creates publishable instance, sets
+        frame/duration settings according to DB.
+        """
+        pre_create_data = {"use_selection": True}
+        item_id, item = self._get_item(placeholder)
+        get_stub().select_items([item_id])
         self.populate_create_placeholder(placeholder, pre_create_data)
 
         # apply settings for populated composition
@@ -155,7 +174,11 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
     label = "AfterEffects load"
 
     def create_placeholder(self, placeholder_data):
+        """Creates AE's Placeholder item in Project items list.
 
+         Sets dummy resolution/duration/fps settings, will be replaced when
+         populated.
+         """
         stub = get_stub()
         name = "LOADERPLACEHOLDER"
         item_id = stub.add_placeholder(name, 1920, 1060, 25, 10)
@@ -163,6 +186,10 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
         self._imprint_item(item_id, name, placeholder_data, stub)
 
     def populate_placeholder(self, placeholder):
+        """Use Openpype Loader from `placeholder` to create new FootageItems
+
+        New FootageItems are created, files are imported.
+        """
         self.populate_load_placeholder(placeholder)
         errors = placeholder.get_errors()
         stub = get_stub()
@@ -195,6 +222,7 @@ def update_workfile_template(*args):
 
 
 def create_placeholder(*args):
+    """Called when new workile placeholder should be created."""
     host = registered_host()
     builder = AETemplateBuilder(host)
     window = WorkfileBuildPlaceholderDialog(host, builder)
@@ -202,6 +230,7 @@ def create_placeholder(*args):
 
 
 def update_placeholder(*args):
+    """Called after placeholder item is selected to modify it."""
     host = registered_host()
     builder = AETemplateBuilder(host)
 
