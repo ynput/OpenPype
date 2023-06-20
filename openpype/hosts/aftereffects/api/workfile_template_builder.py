@@ -12,6 +12,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     PlaceholderCreateMixin
 )
 from openpype.hosts.aftereffects.api import get_stub
+from openpype.hosts.aftereffects.api.lib import set_settings
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 PLACEHOLDER_ID = "openpype.placeholder"
@@ -60,20 +61,25 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
         return output
 
     def update_placeholder(self, placeholder_item, placeholder_data):
+        item_id, metadata_item = self._get_item(placeholder_item)
+        stub = get_stub()
+        if not item_id:
+            stub.print_msg("Cannot find item for "
+                           f"{placeholder_item.scene_identifier}")
+            return
+        metadata_item["data"] = placeholder_data
+        stub.imprint(item_id, metadata_item)
+
+    def _get_item(self, placeholder_item):
+        """Returns item id and item metadata for placeholder from file meta"""
         stub = get_stub()
         placeholder_uuid = placeholder_item.scene_identifier
-        item_id = None
         for metadata_item in stub.get_metadata():
             if not metadata_item.get("is_placeholder"):
                 continue
             if placeholder_uuid in metadata_item.get("uuid"):
-                item_id = metadata_item["members"][0]
-                break
-        if not item_id:
-            stub.print_msg(f"Cannot find item for {placeholder_uuid}")
-            return
-        metadata_item["data"] = placeholder_data
-        stub.imprint(item_id, metadata_item)
+                return metadata_item["members"][0], metadata_item
+        return None, None
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
@@ -125,7 +131,12 @@ class AEPlaceholderCreatePlugin(AEPlaceholderPlugin, PlaceholderCreateMixin):
         self._imprint_item(item_id, name, placeholder_data, stub)
 
     def populate_placeholder(self, placeholder):
-        pass
+        pre_create_data = {"use_selection": False}
+        self.populate_create_placeholder(placeholder, pre_create_data)
+
+        # apply settings for populated composition
+        item_id, metadata_item = self._get_item(placeholder)
+        set_settings(True, True, [item_id])
 
     def get_placeholder_options(self, options=None):
         return self.get_create_plugin_options(options)
@@ -146,10 +157,10 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
     def populate_placeholder(self, placeholder):
         self.populate_load_placeholder(placeholder)
         errors = placeholder.get_errors()
+        stub = get_stub()
         if errors:
-            get_stub().print_msg("\n".join(errors))
+            stub.print_msg("\n".join(errors))
         else:
-            stub = get_stub()
             if not placeholder.data["keep_placeholder"]:
                 metadata = stub.get_metadata()
                 for item in metadata:
