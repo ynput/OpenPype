@@ -82,7 +82,7 @@
         "pattern": "CI(.+)",
         "flags": "gu"
       }
-    },
+    }
     // "base_branches": [
     //   "dev"
     // ]
