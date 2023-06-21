@@ -38,6 +38,13 @@ jobs:
                     "title": "## 📦 Dependencies",
                     "labels": ["dependencies"]
                 }
+              ],
+              label_extractor: [
+                {
+                  "pattern": "(#[0-9]\{4\})",
+                  "target": "$1",
+                  "flags": "gu"
+                },
               ]
             }
       env:
