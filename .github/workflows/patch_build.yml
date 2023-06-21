@@ -21,13 +21,13 @@ jobs:
       
     - name: "📝 Build Changelog"
       id: changelog
-      uses: mikepenz/release-changelog-builder-action@v4
+      uses: mikepenz/release-changelog-builder-action@v3.4
       with:
         # fromTag: "3.15.6"
         # toTag: "3.15.8"
         commitMode: true
         failOnError: true
-        configuration: configuration.json
+        configuration: "configuration.json"
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
         
