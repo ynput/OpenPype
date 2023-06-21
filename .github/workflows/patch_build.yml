@@ -26,7 +26,8 @@ jobs:
         fromTag: "3.15.6"
         toTag: "3.15.8"
         commitMode: true
-        configuration: "configuration.json"
+        failOnError: true
+        configuration: .github/workflows/configuration.json
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
 
