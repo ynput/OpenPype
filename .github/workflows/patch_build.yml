@@ -11,42 +11,22 @@ on:
 jobs:
   build-zip-patch:
     runs-on: [self-hosted, ubuntu]
-    strategy:
-      matrix:
-        python-version: [3.9.16]
 
     steps:
+    
+    - name: 📩 Message to Release chat
+      uses: julb/action-post-googlechat-message@v1
+      with:
+        message: "Hello from Github Action!"
+        gchat_webhook_url: ${{ secrets.GCHAT_WEBHOOK_URL }}
+        
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
-
-#     - name: 🐍 Set up Python
-#       uses: gabrielfalcao/pyenv-action@v14
-#       with:
-#         versions:  3.9.16
-#         default: 3.9.16
-#         command: pyenv global 3.9.16
     
-    - name: Set up Python
+    - name: 🐍 Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.9
-        
-#     - name: test python
-#       run: |
-#         # pyenv versions
-#         # pyenv uninstall 3.9.16
-#         # pyenv global 3.9.16
-#         python --version
-#         python3 --version
-#         python3.9 --version
-#         python3 -m pip install -U pip
-
-#     - name: 📝 Install Poetry
-#       uses: snok/install-poetry@v1
-#       env:
-#         POETRY_HOME: ${PWD}/.poetry
-#       with:
-#         version: 1.3.2
 
     - name: 🧵 Install Requirements
       run: ./tools/create_env.sh && ./tools/fetch_thirdparty_libs.sh
