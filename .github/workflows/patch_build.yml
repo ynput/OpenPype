@@ -30,29 +30,20 @@ jobs:
         configuration: .github/workflows/configuration.json
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
-
-    # - name: "print msg"
-    #   run: |
-    #     echo ${{steps.changelog.outputs.changelog}}
-    #     echo ${{steps.changelog.outputs.changes}}
-    #     echo ${{steps.changelog.outputs.commits}}
-    #     echo ${{steps.changelog.outputs.uncategorized_prs}}
         
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
 
+    - name: 🧵 Install Requirements
+      run: ./tools/create_env.sh && ./tools/fetch_thirdparty_libs.sh
+
+    - name: 🔨 Build
+      run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
+    
     - name: 💬 Message to Release chat
       uses: julb/action-post-googlechat-message@v1
       with:
         message: ${{ steps.changelog.outputs.changelog }}
         gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
-
-    # - name: 🐍 Set up Python
-    #   uses: actions/setup-python@v4
-    #   with:
-    #     python-version: 3.9
-
-    # - name: 🧵 Install Requirements
-    #   run: ./tools/create_env.sh && ./tools/fetch_thirdparty_libs.sh
-
-    # - name: 🔨 Build
-    #   run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
-    
