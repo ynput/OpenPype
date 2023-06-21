@@ -1,42 +1,34 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection
-)
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
 
-
-def get_setting(project_setting=None):
-    project_setting = get_project_settings(
-        legacy_io.Session["AVALON_PROJECT"]
-    )
-    return (project_setting["max"]["PointCloud"])
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import publish
 
 
 class ExtractPointCloud(publish.Extractor):
     """
-    Extract PRT format with tyFlow operators
+    Extract PRT format with tyFlow operators.
 
     Notes:
         Currently only works for the default partition setting
 
     Args:
-        export_particle(): sets up all job arguments for attributes
-        to be exported in MAXscript
+        self.export_particle(): sets up all job arguments for attributes
+            to be exported in MAXscript
 
-        get_operators(): get the export_particle operator
+        self.get_operators(): get the export_particle operator
 
-        get_custom_attr(): get all custom channel attributes from Openpype
-        setting and sets it as job arguments before exporting
+        self.get_custom_attr(): get all custom channel attributes from Openpype
+            setting and sets it as job arguments before exporting
 
-        get_files(): get the files with tyFlow naming convention
-        before publishing
+        self.get_files(): get the files with tyFlow naming convention
+            before publishing
 
-        partition_output_name(): get the naming with partition settings.
-        get_partition(): get partition value
+        self.partition_output_name(): get the naming with partition settings.
+
+        self.get_partition(): get partition value
 
     """
 
@@ -46,9 +38,9 @@ class ExtractPointCloud(publish.Extractor):
     families = ["pointcloud"]
 
     def process(self, instance):
+        self.settings = self.get_setting(instance)
         start = int(instance.context.data.get("frameStart"))
         end = int(instance.context.data.get("frameEnd"))
-        container = instance.data["instance_node"]
         self.log.info("Extracting PRT...")
 
         stagingdir = self.staging_dir(instance)
@@ -56,22 +48,25 @@ class ExtractPointCloud(publish.Extractor):
         path = os.path.join(stagingdir, filename)
 
         with maintained_selection():
-            job_args = self.export_particle(container,
+            job_args = self.export_particle(instance.data["members"],
                                             start,
                                             end,
                                             path)
+
             for job in job_args:
-                rt.execute(job)
+                rt.Execute(job)
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         self.log.info("Writing PRT with TyFlow Plugin...")
-        filenames = self.get_files(container, path, start, end)
-        self.log.debug("filenames: {0}".format(filenames))
+        filenames = self.get_files(
+            instance.data["members"], path, start, end)
+        self.log.debug(f"filenames: {filenames}")
 
-        partition = self.partition_output_name(container)
+        partition = self.partition_output_name(
+            instance.data["members"])
 
         representation = {
             'name': 'prt',
@@ -81,67 +76,84 @@ class ExtractPointCloud(publish.Extractor):
             "outputName": partition         # partition value
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          path))
+        self.log.info(f"Extracted instance '{instance.name}' to: {path}")
 
     def export_particle(self,
-                        container,
+                        members,
                         start,
                         end,
                         filepath):
+        """Sets up all job arguments for attributes.
+
+        Those attributes are to be exported in MAX Script.
+
+        Args:
+            members (list): Member nodes of the instance.
+            start (int): Start frame.
+            end (int): End frame.
+            filepath (str): Path to PRT file.
+
+        Returns:
+            list of arguments for MAX Script.
+
+        """
         job_args = []
-        opt_list = self.get_operators(container)
+        opt_list = self.get_operators(members)
         for operator in opt_list:
-            start_frame = "{0}.frameStart={1}".format(operator,
-                                                      start)
+            start_frame = f"{operator}.frameStart={start}"
             job_args.append(start_frame)
-            end_frame = "{0}.frameEnd={1}".format(operator,
-                                                  end)
+            end_frame = f"{operator}.frameEnd={end}"
             job_args.append(end_frame)
             filepath = filepath.replace("\\", "/")
-            prt_filename = '{0}.PRTFilename="{1}"'.format(operator,
-                                                          filepath)
-
+            prt_filename = f'{operator}.PRTFilename="{filepath}"'
             job_args.append(prt_filename)
             # Partition
-            mode = "{0}.PRTPartitionsMode=2".format(operator)
+            mode = f"{operator}.PRTPartitionsMode=2"
             job_args.append(mode)
 
             additional_args = self.get_custom_attr(operator)
-            for args in additional_args:
-                job_args.append(args)
-
-            prt_export = "{0}.exportPRT()".format(operator)
+            job_args.extend(iter(additional_args))
+            prt_export = f"{operator}.exportPRT()"
             job_args.append(prt_export)
 
         return job_args
 
-    def get_operators(self, container):
-        """Get Export Particles Operator"""
+    @staticmethod
+    def get_operators(members):
+        """Get Export Particles Operator.
 
+        Args:
+            members (list): Instance members.
+
+        Returns:
+            list of particle operators
+
+        """
         opt_list = []
-        node = rt.getNodebyName(container)
-        selection_list = list(node.Children)
-        for sel in selection_list:
-            obj = sel.baseobject
-            # TODO: to see if it can be used maxscript instead
-            anim_names = rt.getsubanimnames(obj)
+        for member in members:
+            obj = member.baseobject
+        # TODO: to see if it can be used maxscript instead
+            anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
-                sub_anim = rt.getsubanim(obj, anim_name)
-                boolean = rt.isProperty(sub_anim, "Export_Particles")
-                event_name = sub_anim.name
+                sub_anim = rt.GetSubAnim(obj, anim_name)
+                boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 if boolean:
-                    opt = "${0}.{1}.export_particles".format(sel.name,
-                                                             event_name)
-                    opt_list.append(opt)
+                        event_name = sub_anim.Name
+                        opt = f"${member.Name}.{event_name}.export_particles"
+                        opt_list.append(opt)
 
         return opt_list
+
+    @staticmethod
+    def get_setting(instance):
+        project_setting = instance.context.data["project_settings"]
+        return project_setting["max"]["PointCloud"]
 
     def get_custom_attr(self, operator):
         """Get Custom Attributes"""
 
         custom_attr_list = []
-        attr_settings = get_setting()["attribute"]
+        attr_settings = self.settings["attribute"]
         for key, value in attr_settings.items():
             custom_attr = "{0}.PRTChannels_{1}=True".format(operator,
                                                             value)
@@ -157,14 +169,25 @@ class ExtractPointCloud(publish.Extractor):
                   path,
                   start_frame,
                   end_frame):
-        """
-        Note:
-            Set the filenames accordingly to the tyFlow file
-            naming extension for the publishing purpose
+        """Get file names for tyFlow.
 
-            Actual File Output from tyFlow:
+        Set the filenames accordingly to the tyFlow file
+        naming extension for the publishing purpose
+
+        Actual File Output from tyFlow::
             <SceneFile>__part<PartitionStart>of<PartitionCount>.<frame>.prt
+
             e.g. tyFlow_cloth_CCCS_blobbyFill_001__part1of1_00004.prt
+
+        Args:
+            container: Instance node.
+            path (str): Output directory.
+            start_frame (int): Start frame.
+            end_frame (int): End frame.
+
+        Returns:
+            list of filenames
+
         """
         filenames = []
         filename = os.path.basename(path)
@@ -181,27 +204,36 @@ class ExtractPointCloud(publish.Extractor):
         return filenames
 
     def partition_output_name(self, container):
-        """
-        Notes:
-            Partition output name set for mapping
-            the published file output
+        """Get partition output name.
 
-        todo:
-            Customizes the setting for the output
+        Partition output name set for mapping
+        the published file output.
+
+        Todo:
+            Customizes the setting for the output.
+
+        Args:
+            container: Instance node.
+
+        Returns:
+            str: Partition name.
+
         """
         partition_count, partition_start = self.get_partition(container)
-        partition = "_part{:03}of{}".format(partition_start,
-                                            partition_count)
-
-        return partition
+        return f"_part{partition_start:03}of{partition_count}"
 
     def get_partition(self, container):
-        """
-        Get Partition Value
+        """Get Partition value.
+
+        Args:
+            container: Instance node.
+
         """
         opt_list = self.get_operators(container)
+        # TODO: This looks strange? Iterating over
+        #   the opt_list but returning from inside?
         for operator in opt_list:
-            count = rt.execute(f'{operator}.PRTPartitionsCount')
-            start = rt.execute(f'{operator}.PRTPartitionsFrom')
+            count = rt.Execute(f'{operator}.PRTPartitionsCount')
+            start = rt.Execute(f'{operator}.PRTPartitionsFrom')
 
             return count, start
