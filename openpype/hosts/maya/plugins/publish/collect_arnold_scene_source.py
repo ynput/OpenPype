@@ -18,18 +18,14 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
         for objset in objsets:
             objset = str(objset)
             members = cmds.sets(objset, query=True)
+            members = cmds.ls(members, long=True)
             if members is None:
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
             if objset.endswith("content_SET"):
-                members = cmds.ls(members, long=True)
-                children = get_all_children(members)
-                instance.data["contentMembers"] = children
-                self.log.debug("content members: {}".format(children))
-            elif objset.endswith("proxy_SET"):
-                set_members = get_all_children(cmds.ls(members, long=True))
-                instance.data["proxy"] = set_members
-                self.log.debug("proxy members: {}".format(set_members))
+                instance.data["contentMembers"] = self.get_hierarchy(members)
+            if objset.endswith("proxy_SET"):
+                instance.data["proxy"] = self.get_hierarchy(members)
 
         # Use camera in object set if present else default to render globals
         # camera.
@@ -48,3 +44,13 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
             self.log.debug("No renderable cameras found.")
 
         self.log.debug("data: {}".format(instance.data))
+
+    def get_hierarchy(self, nodes):
+        """Return nodes with all their children"""
+        nodes = cmds.ls(nodes, long=True)
+        if not nodes:
+            return []
+        children = get_all_children(nodes)
+        # Make sure nodes merged with children only
+        # contains unique entries
+        return list(set(nodes + children))
