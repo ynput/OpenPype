@@ -24,6 +24,7 @@ jobs:
       with:
         fromTag: "3.15.6"
         toTag: "3.15.8"
+        commitMode: true
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
             
