@@ -24,22 +24,27 @@ jobs:
       with:
           configurationJson: |
             {
-              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
-              "categories": [
-                {
-                    "title": "## 💬 Other",
-                    "labels": ["other"]
-                },
-                {
-                    "title": "## 📦 Dependencies",
-                    "labels": ["dependencies"]
-                }
-              ],
-            "tag_resolver": {
-              "method": "semver",
-              "filter": {
-                "pattern": "(.+)\.(.+)\.(.+)",
-              }
+               "template":"#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+               "categories":[
+                  {
+                     "title":"## 💬 Other",
+                     "labels":[
+                        "other"
+                     ]
+                  },
+                  {
+                     "title":"## 📦 Dependencies",
+                     "labels":[
+                        "dependencies"
+                     ]
+                  }
+               ],
+               "tag_resolver":{
+                  "method":"semver",
+                  "filter":{
+                     "pattern":"(.+)\\.(.+)\\.(.+)"
+                  }
+               }
             }
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
