@@ -86,6 +86,18 @@ class ExtractXgen(publish.Extractor):
 
             delete_bin.append(palette)
 
+            # Copy shading assignments.
+            nodes = (
+                instance.data["xgmDescriptions"] +
+                instance.data["xgmSubdPatches"]
+            )
+            for node in nodes:
+                target_node = node.split(":")[-1]
+                shading_engine = cmds.listConnections(
+                    node, type="shadingEngine"
+                )[0]
+                cmds.sets(target_node, edit=True, forceElement=shading_engine)
+
             # Export duplicated palettes.
             xgenm.exportPalette(palette, xgen_path)
 
