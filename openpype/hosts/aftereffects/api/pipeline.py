@@ -12,6 +12,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.aftereffects.api.workfile_template_builder import (
     AEPlaceholderLoadPlugin,
+    AEPlaceholderCreatePlugin
 )
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
@@ -121,7 +122,8 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def get_workfile_build_placeholder_plugins(self):
         return [
-            AEPlaceholderLoadPlugin
+            AEPlaceholderLoadPlugin,
+            AEPlaceholderCreatePlugin
         ]
 
     # created instances section
