@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """Unreal launching and project tools."""
 
+import json
 import os
 import platform
-import json
-
+import re
+import subprocess
+from collections import OrderedDict
+from distutils import dir_util
+from pathlib import Path
 from typing import List
 
-from distutils import dir_util
-import subprocess
-import re
-from pathlib import Path
-from collections import OrderedDict
-from openpype.settings import get_project_settings
+from openpype.settings import get_current_project_settings
 
 
 def get_engine_versions(env=None):
@@ -213,7 +212,8 @@ def create_unreal_project(project_name: str,
 
     """
     env = env or os.environ
-    preset = get_project_settings(project_name)["unreal"]["project_setup"]
+
+    preset = get_current_project_settings()["unreal"]["project_setup"]
     ue_id = ".".join(ue_version.split(".")[:2])
     # get unreal engine identifier
     # -------------------------------------------------------------------------
