@@ -31,7 +31,7 @@ appdirs = { git = "https://github.com/ActiveState/appdirs.git", branch = "master
 blessed = "^1.17" # terminal formatting
 coolname = "*"
 Click = "^8"
-# dnspython = "^2.1.0"
+ dnspython = "^2.1.0"
 arrow = "^0.17"
 keyring = "^22.0.1"
 QtPy = "^2.3.0"
