@@ -9,7 +9,7 @@ class ExtractReviewAnimation(publish.Extractor):
     Extract Review by Review Animation
     """
 
-    order = pyblish.api.ExtractorOrder
+    order = pyblish.api.ExtractorOrder + 0.001
     label = "Extract Review Animation"
     hosts = ["max"]
     families = ["review"]
@@ -72,8 +72,14 @@ class ExtractReviewAnimation(publish.Extractor):
         job_args = list()
         default_option = f'CreatePreview filename:"{filepath}"'
         job_args.append(default_option)
+        frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
+        job_args.append(frame_option)
+        rndLevel = instance.data.get("rndLevel")
+        if rndLevel:
+            option = f"rndLevel:#{rndLevel}"
+            job_args.append(option)
         options = [
-            "rndLevel", "percentSize", "dspGeometry", "dspShapes",
+            "percentSize", "dspGeometry", "dspShapes",
             "dspLights", "dspCameras", "dspHelpers", "dspParticles",
             "dspBones", "dspBkg", "dspGrid", "dspSafeFrame", "dspFrameNums"
         ]
@@ -82,8 +88,6 @@ class ExtractReviewAnimation(publish.Extractor):
             enabled = instance.data.get(key)
             if enabled:
                 job_args.append(f"{key}:{enabled}")
-        frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
-        job_args.append(frame_option)
         job_str = " ".join(job_args)
         self.log.info(f"{job_str}")
 

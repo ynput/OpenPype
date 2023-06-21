@@ -53,6 +53,6 @@ class CreateReview(plugin.MaxCreator):
                       decimals=0),
             EnumDef("rndLevel",
                     rndLevel_enum,
-                    default="png",
+                    default="smoothhighlights",
                     label="Preference")
         ]
