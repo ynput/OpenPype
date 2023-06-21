@@ -1,16 +1,18 @@
-import os
 import contextlib
 
-from openpype.client import get_version_by_id
-from openpype.pipeline import (
-    load,
-    legacy_io,
-    get_representation_path,
+import openpype.pipeline.load as load
+from openpype.pipeline.load import (
+    get_representation_context,
+    get_representation_path_from_context
 )
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
     comp_lock_and_undo_chunk
+)
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS,
+    VIDEO_EXTENSIONS
 )
 
 comp = get_current_comp()
@@ -129,6 +131,9 @@ class FusionLoadSequence(load.LoaderPlugin):
 
     families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load sequence"
     order = -10
@@ -141,7 +146,7 @@ class FusionLoadSequence(load.LoaderPlugin):
             namespace = context['asset']['name']
 
         # Use the first file for now
-        path = self._get_first_image(os.path.dirname(self.fname))
+        path = get_representation_path_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
@@ -210,13 +215,11 @@ class FusionLoadSequence(load.LoaderPlugin):
         assert tool.ID == "Loader", "Must be Loader"
         comp = tool.Comp()
 
-        root = os.path.dirname(get_representation_path(representation))
-        path = self._get_first_image(root)
+        context = get_representation_context(representation)
+        path = get_representation_path_from_context(context)
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
-        version = get_version_by_id(project_name, representation["parent"])
-        start = self._get_start(version, tool)
+        start = self._get_start(context["version"], tool)
 
         with comp_lock_and_undo_chunk(comp, "Update Loader"):
 
@@ -248,11 +251,6 @@ class FusionLoadSequence(load.LoaderPlugin):
 
         with comp_lock_and_undo_chunk(comp, "Remove Loader"):
             tool.Delete()
-
-    def _get_first_image(self, root):
-        """Get first file in representation root"""
-        files = sorted(os.listdir(root))
-        return os.path.join(root, files[0])
 
     def _get_start(self, version_doc, tool):
         """Return real start frame of published files (incl. handles)"""

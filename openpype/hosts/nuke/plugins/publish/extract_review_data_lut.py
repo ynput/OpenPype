@@ -49,7 +49,12 @@ class ExtractReviewDataLut(publish.Extractor):
                 exporter.stagingDir, exporter.file).replace("\\", "/")
             instance.data["representations"] += data["representations"]
 
-        if "render.farm" in families:
+        # review can be removed since `ProcessSubmittedJobOnFarm` will create
+        # reviewable representation if needed
+        if (
+            instance.data.get("farm")
+            and "review" in instance.data["families"]
+        ):
             instance.data["families"].remove("review")
 
         self.log.debug(

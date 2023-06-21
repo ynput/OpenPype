@@ -135,6 +135,38 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             )
         return project_doc
 
+    def _prepare_new_tasks(self, asset_doc, entity_data):
+        new_tasks = entity_data.get("tasks") or {}
+        if not asset_doc:
+            return new_tasks
+
+        old_tasks = asset_doc.get("data", {}).get("tasks")
+        # Just use new tasks if old are not available
+        if not old_tasks:
+            return new_tasks
+
+        output = deepcopy(old_tasks)
+        # Create mapping of lowered task names from old tasks
+        cur_task_low_mapping = {
+            task_name.lower(): task_name
+            for task_name in old_tasks
+        }
+        # Add/update tasks from new entity data
+        for task_name, task_info in new_tasks.items():
+            task_info = deepcopy(task_info)
+            task_name_low = task_name.lower()
+            # Add new task
+            if task_name_low not in cur_task_low_mapping:
+                output[task_name] = task_info
+                continue
+
+            # Update existing task with new info
+            mapped_task_name = cur_task_low_mapping.pop(task_name_low)
+            src_task_info = output.pop(mapped_task_name)
+            src_task_info.update(task_info)
+            output[task_name] = src_task_info
+        return output
+
     def sync_asset(
         self,
         asset_name,
@@ -170,11 +202,12 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         data["parents"] = parents
 
         asset_doc = asset_docs_by_name.get(asset_name)
+
+        # Tasks
+        data["tasks"] = self._prepare_new_tasks(asset_doc, entity_data)
+
         # --- Create/Unarchive asset and end ---
         if not asset_doc:
-            # Just use tasks from entity data as they are
-            # - this is different from the case when tasks are updated
-            data["tasks"] = entity_data.get("tasks") or {}
             archived_asset_doc = None
             for archived_entity in archived_asset_docs_by_name[asset_name]:
                 archived_parents = (
@@ -201,19 +234,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if "data" not in asset_doc:
             asset_doc["data"] = {}
         cur_entity_data = asset_doc["data"]
-        cur_entity_tasks = cur_entity_data.get("tasks") or {}
-
-        # Tasks
-        data["tasks"] = {}
-        new_tasks = entity_data.get("tasks") or {}
-        for task_name, task_info in new_tasks.items():
-            task_info = deepcopy(task_info)
-            if task_name in cur_entity_tasks:
-                src_task_info = deepcopy(cur_entity_tasks[task_name])
-                src_task_info.update(task_info)
-                task_info = src_task_info
-
-            data["tasks"][task_name] = task_info
 
         changes = {}
         for key, value in data.items():

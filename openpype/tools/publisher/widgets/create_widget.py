@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
@@ -18,9 +18,12 @@ from .tasks_widget import CreateWidgetTasksWidget
 from .precreate_widget import PreCreateWidget
 from ..constants import (
     VARIANT_TOOLTIP,
-    CREATOR_IDENTIFIER_ROLE,
     FAMILY_ROLE,
+    CREATOR_IDENTIFIER_ROLE,
     CREATOR_THUMBNAIL_ENABLED_ROLE,
+    CREATOR_SORT_ROLE,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 SEPARATORS = ("---separator---", "---")
@@ -90,11 +93,18 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._description_label.setText(description)
 
 
+class CreatorsProxyModel(QtCore.QSortFilterProxyModel):
+    def lessThan(self, left, right):
+        l_show_order = left.data(CREATOR_SORT_ROLE)
+        r_show_order = right.data(CREATOR_SORT_ROLE)
+        if l_show_order == r_show_order:
+            return super(CreatorsProxyModel, self).lessThan(left, right)
+        return l_show_order < r_show_order
+
+
 class CreateWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent=None):
         super(CreateWidget, self).__init__(parent)
-
-        self.setWindowTitle("Create new instance")
 
         self._controller = controller
 
@@ -141,7 +151,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         creators_view = QtWidgets.QListView(creators_view_widget)
         creators_model = QtGui.QStandardItemModel()
-        creators_sort_model = QtCore.QSortFilterProxyModel()
+        creators_sort_model = CreatorsProxyModel()
         creators_sort_model.setSourceModel(creators_model)
         creators_view.setModel(creators_sort_model)
 
@@ -190,6 +200,8 @@ class CreateWidget(QtWidgets.QWidget):
 
         variant_subset_layout = QtWidgets.QFormLayout(variant_subset_widget)
         variant_subset_layout.setContentsMargins(0, 0, 0, 0)
+        variant_subset_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        variant_subset_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         variant_subset_layout.addRow("Variant", variant_widget)
         variant_subset_layout.addRow("Subset", subset_name_input)
 
@@ -275,6 +287,9 @@ class CreateWidget(QtWidgets.QWidget):
         thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
         controller.event_system.add_callback(
+            "main.window.closed", self._on_main_window_close
+        )
+        controller.event_system.add_callback(
             "plugins.refresh.finished", self._on_plugins_refresh
         )
 
@@ -307,6 +322,10 @@ class CreateWidget(QtWidgets.QWidget):
         self._prereq_timer = prereq_timer
         self._first_show = True
         self._last_thumbnail_path = None
+
+        self._last_current_context_asset = None
+        self._last_current_context_task = None
+        self._use_current_context = True
 
     @property
     def current_asset_name(self):
@@ -348,11 +367,38 @@ class CreateWidget(QtWidgets.QWidget):
         if check_prereq:
             self._invalidate_prereq()
 
+    def _on_main_window_close(self):
+        """Publisher window was closed."""
+
+        # Use current context on next refresh
+        self._use_current_context = True
+
     def refresh(self):
+        current_asset_name = self._controller.current_asset_name
+        current_task_name = self._controller.current_task_name
+
         # Get context before refresh to keep selection of asset and
         #   task widgets
         asset_name = self._get_asset_name()
         task_name = self._get_task_name()
+
+        # Replace by current context if last loaded context was
+        #   'current context' before reset
+        if (
+            self._use_current_context
+            or (
+                self._last_current_context_asset
+                and asset_name == self._last_current_context_asset
+                and task_name == self._last_current_context_task
+            )
+        ):
+            asset_name = current_asset_name
+            task_name = current_task_name
+
+        # Store values for future refresh
+        self._last_current_context_asset = current_asset_name
+        self._last_current_context_task = current_task_name
+        self._use_current_context = False
 
         self._prereq_available = False
 
@@ -390,7 +436,10 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_name is None:
+        if (
+            self._context_change_is_enabled()
+            and self._get_asset_name() is None
+        ):
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -441,28 +490,33 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Add new families
         new_creators = set()
-        for identifier, creator_item in self._controller.creator_items.items():
+        creator_items_by_identifier = self._controller.creator_items
+        for identifier, creator_item in creator_items_by_identifier.items():
             if creator_item.creator_type != "artist":
                 continue
 
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
+                is_new = False
                 item = existing_items[identifier]
             else:
+                is_new = True
                 item = QtGui.QStandardItem()
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
                 )
-                self._creators_model.appendRow(item)
 
             item.setData(creator_item.label, QtCore.Qt.DisplayRole)
+            item.setData(creator_item.show_order, CREATOR_SORT_ROLE)
             item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
             item.setData(
                 creator_item.create_allow_thumbnail,
                 CREATOR_THUMBNAIL_ENABLED_ROLE
             )
             item.setData(creator_item.family, FAMILY_ROLE)
+            if is_new:
+                self._creators_model.appendRow(item)
 
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
@@ -482,8 +536,9 @@ class CreateWidget(QtWidgets.QWidget):
             index = indexes[0]
 
         identifier = index.data(CREATOR_IDENTIFIER_ROLE)
+        create_item = creator_items_by_identifier.get(identifier)
 
-        self._set_creator_by_identifier(identifier)
+        self._set_creator(create_item)
 
     def _on_plugins_refresh(self):
         # Trigger refresh only if is visible

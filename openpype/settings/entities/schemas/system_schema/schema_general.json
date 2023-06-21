@@ -146,12 +146,12 @@
                     "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
                 },
                 {
-                    "type": "production-versions-text",
+                    "type": "versions-text",
                     "key": "production_version",
                     "label": "Production version"
                 },
                 {
-                    "type": "staging-versions-text",
+                    "type": "versions-text",
                     "key": "staging_version",
                     "label": "Staging version"
                 },

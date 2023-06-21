@@ -1,8 +1,12 @@
 import nuke
 import pyblish
-from openpype.hosts.nuke.api.lib import maintained_selection
-from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.nuke import api as napi
 
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 
 class SelectCenterInNodeGraph(pyblish.api.Action):
     """
@@ -25,14 +29,14 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
-        all_xC = list()
-        all_yC = list()
+        all_xC = []
+        all_yC = []
 
         # maintain selection
-        with maintained_selection():
+        with napi.maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
-                bdn = instance[0]
+                bdn = instance.data["transientData"]["node"]
                 xC = bdn.xpos() + bdn.screenWidth() / 2
                 yC = bdn.ypos() + bdn.screenHeight() / 2
 
@@ -46,13 +50,15 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         nuke.zoom(2, [min(all_xC), min(all_yC)])
 
 
-@pyblish.api.log
-class ValidateBackdrop(pyblish.api.InstancePlugin):
+class ValidateBackdrop(
+    pyblish.api.InstancePlugin,
+    OptionalPyblishPluginMixin
+):
     """ Validate amount of nodes on backdrop node in case user
-    forgoten to add nodes above the publishing backdrop node.
+    forgotten to add nodes above the publishing backdrop node.
     """
 
-    order = pyblish.api.ValidatorOrder
+    order = ValidateContentsOrder
     optional = True
     families = ["nukenodes"]
     label = "Validate Backdrop"
@@ -60,7 +66,11 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
     actions = [SelectCenterInNodeGraph]
 
     def process(self, instance):
-        connections_out = instance.data["nodeConnectionsOut"]
+        if not self.is_active(instance.data):
+            return
+
+        child_nodes = instance.data["transientData"]["childNodes"]
+        connections_out = instance.data["transientData"]["nodeConnectionsOut"]
 
         msg_multiple_outputs = (
             "Only one outcoming connection from "
@@ -78,10 +88,10 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
 
         self.log.debug(
             "Amount of nodes on instance: {}".format(
-                len(instance))
+                len(child_nodes))
         )
 
-        if len(instance) == 1:
+        if child_nodes == []:
             raise PublishXmlValidationError(
                 self,
                 msg_no_nodes,

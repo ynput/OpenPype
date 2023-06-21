@@ -13,6 +13,7 @@ from openpype.pipeline import install_host
 from openpype.modules import ModulesManager
 
 from openpype.tools.utils import host_tools
+from openpype.tests.lib import is_in_tests
 from .launch_logic import ProcessLauncher, get_stub
 
 log = logging.getLogger(__name__)
@@ -26,9 +27,10 @@ def safe_excepthook(*args):
 def main(*subprocess_args):
     sys.excepthook = safe_excepthook
 
-    from openpype.hosts.aftereffects import api
+    from openpype.hosts.aftereffects.api import AfterEffectsHost
 
-    install_host(api)
+    host = AfterEffectsHost()
+    install_host(host)
 
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
@@ -46,7 +48,7 @@ def main(*subprocess_args):
                 webpublisher_addon.headless_publish,
                 log,
                 "CloseAE",
-                os.environ.get("IS_TEST")
+                is_in_tests()
             )
         )
 
@@ -133,3 +135,32 @@ def get_background_layers(file_url):
                                                layer.get("filename")).
                                   replace("\\", "/"))
     return layers
+
+
+def get_asset_settings(asset_doc):
+    """Get settings on current asset from database.
+
+    Returns:
+        dict: Scene data.
+
+    """
+    asset_data = asset_doc["data"]
+    fps = asset_data.get("fps")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
+    resolution_width = asset_data.get("resolutionWidth")
+    resolution_height = asset_data.get("resolutionHeight")
+    duration = (frame_end - frame_start + 1) + handle_start + handle_end
+
+    return {
+        "fps": fps,
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
+        "resolutionWidth": resolution_width,
+        "resolutionHeight": resolution_height,
+        "duration": duration
+    }

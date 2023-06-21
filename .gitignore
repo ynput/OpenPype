@@ -112,3 +112,9 @@ tools/run_eventserver.*
 tools/dev_*
 
 .github_changelog_generator
+
+
+# Addons
+########
+/openpype/addons/*
+!/openpype/addons/README.md

@@ -127,6 +127,11 @@
                     "label": "Optional"
                 },
                 {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
                     "type": "label",
                     "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
                 },
@@ -144,6 +149,10 @@
                 {
                     "key": "ValidateShadingEngine",
                     "label": "Validate Look Shading Engine Naming"
+                },
+                {
+                    "key": "ValidateMayaColorSpace",
+                    "label": "ValidateMayaColorSpace"
                 }
             ]
         },
@@ -316,6 +325,45 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidatePluginPathAttributes",
+            "label": "Plug-in Path Attributes",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill in the node types and attributes you want to validate. <p>e.g. <b>AlembicNode.abc_file</b>, the node type is <b>AlembicNode</b> and the node attribute is <b>abc_file</b>"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "attribute",
+                    "label": "File Attribute",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateRenderSettings",
             "label": "ValidateRenderSettings",
             "children": [
@@ -326,7 +374,8 @@
                     "label": "Arnold Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -336,7 +385,8 @@
                     "label": "Vray Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -346,7 +396,8 @@
                     "label": "Redshift Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 },
                 {
@@ -356,7 +407,8 @@
                     "label": "Renderman Render Attributes",
                     "use_label_wrap": true,
                     "object_type": {
-                        "type": "text"
+                        "type": "list",
+                        "object_type": "text"
                     }
                 }
             ]
@@ -368,6 +420,14 @@
                 {
                     "key": "ValidateCurrentRenderLayerIsRenderable",
                     "label": "Validate Current Render Layer Has Renderable Camera"
+                },
+                {
+                    "key": "ValidateGLSLMaterial",
+                    "label": "Validate GLSL Material"
+                },
+                {
+                    "key": "ValidateGLSLPlugin",
+                    "label": "Validate GLSL Plugin"
                 },
                 {
                     "key": "ValidateRenderImageRule",
@@ -915,6 +975,118 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGLB",
+            "label": "Extract GLB",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "text",
+                    "key": "ogsfx_path",
+                    "label": "GLSL Shader Directory"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractLook",
+            "label": "Extract Look",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "maketx_arguments",
+                    "label": "Extra arguments for maketx command line",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "argument",
+                                "label": "Argument",
+                                "type": "text"
+                            },
+                            {
+                                "key": "parameters",
+                                "label": "Parameters",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGPUCache",
+            "label": "Extract GPU Cache",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "key": "step",
+                    "label": "Step",
+                    "type": "number",
+                    "decimal": 4,
+                    "minimum": 1
+                },
+                {
+                    "key": "stepSave",
+                    "label": "Step Save",
+                    "type": "number",
+                    "minimum": 1
+                },
+                {
+                    "key": "optimize",
+                    "label": "Optimize Hierarchy",
+                    "type": "boolean"
+                },
+                {
+                    "key": "optimizationThreshold",
+                    "label": "Optimization Threshold",
+                    "type": "number",
+                    "minimum": 1
+                },
+                {
+                    "key": "optimizeAnimationsForMotionBlur",
+                    "label": "Optimize Animations For Motion Blur",
+                    "type": "boolean"
+                },
+                {
+                    "key": "writeMaterials",
+                    "label": "Write Materials",
+                    "type": "boolean"
+                },
+                {
+                    "key": "useBaseTessellation",
+                    "label": "User Base Tesselation",
+                    "type": "boolean"
                 }
             ]
         }

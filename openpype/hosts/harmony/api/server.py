@@ -40,6 +40,7 @@ class Server(threading.Thread):
 
         # Create a TCP/IP socket
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Bind the socket to the port
         server_address = ("127.0.0.1", port)
@@ -60,7 +61,7 @@ class Server(threading.Thread):
                 "module": (str),  # Module of method.
                 "method" (str),  # Name of method in module.
                 "args" (list),  # Arguments to pass to method.
-                "kwargs" (dict),  # Keywork arguments to pass to method.
+                "kwargs" (dict),  # Keyword arguments to pass to method.
                 "reply" (bool),  # Optional wait for method completion.
             }
         """
@@ -91,7 +92,13 @@ class Server(threading.Thread):
             self.log.info("wait ttt")
             # Receive the data in small chunks and retransmit it
             request = None
-            header = self.connection.recv(10)
+            try:
+                header = self.connection.recv(10)
+            except OSError:
+                # could happen on MacOS
+                self.log.info("")
+                break
+
             if len(header) == 0:
                 # null data received, socket is closing.
                 self.log.info(f"[{self.timestamp()}] Connection closing.")

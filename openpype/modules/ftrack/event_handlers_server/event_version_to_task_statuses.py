@@ -102,7 +102,7 @@ class VersionToTaskStatus(BaseEvent):
             asset_version_entities.append(asset_version)
             task_ids.add(asset_version["task_id"])
 
-        # Skipt if `task_ids` are empty
+        # Skip if `task_ids` are empty
         if not task_ids:
             return
 

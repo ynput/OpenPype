@@ -25,8 +25,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
         application_path = instance.context.data.get("applicationPath")
         scene_path = instance.context.data.get("scenePath")
         frame_rate = instance.context.data.get("frameRate")
-        frame_start = instance.context.data.get("frameStart")
-        frame_end = instance.context.data.get("frameEnd")
+        # real value from timeline
+        frame_start = instance.context.data.get("frameStartHandle")
+        frame_end = instance.context.data.get("frameEndHandle")
         audio_path = instance.context.data.get("audioPath")
 
         if audio_path and os.path.exists(audio_path):
@@ -55,9 +56,13 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Execute rendering. Ignoring error cause Harmony returns error code
         # always.
-        self.log.info(f"running [ {application_path} -batch {scene_path}")
+
+        args = [application_path, "-batch",
+                "-frames", str(frame_start), str(frame_end),
+                "-scene", scene_path]
+        self.log.info(f"running [ {application_path} {' '.join(args)}")
         proc = subprocess.Popen(
-            [application_path, "-batch", scene_path],
+            args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             stdin=subprocess.PIPE
@@ -108,9 +113,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
         output = process.communicate()[0]
 
         if process.returncode != 0:
-            raise ValueError(output.decode("utf-8"))
+            raise ValueError(output.decode("utf-8", errors="backslashreplace"))
 
-        self.log.debug(output.decode("utf-8"))
+        self.log.debug(output.decode("utf-8", errors="backslashreplace"))
 
         # Generate representations.
         extension = collection.tail[1:]

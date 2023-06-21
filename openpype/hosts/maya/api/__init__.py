@@ -26,7 +26,6 @@ from .workio import (
 )
 
 from .lib import (
-    export_alembic,
     lsattr,
     lsattrs,
     read,
@@ -58,7 +57,6 @@ __all__ = [
     "work_root",
 
     # Utility functions
-    "export_alembic",
     "lsattr",
     "lsattrs",
     "read",

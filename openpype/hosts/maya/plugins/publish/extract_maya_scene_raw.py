@@ -20,8 +20,7 @@ class ExtractMayaSceneRaw(publish.Extractor):
                 "mayaScene",
                 "setdress",
                 "layout",
-                "camerarig",
-                "xgen"]
+                "camerarig"]
     scene_type = "ma"
 
     def process(self, instance):

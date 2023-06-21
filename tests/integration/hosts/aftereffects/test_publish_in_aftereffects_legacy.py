@@ -86,6 +86,18 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "png_png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
         assert not any(failures)
 
 

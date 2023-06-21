@@ -14,7 +14,8 @@ class FusionLoadFBXMesh(load.LoaderPlugin):
     """Load FBX mesh into Fusion"""
 
     families = ["*"]
-    representations = ["fbx"]
+    representations = ["*"]
+    extensions = {"fbx"}
 
     label = "Load FBX mesh"
     order = -10

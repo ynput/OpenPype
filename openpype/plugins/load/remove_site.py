@@ -3,7 +3,10 @@ from openpype.pipeline import load
 
 
 class RemoveSyncSite(load.LoaderPlugin):
-    """Remove sync site and its files on representation"""
+    """Remove sync site and its files on representation.
+
+    Removes files only on local site!
+    """
     representations = ["*"]
     families = ["*"]
 
@@ -24,13 +27,18 @@ class RemoveSyncSite(load.LoaderPlugin):
         return self._sync_server
 
     def load(self, context, name=None, namespace=None, data=None):
-        self.log.info("Removing {} on representation: {}".format(
-            data["site_name"], data["_id"]))
-        self.sync_server.remove_site(data["project_name"],
-                                     data["_id"],
-                                     data["site_name"],
+        project_name = context["project"]["name"]
+        repre_doc = context["representation"]
+        repre_id = repre_doc["_id"]
+        site_name = data["site_name"]
+
+        print("Removing {} on representation: {}".format(site_name, repre_id))
+
+        self.sync_server.remove_site(project_name,
+                                     repre_id,
+                                     site_name,
                                      True)
-        self.log.debug("Site added.")
+        self.log.debug("Site removed.")
 
     def filepath_from_context(self, context):
         """No real file loading"""

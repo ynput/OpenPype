@@ -30,7 +30,7 @@ def parse_json(path):
         Returns:
             (dict) or None if unparsable
         Raises:
-            AsssertionError if 'path' doesn't exist
+            AssertionError if 'path' doesn't exist
     """
     path = path.strip('\"')
     assert os.path.isfile(path), (

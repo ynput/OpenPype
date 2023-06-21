@@ -4,8 +4,6 @@ import os
 import shutil
 import pyblish.api
 
-from openpype.pipeline import legacy_io
-
 
 class CleanUpFarm(pyblish.api.ContextPlugin):
     """Cleans up the staging directory after a successful publish.
@@ -23,8 +21,8 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # Get source host from which farm publishing was started
-        src_host_name = legacy_io.Session.get("AVALON_APP")
-        self.log.debug("Host name from session is {}".format(src_host_name))
+        src_host_name = context.data["hostName"]
+        self.log.debug("Host name from context is {}".format(src_host_name))
         # Skip process if is not in list of source hosts in which this
         #    plugin should run
         if src_host_name not in self.allowed_hosts:
@@ -39,7 +37,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
         dirpaths_to_remove = set()
         for instance in context:
             staging_dir = instance.data.get("stagingDir")
-            if staging_dir:
+            if staging_dir and not instance.data.get("stagingDir_persistent"):
                 dirpaths_to_remove.add(os.path.normpath(staging_dir))
 
             if "representations" in instance.data:

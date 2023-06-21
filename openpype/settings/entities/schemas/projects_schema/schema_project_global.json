@@ -6,6 +6,34 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "ocio_config",
+                    "type": "dict",
+                    "label": "OCIO config",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "filepath",
+                            "label": "Config path",
+                            "multiplatform": false,
+                            "multipath": true
+                        }
+                    ]
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "schema",
             "name": "schema_global_publish"
         },

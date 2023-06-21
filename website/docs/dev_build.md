@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 To build Pype you currently need (on all platforms):
 
-- **[Python 3.7](https://www.python.org/downloads/)** as we are following [vfx platform](https://vfxplatform.com).
+- **[Python 3.9](https://www.python.org/downloads/)** as we are following [vfx platform CY2022](https://vfxplatform.com).
 - **[git](https://git-scm.com/downloads)**
 
 We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the code and all dependencies and
@@ -116,8 +116,8 @@ To build OpenPype on Linux you will need:
 - **[curl](https://curl.se)** on systems that doesn't have one preinstalled.
 - **bzip2**, **readline**, **sqlite3** and other libraries.
 
-Because some Linux distros come with newer Python version pre-installed, you might 
-need to install **3.7** version and make use of it explicitly. 
+Because some Linux distros come with older Python version pre-installed, you might 
+need to install **3.9** version and make use of it explicitly. 
 Your best bet is probably using [pyenv](https://github.com/pyenv/pyenv).
 
 You can use your package manager to install **git** and other packages to your build
@@ -138,16 +138,16 @@ $ eval "$(pyenv virtualenv-init -)"
 # reload shell
 $ exec $SHELL
 
-# install Python 3.7.10
+# install Python 3.9.6
 # python will be downloaded and build so please make sure
 # you have all necessary requirements installed (see below).
-$ pyenv install -v 3.7.10
+$ pyenv install -v 3.9.6
 
 # change path to pype 3
 $ cd /path/to/pype-3
 
 # set local python version
-$ pyenv local 3.7.10
+$ pyenv local 3.9.6
 ```
 :::note Install build requirements for **Ubuntu**
 
@@ -222,19 +222,19 @@ $ exec "$SHELL"
 $ PATH=$(pyenv root)/shims:$PATH
 ```
 
-4) Pull in required Python version 3.7.x
+4) Pull in required Python version 3.9.x
 ```shell
 # install Python build dependences
 $ brew install openssl readline sqlite3 xz zlib
 
-# replace with up-to-date 3.7.x version
-$ pyenv install 3.7.9
+# replace with up-to-date 3.9.x version
+$ pyenv install 3.9.6
 ```
 
 5) Set local Python version
 ```shell
 # switch to Pype source directory
-$ pyenv local 3.7.9
+$ pyenv local 3.9.6
 ```
 
 6) Install `create-dmg`
@@ -258,7 +258,7 @@ to `pyproject.toml` to `[tool.poetry.dependencies]` section.
 
 ```toml title="/pyproject.toml"
 [tool.poetry.dependencies]
-python = "3.7.*"
+python = "3.9.*"
 aiohttp = "^3.7"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }

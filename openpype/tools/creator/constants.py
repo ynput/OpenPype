@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 
 FAMILY_ROLE = QtCore.Qt.UserRole + 1

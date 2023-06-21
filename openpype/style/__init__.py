@@ -157,7 +157,7 @@ def _load_stylesheet():
 
 def _load_font():
     """Load and register fonts into Qt application."""
-    from Qt import QtGui
+    from qtpy import QtGui
 
     # Check if font ids are still loaded
     if _Cache.font_ids is not None:

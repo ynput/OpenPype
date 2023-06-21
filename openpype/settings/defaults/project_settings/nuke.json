@@ -1,7 +1,7 @@
 {
     "general": {
         "menu": {
-            "create": "ctrl+shift+alt+c",
+            "create": "ctrl+alt+c",
             "publish": "ctrl+alt+p",
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
@@ -9,7 +9,14 @@
         }
     },
     "imageio": {
-        "enabled": false,
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "viewer": {
             "viewerProcess": "sRGB"
         },
@@ -239,6 +246,7 @@
                             "sourcetype": "python",
                             "title": "Gizmo Note",
                             "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "icon": "",
                             "shortcut": ""
                         }
                     ]
@@ -248,12 +256,15 @@
     ],
     "create": {
         "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Main",
                 "Mask"
             ],
-            "knobs": [],
+            "instance_attributes": [
+                "reviewable",
+                "farm_rendering"
+            ],
             "prenodes": {
                 "Reformat01": {
                     "nodeclass": "Reformat",
@@ -274,37 +285,39 @@
             }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "use_range_limit": true,
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Key01",
                 "Bg01",
                 "Fg01",
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false,
-            "knobs": [],
+            "instance_attributes": [
+                "farm_rendering",
+                "use_range_limit"
+            ],
             "prenodes": {}
         },
-        "CreateWriteStill": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
-            "defaults": [
-                "ImageFrame",
+        "CreateWriteImage": {
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "default_variants": [
+                "StillFrame",
                 "MPFrame",
                 "LayoutFrame"
             ],
-            "knobs": [],
+            "instance_attributes": [
+                "use_range_limit"
+            ],
             "prenodes": {
                 "FrameHold01": {
                     "nodeclass": "FrameHold",
                     "dependent": "",
                     "knobs": [
                         {
-                            "type": "formatable",
+                            "type": "expression",
                             "name": "first_frame",
-                            "template": "{frame}",
-                            "to_type": "number"
+                            "expression": "parent.first"
                         }
                     ]
                 }
@@ -312,7 +325,7 @@
         }
     },
     "publish": {
-        "PreCollectNukeInstances": {
+        "CollectInstanceData": {
             "sync_workfile_version_on_families": [
                 "nukenodes",
                 "camera",
@@ -346,6 +359,11 @@
             "active": true
         },
         "ValidateGizmo": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateBackdrop": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -433,6 +451,41 @@
                             "value": false
                         }
                     ],
+                    "reformat_nodes_config": {
+                        "enabled": false,
+                        "reposition_nodes": [
+                            {
+                                "node_class": "Reformat",
+                                "knobs": [
+                                    {
+                                        "type": "text",
+                                        "name": "type",
+                                        "value": "to format"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "format",
+                                        "value": "HD_1080"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "filter",
+                                        "value": "Lanczos6"
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "black_outside",
+                                        "value": true
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "pbb",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
                     "extension": "mov",
                     "add_custom_tags": []
                 }
@@ -489,32 +542,7 @@
         "create_first_version": false,
         "custom_templates": [],
         "builder_on_start": false,
-        "profiles": [
-            {
-                "task_types": [],
-                "tasks": [],
-                "current_context": [
-                    {
-                        "subset_name_filters": [],
-                        "families": [
-                            "render",
-                            "plate"
-                        ],
-                        "repre_names": [
-                            "exr",
-                            "dpx",
-                            "mov",
-                            "mp4",
-                            "h264"
-                        ],
-                        "loaders": [
-                            "LoadClip"
-                        ]
-                    }
-                ],
-                "linked_assets": []
-            }
-        ]
+        "profiles": []
     },
     "templated_workfile_build": {
         "profiles": []

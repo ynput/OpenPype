@@ -84,7 +84,7 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     replace_char = ''
 
     def process(self, instance):
-        help_msg = ' Use Repair action (A) in Pyblish to fix it.'
+        help_msg = ' Use Repair button to fix it and then refresh publish.'
 
         layer = instance.data.get("layer")
         if layer:

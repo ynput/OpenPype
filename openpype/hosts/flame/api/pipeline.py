@@ -38,7 +38,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
     register_creator_plugin_path(CREATE_PATH)
-    log.info("OpenPype Flame plug-ins registred ...")
+    log.info("OpenPype Flame plug-ins registered ...")
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)

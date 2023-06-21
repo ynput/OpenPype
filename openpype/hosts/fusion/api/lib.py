@@ -210,7 +210,8 @@ def switch_item(container,
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
-        repre_parent_docs = get_representation_parents(representation)
+        repre_parent_docs = get_representation_parents(
+            project_name, representation)
         if repre_parent_docs:
             version, subset, asset, _ = repre_parent_docs
         else:
@@ -302,10 +303,18 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
-def get_current_comp():
-    """Hack to get current comp in this session"""
+def get_fusion_module():
+    """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
+    return fusion
+
+
+def get_current_comp():
+    """Get current comp in this session"""
+    fusion = get_fusion_module()
+    if fusion is not None:
+        comp = fusion.CurrentComp
+        return comp
 
 
 @contextlib.contextmanager

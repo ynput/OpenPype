@@ -5,6 +5,7 @@ import re
 from tests.lib.testing_classes import (
     HostFixtures,
     PublishTest,
+    DeadlinePublishTest
 )
 
 
@@ -57,8 +58,11 @@ class NukeHostFixtures(HostFixtures):
 
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
-        yield ["renders"]
-
+        yield []
 
 class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
     """Testing class for local publishes."""
+
+
+class NukeDeadlinePublishTestClass(NukeHostFixtures, DeadlinePublishTest):
+    """Testing class for Deadline publishes."""

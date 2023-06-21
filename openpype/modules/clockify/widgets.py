@@ -34,7 +34,7 @@ class MessageWidget(QtWidgets.QWidget):
 
     def _ui_layout(self, messages):
         if not messages:
-            messages = ["*Misssing messages (This is a bug)*", ]
+            messages = ["*Missing messages (This is a bug)*", ]
 
         elif not isinstance(messages, (tuple, list)):
             messages = [messages, ]
@@ -77,15 +77,15 @@ class MessageWidget(QtWidgets.QWidget):
 
 
 class ClockifySettings(QtWidgets.QWidget):
-    SIZE_W = 300
+    SIZE_W = 500
     SIZE_H = 130
 
     loginSignal = QtCore.Signal(object, object, object)
 
-    def __init__(self, clockapi, optional=True):
+    def __init__(self, clockify_api, optional=True):
         super(ClockifySettings, self).__init__()
 
-        self.clockapi = clockapi
+        self.clockify_api = clockify_api
         self.optional = optional
         self.validated = False
 
@@ -162,17 +162,17 @@ class ClockifySettings(QtWidgets.QWidget):
     def click_ok(self):
         api_key = self.input_api_key.text().strip()
         if self.optional is True and api_key == '':
-            self.clockapi.save_api_key(None)
-            self.clockapi.set_api(api_key)
+            self.clockify_api.save_api_key(None)
+            self.clockify_api.set_api(api_key)
             self.validated = False
             self._close_widget()
             return
 
-        validation = self.clockapi.validate_api_key(api_key)
+        validation = self.clockify_api.validate_api_key(api_key)
 
         if validation:
-            self.clockapi.save_api_key(api_key)
-            self.clockapi.set_api(api_key)
+            self.clockify_api.save_api_key(api_key)
+            self.clockify_api.set_api(api_key)
             self.validated = True
             self._close_widget()
         else:

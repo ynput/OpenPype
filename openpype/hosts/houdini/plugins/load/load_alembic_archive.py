@@ -73,3 +73,6 @@ class AbcArchiveLoader(load.LoaderPlugin):
 
         node = container["node"]
         node.destroy()
+
+    def switch(self, container, representation):
+        self.update(container, representation)

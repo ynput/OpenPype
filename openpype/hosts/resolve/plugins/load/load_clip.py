@@ -14,7 +14,10 @@ from openpype.hosts.resolve.api.pipeline import (
     containerise,
     update_container,
 )
-
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    IMAGE_EXTENSIONS
+)
 
 class LoadClip(plugin.TimelineItemLoader):
     """Load a subset to timeline as clip
@@ -24,7 +27,11 @@ class LoadClip(plugin.TimelineItemLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264", "mov"]
+
+    representations = ["*"]
+    extensions = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     label = "Load as clip"
     order = -10

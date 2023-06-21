@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
+import json
 import logging
 from typing import List
+from contextlib import contextmanager
 import semver
+import time
 
 import pyblish.api
 
@@ -11,19 +14,21 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
-from openpype.host import HostBase, ILoadHost
+from openpype.host import HostBase, ILoadHost, IPublishHost
 
 import unreal  # noqa
 
-
+# Rename to Ayon once parent module renames
 logger = logging.getLogger("openpype.hosts.unreal")
-OPENPYPE_CONTAINERS = "OpenPypeContainers"
+
+AYON_CONTAINERS = "AyonContainers"
+CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
-    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+    *os.getenv("AYON_UNREAL_VERSION").split(".")
 )
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
@@ -34,7 +39,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class UnrealHost(HostBase, ILoadHost):
+class UnrealHost(HostBase, ILoadHost, IPublishHost):
     """Unreal host implementation.
 
     For some time this class will re-use functions from module based
@@ -49,15 +54,42 @@ class UnrealHost(HostBase, ILoadHost):
     def get_containers(self):
         return ls()
 
-    def show_tools_popup(self):
+    @staticmethod
+    def show_tools_popup():
         """Show tools popup with actions leading to show other tools."""
-
         show_tools_popup()
 
-    def show_tools_dialog(self):
+    @staticmethod
+    def show_tools_dialog():
         """Show tools dialog with actions leading to show other tools."""
-
         show_tools_dialog()
+
+    def update_context_data(self, data, changes):
+        content_path = unreal.Paths.project_content_dir()
+        op_ctx = content_path + CONTEXT_CONTAINER
+        attempts = 3
+        for i in range(attempts):
+            try:
+                with open(op_ctx, "w+") as f:
+                    json.dump(data, f)
+                break
+            except IOError as e:
+                if i == attempts - 1:
+                    raise Exception(
+                        "Failed to write context data. Aborting.") from e
+                unreal.log_warning("Failed to write context data. Retrying...")
+                i += 1
+                time.sleep(3)
+                continue
+
+    def get_context_data(self):
+        content_path = unreal.Paths.project_content_dir()
+        op_ctx = content_path + CONTEXT_CONTAINER
+        if not os.path.isfile(op_ctx):
+            return {}
+        with open(op_ctx, "r") as fp:
+            data = json.load(fp)
+        return data
 
 
 def install():
@@ -65,19 +97,30 @@ def install():
     print("-=" * 40)
     logo = '''.
 .
-     ____________
-   / \\      __   \\
-   \\  \\     \\/_\\  \\
-    \\  \\     _____/ ______
-     \\  \\    \\___// \\     \\
-      \\  \\____\\   \\  \\_____\\
-       \\/_____/    \\/______/  PYPE Club .
+                    ·
+                    │
+                   ·∙/
+                 ·-∙•∙-·
+              / \\  /∙·  / \\
+             ∙   \\  │  /   ∙
+              \\   \\ · /   /
+              \\\\   ∙ ∙  //
+                \\\\/   \\//
+                   ___
+                  │   │
+                  │   │
+                  │   │
+                  │___│
+                    -·
+
+         ·-─═─-∙ A Y O N ∙-─═─-·
+                by  YNPUT
 .
 '''
     print(logo)
-    print("installing OpenPype for Unreal ...")
+    print("installing Ayon for Unreal ...")
     print("-=" * 40)
-    logger.info("installing OpenPype for Unreal")
+    logger.info("installing Ayon for Unreal")
     pyblish.api.register_host("unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
@@ -87,7 +130,7 @@ def install():
 
 
 def uninstall():
-    """Uninstall Unreal configuration for Avalon."""
+    """Uninstall Unreal configuration for Ayon."""
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
@@ -95,14 +138,14 @@ def uninstall():
 
 def _register_callbacks():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
 
 def _register_events():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
@@ -116,24 +159,45 @@ def ls():
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     # UE 5.1 changed how class name is specified
-    class_name = ["/Script/OpenPype", "AssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AssetContainer"  # noqa
-    openpype_containers = ar.get_assets_by_class(class_name, True)
+    class_name = ["/Script/Ayon", "AyonAssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AyonAssetContainer"  # noqa
+    ayon_containers = ar.get_assets_by_class(class_name, True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
     # Asset Registry Project settings (and there is no way to set it with
     # python short of editing ini configuration file).
-    for asset_data in openpype_containers:
+    for asset_data in ayon_containers:
         asset = asset_data.get_asset()
         data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
         data["objectName"] = asset_data.asset_name
-        data = cast_map_to_str_dict(data)
+        yield cast_map_to_str_dict(data)
 
-        yield data
+
+def ls_inst():
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    # UE 5.1 changed how class name is specified
+    class_name = [
+        "/Script/Ayon",
+        "AyonPublishInstance"
+    ] if (
+            UNREAL_VERSION.major == 5
+            and UNREAL_VERSION.minor > 0
+    ) else "AyonPublishInstance"  # noqa
+    instances = ar.get_assets_by_class(class_name, True)
+
+    # get_asset_by_class returns AssetData. To get all metadata we need to
+    # load asset. get_tag_values() work only on metadata registered in
+    # Asset Registry Project settings (and there is no way to set it with
+    # python short of editing ini configuration file).
+    for asset_data in instances:
+        asset = asset_data.get_asset()
+        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+        data["objectName"] = asset_data.asset_name
+        yield cast_map_to_str_dict(data)
 
 
 def parse_container(container):
-    """To get data from container, AssetContainer must be loaded.
+    """To get data from container, AyonAssetContainer must be loaded.
 
     Args:
         container(str): path to container
@@ -162,7 +226,7 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     Unreal doesn't support *groups* of assets that you can add metadata to.
     But it does support folders that helps to organize asset. Unfortunately
     those folders are just that - you cannot add any additional information
-    to them. OpenPype Integration Plugin is providing way out - Implementing
+    to them. Ayon Integration Plugin is providing way out - Implementing
     `AssetContainer` Blueprint class. This class when added to folder can
     handle metadata on it using standard
     :func:`unreal.EditorAssetLibrary.set_metadata_tag()` and
@@ -171,30 +235,30 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     those assets is available as `assets` property.
 
     This is list of strings starting with asset type and ending with its path:
-    `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
+    `Material /Game/Ayon/Test/TestMaterial.TestMaterial`
 
     """
     # 1 - create directory for container
     root = "/Game"
-    container_name = "{}{}".format(name, suffix)
+    container_name = f"{name}{suffix}"
     new_name = move_assets_to_path(root, container_name, nodes)
 
     # 2 - create Asset Container there
-    path = "{}/{}".format(root, new_name)
+    path = f"{root}/{new_name}"
     create_container(container=container_name, path=path)
 
     namespace = path
 
     data = {
-        "schema": "openpype:container-2.0",
-        "id": AVALON_CONTAINER_ID,
+        "schema": "ayon:container-2.0",
+        "id": AYON_CONTAINER_ID,
         "name": new_name,
         "namespace": namespace,
         "loader": str(loader),
         "representation": context["representation"]["_id"],
     }
     # 3 - imprint data
-    imprint("{}/{}".format(path, container_name), data)
+    imprint(f"{path}/{container_name}", data)
     return path
 
 
@@ -202,7 +266,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
     """Bundles *nodes* into *container*.
 
     Marking it with metadata as publishable instance. If assets are provided,
-    they are moved to new path where `OpenPypePublishInstance` class asset is
+    they are moved to new path where `AyonPublishInstance` class asset is
     created and imprinted with metadata.
 
     This can then be collected for publishing by Pyblish for example.
@@ -216,7 +280,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
         suffix (str): suffix string to append to instance name
 
     """
-    container_name = "{}{}".format(name, suffix)
+    container_name = f"{name}{suffix}"
 
     # if we specify assets, create new folder and move them there. If not,
     # just create empty folder
@@ -225,10 +289,10 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
     else:
         new_name = create_folder(root, name)
 
-    path = "{}/{}".format(root, new_name)
+    path = f"{root}/{new_name}"
     create_publish_instance(instance=container_name, path=path)
 
-    imprint("{}/{}".format(path, container_name), data)
+    imprint(f"{path}/{container_name}", data)
 
 
 def imprint(node, data):
@@ -244,14 +308,14 @@ def imprint(node, data):
             loaded_asset, key, str(value)
         )
 
-    with unreal.ScopedEditorTransaction("OpenPype containerising"):
+    with unreal.ScopedEditorTransaction("Ayon containerising"):
         unreal.EditorAssetLibrary.save_asset(node)
 
 
 def show_tools_popup():
     """Show popup with tools.
 
-    Popup will disappear on click or loosing focus.
+    Popup will disappear on click or losing focus.
     """
     from openpype.hosts.unreal.api import tools_ui
 
@@ -311,11 +375,11 @@ def create_folder(root: str, name: str) -> str:
     eal = unreal.EditorAssetLibrary
     index = 1
     while True:
-        if eal.does_directory_exist("{}/{}".format(root, name)):
-            name = "{}{}".format(name, index)
+        if eal.does_directory_exist(f"{root}/{name}"):
+            name = f"{name}{index}"
             index += 1
         else:
-            eal.make_directory("{}/{}".format(root, name))
+            eal.make_directory(f"{root}/{name}")
             break
 
     return name
@@ -348,9 +412,7 @@ def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
     unreal.log(assets)
     for asset in assets:
         loaded = eal.load_asset(asset)
-        eal.rename_asset(
-            asset, "{}/{}/{}".format(root, name, loaded.get_name())
-        )
+        eal.rename_asset(asset, f"{root}/{name}/{loaded.get_name()}")
 
     return name
 
@@ -377,17 +439,16 @@ def create_container(container: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.AssetContainerFactory()
+    factory = unreal.AyonAssetContainerFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
 
-    asset = tools.create_asset(container, path, None, factory)
-    return asset
+    return tools.create_asset(container, path, None, factory)
 
 
 def create_publish_instance(instance: str, path: str) -> unreal.Object:
-    """Helper function to create OpenPype Publish Instance on given path.
+    """Helper function to create Ayon Publish Instance on given path.
 
-    This behaves similarly as :func:`create_openpype_container`.
+    This behaves similarly as :func:`create_ayon_container`.
 
     Args:
         path (str): Path where to create Publish Instance.
@@ -405,10 +466,9 @@ def create_publish_instance(instance: str, path: str) -> unreal.Object:
         )
 
     """
-    factory = unreal.OpenPypePublishInstanceFactory()
+    factory = unreal.AyonPublishInstanceFactory()
     tools = unreal.AssetToolsHelpers().get_asset_tools()
-    asset = tools.create_asset(instance, path, None, factory)
-    return asset
+    return tools.create_asset(instance, path, None, factory)
 
 
 def cast_map_to_str_dict(umap) -> dict:
@@ -439,11 +499,27 @@ def get_subsequences(sequence: unreal.LevelSequence):
 
     """
     tracks = sequence.get_master_tracks()
-    subscene_track = None
-    for t in tracks:
-        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
-            subscene_track = t
-            break
+    subscene_track = next(
+        (
+            t
+            for t in tracks
+            if t.get_class() == unreal.MovieSceneSubTrack.static_class()
+        ),
+        None,
+    )
     if subscene_track is not None and subscene_track.get_sections():
         return subscene_track.get_sections()
     return []
+
+
+@contextmanager
+def maintained_selection():
+    """Stub to be either implemented or replaced.
+
+    This is needed for old publisher implementation, but
+    it is not supported (yet) in UE.
+    """
+    try:
+        yield
+    finally:
+        pass

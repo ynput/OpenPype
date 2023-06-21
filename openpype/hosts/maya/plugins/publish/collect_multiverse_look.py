@@ -21,37 +21,68 @@ COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
-def get_look_attrs(node):
-    """Returns attributes of a node that are important for the look.
+class _NodeTypeAttrib(object):
+    """docstring for _NodeType"""
 
-    These are the "changed" attributes (those that have edits applied
-    in the current scene).
+    def __init__(self, name, fname, computed_fname=None, colour_space=None):
+        self.name = name
+        self.fname = fname
+        self.computed_fname = computed_fname or fname
+        self.colour_space = colour_space or "colorSpace"
 
-    Returns:
-        list: Attribute names to extract
+    def get_fname(self, node):
+        return "{}.{}".format(node, self.fname)
 
+    def get_computed_fname(self, node):
+        return "{}.{}".format(node, self.computed_fname)
+
+    def get_colour_space(self, node):
+        return "{}.{}".format(node, self.colour_space)
+
+    def __str__(self):
+        return "_NodeTypeAttrib(name={}, fname={}, "
+        "computed_fname={}, colour_space={})".format(
+            self.name, self.fname, self.computed_fname, self.colour_space)
+
+
+NODETYPES = {
+    "file": [_NodeTypeAttrib("file", "fileTextureName",
+                             "computedFileTextureNamePattern")],
+    "aiImage": [_NodeTypeAttrib("aiImage", "filename")],
+    "RedshiftNormalMap": [_NodeTypeAttrib("RedshiftNormalMap", "tex0")],
+    "dlTexture": [_NodeTypeAttrib("dlTexture", "textureFile",
+                                  None, "textureFile_meta_colorspace")],
+    "dlTriplanar": [_NodeTypeAttrib("dlTriplanar", "colorTexture",
+                                    None, "colorTexture_meta_colorspace"),
+                    _NodeTypeAttrib("dlTriplanar", "floatTexture",
+                                    None, "floatTexture_meta_colorspace"),
+                    _NodeTypeAttrib("dlTriplanar", "heightTexture",
+                                    None, "heightTexture_meta_colorspace")]
+}
+
+
+def get_file_paths_for_node(node):
+    """Gets all the file paths in this node.
+
+    Returns all filepaths that this node references. Some node types only
+    reference one, but others, like dlTriplanar, can reference 3.
+
+    Args:
+        node (str): Name of the Maya node
+
+    Returns
+        list(str): A list with all evaluated maya attributes for filepaths.
     """
-    # When referenced get only attributes that are "changed since file open"
-    # which includes any reference edits, otherwise take *all* user defined
-    # attributes
-    is_referenced = cmds.referenceQuery(node, isNodeReferenced=True)
-    result = cmds.listAttr(node, userDefined=True,
-                           changedSinceFileOpen=is_referenced) or []
 
-    # `cbId` is added when a scene is saved, ignore by default
-    if "cbId" in result:
-        result.remove("cbId")
+    node_type = cmds.nodeType(node)
+    if node_type not in NODETYPES:
+        return []
 
-    # For shapes allow render stat changes
-    if cmds.objectType(node, isAType="shape"):
-        attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
-        for attr in attrs:
-            if attr in SHAPE_ATTRS:
-                result.append(attr)
-            elif attr.startswith('ai'):
-                result.append(attr)
-
-    return result
+    paths = []
+    for node_type_attr in NODETYPES[node_type]:
+        fname = cmds.getAttr("{}.{}".format(node, node_type_attr.fname))
+        paths.append(fname)
+    return paths
 
 
 def node_uses_image_sequence(node):
@@ -69,13 +100,29 @@ def node_uses_image_sequence(node):
     """
 
     # useFrameExtension indicates an explicit image sequence
-    node_path = get_file_node_path(node).lower()
+    paths = get_file_node_paths(node)
+    paths = [path.lower() for path in paths]
 
     # The following tokens imply a sequence
     patterns = ["<udim>", "<tile>", "<uvtile>", "u<u>_v<v>", "<frame0"]
 
-    return (cmds.getAttr('%s.useFrameExtension' % node) or
-            any(pattern in node_path for pattern in patterns))
+    def pattern_in_paths(patterns, paths):
+        """Helper function for checking to see if a pattern is contained
+        in the list of paths"""
+        for pattern in patterns:
+            for path in paths:
+                if pattern in path:
+                    return True
+        return False
+
+    node_type = cmds.nodeType(node)
+    if node_type == 'dlTexture':
+        return (cmds.getAttr('{}.useImageSequence'.format(node)) or
+                pattern_in_paths(patterns, paths))
+    elif node_type == "file":
+        return (cmds.getAttr('{}.useFrameExtension'.format(node)) or
+                pattern_in_paths(patterns, paths))
+    return False
 
 
 def seq_to_glob(path):
@@ -132,7 +179,7 @@ def seq_to_glob(path):
         return path
 
 
-def get_file_node_path(node):
+def get_file_node_paths(node):
     """Get the file path used by a Maya file node.
 
     Args:
@@ -158,15 +205,9 @@ def get_file_node_path(node):
                     "<uvtile>"]
         lower = texture_pattern.lower()
         if any(pattern in lower for pattern in patterns):
-            return texture_pattern
+            return [texture_pattern]
 
-    if cmds.nodeType(node) == 'aiImage':
-        return cmds.getAttr('{0}.filename'.format(node))
-    if cmds.nodeType(node) == 'RedshiftNormalMap':
-        return cmds.getAttr('{}.tex0'.format(node))
-
-    # otherwise use fileTextureName
-    return cmds.getAttr('{0}.fileTextureName'.format(node))
+    return get_file_paths_for_node(node)
 
 
 def get_file_node_files(node):
@@ -181,15 +222,15 @@ def get_file_node_files(node):
 
     """
 
-    path = get_file_node_path(node)
-    path = cmds.workspace(expandName=path)
+    paths = get_file_node_paths(node)
+    paths = [cmds.workspace(expandName=path) for path in paths]
     if node_uses_image_sequence(node):
-        glob_pattern = seq_to_glob(path)
-        return glob.glob(glob_pattern)
-    elif os.path.exists(path):
-        return [path]
+        globs = []
+        for path in paths:
+            globs += glob.glob(seq_to_glob(path))
+        return globs
     else:
-        return []
+        return list(filter(lambda x: os.path.exists(x), paths))
 
 
 def get_mipmap(fname):
@@ -210,6 +251,11 @@ def is_mipmap(fname):
 
 class CollectMultiverseLookData(pyblish.api.InstancePlugin):
     """Collect Multiverse Look
+
+    Searches through the overrides finding all material overrides. From there
+    it extracts the shading group and then finds all texture files in the
+    shading group network. It also checks for mipmap versions of texture files
+    and adds them to the resources to get published.
 
     """
 
@@ -258,12 +304,20 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                         shadingGroup), "members": list()}
 
                     # The SG may reference files, add those too!
-                    history = cmds.listHistory(shadingGroup)
-                    files = cmds.ls(history, type="file", long=True)
+                    history = cmds.listHistory(
+                        shadingGroup, allConnections=True)
+
+                    # We need to iterate over node_types since `cmds.ls` may
+                    # error out if we don't have the appropriate plugin loaded.
+                    files = []
+                    for node_type in NODETYPES.keys():
+                        files += cmds.ls(history,
+                                         type=node_type,
+                                         long=True)
 
                     for f in files:
                         resources = self.collect_resource(f, publishMipMap)
-                        instance.data["resources"].append(resources)
+                        instance.data["resources"] += resources
 
                 elif isinstance(matOver, multiverse.MaterialSourceUsdPath):
                     # TODO: Handle this later.
@@ -284,69 +338,63 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
             dict
         """
 
-        self.log.debug("processing: {}".format(node))
-        if cmds.nodeType(node) not in ["file", "aiImage", "RedshiftNormalMap"]:
-            self.log.error(
-                "Unsupported file node: {}".format(cmds.nodeType(node)))
+        node_type = cmds.nodeType(node)
+        self.log.debug("processing: {}/{}".format(node, node_type))
+
+        if node_type not in NODETYPES:
+            self.log.error("Unsupported file node: {}".format(node_type))
             raise AssertionError("Unsupported file node")
 
-        if cmds.nodeType(node) == 'file':
-            self.log.debug("  - file node")
-            attribute = "{}.fileTextureName".format(node)
-            computed_attribute = "{}.computedFileTextureNamePattern".format(
-                node)
-        elif cmds.nodeType(node) == 'aiImage':
-            self.log.debug("aiImage node")
-            attribute = "{}.filename".format(node)
-            computed_attribute = attribute
-        elif cmds.nodeType(node) == 'RedshiftNormalMap':
-            self.log.debug("RedshiftNormalMap node")
-            attribute = "{}.tex0".format(node)
-            computed_attribute = attribute
+        resources = []
+        for node_type_attr in NODETYPES[node_type]:
+            fname_attrib = node_type_attr.get_fname(node)
+            computed_fname_attrib = node_type_attr.get_computed_fname(node)
+            colour_space_attrib = node_type_attr.get_colour_space(node)
 
-        source = cmds.getAttr(attribute)
-        self.log.info("  - file source: {}".format(source))
-        color_space_attr = "{}.colorSpace".format(node)
-        try:
-            color_space = cmds.getAttr(color_space_attr)
-        except ValueError:
-            # node doesn't have colorspace attribute
+            source = cmds.getAttr(fname_attrib)
             color_space = "Raw"
-        # Compare with the computed file path, e.g. the one with the <UDIM>
-        # pattern in it, to generate some logging information about this
-        # difference
-        # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
-        computed_source = cmds.getAttr(computed_attribute)
-        if source != computed_source:
-            self.log.debug("Detected computed file pattern difference "
-                           "from original pattern: {0} "
-                           "({1} -> {2})".format(node,
-                                                 source,
-                                                 computed_source))
+            try:
+                color_space = cmds.getAttr(colour_space_attrib)
+            except ValueError:
+                # node doesn't have colorspace attribute, use "Raw" from before
+                pass
+            # Compare with the computed file path, e.g. the one with the <UDIM>
+            # pattern in it, to generate some logging information about this
+            # difference
+            # computed_attribute = "{}.computedFileTextureNamePattern".format(node)  # noqa
+            computed_source = cmds.getAttr(computed_fname_attrib)
+            if source != computed_source:
+                self.log.debug("Detected computed file pattern difference "
+                               "from original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
 
-        # We replace backslashes with forward slashes because V-Ray
-        # can't handle the UDIM files with the backslashes in the
-        # paths as the computed patterns
-        source = source.replace("\\", "/")
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = source.replace("\\", "/")
 
-        files = get_file_node_files(node)
-        files = self.handle_files(files, publishMipMap)
-        if len(files) == 0:
-            self.log.error("No valid files found from node `%s`" % node)
+            files = get_file_node_files(node)
+            files = self.handle_files(files, publishMipMap)
+            if len(files) == 0:
+                self.log.error("No valid files found from node `%s`" % node)
 
-        self.log.info("collection of resource done:")
-        self.log.info("  - node: {}".format(node))
-        self.log.info("  - attribute: {}".format(attribute))
-        self.log.info("  - source: {}".format(source))
-        self.log.info("  - file: {}".format(files))
-        self.log.info("  - color space: {}".format(color_space))
+            self.log.info("collection of resource done:")
+            self.log.info("  - node: {}".format(node))
+            self.log.info("  - attribute: {}".format(fname_attrib))
+            self.log.info("  - source: {}".format(source))
+            self.log.info("  - file: {}".format(files))
+            self.log.info("  - color space: {}".format(color_space))
 
-        # Define the resource
-        return {"node": node,
-                "attribute": attribute,
-                "source": source,  # required for resources
-                "files": files,
-                "color_space": color_space}  # required for resources
+            # Define the resource
+            resource = {"node": node,
+                        "attribute": fname_attrib,
+                        "source": source,  # required for resources
+                        "files": files,
+                        "color_space": color_space}  # required for resources
+            resources.append(resource)
+        return resources
 
     def handle_files(self, files, publishMipMap):
         """This will go through all the files and make sure that they are

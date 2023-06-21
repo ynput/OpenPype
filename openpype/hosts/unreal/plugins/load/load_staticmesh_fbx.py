@@ -4,7 +4,7 @@ import os
 
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -68,8 +68,8 @@ class StaticMeshFBXLoader(plugin.Loader):
             list(str): list of container content
         """
 
-        # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        # Create directory for asset and Ayon container
+        root = "/Game/Ayon/Assets"
         if options and options.get("asset_dir"):
             root = options["asset_dir"]
         asset = context.get('asset').get('name')
@@ -81,7 +81,8 @@ class StaticMeshFBXLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            f"{root}/{asset}/{name}", suffix=""
+        )
 
         container_name += suffix
 
@@ -96,8 +97,8 @@ class StaticMeshFBXLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -107,8 +108,7 @@ class StaticMeshFBXLoader(plugin.Loader):
             "parent": context["representation"]["parent"],
             "family": context["representation"]["context"]["family"]
         }
-        unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True

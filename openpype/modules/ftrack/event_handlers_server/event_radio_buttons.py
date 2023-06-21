@@ -7,7 +7,7 @@ class RadioButtons(BaseEvent):
     ignore_me = True
 
     def launch(self, session, event):
-        '''Provides a readio button behaviour to any bolean attribute in
+        '''Provides a radio button behaviour to any boolean attribute in
            radio_button group.'''
 
         # start of event procedure ----------------------------------

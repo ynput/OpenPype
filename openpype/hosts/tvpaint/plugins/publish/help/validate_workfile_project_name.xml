@@ -13,7 +13,7 @@ If the workfile belongs to project "{env_project_name}" then use Workfiles tool 
 Otherwise close TVPaint and launch it again from project you want to publish in.
 </description>
 <detail>
-### How this could happend?
+### How this could happen?
 
 You've opened workfile from different project. You've opened TVPaint on a task from "{env_project_name}" then you've opened TVPaint again on task from "{workfile_project_name}" without closing the TVPaint. Because TVPaint can run only once the project didn't change.
 

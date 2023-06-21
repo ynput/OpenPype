@@ -16,9 +16,7 @@ from openpype.lib import (
 
     get_transcode_temp_directory,
     convert_input_paths_for_ffmpeg,
-    should_convert_for_ffmpeg,
-
-    CREATE_NO_WINDOW
+    should_convert_for_ffmpeg
 )
 from openpype.lib.profiles_filtering import filter_profiles
 
@@ -50,7 +48,8 @@ class ExtractBurnin(publish.Extractor):
         "webpublisher",
         "aftereffects",
         "photoshop",
-        "flame"
+        "flame",
+        "houdini"
         # "resolve"
     ]
 
@@ -79,9 +78,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
@@ -253,6 +253,9 @@ class ExtractBurnin(publish.Extractor):
             # Add context data burnin_data.
             burnin_data["custom"] = custom_data
 
+            # Add data members.
+            burnin_data.update(instance.data.get("burninDataMembers", {}))
+
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
             if camera_name:
@@ -334,11 +337,8 @@ class ExtractBurnin(publish.Extractor):
 
                 # Run burnin script
                 process_kwargs = {
-                    "logger": self.log,
-                    "env": {}
+                    "logger": self.log
                 }
-                if platform.system().lower() == "windows":
-                    process_kwargs["creationflags"] = CREATE_NO_WINDOW
 
                 run_openpype_process(*args, **process_kwargs)
                 # Remove the temporary json
@@ -456,12 +456,6 @@ class ExtractBurnin(publish.Extractor):
             )
             frame_end = 1
         frame_end = int(frame_end)
-
-        handles = instance.data.get("handles")
-        if handles is None:
-            handles = context.data.get("handles")
-            if handles is None:
-                handles = 0
 
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
@@ -728,7 +722,6 @@ class ExtractBurnin(publish.Extractor):
             return filtered_burnin_defs
 
         families = self.families_from_instance(instance)
-        low_families = [family.lower() for family in families]
 
         for filename_suffix, orig_burnin_def in burnin_defs.items():
             burnin_def = copy.deepcopy(orig_burnin_def)
@@ -739,7 +732,7 @@ class ExtractBurnin(publish.Extractor):
 
             families_filters = def_filter["families"]
             if not self.families_filter_validation(
-                low_families, families_filters
+                families, families_filters
             ):
                 self.log.debug((
                     "Skipped burnin definition \"{}\". Family"
@@ -776,31 +769,19 @@ class ExtractBurnin(publish.Extractor):
         return filtered_burnin_defs
 
     def families_filter_validation(self, families, output_families_filter):
-        """Determine if entered families intersect with families filters.
+        """Determines if entered families intersect with families filters.
 
         All family values are lowered to avoid unexpected results.
         """
-        if not output_families_filter:
+
+        families_filter_lower = set(family.lower() for family in
+                                    output_families_filter
+                                    # Exclude empty filter values
+                                    if family)
+        if not families_filter_lower:
             return True
-
-        for family_filter in output_families_filter:
-            if not family_filter:
-                continue
-
-            if not isinstance(family_filter, (list, tuple)):
-                if family_filter.lower() not in families:
-                    continue
-                return True
-
-            valid = True
-            for family in family_filter:
-                if family.lower() not in families:
-                    valid = False
-                    break
-
-            if valid:
-                return True
-        return False
+        return any(family.lower() in families_filter_lower
+                   for family in families)
 
     def families_from_instance(self, instance):
         """Return all families of entered instance."""

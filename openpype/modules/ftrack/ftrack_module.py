@@ -64,6 +64,16 @@ class FtrackModule(
         self._timers_manager_module = None
 
     def get_ftrack_url(self):
+        """Resolved ftrack url.
+
+        Resolving is trying to fill missing information in url and tried to
+        connect to the server.
+
+        Returns:
+            Union[str, None]: Final variant of url or None if url could not be
+                reached.
+        """
+
         if self._ftrack_url is _URL_NOT_SET:
             self._ftrack_url = resolve_ftrack_url(
                 self._settings_ftrack_url,
@@ -73,8 +83,19 @@ class FtrackModule(
 
     ftrack_url = property(get_ftrack_url)
 
+    @property
+    def settings_ftrack_url(self):
+        """Ftrack url from settings in a format as it is.
+
+        Returns:
+            str: Ftrack url from settings.
+        """
+
+        return self._settings_ftrack_url
+
     def get_global_environments(self):
         """Ftrack's global environments."""
+
         return {
             "FTRACK_SERVER": self.ftrack_url
         }
@@ -510,7 +531,10 @@ def resolve_ftrack_url(url, logger=None):
         url = "https://" + url
 
     ftrack_url = None
-    if not url.endswith("ftrackapp.com"):
+    if url and _check_ftrack_url(url):
+        ftrack_url = url
+
+    if not ftrack_url and not url.endswith("ftrackapp.com"):
         ftrackapp_url = url + ".ftrackapp.com"
         if _check_ftrack_url(ftrackapp_url):
             ftrack_url = ftrackapp_url

@@ -43,4 +43,5 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 Set-Location $openpype_root/website
 
-& yarn run start
+& yarn install
+& yarn start

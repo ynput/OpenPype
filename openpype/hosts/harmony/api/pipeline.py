@@ -126,10 +126,6 @@ def check_inventory():
 
 def application_launch(event):
     """Event that is executed after Harmony is launched."""
-    # FIXME: This is breaking server <-> client communication.
-    # It is now moved so it it manually called.
-    # ensure_scene_settings()
-    # check_inventory()
     # fills OPENPYPE_HARMONY_JS
     pype_harmony_path = Path(__file__).parent.parent / "js" / "PypeHarmony.js"
     pype_harmony_js = pype_harmony_path.read_text()
@@ -145,6 +141,9 @@ def application_launch(event):
     harmony.send({"script": pype_harmony_js})
     harmony.send({"script": script})
     inject_avalon_js()
+
+    # ensure_scene_settings()
+    check_inventory()
 
 
 def export_template(backdrops, nodes, filepath):

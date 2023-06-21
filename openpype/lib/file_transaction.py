@@ -13,6 +13,16 @@ else:
     from shutil import copyfile
 
 
+class DuplicateDestinationError(ValueError):
+    """Error raised when transfer destination already exists in queue.
+
+    The error is only raised if `allow_queue_replacements` is False on the
+    FileTransaction instance and the added file to transfer is of a different
+    src file than the one already detected in the queue.
+
+    """
+
+
 class FileTransaction(object):
     """File transaction with rollback options.
 
@@ -44,7 +54,7 @@ class FileTransaction(object):
     MODE_COPY = 0
     MODE_HARDLINK = 1
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, allow_queue_replacements=False):
         if log is None:
             log = logging.getLogger("FileTransaction")
 
@@ -59,6 +69,8 @@ class FileTransaction(object):
 
         # Backup file location mapping to original locations
         self._backup_to_original = {}
+
+        self._allow_queue_replacements = allow_queue_replacements
 
     def add(self, src, dst, mode=MODE_COPY):
         """Add a new file to transfer queue.
@@ -82,6 +94,14 @@ class FileTransaction(object):
                         src, dst))
                 return
             else:
+                if not self._allow_queue_replacements:
+                    raise DuplicateDestinationError(
+                        "Transfer to destination is already in queue: "
+                        "{} -> {}. It's not allowed to be replaced by "
+                        "a new transfer from {}".format(
+                            queued_src, dst, src
+                        ))
+
                 self.log.warning("File transfer in queue replaced..")
                 self.log.debug(
                     "Removed from queue: {} -> {} replaced by {} -> {}".format(
@@ -92,7 +112,9 @@ class FileTransaction(object):
     def process(self):
         # Backup any existing files
         for dst, (src, _) in self._transfers.items():
-            if dst == src or not os.path.exists(dst):
+            self.log.debug("Checking file ... {} -> {}".format(src, dst))
+            path_same = self._same_paths(src, dst)
+            if path_same or not os.path.exists(dst):
                 continue
 
             # Backup original file
@@ -105,9 +127,10 @@ class FileTransaction(object):
 
         # Copy the files to transfer
         for dst, (src, opts) in self._transfers.items():
-            if dst == src:
+            path_same = self._same_paths(src, dst)
+            if path_same:
                 self.log.debug(
-                    "Source and destionation are same files {} -> {}".format(
+                    "Source and destination are same files {} -> {}".format(
                         src, dst))
                 continue
 
@@ -182,3 +205,10 @@ class FileTransaction(object):
             else:
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
+
+    def _same_paths(self, src, dst):
+        # handles same paths but with C:/project vs c:/project
+        if os.path.exists(src) and os.path.exists(dst):
+            return os.stat(src) == os.stat(dst)
+
+        return src == dst
