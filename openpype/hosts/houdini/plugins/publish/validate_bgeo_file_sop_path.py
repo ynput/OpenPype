@@ -18,8 +18,9 @@ class ValidateNoSOPPath(pyblish.api.InstancePlugin):
         node = hou.node(instance.data.get("instance_node"))
         sop_path = node.evalParm("soppath")
         if not sop_path:
-            raise PublishValidationError("Empty SOP Path found in "
-                                         "the bgeo isntance Geometry")
+            raise PublishValidationError(
+                ("Empty SOP Path ('soppath' parameter) found in " 
+                 f"the BGEO instance Geometry - {node.path()}"))
         if not isinstance(hou.node(sop_path), hou.SopNode):
             raise PublishValidationError(
                 "SOP path is not pointing to valid SOP node.")
