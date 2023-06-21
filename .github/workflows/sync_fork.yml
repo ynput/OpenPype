@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.8
         with:
-          token: ${{ secrets.QUAD__PUBLIC_GITHUB_TOKEN }}
+          token: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
           base: develop
           head: develop
           pr_message: Automatic synchronization requires conflict resolution.
