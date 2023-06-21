@@ -22,7 +22,7 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin):
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
             self.log.debug("Instance has no asset entity set."
-                        " Skipping collecting frame range data.")
+                           " Skipping collecting frame range data.")
             return
         if repres:
             first_repre = repres[0]
