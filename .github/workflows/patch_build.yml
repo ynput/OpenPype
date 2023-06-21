@@ -28,20 +28,6 @@ jobs:
         commitMode: true
         failOnError: true
         configuration: .github/workflows/configuration.json
-        # configurationJson: |
-        #     {
-        #       "template": "#${{UNCATEGORIZED}}",
-        #       "categories": [
-        #         {
-        #             "title": "## 💬 Other",
-        #             "labels": ["other"]
-        #         },
-        #         {
-        #             "title": "## 📦 Dependencies",
-        #             "labels": ["dependencies"]
-        #         }
-        #       ]
-        #     }
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
 
