@@ -24,7 +24,7 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
                 continue
             if objset.endswith("content_SET"):
                 instance.data["contentMembers"] = self.get_hierarchy(members)
-            if objset.endswith("content_SET"):
+            if objset.endswith("proxy_SET"):
                 instance.data["proxy"] = self.get_hierarchy(members)
 
         # Use camera in object set if present else default to render globals
