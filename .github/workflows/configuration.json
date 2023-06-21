@@ -76,13 +76,13 @@
     // "exclude_merge_branches": [
     //   "Owner/qa"
     // ],
-    "tag_resolver": {
-      "method": "semver",
-      "filter": {
-        "pattern": "CI(.+)",
-        "flags": "gu"
-      }
-    }
+    // "tag_resolver": {
+    //   "method": "semver",
+    //   "filter": {
+    //     "pattern": "api-(.+)",
+    //     "flags": "gu"
+    //   }
+    // },
     // "base_branches": [
     //   "dev"
     // ]
