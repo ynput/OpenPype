@@ -35,8 +35,7 @@ class CollectXgen(pyblish.api.InstancePlugin):
             connected_transform = get_attribute_input(
                 node + ".transform"
             ).split(".")[0]
-            if connected_transform not in data["xgenConnections"]:
-                data["xgenConnections"].add(connected_transform)
+            data["xgenConnections"].add(connected_transform)
 
         # Collect all files under palette root as resources.
         import xgenm
