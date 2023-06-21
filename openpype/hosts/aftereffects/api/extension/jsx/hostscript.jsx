@@ -866,14 +866,64 @@ function printMsg(msg){
 }
 
 function addPlaceholder(name, width, height, fps, duration){
+    /** Add AE PlaceholderItem to Project list.
+     *
+     * PlaceholderItem chosen as it doesn't require existing file and
+     * might potentially allow nice functionality in the future.
+     *
+     */
     app.beginUndoGroup('change comp properties');
     try{
-        item = app.project.importPlaceholder(name, width, height, fps, duration);
+        item = app.project.importPlaceholder(name, width, height,
+                                             fps, duration);
 
         return _prepareSingleValue(item.id);
     }catch (error) {
         writeLn(_prepareError("Cannot add placeholder " + error.toString()));
     }
+    app.endUndoGroup();
+}
+
+function addItemInstead(placeholder_item_id, item_id){
+    /** Add new loaded item in place of load placeholder.
+     *
+     * Each placeholder could be placed multiple times into multiple
+     * composition. This loops through all compositions and
+     * places loaded item under placeholder.
+     * Placeholder item gets deleted later separately according
+     * to configuration in Settings.
+     *
+     * Args:
+     *      placeholder_item_id (int)
+     *      item_id (int)
+    */
+    var item = app.project.itemByID(item_id);
+    if (!item){
+        return _prepareError("There is no item with "+ item_id);
+    }
+
+    app.beginUndoGroup('Add loaded items');
+    for (i = 1; i <= app.project.items.length; ++i){
+        var comp = app.project.items[i];
+        if (!(comp instanceof CompItem)){
+            continue
+        }
+
+        var i = 1;
+        while (i <= comp.numLayers) {
+            var layer = comp.layer(i);
+            var layer_source = layer.source;
+            if (layer_source && layer_source.id == placeholder_item_id){
+                var new_layer = comp.layers.add(item);
+                new_layer.moveAfter(layer);
+                // copy all(?) properties to new layer
+                layer.property("ADBE Transform Group").copyToComp(new_layer);
+                i = i + 1;
+            }
+            i = i + 1;
+        }
+    }
+    app.endUndoGroup();
 }
 
 function _prepareSingleValue(value){

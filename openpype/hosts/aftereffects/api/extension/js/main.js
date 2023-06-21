@@ -300,13 +300,23 @@ function main(websocket_url){
    RPC.addRoute('AfterEffects.add_item_as_layer', function (data) {
        log.warn('Server called client route "add_item_as_layer":', data);
        return runEvalScript("addItemAsLayerToComp(" + data.comp_id + ", " +
-                                                  data.item_id + "," +
+                                                      data.item_id + "," +
                                                   " null )")
            .then(function(result){
                log.warn("addItemAsLayerToComp: " + result);
                return result;
            });
    });
+
+   RPC.addRoute('AfterEffects.add_item_instead_placeholder', function (data) {
+    log.warn('Server called client route "add_item_instead_placeholder":', data);
+    return runEvalScript("addItemInstead(" + data.placeholder_item_id + ", " +
+                                             data.item_id + ")")
+        .then(function(result){
+            log.warn("add_item_instead_placeholder: " + result);
+            return result;
+        });
+});
 
    RPC.addRoute('AfterEffects.render', function (data) {
     log.warn('Server called client route "render":', data);

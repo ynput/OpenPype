@@ -222,6 +222,16 @@ class AfterEffectsServerStub():
               )
         return self._to_records(self._handle_return(res))
 
+    def select_items(self, items):
+        """
+            Select items in Project list
+        Args:
+            items (list): of int item ids
+        """
+        self.websocketserver.call(
+            self.client.call('AfterEffects.select_items', items=items))
+
+
     def get_selected_items(self, comps, folders=False, footages=False):
         """
             Same as get_items but using selected items only
@@ -554,6 +564,22 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
+    def add_item_instead_placeholder(self, placeholder_item_id, item_id):
+        """
+            Adds item_id to layers where plaeholder_item_id is present.
+
+            1 placeholder could result in multiple loaded containers (eg items)
+
+            Args:
+                placeholder_item_id (int): id of placeholder item
+                item_id (int): loaded FootageItem id
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item_instead_placeholder',  # noqa
+                                         placeholder_item_id=placeholder_item_id,  # noqa
+                                         item_id=item_id))
+
+        return self._handle_return(res)
 
     def add_placeholder(self, name, width, height, fps, duration):
         """

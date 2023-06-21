@@ -210,6 +210,11 @@ class AEPlaceholderLoadPlugin(AEPlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
+    def load_succeed(self, placeholder, container):
+        placeholder_item_id, _ = self._get_item(placeholder)
+        item_id = container.id
+        get_stub().add_item_instead_placeholder(placeholder_item_id, item_id)
+
 
 def build_workfile_template(*args, **kwargs):
     builder = AETemplateBuilder(registered_host())
