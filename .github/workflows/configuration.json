@@ -36,7 +36,7 @@
       "order": "ASC",
       "on_property": "mergedAt"
     },
-    "template": "${{CHANGELOG}}",
+    "template": "${{UNCATEGORIZED}}",
     "pr_template": "- ${{TITLE}}\n   - PR: #${{NUMBER}}",
     "empty_template": "- no changes",
     "label_extractor": [
