@@ -45,12 +45,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
 
-    - name: "print msg"
-      run: |
-        echo ${{steps.changelog.outputs.changelog}}
-        echo ${{steps.changelog.outputs.changes}}
-        echo ${{steps.changelog.outputs.commits}}
-        echo ${{steps.changelog.outputs.uncategorized_prs}}
+    # - name: "print msg"
+    #   run: |
+    #     echo ${{steps.changelog.outputs.changelog}}
+    #     echo ${{steps.changelog.outputs.changes}}
+    #     echo ${{steps.changelog.outputs.commits}}
+    #     echo ${{steps.changelog.outputs.uncategorized_prs}}
         
 
     - name: 💬 Message to Release chat
