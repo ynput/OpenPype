@@ -128,30 +128,157 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "Write Color Sets"
+                  "type": "boolean",
+                  "key": "includeUserDefinedAttributes",
+                  "label": "Include User Defined Attributes"
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "Write Face Sets"
+                  "type": "boolean",
+                  "key": "eulerFilter",
+                  "label": "Euler Filter"
                 },
                 {
-                    "type": "boolean",
-                    "key": "include_parent_hierarchy",
-                    "label": "Include Parent Hierarchy"
+                  "type": "boolean",
+                  "key": "noNormals",
+                  "label": "No Normals"
                 },
                 {
-                    "type": "boolean",
-                    "key": "include_user_defined_attributes",
-                    "label": "Include User Defined Attributes"
+                  "type": "boolean",
+                  "key": "preRoll",
+                  "label": "Pre Roll"
+                },
+                {
+                  "type": "boolean",
+                  "key": "renderableOnly",
+                  "label": "Renderable Only"
+                },
+                {
+                  "type": "boolean",
+                  "key": "uvWrite",
+                  "label": "UV Write"
+                },
+                {
+                  "type": "boolean",
+                  "key": "WriteColorSets",
+                  "label": "Write Color Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeFaceSets",
+                  "label": "Write Face Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "wholeFrameGeo",
+                  "label": "Whole Frame Geo"
+                },
+                {
+                  "type": "boolean",
+                  "key": "worldSpace",
+                  "label": "World Space"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeVisibility",
+                  "label": "Write Visibility"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeUVSets",
+                  "label": "Write UV Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeCreases",
+                  "label": "Write Creases"
+                },
+                {
+                  "type": "text",
+                  "key": "dataFormat",
+                  "label": "Data Format"
+                },
+                {
+                  "type": "number",
+                  "key": "step",
+                  "label": "Step",
+                  "minimum": 0.0,
+                  "decimal": 4
+                },
+                {
+                  "type": "text",
+                  "key": "attr",
+                  "label": "Attr"
+                },
+                {
+                  "type": "text",
+                  "key": "attrPrefix",
+                  "label": "Attr Prefix"
+                },
+                {
+                  "type": "boolean",
+                  "key": "stripNamespaces",
+                  "label": "StripNamespaces"
+                },
+                {
+                  "type": "boolean",
+                  "key": "verbose",
+                  "label": "Verbose"
+                },
+                {
+                  "type": "number",
+                  "key": "preRollStartFrame",
+                  "label": "Pre Roll Start Frame"
+                },
+                {
+                  "type": "boolean",
+                  "key": "farm",
+                  "label": "Farm"
+                },
+                {
+                  "type": "number",
+                  "key": "priority",
+                  "label": "Priority"
+                },
+                {
+                  "type": "boolean",
+                  "key": "includeParentHierarchy",
+                  "label": "Include Parent Hierarchy"
+                },
+                {
+                  "type": "boolean",
+                  "key": "refresh",
+                  "label": "Refresh"
+                },
+                {
+                  "type": "boolean",
+                  "key": "visibleOnly",
+                  "label": "Visible Only"
                 },
                 {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "DEPRECATED! Write Color Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "DEPRECATED! Write Face Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "include_parent_hierarchy",
+                    "label": "DEPRECATED! Include Parent Hierarchy"
+                },
+                {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "DEPRECATED! Include User Defined Attributes"
                 }
             ]
         },
@@ -198,25 +325,152 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "Write Color Sets"
+                  "type": "boolean",
+                  "key": "includeUserDefinedAttributes",
+                  "label": "Include User Defined Attributes"
                 },
                 {
-                    "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "Write Face Sets"
+                  "type": "boolean",
+                  "key": "eulerFilter",
+                  "label": "Euler Filter"
                 },
                 {
-                    "type": "boolean",
-                    "key": "include_user_defined_attributes",
-                    "label": "Include User Defined Attributes"
+                  "type": "boolean",
+                  "key": "noNormals",
+                  "label": "No Normals"
+                },
+                {
+                  "type": "boolean",
+                  "key": "preRoll",
+                  "label": "Pre Roll"
+                },
+                {
+                  "type": "boolean",
+                  "key": "renderableOnly",
+                  "label": "Renderable Only"
+                },
+                {
+                  "type": "boolean",
+                  "key": "uvWrite",
+                  "label": "UV Write"
+                },
+                {
+                  "type": "boolean",
+                  "key": "WriteColorSets",
+                  "label": "Write Color Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeFaceSets",
+                  "label": "Write Face Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "wholeFrameGeo",
+                  "label": "Whole Frame Geo"
+                },
+                {
+                  "type": "boolean",
+                  "key": "worldSpace",
+                  "label": "World Space"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeVisibility",
+                  "label": "Write Visibility"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeUVSets",
+                  "label": "Write UV Sets"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeCreases",
+                  "label": "Write Creases"
+                },
+                {
+                  "type": "text",
+                  "key": "dataFormat",
+                  "label": "Data Format"
+                },
+                {
+                  "type": "number",
+                  "key": "step",
+                  "label": "Step",
+                  "minimum": 0.0,
+                  "decimal": 4
+                },
+                {
+                  "type": "text",
+                  "key": "attr",
+                  "label": "Attr"
+                },
+                {
+                  "type": "text",
+                  "key": "attrPrefix",
+                  "label": "Attr Prefix"
+                },
+                {
+                  "type": "boolean",
+                  "key": "stripNamespaces",
+                  "label": "StripNamespaces"
+                },
+                {
+                  "type": "boolean",
+                  "key": "verbose",
+                  "label": "Verbose"
+                },
+                {
+                  "type": "number",
+                  "key": "preRollStartFrame",
+                  "label": "Pre Roll Start Frame"
+                },
+                {
+                  "type": "boolean",
+                  "key": "farm",
+                  "label": "Farm"
+                },
+                {
+                  "type": "number",
+                  "key": "priority",
+                  "label": "Priority"
+                },
+                {
+                  "type": "boolean",
+                  "key": "includeParentHierarchy",
+                  "label": "Include Parent Hierarchy"
+                },
+                {
+                  "type": "boolean",
+                  "key": "refresh",
+                  "label": "Refresh"
+                },
+                {
+                  "type": "boolean",
+                  "key": "visibleOnly",
+                  "label": "Visible Only"
                 },
                 {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "DEPRECATED! Write Color Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "DEPRECATED! Write Face Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "DEPRECATED! Include User Defined Attributes"
                 }
             ]
         },

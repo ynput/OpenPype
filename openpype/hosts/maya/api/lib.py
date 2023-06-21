@@ -98,6 +98,7 @@ _alembic_options = {
     "renderableOnly": bool,
     "step": float,
     "stripNamespaces": bool,
+    "verbose": bool,
     "uvWrite": bool,
     "wholeFrameGeo": bool,
     "worldSpace": bool,
@@ -115,7 +116,9 @@ _alembic_options = {
     "melPostJobCallback": str,
     "pythonPerFrameCallback": str,
     "pythonPostJobCallback": str,
-    "selection": bool
+    "selection": bool,
+    "preRoll": bool,
+    "preRollStartFrame": int
 }
 
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
@@ -1083,12 +1086,28 @@ def is_visible(node,
 def extract_alembic(file,
                     startFrame=None,
                     endFrame=None,
+                    frameRange="",
+                    eulerFilter=True,
+                    noNormals=False,
+                    preRoll=False,
+                    renderableOnly=False,
                     selection=True,
                     uvWrite=True,
-                    eulerFilter=True,
+                    writeColorSets=False,
+                    writeFaceSets=False,
+                    wholeFrameGeo=False,
+                    worldSpace=False,
+                    writeVisibility=False,
+                    writeUVSets=False,
+                    writeCreases=False,
                     dataFormat="ogawa",
+                    step=1.0,
+                    attr=[],
+                    attrPrefix=[],
+                    root=[],
+                    stripNamespaces=True,
                     verbose=False,
-                    **kwargs):
+                    preRollStartFrame=0):
     """Extract a single Alembic Cache.
 
     This extracts an Alembic cache using the `-selection` flag to minimize
@@ -1106,37 +1125,87 @@ def extract_alembic(file,
             string formatted as: "startFrame endFrame". This argument
             overrides `startFrame` and `endFrame` arguments.
 
-        dataFormat (str): The data format to use for the cache,
-                          defaults to "ogawa"
-
-        verbose (bool): When on, outputs frame number information to the
-            Script Editor or output window during extraction.
+        eulerFilter (bool): When on, X, Y, and Z rotation data is filtered with
+            an Euler filter. Euler filtering helps resolve irregularities in
+            rotations especially if X, Y, and Z rotations exceed 360 degrees.
+            Defaults to True.
 
         noNormals (bool): When on, normal data from the original polygon
             objects is not included in the exported Alembic cache file.
 
+        preRoll (bool): This frame range will not be sampled.
+            Defaults to False.
+
         renderableOnly (bool): When on, any non-renderable nodes or hierarchy,
             such as hidden objects, are not included in the Alembic file.
             Defaults to False.
+
+        selection (bool): Write out all all selected nodes from the
+            active selection list that are descendents of the roots specified
+            with -root. Defaults to False.
+
+        uvWrite (bool): When on, UV data from polygon meshes and subdivision
+            objects are written to the Alembic file. Only the current UV map is
+            included.
+
+        writeColorSets (bool): Write all color sets on MFnMeshes as
+            color 3 or color 4 indexed geometry parameters with face varying
+            scope. Defaults to False.
+
+        writeFaceSets (bool): Write all Face sets on MFnMeshes.
+            Defaults to False.
+
+        wholeFrameGeo (bool): Data for geometry will only be written
+            out on whole frames. Defaults to False.
+
+        worldSpace (bool): When on, the top node in the node hierarchy is
+            stored as world space. By default, these nodes are stored as local
+            space. Defaults to False.
+
+        writeVisibility (bool): Visibility state will be stored in
+            the Alembic file.  Otherwise everything written out is treated as
+            visible. Defaults to False.
+
+        writeUVSets (bool): Write all uv sets on MFnMeshes as vector
+            2 indexed geometry parameters with face varying scope. Defaults to
+            False.
+
+        writeCreases (bool): If the mesh has crease edges or crease
+            vertices, the mesh (OPolyMesh) would now be written out as an OSubD
+            and crease info will be stored in the Alembic file. Otherwise,
+            creases info won't be preserved in Alembic file unless a custom
+            Boolean attribute SubDivisionMesh has been added to mesh node and
+            its value is true. Defaults to False.
+
+        dataFormat (str): The data format to use for the cache,
+                          defaults to "ogawa"
+
+        step (float): The time interval (expressed in frames) at
+            which the frame range is sampled. Additional samples around each
+            frame can be specified with -frs. Defaults to 1.0.
+
+        attr (list of str, optional): A specific geometric attribute to write
+            out. Defaults to [].
+
+        attrPrefix (list of str, optional): Prefix filter for determining which
+            geometric attributes to write out. Defaults to ["ABC_"].
+
+        root (list of str): Maya dag path which will be parented to
+            the root of the Alembic file. Defaults to [], which means the
+            entire scene will be written out.
 
         stripNamespaces (bool): When on, any namespaces associated with the
             exported objects are removed from the Alembic file. For example, an
             object with the namespace taco:foo:bar appears as bar in the
             Alembic file.
 
-        uvWrite (bool): When on, UV data from polygon meshes and subdivision
-            objects are written to the Alembic file. Only the current UV map is
-            included.
+        verbose (bool): When on, outputs frame number information to the
+            Script Editor or output window during extraction.
 
-        worldSpace (bool): When on, the top node in the node hierarchy is
-            stored as world space. By default, these nodes are stored as local
-            space. Defaults to False.
-
-        eulerFilter (bool): When on, X, Y, and Z rotation data is filtered with
-            an Euler filter. Euler filtering helps resolve irregularities in
-            rotations especially if X, Y, and Z rotations exceed 360 degrees.
-            Defaults to True.
-
+        preRollStartFrame (float): The frame to start scene
+            evaluation at.  This is used to set the starting frame for time
+            dependent translations and can be used to evaluate run-up that
+            isn't actually translated. Defaults to 0.
     """
 
     # Ensure alembic exporter is loaded
@@ -1147,7 +1216,7 @@ def extract_alembic(file,
 
     # Pass the start and end frame on as `frameRange` so that it
     # never conflicts with that argument
-    if "frameRange" not in kwargs:
+    if not frameRange:
         # Fallback to maya timeline if no start or end frame provided.
         if startFrame is None:
             startFrame = cmds.playbackOptions(query=True,
@@ -1159,23 +1228,38 @@ def extract_alembic(file,
         # Ensure valid types are converted to frame range
         assert isinstance(startFrame, _alembic_options["startFrame"])
         assert isinstance(endFrame, _alembic_options["endFrame"])
-        kwargs["frameRange"] = "{0} {1}".format(startFrame, endFrame)
+        frameRange = "{0} {1}".format(startFrame, endFrame)
     else:
         # Allow conversion from tuple for `frameRange`
-        frame_range = kwargs["frameRange"]
-        if isinstance(frame_range, (list, tuple)):
-            assert len(frame_range) == 2
-            kwargs["frameRange"] = "{0} {1}".format(frame_range[0],
-                                                    frame_range[1])
+        if isinstance(frameRange, (list, tuple)):
+            assert len(frameRange) == 2
+            frameRange = "{0} {1}".format(frameRange[0], frameRange[1])
 
     # Assemble options
     options = {
         "selection": selection,
-        "uvWrite": uvWrite,
+        "frameRange": frameRange,
         "eulerFilter": eulerFilter,
-        "dataFormat": dataFormat
+        "noNormals": noNormals,
+        "preRoll": preRoll,
+        "renderableOnly": renderableOnly,
+        "selection": selection,
+        "uvWrite": uvWrite,
+        "writeColorSets": writeColorSets,
+        "writeFaceSets": writeFaceSets,
+        "wholeFrameGeo": wholeFrameGeo,
+        "worldSpace": worldSpace,
+        "writeVisibility": writeVisibility,
+        "writeUVSets": writeUVSets,
+        "writeCreases": writeCreases,
+        "dataFormat": dataFormat,
+        "step": step,
+        "attr": attr,
+        "attrPrefix": attrPrefix,
+        "stripNamespaces": stripNamespaces,
+        "verbose": verbose,
+        "preRollStartFrame": preRollStartFrame
     }
-    options.update(kwargs)
 
     # Validate options
     for key, value in options.copy().items():

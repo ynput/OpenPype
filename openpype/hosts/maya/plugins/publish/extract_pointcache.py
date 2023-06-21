@@ -52,19 +52,29 @@ class ExtractAlembic(publish.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        options = {
-            "step": instance.data.get("step", 1.0),
-            "attr": attrs,
-            "attrPrefix": attr_prefixes,
-            "writeVisibility": True,
-            "writeCreases": True,
-            "writeColorSets": instance.data.get("writeColorSets", False),
-            "writeFaceSets": instance.data.get("writeFaceSets", False),
-            "uvWrite": True,
-            "selection": True,
-            "worldSpace": instance.data.get("worldSpace", True)
-        }
-
+        options = {"selection": True}
+        option_keys = [
+            "eulerFilter",
+            "noNormals",
+            "preRoll",
+            "renderableOnly",
+            "uvWrite",
+            "writeColorSets",
+            "writeFaceSets",
+            "wholeFrameGeo",
+            "worldSpace",
+            "writeVisibility",
+            "writeUVSets",
+            "writeCreases",
+            "dataFormat",
+            "step",
+            "stripNamespaces",
+            "verbose",
+            "preRollStartFrame"
+        ]
+        for key in option_keys:
+            options[key] = instance.data[key]
+        self.log.info(options)
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
@@ -81,12 +91,13 @@ class ExtractAlembic(publish.Extractor):
             # flag does not filter out those that are only hidden on some
             # frames as it counts "animated" or "connected" visibilities as
             # if it's always visible.
-            nodes = list(iter_visible_nodes_in_range(nodes,
-                                                     start=start,
-                                                     end=end))
+            nodes = list(
+                iter_visible_nodes_in_range(nodes, start=start, end=end)
+            )
 
         suspend = not instance.data.get("refresh", False)
         self.log.info(nodes)
+        self.log.info(options)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)

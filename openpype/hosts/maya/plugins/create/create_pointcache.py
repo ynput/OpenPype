@@ -13,9 +13,31 @@ class CreatePointCache(plugin.Creator):
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
-    write_color_sets = False
-    write_face_sets = False
-    include_user_defined_attributes = False
+    includeUserDefinedAttributes = False
+    eulerFilter = True
+    noNormals = False
+    preRoll = False
+    renderableOnly = False
+    uvWrite = True
+    writeColorSets = False
+    writeFaceSets = False
+    wholeFrameGeo = False
+    worldSpace = True
+    writeVisibility = True
+    writeUVSets = True
+    writeCreases = False
+    dataFormat = "ogawa"
+    step = 1.0
+    attr = ""
+    attrPrefix = ""
+    stripNamespaces = True
+    verbose = False
+    preRollStartFrame = 0
+    farm = False
+    priority = 50
+    includeParentHierarchy = False  # Include parent groups
+    refresh = False  # Default to suspend refresh.
+    visibleOnly = False  # only nodes that are visible
 
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
@@ -23,25 +45,35 @@ class CreatePointCache(plugin.Creator):
         # Add animation data
         self.data.update(lib.collect_animation_data())
 
-        # Vertex colors with the geometry.
-        self.data["writeColorSets"] = self.write_color_sets
-        # Vertex colors with the geometry.
-        self.data["writeFaceSets"] = self.write_face_sets
-        self.data["renderableOnly"] = False  # Only renderable visible shapes
-        self.data["visibleOnly"] = False     # only nodes that are visible
-        self.data["includeParentHierarchy"] = False  # Include parent groups
-        self.data["worldSpace"] = True       # Default to exporting world-space
-        self.data["refresh"] = False       # Default to suspend refresh.
-
-        # Add options for custom attributes
-        value = self.include_user_defined_attributes
-        self.data["includeUserDefinedAttributes"] = value
-        self.data["attr"] = ""
-        self.data["attrPrefix"] = ""
-
-        # Default to not send to farm.
-        self.data["farm"] = False
-        self.data["priority"] = 50
+        attrs = [
+            "includeUserDefinedAttributes",
+            "eulerFilter",
+            "noNormals",
+            "preRoll",
+            "renderableOnly",
+            "uvWrite",
+            "writeColorSets",
+            "writeFaceSets",
+            "wholeFrameGeo",
+            "worldSpace",
+            "writeVisibility",
+            "writeUVSets",
+            "writeCreases",
+            "dataFormat",
+            "step",
+            "attr",
+            "attrPrefix",
+            "stripNamespaces",
+            "verbose",
+            "preRollStartFrame",
+            "farm",
+            "priority",
+            "includeParentHierarchy",
+            "refresh",
+            "visibleOnly"
+        ]
+        for attr in attrs:
+            self.data[attr] = getattr(self, attr)
 
     def process(self):
         instance = super(CreatePointCache, self).process()

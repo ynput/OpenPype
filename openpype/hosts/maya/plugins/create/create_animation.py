@@ -17,44 +17,65 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    write_color_sets = False
-    write_face_sets = False
-    include_parent_hierarchy = False
-    include_user_defined_attributes = False
+    includeUserDefinedAttributes = False
+    eulerFilter = True
+    noNormals = False
+    preRoll = False
+    renderableOnly = False
+    uvWrite = True
+    writeColorSets = False
+    writeFaceSets = False
+    wholeFrameGeo = False
+    worldSpace = True
+    writeVisibility = True
+    writeUVSets = True
+    writeCreases = False
+    dataFormat = "ogawa"
+    step = 1.0
+    attr = ""
+    attrPrefix = ""
+    stripNamespaces = True
+    verbose = False
+    preRollStartFrame = 0
+    farm = False
+    priority = 50
+    includeParentHierarchy = False  # Include parent groups
+    refresh = False  # Default to suspend refresh.
+    visibleOnly = False  # only nodes that are visible
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
-
-        # create an ordered dict with the existing data first
 
         # get basic animation data : start / end / handles / steps
         for key, value in lib.collect_animation_data().items():
             self.data[key] = value
 
-        # Write vertex colors with the geometry.
-        self.data["writeColorSets"] = self.write_color_sets
-        self.data["writeFaceSets"] = self.write_face_sets
-
-        # Include only renderable visible shapes.
-        # Skips locators and empty transforms
-        self.data["renderableOnly"] = False
-
-        # Include only nodes that are visible at least once during the
-        # frame range.
-        self.data["visibleOnly"] = False
-
-        # Include the groups above the out_SET content
-        self.data["includeParentHierarchy"] = self.include_parent_hierarchy
-
-        # Default to exporting world-space
-        self.data["worldSpace"] = True
-
-        # Default to not send to farm.
-        self.data["farm"] = False
-        self.data["priority"] = 50
-
-        # Default to write normals.
-        self.data["writeNormals"] = True
-
-        value = self.include_user_defined_attributes
-        self.data["includeUserDefinedAttributes"] = value
+        attrs = [
+            "includeUserDefinedAttributes",
+            "eulerFilter",
+            "noNormals",
+            "preRoll",
+            "renderableOnly",
+            "uvWrite",
+            "writeColorSets",
+            "writeFaceSets",
+            "wholeFrameGeo",
+            "worldSpace",
+            "writeVisibility",
+            "writeUVSets",
+            "writeCreases",
+            "dataFormat",
+            "step",
+            "attr",
+            "attrPrefix",
+            "stripNamespaces",
+            "verbose",
+            "preRollStartFrame",
+            "farm",
+            "priority",
+            "includeParentHierarchy",
+            "refresh",
+            "visibleOnly"
+        ]
+        for attr in attrs:
+            self.data[attr] = getattr(self, attr)
