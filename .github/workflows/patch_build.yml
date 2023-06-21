@@ -29,6 +29,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
 
+    - name: "print msg"
+      run: echo ${{steps.changelog.outputs.changelog}}
+
     - name: 💬 Message to Release chat
       uses: julb/action-post-googlechat-message@v1
       with:
