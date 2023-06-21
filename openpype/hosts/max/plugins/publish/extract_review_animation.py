@@ -79,7 +79,7 @@ class ExtractReviewAnimation(publish.Extractor):
         ]
 
         for key in options:
-            enabled= instance.data.get(key)
+            enabled = instance.data.get(key)
             if enabled:
                 job_args.append(f"{key}:{enabled}")
         frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
