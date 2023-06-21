@@ -18,7 +18,7 @@ jobs:
       uses: julb/action-post-googlechat-message@v1
       with:
         message: "Hello from Github Action!"
-        gchat_webhook_url: ${{ secrets.GCHAT_WEBHOOK_URL }}
+        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
         
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
