@@ -146,7 +146,7 @@ realpath () {
 
 main () {
   # Main
-  if [[ -z $_inside_openpype_tool ]]; then
+  if [[ -z $_INSIDE_AYON_TOOL ]]; then
     echo -e "${BGreen}"
     art
     echo -e "${RST}"

@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  Helper script to build OpenPype.
+  Helper script to build AYON desktop.
 
 .DESCRIPTION
-  This script will detect Python installation, and build OpenPype to `build`
+  This script will detect Python installation, and build AYON to `build`
   directory using existing virtual environment created by Poetry (or
   by running `/tools/create_venv.ps1`). It will then shuffle dependencies in
   build folder to optimize for different Python versions (2/3) in Python host.
@@ -90,7 +90,6 @@ function Install-Poetry() {
     $env:POETRY_HOME="$repo_root\.poetry"
     (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 }
-
 $art = @"
 
              . .   ..     .    ..
@@ -114,7 +113,7 @@ Write-Host $art -ForegroundColor DarkGreen
 # Enable if PS 7.x is needed.
 # Show-PSWarning
 
-$env:_INSIDE_OPENPYPE_TOOL = "1"
+$env:_INSIDE_AYON_TOOL = "1"
 
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$repo_root\.poetry"
@@ -122,11 +121,11 @@ if (-not (Test-Path 'env:POETRY_HOME')) {
 
 Set-Location -Path $repo_root
 
-$version_file = Get-Content -Path "$($repo_root)\openpype\version.py"
+$version_file = Get-Content -Path "$($repo_root)\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$openpype_version = $result[0].Groups['version'].Value
-if (-not $openpype_version) {
-  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
+$ayon_version = $result[0].Groups['version'].Value
+if (-not $ayon_version) {
+  Write-Color -Text "!!! ", "Cannot determine AYON version." -Color Yellow, Gray
   Exit-WithCode 1
 }
 
@@ -151,7 +150,7 @@ if (-not $disable_submodule_update) {
     Write-Color -Text "*** ", "Not updating submodules ..." -Color Green, Gray
 }
 
-Write-Color -Text ">>> ", "OpenPype [ ", $openpype_version, " ]" -Color Green, White, Cyan, White
+Write-Color -Text ">>> ", "AYON [ ", $ayon_version, " ]" -Color Green, White, Cyan, White
 
 Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
@@ -168,7 +167,7 @@ Get-ChildItem $repo_root -Filter "*.pyo" -Force -Recurse | Where-Object { $_.Ful
 Get-ChildItem $repo_root -Filter "__pycache__" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
 Write-Color -Text "OK" -Color green
 
-Write-Color -Text ">>> ", "Building OpenPype ..." -Color Green, White
+Write-Color -Text ">>> ", "Building AYON ..." -Color Green, White
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
 $out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
@@ -191,6 +190,6 @@ Set-Location -Path $current_dir
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 try
 {
-    New-BurntToastNotification -AppLogo "$repo_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done in $( $endTime - $startTime ) secs. You will find OpenPype and build log in build directory."
+    New-BurntToastNotification -AppLogo "$repo_root/common/ayon_common/resources/AYON.png" -Text "AYON build complete!", "All done in $( $endTime - $startTime ) secs. You will find AYON and build log in build directory."
 } catch {}
-Write-Color -Text "*** ", "All done in ", $($endTime - $startTime), " secs. You will find OpenPype and build log in ", "'.\build'", " directory." -Color Green, Gray, White, Gray, White, Gray
+Write-Color -Text "*** ", "All done in ", $($endTime - $startTime), " secs. You will find AYON and build log in ", "'.\build'", " directory." -Color Green, Gray, White, Gray, White, Gray

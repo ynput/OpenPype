@@ -139,7 +139,7 @@ $art = @"
 
 
 "@
-if (-not (Test-Path 'env:_INSIDE_OPENPYPE_TOOL')) {
+if (-not (Test-Path 'env:_INSIDE_AYON_TOOL')) {
     Write-Host $art -ForegroundColor DarkGreen
 }
 

@@ -156,7 +156,7 @@ main () {
   ayon_version="$(python <<< ${version_command})"
   app_filename="AYON ${ayon_version}.app"
 
-  _inside_openpype_tool="1"
+  _INSIDE_AYON_TOOL="1"
 
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$repo_root/.poetry"

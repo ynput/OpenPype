@@ -77,7 +77,7 @@ main () {
   # Directories
   repo_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
-  _inside_openpype_tool="1"
+  _INSIDE_AYON_TOOL="1"
 
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$repo_root/.poetry"

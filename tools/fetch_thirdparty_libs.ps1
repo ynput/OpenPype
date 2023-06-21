@@ -18,7 +18,7 @@ $repo_root = (Get-Item $script_dir).parent.FullName
 # Install PSWriteColor to support colorized output to terminal
 $env:PSModulePath = $env:PSModulePath + ";$($repo_root)\tools\modules\powershell"
 
-$env:_INSIDE_OPENPYPE_TOOL = "1"
+$env:_INSIDE_AYON_TOOL = "1"
 
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$repo_root\.poetry"
