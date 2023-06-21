@@ -22,7 +22,7 @@ jobs:
     - name: "Build Changelog"
       uses: mikepenz/release-changelog-builder-action@v3
       with:
-        fromTag: "3.15.7"
+        fromTag: "3.15.6"
         toTag: "3.15.8"
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
