@@ -19,17 +19,17 @@ jobs:
       with:
         fetch-depth: 0
       
-    - name: "📝 Build Changelog"
-      id: changelog
-      uses: mikepenz/release-changelog-builder-action@v3.4.0
-      with:
-        # fromTag: "3.15.6"
-        # toTag: "3.15.8"
-        commitMode: true
-        failOnError: true
-        configuration: "configuration.json"
-      env:
-        GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
+    # - name: "📝 Build Changelog"
+    #   id: changelog
+    #   uses: mikepenz/release-changelog-builder-action@v3.4.0
+    #   with:
+    #     # fromTag: "3.15.6"
+    #     # toTag: "3.15.8"
+    #     commitMode: true
+    #     failOnError: true
+    #     configuration: "configuration.json"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
         
     - name: 🐍 Set up Python
       uses: actions/setup-python@v4
@@ -42,8 +42,8 @@ jobs:
     - name: 🔨 Build
       run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
     
-    - name: 💬 Message to Release chat
-      uses: julb/action-post-googlechat-message@v1
-      with:
-        message: ${{ steps.changelog.outputs.changelog }}
-        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
+    # - name: 💬 Message to Release chat
+    #   uses: julb/action-post-googlechat-message@v1
+    #   with:
+    #     message: ${{ steps.changelog.outputs.changelog }}
+    #     gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
