@@ -21,11 +21,15 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
             if members is None:
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
-
-            instance.data["contentMembers"] = self.get_ass_data(
-                objset, members, "content_SET")
-            instance.data["proxy"] = self.get_ass_data(
-                objset, members, "proxy_SET")
+            if objset.endswith("content_SET"):
+                members = cmds.ls(members, long=True)
+                children = get_all_children(members)
+                instance.data["contentMembers"] = children
+                self.log.debug("content members: {}".format(children))
+            elif objset.endswith("proxy_SET"):
+                set_members = get_all_children(cmds.ls(members, long=True))
+                instance.data["proxy"] = set_members
+                self.log.debug("proxy members: {}".format(set_members))
 
         # Use camera in object set if present else default to render globals
         # camera.
@@ -44,13 +48,3 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
             self.log.debug("No renderable cameras found.")
 
         self.log.debug("data: {}".format(instance.data))
-
-    def get_ass_data(self, objset, members, suffix):
-        if objset.endswith(suffix):
-            members = cmds.ls(members, long=True)
-            if not members:
-                return
-            children = get_all_children(members)
-            members = list(set(members) - set(children))
-
-            return children + members
