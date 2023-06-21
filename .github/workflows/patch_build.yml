@@ -27,7 +27,13 @@ jobs:
         commitMode: true
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
-            
+
+    - name: 💬 Message to Release chat
+      uses: julb/action-post-googlechat-message@v1
+      with:
+        message: ${{steps.github_release.outputs.changelog}}
+        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
+
     - name: 🐍 Set up Python
       uses: actions/setup-python@v4
       with:
@@ -39,8 +45,3 @@ jobs:
     - name: 🔨 Build
       run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
     
-    - name: 💬 Message to Release chat
-      uses: julb/action-post-googlechat-message@v1
-      with:
-        message: ${{steps.github_release.outputs.changelog}}
-        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
