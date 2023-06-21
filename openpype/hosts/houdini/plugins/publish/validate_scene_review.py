@@ -16,13 +16,23 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
     label = "Scene Setting for review"
 
     def process(self, instance):
-        invalid = self.get_invalid_scene_path(instance)
-
+        lop_enabled = instance.data.get("lopEnabled")
         report = []
-        if invalid:
-            report.append(
-                "Scene path does not exist: '%s'" % invalid[0],
-            )
+        invalid = None
+        if lop_enabled:
+            invalid = self.get_invalid_lop_network(instance)
+            if invalid:
+                report.append(
+                    "Lop Network does not exist: '%s'" % invalid[0],
+                )
+
+        else:
+            invalid = self.get_invalid_scene_path(instance)
+
+            if invalid:
+                report.append(
+                    "Scene path does not exist: '%s'" % invalid[0],
+                )
 
         invalid = self.get_invalid_resolution(instance)
         if invalid:
@@ -40,6 +50,17 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
         scene_path_node = scene_path_parm.evalAsNode()
         if not scene_path_node:
             return [scene_path_parm.evalAsString()]
+
+    def get_invalid_lop_network(self, instance):
+        node = hou.node(instance.data.get("instance_node"))
+        lop_network_parm = node.parm("loppath")
+        lop_network_node = lop_network_parm.evalAsNode()
+        node_name = lop_network_parm.evalAsString()
+        if not lop_network_node:
+            return [node_name]
+        lop_node = hou.node(node_name)
+        if lop_node.type().name() != "lopnet":
+            return [node_name]
 
     def get_invalid_resolution(self, instance):
         node = hou.node(instance.data.get("instance_node"))
