@@ -1,12 +1,23 @@
 {
+    "imageio": {
+        "activate_host_color_management": true,
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
     "RenderSettings": {
         "default_render_image_folder": "renders/3dsmax",
         "aov_separator": "underscore",
         "image_format": "exr",
         "multipass": true
     },
-    "PointCloud":{
-        "attribute":{
+    "PointCloud": {
+        "attribute": {
             "Age": "age",
             "Radius": "radius",
             "Position": "position",
@@ -18,6 +29,13 @@
             "MaterialID": "matid",
             "custFloats": "custFloats",
             "custVecs": "custVecs"
+        }
+    },
+    "publish": {
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }

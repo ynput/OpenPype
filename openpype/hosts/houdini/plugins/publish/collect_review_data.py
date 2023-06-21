@@ -17,6 +17,10 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         # which isn't the actual frame range that this instance renders.
         instance.data["handleStart"] = 0
         instance.data["handleEnd"] = 0
+        instance.data["fps"] = instance.context.data["fps"]
+
+        # Enable ftrack functionality
+        instance.data.setdefault("families", []).append('ftrack')
 
         # Get the camera from the rop node to collect the focal length
         start = instance.data["frameStart"]
@@ -125,16 +129,4 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
                              "property.".format(prim_path))
             return
 
-        if (
-            not focal_length_property.HasAuthoredValue() or
-            not focal_length_property.GetNumTimeSamples()
-        ):
-            # Static value
-            start_time = Usd.TimeCode(start)
-            return focal_length_property.Get(start_time) * multiplier
-        else:
-            # There are time based values
-            return [
-                focal_length_property.Get(Usd.TimeCode(t)) * multiplier
-                for t in range(int(start), int(end))
-            ]
+        instance.data.setdefault("families", []).append('ftrack')

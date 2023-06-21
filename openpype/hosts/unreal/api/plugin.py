@@ -31,7 +31,7 @@ from openpype.pipeline import (
 @six.add_metaclass(ABCMeta)
 class UnrealBaseCreator(Creator):
     """Base class for Unreal creator plugins."""
-    root = "/Game/OpenPype/PublishInstances"
+    root = "/Game/Ayon/AyonPublishInstances"
     suffix = "_INS"
 
     @staticmethod
@@ -243,5 +243,5 @@ class UnrealActorCreator(UnrealBaseCreator):
 
 
 class Loader(LoaderPlugin, ABC):
-    """This serves as skeleton for future OpenPype specific functionality"""
+    """This serves as skeleton for future Ayon specific functionality"""
     pass

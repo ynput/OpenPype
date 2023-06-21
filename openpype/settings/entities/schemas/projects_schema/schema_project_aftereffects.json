@@ -8,18 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
-
             ]
         },
         {
@@ -40,7 +36,13 @@
                             "label": "Default Variants",
                             "object_type": "text",
                             "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
-                        }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "mark_for_review",
+                            "label": "Review",
+                            "default": true
+                         }
                     ]
                 }
             ]
@@ -51,6 +53,21 @@
             "key": "publish",
             "label": "Publish plugins",
             "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled",
+                            "default": true
+                        }
+                    ]
+                },
                 {
                     "type": "dict",
                     "collapsible": true,

@@ -81,7 +81,13 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         # TODO: make sure this doesn't trigger when
         #       opening with last workfile.
         _set_context_settings()
-        shelves.generate_shelves()
+
+        if not IS_HEADLESS:
+            import hdefereval  # noqa, hdefereval is only available in ui mode
+            # Defer generation of shelves due to issue on Windows where shelf
+            # initialization during start up delays Houdini UI by minutes
+            # making it extremely slow to launch.
+            hdefereval.executeDeferred(shelves.generate_shelves)
 
         if not IS_HEADLESS:
             import hdefereval # noqa, hdefereval is only available in ui mode

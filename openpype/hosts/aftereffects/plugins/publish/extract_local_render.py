@@ -66,33 +66,9 @@ class ExtractLocalRender(publish.Extractor):
             first_repre = not representations
             if instance.data["review"] and first_repre:
                 repre_data["tags"] = ["review"]
+                thumbnail_path = os.path.join(staging_dir, files[0])
+                instance.data["thumbnailSource"] = thumbnail_path
 
             representations.append(repre_data)
 
         instance.data["representations"] = representations
-
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-        # Generate thumbnail.
-        thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
-
-        args = [
-            ffmpeg_path, "-y",
-            "-i", first_file_path,
-            "-vf", "scale=300:-1",
-            "-vframes", "1",
-            thumbnail_path
-        ]
-        self.log.debug("Thumbnail args:: {}".format(args))
-        try:
-            output = run_subprocess(args)
-        except TypeError:
-            self.log.warning("Error in creating thumbnail")
-            six.reraise(*sys.exc_info())
-
-        instance.data["representations"].append({
-            "name": "thumbnail",
-            "ext": "jpg",
-            "files": os.path.basename(thumbnail_path),
-            "stagingDir": staging_dir,
-            "tags": ["thumbnail"]
-        })

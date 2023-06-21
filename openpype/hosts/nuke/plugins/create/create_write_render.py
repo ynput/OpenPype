@@ -66,7 +66,6 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
 
         self.integrate_links(created_node, outputs=False)
 
