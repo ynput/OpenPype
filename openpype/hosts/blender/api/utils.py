@@ -375,7 +375,7 @@ def get_datablocks_with_filepath(
             ):
                 if relative and datablock.filepath.startswith("//"):
                     datablocks.add(datablock)
-                elif absolute:
+                elif absolute and not datablock.filepath.startswith("//"):
                     datablocks.add(datablock)
     return datablocks
 
