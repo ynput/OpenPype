@@ -23,8 +23,8 @@ jobs:
       id: changelog
       uses: mikepenz/release-changelog-builder-action@v4
       with:
-        fromTag: "3.15.6"
-        toTag: "3.15.8"
+        # fromTag: "3.15.6"
+        # toTag: "3.15.8"
         commitMode: true
         failOnError: true
         configuration: .github/workflows/configuration.json

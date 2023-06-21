@@ -50,14 +50,6 @@
         "pattern": "\\[Issue\\]",
         "on_property": "title",
         "method": "match"
-      },
-      {
-        "pattern": ".*quadproduction.*",
-        "on_property": "title"
-      },
-      {
-        "pattern": ".*quadproduction.*",
-        "on_property": "body"
       }
     ],
     // "duplicate_filter": {
@@ -84,13 +76,13 @@
     // "exclude_merge_branches": [
     //   "Owner/qa"
     // ],
-    // "tag_resolver": {
-    //   "method": "semver",
-    //   "filter": {
-    //     "pattern": "api-(.+)",
-    //     "flags": "gu"
-    //   }
-    // },
+    "tag_resolver": {
+      "method": "semver",
+      "filter": {
+        "pattern": "CI(.+)",
+        "flags": "gu"
+      }
+    },
     // "base_branches": [
     //   "dev"
     // ]
