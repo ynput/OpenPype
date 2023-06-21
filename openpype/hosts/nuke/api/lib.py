@@ -2069,6 +2069,35 @@ class WorkfileSettings(object):
                 log.debug("nuke.root()['{}'] changed to: {}".format(
                     knob, value_))
 
+        # set ocio config path
+        if config_data:
+            current_ocio_path = os.getenv("OCIO")
+            if current_ocio_path != config_data["path"]:
+                message = """
+It seems like there's a mismatch between the OCIO config path set in your Nuke
+settings and the actual path set in your OCIO environment.
+
+To resolve this, please follow these steps:
+1. Close Nuke if it's currently open.
+2. Reopen Nuke.
+
+Please note the paths for your reference:
+
+- The OCIO environment path currently set:
+  `{env_path}`
+
+- The path in your current Nuke settings:
+  `{settings_path}`
+
+Reopening Nuke should synchronize these paths and resolve any discrepancies.
+"""
+                nuke.message(
+                    message.format(
+                        env_path=current_ocio_path,
+                        settings_path=config_data["path"]
+                    )
+                )
+
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
 
