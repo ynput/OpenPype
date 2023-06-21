@@ -34,7 +34,12 @@ jobs:
                     "title": "## 📦 Dependencies",
                     "labels": ["dependencies"]
                 }
-              ]
+              ],
+            "tag_resolver": {
+              "method": "semver",
+              "filter": {
+                "pattern": "(.+)\.(.+)\.(.+)",
+              }
             }
       env:
         GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
