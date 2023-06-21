@@ -13,12 +13,6 @@ jobs:
     runs-on: [self-hosted, ubuntu]
 
     steps:
-    
-    - name: 📩 Message to Release chat
-      uses: julb/action-post-googlechat-message@v1
-      with:
-        message: "Hello from Github Action!"
-        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
         
     - name: 🚛 Checkout Code
       uses: actions/checkout@v3
@@ -33,3 +27,21 @@ jobs:
 
     - name: 🔨 Build
       run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
+    
+    - name: 📩 Message to Release chat
+      uses: julb/action-post-googlechat-message@v1
+      with:
+        message: "Bonjour,
+
+Voici la liste des dernières versions déployé🥳, viendra bientot une version spécial quad 😏
+
+3.15.10 pour la prod 🚀
+
+Vous pouvez consulté la liste des nouveautés depuis la 3.15.9 ici: https://github.com/ynput/OpenPype/releases/tag/3.15.10
+
+Dès à présent disponible dans la version prod de OpenPype 3.15.
+
+3.15.10-nightly.2 pour le staging 🚧
+
+Voici la liste des issues ajouté:"
+        gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
