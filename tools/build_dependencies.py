@@ -112,7 +112,7 @@ if platform.system().lower() == "darwin":
         "MacOS")
 else:
     build_subdir = f"exe.{get_platform()}-{sys.version[:3]}"
-    build_dir = openpype_root / "build" / build_subdir
+    build_dir = ayon_root / "build" / build_subdir
 
 _print(f"Using build at {build_dir}", 2)
 if not build_dir.exists():
@@ -198,9 +198,9 @@ for d in libs_dir.iterdir():
 
 find_progress_bar.close()
 # add openpype and igniter in libs too
-to_delete.append(libs_dir / "openpype")
-to_delete.append(libs_dir / "openpype.pth")
-to_delete.append(deps_dir / "openpype.pth")
+to_delete.append(libs_dir / "ayon")
+to_delete.append(libs_dir / "ayon.pth")
+to_delete.append(deps_dir / "ayon.pth")
 
 # delete duplicates
 # _print(f"Deleting {len(to_delete)} duplicates ...")
