@@ -320,7 +320,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             path = temp.name
             lines = []
             for frame, value in enumerate(new_listed_keys):
-                seconds = frame / fps
+                seconds = float(frame) / fps
                 # Escape special character
                 new_text = text
                 for _key, _value in value.items():
@@ -333,9 +333,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                     .replace(",", "\\,")
                     .replace(":", "\\:")
                 )
-                filter_type = f"drawtext@{align}"
                 lines.append(
-                    f"{seconds} {filter_type} reinit text='{new_text}';")
+                    f"{seconds} drawtext@{align} reinit text='{new_text}';")
 
             temp.write("\n".join(lines))
 
