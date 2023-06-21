@@ -69,8 +69,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             "camera": instance.data["camera"],
             "mask": mask
         }
-        # TODO: dont use instance.data["contentMembers"]
-        # but use the new instance.data["contentMemberTransforms"]
+
         filenames, nodes_by_id = self._extract(
             instance.data["contentMembers"], attribute_data, kwargs
         )
@@ -110,8 +109,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             return
 
         kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
-        # TODO: dont use instance.data["proxy"]
-        # but use the new instance.data["proxyTransforms"]
+
         filenames, _ = self._extract(
             instance.data["proxy"], attribute_data, kwargs
         )
