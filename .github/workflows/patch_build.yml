@@ -29,6 +29,7 @@ jobs:
         configurationJson: |
             {
               "template": "${CHANGELOG}\n\n<details>\n<summary>Uncategorized</summary>\n\n${UNCATEGORIZED}\n</details>",
+              "pr_template": "- ${{TITLE}}\n   - PR: #${{NUMBER}}",
               "categories": [
                 {
                     "title": "## 💬 Other",
@@ -61,7 +62,7 @@ jobs:
     - name: 💬 Message to Release chat
       uses: julb/action-post-googlechat-message@v1
       with:
-        message: ${{steps.changelog.outputs.changelog}}
+        message: ${{ steps.changelog.outputs.changelog }}
         gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}
 
     # - name: 🐍 Set up Python
