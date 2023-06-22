@@ -81,10 +81,6 @@ class ExtractAlembic(publish.Extractor):
             # direct members of the set
             options["root"] = roots
 
-        if int(cmds.about(version=True)) >= 2017:
-            # Since Maya 2017 alembic supports multiple uv sets - write them.
-            options["writeUVSets"] = True
-
         if instance.data.get("visibleOnly", False):
             # If we only want to include nodes that are visible in the frame
             # range then we need to do our own check. Alembic's `visibleOnly`
