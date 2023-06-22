@@ -473,15 +473,11 @@ class ExtractBurnin(publish.Extractor):
 
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
-            handle_start = context.data.get("handleStart")
-            if handle_start is None:
-                handle_start = handles
+            handle_start = context.data.get("handleStart") or 0
 
         handle_end = instance.data.get("handleEnd")
         if handle_end is None:
-            handle_end = context.data.get("handleEnd")
-            if handle_end is None:
-                handle_end = handles
+            handle_end = context.data.get("handleEnd") or 0
 
         frame_start_handle = frame_start - handle_start
         frame_end_handle = frame_end + handle_end
