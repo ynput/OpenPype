@@ -26,6 +26,7 @@ class ExtractBlend(publish.Extractor):
         "layout",
         "setdress",
         "blender.nodegroup",
+        "blender.particles",
         "blender.world",
     ]
     optional = True

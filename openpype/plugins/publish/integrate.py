@@ -139,6 +139,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "online",
                 "uasset",
                 "blender.nodegroup",
+                "blender.particles",
                 "blender.world",
                 ]
 
