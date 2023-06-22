@@ -7,6 +7,7 @@ import bpy
 
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.hosts.blender.api.utils import AVALON_PROPERTY
 
 
 class AudioLoader(plugin.AssetLoader):
@@ -60,6 +61,19 @@ class AudioLoader(plugin.AssetLoader):
 
         return container, datablocks
 
+    def load(self, *args, **kwargs):
+        """OVERRIDE.
+
+        Keep container metadata in sound datablock to allow container
+        auto creation of theses datablocks.
+        """
+        container, datablocks = super().load(*args, **kwargs)
+
+        # Set container metadata to sound datablock
+        datablocks[0][AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
+
+        return container, datablocks
+
     def update(
         self, *args, **kwargs
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
@@ -76,6 +90,10 @@ class AudioLoader(plugin.AssetLoader):
         container, datablocks = super().update(
             container_metadata, representation
         )
+
+        # Set container metadata to sound datablock
+        sound = datablocks[0]
+        sound[AVALON_PROPERTY] = container.get(AVALON_PROPERTY)
 
         return container, datablocks
 

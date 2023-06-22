@@ -96,3 +96,21 @@ class UpdateContainer(pyblish.api.Action):
         for action, containers in update_actions:
             if containers:
                 action().process(containers)
+
+class SaveDirtyTextures(pyblish.api.Action):
+    """Saves all dirty textures found"""
+    
+    label = "Save all dirty textures"
+    on = "failed"
+    icon = "floppy-disk"
+
+    def process(self, context, plugin):
+        self.log.info("Finding invalid nodes...")
+        invalid_nodes = set(_get_invalid_nodes(context, plugin))
+
+        # Saves the texture image
+        for v in invalid_nodes:
+            v.filepath_raw = f"//{v.name}.png"
+            v.file_format = "PNG"
+            v.save()
+            print(f"Saved {v.name}")

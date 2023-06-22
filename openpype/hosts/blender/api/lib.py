@@ -166,9 +166,8 @@ def update_scene_containers() -> List[OpenpypeContainer]:
     created_containers = {c.name: c for c in openpype_containers}
     user_map = bpy.data.user_map(subset=containerized_datablocks)
     for entity in containerized_datablocks:
-        if (
-            entity in datablocks_to_skip
-            or user_map.get(entity) <= datablocks_to_skip
+        if entity in datablocks_to_skip or (
+            user_map.get(entity) and user_map.get(entity) <= datablocks_to_skip
         ):
             continue
 

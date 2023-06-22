@@ -9,17 +9,27 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
     label = "Increment Workfile Version"
     optional = True
     hosts = ["blender"]
-    families = ["animation", "model", "rig", "action", "layout", "setdress"]
+    families = [
+        "animation",
+        "model",
+        "rig",
+        "action",
+        "layout",
+        "setdress",
+        "look",
+    ]
 
     def process(self, context):
 
-        assert all(result["success"] for result in context.data["results"]), (
-            "Publishing not successful so version is not increased.")
+        assert all(
+            result["success"] for result in context.data["results"]
+        ), "Publishing not successful so version is not increased."
 
         from openpype.lib import version_up
+
         path = context.data["currentFile"]
         filepath = version_up(path)
 
         save_file(filepath, copy=False)
 
-        self.log.info('Incrementing script version')
+        self.log.info("Incrementing script version")
