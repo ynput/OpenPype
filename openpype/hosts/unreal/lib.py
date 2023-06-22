@@ -11,7 +11,7 @@ from distutils import dir_util
 from pathlib import Path
 from typing import List
 
-from openpype.settings import get_current_project_settings
+from openpype.settings import get_project_settings
 
 
 def get_engine_versions(env=None):
@@ -178,6 +178,7 @@ def _parse_launcher_locations(install_json_path: str) -> dict:
 
 
 def create_unreal_project(project_name: str,
+                          unreal_project_name: str,
                           ue_version: str,
                           pr_dir: Path,
                           engine_path: Path,
@@ -192,7 +193,8 @@ def create_unreal_project(project_name: str,
     folder and enable this plugin.
 
     Args:
-        project_name (str): Name of the project.
+        project_name (str): Name of the project in AYON.
+        unreal_project_name (str): Name of the project in Unreal.
         ue_version (str): Unreal engine version (like 4.23).
         pr_dir (Path): Path to directory where project will be created.
         engine_path (Path): Path to Unreal Engine installation.
@@ -210,10 +212,13 @@ def create_unreal_project(project_name: str,
     Returns:
         None
 
+    Deprecated:
+        since 3.16.0
+
     """
     env = env or os.environ
 
-    preset = get_current_project_settings()["unreal"]["project_setup"]
+    preset = get_project_settings(project_name)["unreal"]["project_setup"]
     ue_id = ".".join(ue_version.split(".")[:2])
     # get unreal engine identifier
     # -------------------------------------------------------------------------
@@ -230,7 +235,7 @@ def create_unreal_project(project_name: str,
     ue_editor_exe: Path = get_editor_exe_path(engine_path, ue_version)
     cmdlet_project: Path = get_path_to_cmdlet_project(ue_version)
 
-    project_file = pr_dir / f"{project_name}.uproject"
+    project_file = pr_dir / f"{unreal_project_name}.uproject"
 
     print("--- Generating a new project ...")
     commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
@@ -251,8 +256,9 @@ def create_unreal_project(project_name: str,
     return_code = gen_process.wait()
 
     if return_code and return_code != 0:
-        raise RuntimeError(f'Failed to generate \'{project_name}\' project! '
-                           f'Exited with return code {return_code}')
+        raise RuntimeError(
+            (f"Failed to generate '{unreal_project_name}' project! "
+             f"Exited with return code {return_code}"))
 
     print("--- Project has been generated successfully.")
 
@@ -282,7 +288,7 @@ def create_unreal_project(project_name: str,
         subprocess.run(command1)
 
         command2 = [u_build_tool.as_posix(),
-                    f"-ModuleWithSuffix={project_name},3555", arch,
+                    f"-ModuleWithSuffix={unreal_project_name},3555", arch,
                     "Development", "-TargetType=Editor",
                     f'-Project={project_file}',
                     f'{project_file}',
