@@ -48,9 +48,19 @@ if __name__ == "__main__":
         help="representation ID",
         required=True,
     )
+    parser.add_argument(
+        "--published_time",
+        type=str,
+        nargs="?",
+        help="published time",
+        default="",
+    )
     args, unknown = parser.parse_known_args(
         sys.argv[sys.argv.index("--") + 1 :]
     )
+
+    # Set published time
+    bpy.context.scene["op_published_time"] = args.published_time
 
     containerized_datablocks = set()
     for datapath in args.datapaths:

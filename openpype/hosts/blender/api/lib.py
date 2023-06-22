@@ -1,6 +1,7 @@
 from itertools import chain
 import os
 from pathlib import Path
+import shutil
 import traceback
 import importlib
 import contextlib
@@ -20,9 +21,32 @@ from openpype.hosts.blender.api.utils import (
     get_used_datablocks,
 )
 from openpype.lib import Logger
+from openpype.modules import ModulesManager
+from openpype.pipeline import (
+    Anatomy,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io, schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
-from openpype.pipeline.load.utils import get_representation_path
+from openpype.modules import ModulesManager
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.template_data import (
+    get_template_data,
+)
+from openpype.pipeline.workfile.path_resolving import (
+    get_workfile_template_key,
+    get_last_workfile_with_version,
+)
+from openpype.client.entities import (
+    get_subsets,
+    get_representations,
+    get_last_version_by_subset_id,
+    get_asset_by_name,
+    get_project,
+)
 
 from . import pipeline
 
@@ -579,3 +603,158 @@ def maintained_time():
         yield
     finally:
         bpy.context.scene.frame_current = current_time
+
+
+def download_last_workfile() -> str:
+    """Download last workfile and return its path.
+
+    Returns:
+        str: Path to last workfile.
+    """
+    from openpype.modules.sync_server.sync_server import (
+        download_last_published_workfile,
+    )
+
+    sync_server = ModulesManager().get("sync_server")
+    if not sync_server or not sync_server.enabled:
+        raise RuntimeError("Sync server module is not enabled or available")
+
+    session = legacy_io.Session
+    project_name = session.get("AVALON_PROJECT")
+    task_name = session.get("AVALON_TASK")
+    asset_name = session.get("AVALON_ASSET")
+    anatomy = Anatomy(project_name)
+    asset_doc = get_asset_by_name(
+        project_name,
+        session.get("AVALON_ASSET"),
+    )
+    family = "workfile"
+
+    filtered_subsets = [
+        subset
+        for subset in get_subsets(
+            project_name,
+            asset_ids=[asset_doc["_id"]],
+            fields=["_id", "name", "data.family", "data.families"],
+        )
+        if (
+            subset["data"].get("family") == family
+            # Legacy compatibility
+            or family in subset["data"].get("families", {})
+        )
+    ]
+    if not filtered_subsets:
+        raise RuntimeError(
+            "Not any subset for asset '{}' with id '{}'".format(
+                asset_doc["name"], asset_doc["_id"]
+            )
+        )
+
+    # Match subset wich has `task_name` in its name
+    low_task_name = task_name.lower()
+    if len(filtered_subsets) > 1:
+        for subset in filtered_subsets:
+            if low_task_name in subset["name"].lower():
+                subset_id = subset["_id"]  # What if none is found?
+    else:
+        subset_id = filtered_subsets[0]["_id"]
+
+    if subset_id is None:
+        print(
+            f"Not any matched subset for task '{task_name}'"
+            f" of '{asset_name}'"
+        )
+        return
+
+    # Get workfile representation
+    last_version_doc = get_last_version_by_subset_id(
+        project_name, subset_id, fields=["_id", "name", "data"]
+    )
+    if not last_version_doc:
+        print("Subset does not have any version")
+        return
+
+    workfile_representations = list(
+        get_representations(
+            project_name,
+            context_filters={
+                "asset": asset_name,
+                "family": "workfile",
+                "task": {"name": task_name},
+            },
+        )
+    )
+
+    if not workfile_representations:
+        raise RuntimeError(
+            f"No published workfile for task {task_name} and host blender."
+        )
+
+    workfile_representation = max(
+        filter(
+            lambda r: r["context"].get("version"),
+            workfile_representations,
+        ),
+        key=lambda r: r["context"]["version"],
+    )
+    if not workfile_representation:
+        raise RuntimeError(
+            "No published workfile for task " f"'{task_name}' and host blender"
+        )
+
+    # Get workfile template data
+    workfile_data = get_template_data(
+        get_project(project_name, inactive=False),
+        asset_doc,
+        task_name,
+        "blender",
+    )
+
+    # Get workfile version
+    workfile_data["version"] = (
+        get_last_workfile_with_version(
+            Path(bpy.data.filepath).parent.as_posix(),
+            anatomy.templates[
+                get_workfile_template_key(task_name, "blender", project_name)
+            ]["file"],
+            workfile_data,
+            ["blend"],
+        )[1]
+        + 1
+    )
+    workfile_data["ext"] = "blend"
+
+    # Get local workfile path
+    local_workfile_path = anatomy.format(workfile_data)[
+        get_workfile_template_key(task_name, "blender", project_name)
+    ]["path"]
+
+    # Download and get last workfile
+    last_published_workfile_path = download_last_published_workfile(
+        "blender",
+        project_name,
+        task_name,
+        workfile_representation,
+        int(
+            (
+                sync_server.sync_project_settings[project_name]["config"][
+                    "retry_cnt"
+                ]
+            )
+        ),
+        anatomy=anatomy,
+    )
+
+    if (
+        not last_published_workfile_path
+        or not Path(last_published_workfile_path).exists()
+    ):
+        raise OSError("Failed to download last published workfile")
+
+    # Download and copy last published workfile to local workfile path
+    shutil.copy(
+        last_published_workfile_path,
+        local_workfile_path,
+    )
+
+    return local_workfile_path, last_version_doc["data"]["time"]
