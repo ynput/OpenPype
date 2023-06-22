@@ -3155,11 +3155,3 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
-
-
-def is_headless():
-    """
-    Returns:
-        bool: headless
-    """
-    return QtWidgets.QApplication.instance() is None

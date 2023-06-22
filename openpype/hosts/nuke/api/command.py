@@ -2,6 +2,8 @@ import logging
 import contextlib
 import nuke
 
+from qtpy import QtWidgets
+
 log = logging.getLogger(__name__)
 
 
@@ -19,3 +21,11 @@ def viewer_update_and_undo_stop():
         yield
     finally:
         nuke.Undo.enable()
+
+
+def is_headless():
+    """
+    Returns:
+        bool: headless
+    """
+    return QtWidgets.QApplication.instance() is None
