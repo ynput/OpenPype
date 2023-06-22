@@ -1,5 +1,6 @@
 import os
 import shutil
+import filecmp
 
 from openpype.client.entities import (
     get_representations,
@@ -184,3 +185,53 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         self.data["last_workfile_path"] = local_workfile_path
         # Keep source filepath for further path conformation
         self.data["source_filepath"] = last_published_workfile_path
+
+        # Get and make resources directory
+        resources_dir = os.path.join(
+            os.path.dirname(local_workfile_path), 'resources'
+        )
+        if not os.path.exists(resources_dir):
+            os.mkdir(resources_dir)
+
+        # Copy resources to the local resources directory
+        for file in workfile_representation['files']:
+            resource_main_path = file['path'].replace(
+                '{root[main]}', str(anatomy.roots['main'])
+            )
+
+            # Only copy if the resource file exists, and it's not the workfile
+            if (
+                os.path.exists(resource_main_path)
+                and resource_main_path != last_published_workfile_path
+            ):
+                resource_basename = os.path.basename(resource_main_path)
+                resource_work_path = os.path.join(
+                    resources_dir, resource_basename
+                )
+                if os.path.exists(resource_work_path):
+                    if filecmp.cmp(resource_main_path, resource_work_path):
+                        self.log.warning(
+                            'Resource "{}" already exists.'
+                            .format(resource_basename)
+                        )
+                        continue
+                    else:
+                        resource_path_old = resource_work_path + '.old'
+                        if os.path.exists(resource_work_path + '.old'):
+                            for i in range(1, 100):
+                                p = resource_path_old + '%02d' % i
+                                if not os.path.exists(p):
+                                    shutil.move(resource_work_path, p)
+                                    break
+                            else:
+                                self.log.warning(
+                                    'There are a hundred old files for '
+                                    'resource "{}". '
+                                    'Perhaps is it time to clean up your '
+                                    'resources folder'
+                                    .format(resource_basename)
+                                )
+                                continue
+                        else:
+                            shutil.move(resource_work_path, resource_path_old)
+                shutil.copy(resource_main_path, resources_dir)
