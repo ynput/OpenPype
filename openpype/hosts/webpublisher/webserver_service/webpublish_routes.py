@@ -71,7 +71,7 @@ class RestApiResource(JsonApiResource):
 
         if studio_task_queue is None:
             studio_task_queue = collections.deque().dequeu
-        self.studio_task_queue = studio_task_queue
+        self.studio_task_queuestudio_task_queue = studio_task_queue
 
 
 class WebpublishRestApiResource(JsonApiResource):
@@ -293,7 +293,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             log.debug("Adding to queue")
             self.resource.studio_task_queue.append(args)
         else:
-            subprocess.call(args)
+            subprocess.Popen(args)
 
         return Response(
             status=200,
