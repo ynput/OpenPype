@@ -1,7 +1,7 @@
 """Host API required Work Files tool"""
 import os
 import nuke
-from openpype.hosts.nuke.api.lib import is_headless
+from qtpy import QtWidgets
 
 
 def file_extensions():
@@ -26,7 +26,8 @@ def open_file(filepath):
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
-    if not is_headless():
+    headless = QtWidgets.QApplication.instance() is None
+    if not headless:
         autosave = nuke.toNode("preferences")["AutoSaveName"].evaluate()
         autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
         if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
