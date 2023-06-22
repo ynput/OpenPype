@@ -317,26 +317,26 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             text_for_size = text_for_size.replace(key, value)
 
         # Create temp file with instructions for each frame of text
+        lines = []
+        for frame, value in enumerate(new_listed_keys):
+            seconds = float(frame) / fps
+            # Escape special character
+            new_text = text
+            for _key, _value in value.items():
+                _value = str(_value)
+                new_text = new_text.replace(_key, str(_value))
+
+            new_text = (
+                str(new_text)
+                .replace("\\", "\\\\")
+                .replace(",", "\\,")
+                .replace(":", "\\:")
+            )
+            lines.append(
+                f"{seconds} drawtext@{align} reinit text='{new_text}';")
+
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
             path = temp.name
-            lines = []
-            for frame, value in enumerate(new_listed_keys):
-                seconds = float(frame) / fps
-                # Escape special character
-                new_text = text
-                for _key, _value in value.items():
-                    _value = str(_value)
-                    new_text = new_text.replace(_key, str(_value))
-
-                new_text = (
-                    str(new_text)
-                    .replace("\\", "\\\\")
-                    .replace(",", "\\,")
-                    .replace(":", "\\:")
-                )
-                lines.append(
-                    f"{seconds} drawtext@{align} reinit text='{new_text}';")
-
             temp.write("\n".join(lines))
 
         self.cleanup_paths.append(path)
