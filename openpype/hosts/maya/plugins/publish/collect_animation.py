@@ -83,4 +83,5 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
             "include_user_defined_attributes": "includeUserDefinedAttributes"
         }
         for key, value in backwards_mapping.items():
-            instance.data[value] = instance.data[key]
+            if key in instance.data:
+                instance.data[value] = instance.data[key]
