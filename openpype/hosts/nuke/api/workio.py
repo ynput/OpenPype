@@ -2,6 +2,7 @@
 import os
 import nuke
 from qtpy import QtWidgets
+from openpype.hosts.nuke.api.lib import is_headless
 
 
 def file_extensions():
@@ -26,7 +27,7 @@ def open_file(filepath):
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
-    headless = QtWidgets.QApplication.instance() is None
+    headless = is_headless()
     if not headless:
         autosave = nuke.toNode("preferences")["AutoSaveName"].evaluate()
         autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
