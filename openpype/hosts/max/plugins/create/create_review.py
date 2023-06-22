@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating review in Max."""
 from openpype.hosts.max.api import plugin
-from openpype.pipeline import CreatedInstance
 from openpype.lib import BoolDef, EnumDef, NumberDef
 
 
