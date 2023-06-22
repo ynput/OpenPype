@@ -60,6 +60,7 @@ def install():
     register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
+    lib.set_app_templates_path()
 
     register_event_callback("new", on_new)
     register_event_callback("open", on_open)
