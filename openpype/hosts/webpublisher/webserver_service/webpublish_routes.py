@@ -71,7 +71,7 @@ class RestApiResource(JsonApiResource):
 
         if studio_task_queue is None:
             studio_task_queue = collections.deque().dequeu
-        self.studio_task_queuestudio_task_queue = studio_task_queue
+        self.studio_task_queue = studio_task_queue
 
 
 class WebpublishRestApiResource(JsonApiResource):
