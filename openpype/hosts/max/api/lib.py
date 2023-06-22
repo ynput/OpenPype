@@ -282,3 +282,13 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+@contextlib.contextmanager
+def viewport_camera(camera):
+    original = rt.viewport.getCamera()
+    review_camera = rt.getNodeByName(camera)
+    try:
+        rt.viewport.setCamera(review_camera)
+        yield
+    finally:
+        rt.viewport.setCamera(original)

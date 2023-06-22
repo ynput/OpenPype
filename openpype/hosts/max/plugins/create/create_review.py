@@ -20,10 +20,10 @@ class CreateReview(plugin.MaxCreator):
         instance_data["percentSize"] = pre_create_data.get("percentSize")
         instance_data["rndLevel"] = pre_create_data.get("rndLevel")
 
-        _ = super(CreateReview, self).create(
+        super(CreateReview, self).create(
             subset_name,
             instance_data,
-            pre_create_data)  # type: CreatedInstance
+            pre_create_data)
 
     def get_pre_create_attr_defs(self):
         attrs = super(CreateReview, self).get_pre_create_attr_defs()

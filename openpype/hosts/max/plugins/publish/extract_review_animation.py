@@ -1,7 +1,8 @@
 import os
 import pyblish.api
-from openpype.pipeline import publish
 from pymxs import runtime as rt
+from openpype.pipeline import publish
+from openpype.hosts.max.api.lib import viewport_camera
 
 
 class ExtractReviewAnimation(publish.Extractor):
@@ -30,9 +31,11 @@ class ExtractReviewAnimation(publish.Extractor):
             "Writing Review Animation to"
             " '%s' to '%s'" % (filename, staging_dir))
 
-        preview_arg = self.set_preview_arg(
-            instance, filepath, start, end, fps)
-        rt.execute(preview_arg)
+        review_camera = instance.data["review_camera"]
+        with viewport_camera(review_camera):
+            preview_arg = self.set_preview_arg(
+                instance, filepath, start, end, fps)
+            rt.execute(preview_arg)
 
         tags = ["review"]
         if not instance.data.get("keepImages"):
@@ -49,7 +52,7 @@ class ExtractReviewAnimation(publish.Extractor):
             "frameEnd": instance.data["frameEnd"],
             "tags": tags,
             "preview": True,
-            "camera_name": instance.data["review_camera"]
+            "camera_name": review_camera
         }
         self.log.debug(f"{representation}")
 

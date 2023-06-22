@@ -23,6 +23,7 @@ class ExtractThumbnail(publish.Extractor):
             f"Create temp directory {tmp_staging} for thumbnail"
         )
         fps = int(instance.data["fps"])
+        frame = int(instance.data["frameStart"])
         instance.context.data["cleanupFullPaths"].append(tmp_staging)
         filename = "{name}_thumbnail..jpg".format(**instance.data)
         filepath = os.path.join(tmp_staging, filename)
@@ -34,7 +35,7 @@ class ExtractThumbnail(publish.Extractor):
             " '%s' to '%s'" % (filename, tmp_staging))
 
         preview_arg = self.set_preview_arg(
-            instance, filepath, fps)
+            instance, filepath, fps, frame)
         rt.execute(preview_arg)
 
         representation = {
@@ -54,11 +55,11 @@ class ExtractThumbnail(publish.Extractor):
     def get_filename(self, filename):
         return f"{filename}_thumbnail.0001.jpg"
 
-    def set_preview_arg(self, instance, filepath, fps):
+    def set_preview_arg(self, instance, filepath, fps, frame):
         job_args = list()
         default_option = f'CreatePreview filename:"{filepath}"'
         job_args.append(default_option)
-        frame_option = f"outputAVI:false start:1 end:1 fps:{fps}" # noqa
+        frame_option = f"outputAVI:false start:{frame} end:{frame} fps:{fps}" # noqa
         job_args.append(frame_option)
         rndLevel = instance.data.get("rndLevel")
         if rndLevel:
