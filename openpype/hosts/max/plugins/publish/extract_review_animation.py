@@ -15,7 +15,6 @@ class ExtractReviewAnimation(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        self.log.info("Extracting Review Animation ...")
         staging_dir = self.staging_dir(instance)
         ext = instance.data.get("imageFormat")
         filename = "{0}..{1}".format(instance.name, ext)
@@ -27,7 +26,7 @@ class ExtractReviewAnimation(publish.Extractor):
         filenames = self.get_files(
             instance.name, start, end, ext)
 
-        self.log.info(
+        self.log.debug(
             "Writing Review Animation to"
             " '%s' to '%s'" % (filename, staging_dir))
 
@@ -39,7 +38,7 @@ class ExtractReviewAnimation(publish.Extractor):
         if not instance.data.get("keepImages"):
             tags.append("delete")
 
-        self.log.info("Performing Extraction ...")
+        self.log.debug("Performing Extraction ...")
 
         representation = {
             "name": instance.data["imageFormat"],
@@ -89,6 +88,6 @@ class ExtractReviewAnimation(publish.Extractor):
             if enabled:
                 job_args.append(f"{key}:{enabled}")
         job_str = " ".join(job_args)
-        self.log.info(f"{job_str}")
+        self.log.debug(job_str)
 
         return job_str
