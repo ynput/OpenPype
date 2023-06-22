@@ -59,16 +59,28 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
             instance.data["families"].append("publish.farm")
 
         # Collect user defined attributes.
-        if not instance.data.get("includeUserDefinedAttributes", False):
-            return
+        if instance.data.get("includeUserDefinedAttributes", False):
+            user_defined_attributes = set()
+            for node in hierarchy:
+                attrs = cmds.listAttr(node, userDefined=True) or list()
+                shapes = cmds.listRelatives(node, shapes=True) or list()
+                for shape in shapes:
+                    attrs.extend(
+                        cmds.listAttr(shape, userDefined=True) or list()
+                    )
 
-        user_defined_attributes = set()
-        for node in hierarchy:
-            attrs = cmds.listAttr(node, userDefined=True) or list()
-            shapes = cmds.listRelatives(node, shapes=True) or list()
-            for shape in shapes:
-                attrs.extend(cmds.listAttr(shape, userDefined=True) or list())
+                user_defined_attributes.update(attrs)
 
-            user_defined_attributes.update(attrs)
+            instance.data["userDefinedAttributes"] = list(
+                user_defined_attributes
+            )
 
-        instance.data["userDefinedAttributes"] = list(user_defined_attributes)
+        # Backwards compatibility for attributes.
+        backwards_mapping = {
+            "write_color_sets": "writeColorSets",
+            "write_face_sets": "writeFaceSets",
+            "include_parent_hierarchy": "includeParentHierarchy",
+            "include_user_defined_attributes": "includeUserDefinedAttributes"
+        }
+        for key, value in backwards_mapping.items():
+            instance.data[value] = instance.data[key]

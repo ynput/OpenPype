@@ -45,15 +45,26 @@ class CollectPointcache(pyblish.api.InstancePlugin):
 
         # Collect user defined attributes.
         if not instance.data.get("includeUserDefinedAttributes", False):
-            return
+            user_defined_attributes = set()
+            for node in instance:
+                attrs = cmds.listAttr(node, userDefined=True) or list()
+                shapes = cmds.listRelatives(node, shapes=True) or list()
+                for shape in shapes:
+                    attrs.extend(
+                        cmds.listAttr(shape, userDefined=True) or list()
+                    )
 
-        user_defined_attributes = set()
-        for node in instance:
-            attrs = cmds.listAttr(node, userDefined=True) or list()
-            shapes = cmds.listRelatives(node, shapes=True) or list()
-            for shape in shapes:
-                attrs.extend(cmds.listAttr(shape, userDefined=True) or list())
+                user_defined_attributes.update(attrs)
 
-            user_defined_attributes.update(attrs)
+            instance.data["userDefinedAttributes"] = list(
+                user_defined_attributes
+            )
 
-        instance.data["userDefinedAttributes"] = list(user_defined_attributes)
+        # Backwards compatibility for attributes.
+        backwards_mapping = {
+            "write_color_sets": "writeColorSets",
+            "write_face_sets": "writeFaceSets",
+            "include_user_defined_attributes": "includeUserDefinedAttributes"
+        }
+        for key, value in backwards_mapping.items():
+            instance.data[value] = instance.data[key]
