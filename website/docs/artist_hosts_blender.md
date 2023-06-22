@@ -284,3 +284,24 @@ select **Link Animation (blend)**.
 
 Loading an animation should be done after loading the layout or rigs that have
 been animated in the animation task.
+
+## Geometry nodes
+
+Creating and publishing geometry nodes with OpenPype follows similar workflow as with
+other data types.
+
+:::note
+This family works only across blender files and cannot be compatible with any other host.
+:::
+
+### Publishing geometry nodes
+
+First of all, you must create a `Blender Nodegroup` instance from **OpenPype → Create...** which will create a collection to which you can link the objects holding you want to publish. All geometry nodes linked to an object by a `Geometry Nodes` modifier will be published.
+
+### Loading geometry nodes
+
+You can load published geometry nodes using [Loader](artist_tools.md#loader)
+(**OpenPype → Load...**). To link or append the geometry nodes with the source object it's been published with, 
+select your nodegroup subset, right click on it and select **Link Nodegroup with reference (blend)**.
+If you want to load only the data block without any useless object populating the outliner you can select **Link Nodegroup only (blend)**
+and then assign it to an object using a modifier.

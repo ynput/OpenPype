@@ -137,7 +137,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture",
                 "online",
-                "uasset"
+                "uasset",
+                "blender.nodegroup",
                 ]
 
     default_template_name = "publish"
