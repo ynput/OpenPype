@@ -682,7 +682,8 @@ def burnins_from_data(
         # FPS May not be needed at all in some cases (e.g. sequence)
         # - ignore the bug here, it will crash elsewhere when fps is needed
         try:
-            burnin.options_init["fps"] = convert_ffprobe_fps_to_float(r_frame_rate)
+            burnin.options_init["fps"] = convert_ffprobe_fps_to_float(
+                r_frame_rate)
         except ValueError:
             print(
                 "Warning: Couldn't convert fps value: {}".format(r_frame_rate)
