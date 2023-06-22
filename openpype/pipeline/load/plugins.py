@@ -28,6 +28,7 @@ class LoaderPlugin(list):
     """
 
     families = []
+    excluded_families = []
     representations = []
     extensions = {"*"}
     order = 0
@@ -159,7 +160,10 @@ class LoaderPlugin(list):
             return False
 
         plugin_families = set(plugin_families)
-        if "*" in plugin_families:
+
+        # Return if all families are allowed and no excluded families are
+        # defined.
+        if "*" in plugin_families and not cls.excluded_families:
             return True
 
         subset_doc = context["subset"]
@@ -175,6 +179,17 @@ class LoaderPlugin(list):
 
         if not families:
             return False
+
+        # Return if there are intersections between the subsets families and
+        # the loaders excluded families.
+        if list(set(families) & set(cls.excluded_families)):
+            return False
+
+        # Return if all families are allowed since excluded families have
+        # already been considered.
+        if "*" in plugin_families:
+            return True
+
         return any(family in plugin_families for family in families)
 
     @classmethod
