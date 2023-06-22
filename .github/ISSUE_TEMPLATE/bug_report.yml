@@ -151,6 +151,7 @@ body:
         - Linux / Centos
         - Linux / Ubuntu
         - Linux / RedHat
+        - Linux / Rocky
         - MacOS
   - type: markdown
     attributes:
