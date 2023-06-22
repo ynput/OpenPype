@@ -141,6 +141,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "blender.nodegroup",
                 "blender.particles",
                 "blender.world",
+                "blender.lighting"
                 ]
 
     default_template_name = "publish"
