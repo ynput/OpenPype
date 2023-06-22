@@ -1,58 +1,66 @@
-
 """Blender Capture
+
 Playblasting with independent viewport, camera and display options
+
 """
 import contextlib
 import bpy
+from pathlib import Path
 
-from .lib import maintained_time
-from .plugin import deselect_all
+from .lib import maintained_time, maintained_selection, maintained_visibility
+from .plugin import deselect_all, context_override
 
 
 def capture(
+    opengl=True,
+    animation=True,
+    write_still=False,
     camera=None,
     width=None,
     height=None,
-    filename=None,
-    start_frame=None,
-    end_frame=None,
-    step_frame=None,
-    sound=None,
+    filepath=None,
     isolate=None,
+    focus=None,
     maintain_aspect_ratio=True,
     overwrite=False,
-    image_settings=None,
-    display_options=None
+    display_options=None,
+    **preset_settings,
 ):
     """Playblast in an independent windows
     Arguments:
-        camera (str, optional): Name of camera, defaults to "Camera"
+        opengl (bool, optional): Whether or not to use OpenGL render.
+            Defaults to True.
+        animation (bool, optional): Whether or not to render animation.
+            Defaults to True.
+        write_still (bool, optional): Whether or not to write still image.
+            Defaults to False.
+        camera (str, optional): Name of the camera.
+            Defaults to current scene camera.
         width (int, optional): Width of output in pixels
         height (int, optional): Height of output in pixels
-        filename (str, optional): Name of output file path. Defaults to current
+        filepath (str, optional): Name of output file path. Defaults to current
             render output path.
-        start_frame (int, optional): Defaults to current start frame.
-        end_frame (int, optional): Defaults to current end frame.
-        step_frame (int, optional): Defaults to 1.
-        sound (str, optional):  Specify the sound node to be used during
-            playblast. When None (default) no sound will be used.
-        isolate (list): List of nodes to isolate upon capturing
+        isolate (list, optional): List of nodes to isolate upon capturing
         maintain_aspect_ratio (bool, optional): Modify height in order to
             maintain aspect ratio.
         overwrite (bool, optional): Whether or not to overwrite if file
             already exists. If disabled and file exists and error will be
-            raised.
-        image_settings (dict, optional): Supplied image settings for render,
-            using `ImageSettings`
+            raised. Default to False.
         display_options (dict, optional): Supplied display options for render
+        **preset_settings: Arbitrary keyword arguments for scene and render
+            settings overrides.
+
+    Returns:
+        str: The output file path.
     """
 
     scene = bpy.context.scene
-    camera = camera or "Camera"
+    if not camera and scene.camera:
+        camera = scene.camera.name
 
     # Ensure camera exists.
     if camera not in scene.objects and camera != "AUTO":
-        raise RuntimeError("Camera does not exist: {0}".format(camera))
+        raise RuntimeError(f"Camera does not exist: {camera}")
 
     # Ensure resolution.
     if width and height:
@@ -63,103 +71,175 @@ def capture(
         ratio = scene.render.resolution_x / scene.render.resolution_y
         height = round(width / ratio)
 
+    # Get filepath.
+    if filepath is None:
+        filepath = Path(scene.render.filepath)
+    else:
+        filepath = Path(filepath)
+
     # Get frame range.
-    if start_frame is None:
-        start_frame = scene.frame_start
-    if end_frame is None:
-        end_frame = scene.frame_end
-    if step_frame is None:
-        step_frame = 1
-    frame_range = (start_frame, end_frame, step_frame)
+    preset_settings.setdefault("frame_start", scene.frame_start)
+    preset_settings.setdefault("frame_end", scene.frame_end)
+    preset_settings.setdefault("frame_step", scene.frame_step)
 
-    if filename is None:
-        filename = scene.render.filepath
+    # Get render settings.
+    preset_settings.setdefault("render", {})
+    preset_settings["render"].update(
+        {
+            "resolution_x": width,
+            "resolution_y": height,
+            "use_overwrite": overwrite,
+        }
+    )
 
-    render_options = {
-        "filepath": "{}.".format(filename.rstrip(".")),
-        "resolution_x": width,
-        "resolution_y": height,
-        "use_overwrite": overwrite,
-    }
+    # Set filepath, with extension if not set
+    if filepath.suffix:
+        preset_settings["render"].update(
+            {
+                "file_format": filepath.suffix[1:].upper(),
+                "use_file_extension": False,
+                "filepath": filepath.as_posix(),
+            }
+        )
+    else:
+        preset_settings["render"].update(
+            {"use_file_extension": True, "filepath": filepath.as_posix() + "."}
+        )
 
-    with _independent_window() as window:
+    # Move image_settings into render options.
+    # NOTE: That fix deprecated image_settings argument.
+    preset_settings["render"].setdefault(
+        "image_settings", preset_settings.get("image_settings", {})
+    )
 
-        applied_view(window, camera, isolate, options=display_options)
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(maintained_time())
+        stack.enter_context(maintained_selection())
+        stack.enter_context(maintained_visibility())
+        window = stack.enter_context(_independent_window())
 
-        with contextlib.ExitStack() as stack:
-            stack.enter_context(maintain_camera(window, camera))
-            stack.enter_context(applied_frame_range(window, *frame_range))
-            stack.enter_context(applied_render_options(window, render_options))
-            stack.enter_context(applied_image_settings(window, image_settings))
-            stack.enter_context(maintained_time())
+        applied_view(window, camera, isolate, focus, options=display_options)
 
-            bpy.ops.render.opengl(
-                animation=True,
-                render_keyed_only=False,
-                sequencer=False,
-                write_still=False,
-                view_context=True
-            )
+        stack.enter_context(applied_camera(window, camera))
+        stack.enter_context(applied_preset_settings(window, preset_settings))
 
-    return filename
+        with context_override(window=window):
+            if opengl:
+                bpy.ops.render.opengl(
+                    animation=animation,
+                    render_keyed_only=False,
+                    sequencer=False,
+                    write_still=write_still,
+                    view_context=True,
+                )
+            else:
+                bpy.ops.render.render(
+                    animation=animation,
+                    write_still=write_still,
+                    use_viewport=False,
+                )
 
-
-ImageSettings = {
-    "file_format": "FFMPEG",
-    "color_mode": "RGB",
-    "ffmpeg": {
-        "format": "QUICKTIME",
-        "use_autosplit": False,
-        "codec": "H264",
-        "constant_rate_factor": "MEDIUM",
-        "gopsize": 18,
-        "use_max_b_frames": False,
-    },
-}
+    return filepath
 
 
-def isolate_objects(window, objects):
-    """Isolate selection"""
+def isolate_objects(window, objects, focus=None):
+    """Isolate selected objects and set focus on this one or given objects list
+    in optional argument.
+
+    Arguments:
+        window (bpy.types.Window): The Blender active window.
+        objects (list, optional): List of objects to be isolate in viewport.
+        focus (list, optional): List of objects used for focus view.
+    """
+
+    # Hide all scene objects excepte given object liste to be isolate.
+    for obj in bpy.context.scene.objects:
+        try:
+            obj.hide_set(obj not in objects)
+        except RuntimeError:
+            continue
+
+    # Select objects to center the view in front axis.
+    deselect_all()
+    focus = focus or objects
+    for obj in focus:
+        try:
+            obj.select_set(True)
+        except RuntimeError:
+            continue
+    with context_override(selected=focus, window=window):
+        bpy.ops.view3d.view_axis(type="FRONT")
+        bpy.ops.view3d.view_selected(use_all_regions=False)
     deselect_all()
 
-    for obj in objects:
-        obj.select_set(True)
 
-    context = create_blender_context(selected=objects, window=window)
+def _apply_settings(entity, settings):
+    """Apply settings for given entity.
 
-    bpy.ops.view3d.view_axis(context, type="FRONT")
-    bpy.ops.view3d.localview(context)
-
-    deselect_all()
-
-
-def _apply_options(entity, options):
-    for option, value in options.items():
-        if isinstance(value, dict):
-            _apply_options(getattr(entity, option), value)
-        else:
-            setattr(entity, option, value)
+    Arguments:
+        entity (bpy.types.bpy_struct): The entity.
+        settings (dict): Dict of settings.
+    """
+    for option, value in settings.items():
+        if hasattr(entity, option):
+            if isinstance(value, dict):
+                _apply_settings(getattr(entity, option), value)
+            else:
+                setattr(entity, option, value)
 
 
-def applied_view(window, camera, isolate=None, options=None):
-    """Apply view options to window."""
+def _get_current_settings(entity, settings):
+    """Get current settings for given entity.
+
+    Arguments:
+        entity (bpy.types.bpy_struct): The entity.
+        settings (dict): Dict of settings.
+
+    Returns:
+        dict: The current settings for the entity.
+    """
+    current_settings = {}
+    for option in settings:
+        if hasattr(entity, option):
+            if isinstance(settings[option], dict):
+                current_settings[option] = _get_current_settings(
+                    getattr(entity, option), settings[option]
+                )
+            else:
+                current_settings[option] = getattr(entity, option)
+
+    return current_settings
+
+
+def applied_view(window, camera, isolate=None, focus=None, options=None):
+    """Apply view options to window.
+
+    Arguments:
+        window (bpy.types.Window): The Blender active window.
+        camera (str): The camera name to set as active camera.
+            Use AUTO as special value to use centered orthographic view.
+        isolate (list, optional): List of objects to be isolate in viewport.
+        focus (list, optional): List of objects used for focus view
+            if argument camera is AUTO.
+        options (dict, optional): The display options.
+    """
+    # Change area of window to 3D view
     area = window.screen.areas[0]
+    area.ui_type = "VIEW_3D"
     space = area.spaces[0]
 
-    area.ui_type = "VIEW_3D"
-
-    meshes = [obj for obj in window.scene.objects if obj.type == "MESH"]
+    visible = [obj for obj in window.scene.objects if obj.visible_get()]
 
     if camera == "AUTO":
         space.region_3d.view_perspective = "ORTHO"
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or visible, focus)
     else:
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or visible, focus)
         space.camera = window.scene.objects.get(camera)
         space.region_3d.view_perspective = "CAMERA"
 
     if isinstance(options, dict):
-        _apply_options(space, options)
+        _apply_settings(space, options)
     else:
         space.shading.type = "SOLID"
         space.shading.color_type = "MATERIAL"
@@ -168,93 +248,35 @@ def applied_view(window, camera, isolate=None, options=None):
 
 
 @contextlib.contextmanager
-def applied_frame_range(window, start, end, step):
-    """Context manager for setting frame range."""
-    # Store current frame range
-    current_frame_start = window.scene.frame_start
-    current_frame_end = window.scene.frame_end
-    current_frame_step = window.scene.frame_step
-    # Apply frame range
-    window.scene.frame_start = start
-    window.scene.frame_end = end
-    window.scene.frame_step = step
-    try:
-        yield
-    finally:
-        # Restore frame range
-        window.scene.frame_start = current_frame_start
-        window.scene.frame_end = current_frame_end
-        window.scene.frame_step = current_frame_step
+def applied_preset_settings(window, settings):
+    """Context manager to override Blender settings.
 
-
-@contextlib.contextmanager
-def applied_render_options(window, options):
-    """Context manager for setting render options."""
-    render = window.scene.render
+    Arguments:
+        window (bpy.types.Window): The Blender active window.
+        settings (dict): The settings to apply.
+    """
 
     # Store current settings
-    original = {}
-    for opt in options.copy():
-        try:
-            original[opt] = getattr(render, opt)
-        except ValueError:
-            options.pop(opt)
+    old_settings = _get_current_settings(window.scene, settings)
 
     # Apply settings
-    _apply_options(render, options)
+    _apply_settings(window.scene, settings)
 
     try:
         yield
     finally:
         # Restore previous settings
-        _apply_options(render, original)
+        _apply_settings(window.scene, old_settings)
 
 
 @contextlib.contextmanager
-def applied_image_settings(window, options):
-    """Context manager to override image settings."""
+def applied_camera(window, camera):
+    """Context manager to override camera.
 
-    options = options or ImageSettings.copy()
-    ffmpeg = options.pop("ffmpeg", {})
-    render = window.scene.render
-
-    # Store current image settings
-    original = {}
-    for opt in options.copy():
-        try:
-            original[opt] = getattr(render.image_settings, opt)
-        except ValueError:
-            options.pop(opt)
-
-    # Store current ffmpeg settings
-    original_ffmpeg = {}
-    for opt in ffmpeg.copy():
-        try:
-            original_ffmpeg[opt] = getattr(render.ffmpeg, opt)
-        except ValueError:
-            ffmpeg.pop(opt)
-
-    # Apply image settings
-    for opt, value in options.items():
-        setattr(render.image_settings, opt, value)
-
-    # Apply ffmpeg settings
-    for opt, value in ffmpeg.items():
-        setattr(render.ffmpeg, opt, value)
-
-    try:
-        yield
-    finally:
-        # Restore previous settings
-        for opt, value in original.items():
-            setattr(render.image_settings, opt, value)
-        for opt, value in original_ffmpeg.items():
-            setattr(render.ffmpeg, opt, value)
-
-
-@contextlib.contextmanager
-def maintain_camera(window, camera):
-    """Context manager to override camera."""
+    Arguments:
+        window (bpy.types.Window): The Blender active window.
+        camera (str): The camera name to set as active camera.
+    """
     current_camera = window.scene.camera
     if camera in window.scene.objects:
         window.scene.camera = window.scene.objects.get(camera)
@@ -267,12 +289,12 @@ def maintain_camera(window, camera):
 @contextlib.contextmanager
 def _independent_window():
     """Create capture-window context."""
-    context = create_blender_context()
     current_windows = set(bpy.context.window_manager.windows)
-    bpy.ops.wm.window_new(context)
+    with context_override():
+        bpy.ops.wm.window_new()
     window = list(set(bpy.context.window_manager.windows) - current_windows)[0]
-    context["window"] = window
     try:
         yield window
     finally:
-        bpy.ops.wm.window_close(context)
+        with context_override(window=window):
+            bpy.ops.wm.window_close()

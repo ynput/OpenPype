@@ -1,47 +1,40 @@
 """Create review."""
+from typing import List
 
 import bpy
+from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.properties import OpenpypeInstance
 
-from openpype.pipeline import legacy_io
-from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.plugins.create.create_camera import _get_camera_from_datablocks
 
 
 class CreateReview(plugin.Creator):
-    """Single baked camera"""
+    """Review is basically a camera with different integration."""
 
     name = "reviewDefault"
     label = "Review"
     family = "review"
     icon = "video-camera"
 
-    def process(self):
-        """ Run the creator on Blender main thread"""
-        mti = ops.MainThreadItem(self._process)
-        ops.execute_in_main_thread(mti)
-
-    def _process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
+    def process(
+        self, datablocks: List[bpy.types.ID] = None, **kwargs
+    ) -> OpenpypeInstance:
+        """OVERRIDE from CreateCamera to not rename target camera.
+        
+        Still create one if None.
+        """
         # Create instance object
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.collections.new(name=name)
-        instances.children.link(asset_group)
-        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
-        lib.imprint(asset_group, self.data)
+        instance_name = plugin.build_op_basename(asset, subset)
 
-        if (self.options or {}).get("useSelection"):
-            selected = lib.get_selection()
-            for obj in selected:
-                asset_group.objects.link(obj)
-        elif (self.options or {}).get("asset_group"):
-            obj = (self.options or {}).get("asset_group")
-            asset_group.objects.link(obj)
+        # Create camera if doesn't exist
+        datablocks = datablocks or []
+        camera = _get_camera_from_datablocks(datablocks)
+        if not camera:
+            camera = bpy.data.cameras.new(instance_name)
+            camera_obj = bpy.data.objects.new(instance_name, camera)
+            datablocks.append(camera_obj)
 
-        return asset_group
+        # Create Instance
+        return super().process(datablocks, **kwargs)

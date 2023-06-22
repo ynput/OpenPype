@@ -546,6 +546,26 @@ def maintained_selection():
 
 
 @contextlib.contextmanager
+def maintained_visibility():
+    """Maintain visibility during context."""
+
+    previous_hidden_objects = [
+        obj for obj in bpy.context.scene.objects if obj.hide_get()
+    ]
+    previous_hidden_collections = [
+        col for col in bpy.context.scene.collection.children_recursive
+        if col.hide_viewport
+    ]
+    try:
+        yield
+    finally:
+        for obj in bpy.context.scene.objects:
+            obj.hide_set(obj in previous_hidden_objects)
+        for col in bpy.context.scene.collection.children_recursive:
+            col.hide_viewport = col in previous_hidden_collections
+
+
+@contextlib.contextmanager
 def maintained_time():
     """Maintain current frame during context."""
     current_time = bpy.context.scene.frame_current

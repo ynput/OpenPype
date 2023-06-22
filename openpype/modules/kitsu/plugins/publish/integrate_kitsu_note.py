@@ -9,7 +9,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "Kitsu Note and Status"
-    families = ["render", "image", "online", "plate", "kitsu"]
+    families = ["render", "image", "online", "plate", "kitsu", "review"]
 
     # status settings
     set_status_note = False

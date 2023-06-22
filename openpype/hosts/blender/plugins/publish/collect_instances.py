@@ -41,6 +41,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
+        # Collect global scene data.
+        context.data.update({
+            "frameStart": bpy.context.scene.frame_start,
+            "frameEnd": bpy.context.scene.frame_end,
+            "fps": bpy.context.scene.render.fps,
+        })
 
         # Create pyblish instances for scene instances
         for op_instance in bpy.context.scene.openpype_instances:

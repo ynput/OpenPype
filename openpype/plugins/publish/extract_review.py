@@ -983,14 +983,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return audio_in_args, audio_filters, audio_out_args
 
         for audio in audio_inputs:
-            # NOTE modified, always was expected "frameStartFtrack" which is
-            # STRANGE?!!! There should be different key, right?
-            # TODO use different frame start!
             offset_seconds = 0
-            frame_start_ftrack = instance.data.get("frameStartFtrack")
-            if frame_start_ftrack is not None:
-                offset_frames = frame_start_ftrack - audio["offset"]
-                offset_seconds = offset_frames / temp_data["fps"]
+            frame_start = instance.data.get("frameStart")
+            offset_frames = frame_start - audio["offset"]
+            offset_seconds = offset_frames / temp_data["fps"]
 
             if offset_seconds > 0:
                 audio_in_args.append(
@@ -1015,6 +1011,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             audio_in_args.append("-i {}".format(
                 path_to_subprocess_arg(audio["filename"])
             ))
+
+        # Add exclusive mapping for audio channels
+        audio_in_args.append("-map 0:v")
+        for i in range(len(audio_inputs)):
+            audio_in_args.append("-map {}:a".format(i+1))
 
         # NOTE: These were changed from input to output arguments.
         # NOTE: value in "-ac" was hardcoded to 2, changed to audio inputs len.

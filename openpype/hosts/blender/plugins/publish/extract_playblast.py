@@ -3,30 +3,28 @@ import clique
 
 import bpy
 
-import pyblish.api
-from openpype.pipeline import publish
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
+from openpype.hosts.blender.plugins.publish import extract_thumbnail
+from openpype.pipeline.publish.publish_plugins import Extractor
 
 
-class ExtractPlayblast(publish.Extractor):
-    """
-    Extract viewport playblast.
+class ExtractPlayblast(Extractor):
+    """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport
     capture.
+
     """
 
     label = "Extract Playblast"
     hosts = ["blender"]
     families = ["review"]
     optional = True
-    order = pyblish.api.ExtractorOrder + 0.01
+    order = extract_thumbnail.ExtractThumbnail.order - 0.002
 
     def process(self, instance):
         self.log.info("Extracting capture..")
-
-        self.log.info(instance.data)
 
         # get scene fps
         fps = instance.data.get("fps")
@@ -42,7 +40,6 @@ class ExtractPlayblast(publish.Extractor):
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
 
         self.log.info(f"start: {start}, end: {end}")
-        assert end > start, "Invalid time range !"
 
         # get cameras
         camera = instance.data("review_camera", None)
@@ -57,17 +54,20 @@ class ExtractPlayblast(publish.Extractor):
 
         self.log.info(f"Outputting images to {path}")
 
+        family = instance.data.get("family")
         project_settings = instance.context.data["project_settings"]["blender"]
         presets = project_settings["publish"]["ExtractPlayblast"]["presets"]
-        preset = presets.get("default")
-        preset.update({
-            "camera": camera,
-            "start_frame": start,
-            "end_frame": end,
-            "filename": path,
-            "overwrite": True,
-            "isolate": isolate,
-        })
+        preset = presets.get(family, presets.get("default", {}))
+        preset.update(
+            {
+                "camera": camera,
+                "frame_start": start,
+                "frame_end": end,
+                "filepath": path,
+                "overwrite": True,
+                "isolate": isolate,
+            }
+        )
         preset.setdefault(
             "image_settings",
             {
@@ -78,29 +78,63 @@ class ExtractPlayblast(publish.Extractor):
             },
         )
 
+        # Keep current display shading
+        # Catch source window because Win changes focus
+        screen = bpy.context.window_manager.windows[0].screen
+        current_area = next(
+            (a for a in screen.areas if a.type == "VIEW_3D"), None
+        )
+        shading_type = (
+            current_area.spaces[0].shading.type if current_area else "SOLID"
+        )
+        preset.setdefault("display_options", {})
+        preset["display_options"].setdefault(
+            "shading", {"type": shading_type}
+        )
+        preset["display_options"].setdefault(
+            "overlay", {"show_overlays": False}
+        )
+
         with maintained_time():
             path = capture(**preset)
 
         self.log.debug(f"playblast path {path}")
 
-        collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(
-            collected_files,
-            patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
-        )
-
-        if len(collections) > 1:
-            raise RuntimeError(
-                f"More than one collection found in stagingdir: {stagingdir}"
+        # if only one frame
+        if end == start:
+            files = next(
+                (
+                    frame for frame in os.listdir(stagingdir)
+                    if frame.endswith(".png")
+                ),
+                None
             )
-        elif len(collections) == 0:
-            raise RuntimeError(
-                f"No collection found in stagingdir: {stagingdir}"
+            if not files:
+                raise RuntimeError(
+                    f"No frame found in stagingdir: {stagingdir}"
+                )
+        else:
+            collected_files = os.listdir(stagingdir)
+            collections, _ = clique.assemble(
+                collected_files,
+                patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
             )
 
-        frame_collection = collections[0]
+            if len(collections) > 1:
+                raise RuntimeError(
+                    "More than one collection found"
+                    f"in stagingdir: {stagingdir}"
+                )
+            elif len(collections) == 0:
+                raise RuntimeError(
+                    f"No collection found in stagingdir: {stagingdir}"
+                )
 
-        self.log.info(f"We found collection of interest {frame_collection}")
+            frame_collection = collections[0]
+            self.log.info(
+                f"We found collection of interest {frame_collection}"
+            )
+            files = list(frame_collection)
 
         instance.data.setdefault("representations", [])
 
@@ -111,12 +145,13 @@ class ExtractPlayblast(publish.Extractor):
         representation = {
             "name": "png",
             "ext": "png",
-            "files": list(frame_collection),
+            "files": files,
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
             "fps": fps,
+            "preview": True,
             "tags": tags,
-            "camera_name": camera
+            "camera_name": camera,
         }
         instance.data["representations"].append(representation)
