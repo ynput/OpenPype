@@ -14,7 +14,6 @@ class ExtractThumbnail(publish.Extractor):
     label = "Extract Thumbnail"
     hosts = ["max"]
     families = ["review"]
-    start
 
     def process(self, instance):
         # TODO: Create temp directory for thumbnail
