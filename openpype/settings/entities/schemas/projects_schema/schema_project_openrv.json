@@ -21,6 +21,33 @@
                     "name": "schema_imageio_file_rules"
                 }
             ]
+        },
+        {
+            "key": "openrv_nuke_integration",
+            "type": "dict",
+            "label": "Nuke integration",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "rvnuke_enabled",
+                    "label": "Enable RV Nuke integration"
+                },
+
+                {
+                    "type": "text",
+                    "key": "rvnuke_open_in_rv_shortcut",
+                    "label": "Open In Rv Shortcut"
+                },
+                {
+                    "type": "path",
+                    "key": "rvnuke_content_paths",
+                    "label": "RV Nuke Content Paths",
+                    "multiplatform": false,
+                    "multipath": true
+                }
+            ]
         }
     ]
 }

@@ -8,5 +8,10 @@
             "enabled": true,
             "rules": {}
         }
+    },
+    "openrv_nuke_integration": {
+        "rvnuke_enabled": false,
+        "rvnuke_content_paths" : [],
+        "rvnuke_open_in_rv_shortcut" : "Alt+V"
     }
 }
