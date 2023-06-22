@@ -277,7 +277,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         for key, item in listed_keys.items():
             values = item["values"]
             # Fill the missing values from the longest list with the last
-            #   value to make sure all values have same "frame cound"
+            #   value to make sure all values have same "frame count"
             last_value = values[-1] if values else ""
             for _ in range(longest_list_len - len(values)):
                 values.append(last_value)
