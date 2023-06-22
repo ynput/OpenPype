@@ -21,7 +21,6 @@ speed.
 import os
 import sys
 import site
-from sysconfig import get_platform
 import platform
 import subprocess
 from pathlib import Path
@@ -101,18 +100,17 @@ with open(ayon_root / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
-openpype_version = version_match[1]
+ayon_version = version_match[1]
 
 # create full path
 if platform.system().lower() == "darwin":
     build_dir = ayon_root.joinpath(
         "build",
-        f"AYON {openpype_version}.app",
+        f"AYON {ayon_version}.app",
         "Contents",
         "MacOS")
 else:
-    build_subdir = f"exe.{get_platform()}-{sys.version[:3]}"
-    build_dir = ayon_root / "build" / build_subdir
+    build_dir = ayon_root / "build" / "output"
 
 _print(f"Using build at {build_dir}", 2)
 if not build_dir.exists():

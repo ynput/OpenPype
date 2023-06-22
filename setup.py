@@ -75,12 +75,14 @@ icon_path = resources_dir / "ayon.ico"
 mac_icon_path = resources_dir / "ayon.icns"
 
 build_exe_options = dict(
+    build_exe="build/output",
     packages=install_requires,
     includes=includes,
     excludes=excludes,
     bin_includes=bin_includes,
     include_files=include_files,
-    optimize=0
+    optimize=0,
+    replace_paths=[("*", "")],
 )
 
 bdist_mac_options = dict(

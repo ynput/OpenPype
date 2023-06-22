@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-  Helper script to build OpenPype Installer.
+  Helper script to build AYON Installer.
 
 .DESCRIPTION
-  This script will use already built OpenPype (in `build` directory) and
+  This script will use already built AYON (in `build` directory) and
   create Windows installer from it using Inno Setup (https://jrsoftware.org/)
 
 .EXAMPLE
@@ -13,10 +13,10 @@ PS> .\build_win_installer.ps1
 #>
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
+$ayon_root = (Get-Item $script_dir).parent.FullName
 
 # Install PSWriteColor to support colorized output to terminal
-$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+$env:PSModulePath = $env:PSModulePath + ";$($ayon_root)\tools\modules\powershell"
 
 function Start-Progress {
     param([ScriptBlock]$code)
@@ -91,19 +91,19 @@ Write-Host $art -ForegroundColor DarkGreen
 # Show-PSWarning
 
 
-Set-Location -Path $openpype_root
+Set-Location -Path $ayon_root
 
-$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
+$version_file = Get-Content -Path "$($ayon_root)\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$openpype_version = $result[0].Groups['version'].Value
-if (-not $openpype_version) {
-  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
+$ayon_version = $result[0].Groups['version'].Value
+if (-not $ayon_version) {
+  Write-Color -Text "!!! ", "Cannot determine AYON version." -Color Yellow, Gray
   Exit-WithCode 1
 }
 
-$env:BUILD_VERSION = $openpype_version
+$env:BUILD_VERSION = $ayon_version
 
-iscc 
+iscc
 
 Write-Color ">>> ", "Detecting host Python ... " -Color Green, White -NoNewline
 $python = "python"
@@ -139,20 +139,14 @@ if (($matches[1] -lt 3) -or ($matches[2] -lt 9)) {
 } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 9)) {
     Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
     Write-Host "*** " -NoNewline -ForegroundColor yellow
-    Write-Host "OpenPype supports only Python 3.9" -ForegroundColor white
+    Write-Host "AYON supports only Python 3.9" -ForegroundColor white
 } else {
     Write-Host "OK [ $p ]" -ForegroundColor green
 }
 
-Write-Color -Text ">>> ", "Creating OpenPype installer ... " -Color Green, White
+Write-Color -Text ">>> ", "Creating AYON installer ... " -Color Green, White
 
-$build_dir_command = @"
-import sys
-from distutils.util import get_platform
-print('exe.{}-{}'.format(get_platform(), sys.version[0:3]))
-"@
-
-$build_dir = & $python -c $build_dir_command
+$build_dir = & $python -c "build/output"
 Write-Color -Text "--- ", "Build directory ", "${build_dir}" -Color Green, Gray, White
 $env:BUILD_DIR = $build_dir
 
@@ -162,7 +156,7 @@ if (-not (Get-Command iscc -errorAction SilentlyContinue -ErrorVariable ProcessE
   Exit-WithCode 1
 }
 
-& iscc "$openpype_root\inno_setup.iss"
+& iscc "$ayon_root\inno_setup.iss"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Color -Text "!!! ", "Creating installer failed." -Color Red, Yellow
@@ -172,6 +166,6 @@ if ($LASTEXITCODE -ne 0) {
 Write-Color -Text ">>> ", "Restoring current directory" -Color Green, Gray
 Set-Location -Path $current_dir
 try {
-    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done. You will find You will find OpenPype installer in '.\build' directory."
+    New-BurntToastNotification -AppLogo "$ayon_root/common/ayon_common/resources/AYON.png" -Text "AYON build complete!", "All done. You will find You will find AYON installer in '.\build' directory."
 } catch {}
-Write-Color -Text "*** ", "All done. You will find OpenPype installer in ", "'.\build'", " directory." -Color Green, Gray, White, Gray
+Write-Color -Text "*** ", "All done. You will find AYON installer in ", "'.\build'", " directory." -Color Green, Gray, White, Gray
