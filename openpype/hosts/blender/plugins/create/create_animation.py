@@ -2,6 +2,7 @@
 import bpy
 
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
 
 
 class CreateAnimation(plugin.Creator):
@@ -11,4 +12,4 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    bl_types = frozenset({bpy.types.Action, bpy.types.Object})
+    bl_types = frozenset(BL_OUTLINER_TYPES | {bpy.types.Action})

@@ -32,15 +32,19 @@ from openpype.hosts.blender.api.utils import (
     link_to_collection,
     unlink_from_collection,
 )
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.constants import AVALON_INSTANCE_ID
 from openpype.pipeline.create.creator_plugins import (
     discover_legacy_creator_plugins,
     get_legacy_creator_by_name,
 )
 from openpype.pipeline.create.subset_name import get_subset_name
+from openpype.pipeline.template_data import get_template_data_with_names
+from openpype.lib.path_tools import version_up
 from openpype.tools.utils import host_tools
-
-from .workio import OpenFileCacher
+from openpype.hosts.blender.scripts import build_workfile
+from openpype.tools.utils.lib import qt_app_context
+from .workio import OpenFileCacher, save_file, work_root
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -93,6 +97,7 @@ class MainThreadItem:
     Item store callback (callable variable), arguments and keyword arguments
     for the callback. Item hold information about it's process.
     """
+
     not_set = object()
     sleep_time = 0.1
 
@@ -178,9 +183,8 @@ def _process_app_events() -> Optional[float]:
             msg = str(val)
             detail = "\n".join(traceback.format_exception(_clc, val, tb))
             dialog = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Error",
-                msg)
+                QtWidgets.QMessageBox.Warning, "Error", msg
+            )
             dialog.setMinimumWidth(500)
             dialog.setDetailedText(detail)
             dialog.setWindowFlags(
@@ -224,10 +228,7 @@ class LaunchQtApp(bpy.types.Operator):
         GlobalClass.app = self._app
 
         if not bpy.app.timers.is_registered(_process_app_events):
-            bpy.app.timers.register(
-                _process_app_events,
-                persistent=True
-            )
+            bpy.app.timers.register(_process_app_events, persistent=True)
 
     def execute(self, context):
         """Execute the operator.
@@ -282,7 +283,7 @@ class LaunchQtApp(bpy.types.Operator):
             #     self._window.setWindowFlags(origin_flags)
             #     self._window.show()
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def before_window_show(self):
         return
@@ -308,8 +309,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": legacy_io.Session["AVALON_ASSET"]},
-            refresh=True
+            {"asset": legacy_io.Session["AVALON_ASSET"]}, refresh=True
         )
 
 
@@ -979,18 +979,116 @@ class LaunchWorkFiles(LaunchQtApp):
 
     def execute(self, context):
         result = super().execute(context)
-        self._window.set_context({
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
-        })
+        self._window.set_context(
+            {
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"],
+            }
+        )
         return result
 
     def before_window_show(self):
-        self._window.root = str(Path(
-            os.environ.get("AVALON_WORKDIR", ""),
-            os.environ.get("AVALON_SCENEDIR", ""),
-        ))
+        self._window.root = str(
+            Path(
+                os.environ.get("AVALON_WORKDIR", ""),
+                os.environ.get("AVALON_SCENEDIR", ""),
+            )
+        )
         self._window.refresh()
+
+
+class BuildWorkFile(bpy.types.Operator):
+    """Build First Work File."""
+
+    bl_idname = "wm.avalon_builder"
+    bl_label = "Build First Workfile"
+    _app: QtWidgets.QApplication
+
+    # Should save property
+    save_as: bpy.props.BoolProperty(name="Save as...", default=True)
+    # Should clear current scene property
+    clear_scene: bpy.props.BoolProperty(
+        name="Clear current scene", default=False
+    )
+
+    def __init__(self):
+        print(f"Initialising {self.bl_idname}...")
+        self._app = BlenderApplication.get_app()
+        GlobalClass.app = self._app
+
+        if not bpy.app.timers.is_registered(_process_app_events):
+            bpy.app.timers.register(_process_app_events, persistent=True)
+
+    def _build_first_workfile(self, clear_scene: bool, save_as: bool):
+        """Execute Build First workfile process.
+        
+        Args:
+            clear_scene (bool): Clear scene content before the build. 
+            save_as (bool): Save as new incremented workfile after the build.
+        """
+        if clear_scene:
+            # Clear scene content
+            print("Clear scene content")
+
+            # clear all openpype instances
+            bpy.context.scene.openpype_instances.clear()
+            # clear all objects and collections
+            for obj in set(bpy.data.objects):
+                bpy.data.objects.remove(obj)
+            for collection in set(bpy.data.collections):
+                bpy.data.collections.remove(collection)
+            # purgne unused datablock
+            while bpy.data.orphans_purge(
+                do_local_ids=False, do_recursive=True
+            ):
+                pass
+            # clear all libraries
+            for library in list(bpy.data.libraries):
+                bpy.data.libraries.remove(library)
+
+        print("Build Workfile")
+        build_workfile()
+
+        if save_as:
+            # Saving workfile
+            print("Saving workfile")
+
+            with qt_app_context():
+                session = legacy_io.Session
+                root = work_root(session)
+
+                # Set work file data for template formatting
+                project_name = session["AVALON_PROJECT"]
+                asset_name = session["AVALON_ASSET"]
+                task_name = session["AVALON_TASK"]
+                host_name = session["AVALON_APP"]
+
+                data = get_template_data_with_names(
+                    project_name, asset_name, task_name, host_name
+                )
+                data.update({"version": 0, "ext": "blend"})
+
+                # Getting file name anatomy
+                anatomy_filled = Anatomy(project_name).format(data)
+                file_path = anatomy_filled["work"]["file"]
+
+                # Saving
+                if file_path:
+                    file_path = version_up(os.path.join(root, file_path))
+                    save_file(file_path, copy=False)
+                else:
+                    print("Failed to save")
+
+    def execute(self, context):
+        mti = MainThreadItem(
+            self._build_first_workfile, self.clear_scene, self.save_as
+        )
+        execute_in_main_thread(mti)
+
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return bpy.context.window_manager.invoke_props_dialog(self, width=150)
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -1011,8 +1109,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = legacy_io.Session['AVALON_ASSET']
-        task = legacy_io.Session['AVALON_TASK']
+        asset = legacy_io.Session["AVALON_ASSET"]
+        task = legacy_io.Session["AVALON_TASK"]
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(
@@ -1033,6 +1131,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
         #                'Set Resolution'?
+        layout.separator()
+        layout.operator(BuildWorkFile.bl_idname, text="Build First Workfile")
 
 
 def draw_avalon_menu(self, context):
@@ -1291,6 +1391,7 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+    BuildWorkFile,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_ExposeContainerContent,
@@ -1309,7 +1410,7 @@ def register():
 
     pcoll = bpy.utils.previews.new()
     pyblish_icon_file = Path(__file__).parent / "icons" / "pyblish-32x32.png"
-    pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), 'IMAGE')
+    pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), "IMAGE")
     PREVIEW_COLLECTIONS["avalon"] = pcoll
 
     for cls in classes:

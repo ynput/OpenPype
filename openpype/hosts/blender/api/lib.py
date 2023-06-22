@@ -556,6 +556,10 @@ def maintained_visibility():
         col for col in bpy.context.scene.collection.children_recursive
         if col.hide_viewport
     ]
+    previous_hidden_layer_collection = [
+        col for col in bpy.context.view_layer.layer_collection.children
+        if col.hide_viewport
+    ]
     try:
         yield
     finally:
@@ -563,6 +567,8 @@ def maintained_visibility():
             obj.hide_set(obj in previous_hidden_objects)
         for col in bpy.context.scene.collection.children_recursive:
             col.hide_viewport = col in previous_hidden_collections
+        for col in bpy.context.view_layer.layer_collection.children:
+            col.hide_viewport = col in previous_hidden_layer_collection
 
 
 @contextlib.contextmanager
