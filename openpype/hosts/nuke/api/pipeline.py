@@ -1,5 +1,3 @@
-import sys
-
 import nuke
 
 import os
@@ -369,7 +367,7 @@ def add_rv_from_presets():
     if not rv_settings['rvnuke_enabled']:
         return
 
-    if not 'rvnuke_content_paths' in rv_settings:
+    if 'rvnuke_content_paths' not in rv_settings:
         return
 
     for rv_nuke_path in rv_settings['rvnuke_content_paths']:
@@ -398,15 +396,17 @@ def add_rv_from_presets():
 
 
 def add_rv_shortcut():
-    rv_settings = get_current_project_settings()["openrv"]['openrv_nuke_integration']
-    if rv_settings['rvnuke_open_in_rv_shortcut']:
+    rv_global_settings = get_current_project_settings()["openrv"]
+    rv_nuke_settings = rv_global_settings['openrv_nuke_integration']
+    if rv_nuke_settings['rvnuke_open_in_rv_shortcut']:
         menubar = nuke.menu("Nuke")
         menu_item = menubar.findItem("RV/View in RV")
         menu_item.setShortcut("Alt+v")
-        menu_item.setShortcut(rv_settings['rvnuke_open_in_rv_shortcut'])
+        menu_item.setShortcut(rv_nuke_settings['rvnuke_open_in_rv_shortcut'])
         log.info("Adding Shortcut `{}` to `{}`".format(
             'Open in RV',
-            rv_settings['rvnuke_open_in_rv_shortcut']))
+            rv_nuke_settings['rvnuke_open_in_rv_shortcut']))
+
 
 def add_shortcuts_from_presets():
     menubar = nuke.menu("Nuke")
