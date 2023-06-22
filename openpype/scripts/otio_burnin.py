@@ -677,18 +677,6 @@ def burnins_from_data(
     if "fps" not in data:
         data["fps"] = convert_ffprobe_fps_value(r_frame_rate)
 
-    # Fill 'fps' in burnin options if not set
-    if options.get("fps") is None:
-        # FPS May not be needed at all in some cases (e.g. sequence)
-        # - ignore the bug here, it will crash elsewhere when fps is needed
-        try:
-            burnin.options_init["fps"] = convert_ffprobe_fps_to_float(
-                r_frame_rate)
-        except ValueError:
-            print(
-                "Warning: Couldn't convert fps value: {}".format(r_frame_rate)
-            )
-
     # Check frame start and add expression if is available
     if frame_start is not None:
         data[CURRENT_FRAME_KEY[1:-1]] = CURRENT_FRAME_SPLITTER

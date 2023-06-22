@@ -266,6 +266,16 @@ class ExtractBurnin(publish.Extractor):
             first_output = True
 
             files_to_delete = []
+
+            repre_burnin_options = copy.deepcopy(burnin_options)
+            # Use fps from representation for output in options
+            fps = repre.get("fps")
+            if fps is not None:
+                repre_burnin_options["fps"] = fps
+                # TODO Should we use fps from source representation to fill
+                #  it in review?
+                # burnin_data["fps"] = fps
+
             for filename_suffix, burnin_def in repre_burnin_defs.items():
                 new_repre = copy.deepcopy(repre)
                 new_repre["stagingDir"] = src_repre_staging_dir
@@ -308,7 +318,7 @@ class ExtractBurnin(publish.Extractor):
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
-                    "options": copy.deepcopy(burnin_options),
+                    "options": repre_burnin_options,
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
                     "first_frame": temp_data["first_frame"],
