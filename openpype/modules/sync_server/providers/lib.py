@@ -114,5 +114,5 @@ factory = ProviderFactory()
 # trial and error
 factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
 factory.register_provider(DropboxHandler.CODE, DropboxHandler, 10)
-factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)
-factory.register_provider(SFTPHandler.CODE, SFTPHandler, 20)
+factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 200)
+factory.register_provider(SFTPHandler.CODE, SFTPHandler, 100)
