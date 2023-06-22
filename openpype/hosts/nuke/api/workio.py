@@ -1,7 +1,6 @@
 """Host API required Work Files tool"""
 import os
 import nuke
-from qtpy import QtWidgets
 from openpype.hosts.nuke.api.lib import is_headless
 
 
