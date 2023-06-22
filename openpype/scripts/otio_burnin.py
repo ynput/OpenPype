@@ -12,6 +12,7 @@ from openpype.lib import (
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
     convert_ffprobe_fps_value,
+    convert_ffprobe_fps_to_float,
 )
 
 
@@ -655,17 +656,37 @@ def burnins_from_data(
     frame_end = data.get("frame_end")
     frame_start_tc = data.get('frame_start_tc', frame_start)
 
-    stream = burnin._streams[0]
+    video_stream = None
+    for stream in burnin._streams:
+        if stream.get("codec_type") == "video":
+            video_stream = stream
+            break
+
+    if video_stream is None:
+        raise ValueError("Source didn't have video stream.")
+
     if "resolution_width" not in data:
-        data["resolution_width"] = stream.get("width", MISSING_KEY_VALUE)
+        data["resolution_width"] = video_stream.get(
+            "width", MISSING_KEY_VALUE)
 
     if "resolution_height" not in data:
-        data["resolution_height"] = stream.get("height", MISSING_KEY_VALUE)
+        data["resolution_height"] = video_stream.get(
+            "height", MISSING_KEY_VALUE)
 
+    r_frame_rate = video_stream.get("r_frame_rate", "0/0")
     if "fps" not in data:
-        data["fps"] = convert_ffprobe_fps_value(
-            stream.get("r_frame_rate", "0/0")
-        )
+        data["fps"] = convert_ffprobe_fps_value(r_frame_rate)
+
+    # Fill 'fps' in burnin options if not set
+    if options.get("fps") is None:
+        # FPS May not be needed at all in some cases (e.g. sequence)
+        # - ignore the bug here, it will crash elsewhere when fps is needed
+        try:
+            burnin.options_init["fps"] = convert_ffprobe_fps_to_float(r_frame_rate)
+        except ValueError:
+            print(
+                "Warning: Couldn't convert fps value: {}".format(r_frame_rate)
+            )
 
     # Check frame start and add expression if is available
     if frame_start is not None:
@@ -674,9 +695,9 @@ def burnins_from_data(
     if frame_start_tc is not None:
         data[TIMECODE_KEY[1:-1]] = TIMECODE_KEY
 
-    source_timecode = stream.get("timecode")
+    source_timecode = video_stream.get("timecode")
     if source_timecode is None:
-        source_timecode = stream.get("tags", {}).get("timecode")
+        source_timecode = video_stream.get("tags", {}).get("timecode")
 
     # Use "format" key from ffprobe data
     #   - this is used e.g. in mxf extension
