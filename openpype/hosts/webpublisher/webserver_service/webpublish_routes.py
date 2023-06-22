@@ -293,7 +293,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             log.debug("Adding to queue")
             self.resource.studio_task_queue.append(args)
         else:
-            subprocess.call(args)
+            subprocess.Popen(args)
 
         return Response(
             status=200,
