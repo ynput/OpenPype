@@ -3162,5 +3162,4 @@ def is_headless():
     Returns:
         bool: headless
     """
-    headless = QtWidgets.QApplication.instance() is None
-    return headless
+    return QtWidgets.QApplication.instance() is None

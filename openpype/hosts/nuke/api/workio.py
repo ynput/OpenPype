@@ -26,8 +26,7 @@ def open_file(filepath):
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
-    headless = is_headless()
-    if not headless:
+    if not is_headless():
         autosave = nuke.toNode("preferences")["AutoSaveName"].evaluate()
         autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
         if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
