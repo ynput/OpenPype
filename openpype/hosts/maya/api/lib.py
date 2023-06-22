@@ -3,7 +3,6 @@
 import os
 from pprint import pformat
 import sys
-import platform
 import uuid
 import re
 
@@ -1102,9 +1101,9 @@ def extract_alembic(file,
                     writeCreases=False,
                     dataFormat="ogawa",
                     step=1.0,
-                    attr=[],
-                    attrPrefix=[],
-                    root=[],
+                    attr=None,
+                    attrPrefix=None,
+                    root=None,
                     stripNamespaces=True,
                     verbose=False,
                     preRollStartFrame=0):
