@@ -43,8 +43,18 @@ class CollectPointcache(pyblish.api.InstancePlugin):
             instance.remove(proxy_set)
             instance.data["setMembers"].remove(proxy_set)
 
+        # Backwards compatibility for attributes.
+        backwards_mapping = {
+            "write_color_sets": "writeColorSets",
+            "write_face_sets": "writeFaceSets",
+            "include_user_defined_attributes": "includeUserDefinedAttributes"
+        }
+        for key, value in backwards_mapping.items():
+            if key in instance.data:
+                instance.data[value] = instance.data[key]
+
         # Collect user defined attributes.
-        if not instance.data.get("includeUserDefinedAttributes", False):
+        if instance.data.get("includeUserDefinedAttributes", False):
             user_defined_attributes = set()
             for node in instance:
                 attrs = cmds.listAttr(node, userDefined=True) or list()
@@ -59,13 +69,3 @@ class CollectPointcache(pyblish.api.InstancePlugin):
             instance.data["userDefinedAttributes"] = list(
                 user_defined_attributes
             )
-
-        # Backwards compatibility for attributes.
-        backwards_mapping = {
-            "write_color_sets": "writeColorSets",
-            "write_face_sets": "writeFaceSets",
-            "include_user_defined_attributes": "includeUserDefinedAttributes"
-        }
-        for key, value in backwards_mapping.items():
-            if key in instance.data:
-                instance.data[value] = instance.data[key]

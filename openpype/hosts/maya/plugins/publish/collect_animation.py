@@ -58,6 +58,17 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
         if instance.data.get("farm"):
             instance.data["families"].append("publish.farm")
 
+        # Backwards compatibility for attributes.
+        backwards_mapping = {
+            "write_color_sets": "writeColorSets",
+            "write_face_sets": "writeFaceSets",
+            "include_parent_hierarchy": "includeParentHierarchy",
+            "include_user_defined_attributes": "includeUserDefinedAttributes"
+        }
+        for key, value in backwards_mapping.items():
+            if key in instance.data:
+                instance.data[value] = instance.data[key]
+
         # Collect user defined attributes.
         if instance.data.get("includeUserDefinedAttributes", False):
             user_defined_attributes = set()
@@ -74,14 +85,3 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
             instance.data["userDefinedAttributes"] = list(
                 user_defined_attributes
             )
-
-        # Backwards compatibility for attributes.
-        backwards_mapping = {
-            "write_color_sets": "writeColorSets",
-            "write_face_sets": "writeFaceSets",
-            "include_parent_hierarchy": "includeParentHierarchy",
-            "include_user_defined_attributes": "includeUserDefinedAttributes"
-        }
-        for key, value in backwards_mapping.items():
-            if key in instance.data:
-                instance.data[value] = instance.data[key]
