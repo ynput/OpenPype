@@ -347,6 +347,24 @@ Example setup:
 - **Include User Defined Attribudes**: include all user defined attributes in the publish.
 - **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
 - **Priority**: Farm priority.
+- **Euler Filter**: Apply Euler filter while sampling rotations.
+- **No Normals**: Present normal data for Alembic poly meshes will not be written.
+- **Pre Roll**: This frame range will not be sampled.
+- **Renderable Only**: Non-renderable hierarchy (invisible, or templated) will not be written out.
+- **UV Write**: Uv data for PolyMesh and SubD shapes will be written to the Alembic file. Only the current uv map is used.
+- **Write Color Sets**: Write all color sets on MFnMeshes as color 3 or color 4 indexed geometry parameters with face varying scope.
+- **Write Face Sets**: Write all Face sets on MFnMeshes.
+- **Whole Frame Geo**: Data for geometry will only be written out on whole frames.
+- **World Space**: Any root nodes will be stored in world space.
+- **Write Visibility**: Visibility state will be stored in the Alembic file.  Otherwise everything written out is treated as visible.
+- **Write UV Sets**: Write all uv sets on MFnMeshes as vector 2 indexed geometry parameters with face varying scope.
+- **Write Creases**: If the mesh has crease edges or crease vertices, the mesh (OPolyMesh) would now be written out as an OSubD and crease info will be stored in the Alembic file. Otherwise, creases info won't be preserved in Alembic file unless a custom Boolean attribute SubDivisionMesh has been added to mesh node and its value is true.
+- **Data Format**: The data format to use to write the file. Can be either "HDF" or "Ogawa".
+- **Strip Namespaces**: Namespaces will be stripped off of the node before being written to Alembic. The int specifies how many namespaces will be stripped off of the node name. Be careful that the new stripped name does not collide with other sibling node names.
+- **Verbose**: Prints the current frame that is being evaluated.
+- **Pre Roll Start Frame**: The frame to start scene evaluation at.  This is used to set the starting frame for time dependent translations and can be used to evaluate run-up that isn't actually translated.
+- **Include Parent Hierarchy**: Set the root nodes if we don't want to include parents. The roots are to be considered the ones that are the actual direct members of the set.
+- **Visible Only**: Does not filter out nodes that are only hidden on some frames as it counts "animated" or "connected" visibilities as if it's always visible.
 
 ### Loading Point Caches
 
