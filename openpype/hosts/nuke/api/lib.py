@@ -30,6 +30,7 @@ from openpype.lib import (
     env_value_to_bool,
     Logger,
     get_version_from_path,
+    StringTemplate,
 )
 
 from openpype.settings import (
@@ -1300,13 +1301,8 @@ def create_write_node(
 
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = data["fpath_template"].format(
-        work=fdir,
-        version=data["version"],
-        subset=data["subset"],
-        frame=data["frame"],
-        ext=ext
-    )
+    data["work"] = fdir
+    fpath = StringTemplate(data["fpath_template"]).format_strict(data)
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
@@ -2064,6 +2060,9 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value_, dict):
                 continue
+            # skip empty values
+            if not value_:
+                continue
             if self._root_node[knob].value() not in value_:
                 self._root_node[knob].setValue(str(value_))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
@@ -2193,7 +2192,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
         log.debug(changes)
         if changes:
-            msg = "Read nodes are not set to correct colospace:\n\n"
+            msg = "Read nodes are not set to correct colorspace:\n\n"
             for nname, knobs in changes.items():
                 msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
