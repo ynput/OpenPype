@@ -125,6 +125,7 @@ def pack_project(
     if not only_documents:
         roots = project_doc["config"]["roots"]
         # Determine root directory of project
+        source_root = None
         source_root_name = None
         for root_name, root_value in roots.items():
             if source_root is not None:

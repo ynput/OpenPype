@@ -128,7 +128,8 @@ class FamilyWidget(QtWidgets.QWidget):
             'family_preset_key': key,
             'family': family,
             'subset': self.input_result.text(),
-            'version': self.version_spinbox.value()
+            'version': self.version_spinbox.value(),
+            'use_next_available_version': self.version_checkbox.isChecked(),
         }
         return data
 

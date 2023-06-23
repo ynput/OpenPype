@@ -9,10 +9,3 @@ class CreateRedshiftProxy(plugin.MaxCreator):
     label = "Redshift Proxy"
     family = "redshiftproxy"
     icon = "gear"
-
-    def create(self, subset_name, instance_data, pre_create_data):
-
-        _ = super(CreateRedshiftProxy, self).create(
-            subset_name,
-            instance_data,
-            pre_create_data)  # type: CreatedInstance
