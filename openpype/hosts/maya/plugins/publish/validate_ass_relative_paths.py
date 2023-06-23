@@ -27,9 +27,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
         errors = []
 
         try:
-            relative_texture = cmds.getAttr(
+            absolute_texture = cmds.getAttr(
                 "defaultArnoldRenderOptions.absolute_texture_paths")
-            relative_procedural = cmds.getAttr(
+            absolute_procedural = cmds.getAttr(
                 "defaultArnoldRenderOptions.absolute_procedural_paths")
             texture_search_path = cmds.getAttr(
                 "defaultArnoldRenderOptions.tspath"
@@ -45,9 +45,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
 
-        if not self.maya_is_true(relative_texture):
+        if self.maya_is_true(absolute_texture):
             errors.append("Texture path is set to be absolute")
-        if not self.maya_is_true(relative_procedural):
+        if self.maya_is_true(absolute_procedural):
             errors.append("Procedural path is set to be absolute")
 
         anatomy = instance.context.data["anatomy"]
