@@ -253,7 +253,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def post_placeholder_process(self, placeholder, failed):
         """Hide placeholder, add them to placeholder set
         """
-        node = placeholder._scene_identifier
+        node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
@@ -261,7 +261,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def delete_placeholder(self, placeholder):
         """Remove placeholder if building was successful"""
-        cmds.delete(placeholder._scene_identifier)
+        cmds.delete(placeholder.scene_identifier)
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
