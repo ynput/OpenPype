@@ -2,7 +2,6 @@ import logging
 import contextlib
 import nuke
 
-
 log = logging.getLogger(__name__)
 
 
