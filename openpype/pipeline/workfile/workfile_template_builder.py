@@ -1574,7 +1574,7 @@ class PlaceholderLoadMixin(object):
                 "population."
             )
             return
-        if not placeholder.data["keep_placeholder"]:
+        if not placeholder.data.get("keep_placeholder", True):
             self.delete_placeholder(placeholder)
 
     def load_failed(self, placeholder, representation):
