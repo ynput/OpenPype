@@ -93,8 +93,21 @@ class ImportMayaLoader(load.LoaderPlugin):
 
     """
     representations = ["ma", "mb", "obj"]
-    families = ["*"]
-    excluded_families = ["xgen"]
+    families = [
+        "model",
+        "pointcache",
+        "proxyAbc",
+        "animation",
+        "mayaAscii",
+        "mayaScene",
+        "setdress",
+        "layout",
+        "camera",
+        "rig",
+        "camerarig",
+        "staticMesh",
+        "workfile"
+    ]
 
     label = "Import"
     order = 10
