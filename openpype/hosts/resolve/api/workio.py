@@ -30,13 +30,22 @@ def save_file(filepath):
     project = get_current_project()
     name = project.GetName()
 
-    if "Untitled Project" not in name:
-        log.info("Saving project: `{}` as '{}'".format(name, file))
-        pm.ExportProject(name, filepath)
-    else:
+    log.info("name: `{}`, file: '{}'".format(name, file))
+    log.info("fname: `{}`, filepath: '{}'".format(fname, filepath))
+
+    if "Untitled Project" in name:
         log.info("Creating new project...")
-        pm.CreateProject(fname)
-        pm.ExportProject(name, filepath)
+        response = pm.CreateProject(fname)
+        log.info("New project created: {}".format(response))
+    else:
+        log.info("Saving project: `{}` as '{}'".format(name, file))
+        response = project.SetName(fname)
+        log.info("Project renamed: {}".format(response))
+
+    if response:
+        # only export if project was saved or renamed
+        exported = pm.ExportProject(fname, filepath)
+        log.info("Project exported: {}".format(exported))
 
 
 def open_file(filepath):
