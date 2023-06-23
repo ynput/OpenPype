@@ -20,16 +20,13 @@ class CollectReview(pyblish.api.InstancePlugin,
         nodes = instance.data["members"]
         focal_length = None
         camera_name = None
-        camera = None
         for node in nodes:
             if rt.classOf(node) in rt.Camera.classes:
-                camera = node
                 camera_name = node.name
                 focal_length = node.fov
 
         attr_values = self.get_attr_values_from_data(instance.data)
         data = {
-            "camera_node": camera,
             "review_camera": camera_name,
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
