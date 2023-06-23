@@ -1,7 +1,7 @@
 """Host API required Work Files tool"""
 import os
 import nuke
-from .command import is_headless
+from .utils import is_headless
 
 
 def file_extensions():
