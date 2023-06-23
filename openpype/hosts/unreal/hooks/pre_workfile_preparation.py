@@ -34,7 +34,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
         super().__init__(*args, **kwargs)
 
         self.signature = f"( {self.__class__.__name__} )"
-        self.project_name = self.data["project_name"]
 
     def _get_work_filename(self):
         # Use last workfile if was found
