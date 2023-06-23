@@ -9,11 +9,11 @@ def get_setting(project_setting=None):
     project_setting = get_project_settings(
         legacy_io.Session["AVALON_PROJECT"]
     )
-    return (project_setting["max"]["PointCloud"])
+    return project_setting["max"]["PointCloud"]
 
 
 class ValidatePointCloud(pyblish.api.InstancePlugin):
-    """Validate that workfile was saved."""
+    """Validate that work file was saved."""
 
     order = pyblish.api.ValidatorOrder
     families = ["pointcloud"]
@@ -34,39 +34,42 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                 of export_particle operator
 
         """
-        invalid = self.get_tyFlow_object(instance)
-        if invalid:
-            raise PublishValidationError("Non tyFlow object "
-                                         "found: {}".format(invalid))
-        invalid = self.get_tyFlow_operator(instance)
-        if invalid:
-            raise PublishValidationError("tyFlow ExportParticle operator "
-                                         "not found: {}".format(invalid))
+        report = []
 
-        invalid = self.validate_export_mode(instance)
-        if invalid:
-            raise PublishValidationError("The export mode is not at PRT")
+        invalid_object = self.get_tyflow_object(instance)
+        if invalid_object:
+            report.append(f"Non tyFlow object found: {invalid_object}")
 
-        invalid = self.validate_partition_value(instance)
-        if invalid:
-            raise PublishValidationError("tyFlow Partition setting is "
-                                         "not at the default value")
-        invalid = self.validate_custom_attribute(instance)
-        if invalid:
-            raise PublishValidationError("Custom Attribute not found "
-                                         ":{}".format(invalid))
+        invalid_operator = self.get_tyflow_operator(instance)
+        if invalid_operator:
+            report.append((
+                "tyFlow ExportParticle operator not "
+                f"found: {invalid_operator}"))
 
-    def get_tyFlow_object(self, instance):
+        if self.validate_export_mode(instance):
+            report.append("The export mode is not at PRT")
+
+        if self.validate_partition_value(instance):
+            report.append(("tyFlow Partition setting is "
+                           "not at the default value"))
+
+        invalid_attribute = self.validate_custom_attribute(instance)
+        if invalid_attribute:
+            report.append(("Custom Attribute not found "
+                           f":{invalid_attribute}"))
+
+        if report:
+            raise PublishValidationError(f"{report}")
+
+    def get_tyflow_object(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow container "
-                      "for {}".format(container))
+        self.log.info(f"Validating tyFlow container for {container}")
 
-        con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        selection_list = instance.data["members"]
         for sel in selection_list:
             sel_tmp = str(sel)
-            if rt.classOf(sel) in [rt.tyFlow,
+            if rt.ClassOf(sel) in [rt.tyFlow,
                                    rt.Editable_Mesh]:
                 if "tyFlow" not in sel_tmp:
                     invalid.append(sel)
@@ -75,23 +78,20 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
 
         return invalid
 
-    def get_tyFlow_operator(self, instance):
+    def get_tyflow_operator(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow object "
-                      "for {}".format(container))
-
-        con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        self.log.info(f"Validating tyFlow object for {container}")
+        selection_list = instance.data["members"]
         bool_list = []
         for sel in selection_list:
             obj = sel.baseobject
-            anim_names = rt.getsubanimnames(obj)
+            anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 # get all the names of the related tyFlow nodes
-                sub_anim = rt.getsubanim(obj, anim_name)
+                sub_anim = rt.GetSubAnim(obj, anim_name)
                 # check if there is export particle operator
-                boolean = rt.isProperty(sub_anim, "Export_Particles")
+                boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 bool_list.append(str(boolean))
             # if the export_particles property is not there
             # it means there is not a "Export Particle" operator
@@ -104,21 +104,18 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
     def validate_custom_attribute(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow custom "
-                      "attributes for {}".format(container))
+        self.log.info(
+            f"Validating tyFlow custom attributes for {container}")
 
-        con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        selection_list = instance.data["members"]
         for sel in selection_list:
             obj = sel.baseobject
-            anim_names = rt.getsubanimnames(obj)
+            anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 # get all the names of the related tyFlow nodes
-                sub_anim = rt.getsubanim(obj, anim_name)
-                # check if there is export particle operator
-                boolean = rt.isProperty(sub_anim, "Export_Particles")
-                event_name = sub_anim.name
-                if boolean:
+                sub_anim = rt.GetSubAnim(obj, anim_name)
+                if rt.IsProperty(sub_anim, "Export_Particles"):
+                    event_name = sub_anim.name
                     opt = "${0}.{1}.export_particles".format(sel.name,
                                                              event_name)
                     attributes = get_setting()["attribute"]
@@ -126,39 +123,36 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                         custom_attr = "{0}.PRTChannels_{1}".format(opt,
                                                                    value)
                         try:
-                            rt.execute(custom_attr)
+                            rt.Execute(custom_attr)
                         except RuntimeError:
-                            invalid.add(key)
+                            invalid.append(key)
 
         return invalid
 
     def validate_partition_value(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow partition "
-                      "value for {}".format(container))
+        self.log.info(
+            f"Validating tyFlow partition value for {container}")
 
-        con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        selection_list = instance.data["members"]
         for sel in selection_list:
             obj = sel.baseobject
-            anim_names = rt.getsubanimnames(obj)
+            anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 # get all the names of the related tyFlow nodes
-                sub_anim = rt.getsubanim(obj, anim_name)
-                # check if there is export particle operator
-                boolean = rt.isProperty(sub_anim, "Export_Particles")
-                event_name = sub_anim.name
-                if boolean:
+                sub_anim = rt.GetSubAnim(obj, anim_name)
+                if rt.IsProperty(sub_anim, "Export_Particles"):
+                    event_name = sub_anim.name
                     opt = "${0}.{1}.export_particles".format(sel.name,
                                                              event_name)
-                    count = rt.execute(f'{opt}.PRTPartitionsCount')
+                    count = rt.Execute(f'{opt}.PRTPartitionsCount')
                     if count != 100:
                         invalid.append(count)
-                    start = rt.execute(f'{opt}.PRTPartitionsFrom')
+                    start = rt.Execute(f'{opt}.PRTPartitionsFrom')
                     if start != 1:
                         invalid.append(start)
-                    end = rt.execute(f'{opt}.PRTPartitionsTo')
+                    end = rt.Execute(f'{opt}.PRTPartitionsTo')
                     if end != 1:
                         invalid.append(end)
 
@@ -167,24 +161,23 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
     def validate_export_mode(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow export "
-                      "mode for {}".format(container))
+        self.log.info(
+            f"Validating tyFlow export mode for {container}")
 
-        con = rt.getNodeByName(container)
+        con = rt.GetNodeByName(container)
         selection_list = list(con.Children)
         for sel in selection_list:
             obj = sel.baseobject
-            anim_names = rt.getsubanimnames(obj)
+            anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 # get all the names of the related tyFlow nodes
-                sub_anim = rt.getsubanim(obj, anim_name)
+                sub_anim = rt.GetSubAnim(obj, anim_name)
                 # check if there is export particle operator
-                boolean = rt.isProperty(sub_anim, "Export_Particles")
+                boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 event_name = sub_anim.name
                 if boolean:
-                    opt = "${0}.{1}.export_particles".format(sel.name,
-                                                             event_name)
-                    export_mode = rt.execute(f'{opt}.exportMode')
+                    opt = f"${sel.name}.{event_name}.export_particles"
+                    export_mode = rt.Execute(f'{opt}.exportMode')
                     if export_mode != 1:
                         invalid.append(export_mode)
 

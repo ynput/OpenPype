@@ -1,18 +1,11 @@
 import os
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
+from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
-)
+from openpype.hosts.max.api import maintained_selection
 
 
-class ExtractModel(publish.Extractor,
-                   OptionalPyblishPluginMixin):
+class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
     """
     Extract Geometry in Alembic Format
     """
@@ -36,39 +29,37 @@ class ExtractModel(publish.Extractor,
         filepath = os.path.join(stagingdir, filename)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (filename,
-                                                        stagingdir))
+        self.log.info("Writing alembic '%s' to '%s'" % (filename, stagingdir))
 
-        export_cmd = (
-            f"""
-AlembicExport.ArchiveType = #ogawa
-AlembicExport.CoordinateSystem = #maya
-AlembicExport.CustomAttributes = true
-AlembicExport.UVs = true
-AlembicExport.VertexColors = true
-AlembicExport.PreserveInstances = true
-
-exportFile @"{filepath}" #noPrompt selectedOnly:on using:AlembicExport
-
-            """)
-
-        self.log.debug(f"Executing command: {export_cmd}")
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.CustomAttributes = True
+        rt.AlembicExport.UVs = True
+        rt.AlembicExport.VertexColors = True
+        rt.AlembicExport.PreserveInstances = True
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(export_cmd)
+            node_list = instance.data["members"]
+            rt.Select(node_list)
+            rt.exportFile(
+                filepath,
+                rt.name("noPrompt"),
+                selectedOnly=True,
+                using=rt.AlembicExport,
+            )
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': filename,
+            "name": "abc",
+            "ext": "abc",
+            "files": filename,
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          filepath))
+        self.log.info(
+            "Extracted instance '%s' to: %s" % (instance.name, filepath)
+        )

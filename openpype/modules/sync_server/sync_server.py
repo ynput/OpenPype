@@ -237,8 +237,7 @@ def download_last_published_workfile(
     last_published_workfile_path = get_representation_path_with_anatomy(
         workfile_representation, anatomy
     )
-    if (not last_published_workfile_path or
-            not os.path.exists(last_published_workfile_path)):
+    if not last_published_workfile_path:
         return
 
     # If representation isn't available on remote site, then return.

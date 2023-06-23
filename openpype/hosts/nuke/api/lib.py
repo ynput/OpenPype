@@ -30,6 +30,7 @@ from openpype.lib import (
     env_value_to_bool,
     Logger,
     get_version_from_path,
+    StringTemplate,
 )
 
 from openpype.settings import (
@@ -39,6 +40,7 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
+    get_current_project_name,
     discover_legacy_creator_plugins,
     legacy_io,
     Anatomy,
@@ -1299,13 +1301,8 @@ def create_write_node(
 
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = data["fpath_template"].format(
-        work=fdir,
-        version=data["version"],
-        subset=data["subset"],
-        frame=data["frame"],
-        ext=ext
-    )
+    data["work"] = fdir
+    fpath = StringTemplate(data["fpath_template"]).format_strict(data)
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
@@ -1402,8 +1399,6 @@ def create_write_node(
 
     # adding write to read button
     add_button_clear_rendered(GN, os.path.dirname(fpath))
-
-    GN.addKnob(nuke.Text_Knob('', ''))
 
     # set tile color
     tile_color = next(
@@ -2003,63 +1998,104 @@ class WorkfileSettings(object):
                 "Attention! Viewer nodes {} were erased."
                 "It had wrong color profile".format(erased_viewers))
 
-    def set_root_colorspace(self, nuke_colorspace):
+    def set_root_colorspace(self, imageio_host):
         ''' Adds correct colorspace to root
 
         Arguments:
-            nuke_colorspace (dict): adjustmensts from presets
+            imageio_host (dict): host colorspace configurations
 
         '''
-        workfile_settings = nuke_colorspace["workfile"]
+        config_data = get_imageio_config(
+            project_name=get_current_project_name(),
+            host_name="nuke"
+        )
 
-        # resolve config data if they are enabled in host
-        config_data = None
-        if nuke_colorspace.get("ocio_config", {}).get("enabled"):
-            # switch ocio config to custom config
-            workfile_settings["OCIO_config"] = "custom"
-            workfile_settings["colorManagement"] = "OCIO"
+        workfile_settings = imageio_host["workfile"]
 
-            # get resolved ocio config path
-            config_data = get_imageio_config(
-                legacy_io.active_project(), "nuke"
-            )
+        if not config_data:
+            # TODO: backward compatibility for old projects - remove later
+            # perhaps old project overrides is having it set to older version
+            # with use of `customOCIOConfigPath`
+            resolved_path = None
+            if workfile_settings.get("customOCIOConfigPath"):
+                unresolved_path = workfile_settings["customOCIOConfigPath"]
+                ocio_paths = unresolved_path[platform.system().lower()]
 
-        # first set OCIO
-        if self._root_node["colorManagement"].value() \
-                not in str(workfile_settings["colorManagement"]):
-            self._root_node["colorManagement"].setValue(
-                str(workfile_settings["colorManagement"]))
+                for ocio_p in ocio_paths:
+                    resolved_path = str(ocio_p).format(**os.environ)
+                    if not os.path.exists(resolved_path):
+                        continue
 
-            # we dont need the key anymore
-            workfile_settings.pop("colorManagement")
+            if resolved_path:
+                # set values to root
+                self._root_node["colorManagement"].setValue("OCIO")
+                self._root_node["OCIO_config"].setValue("custom")
+                self._root_node["customOCIOConfigPath"].setValue(
+                    resolved_path)
+            else:
+                # no ocio config found and no custom path used
+                if self._root_node["colorManagement"].value() \
+                        not in str(workfile_settings["colorManagement"]):
+                    self._root_node["colorManagement"].setValue(
+                        str(workfile_settings["colorManagement"]))
 
-        # second set ocio version
-        if self._root_node["OCIO_config"].value() \
-                not in str(workfile_settings["OCIO_config"]):
-            self._root_node["OCIO_config"].setValue(
-                str(workfile_settings["OCIO_config"]))
+                # second set ocio version
+                if self._root_node["OCIO_config"].value() \
+                        not in str(workfile_settings["OCIO_config"]):
+                    self._root_node["OCIO_config"].setValue(
+                        str(workfile_settings["OCIO_config"]))
 
-            # we dont need the key anymore
-            workfile_settings.pop("OCIO_config")
+        else:
+            # set values to root
+            self._root_node["colorManagement"].setValue("OCIO")
 
-        # third set ocio custom path
-        if config_data:
-            self._root_node["customOCIOConfigPath"].setValue(
-                str(config_data["path"]).replace("\\", "/")
-            )
-            # backward compatibility, remove in case it exists
-            workfile_settings.pop("customOCIOConfigPath")
+        # we dont need the key anymore
+        workfile_settings.pop("customOCIOConfigPath", None)
+        workfile_settings.pop("colorManagement", None)
+        workfile_settings.pop("OCIO_config", None)
 
         # then set the rest
-        for knob, value in workfile_settings.items():
+        for knob, value_ in workfile_settings.items():
             # skip unfilled ocio config path
             # it will be dict in value
-            if isinstance(value, dict):
+            if isinstance(value_, dict):
                 continue
-            if self._root_node[knob].value() not in value:
-                self._root_node[knob].setValue(str(value))
+            # skip empty values
+            if not value_:
+                continue
+            if self._root_node[knob].value() not in value_:
+                self._root_node[knob].setValue(str(value_))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
-                    knob, value))
+                    knob, value_))
+
+        # set ocio config path
+        if config_data:
+            current_ocio_path = os.getenv("OCIO")
+            if current_ocio_path != config_data["path"]:
+                message = """
+It seems like there's a mismatch between the OCIO config path set in your Nuke
+settings and the actual path set in your OCIO environment.
+
+To resolve this, please follow these steps:
+1. Close Nuke if it's currently open.
+2. Reopen Nuke.
+
+Please note the paths for your reference:
+
+- The OCIO environment path currently set:
+  `{env_path}`
+
+- The path in your current Nuke settings:
+  `{settings_path}`
+
+Reopening Nuke should synchronize these paths and resolve any discrepancies.
+"""
+                nuke.message(
+                    message.format(
+                        env_path=current_ocio_path,
+                        settings_path=config_data["path"]
+                    )
+                )
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
@@ -2156,7 +2192,7 @@ class WorkfileSettings(object):
 
         log.debug(changes)
         if changes:
-            msg = "Read nodes are not set to correct colospace:\n\n"
+            msg = "Read nodes are not set to correct colorspace:\n\n"
             for nname, knobs in changes.items():
                 msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
@@ -2239,13 +2275,13 @@ class WorkfileSettings(object):
         handle_end = data["handleEnd"]
 
         fps = float(data["fps"])
-        frame_start = int(data["frameStart"]) - handle_start
-        frame_end = int(data["frameEnd"]) + handle_end
+        frame_start_handle = int(data["frameStart"]) - handle_start
+        frame_end_handle = int(data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
-        self._root_node["first_frame"].setValue(frame_start)
-        self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["first_frame"].setValue(frame_start_handle)
+        self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
         # setting active viewers

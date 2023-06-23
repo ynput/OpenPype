@@ -296,9 +296,9 @@ def server_activity_validate_user(event):
     if not user_ent:
         return False
 
-    role_list = ["Pypeclub", "Administrator"]
+    role_list = {"pypeclub", "administrator"}
     for role in user_ent["user_security_roles"]:
-        if role["security_role"]["name"] in role_list:
+        if role["security_role"]["name"].lower() in role_list:
             return True
     return False
 

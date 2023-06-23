@@ -81,9 +81,10 @@ def main(argv):
 
     host_name = os.environ["AVALON_APP"].lower()
     if host_name == "photoshop":
+        # TODO refactor launch logic according to AE
         from openpype.hosts.photoshop.api.lib import main
     elif host_name == "aftereffects":
-        from openpype.hosts.aftereffects.api.lib import main
+        from openpype.hosts.aftereffects.api.launch_logic import main
     elif host_name == "harmony":
         from openpype.hosts.harmony.api.lib import main
     else:

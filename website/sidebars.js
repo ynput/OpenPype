@@ -180,6 +180,7 @@ module.exports = {
             ]
         },
         "dev_deadline",
+        "dev_blender",
         "dev_colorspace"
     ]
 };
