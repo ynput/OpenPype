@@ -52,7 +52,9 @@ class CollectPointcache(pyblish.api.InstancePlugin):
         for key, value in backwards_mapping.items():
             if key in instance.data:
                 self.log.debug(
-                    "Using legacy attribute name '{}' since it exists.".format(key)
+                    "Using legacy attribute name '{}' since it exists.".format(
+                        key
+                    )
                 )
                 instance.data[value] = instance.data.pop(key)
 
