@@ -207,7 +207,9 @@ class MaxCreator(Creator, MaxCreatorBase):
 
         """
         for instance in instances:
-            if instance_node := rt.GetNodeByName(instance.data.get("instance_node")):  # noqa
+            instance_node = rt.GetNodeByName(
+                instance.data.get("instance_node"))
+            if instance_node:
                 count = rt.custAttributes.count(instance_node)
                 rt.custAttributes.delete(instance_node, count)
                 rt.Delete(instance_node)
