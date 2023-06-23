@@ -890,7 +890,7 @@ class SyncEntitiesFactory:
             else:
                 parent_dict = self.entities_dict.get(parent_id, {})
 
-            for child_id in parent_dict.get("children", []):
+            for child_id in list(parent_dict.get("children", [])):
                 # keep original `remove` value for all children
                 _remove = (remove is True)
                 if not _remove:
