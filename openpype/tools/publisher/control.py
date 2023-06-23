@@ -497,7 +497,9 @@ class PublishPluginsProxy:
         """
 
         return [
-            self._create_action_item(self._actions_by_id[action_id], plugin_id)
+            self._create_action_item(
+                self.get_action(plugin_id, action_id), plugin_id
+            )
             for action_id in self._action_ids_by_plugin_id[plugin_id]
         ]
 
