@@ -57,7 +57,6 @@ class CreateReview(plugin.HoudiniCreator):
                 "aspect": pre_create_data.get("aspect"),
             })
 
-        sources = pre_create_data.get("sources")
 
         if self.selected_nodes:
             # The first camera found in selection we will use as camera
@@ -81,7 +80,8 @@ class CreateReview(plugin.HoudiniCreator):
             if not camera:
                 self.log.warning("No camera found in selection.")
 
-
+            sources = pre_create_data.get("sources")
+            # if source is still at the SOPs
             if sources == 0:
                 parms.update({
                     "opsource": sources,
