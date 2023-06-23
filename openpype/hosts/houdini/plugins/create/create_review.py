@@ -19,7 +19,7 @@ class CreateReview(plugin.HoudiniCreator):
         instance_data.update({"node_type": "opengl"})
         instance_data["imageFormat"] = pre_create_data.get("imageFormat")
         instance_data["keepImages"] = pre_create_data.get("keepImages")
-        instance_data["lopEnabled"] = pre_create_data.get("lopEnabled")
+        instance_data["sources"] = pre_create_data.get("sources")
 
         instance = super(CreateReview, self).create(
             subset_name,
@@ -57,11 +57,7 @@ class CreateReview(plugin.HoudiniCreator):
                 "aspect": pre_create_data.get("aspect"),
             })
 
-        lop_enabled = pre_create_data.get("lopEnabled")
-        if lop_enabled:
-            parms.update({
-                "opsource": 1,
-            })
+        sources = pre_create_data.get("sources")
 
         if self.selected_nodes:
             # The first camera found in selection we will use as camera
@@ -85,20 +81,24 @@ class CreateReview(plugin.HoudiniCreator):
             if not camera:
                 self.log.warning("No camera found in selection.")
 
-            if lop_enabled:
-                if not lop_network:
-                    self.log.warning("No LOP network found in selection.")
+
+            if sources == 0:
                 parms.update({
-                    "cameraprim": camera or "",
-                    "loppath": lop_network
-                })
-            else:
-                parms.update({
+                    "opsource": sources,
                     "camera": camera or "",
                     "scenepath": "/obj",
                     "forceobjects": " ".join(force_objects),
                     "vobjects": ""  # clear candidate objects from '*' value
                 })
+            else:
+                if not lop_network:
+                    self.log.warning("No LOP network found in selection.")
+                parms.update({
+                    "opsource": sources,
+                    "cameraprim": camera or "",
+                    "loppath": lop_network
+                })
+
         instance_node.setParms(parms)
 
         to_lock = ["id", "family"]
@@ -113,13 +113,18 @@ class CreateReview(plugin.HoudiniCreator):
             "rad", "rat", "rta", "sgi", "tga", "tif",
         ]
 
+
         return attrs + [
             BoolDef("keepImages",
                     label="Keep Image Sequences",
                     default=False),
-            BoolDef("lopEnabled",
-                    label="Use LOP as Source",
-                    default=False),
+            EnumDef("sources",
+                    items={
+                        0: "Objects",
+                        1: "LOPs"
+                    },
+                    default=0,
+                    label="Source"),
             EnumDef("imageFormat",
                     image_format_enum,
                     default="png",

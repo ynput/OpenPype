@@ -58,22 +58,19 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
         node_name = lop_network_parm.evalAsString()
         if not lop_network_node:
             return [node_name]
-        lop_node = hou.node(node_name)
-        if lop_node.type().name() != "lopnet":
-            return [node_name]
 
     def get_invalid_resolution(self, instance):
-        node = hou.node(instance.data.get("instance_node"))
+        rop_node = hou.node(instance.data.get("instance_node"))
 
         # The resolution setting is only used when Override Camera Resolution
         # is enabled. So we skip validation if it is disabled.
-        override = node.parm("tres").eval()
+        override = rop_node.parm("tres").eval()
         if not override:
             return
 
         invalid = []
-        res_width = node.parm("res1").eval()
-        res_height = node.parm("res2").eval()
+        res_width = rop_node.parm("res1").eval()
+        res_height = rop_node.parm("res2").eval()
         if res_width == 0:
             invalid.append("Override Resolution width is set to zero.")
         if res_height == 0:
