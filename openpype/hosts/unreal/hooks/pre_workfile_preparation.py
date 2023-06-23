@@ -111,6 +111,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue_project_worker = UEProjectGenerationWorker()
         ue_project_worker.setup(
             engine_version,
+            self.data["project_name"],
             unreal_project_name,
             engine_path,
             project_dir
