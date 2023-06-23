@@ -251,13 +251,36 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def cleanup_placeholder(self, placeholder, failed):
+        print("==> Cleanup placeholder", placeholder, failed)
         """Hide placeholder, add them to placeholder set
         """
         node = placeholder._scene_identifier
+        print("==> node : ", node)
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
+
+        model = cmds.ls(assemblies  = True)        
+        filtered_model = []
+        exclude_list = ['persp', 'top', 'front', 'side', 'root', 'wip']
+
+        for element in model:
+            if not any(exclude_elem in element for exclude_elem in exclude_list):
+                filtered_model.append(element)
+
+        cameras = cmds.ls(type="camera")
+        renderable_camera = None
+
+        for camera in cameras:
+            if cmds.getAttr(camera + ".renderable"):
+                shapes = cmds.listRelatives(camera, parent=True, fullPath=True, type="transform")
+                if shapes:
+                    renderable_camera = shapes[0]
+                    break
+        
+        cmds.lookThru(renderable_camera)
+        cmds.viewFit(filtered_model, f=0.6) 
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
