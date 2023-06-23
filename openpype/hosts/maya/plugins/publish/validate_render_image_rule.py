@@ -1,3 +1,5 @@
+import os
+
 from maya import cmds
 
 import pyblish.api
@@ -24,8 +26,12 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        required_images_rule = self.get_default_render_image_folder(instance)
-        current_images_rule = cmds.workspace(fileRuleEntry="images")
+        required_images_rule = os.path.normpath(
+            self.get_default_render_image_folder(self, instance)
+        )
+        current_images_rule = os.path.normpath(
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         assert current_images_rule == required_images_rule, (
             "Invalid workspace `images` file rule value: '{}'. "
@@ -37,7 +43,9 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
-        required_images_rule = cls.get_default_render_image_folder(instance)
+        required_images_rule = cls.get_default_render_image_folder(
+            cls, instance
+        )
         current_images_rule = cmds.workspace(fileRuleEntry="images")
 
         if current_images_rule != required_images_rule:
@@ -45,7 +53,16 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
             cmds.workspace(saveWorkspace=True)
 
     @staticmethod
-    def get_default_render_image_folder(instance):
+    def get_default_render_image_folder(cls, instance):
+        staging_dir = instance.data.get("stagingDir")
+        if staging_dir:
+            cls.log.debug(
+                "Staging dir found: \"{}\". Ignoring setting from "
+                "`project_settings/maya/RenderSettings/"
+                "default_render_image_folder`.".format(staging_dir)
+            )
+            return staging_dir
+
         return instance.context.data.get('project_settings')\
             .get('maya') \
             .get('RenderSettings') \
