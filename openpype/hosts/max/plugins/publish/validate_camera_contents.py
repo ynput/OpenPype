@@ -18,6 +18,10 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
                    "$Physical_Camera", "$Target"]
 
     def process(self, instance):
+        selection_list = instance.data["members"]
+        if not selection_list:
+            raise PublishValidationError("No camera instance found..")
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(("Camera instance must only include"
