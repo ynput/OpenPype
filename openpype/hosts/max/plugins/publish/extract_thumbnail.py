@@ -1,8 +1,9 @@
 import os
 import tempfile
 import pyblish.api
-from openpype.pipeline import publish
 from pymxs import runtime as rt
+from openpype.pipeline import publish
+from openpype.hosts.max.api.lib import viewport_camera
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -33,10 +34,11 @@ class ExtractThumbnail(publish.Extractor):
         self.log.debug(
             "Writing Thumbnail to"
             " '%s' to '%s'" % (filename, tmp_staging))
-
-        preview_arg = self.set_preview_arg(
-            instance, filepath, fps, frame)
-        rt.execute(preview_arg)
+        review_camera = instance.data["review_camera"]
+        with viewport_camera(review_camera):
+            preview_arg = self.set_preview_arg(
+                instance, filepath, fps, frame)
+            rt.execute(preview_arg)
 
         representation = {
             "name": "thumbnail",
