@@ -443,7 +443,7 @@ class PublishPluginsProxy:
 
     def __init__(self, plugins):
         plugins_by_id = {}
-        _actions_by_plugin_id = {}
+        actions_by_plugin_id = {}
         action_ids_by_plugin_id = {}
         for plugin in plugins:
             plugin_id = plugin.id
@@ -452,7 +452,7 @@ class PublishPluginsProxy:
             action_ids = []
             actions_by_id = {}
             action_ids_by_plugin_id[plugin_id] = action_ids
-            _actions_by_plugin_id[plugin_id] = actions_by_id
+            actions_by_plugin_id[plugin_id] = actions_by_id
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
@@ -461,11 +461,11 @@ class PublishPluginsProxy:
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
-        self._actions_by_plugin_id = _actions_by_plugin_id
+        self._actions_by_plugin_id = actions_by_plugin_id
         self._action_ids_by_plugin_id = action_ids_by_plugin_id
 
     def get_action(self, plugin_id, action_id):
-        return self.__actions_by_plugin_id[plugin_id][action_id]
+        return self._actions_by_plugin_id[plugin_id][action_id]
 
     def get_plugin(self, plugin_id):
         return self._plugins_by_id[plugin_id]
