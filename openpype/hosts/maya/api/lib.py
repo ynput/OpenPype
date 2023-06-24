@@ -2297,8 +2297,8 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
 
 def reset_scene_resolution():
