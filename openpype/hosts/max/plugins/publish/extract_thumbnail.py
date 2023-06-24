@@ -29,7 +29,7 @@ class ExtractThumbnail(publish.Extractor):
         filename = "{name}_thumbnail..jpg".format(**instance.data)
         filepath = os.path.join(tmp_staging, filename)
         filepath = filepath.replace("\\", "/")
-        thumbnail = self.get_filename(instance.name)
+        thumbnail = self.get_filename(instance.name, frame)
 
         self.log.debug(
             "Writing Thumbnail to"
@@ -42,7 +42,7 @@ class ExtractThumbnail(publish.Extractor):
 
         representation = {
             "name": "thumbnail",
-            "ext": "jpg",
+            "ext": "png",
             "files": thumbnail,
             "stagingDir": tmp_staging,
             "thumbnail": True
@@ -54,8 +54,11 @@ class ExtractThumbnail(publish.Extractor):
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
 
-    def get_filename(self, filename):
-        return f"{filename}_thumbnail.0001.jpg"
+    def get_filename(self, filename, target_frame):
+        thumbnail_name = "{}_thumbnail.{:04}.png".format(
+            filename, target_frame
+        )
+        return thumbnail_name
 
     def set_preview_arg(self, instance, filepath, fps, frame):
         job_args = list()
