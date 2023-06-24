@@ -284,7 +284,6 @@ def get_max_version():
     return max_info[7]
 
 
-@contextlib.contextmanager
 def set_timeline(frameStart, frameEnd):
     """Set frame range for timeline editor in Max
     """
