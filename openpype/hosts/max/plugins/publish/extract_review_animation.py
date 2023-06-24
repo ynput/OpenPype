@@ -2,7 +2,7 @@ import os
 import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import viewport_camera
+from openpype.hosts.max.api.lib import viewport_camera, get_max_version
 
 
 class ExtractReviewAnimation(publish.Extractor):
@@ -90,6 +90,12 @@ class ExtractReviewAnimation(publish.Extractor):
             enabled = instance.data.get(key)
             if enabled:
                 job_args.append(f"{key}:{enabled}")
+
+        if get_max_version() == 2024:
+            # hardcoded for current stage
+            auto_play_option = "autoPlay:false"
+            job_args.append(auto_play_option)
+
         job_str = " ".join(job_args)
         self.log.debug(job_str)
 

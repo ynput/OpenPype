@@ -3,7 +3,7 @@ import tempfile
 import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import viewport_camera
+from openpype.hosts.max.api.lib import viewport_camera, get_max_version
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -26,7 +26,7 @@ class ExtractThumbnail(publish.Extractor):
         fps = int(instance.data["fps"])
         frame = int(instance.data["frameStart"])
         instance.context.data["cleanupFullPaths"].append(tmp_staging)
-        filename = "{name}_thumbnail..jpg".format(**instance.data)
+        filename = "{name}_thumbnail..png".format(**instance.data)
         filepath = os.path.join(tmp_staging, filename)
         filepath = filepath.replace("\\", "/")
         thumbnail = self.get_filename(instance.name, frame)
@@ -80,6 +80,11 @@ class ExtractThumbnail(publish.Extractor):
             enabled = instance.data.get(key)
             if enabled:
                 job_args.append(f"{key}:{enabled}")
+        if get_max_version() == 2024:
+            # hardcoded for current stage
+            auto_play_option = "autoPlay:false"
+            job_args.append(auto_play_option)
+
         job_str = " ".join(job_args)
         self.log.debug(job_str)
 
