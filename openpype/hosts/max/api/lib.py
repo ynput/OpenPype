@@ -250,10 +250,7 @@ def reset_frame_range(fps: bool = True):
         frame_range["handleStart"]
     )
     frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    frange_cmd = (
-        f"animationRange = interval {frame_start_handle} {frame_end_handle}"
-    )
-    rt.Execute(frange_cmd)
+    set_timeline(frame_start_handle, frame_end_handle)
     set_render_frame_range(frame_start_handle, frame_end_handle)
 
 
@@ -285,3 +282,11 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+
+@contextlib.contextmanager
+def set_timeline(frameStart, frameEnd):
+    """Set frame range for timeline editor in Max
+    """
+    rt.animationRange = rt.interval(frameStart, frameEnd)
+    return rt.animationRange
