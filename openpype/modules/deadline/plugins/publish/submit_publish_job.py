@@ -844,7 +844,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         do_not_add_review = False
         if data.get("review"):
             families.append("review")
-        elif data.get("review") == False:
+        elif data.get("review") is False:
             self.log.debug("Instance has review explicitly disabled.")
             do_not_add_review = True
 
@@ -872,7 +872,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "useSequenceForReview": data.get("useSequenceForReview", True),
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
-            "colorspace": instance.data.get("colorspace")
+            "colorspace": instance.data.get("colorspace"),
+            "stagingDir_persistent": instance.data.get(
+                "stagingDir_persistent", False
+            )
         }
 
         # skip locking version if we are creating v01
