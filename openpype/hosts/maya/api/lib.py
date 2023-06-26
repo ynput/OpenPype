@@ -2269,7 +2269,8 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
         instances (bool, Optional): Whether to update publishable instances.
-            Defaults to True.
+            Defaults to True. Even when True this will only reset instances if
+            `update_publishable_frame_range` is also enabled in project settings.
     """
     if fps:
         fps = convert_to_maya_fps(
