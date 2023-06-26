@@ -89,9 +89,15 @@ def get_current_project():
     """Get current project object.
     """
     if not self.current_project:
-        self.current_project = get_project_manager().GetCurrentProject()
+        set_current_project()
 
     return self.current_project
+
+
+def set_current_project():
+    """Set current project object.
+    """
+    self.current_project = get_project_manager().GetCurrentProject()
 
 
 def get_current_timeline(new=False):
