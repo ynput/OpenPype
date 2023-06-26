@@ -128,7 +128,6 @@ class CollectSettingsSimpleInstances(
                 instance.data["expectedFiles"] = list()
                 instance.data["files"] = list()
                 for source_file in source_filepaths:
-                    # expected_file = os.path.basename(source_file)
                     instance.data["files"].append(source_file)
                     instance.data["expectedFiles"].append(source_file)
 
