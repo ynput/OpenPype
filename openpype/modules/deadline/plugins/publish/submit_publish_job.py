@@ -689,7 +689,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 rep["tags"].append("toScanline")
 
             if not rep.get("colorspaceData"):
-                self.set_representation_colorspace(rep,
+                self.set_representation_colorspace(
+                    rep,
                     context=self.context,
                     colorspace=instance_data.get("colorspace", None)
                 )
@@ -877,7 +878,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True),
-            "colorspace": data.get("colorspace"),
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
             "colorspace": instance.data.get("colorspace")
