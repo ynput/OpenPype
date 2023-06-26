@@ -61,7 +61,7 @@ def main():
 
     settings = get_project_settings(project_name)
     if settings.get("resolve", {}).get("launch_openpype_menu_on_start", True):
-        self.log.info("Launching OpenPype menu..")
+        log.info("Launching OpenPype menu..")
         launch_menu()
 
 
