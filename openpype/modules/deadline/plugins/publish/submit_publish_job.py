@@ -891,7 +891,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
-                self.log.debug("Transfering '%s' family to instance.", item)
+                self.log.debug("Transfering '%s' family to farm instance.", item)
                 instance_skeleton_data["families"] += [item]
 
         # transfer specific properties from original instance based on
@@ -899,7 +899,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         for key, values in self.instance_transfer.items():
             if key in instance.data.get("families", []):
                 for v in values:
-                    self.log.debug("Transfering '%s' property to instance.", v)
+                    self.log.debug("Transfering '%s' property to farm instance.", v)
                     instance_skeleton_data[v] = instance.data.get(v)
 
         # look into instance data if representations are not having any
