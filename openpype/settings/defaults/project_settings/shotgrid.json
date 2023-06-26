@@ -1,6 +1,6 @@
 {
     "shotgrid_project_id": 0,
-    "shotgrid_server": "",
+    "shotgrid_server": [],
     "event": {
         "enabled": false
     },

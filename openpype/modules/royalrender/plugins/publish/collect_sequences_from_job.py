@@ -71,7 +71,7 @@ class CollectSequencesFromJob(pyblish.api.ContextPlugin):
     """Gather file sequences from job directory.
 
     When "OPENPYPE_PUBLISH_DATA" environment variable is set these paths
-    (folders or .json files) are parsed for image sequences. Otherwise the
+    (folders or .json files) are parsed for image sequences. Otherwise, the
     current working directory is searched for file sequences.
 
     """

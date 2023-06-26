@@ -295,6 +295,13 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "colorspaceView": colorspace_data["view"],
         }
 
+        rr_settings = (
+            context.data["system_settings"]["modules"]["royalrender"]
+        )
+        if rr_settings["enabled"]:
+            data["rrPathName"] = instance.data.get("rrPathName")
+            self.log.info(data["rrPathName"])
+
         if self.sync_workfile_version:
             data["version"] = context.data["version"]
             for instance in context:
