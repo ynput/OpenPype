@@ -31,9 +31,6 @@ def save_file(filepath):
     project = get_current_project()
     name = project.GetName()
 
-    log.info("name: `{}`, file: '{}'".format(name, file))
-    log.info("fname: `{}`, filepath: '{}'".format(fname, filepath))
-
     response = False
     if name == "Untitled Project":
         response = pm.CreateProject(fname)
