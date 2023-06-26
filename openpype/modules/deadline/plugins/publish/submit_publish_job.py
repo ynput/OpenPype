@@ -872,7 +872,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True),
-            "colorspace": data.get("colorspace"),
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
             "colorspace": instance.data.get("colorspace")
@@ -886,7 +885,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
-                self.log.debug("Transfering '%s' family to instance.", item)
                 instance_skeleton_data["families"] += [item]
 
         # transfer specific properties from original instance based on
@@ -894,7 +892,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         for key, values in self.instance_transfer.items():
             if key in instance.data.get("families", []):
                 for v in values:
-                    self.log.debug("Transfering '%s' property to instance.", v)
                     instance_skeleton_data[v] = instance.data.get(v)
 
         # look into instance data if representations are not having any

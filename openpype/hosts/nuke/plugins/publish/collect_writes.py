@@ -149,7 +149,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 # Farm rendering
                 instance.data["toBeRenderedOn"] = "deadline"
                 instance.data["transfer"] = False
-                instance.data["farm"] = True # to skip integrate
+                instance.data["farm"] = True  # to skip integrate
                 self.log.info("Farm rendering ON ...")
 
                 self.log.info(
@@ -159,7 +159,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 if "expectedFiles" not in instance.data:
                     instance.data["expectedFiles"] = list()
                     for source_file in collected_frames:
-                        instance.data["expectedFiles"].append(os.path.join(output_dir, source_file))
+                        instance.data["expectedFiles"].append(
+                            os.path.join(output_dir, source_file)
+                        )
 
         elif render_target == "farm":
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
