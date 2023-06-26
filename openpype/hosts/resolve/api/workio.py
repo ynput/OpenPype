@@ -69,10 +69,8 @@ def open_file(filepath):
 
     file = os.path.basename(filepath)
     fname, _ = os.path.splitext(file)
-    dname, _ = fname.split("_v")
+
     try:
-        if not set_project_manager_to_folder_name(dname):
-            raise
         # load project from input path
         project = pm.LoadProject(fname)
         log.info(f"Project {project.GetName()} opened...")
