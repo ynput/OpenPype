@@ -10,11 +10,11 @@ from .lib import (
 
 log = Logger.get_logger(__name__)
 
-exported_projet_ext = ".drp"
+exported_project_ext = ".drp"
 
 
 def file_extensions():
-    return [exported_projet_ext]
+    return [exported_project_ext]
 
 
 def has_unsaved_changes():
@@ -85,7 +85,7 @@ def current_file():
     current_dir = os.getenv("AVALON_WORKDIR")
     project = pm.GetCurrentProject()
     name = project.GetName()
-    fname = name + exported_projet_ext
+    fname = name + exported_project_ext
     current_file = os.path.join(current_dir, fname)
     if not current_file:
         return None
