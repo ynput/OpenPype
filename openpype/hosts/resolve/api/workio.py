@@ -32,6 +32,8 @@ def save_file(filepath):
     response = False
     if name == "Untitled Project":
         response = pm.CreateProject(fname)
+        # recache new current project after creating new project
+        set_current_project()
         log.info("New project created: {}".format(response))
         pm.SaveProject()
     elif name != fname:
