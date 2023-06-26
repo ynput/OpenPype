@@ -33,7 +33,7 @@ def preserve_modelpanel_cameras(container, log=None):
     panel_cameras = {}
     for panel in cmds.getPanel(type="modelPanel"):
         cam = cmds.ls(cmds.modelPanel(panel, query=True, camera=True),
-                      long=True)
+                      long=True)[0]
 
         # Often but not always maya returns the transform from the
         # modelPanel as opposed to the camera shape, so we convert it

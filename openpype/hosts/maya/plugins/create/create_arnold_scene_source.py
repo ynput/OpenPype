@@ -98,4 +98,4 @@ class CreateArnoldSceneSource(plugin.MayaCreator):
 
         content = cmds.sets(name=instance_node + "_content_SET", empty=True)
         proxy = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
-        cmds.sets([content, proxy], forceElement=instance)
+        cmds.sets([content, proxy], forceElement=instance_node)

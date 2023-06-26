@@ -113,30 +113,45 @@ def pack_project(
             project_name
         ))
 
-    roots = project_doc["config"]["roots"]
-    # Determine root directory of project
-    source_root = None
-    source_root_name = None
-    for root_name, root_value in roots.items():
-        if source_root is not None:
-            raise ValueError(
-                "Packaging is supported only for single root projects"
-            )
-        source_root = root_value
-        source_root_name = root_name
+    if only_documents and not destination_dir:
+        raise ValueError((
+            "Destination directory must be defined"
+            " when only documents should be packed."
+        ))
 
-    root_path = source_root[platform.system().lower()]
-    print("Using root \"{}\" with path \"{}\"".format(
-        source_root_name, root_path
-    ))
+    root_path = None
+    source_root = {}
+    project_source_path = None
+    if not only_documents:
+        roots = project_doc["config"]["roots"]
+        # Determine root directory of project
+        source_root = None
+        source_root_name = None
+        for root_name, root_value in roots.items():
+            if source_root is not None:
+                raise ValueError(
+                    "Packaging is supported only for single root projects"
+                )
+            source_root = root_value
+            source_root_name = root_name
 
-    project_source_path = os.path.join(root_path, project_name)
-    if not os.path.exists(project_source_path):
-        raise ValueError("Didn't find source of project files")
+        root_path = source_root[platform.system().lower()]
+        print("Using root \"{}\" with path \"{}\"".format(
+            source_root_name, root_path
+        ))
+
+        project_source_path = os.path.join(root_path, project_name)
+        if not os.path.exists(project_source_path):
+            raise ValueError("Didn't find source of project files")
 
     # Determine zip filepath where data will be stored
     if not destination_dir:
         destination_dir = root_path
+
+    if not destination_dir:
+        raise ValueError(
+            "Project {} does not have any roots.".format(project_name)
+        )
 
     destination_dir = os.path.normpath(destination_dir)
     if not os.path.exists(destination_dir):
@@ -273,8 +288,7 @@ def unpack_project(
 
     low_platform = platform.system().lower()
     project_name = metadata["project_name"]
-    source_root = metadata["root"]
-    root_path = source_root[low_platform]
+    root_path = metadata["root"].get(low_platform)
 
     # Drop existing collection
     replace_project_documents(project_name, docs, database_name)

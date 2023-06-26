@@ -398,12 +398,22 @@ class PublishReportMaker:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+
+            # Conversion of exception into string may crash
+            try:
+                msg = str(exception)
+            except BaseException:
+                msg = (
+                    "Publisher Controller: ERROR"
+                    " - Failed to get exception message"
+                )
+
             # Action result does not have 'is_validation_error'
             is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
                 "is_validation_error": is_validation_error,
-                "msg": str(exception),
+                "msg": msg,
                 "filename": str(fname),
                 "lineno": str(line_no),
                 "func": str(func),
