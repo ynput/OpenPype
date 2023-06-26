@@ -311,6 +311,7 @@ class NukeWriteCreator(NukeCreator):
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
+            rendering_targets["farm_frames"] = "Existing frames farm rendering"
 
         return EnumDef(
             "render_target",
@@ -669,7 +670,7 @@ class ExporterReviewLut(ExporterReview):
         self.ext = ext or "cube"
         self.cube_size = cube_size or 32
         self.lut_size = lut_size or 1024
-        self.lut_style = lut_style or "linear"
+        self.lut_style = lut_style or "scene_linear"
 
         # set frame start / end and file name to self
         self.get_file_info()

@@ -32,7 +32,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     label = "Submit Nuke to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke"]
-    families = ["render", "prerender"]
+    families = ["render.farm", "prerender.farm"]
     optional = True
     targets = ["local"]
 

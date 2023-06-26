@@ -21,6 +21,10 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.instance = instance
+        # TODO: Find a better way to check whether a job has been submitted with
+        # existing frames
+        if not instance.data["render_job_id"]:
+            return
         frame_list = self._get_frame_list(instance.data["render_job_id"])
 
         for repre in instance.data["representations"]:
