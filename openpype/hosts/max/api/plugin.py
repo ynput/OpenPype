@@ -44,7 +44,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 node_ref = NodeTransformMonitor node:c
                 idx = finditem list_node.items handle_name
                 if idx do (
-                    return False
+                    continue
                 )
                 append temp_arr handle_name
                 append i_node_arr node_ref
