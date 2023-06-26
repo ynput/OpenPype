@@ -1,15 +1,105 @@
 # -*- coding: utf-8 -*-
 """3dsmax specific Avalon/Pyblish plugin definitions."""
-from pymxs import runtime as rt
-import six
 from abc import ABCMeta
-from openpype.pipeline import (
-    CreatorError,
-    Creator,
-    CreatedInstance
-)
+
+import six
+from pymxs import runtime as rt
+
 from openpype.lib import BoolDef
-from .lib import imprint, read, lsattr
+from openpype.pipeline import CreatedInstance, Creator, CreatorError
+
+from .lib import imprint, lsattr, read
+
+MS_CUSTOM_ATTRIB = """attributes "openPypeData"
+(
+    parameters main rollout:OPparams
+    (
+        all_handles type:#maxObjectTab tabSize:0 tabSizeVariable:on
+    )
+
+    rollout OPparams "OP Parameters"
+    (
+        listbox list_node "Node References" items:#()
+        button button_add "Add to Container"
+        button button_del "Delete from Container"
+
+        fn node_to_name the_node =
+        (
+            handle = the_node.handle
+            obj_name = the_node.name
+            handle_name = obj_name + "<" + handle as string + ">"
+            return handle_name
+        )
+
+        on button_add pressed do
+        (
+            current_selection = selectByName title:"Select Objects to add to
+            the Container" buttontext:"Add"
+            if current_selection == undefined then return False
+            temp_arr = #()
+            i_node_arr = #()
+            for c in current_selection do
+            (
+                handle_name = node_to_name c
+                node_ref = NodeTransformMonitor node:c
+                append temp_arr handle_name
+                append i_node_arr node_ref
+            )
+            all_handles = join i_node_arr all_handles
+            list_node.items = join temp_arr list_node.items
+        )
+
+        on button_del pressed do
+        (
+            current_selection = selectByName title:"Select Objects to remove
+            from the Container" buttontext:"Remove"
+            if current_selection == undefined then return False
+            temp_arr = #()
+            i_node_arr = #()
+            new_i_node_arr = #()
+            new_temp_arr = #()
+
+            for c in current_selection do
+            (
+                node_ref = NodeTransformMonitor node:c as string
+                handle_name = node_to_name c
+                tmp_all_handles = #()
+                for i in all_handles do
+                (
+                    tmp = i as string
+                    append tmp_all_handles tmp
+                )
+                idx = finditem tmp_all_handles node_ref
+                if idx do
+                (
+                    new_i_node_arr = DeleteItem all_handles idx
+
+                )
+                idx = finditem list_node.items handle_name
+                if idx do
+                (
+                    new_temp_arr = DeleteItem list_node.items idx
+                )
+            )
+            all_handles = join i_node_arr new_i_node_arr
+            list_node.items = join temp_arr new_temp_arr
+        )
+
+        on OPparams open do
+        (
+            if all_handles.count != 0 then
+            (
+                temp_arr = #()
+                for x in all_handles do
+                (
+                    handle_name = node_to_name x.node
+                    append temp_arr handle_name
+                )
+                list_node.items = temp_arr
+            )
+        )
+    )
+)"""
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -20,28 +110,40 @@ class MaxCreatorBase(object):
 
     @staticmethod
     def cache_subsets(shared_data):
-        if shared_data.get("max_cached_subsets") is None:
-            shared_data["max_cached_subsets"] = {}
-            cached_instances = lsattr("id", "pyblish.avalon.instance")
-            for i in cached_instances:
-                creator_id = rt.getUserProp(i, "creator_identifier")
-                if creator_id not in shared_data["max_cached_subsets"]:
-                    shared_data["max_cached_subsets"][creator_id] = [i.name]
-                else:
-                    shared_data[
-                        "max_cached_subsets"][creator_id].append(i.name)  # noqa
+        if shared_data.get("max_cached_subsets") is not None:
+            return shared_data
+
+        shared_data["max_cached_subsets"] = {}
+        cached_instances = lsattr("id", "pyblish.avalon.instance")
+        for i in cached_instances:
+            creator_id = rt.GetUserProp(i, "creator_identifier")
+            if creator_id not in shared_data["max_cached_subsets"]:
+                shared_data["max_cached_subsets"][creator_id] = [i.name]
+            else:
+                shared_data[
+                    "max_cached_subsets"][creator_id].append(i.name)
         return shared_data
 
     @staticmethod
-    def create_instance_node(node_name: str, parent: str = ""):
-        parent_node = rt.getNodeByName(parent) if parent else rt.rootScene
-        if not parent_node:
-            raise OpenPypeCreatorError(f"Specified parent {parent} not found")
+    def create_instance_node(node):
+        """Create instance node.
 
-        container = rt.container(name=node_name)
-        container.Parent = parent_node
+        If the supplied node is existing node, it will be used to hold the
+        instance, otherwise new node of type Dummy will be created.
 
-        return container
+        Args:
+            node (rt.MXSWrapperBase, str): Node or node name to use.
+
+        Returns:
+            instance
+        """
+        if isinstance(node, str):
+            node = rt.Container(name=node)
+
+        attrs = rt.Execute(MS_CUSTOM_ATTRIB)
+        rt.custAttributes.add(node.baseObject, attrs)
+
+        return node
 
 
 @six.add_metaclass(ABCMeta)
@@ -50,7 +152,7 @@ class MaxCreator(Creator, MaxCreatorBase):
 
     def create(self, subset_name, instance_data, pre_create_data):
         if pre_create_data.get("use_selection"):
-            self.selected_nodes = rt.getCurrentSelection()
+            self.selected_nodes = rt.GetCurrentSelection()
 
         instance_node = self.create_instance_node(subset_name)
         instance_data["instance_node"] = instance_node.name
@@ -60,8 +162,16 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_data,
             self
         )
-        for node in self.selected_nodes:
-            node.Parent = instance_node
+        if pre_create_data.get("use_selection"):
+
+            node_list = []
+            for i in self.selected_nodes:
+                node_ref = rt.NodeTransformMonitor(node=i)
+                node_list.append(node_ref)
+
+            # Setting the property
+            rt.setProperty(
+                instance_node.openPypeData, "all_handles", node_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
@@ -70,10 +180,9 @@ class MaxCreator(Creator, MaxCreatorBase):
 
     def collect_instances(self):
         self.cache_subsets(self.collection_shared_data)
-        for instance in self.collection_shared_data[
-                "max_cached_subsets"].get(self.identifier, []):
+        for instance in self.collection_shared_data["max_cached_subsets"].get(self.identifier, []):  # noqa
             created_instance = CreatedInstance.from_existing(
-                read(rt.getNodeByName(instance)), self
+                read(rt.GetNodeByName(instance)), self
             )
             self._add_instance_to_context(created_instance)
 
@@ -98,12 +207,12 @@ class MaxCreator(Creator, MaxCreatorBase):
 
         """
         for instance in instances:
-            instance_node = rt.getNodeByName(
+            instance_node = rt.GetNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                rt.select(instance_node)
-                rt.execute(f'for o in selection do for c in o.children do c.parent = undefined')    # noqa
-                rt.delete(instance_node)
+                count = rt.custAttributes.count(instance_node)
+                rt.custAttributes.delete(instance_node, count)
+                rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
 

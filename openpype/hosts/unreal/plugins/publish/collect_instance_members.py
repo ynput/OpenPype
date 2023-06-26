@@ -24,7 +24,7 @@ class CollectInstanceMembers(pyblish.api.InstancePlugin):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         inst_path = instance.data.get('instance_path')
-        inst_name = instance.data.get('objectName')
+        inst_name = inst_path.split('/')[-1]
 
         pub_instance = ar.get_asset_by_object_path(
             f"{inst_path}.{inst_name}").get_asset()

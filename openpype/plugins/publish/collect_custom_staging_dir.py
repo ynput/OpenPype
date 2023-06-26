@@ -65,6 +65,6 @@ class CollectCustomStagingDir(pyblish.api.InstancePlugin):
         else:
             result_str = "Not adding"
 
-        self.log.info("{} custom staging dir for instance with '{}'".format(
+        self.log.debug("{} custom staging dir for instance with '{}'".format(
             result_str, family
         ))
