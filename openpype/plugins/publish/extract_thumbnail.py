@@ -36,7 +36,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             ).format(subset_name))
             return
 
-        self.log.info(
+        self.log.debug(
             "Processing instance with subset name {}".format(subset_name)
         )
 
@@ -89,13 +89,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             src_staging = os.path.normpath(repre["stagingDir"])
             full_input_path = os.path.join(src_staging, input_file)
-            self.log.info("input {}".format(full_input_path))
+            self.log.debug("input {}".format(full_input_path))
             filename = os.path.splitext(input_file)[0]
             jpeg_file = filename + "_thumb.jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
 
             if oiio_supported:
-                self.log.info("Trying to convert with OIIO")
+                self.log.debug("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
                 thumbnail_created = self.create_thumbnail_oiio(
@@ -148,7 +148,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def _already_has_thumbnail(self, repres):
         for repre in repres:
-            self.log.info("repre {}".format(repre))
+            self.log.debug("repre {}".format(repre))
             if repre["name"] == "thumbnail":
                 return True
         return False
@@ -173,20 +173,20 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(self, src_path, dst_path):
-        self.log.info("outputting {}".format(dst_path))
+        self.log.info("Extracting thumbnail {}".format(dst_path))
         oiio_tool_path = get_oiio_tools_path()
         oiio_cmd = [
             oiio_tool_path,
             "-a", src_path,
             "-o", dst_path
         ]
-        self.log.info("running: {}".format(" ".join(oiio_cmd)))
+        self.log.debug("running: {}".format(" ".join(oiio_cmd)))
         try:
             run_subprocess(oiio_cmd, logger=self.log)
             return True
         except Exception:
             self.log.warning(
-                "Failed to create thubmnail using oiiotool",
+                "Failed to create thumbnail using oiiotool",
                 exc_info=True
             )
             return False

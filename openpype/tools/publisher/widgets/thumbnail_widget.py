@@ -75,6 +75,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         painter = QtGui.QPainter()
         painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
 
@@ -183,6 +184,18 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             backgrounded_images.append(new_pix)
         return backgrounded_images
 
+    def _paint_dash_line(self, painter, rect):
+        pen = QtGui.QPen()
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
+
+        new_rect = rect.adjusted(1, 1, -1, -1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        # painter.drawRect(rect)
+        painter.drawRect(new_rect)
+
     def _cache_pix(self):
         rect = self.rect()
         rect_width = rect.width()
@@ -264,13 +277,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         # Draw drop enabled dashes
         if used_default_pix:
-            pen = QtGui.QPen()
-            pen.setWidth(1)
-            pen.setBrush(QtCore.Qt.darkGray)
-            pen.setStyle(QtCore.Qt.DashLine)
-            final_painter.setPen(pen)
-            final_painter.setBrush(QtCore.Qt.transparent)
-            final_painter.drawRect(rect)
+            self._paint_dash_line(final_painter, rect)
 
         final_painter.end()
 

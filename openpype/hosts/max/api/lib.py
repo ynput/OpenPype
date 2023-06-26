@@ -1,30 +1,27 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
-import json
-import six
-from pymxs import runtime as rt
-from typing import Union
 import contextlib
+import json
+from typing import Any, Dict, Union
 
+import six
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
-    get_current_project
-)
-
+    get_current_project, get_current_project_asset,)
+from pymxs import runtime as rt
 
 JSON_PREFIX = "JSON::"
 
 
 def imprint(node_name: str, data: dict) -> bool:
-    node = rt.getNodeByName(node_name)
+    node = rt.GetNodeByName(node_name)
     if not node:
         return False
 
     for k, v in data.items():
         if isinstance(v, (dict, list)):
-            rt.setUserProp(node, k, f'{JSON_PREFIX}{json.dumps(v)}')
+            rt.SetUserProp(node, k, f"{JSON_PREFIX}{json.dumps(v)}")
         else:
-            rt.setUserProp(node, k, v)
+            rt.SetUserProp(node, k, v)
 
     return True
 
@@ -44,7 +41,7 @@ def lsattr(
     Returns:
         list of nodes.
     """
-    root = rt.rootnode if root is None else rt.getNodeByName(root)
+    root = rt.RootNode if root is None else rt.GetNodeByName(root)
 
     def output_node(node, nodes):
         nodes.append(node)
@@ -55,16 +52,16 @@ def lsattr(
     output_node(root, nodes)
     return [
         n for n in nodes
-        if rt.getUserProp(n, attr) == value
+        if rt.GetUserProp(n, attr) == value
     ] if value else [
         n for n in nodes
-        if rt.getUserProp(n, attr)
+        if rt.GetUserProp(n, attr)
     ]
 
 
 def read(container) -> dict:
     data = {}
-    props = rt.getUserPropBuffer(container)
+    props = rt.GetUserPropBuffer(container)
     # this shouldn't happen but let's guard against it anyway
     if not props:
         return data
@@ -79,29 +76,25 @@ def read(container) -> dict:
         value = value.strip()
         if isinstance(value.strip(), six.string_types) and \
                 value.startswith(JSON_PREFIX):
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 value = json.loads(value[len(JSON_PREFIX):])
-            except json.JSONDecodeError:
-                # not a json
-                pass
-
         data[key.strip()] = value
 
-    data["instance_node"] = container.name
+    data["instance_node"] = container.Name
 
     return data
 
 
 @contextlib.contextmanager
 def maintained_selection():
-    previous_selection = rt.getCurrentSelection()
+    previous_selection = rt.GetCurrentSelection()
     try:
         yield
     finally:
         if previous_selection:
-            rt.select(previous_selection)
+            rt.Select(previous_selection)
         else:
-            rt.select()
+            rt.Select()
 
 
 def get_all_children(parent, node_type=None):
@@ -123,12 +116,19 @@ def get_all_children(parent, node_type=None):
         return children
     child_list = list_children(parent)
 
-    return ([x for x in child_list if rt.superClassOf(x) == node_type]
+    return ([x for x in child_list if rt.SuperClassOf(x) == node_type]
             if node_type else child_list)
 
 
 def get_current_renderer():
-    """get current renderer"""
+    """
+    Notes:
+        Get current renderer for Max
+
+    Returns:
+        "{Current Renderer}:{Current Renderer}"
+        e.g. "Redshift_Renderer:Redshift_Renderer"
+    """
     return rt.renderers.production
 
 
@@ -175,13 +175,14 @@ def set_scene_resolution(width: int, height: int):
     """
     # make sure the render dialog is closed
     # for the update of resolution
-    # Changing the Render Setup dialog settingsshould be done
+    # Changing the Render Setup dialog settings should be done
     # with the actual Render Setup dialog in a closed state.
     if rt.renderSceneDialog.isOpen():
         rt.renderSceneDialog.close()
 
     rt.renderWidth = width
     rt.renderHeight = height
+
 
 def reset_scene_resolution():
     """Apply the scene resolution from the project definition
@@ -205,7 +206,7 @@ def reset_scene_resolution():
     set_scene_resolution(width, height)
 
 
-def get_frame_range() -> dict:
+def get_frame_range() -> Union[Dict[str, Any], None]:
     """Get the current assets frame range and handles.
 
     Returns:
@@ -252,7 +253,7 @@ def reset_frame_range(fps: bool = True):
     frange_cmd = (
         f"animationRange = interval {frame_start_handle} {frame_end_handle}"
     )
-    rt.execute(frange_cmd)
+    rt.Execute(frange_cmd)
     set_render_frame_range(frame_start_handle, frame_end_handle)
 
 
@@ -282,5 +283,5 @@ def get_max_version():
         #(25000, 62, 0, 25, 0, 0, 997, 2023, "")
         max_info[7] = max version date
     """
-    max_info = rt.maxversion()
+    max_info = rt.MaxVersion()
     return max_info[7]

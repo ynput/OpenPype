@@ -1441,6 +1441,19 @@ class CreateContext:
         """Access to global publish attributes."""
         return self._publish_attributes
 
+    def get_instance_by_id(self, instance_id):
+        """Receive instance by id.
+
+        Args:
+            instance_id (str): Instance id.
+
+        Returns:
+            Union[CreatedInstance, None]: Instance or None if instance with
+                given id is not available.
+        """
+
+        return self._instances_by_id.get(instance_id)
+
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.
 

@@ -582,7 +582,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             metadata_folder = metadata_folder.replace(orig_scene,
                                                       new_scene)
             instance.data["publishRenderMetadataFolder"] = metadata_folder
-
         self.log.info("Scene name was switched {} -> {}".format(
             orig_scene, new_scene
         ))
@@ -663,7 +662,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
             # test if there is instance of workfile waiting
             # to be published.
-            assert i.data["publish"] is True, (
+            assert i.data.get("publish", True) is True, (
                 "Workfile (scene) must be published along")
 
             return i

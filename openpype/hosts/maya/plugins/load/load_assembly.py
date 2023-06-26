@@ -1,7 +1,13 @@
+import maya.cmds as cmds
+
 from openpype.pipeline import (
     load,
     remove_container
 )
+
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
+from openpype.hosts.maya.api import setdress
 
 
 class AssemblyLoader(load.LoaderPlugin):
@@ -16,17 +22,12 @@ class AssemblyLoader(load.LoaderPlugin):
 
     def load(self, context, name, namespace, data):
 
-        from openpype.hosts.maya.api.pipeline import containerise
-        from openpype.hosts.maya.api.lib import unique_namespace
-
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
         )
-
-        from openpype.hosts.maya.api import setdress
 
         containers = setdress.load_package(
             filepath=self.fname,
@@ -50,14 +51,10 @@ class AssemblyLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
 
-        from openpype import setdress
         return setdress.update_package(container, representation)
 
     def remove(self, container):
         """Remove all sub containers"""
-
-        from openpype import setdress
-        import maya.cmds as cmds
 
         # Remove all members
         member_containers = setdress.get_contained_containers(container)
