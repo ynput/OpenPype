@@ -7,7 +7,7 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.491
-    label = "Collect Frame Range from Asset Entity"
+    label = "Collect Frame Range Data"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
                 "render"]
@@ -19,11 +19,6 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin):
     def process(self, instance):
         repres = instance.data.get("representations")
         asset_data = None
-        asset_doc = instance.data.get("assetEntity")
-        if not asset_doc:
-            self.log.debug("Instance has no asset entity set."
-                           " Skipping collecting frame range data.")
-            return
         if repres:
             first_repre = repres[0]
             ext = first_repre["ext"].replace(".", "")
@@ -41,19 +36,19 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin):
                 files, minimum_items=1)[0][0]
             repres_frames = [frames for frames in repres_file.indexes]
             last_frame = len(repres_frames) - 1
-            entity_data = asset_doc["data"]
             asset_data = {
-                "fps": entity_data["fps"],
                 "frameStart": repres_frames[0],
                 "frameEnd": repres_frames[last_frame],
-                "handleStart": entity_data["handleStart"],
-                "handleEnd": entity_data["handleEnd"]
             }
 
         else:
             self.log.info("No representation data.. "
                           "\nUse Asset Entity data instead")
-
+            asset_doc = instance.data.get("assetEntity")
+            if  instance.data.get("frameStart") is not None or not asset_doc:
+                self.log.debug("Instance has no asset entity set."
+                               " Skipping collecting frame range data.")
+                return
             asset_data = asset_doc["data"]
 
         key_sets = []
