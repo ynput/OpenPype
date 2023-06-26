@@ -4,9 +4,7 @@ import os
 from openpype.lib import Logger
 from .lib import (
     get_project_manager,
-    get_current_project,
-    set_current_project,
-    set_project_manager_to_folder_name
+    get_current_project
 )
 
 
@@ -34,8 +32,6 @@ def save_file(filepath):
     response = False
     if name == "Untitled Project":
         response = pm.CreateProject(fname)
-        # re-cash new current project after renaming
-        set_current_project()
         log.info("New project created: {}".format(response))
         pm.SaveProject()
     elif name != fname:
