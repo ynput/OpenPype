@@ -16,6 +16,8 @@ class ResolveLaunchLastWorkfile(PreLaunchHook):
     app_groups = ["resolve"]
 
     def execute(self):
+        self.set_startup_script()
+
         if not self.data.get("start_last_workfile"):
             self.log.info("It is set to not start last workfile on start.")
             return
@@ -35,6 +37,7 @@ class ResolveLaunchLastWorkfile(PreLaunchHook):
         key = "OPENPYPE_RESOLVE_OPEN_ON_LAUNCH"
         self.launch_context.env[key] = last_workfile
 
+    def set_startup_script(self):
         # Set the openpype prelaunch startup script path for easy access
         # in the LUA .scriptlib code
         op_resolve_root = os.path.dirname(openpype.hosts.resolve.__file__)
