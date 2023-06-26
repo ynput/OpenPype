@@ -9,7 +9,7 @@ from openpype.pipeline import publish, legacy_io
 
 class CollectSettingsSimpleInstances(
     pyblish.api.InstancePlugin, publish.ColormanagedPyblishPluginMixin
-    ):
+):
     """Collect data for instances created by settings creators.
 
     Plugin create representations for simple instances based
@@ -70,9 +70,9 @@ class CollectSettingsSimpleInstances(
 
         # Hack to set env vars required to run in the farm
         os.environ["AVALON_ASSET"] = instance.data["asset"]
-        os.environ["AVALON_TASK"] =  instance.data.get("task")
+        os.environ["AVALON_TASK"] = instance.data.get("task")
         legacy_io.Session["AVALON_ASSET"] = instance.data["asset"]
-        legacy_io.Session["AVALON_TASK"] =  instance.data.get("task")
+        legacy_io.Session["AVALON_TASK"] = instance.data.get("task")
 
         self._create_review_representation(
             instance,
@@ -117,7 +117,7 @@ class CollectSettingsSimpleInstances(
             # Farm rendering
             instance.data["toBeRenderedOn"] = "deadline"
             instance.data["transfer"] = False
-            instance.data["farm"] = True # to skip integrate
+            instance.data["farm"] = True  # to skip integrate
             if "review" in instance.data["families"]:
                 # to skip ExtractReview locally
                 instance.data["families"].remove("review")
@@ -228,8 +228,7 @@ class CollectSettingsSimpleInstances(
         first_filepath = os.path.join(item_dir, filenames[0])
 
         filepaths = {
-            os.path.join(item_dir, filename)
-            for filename in filenames
+            os.path.join(item_dir, filename) for filename in filenames
         }
         source_filepaths.extend(filepaths)
         # First try to find out representation with same filepaths
@@ -267,7 +266,9 @@ class CollectSettingsSimpleInstances(
         input_colorspace = creator_attributes["input_colorspace"]
         instance.data["colorspace"] = input_colorspace
         self.set_representation_colorspace(
-            review_representation, instance.context, colorspace=input_colorspace
+            review_representation,
+            instance.context,
+            colorspace=input_colorspace,
         )
 
     def _create_representation_data(
@@ -305,7 +306,7 @@ class CollectSettingsSimpleInstances(
             "name": repre_name,
             "stagingDir": filepath_item["directory"],
             "files": filenames,
-            "tags": []
+            "tags": [],
         }
 
     def _calculate_source(self, filepaths):
