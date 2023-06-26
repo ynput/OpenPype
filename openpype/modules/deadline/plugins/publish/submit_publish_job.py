@@ -17,6 +17,7 @@ from openpype.client import (
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
+    publish,
 )
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
@@ -121,7 +122,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony"]
+             "celaction", "aftereffects", "harmony", "traypublisher"]
 
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence",
@@ -334,7 +335,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             for assembly_id in instance.data["bakingSubmissionJobs"]:
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
-        else:
+        elif job.get("_id"):
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         if instance.data.get("suspend_publish"):
@@ -687,6 +688,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 self.log.info("Adding scanline conversion.")
                 rep["tags"].append("toScanline")
 
+            if not rep.get("colorspaceData"):
+                self.set_representation_colorspace(rep,
+                    context=self.context,
+                    colorspace=instance_data.get("colorspace", None)
+                )
+
             representations.append(rep)
 
             self._solve_families(instance_data, preview)
@@ -870,6 +877,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
             "useSequenceForReview": data.get("useSequenceForReview", True),
+            "colorspace": data.get("colorspace"),
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
             "colorspace": instance.data.get("colorspace")
@@ -883,6 +891,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
+                self.log.debug("Transfering '%s' family to instance.", item)
                 instance_skeleton_data["families"] += [item]
 
         # transfer specific properties from original instance based on
@@ -890,6 +899,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         for key, values in self.instance_transfer.items():
             if key in instance.data.get("families", []):
                 for v in values:
+                    self.log.debug("Transfering '%s' property to instance.", v)
                     instance_skeleton_data[v] = instance.data.get(v)
 
         # look into instance data if representations are not having any
@@ -912,7 +922,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     repre["stagingDir"] = staging_dir
 
             if "publish_on_farm" in repre.get("tags"):
-                # create representations attribute of not there
+                # create representations attribute if not there
                 if "representations" not in instance_skeleton_data.keys():
                     instance_skeleton_data["representations"] = []
 
@@ -1095,6 +1105,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
+        deadline_publish_job_id = None
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]
@@ -1118,7 +1129,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "fps": context.data.get("fps", None),
             "source": source,
             "user": context.data["user"],
-            "version": context.data["version"],  # this is workfile version
+            "version": context.data.get("version"),  # this is workfile version
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job or None,
@@ -1151,7 +1162,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             json.dump(publish_job, f, indent=4, sort_keys=True)
 
     def _extend_frames(self, asset, subset, start, end):
-        """Get latest version of asset nad update frame range.
+        """Get latest version of asset and update frame range.
 
         Based on minimum and maximuma values.
 

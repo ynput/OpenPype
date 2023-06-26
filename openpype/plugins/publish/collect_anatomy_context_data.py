@@ -42,7 +42,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
     }
     """
 
-    order = pyblish.api.CollectorOrder + 0.002
+    order = pyblish.api.CollectorOrder - 0.02
     label = "Collect Anatomy Context Data"
 
     def process(self, context):

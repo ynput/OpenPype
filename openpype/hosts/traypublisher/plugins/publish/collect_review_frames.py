@@ -16,7 +16,7 @@ class CollectReviewInfo(pyblish.api.InstancePlugin):
 
     label = "Collect Review Info"
     order = pyblish.api.CollectorOrder + 0.491
-    families = ["review"]
+    families = ["review", "render"]
     hosts = ["traypublisher"]
 
     def process(self, instance):
