@@ -52,7 +52,7 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
             cmds.workspace(fileRule=("images", required_images_rule))
             cmds.workspace(saveWorkspace=True)
 
-    @staticmethod
+    @classmethod
     def get_default_render_image_folder(cls, instance):
         staging_dir = instance.data.get("stagingDir")
         if staging_dir:
