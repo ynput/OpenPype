@@ -131,9 +131,6 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         if not self._instance.data.get("rrJobs"):
             self._instance.data["rrJobs"] = []
 
-        self._instance.data["outputDir"] = os.path.dirname(
-            self._instance.data["path"]).replace("\\", "/")
-
     def get_job(self, instance, script_path, render_path, node_name):
         """Get RR job based on current instance.
 
