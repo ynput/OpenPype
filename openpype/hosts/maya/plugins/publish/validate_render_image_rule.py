@@ -27,7 +27,7 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         required_images_rule = os.path.normpath(
-            self.get_default_render_image_folder(self, instance)
+            self.get_default_render_image_folder(instance)
         )
         current_images_rule = os.path.normpath(
             cmds.workspace(fileRuleEntry="images")
@@ -43,9 +43,7 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
-        required_images_rule = cls.get_default_render_image_folder(
-            cls, instance
-        )
+        required_images_rule = cls.get_default_render_image_folder(instance)
         current_images_rule = cmds.workspace(fileRuleEntry="images")
 
         if current_images_rule != required_images_rule:
