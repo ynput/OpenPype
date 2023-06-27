@@ -5,7 +5,6 @@ Host specific functions where host api is connected
 from copy import deepcopy
 import os
 import re
-import sys
 import platform
 import functools
 import warnings
@@ -29,10 +28,20 @@ from openpype.pipeline import (
 from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
-
+from .constants import (
+    OPENPYPE_TAG_NAME,
+    DEFAULT_SEQUENCE_NAME,
+    DEFAULT_BIN_NAME
+)
 from openpype.pipeline.colorspace import (
     get_imageio_config
 )
+
+
+class CTX:
+    _has_been_setup = False
+    _has_menu = False
+    _parent_gui = None
 
 
 class DeprecatedWarning(DeprecationWarning):
@@ -82,15 +91,6 @@ def deprecated(new_destination):
 
 log = Logger.get_logger(__name__)
 
-self = sys.modules[__name__]
-self._has_been_setup = False
-self._has_menu = False
-self._registered_gui = None
-self._parent = None
-self.pype_tag_name = "openpypeData"
-self.default_sequence_name = "openpypeSequence"
-self.default_bin_name = "openpypeBin"
-
 
 def flatten(_list):
     for item in _list:
@@ -131,7 +131,7 @@ def get_current_sequence(name=None, new=False):
 
     if new:
         # create new
-        name = name or self.default_sequence_name
+        name = name or DEFAULT_SEQUENCE_NAME
         sequence = hiero.core.Sequence(name)
         root_bin.addItem(hiero.core.BinItem(sequence))
     elif name:
@@ -345,7 +345,7 @@ def get_track_item_tags(track_item):
     # collect all tags which are not openpype tag
     returning_tag_data.extend(
         tag for tag in _tags
-        if tag.name() != self.pype_tag_name
+        if tag.name() != OPENPYPE_TAG_NAME
     )
 
     return returning_tag_data
@@ -385,7 +385,7 @@ def set_track_openpype_tag(track, data=None):
         # if pype tag available then update with input data
         tag = tags.create_tag(
             "{}_{}".format(
-                self.pype_tag_name,
+                OPENPYPE_TAG_NAME,
                 _get_tag_unique_hash()
             ),
             tag_data
@@ -412,7 +412,7 @@ def get_track_openpype_tag(track):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if self.pype_tag_name in tag.name():
+        if OPENPYPE_TAG_NAME in tag.name():
             return tag
 
 
@@ -484,7 +484,7 @@ def get_trackitem_openpype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if self.pype_tag_name in tag.name():
+        if OPENPYPE_TAG_NAME in tag.name():
             return tag
 
 
@@ -516,7 +516,7 @@ def set_trackitem_openpype_tag(track_item, data=None):
         # if pype tag available then update with input data
         tag = tags.create_tag(
             "{}_{}".format(
-                self.pype_tag_name,
+                OPENPYPE_TAG_NAME,
                 _get_tag_unique_hash()
             ),
             tag_data
@@ -698,29 +698,29 @@ def setup(console=False, port=None, menu=True):
         menu (bool, optional): Display file menu in Hiero.
     """
 
-    if self._has_been_setup:
+    if CTX._has_been_setup:
         teardown()
 
     add_submission()
 
     if menu:
         add_to_filemenu()
-        self._has_menu = True
+        CTX._has_menu = True
 
-    self._has_been_setup = True
+    CTX._has_been_setup = True
     log.debug("pyblish: Loaded successfully.")
 
 
 def teardown():
     """Remove integration"""
-    if not self._has_been_setup:
+    if not CTX._has_been_setup:
         return
 
-    if self._has_menu:
+    if CTX._has_menu:
         remove_from_filemenu()
-        self._has_menu = False
+        CTX._has_menu = False
 
-    self._has_been_setup = False
+    CTX._has_been_setup = False
     log.debug("pyblish: Integration torn down successfully")
 
 
@@ -928,7 +928,7 @@ def create_bin(path=None, project=None):
     # get the first loaded project
     project = project or get_current_project()
 
-    path = path or self.default_bin_name
+    path = path or DEFAULT_BIN_NAME
 
     path = path.replace("\\", "/").split("/")
 
@@ -1311,11 +1311,11 @@ def before_project_save(event):
 
 def get_main_window():
     """Acquire Nuke's main window"""
-    if self._parent is None:
+    if CTX._parent_gui is None:
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
         main_window = next(widget for widget in top_widgets if
                            widget.inherits("QMainWindow") and
                            widget.metaObject().className() == name)
-        self._parent = main_window
-    return self._parent
+        CTX._parent_gui = main_window
+    return CTX._parent_gui
