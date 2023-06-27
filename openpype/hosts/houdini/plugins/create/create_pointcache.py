@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
+# from openpype.pipeline import CreatedInstance
 
 import hou
 
@@ -37,14 +37,44 @@ class CreatePointCache(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            parms["sop_path"] = self.selected_nodes[0].path()
+            parent = self.selected_nodes[0]
+            parms["sop_path"] = parent.path()
+
+            child_render = ""
+            child_output = ""
 
             # try to find output node
-            for child in self.selected_nodes[0].children():
+            for child in parent.children():
+                if child.isGenericFlagSet( hou.nodeFlag.Render):
+                    child_render = child
                 if child.type().name() == "output":
-                    parms["sop_path"] = child.path()
+                    child_output =  child
                     break
 
+            # create output node if not exists
+            if not child_output:
+                child_output = parent.createNode("output","OUTPUT")
+                child_output.setFirstInput(child_render)
+
+                child_output.setDisplayFlag(1)
+                child_output.setRenderFlag(1)
+                child_output.moveToGoodPosition()
+
+            paths = child_output.geometry().findPrimAttrib("path") and \
+                      child_output.geometry().primStringAttribValues("path")
+
+            # Create default path value if missing
+            if not paths :
+                path_node = parent.createNode("name", "AUTO_PATH")
+                path_node.parm("attribname").set("path")
+                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`')
+
+                path_node.setFirstInput(child_output.input(0))
+                path_node.moveToGoodPosition()
+                child_output.setFirstInput(path_node)
+                child_output.moveToGoodPosition()
+
+            parms["sop_path"] = child_output.path()
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)
 
