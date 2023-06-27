@@ -479,7 +479,9 @@ class AbstractTemplateBuilder(object):
             create_first_version = template_preset["create_first_version"]
 
         # check if first version is created
-        created_version_workfile = self.create_first_workfile_version()
+        created_version_workfile = False
+        if create_first_version:
+            created_version_workfile = self.create_first_workfile_version()
 
         # if first version is created, import template
         # and populate placeholders
@@ -1567,7 +1569,16 @@ class PlaceholderLoadMixin(object):
             else:
                 failed = False
                 self.load_succeed(placeholder, container)
-            self.cleanup_placeholder(placeholder, failed)
+            self.post_placeholder_process(placeholder, failed)
+
+        if failed:
+            self.log.debug(
+                "Placeholder cleanup skipped due to failed placeholder "
+                "population."
+            )
+            return
+        if not placeholder.data.get("keep_placeholder", True):
+            self.delete_placeholder(placeholder)
 
     def load_failed(self, placeholder, representation):
         if hasattr(placeholder, "load_failed"):
@@ -1577,7 +1588,7 @@ class PlaceholderLoadMixin(object):
         if hasattr(placeholder, "load_succeed"):
             placeholder.load_succeed(container)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is
@@ -1590,6 +1601,10 @@ class PlaceholderLoadMixin(object):
         """
 
         pass
+
+    def delete_placeholder(self, placeholder, failed):
+        """Called when all item population is done."""
+        self.log.debug("Clean up of placeholder is not implemented.")
 
 
 class PlaceholderCreateMixin(object):
@@ -1753,7 +1768,7 @@ class PlaceholderCreateMixin(object):
             failed = False
             self.create_succeed(placeholder, creator_instance)
 
-        self.cleanup_placeholder(placeholder, failed)
+        self.post_placeholder_process(placeholder, failed)
 
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
@@ -1763,7 +1778,7 @@ class PlaceholderCreateMixin(object):
         if hasattr(placeholder, "create_succeed"):
             placeholder.create_succeed(creator_instance)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is
