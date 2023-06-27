@@ -87,7 +87,8 @@ def current_file():
     name = project.GetName()
     fname = name + exported_project_ext
     current_file = os.path.join(current_dir, fname)
-    return os.path.normpath(current_file) if current_file else None
+    if current_file:
+        return os.path.normpath(current_file)
 
 
 def work_root(session):
