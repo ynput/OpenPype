@@ -45,15 +45,15 @@ class CreatePointCache(plugin.HoudiniCreator):
 
             # try to find output node
             for child in parent.children():
-                if child.isGenericFlagSet( hou.nodeFlag.Render):
+                if child.isGenericFlagSet(hou.nodeFlag.Render):
                     child_render = child
                 if child.type().name() == "output":
-                    child_output =  child
+                    child_output = child
                     break
 
             # create output node if not exists
             if not child_output:
-                child_output = parent.createNode("output","OUTPUT")
+                child_output = parent.createNode("output", "OUTPUT")
                 child_output.setFirstInput(child_render)
 
                 child_output.setDisplayFlag(1)
@@ -64,10 +64,10 @@ class CreatePointCache(plugin.HoudiniCreator):
                       child_output.geometry().primStringAttribValues("path")
 
             # Create default path value if missing
-            if not paths :
+            if not paths:
                 path_node = parent.createNode("name", "AUTO_PATH")
                 path_node.parm("attribname").set("path")
-                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`')
+                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`') #noqa
 
                 path_node.setFirstInput(child_output.input(0))
                 path_node.moveToGoodPosition()

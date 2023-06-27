@@ -119,9 +119,9 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         path_attr = rop_node.parm("path_attrib").eval() or "path"
         paths = geo.findPrimAttrib(path_attr) and \
-            geo.primStringAttribValues(path_attr)
+                    geo.primStringAttribValues(path_attr)
 
-        if not paths :
+        if not paths:
             output_node = instance.data.get("output_node")
             path_node = output_node.parent().createNode("name", "AUTO_PATH")
             path_node.parm("attribname").set(path_attr)
