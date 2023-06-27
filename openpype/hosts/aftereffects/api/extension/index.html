@@ -105,6 +105,39 @@
     </script>
 
     <script type=text/javascript>
+      $(function() {
+        $("a#create-placeholder-button").bind("click", function() {
+          RPC.call('AfterEffects.create_placeholder_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
+      $(function() {
+        $("a#update-placeholder-button").bind("click", function() {
+          RPC.call('AfterEffects.update_placeholder_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
+      $(function() {
+        $("a#build-workfile-button").bind("click", function() {
+          RPC.call('AfterEffects.build_workfile_template_route').then(function (data) {
+          }, function (error) {
+              alert(error);
+          });
+        });
+      });
+    </script>
+
+    <script type=text/javascript>
             $(function() {
               $("a#experimental-button").bind("click", function() {
                 RPC.call('AfterEffects.experimental_tools_route').then(function (data) {
@@ -127,9 +160,15 @@
             <div><a href=# id=loader-button><button class="hostFontSize">Load...</button></a></div>
             <div><a href=# id=publish-button><button class="hostFontSize">Publish...</button></a></div>
             <div><a href=# id=sceneinventory-button><button class="hostFontSize">Manage...</button></a></div>
+            <div><a href=# id=separator0><button class="hostFontSize">&nbsp;</button></a></div>
             <div><a href=# id=setresolution-button><button class="hostFontSize">Set Resolution</button></a></div>
             <div><a href=# id=setframes-button><button class="hostFontSize">Set Frame Range</button></a></div>
             <div><a href=# id=setall-button><button class="hostFontSize">Apply All Settings</button></a></div>
+            <div><a href=# id=separator1><button class="hostFontSize">&nbsp;</button></a></div>
+            <div><a href=# id=create-placeholder-button><button class="hostFontSize">Create placeholder</button></a></div>
+            <div><a href=# id=update-placeholder-button><button class="hostFontSize">Update placeholder</button></a></div>
+            <div><a href=# id=build-workfile-button><button class="hostFontSize">Build Workfile from template</button></a></div>
+            <div><a href=# id=separator3><button class="hostFontSize">&nbsp;</button></a></div>
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
         </div>
 

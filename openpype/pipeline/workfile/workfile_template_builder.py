@@ -13,6 +13,7 @@ about it's progress.
 
 import os
 import re
+import platform
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
@@ -761,7 +762,9 @@ class AbstractTemplateBuilder(object):
                 "with host '{}'"
             ).format(task_name, task_type, host_name))
 
-        path = profile["path"]
+        current_platform = platform.system().lower()
+        # backward compatibility for single platform version
+        path = profile["path"].get(current_platform) or profile["path"]
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
@@ -1673,12 +1676,14 @@ class PlaceholderCreateMixin(object):
             )
         ]
 
-    def populate_create_placeholder(self, placeholder):
+    def populate_create_placeholder(self, placeholder, pre_create_data=None):
         """Create placeholder is going to create matching publishabe instance.
 
         Args:
             placeholder (PlaceholderItem): Placeholder item with information
                 about requested publishable instance.
+            pre_create_data (dict): dictionary of configuration from Creator
+                configuration in UI
         """
 
         legacy_create = self.builder.use_legacy_creators
@@ -1736,7 +1741,8 @@ class PlaceholderCreateMixin(object):
                     creator_plugin.identifier,
                     create_variant,
                     asset_doc,
-                    task_name=task_name
+                    task_name=task_name,
+                    pre_create_data=pre_create_data
                 )
 
         except:  # noqa: E722
