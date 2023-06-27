@@ -17,6 +17,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
     colorspace_items = [
         (None, "Don't override")
     ]
+    colorspace_attr_show = False
 
     def process(self, instance):
         values = self.get_attr_values_from_data(instance.data)
@@ -50,13 +51,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
             cls.colorspace_items.extend((
                 (name, name) for name in config_items.keys()
             ))
-        else:
-            cls.colorspace_items.extend([
-                ("sRGB", "sRGB"),
-                ("rec709", "rec709"),
-                ("ACES", "ACES"),
-                ("ACEScg", "ACEScg")
-            ])
+            cls.colorspace_attr_show = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -65,6 +60,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
                 "colorspace",
                 cls.colorspace_items,
                 default="Don't override",
-                label="Override Colorspace"
+                label="Override Colorspace",
+                hidden=not cls.colorspace_attr_show
             )
         ]
