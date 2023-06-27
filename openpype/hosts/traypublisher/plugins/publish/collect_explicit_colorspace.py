@@ -47,8 +47,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
             filepath = config_data["path"]
             config_items = colorspace.get_ocio_config_colorspaces(filepath)
             cls.colorspace_items.extend((
-                (name, name)
-                for name, family in config_items.items()
+                (name, name) for name in config_items.keys()
             ))
         else:
             cls.colorspace_items.extend([
