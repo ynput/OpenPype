@@ -13,7 +13,6 @@ about it's progress.
 
 import os
 import re
-import platform
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
@@ -764,9 +763,7 @@ class AbstractTemplateBuilder(object):
                 "with host '{}'"
             ).format(task_name, task_type, host_name))
 
-        current_platform = platform.system().lower()
-        # backward compatibility for single platform version
-        path = profile["path"].get(current_platform) or profile["path"]
+        path = profile["path"]
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
