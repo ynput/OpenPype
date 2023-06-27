@@ -16,7 +16,8 @@ class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
     def update_job_with_host_specific(self, instance, job):
         job.Software = "Maya"
         job.Version = "{0:.2f}".format(MGlobal.apiVersion() / 10000)
-        job.Camera = instance.data["cameras"][0],
+        if instance.data.get("cameras"):
+            job.Camera = instance.data["cameras"][0].replace("'", '"')
         workspace = instance.context.data["workspaceDir"]
         job.SceneDatabaseDir = workspace
 
