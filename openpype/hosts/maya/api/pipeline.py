@@ -653,7 +653,7 @@ def on_task_changed():
 
     with lib.suspended_refresh():
         lib.set_context_settings()
-        lib.update_content_on_context_change()
+        lib.update_instances_frame_range()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
         legacy_io.active_project(),

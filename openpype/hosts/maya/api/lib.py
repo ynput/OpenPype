@@ -2261,7 +2261,7 @@ def get_frame_range(include_animation_range=False):
     return frame_range
 
 
-def reset_frame_range(playback=True, render=True, fps=True):
+def reset_frame_range(playback=True, render=True, fps=True, instances=True):
     """Set frame range to current asset
 
     Args:
@@ -2270,6 +2270,8 @@ def reset_frame_range(playback=True, render=True, fps=True):
         render (bool, Optional): Whether to set the maya render frame range.
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
+        instances (bool, Optional): Whether to update publishable instances.
+            Defaults to True.
     """
     if fps:
         fps = convert_to_maya_fps(
@@ -2299,6 +2301,12 @@ def reset_frame_range(playback=True, render=True, fps=True):
     if render:
         cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
+
+    if instances:
+        project_name = get_current_project_name()
+        settings = get_project_settings(project_name)
+        if settings["maya"]["update_publishable_frame_range"]["enabled"]:
+            update_instances_frame_range()
 
 
 def reset_scene_resolution():
@@ -3129,31 +3137,52 @@ def remove_render_layer_observer():
         pass
 
 
-def update_content_on_context_change():
+def update_instances_frame_range():
+    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'asset'
+    attributes of sets that got one, execpt if instance family is 'render'
     """
-    This will update scene content to match new asset on context change
-    """
-    scene_sets = cmds.listSets(allSets=True)
+    collected_instances = cmds.ls(
+        "*.id",
+        long=True,
+        type="objectSet",
+        recursive=True,
+        objectsOnly=True
+    )
     asset_doc = get_current_project_asset()
-    new_asset = asset_doc["name"]
-    new_data = asset_doc["data"]
-    for s in scene_sets:
-        try:
-            if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
-                attr = cmds.listAttr(s)
-                print(s)
-                if "asset" in attr:
-                    print("  - setting asset to: [ {} ]".format(new_asset))
-                    cmds.setAttr("{}.asset".format(s),
-                                 new_asset, type="string")
-                if "frameStart" in attr:
-                    cmds.setAttr("{}.frameStart".format(s),
-                                 new_data["frameStart"])
-                if "frameEnd" in attr:
-                    cmds.setAttr("{}.frameEnd".format(s),
-                                 new_data["frameEnd"],)
-        except ValueError:
-            pass
+
+    asset_data = asset_doc["data"]
+    frames_attributes = {
+        'frameStart': asset_data["frameStart"],
+        'frameEnd': asset_data["frameEnd"],
+        'handleStart': asset_data["handleStart"],
+        'handleEnd': asset_data["handleEnd"],
+        'asset': asset_doc['name']
+    }
+
+    for instance in collected_instances:
+        id_attr = "{}.id".format(instance)
+        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+            continue
+
+        if (
+            cmds.attributeQuery('family', node=instance, exists=True) and
+            cmds.getAttr("{}.family".format(instance)) == "render"
+        ):
+            continue
+
+        for key, value in frames_attributes.items():
+            if cmds.attributeQuery(key, node=instance, exists=True):
+                if key == 'asset':
+                    cmds.setAttr(
+                        "{}.{}".format(instance, key),
+                        value,
+                        type="string"
+                    )
+                else:
+                    cmds.setAttr(
+                        "{}.{}".format(instance, key),
+                        value
+                    )
 
 
 def show_message(title, msg):
