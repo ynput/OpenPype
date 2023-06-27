@@ -67,7 +67,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             if not paths:
                 path_node = parent.createNode("name", "AUTO_PATH")
                 path_node.parm("attribname").set("path")
-                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`') #noqa
+                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`') # noqa
 
                 path_node.setFirstInput(child_output.input(0))
                 path_node.moveToGoodPosition()
