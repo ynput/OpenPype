@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint, get_reference_node
+from .lib import read, imprint, get_reference_node, get_main_window
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -173,44 +173,37 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def create_placeholder(self, placeholder_data):
         selection = cmds.ls(selection=True)
-        if not selection:
-            raise ValueError("Nothing is selected")
         if len(selection) > 1:
             raise ValueError("More then one item are selected")
+
+        parent = selection[0] if selection else None
 
         placeholder_data["plugin_identifier"] = self.identifier
 
         placeholder_name = self._create_placeholder_name(placeholder_data)
 
         placeholder = cmds.spaceLocator(name=placeholder_name)[0]
-        # TODO: this can crash if selection can't be used
-        cmds.parent(placeholder, selection[0])
+        if parent:
+            placeholder = cmds.parent(placeholder, selection[0])[0]
 
-        # get the long name of the placeholder (with the groups)
-        placeholder_full_name = (
-            cmds.ls(selection[0], long=True)[0]
-            + "|"
-            + placeholder.replace("|", "")
-        )
-
-        imprint(placeholder_full_name, placeholder_data)
+        imprint(placeholder, placeholder_data)
 
         # Add helper attributes to keep placeholder info
         cmds.addAttr(
-            placeholder_full_name,
+            placeholder,
             longName="parent",
             hidden=True,
             dataType="string"
         )
         cmds.addAttr(
-            placeholder_full_name,
+            placeholder,
             longName="index",
             hidden=True,
             attributeType="short",
             defaultValue=-1
         )
 
-        cmds.setAttr(placeholder_full_name + ".parent", "", type="string")
+        cmds.setAttr(placeholder + ".parent", "", type="string")
 
     def update_placeholder(self, placeholder_item, placeholder_data):
         node_name = placeholder_item.scene_identifier
@@ -233,7 +226,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             if placeholder_data.get("plugin_identifier") != self.identifier:
                 continue
 
-            # TODO do data validations and maybe updgrades if are invalid
+            # TODO do data validations and maybe upgrades if they are invalid
             output.append(
                 LoadPlaceholderItem(node_name, placeholder_data, self)
             )
@@ -340,8 +333,9 @@ def update_workfile_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder)
-    window.exec_()
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
+    window.show()
 
 
 def update_placeholder(*args):
@@ -364,6 +358,7 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()
