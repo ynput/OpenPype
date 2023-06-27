@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Submitting render job to RoyalRender."""
-# -*- coding: utf-8 -*-
-"""Submitting render job to RoyalRender."""
 import os
 
 from maya.OpenMaya import MGlobal
@@ -12,6 +10,7 @@ from openpype.pipeline.farm.tools import iter_expected_files
 
 class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
     label = "Create Maya Render job in RR"
+    hosts = ["maya"]
     families = ["renderlayer"]
 
     def update_job_with_host_specific(self, instance, job):
@@ -39,4 +38,4 @@ class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
                            layer_name)
         job = self.update_job_with_host_specific(instance, job)
 
-        instance.data["rrJobs"] += job
+        instance.data["rrJobs"].append(job)
