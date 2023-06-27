@@ -8,18 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
-
             ]
         },
         {
@@ -121,6 +117,10 @@
                 "workfile_builder/builder_on_start",
                 "workfile_builder/profiles"
             ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         }
     ]
 }

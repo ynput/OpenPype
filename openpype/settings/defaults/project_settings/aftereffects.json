@@ -1,11 +1,12 @@
 {
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },
@@ -36,5 +37,8 @@
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []
+    },
+    "templated_workfile_build": {
+        "profiles": []
     }
 }

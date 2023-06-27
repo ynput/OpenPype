@@ -453,7 +453,11 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         save_match = event.matches(QtGui.QKeySequence.Save)
-        if save_match == QtGui.QKeySequence.ExactMatch:
+        # PySide2 and PySide6 support
+        if not isinstance(save_match, bool):
+            save_match = save_match == QtGui.QKeySequence.ExactMatch
+
+        if save_match:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()

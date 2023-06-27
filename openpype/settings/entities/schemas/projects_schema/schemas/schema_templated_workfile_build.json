@@ -26,7 +26,7 @@
                         "key": "path",
                         "label": "Path to template",
                         "type": "path",
-                        "multiplatform": false,
+                        "multiplatform": true,
                         "multipath": false
                     },
                     {

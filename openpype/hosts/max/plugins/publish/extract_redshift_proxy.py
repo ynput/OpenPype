@@ -30,8 +30,8 @@ class ExtractRedshiftProxy(publish.Extractor):
 
         with maintained_selection():
             # select and export
-            con = rt.getNodeByName(container)
-            rt.select(con.Children)
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             # Redshift rsProxy command
             # rsProxy fp selected compress connectivity startFrame endFrame
             # camera warnExisting transformPivotToOrigin

@@ -2,7 +2,6 @@ import os
 import pyblish.api
 from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import get_all_children
 
 
 class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
@@ -33,7 +32,7 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        nodes = get_all_children(rt.getNodeByName(container))
+        nodes = instance.data["members"]
         rt.saveNodes(nodes, max_path, quiet=True)
 
         self.log.info("Performing Extraction ...")
