@@ -36,10 +36,8 @@ def save_file(filepath):
         response = project.SetName(fname)
         log.info("Project renamed: {}".format(response))
 
-    if response:
-        # only export if project was saved or renamed
-        exported = pm.ExportProject(fname, filepath)
-        log.info("Project exported: {}".format(exported))
+    exported = pm.ExportProject(fname, filepath)
+    log.info("Project exported: {}".format(exported))
 
 
 def open_file(filepath):
