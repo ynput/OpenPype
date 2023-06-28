@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
-# from openpype.pipeline import CreatedInstance
 
 import hou
 
@@ -58,20 +57,6 @@ class CreatePointCache(plugin.HoudiniCreator):
 
                 child_output.setDisplayFlag(1)
                 child_output.setRenderFlag(1)
-                child_output.moveToGoodPosition()
-
-            paths = child_output.geometry().findPrimAttrib("path") and \
-                      child_output.geometry().primStringAttribValues("path")
-
-            # Create default path value if missing
-            if not paths:
-                path_node = parent.createNode("name", "AUTO_PATH")
-                path_node.parm("attribname").set("path")
-                path_node.parm("name1").set('`opname("..")`/`opoutput(".", 0)`') # noqa
-
-                path_node.setFirstInput(child_output.input(0))
-                path_node.moveToGoodPosition()
-                child_output.setFirstInput(path_node)
                 child_output.moveToGoodPosition()
 
             parms["sop_path"] = child_output.path()
