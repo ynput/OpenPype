@@ -18,7 +18,8 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     label = "Model Contents"
 
     def process(self, instance):
-        if invalid := self.get_invalid(instance):  # noqa
+        invalid = self.get_invalid(instance)
+        if invalid:
             raise PublishValidationError(("Model instance must only include"
                                           "Geometry and Editable Mesh. "
                                           f"Invalid types on: {invalid}"))

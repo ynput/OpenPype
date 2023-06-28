@@ -105,7 +105,8 @@ class ImportMayaLoader(load.LoaderPlugin):
         "camera",
         "rig",
         "camerarig",
-        "staticMesh"
+        "staticMesh",
+        "workfile"
     ]
 
     label = "Import"
