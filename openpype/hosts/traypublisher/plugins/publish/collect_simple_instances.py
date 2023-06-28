@@ -32,7 +32,7 @@ class CollectSettingsSimpleInstances(
     """
 
     label = "Collect Settings Simple Instances"
-    order = pyblish.api.CollectorOrder + 0.002
+    order = pyblish.api.CollectorOrder - 0.49
 
     hosts = ["traypublisher"]
 
