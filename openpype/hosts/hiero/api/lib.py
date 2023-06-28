@@ -92,13 +92,13 @@ def deprecated(new_destination):
 log = Logger.get_logger(__name__)
 
 
-def flatten(_list):
-    for item in _list:
-        if isinstance(item, (list, tuple)):
-            for sub_item in flatten(item):
+def flatten(list_):
+    for item_ in list_:
+        if isinstance(item_, (list, tuple)):
+            for sub_item in flatten(item_):
                 yield sub_item
         else:
-            yield item
+            yield item_
 
 
 def get_current_project(remove_untitled=False):
@@ -698,29 +698,29 @@ def setup(console=False, port=None, menu=True):
         menu (bool, optional): Display file menu in Hiero.
     """
 
-    if CTX._has_been_setup:
+    if _CTX.has_been_setup:
         teardown()
 
     add_submission()
 
     if menu:
         add_to_filemenu()
-        CTX._has_menu = True
+        _CTX.has_menu = True
 
-    CTX._has_been_setup = True
+    _CTX.has_been_setup = True
     log.debug("pyblish: Loaded successfully.")
 
 
 def teardown():
     """Remove integration"""
-    if not CTX._has_been_setup:
+    if not _CTX.has_been_setup:
         return
 
-    if CTX._has_menu:
+    if _CTX.has_menu:
         remove_from_filemenu()
-        CTX._has_menu = False
+        _CTX.has_menu = False
 
-    CTX._has_been_setup = False
+    _CTX.has_been_setup = False
     log.debug("pyblish: Integration torn down successfully")
 
 
@@ -1311,11 +1311,11 @@ def before_project_save(event):
 
 def get_main_window():
     """Acquire Nuke's main window"""
-    if CTX._parent_gui is None:
+    if _CTX.parent_gui is None:
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
         main_window = next(widget for widget in top_widgets if
                            widget.inherits("QMainWindow") and
                            widget.metaObject().className() == name)
-        CTX._parent_gui = main_window
-    return CTX._parent_gui
+        _CTX.parent_gui = main_window
+    return _CTX.parent_gui

@@ -3,7 +3,6 @@
 
 import os
 import re
-import sys
 import ast
 import opentimelineio as otio
 from . import utils
@@ -23,19 +22,21 @@ MARKER_COLOR_MAP = {
     "cyan": otio.schema.MarkerColor.CYAN,
     "blue": otio.schema.MarkerColor.BLUE,
 }
-    
+
+
 class CTX:
     project_fps = None
     timeline = None
     include_tags = True
 
-def flatten(_list):
-    for item in _list:
-        if isinstance(item, (list, tuple)):
-            for sub_item in flatten(item):
+
+def flatten(list_):
+    for item_ in list_:
+        if isinstance(item_, (list, tuple)):
+            for sub_item in flatten(item_):
                 yield sub_item
         else:
-            yield item
+            yield item_
 
 
 def create_otio_rational_time(frame, fps):
@@ -205,8 +206,8 @@ def get_marker_color(tag):
     res = re.search(pat, icon)
     if res:
         color = res.groupdict().get('color')
-        if color.lower() in CTX.marker_color_map:
-            return CTX.marker_color_map[color.lower()]
+        if color.lower() in MARKER_COLOR_MAP:
+            return MARKER_COLOR_MAP[color.lower()]
 
     return otio.schema.MarkerColor.RED
 
@@ -339,7 +340,7 @@ def _create_otio_timeline():
 def create_otio_track(track_type, track_name):
     return otio.schema.Track(
         name=track_name,
-        kind=CTX.track_types[track_type]
+        kind=TRACK_TYPE_MAP[track_type]
     )
 
 
