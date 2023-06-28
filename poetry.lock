@@ -1895,46 +1895,6 @@ files = [
 setuptools = "*"
 
 [[package]]
-name = "opentimelineio"
-version = "0.14.1"
-description = "Editorial interchange format and API"
-category = "main"
-optional = false
-python-versions = ">2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.9.0"
-files = [
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:d5466742d1de323e922965e64ca7099f6dd756774d5f8b404a11d6ec6e7c5fe0"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:3f5187eb0cd8f607bfcc5c1d58ce878734975a0a6a91360a2605ad831198ed89"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:a2b64bf817d3065f7302c748bcc1d5938971e157c42e67fcb4e5e3612358813b"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27m-win32.whl", hash = "sha256:4cde33ea83ba041332bae55474fc155219871396b82031dd54d3e857973805b6"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27m-win_amd64.whl", hash = "sha256:d5dc153867c688ad4f39cbac78eda069cfe4f17376d9444d202f8073efa6cbd4"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27mu-manylinux2010_i686.whl", hash = "sha256:e07390dd1e0f82e5a5880ef2d498cbcbf482b4e5bfb4b9026342578a2fad358d"},
-    {file = "OpenTimelineIO-0.14.1-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:4c1c522df397536c7620d44e32302165a9ef9bbbf0de83a5a0621f0a75047cc9"},
-    {file = "OpenTimelineIO-0.14.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:e368a1d64366e3fdf1eadd10077a135833fdc893ff65f8dc43a91254cb7ee6fa"},
-    {file = "OpenTimelineIO-0.14.1-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:cf2cd94d11d0ae0fc78418cc0d17f2fe3bf85598b9b109f98b2301272a87bff5"},
-    {file = "OpenTimelineIO-0.14.1-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:7af41f43ef72fbf3c0ae2e47cabd7715eb348726c9e5e430ab36ce2357181cf4"},
-    {file = "OpenTimelineIO-0.14.1-cp37-cp37m-win32.whl", hash = "sha256:55dbb859d16535ba5dab8a66a78aef8db55f030d771b6e5b91e94241b6db65bd"},
-    {file = "OpenTimelineIO-0.14.1-cp37-cp37m-win_amd64.whl", hash = "sha256:08eaef8fbc423c25e94e189eb788c92c16916ae74d16ebcab34ba889e980c6ad"},
-    {file = "OpenTimelineIO-0.14.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:10b34a6997d6d6edb9b8a1c93718a1e90e8202d930559cdce2ad369e0473327f"},
-    {file = "OpenTimelineIO-0.14.1-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:c6b44986da8c7a64f8f549795279f0af05ec875a425d11600585dab0b3269ec2"},
-    {file = "OpenTimelineIO-0.14.1-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:45e1774d9f7215190a7c1e5b70dfc237f4a03b79b0539902d9ec8074707450f9"},
-    {file = "OpenTimelineIO-0.14.1-cp38-cp38-win32.whl", hash = "sha256:1ee0e72320309b8dedf0e2f40fc2b8d3dd2c854db0aba28a84a038d7177a1208"},
-    {file = "OpenTimelineIO-0.14.1-cp38-cp38-win_amd64.whl", hash = "sha256:bd58e9fdc765623e160ab3ec32e9199bcb3906a6f3c06cca7564fbb7c18d2d28"},
-    {file = "OpenTimelineIO-0.14.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:f8d6e15f793577de59cc01e49600898ab12dbdc260dbcba83936c00965f0090a"},
-    {file = "OpenTimelineIO-0.14.1-cp39-cp39-manylinux2010_i686.whl", hash = "sha256:50644c5e43076a3717b77645657545d0be19376ecb4c6f2e4103670052d726d4"},
-    {file = "OpenTimelineIO-0.14.1-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:a44f77fb5dbfd60d992ac2acc6782a7b0a26452db3a069425b8bd73b2f3bb336"},
-    {file = "OpenTimelineIO-0.14.1-cp39-cp39-win32.whl", hash = "sha256:63fb0d1258f490bcebf6325067db64a0f0dc405b8b905ee2bb625f04d04a8082"},
-    {file = "OpenTimelineIO-0.14.1-cp39-cp39-win_amd64.whl", hash = "sha256:8a303b2f3dfba542f588b227575f1967f7a9da854b34f620504e1ecb8d551f5f"},
-    {file = "OpenTimelineIO-0.14.1.tar.gz", hash = "sha256:0b9adc0fd303b978af120259d6b1d23e0623800615b4a3e2eb9f9fb2c70d5d13"},
-]
-
-[package.dependencies]
-pyaaf2 = ">=1.4.0,<1.5.0"
-
-[package.extras]
-dev = ["check-manifest", "coverage (>=4.5)", "flake8 (>=3.5)", "urllib3 (>=1.24.3)"]
-view = ["PySide2 (>=5.11,<6.0)"]
-
-[[package]]
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
@@ -2222,17 +2182,6 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 files = [
     {file = "py-1.11.0-py2.py3-none-any.whl", hash = "sha256:607c53218732647dff4acdfcd50cb62615cedf612e72d1724fb1a0cc6405b378"},
     {file = "py-1.11.0.tar.gz", hash = "sha256:51c75c4126074b472f746a24399ad32f6053d1b34b68d2fa41e558e6f4a98719"},
-]
-
-[[package]]
-name = "pyaaf2"
-version = "1.4.0"
-description = "A python module for reading and writing advanced authoring format files"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pyaaf2-1.4.0.tar.gz", hash = "sha256:160d3c26c7cfef7176d0bdb0e55772156570435982c3abfa415e89639f76e71b"},
 ]
 
 [[package]]
