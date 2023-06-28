@@ -104,6 +104,8 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
     version = qtbinding_def.get("version")
     _pip_install(openpype_root, package, version)
 
+    python_vendor_dir = openpype_root / "vendor" / "python"
+
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of
     #   dependency
