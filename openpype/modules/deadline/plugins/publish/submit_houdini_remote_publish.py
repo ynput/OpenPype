@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 
 import requests
 import hou
@@ -7,6 +8,8 @@ import hou
 import pyblish.api
 
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
@@ -60,6 +63,8 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         deadline_user = "roy"  # todo: get deadline user dynamically
 
         # Get only major.minor version of Houdini, ignore patch version
@@ -129,9 +134,13 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             # Submit along the current Avalon tool setup that we launched
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "houdini17.5;pluginx2.3"
-            "AVALON_TOOLS",
-            "OPENPYPE_VERSION"
+            "AVALON_TOOLS"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")

@@ -2,12 +2,13 @@
 
 Idea for current dirmap implementation was used from Maya where is possible to
 enter source and destination roots and maya will try each found source
-in referenced file replace with each destionation paths. First path which
+in referenced file replace with each destination paths. First path which
 exists is used.
 """
 
 import os
 from abc import ABCMeta, abstractmethod
+import platform
 
 import six
 
@@ -38,7 +39,6 @@ class HostDirmap(object):
         self._project_settings = project_settings
         self._sync_module = sync_module  # to limit reinit of Modules
         self._log = None
-        self._mapping = None  # cache mapping
 
     @property
     def sync_module(self):
@@ -69,29 +69,28 @@ class HostDirmap(object):
         """Run host dependent remapping from source_path to destination_path"""
         pass
 
-    def process_dirmap(self):
+    def process_dirmap(self, mapping=None):
         # type: (dict) -> None
         """Go through all paths in Settings and set them using `dirmap`.
 
             If artists has Site Sync enabled, take dirmap mapping directly from
             Local Settings when artist is syncing workfile locally.
 
-        Args:
-            project_settings (dict): Settings for current project.
         """
 
-        if not self._mapping:
-            self._mapping = self.get_mappings(self.project_settings)
-        if not self._mapping:
+        if not mapping:
+            mapping = self.get_mappings()
+        if not mapping:
             return
 
-        self.log.info("Processing directory mapping ...")
         self.on_enable_dirmap()
-        self.log.info("mapping:: {}".format(self._mapping))
 
-        for k, sp in enumerate(self._mapping["source-path"]):
-            dst = self._mapping["destination-path"][k]
+        for k, sp in enumerate(mapping["source-path"]):
+            dst = mapping["destination-path"][k]
             try:
+                # add trailing slash if missing
+                sp = os.path.join(sp, '')
+                dst = os.path.join(dst, '')
                 print("{} -> {}".format(sp, dst))
                 self.dirmap_routine(sp, dst)
             except IndexError:
@@ -109,28 +108,24 @@ class HostDirmap(object):
                 )
                 continue
 
-    def get_mappings(self, project_settings):
+    def get_mappings(self):
         """Get translation from source-path to destination-path.
 
             It checks if Site Sync is enabled and user chose to use local
             site, in that case configuration in Local Settings takes precedence
         """
 
-        local_mapping = self._get_local_sync_dirmap(project_settings)
         dirmap_label = "{}-dirmap".format(self.host_name)
-        if (
-            not self.project_settings[self.host_name].get(dirmap_label)
-            and not local_mapping
-        ):
-            return {}
-        mapping_settings = self.project_settings[self.host_name][dirmap_label]
-        mapping_enabled = mapping_settings["enabled"] or bool(local_mapping)
+        mapping_sett = self.project_settings[self.host_name].get(dirmap_label,
+                                                                 {})
+        local_mapping = self._get_local_sync_dirmap()
+        mapping_enabled = mapping_sett.get("enabled") or bool(local_mapping)
         if not mapping_enabled:
             return {}
 
         mapping = (
             local_mapping
-            or mapping_settings["paths"]
+            or mapping_sett["paths"]
             or {}
         )
 
@@ -140,27 +135,26 @@ class HostDirmap(object):
             or not mapping.get("source-path")
         ):
             return {}
+        self.log.info("Processing directory mapping ...")
+        self.log.info("mapping:: {}".format(mapping))
         return mapping
 
-    def _get_local_sync_dirmap(self, project_settings):
+    def _get_local_sync_dirmap(self):
         """
             Returns dirmap if synch to local project is enabled.
 
             Only valid mapping is from roots of remote site to local site set
             in Local Settings.
 
-            Args:
-                project_settings (dict)
             Returns:
                 dict : { "source-path": [XXX], "destination-path": [YYYY]}
         """
+        project_name = os.getenv("AVALON_PROJECT")
 
         mapping = {}
-
-        if not project_settings["global"]["sync_server"]["enabled"]:
+        if (not self.sync_module.enabled or
+                project_name not in self.sync_module.get_enabled_projects()):
             return mapping
-
-        project_name = os.getenv("AVALON_PROJECT")
 
         active_site = self.sync_module.get_local_normalized_site(
             self.sync_module.get_active_site(project_name))
@@ -170,11 +164,7 @@ class HostDirmap(object):
             "active {} - remote {}".format(active_site, remote_site)
         )
 
-        if (
-            active_site == "local"
-            and project_name in self.sync_module.get_enabled_projects()
-            and active_site != remote_site
-        ):
+        if active_site == "local" and active_site != remote_site:
             sync_settings = self.sync_module.get_sync_project_setting(
                 project_name,
                 exclude_locals=False,
@@ -187,11 +177,27 @@ class HostDirmap(object):
 
             self.log.debug("local overrides {}".format(active_overrides))
             self.log.debug("remote overrides {}".format(remote_overrides))
+
+            current_platform = platform.system().lower()
+            remote_provider = self.sync_module.get_provider_for_site(
+                project_name, remote_site
+            )
+            # dirmap has sense only with regular disk provider, in the workfile
+            # won't be root on cloud or sftp provider
+            if remote_provider != "local_drive":
+                remote_site = "studio"
             for root_name, active_site_dir in active_overrides.items():
                 remote_site_dir = (
                     remote_overrides.get(root_name)
                     or sync_settings["sites"][remote_site]["root"][root_name]
                 )
+
+                if isinstance(remote_site_dir, dict):
+                    remote_site_dir = remote_site_dir.get(current_platform)
+
+                if not remote_site_dir:
+                    continue
+
                 if os.path.isdir(active_site_dir):
                     if "destination-path" not in mapping:
                         mapping["destination-path"] = []

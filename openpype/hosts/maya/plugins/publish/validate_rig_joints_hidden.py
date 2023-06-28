@@ -24,7 +24,6 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['rig']
-    version = (0, 1, 0)
     label = "Joints Hidden"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]

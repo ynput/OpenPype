@@ -20,6 +20,7 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     def process(self, instance):
         representations = instance.data.get("representations")
         for repr in representations:
+            data = instance.data.get("assetEntity", {}).get("data", {})
             patterns = [clique.PATTERNS["frames"]]
             collections, remainder = clique.assemble(
                 repr["files"], minimum_items=1, patterns=patterns)
@@ -30,8 +31,8 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
             frames = list(collection.indexes)
 
             current_range = (frames[0], frames[-1])
-            required_range = (instance.data["frameStart"],
-                              instance.data["frameEnd"])
+            required_range = (data["frameStart"],
+                              data["frameEnd"])
 
             if current_range != required_range:
                 raise ValueError(f"Invalid frame range: {current_range} - "

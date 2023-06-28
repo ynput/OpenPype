@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Asset does not match</title>
+<description>
+## Collected asset name is not same as in context
+
+    {msg}
+### How to repair?
+    {repair_msg}
+    Refresh Publish afterwards (circle arrow at the bottom right).
+
+    If that's not correct value, close workfile and reopen via Workfiles to get
+    proper context asset name OR disable this validator and publish again
+    if you are publishing to different context deliberately.
+
+    (Context means combination of project, asset name and task name.)
+</description>
+</error>
+</root>

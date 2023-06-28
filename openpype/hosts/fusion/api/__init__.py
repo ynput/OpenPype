@@ -1,20 +1,11 @@
 from .pipeline import (
-    install,
-    uninstall,
-
+    FusionHost,
     ls,
 
     imprint_container,
-    parse_container
-)
-
-from .workio import (
-    open_file,
-    save_file,
-    current_file,
-    has_unsaved_changes,
-    file_extensions,
-    work_root
+    parse_container,
+    list_instances,
+    remove_instance
 )
 
 from .lib import (
@@ -30,20 +21,10 @@ from .menu import launch_openpype_menu
 
 __all__ = [
     # pipeline
-    "install",
-    "uninstall",
     "ls",
 
     "imprint_container",
     "parse_container",
-
-    # workio
-    "open_file",
-    "save_file",
-    "current_file",
-    "has_unsaved_changes",
-    "file_extensions",
-    "work_root",
 
     # lib
     "maintained_selection",

@@ -442,12 +442,16 @@ class TextEntity(InputEntity):
 
     def _item_initialization(self):
         self.valid_value_types = (STRING_TYPE, )
-        self.value_on_not_set = ""
+        self.value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", "")
+        )
 
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
         self.value_hints = self.schema_data.get("value_hints") or []
+        self.minimum_lines_count = (
+            self.schema_data.get("minimum_lines_count") or 0)
 
     def schema_validations(self):
         if self.multiline and self.value_hints:

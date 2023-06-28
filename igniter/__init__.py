@@ -24,7 +24,7 @@ def open_dialog():
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
-    from Qt import QtWidgets, QtCore
+    from qtpy import QtWidgets, QtCore
     from .install_dialog import InstallDialog
 
     scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
@@ -47,7 +47,7 @@ def open_update_window(openpype_version):
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
-    from Qt import QtWidgets, QtCore
+    from qtpy import QtWidgets, QtCore
     from .update_window import UpdateWindow
 
     scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
@@ -71,7 +71,7 @@ def show_message_dialog(title, message):
     if os.getenv("OPENPYPE_HEADLESS_MODE"):
         print("!!! Can't open dialog in headless mode. Exiting.")
         sys.exit(1)
-    from Qt import QtWidgets, QtCore
+    from qtpy import QtWidgets, QtCore
     from .message_dialog import MessageDialog
 
     scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)

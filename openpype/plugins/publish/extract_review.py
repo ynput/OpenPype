@@ -12,7 +12,7 @@ import pyblish.api
 
 from openpype.lib import (
     get_ffmpeg_tool_path,
-
+    filter_profiles,
     path_to_subprocess_arg,
     run_subprocess,
 )
@@ -23,6 +23,7 @@ from openpype.lib.transcoding import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
 )
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -42,6 +43,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     hosts = [
         "nuke",
         "maya",
+        "blender",
+        "houdini",
         "shell",
         "hiero",
         "premiere",
@@ -87,21 +90,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
-        task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 
         self.log.info("Host: \"{}\"".format(host_name))
-        self.log.info("Task: \"{}\"".format(task_name))
         self.log.info("Family: \"{}\"".format(family))
 
-        profile = self.find_matching_profile(
-            host_name, task_name, family
-        )
+        profile = filter_profiles(
+            self.profiles,
+            {
+                "hosts": host_name,
+                "families": family,
+            },
+            logger=self.log)
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
-                " Host: \"{}\" | Family: \"{}\" | Task \"{}\""
-            ).format(host_name, family, task_name))
+                " Host: \"{}\" | Family: \"{}\""
+            ).format(host_name, family))
             return
 
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
@@ -111,17 +116,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         filtered_outputs = self.filter_output_defs(
             profile, subset_name, instance_families
         )
+        if not filtered_outputs:
+            self.log.info((
+                "Skipped instance. All output definitions from selected"
+                " profile do not match instance families \"{}\" or"
+                " subset name \"{}\"."
+            ).format(str(instance_families), subset_name))
+
         # Store `filename_suffix` to save arguments
         profile_outputs = []
         for filename_suffix, definition in filtered_outputs.items():
             definition["filename_suffix"] = filename_suffix
             profile_outputs.append(definition)
 
-        if not filtered_outputs:
-            self.log.info((
-                "Skipped instance. All output definitions from selected"
-                " profile does not match to instance families. \"{}\""
-            ).format(str(instance_families)))
         return profile_outputs
 
     def _get_outputs_per_representations(self, instance, profile_outputs):
@@ -169,7 +176,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "Skipped representation. All output definitions from"
                     " selected profile does not match to representation's"
                     " custom tags. \"{}\""
-                ).format(str(tags)))
+                ).format(str(custom_tags)))
                 continue
 
             outputs_per_representations.append((repre, outputs))
@@ -215,6 +222,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
+
         for repre, output_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
@@ -296,10 +304,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         shutil.rmtree(new_staging_dir)
 
     def _render_output_definitions(
-        self, instance, repre, src_repre_staging_dir, output_defs
+        self, instance, repre, src_repre_staging_dir, output_definitions
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for _output_def in output_defs:
+        for _output_def in output_definitions:
             output_def = copy.deepcopy(_output_def)
             # Make sure output definition has "tags" key
             if "tags" not in output_def:
@@ -345,10 +353,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if temp_data["input_is_sequence"]:
                 self.log.info("Filling gaps in sequence.")
                 files_to_clean = self.fill_sequence_gaps(
-                    temp_data["origin_repre"]["files"],
-                    new_repre["stagingDir"],
-                    temp_data["frame_start"],
-                    temp_data["frame_end"])
+                    files=temp_data["origin_repre"]["files"],
+                    staging_dir=new_repre["stagingDir"],
+                    start_frame=temp_data["frame_start"],
+                    end_frame=temp_data["frame_end"]
+                )
 
             # create or update outputName
             output_name = new_repre.get("outputName", "")
@@ -406,7 +415,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             })
 
             # Force to pop these key if are in new repre
-            new_repre.pop("preview", None)
             new_repre.pop("thumbnail", None)
             if "clean_name" in new_repre.get("tags", []):
                 new_repre.pop("outputName")
@@ -420,10 +428,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
         # TODO GLOBAL ISSUE - Find better way how to find out if input
-        # is sequence. Issues( in theory):
-        # - there may be multiple files ant not be sequence
-        # - remainders are not checked at all
-        # - there can be more than one collection
+        #  is sequence. Issues (in theory):
+        #   - there may be multiple files ant not be sequence
+        #   - remainders are not checked at all
+        #   - there can be more than one collection
         return isinstance(repre["files"], (list, tuple))
 
     def prepare_temp_data(self, instance, repre, output_def):
@@ -815,76 +823,41 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 is done.
 
         Raises:
-            AssertionError: if more then one collection is obtained.
-
+            KnownPublishError: if more than one collection is obtained.
         """
-        start_frame = int(start_frame)
-        end_frame = int(end_frame)
+
         collections = clique.assemble(files)[0]
-        msg = "Multiple collections {} found.".format(collections)
-        assert len(collections) == 1, msg
+        if len(collections) != 1:
+            raise KnownPublishError(
+                "Multiple collections {} found.".format(collections))
+
         col = collections[0]
 
-        # do nothing if no gap is found in input range
-        not_gap = True
-        for fr in range(start_frame, end_frame + 1):
-            if fr not in col.indexes:
-                not_gap = False
-
-        if not_gap:
-            return []
-
-        holes = col.holes()
-
-        # generate ideal sequence
-        complete_col = clique.assemble(
-            [("{}{:0" + str(col.padding) + "d}{}").format(
-                col.head, f, col.tail
-            ) for f in range(start_frame, end_frame)]
-        )[0][0]  # type: clique.Collection
-
-        new_files = {}
-        last_existing_file = None
-
-        for idx in holes.indexes:
-            # get previous existing file
-            test_file = os.path.normpath(os.path.join(
-                staging_dir,
-                ("{}{:0" + str(complete_col.padding) + "d}{}").format(
-                    complete_col.head, idx - 1, complete_col.tail)))
-            if os.path.isfile(test_file):
-                new_files[idx] = test_file
-                last_existing_file = test_file
+        # Prepare which hole is filled with what frame
+        #   - the frame is filled only with already existing frames
+        prev_frame = next(iter(col.indexes))
+        hole_frame_to_nearest = {}
+        for frame in range(int(start_frame), int(end_frame) + 1):
+            if frame in col.indexes:
+                prev_frame = frame
             else:
-                if not last_existing_file:
-                    # previous file is not found (sequence has a hole
-                    # at the beginning. Use first available frame
-                    # there is.
-                    try:
-                        last_existing_file = list(col)[0]
-                    except IndexError:
-                        # empty collection?
-                        raise AssertionError(
-                            "Invalid sequence collected")
-                new_files[idx] = os.path.normpath(
-                    os.path.join(staging_dir, last_existing_file))
+                # Use previous frame as source for hole
+                hole_frame_to_nearest[frame] = prev_frame
 
-        files_to_clean = []
-        if new_files:
-            # so now new files are dict with missing frame as a key and
-            # existing file as a value.
-            for frame, file in new_files.items():
-                self.log.info(
-                    "Filling gap {} with {}".format(frame, file))
+        # Calculate paths
+        added_files = []
+        col_format = col.format("{head}{padding}{tail}")
+        for hole_frame, src_frame in hole_frame_to_nearest.items():
+            hole_fpath = os.path.join(staging_dir, col_format % hole_frame)
+            src_fpath = os.path.join(staging_dir, col_format % src_frame)
+            if not os.path.isfile(src_fpath):
+                raise KnownPublishError(
+                    "Missing previously detected file: {}".format(src_fpath))
 
-                hole = os.path.join(
-                    staging_dir,
-                    ("{}{:0" + str(col.padding) + "d}{}").format(
-                        col.head, frame, col.tail))
-                speedcopy.copyfile(file, hole)
-                files_to_clean.append(hole)
+            speedcopy.copyfile(src_fpath, hole_fpath)
+            added_files.append(hole_fpath)
 
-        return files_to_clean
+        return added_files
 
     def input_output_paths(self, new_repre, output_def, temp_data):
         """Deduce input nad output file paths based on entered data.
@@ -1037,6 +1010,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Set audio duration
             audio_in_args.append("-to {:0.10f}".format(audio_duration))
+
+            # Ignore video data from audio input
+            audio_in_args.append("-vn")
 
             # Add audio input path
             audio_in_args.append("-i {}".format(
@@ -1277,7 +1253,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         #   'use_input_res' is set to 'True'.
         use_input_res = False
 
-        # Overscal color
+        # Overscan color
         overscan_color_value = "black"
         overscan_color = output_def.get("overscan_color")
         if overscan_color:
@@ -1464,240 +1440,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 families.append(family)
         return families
 
-    def compile_list_of_regexes(self, in_list):
-        """Convert strings in entered list to compiled regex objects."""
-        regexes = []
-        if not in_list:
-            return regexes
-
-        for item in in_list:
-            if not item:
-                continue
-
-            try:
-                regexes.append(re.compile(item))
-            except TypeError:
-                self.log.warning((
-                    "Invalid type \"{}\" value \"{}\"."
-                    " Expected string based object. Skipping."
-                ).format(str(type(item)), str(item)))
-
-        return regexes
-
-    def validate_value_by_regexes(self, value, in_list):
-        """Validates in any regex from list match entered value.
-
-        Args:
-            in_list (list): List with regexes.
-            value (str): String where regexes is checked.
-
-        Returns:
-            int: Returns `0` when list is not set or is empty. Returns `1` when
-                any regex match value and returns `-1` when none of regexes
-                match value entered.
-        """
-        if not in_list:
-            return 0
-
-        output = -1
-        regexes = self.compile_list_of_regexes(in_list)
-        for regex in regexes:
-            if not value:
-                continue
-            if re.match(regex, value):
-                output = 1
-                break
-        return output
-
-    def profile_exclusion(self, matching_profiles):
-        """Find out most matching profile byt host, task and family match.
-
-        Profiles are selectively filtered. Each profile should have
-        "__value__" key with list of booleans. Each boolean represents
-        existence of filter for specific key (host, tasks, family).
-        Profiles are looped in sequence. In each sequence are split into
-        true_list and false_list. For next sequence loop are used profiles in
-        true_list if there are any profiles else false_list is used.
-
-        Filtering ends when only one profile left in true_list. Or when all
-        existence booleans loops passed, in that case first profile from left
-        profiles is returned.
-
-        Args:
-            matching_profiles (list): Profiles with same values.
-
-        Returns:
-            dict: Most matching profile.
-        """
-        self.log.info(
-            "Search for first most matching profile in match order:"
-            " Host name -> Task name -> Family."
-        )
-        # Filter all profiles with highest points value. First filter profiles
-        # with matching host if there are any then filter profiles by task
-        # name if there are any and lastly filter by family. Else use first in
-        # list.
-        idx = 0
-        final_profile = None
-        while True:
-            profiles_true = []
-            profiles_false = []
-            for profile in matching_profiles:
-                value = profile["__value__"]
-                # Just use first profile when idx is greater than values.
-                if not idx < len(value):
-                    final_profile = profile
-                    break
-
-                if value[idx]:
-                    profiles_true.append(profile)
-                else:
-                    profiles_false.append(profile)
-
-            if final_profile is not None:
-                break
-
-            if profiles_true:
-                matching_profiles = profiles_true
-            else:
-                matching_profiles = profiles_false
-
-            if len(matching_profiles) == 1:
-                final_profile = matching_profiles[0]
-                break
-            idx += 1
-
-        final_profile.pop("__value__")
-        return final_profile
-
-    def find_matching_profile(self, host_name, task_name, family):
-        """ Filter profiles by Host name, Task name and main Family.
-
-        Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
-        If key is not find or is empty than it's expected to match.
-
-        Args:
-            profiles (list): Profiles definition from presets.
-            host_name (str): Current running host name.
-            task_name (str): Current context task name.
-            family (str): Main family of current Instance.
-
-        Returns:
-            dict/None: Return most matching profile or None if none of profiles
-                match at least one criteria.
-        """
-
-        matching_profiles = None
-        if not self.profiles:
-            return matching_profiles
-
-        highest_profile_points = -1
-        # Each profile get 1 point for each matching filter. Profile with most
-        # points is returned. For cases when more than one profile will match
-        # are also stored ordered lists of matching values.
-        for profile in self.profiles:
-            profile_points = 0
-            profile_value = []
-
-            # Host filtering
-            host_names = profile.get("hosts")
-            match = self.validate_value_by_regexes(host_name, host_names)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(host_name, host_names)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            # Task filtering
-            task_names = profile.get("tasks")
-            match = self.validate_value_by_regexes(task_name, task_names)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(task_name, task_names)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            # Family filtering
-            families = profile.get("families")
-            match = self.validate_value_by_regexes(family, families)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(family, families)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            if profile_points < highest_profile_points:
-                continue
-
-            if profile_points > highest_profile_points:
-                matching_profiles = []
-                highest_profile_points = profile_points
-
-            if profile_points == highest_profile_points:
-                profile["__value__"] = profile_value
-                matching_profiles.append(profile)
-
-        if not matching_profiles:
-            self.log.warning((
-                "None of profiles match your setup."
-                " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
-            ).format(host_name, task_name, family))
-            return
-
-        if len(matching_profiles) == 1:
-            # Pop temporary key `__value__`
-            matching_profiles[0].pop("__value__")
-            return matching_profiles[0]
-
-        self.log.warning((
-            "More than one profile match your setup."
-            " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
-        ).format(host_name, task_name, family))
-
-        return self.profile_exclusion(matching_profiles)
-
     def families_filter_validation(self, families, output_families_filter):
         """Determines if entered families intersect with families filters.
 
         All family values are lowered to avoid unexpected results.
         """
-        if not output_families_filter:
+
+        families_filter_lower = set(family.lower() for family in
+                                    output_families_filter
+                                    # Exclude empty filter values
+                                    if family)
+        if not families_filter_lower:
             return True
-
-        single_families = []
-        combination_families = []
-        for family_filter in output_families_filter:
-            if not family_filter:
-                continue
-            if isinstance(family_filter, (list, tuple)):
-                _family_filter = []
-                for family in family_filter:
-                    if family:
-                        _family_filter.append(family.lower())
-                combination_families.append(_family_filter)
-            else:
-                single_families.append(family_filter.lower())
-
-        for family in single_families:
-            if family in families:
-                return True
-
-        for family_combination in combination_families:
-            valid = True
-            for family in family_combination:
-                if family not in families:
-                    valid = False
-                    break
-
-            if valid:
-                return True
-        return False
+        return any(family.lower() in families_filter_lower
+                   for family in families)
 
     def filter_output_defs(self, profile, subset_name, families):
         """Return outputs matching input instance families.
@@ -1712,13 +1468,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Returns:
             list: Containg all output definitions matching entered families.
         """
-        outputs = profile.get("outputs") or []
+        outputs = profile.get("outputs") or {}
         if not outputs:
             return outputs
-
-        # lower values
-        # QUESTION is this valid operation?
-        families = [family.lower() for family in families]
 
         filtered_outputs = {}
         for filename_suffix, output_def in outputs.items():
@@ -1948,9 +1700,9 @@ class PercentValueRelativeSource(_OverscanValue):
 class OverscanCrop:
     """Helper class to read overscan string and calculate output resolution.
 
-    It is possible to enter single value for both width and heigh or two values
-    for width and height. Overscan string may have a few variants. Each variant
-    define output size for input size.
+    It is possible to enter single value for both width and height, or
+    two values for width and height. Overscan string may have a few variants.
+    Each variant define output size for input size.
 
     ### Example
     For input size: 2200px
@@ -1991,14 +1743,14 @@ class OverscanCrop:
     relative_source_regex = re.compile(r"%([\+\-])")
 
     def __init__(
-        self, input_width, input_height, string_value, overscal_color=None
+        self, input_width, input_height, string_value, overscan_color=None
     ):
         # Make sure that is not None
         string_value = string_value or ""
 
         self.input_width = input_width
         self.input_height = input_height
-        self.overscal_color = overscal_color
+        self.overscan_color = overscan_color
 
         width, height = self._convert_string_to_values(string_value)
         self._width_value = width
@@ -2054,20 +1806,20 @@ class OverscanCrop:
         elif width >= self.input_width and height >= self.input_height:
             output.append(
                 "pad={}:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
-                    width, height, self.overscal_color
+                    width, height, self.overscan_color
                 )
             )
 
         elif width > self.input_width and height < self.input_height:
             output.append("crop=iw:{}".format(height))
             output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2:{}".format(
-                width, self.overscal_color
+                width, self.overscan_color
             ))
 
         elif width < self.input_width and height > self.input_height:
             output.append("crop={}:ih".format(width))
             output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
-                height, self.overscal_color
+                height, self.overscan_color
             ))
 
         return output

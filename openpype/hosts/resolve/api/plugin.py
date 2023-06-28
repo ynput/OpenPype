@@ -2,7 +2,7 @@ import re
 import uuid
 
 import qargparse
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.settings import get_current_project_settings
 from openpype.pipeline.context_tools import get_current_project_asset
@@ -715,7 +715,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = dict()
+        hierarchy_formatting_data = dict()
         _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -749,13 +749,13 @@ class PublishClip:
 
             # fill up pythonic expresisons in hierarchy data
             for k, _v in self.hierarchy_data.items():
-                hierarchy_formating_data[k] = _v["value"].format(**_data)
+                hierarchy_formatting_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = self.hierarchy_data
+            hierarchy_formatting_data = self.hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
-            hierarchy_formating_data
+            hierarchy_formatting_data
         )
 
         tag_hierarchy_data.update({"heroTrack": True})
@@ -792,18 +792,17 @@ class PublishClip:
         else:
             self.tag_data.update({"reviewTrack": None})
 
-
-    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+    def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
-        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
-        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formatting_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formatting_data)
 
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
             "parents": self.parents,
-            "hierarchyData": hierarchy_formating_data,
+            "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
             "families": ["clip"]

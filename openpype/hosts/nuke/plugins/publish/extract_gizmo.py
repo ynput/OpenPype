@@ -19,13 +19,14 @@ class ExtractGizmo(publish.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder
-    label = "Extract Gizmo (Group)"
+    label = "Extract Gizmo (group)"
     hosts = ["nuke"]
     families = ["gizmo"]
 
     def process(self, instance):
-        tmp_nodes = list()
-        orig_grpn = instance[0]
+        tmp_nodes = []
+        orig_grpn = instance.data["transientData"]["node"]
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = "{0}.nk".format(instance.name)
@@ -53,15 +54,6 @@ class ExtractGizmo(publish.Extractor):
 
             # convert gizmos to groups
             pnutils.bake_gizmos_recursively(copy_grpn)
-
-            # remove avalonknobs
-            knobs = copy_grpn.knobs()
-            avalon_knobs = [k for k in knobs.keys()
-                            for ak in ["avalon:", "ak:"]
-                            if ak in k]
-            avalon_knobs.append("publish")
-            for ak in avalon_knobs:
-                copy_grpn.removeKnob(knobs[ak])
 
             # add to temporary nodes
             tmp_nodes.append(copy_grpn)

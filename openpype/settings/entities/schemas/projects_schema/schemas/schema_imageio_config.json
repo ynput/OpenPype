@@ -1,0 +1,21 @@
+{
+    "key": "ocio_config",
+    "type": "dict",
+    "label": "OCIO config",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "path",
+            "key": "filepath",
+            "label": "Config path",
+            "multiplatform": false,
+            "multipath": true
+        }
+    ]
+}

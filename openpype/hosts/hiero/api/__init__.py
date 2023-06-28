@@ -108,7 +108,7 @@ __all__ = [
     "apply_colorspace_project",
     "apply_colorspace_clips",
     "get_sequence_pattern_and_padding",
-    # depricated
+    # deprecated
     "get_track_item_pype_tag",
     "set_track_item_pype_tag",
     "get_track_item_pype_data",

@@ -5,6 +5,7 @@ import json
 import collections
 import tempfile
 import subprocess
+import platform
 
 import xml.etree.ElementTree
 
@@ -539,7 +540,7 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg or when containt unallowed symbols
+        #   for ffmpeg or when contain unallowed symbols
         erase_reason = "Missing reason"
         erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -679,7 +680,7 @@ def convert_input_paths_for_ffmpeg(
                 continue
 
             # Remove attributes that have string value longer than allowed
-            #   length for ffmpeg or when containt unallowed symbols
+            #   length for ffmpeg or when containing unallowed symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -745,11 +746,18 @@ def get_ffprobe_data(path_to_file, logger=None):
     logger.debug("FFprobe command: {}".format(
         subprocess.list2cmdline(args)
     ))
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    kwargs = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+    }
+    if platform.system().lower() == "windows":
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+
+    popen = subprocess.Popen(args, **kwargs)
 
     popen_stdout, popen_stderr = popen.communicate()
     if popen_stdout:
@@ -960,7 +968,7 @@ def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     if source_ffmpeg_cmd:
         # Define bitrate arguments
         bit_rate_args = ("-b:v", "-vb",)
-        # Seprate the two variables in case something else should be copied
+        # Separate the two variables in case something else should be copied
         #   from source command
         copy_args = []
         copy_args.extend(bit_rate_args)
@@ -1037,3 +1045,90 @@ def convert_ffprobe_fps_to_float(value):
     if divisor == 0.0:
         return 0.0
     return dividend / divisor
+
+
+def convert_colorspace(
+    input_path,
+    output_path,
+    config_path,
+    source_colorspace,
+    target_colorspace=None,
+    view=None,
+    display=None,
+    additional_command_args=None,
+    logger=None
+):
+    """Convert source file from one color space to another.
+
+    Args:
+        input_path (str): Path that should be converted. It is expected that
+            contains single file or image sequence of same type
+            (sequence in format 'file.FRAMESTART-FRAMEEND#.ext', see oiio docs,
+            eg `big.1-3#.tif`)
+        output_path (str): Path to output filename.
+            (must follow format of 'input_path', eg. single file or
+             sequence in 'file.FRAMESTART-FRAMEEND#.ext', `output.1-3#.tif`)
+        config_path (str): path to OCIO config file
+        source_colorspace (str): ocio valid color space of source files
+        target_colorspace (str): ocio valid target color space
+                    if filled, 'view' and 'display' must be empty
+        view (str): name for viewer space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
+        display (str): name for display-referred reference space (ocio valid)
+        additional_command_args (list): arguments for oiiotool (like binary
+            depth for .dpx)
+        logger (logging.Logger): Logger used for logging.
+    Raises:
+        ValueError: if misconfigured
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    oiio_cmd = [
+        get_oiio_tools_path(),
+        input_path,
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+        "--colorconfig", config_path
+    ]
+
+    if all([target_colorspace, view, display]):
+        raise ValueError("Colorspace and both screen and display"
+                         " cannot be set together."
+                         "Choose colorspace or screen and display")
+    if not target_colorspace and not all([view, display]):
+        raise ValueError("Both screen and display must be set.")
+
+    if additional_command_args:
+        oiio_cmd.extend(additional_command_args)
+
+    if target_colorspace:
+        oiio_cmd.extend(["--colorconvert",
+                         source_colorspace,
+                         target_colorspace])
+    if view and display:
+        oiio_cmd.extend(["--iscolorspace", source_colorspace])
+        oiio_cmd.extend(["--ociodisplay", display, view])
+
+    oiio_cmd.extend(["-o", output_path])
+
+    logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+    run_subprocess(oiio_cmd, logger=logger)
+
+
+def split_cmd_args(in_args):
+    """Makes sure all entered arguments are separated in individual items.
+
+    Split each argument string with " -" to identify if string contains
+    one or more arguments.
+    Args:
+        in_args (list): of arguments ['-n', '-d uint10']
+    Returns
+        (list): ['-n', '-d', 'unint10']
+    """
+    splitted_args = []
+    for arg in in_args:
+        if not arg.strip():
+            continue
+        splitted_args.extend(arg.split(" "))
+    return splitted_args

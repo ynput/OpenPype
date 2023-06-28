@@ -1,7 +1,7 @@
 import copy
 from collections import defaultdict
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_representations
 from openpype.pipeline import load, Anatomy

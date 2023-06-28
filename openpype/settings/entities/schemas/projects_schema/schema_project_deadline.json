@@ -121,7 +121,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "OpenPypeTileAssembler": "Open Image IO"
+                                    "OpenPypeTileAssembler": "OpenPype Tile Assembler"
                                 }
                             ]
                         },
@@ -129,6 +129,11 @@
                             "type": "boolean",
                             "key": "use_published",
                             "label": "Use Published scene"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "import_reference",
+                            "label": "Use Scene with Imported Reference"
                         },
                         {
                             "type": "boolean",
@@ -190,6 +195,56 @@
                                 ]
 
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "strict_error_checking",
+                            "label": "Strict Error Checking",
+                            "default": true
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "MaxSubmitDeadline",
+                    "label": "3dsMax Submit to Deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_published",
+                            "label": "Use Published scene"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Frame per Task"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
                         }
                     ]
                 },
@@ -214,11 +269,6 @@
                             "type": "boolean",
                             "key": "active",
                             "label": "Active"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "use_published",
-                            "label": "Use Published scene"
                         },
                         {
                             "type": "splitter"

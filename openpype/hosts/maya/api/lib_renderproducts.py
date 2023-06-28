@@ -46,6 +46,7 @@ import attr
 
 from . import lib
 from . import lib_rendersetup
+from openpype.pipeline.colorspace import get_ocio_config_views
 
 from maya import cmds, mel
 
@@ -127,6 +128,7 @@ class RenderProduct(object):
     """
     productName = attr.ib()
     ext = attr.ib()                             # extension
+    colorspace = attr.ib()                      # colorspace
     aov = attr.ib(default=None)                 # source aov
     driver = attr.ib(default=None)              # source driver
     multipart = attr.ib(default=False)          # multichannel file
@@ -196,11 +198,17 @@ class ARenderProducts:
         """Constructor."""
         self.layer = layer
         self.render_instance = render_instance
-        self.multipart = False
+        self.multipart = self.get_multipart()
 
         # Initialize
         self.layer_data = self._get_layer_data()
         self.layer_data.products = self.get_render_products()
+
+    def get_multipart(self):
+        raise NotImplementedError(
+            "The render product implementation does not have a "
+            "\"get_multipart\" method."
+        )
 
     def has_camera_token(self):
         # type: () -> bool
@@ -331,7 +339,7 @@ class ARenderProducts:
         aov_tokens = ["<aov>", "<renderpass>"]
 
         def match_last(tokens, text):
-            """regex match the last occurence from a list of tokens"""
+            """regex match the last occurrence from a list of tokens"""
             pattern = "(?:.*)({})".format("|".join(tokens))
             return re.search(pattern, text, re.IGNORECASE)
 
@@ -343,7 +351,6 @@ class ARenderProducts:
                              key=lambda match: match.end(1))
             separator = file_prefix[matches[0].end(1):matches[1].start(1)]
         return separator
-
 
     def _get_layer_data(self):
         # type: () -> LayerMetadata
@@ -531,16 +538,20 @@ class RenderProductsArnold(ARenderProducts):
 
         return prefix
 
-    def _get_aov_render_products(self, aov, cameras=None):
-        """Return all render products for the AOV"""
-
-        products = []
-        aov_name = self._get_attr(aov, "name")
+    def get_multipart(self):
         multipart = False
         multilayer = bool(self._get_attr("defaultArnoldDriver.multipart"))
         merge_AOVs = bool(self._get_attr("defaultArnoldDriver.mergeAOVs"))
         if multilayer or merge_AOVs:
             multipart = True
+
+        return multipart
+
+    def _get_aov_render_products(self, aov, cameras=None):
+        """Return all render products for the AOV"""
+
+        products = []
+        aov_name = self._get_attr(aov, "name")
         ai_drivers = cmds.listConnections("{}.outputs".format(aov),
                                           source=True,
                                           destination=False,
@@ -553,6 +564,9 @@ class RenderProductsArnold(ARenderProducts):
             ]
 
         for ai_driver in ai_drivers:
+            colorspace = self._get_colorspace(
+                ai_driver + ".colorManagement"
+            )
             # todo: check aiAOVDriver.prefix as it could have
             #       a custom path prefix set for this driver
 
@@ -590,12 +604,15 @@ class RenderProductsArnold(ARenderProducts):
             global_aov = self._get_attr(aov, "globalAov")
             if global_aov:
                 for camera in cameras:
-                    product = RenderProduct(productName=name,
-                                            ext=ext,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            multipart=multipart,
-                                            camera=camera)
+                    product = RenderProduct(
+                        productName=name,
+                        ext=ext,
+                        aov=aov_name,
+                        driver=ai_driver,
+                        multipart=self.multipart,
+                        camera=camera,
+                        colorspace=colorspace
+                    )
                     products.append(product)
 
             all_light_groups = self._get_attr(aov, "lightGroups")
@@ -603,13 +620,16 @@ class RenderProductsArnold(ARenderProducts):
                 # All light groups is enabled. A single multipart
                 # Render Product
                 for camera in cameras:
-                    product = RenderProduct(productName=name + "_lgroups",
-                                            ext=ext,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            # Always multichannel output
-                                            multipart=True,
-                                            camera=camera)
+                    product = RenderProduct(
+                        productName=name + "_lgroups",
+                        ext=ext,
+                        aov=aov_name,
+                        driver=ai_driver,
+                        # Always multichannel output
+                        multipart=True,
+                        camera=camera,
+                        colorspace=colorspace
+                    )
                     products.append(product)
             else:
                 value = self._get_attr(aov, "lightGroupsList")
@@ -625,11 +645,35 @@ class RenderProductsArnold(ARenderProducts):
                             aov=aov_name,
                             driver=ai_driver,
                             ext=ext,
-                            camera=camera
+                            camera=camera,
+                            colorspace=colorspace
                         )
                         products.append(product)
 
         return products
+
+    def _get_colorspace(self, attribute):
+        """Resolve colorspace from Arnold settings."""
+
+        def _view_transform():
+            preferences = lib.get_color_management_preferences()
+            views_data = get_ocio_config_views(preferences["config"])
+            view_data = views_data[
+                "{}/{}".format(preferences["display"], preferences["view"])
+            ]
+            return view_data["colorspace"]
+
+        def _raw():
+            preferences = lib.get_color_management_preferences()
+            return preferences["rendering_space"]
+
+        resolved_values = {
+            "Raw": _raw,
+            "Use View Transform": _view_transform,
+            # Default. Same as Maya Preferences.
+            "Use Output Transform": lib.get_color_management_output_transform
+        }
+        return resolved_values[self._get_attr(attribute)]()
 
     def get_render_products(self):
         """Get all AOVs.
@@ -659,11 +703,19 @@ class RenderProductsArnold(ARenderProducts):
         ]
 
         default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
-        beauty_products = [RenderProduct(
-            productName="beauty",
-            ext=default_ext,
-            driver="defaultArnoldDriver",
-            camera=camera) for camera in cameras]
+        colorspace = self._get_colorspace(
+            "defaultArnoldDriver.colorManagement"
+        )
+        beauty_products = [
+            RenderProduct(
+                productName="beauty",
+                ext=default_ext,
+                driver="defaultArnoldDriver",
+                camera=camera,
+                colorspace=colorspace
+            ) for camera in cameras
+        ]
+
         # AOVs > Legacy > Maya Render View > Mode
         aovs_enabled = bool(
             self._get_attr("defaultArnoldRenderOptions.aovMode")
@@ -731,6 +783,14 @@ class RenderProductsVray(ARenderProducts):
 
     renderer = "vray"
 
+    def get_multipart(self):
+        multipart = False
+        image_format = self._get_attr("vraySettings.imageFormatStr")
+        if image_format == "exr (multichannel)":
+            multipart = True
+
+        return multipart
+
     def get_renderer_prefix(self):
         # type: () -> str
         """Get image prefix for V-Ray.
@@ -797,6 +857,7 @@ class RenderProductsVray(ARenderProducts):
         if default_ext in {"exr (multichannel)", "exr (deep)"}:
             default_ext = "exr"
 
+        colorspace = lib.get_color_management_output_transform()
         products = []
 
         # add beauty as default when not disabled
@@ -804,23 +865,30 @@ class RenderProductsVray(ARenderProducts):
         if not dont_save_rgb:
             for camera in cameras:
                 products.append(
-                    RenderProduct(productName="",
-                                  ext=default_ext,
-                                  camera=camera))
+                    RenderProduct(
+                        productName="",
+                        ext=default_ext,
+                        camera=camera,
+                        colorspace=colorspace,
+                        multipart=self.multipart
+                    )
+                )
 
         # separate alpha file
         separate_alpha = self._get_attr("vraySettings.separateAlpha")
         if separate_alpha:
             for camera in cameras:
                 products.append(
-                    RenderProduct(productName="Alpha",
-                                  ext=default_ext,
-                                  camera=camera)
+                    RenderProduct(
+                        productName="Alpha",
+                        ext=default_ext,
+                        camera=camera,
+                        colorspace=colorspace,
+                        multipart=self.multipart
+                    )
                 )
-
-        if image_format_str == "exr (multichannel)":
+        if self.multipart:
             # AOVs are merged in m-channel file, only main layer is rendered
-            self.multipart = True
             return products
 
         # handle aovs from references
@@ -851,17 +919,21 @@ class RenderProductsVray(ARenderProducts):
                         product = RenderProduct(productName=name,
                                                 ext=default_ext,
                                                 aov=aov,
-                                                camera=camera)
+                                                camera=camera,
+                                                colorspace=colorspace)
                         products.append(product)
                 # Continue as we've processed this special case AOV
                 continue
 
             aov_name = self._get_vray_aov_name(aov)
             for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=default_ext,
-                                        aov=aov,
-                                        camera=camera)
+                product = RenderProduct(
+                    productName=aov_name,
+                    ext=default_ext,
+                    aov=aov,
+                    camera=camera,
+                    colorspace=colorspace
+                )
                 products.append(product)
 
         return products
@@ -979,6 +1051,34 @@ class RenderProductsRedshift(ARenderProducts):
     renderer = "redshift"
     unmerged_aovs = {"Cryptomatte"}
 
+    def get_files(self, product):
+        # When outputting AOVs we need to replace Redshift specific AOV tokens
+        # with Maya render tokens for generating file sequences. We validate to
+        # a specific AOV fileprefix so we only need to account for one
+        # replacement.
+        if not product.multipart and product.driver:
+            file_prefix = self._get_attr(product.driver + ".filePrefix")
+            self.layer_data.filePrefix = file_prefix.replace(
+                "<BeautyPath>/<BeautyFile>",
+                "<Scene>/<RenderLayer>/<RenderLayer>"
+            )
+
+        return super(RenderProductsRedshift, self).get_files(product)
+
+    def get_multipart(self):
+        # For Redshift we don't directly return upon forcing multilayer
+        # due to some AOVs still being written into separate files,
+        # like Cryptomatte.
+        # AOVs are merged in multi-channel file
+        multipart = False
+        force_layer = bool(
+            self._get_attr("redshiftOptions.exrForceMultilayer")
+        )
+        if force_layer:
+            multipart = True
+
+        return multipart
+
     def get_renderer_prefix(self):
         """Get image prefix for Redshift.
 
@@ -1018,16 +1118,6 @@ class RenderProductsRedshift(ARenderProducts):
             for c in self.get_renderable_cameras()
         ]
 
-        # For Redshift we don't directly return upon forcing multilayer
-        # due to some AOVs still being written into separate files,
-        # like Cryptomatte.
-        # AOVs are merged in multi-channel file
-        multipart = False
-        force_layer = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) # noqa
-        exMultipart = bool(self._get_attr("redshiftOptions.exrMultipart"))
-        if exMultipart or force_layer:
-            multipart = True
-
         # Get Redshift Extension from image format
         image_format = self._get_attr("redshiftOptions.imageFormat")  # integer
         ext = mel.eval("redshiftGetImageExtension(%i)" % image_format)
@@ -1043,13 +1133,14 @@ class RenderProductsRedshift(ARenderProducts):
         products = []
         light_groups_enabled = False
         has_beauty_aov = False
+        colorspace = lib.get_color_management_output_transform()
         for aov in aovs:
             enabled = self._get_attr(aov, "enabled")
             if not enabled:
                 continue
 
             aov_type = self._get_attr(aov, "aovType")
-            if multipart and aov_type not in self.unmerged_aovs:
+            if self.multipart and aov_type not in self.unmerged_aovs:
                 continue
 
             # Any AOVs that still get processed, like Cryptomatte
@@ -1084,8 +1175,10 @@ class RenderProductsRedshift(ARenderProducts):
                             productName=aov_light_group_name,
                             aov=aov_name,
                             ext=ext,
-                            multipart=multipart,
-                            camera=camera)
+                            multipart=False,
+                            camera=camera,
+                            driver=aov,
+                            colorspace=colorspace)
                         products.append(product)
 
             if light_groups:
@@ -1098,8 +1191,10 @@ class RenderProductsRedshift(ARenderProducts):
                 product = RenderProduct(productName=aov_name,
                                         aov=aov_name,
                                         ext=ext,
-                                        multipart=multipart,
-                                        camera=camera)
+                                        multipart=False,
+                                        camera=camera,
+                                        driver=aov,
+                                        colorspace=colorspace)
                 products.append(product)
 
         # When a Beauty AOV is added manually, it will be rendered as
@@ -1114,8 +1209,9 @@ class RenderProductsRedshift(ARenderProducts):
             products.insert(0,
                             RenderProduct(productName=beauty_name,
                                           ext=ext,
-                                          multipart=multipart,
-                                          camera=camera))
+                                          multipart=self.multipart,
+                                          camera=camera,
+                                          colorspace=colorspace))
 
         return products
 
@@ -1132,6 +1228,11 @@ class RenderProductsRenderman(ARenderProducts):
     """
 
     renderer = "renderman"
+    unmerged_aovs = {"PxrCryptomatte"}
+
+    def get_multipart(self):
+        # Implemented as display specific in "get_render_products".
+        return False
 
     def get_render_products(self):
         """Get all AOVs.
@@ -1141,6 +1242,8 @@ class RenderProductsRenderman(ARenderProducts):
 
         """
         from rfm2.api.displays import get_displays  # noqa
+
+        colorspace = lib.get_color_management_output_transform()
 
         cameras = [
             self.sanitize_camera_name(c)
@@ -1181,6 +1284,17 @@ class RenderProductsRenderman(ARenderProducts):
             if not display_types.get(display["driverNode"]["type"]):
                 continue
 
+            has_cryptomatte = cmds.ls(type=self.unmerged_aovs)
+            matte_enabled = False
+            if has_cryptomatte:
+                for cryptomatte in has_cryptomatte:
+                    cryptomatte_aov = cryptomatte
+                    matte_name = "cryptomatte"
+                    rman_globals = cmds.listConnections(cryptomatte +
+                                                        ".message")
+                    if rman_globals:
+                        matte_enabled = True
+
             aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
@@ -1197,8 +1311,19 @@ class RenderProductsRenderman(ARenderProducts):
                         productName=aov_name,
                         ext=extensions,
                         camera=camera,
-                        multipart=True
+                        multipart=True,
+                        colorspace=colorspace
                     )
+
+                    if has_cryptomatte and matte_enabled:
+                        cryptomatte = RenderProduct(
+                            productName=matte_name,
+                            aov=cryptomatte_aov,
+                            ext=extensions,
+                            camera=camera,
+                            multipart=True,
+                            colorspace=colorspace
+                        )
                 else:
                     # this code should handle the case where no multipart
                     # capable format is selected. But since it involves
@@ -1217,6 +1342,9 @@ class RenderProductsRenderman(ARenderProducts):
                         "Only exr, deep exr and tiff formats are supported.")
 
                 products.append(product)
+
+                if has_cryptomatte and matte_enabled:
+                    products.append(cryptomatte)
 
         return products
 
@@ -1248,6 +1376,10 @@ class RenderProductsMayaHardware(ARenderProducts):
         {"label": "PNG", "index": 32, "extension": "png"},
         {"label": "EXR(exr)", "index": 40, "extension": "exr"}
     ]
+
+    def get_multipart(self):
+        # MayaHardware does not support multipart EXRs.
+        return False
 
     def _get_extension(self, value):
         result = None
@@ -1293,7 +1425,12 @@ class RenderProductsMayaHardware(ARenderProducts):
 
         products = []
         for cam in self.get_renderable_cameras():
-            product = RenderProduct(productName="beauty", ext=ext, camera=cam)
+            product = RenderProduct(
+                productName="beauty",
+                ext=ext,
+                camera=cam,
+                colorspace=lib.get_color_management_output_transform()
+            )
             products.append(product)
 
         return products

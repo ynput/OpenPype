@@ -16,13 +16,17 @@ class CreateOutputNode(pyblish.api.ContextPlugin):
     def process(self, context):
         # capture selection state
         with maintained_selection():
-            active_node = [node for inst in context
-                           for node in inst
-                           if "ak:family" in node.knobs()]
+
+            active_node = [
+                inst.data.get("transientData", {}).get("node")
+                for inst in context
+                if inst.data.get("transientData", {}).get("node")
+                if inst.data.get(
+                    "transientData", {}).get("node").Class() != "Root"
+            ]
 
             if active_node:
-                self.log.info(active_node)
-                active_node = active_node[0]
+                active_node = active_node.pop()
                 self.log.info(active_node)
                 active_node['selected'].setValue(True)
 

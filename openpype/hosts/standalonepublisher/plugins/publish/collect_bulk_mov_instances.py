@@ -83,9 +83,9 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
 
         self.log.info(f"Created new instance: {instance_name}")
 
-        def convertor(value):
+        def converter(value):
             return str(value)
 
         self.log.debug("Instance data: {}".format(
-            json.dumps(new_instance.data, indent=4, default=convertor)
+            json.dumps(new_instance.data, indent=4, default=converter)
         ))

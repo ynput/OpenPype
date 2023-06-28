@@ -221,7 +221,7 @@ class ITrayModule(OpenPypeInterface):
             message (str): Content of message.
             icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
                 Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
+            msecs (int): Duration of message visibility in milliseconds.
                 Default is 10000 msecs, may differ by Qt version.
         """
 

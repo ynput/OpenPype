@@ -1,6 +1,6 @@
 
 # Import third-party modules
-from vendor.Qt import QtWidgets
+from qtpy import QtWidgets
 
 # Import local modules
 import scriptsmenu

@@ -7,23 +7,22 @@ Provides:
 """
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from openpype.lib import filter_profiles
 
 
 class CollectFtrackFamily(pyblish.api.InstancePlugin):
+    """Adds explicitly 'ftrack' to families to upload instance to FTrack.
+
+    Uses selection by combination of hosts/families/tasks names via
+    profiles resolution.
+
+    Triggered everywhere, checks instance against configured.
+
+    Checks advanced filtering which works on 'families' not on main
+    'family', as some variants dynamically resolves addition of ftrack
+    based on 'families' (editorial drives it by presence of 'review')
     """
-        Adds explicitly 'ftrack' to families to upload instance to FTrack.
 
-        Uses selection by combination of hosts/families/tasks names via
-        profiles resolution.
-
-        Triggered everywhere, checks instance against configured.
-
-        Checks advanced filtering which works on 'families' not on main
-        'family', as some variants dynamically resolves addition of ftrack
-        based on 'families' (editorial drives it by presence of 'review')
-    """
     label = "Collect Ftrack Family"
     order = pyblish.api.CollectorOrder + 0.4990
 
@@ -34,68 +33,64 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             self.log.warning("No profiles present for adding Ftrack family")
             return
 
-        add_ftrack_family = False
-        task_name = instance.data.get("task",
-                                      legacy_io.Session["AVALON_TASK"])
-        host_name = legacy_io.Session["AVALON_APP"]
+        host_name = instance.context.data["hostName"]
         family = instance.data["family"]
+        task_name = instance.data.get("task")
 
         filtering_criteria = {
             "hosts": host_name,
             "families": family,
             "tasks": task_name
         }
-        profile = filter_profiles(self.profiles, filtering_criteria,
-                                  logger=self.log)
+        profile = filter_profiles(
+            self.profiles,
+            filtering_criteria,
+            logger=self.log
+        )
+
+        add_ftrack_family = False
+        families = instance.data.setdefault("families", [])
 
         if profile:
-            families = instance.data.get("families")
             add_ftrack_family = profile["add_ftrack_family"]
-
             additional_filters = profile.get("advanced_filtering")
             if additional_filters:
-                self.log.info("'{}' families used for additional filtering".
-                              format(families))
+                families_set = set(families) | {family}
+                self.log.info(
+                    "'{}' families used for additional filtering".format(
+                        families_set))
                 add_ftrack_family = self._get_add_ftrack_f_from_addit_filters(
                     additional_filters,
-                    families,
+                    families_set,
                     add_ftrack_family
                 )
 
-            if add_ftrack_family:
-                self.log.debug("Adding ftrack family for '{}'".
-                               format(instance.data.get("family")))
+        result_str = "Not adding"
+        if add_ftrack_family:
+            result_str = "Adding"
+            if "ftrack" not in families:
+                families.append("ftrack")
 
-                if families:
-                    if "ftrack" not in families:
-                        instance.data["families"].append("ftrack")
-                else:
-                    instance.data["families"] = ["ftrack"]
-
-        result_str = "Adding"
-        if not add_ftrack_family:
-            result_str = "Not adding"
         self.log.info("{} 'ftrack' family for instance with '{}'".format(
             result_str, family
         ))
 
-    def _get_add_ftrack_f_from_addit_filters(self,
-                                             additional_filters,
-                                             families,
-                                             add_ftrack_family):
-        """
-            Compares additional filters - working on instance's families.
+    def _get_add_ftrack_f_from_addit_filters(
+        self, additional_filters, families, add_ftrack_family
+    ):
+        """Compares additional filters - working on instance's families.
 
-            Triggered for more detailed filtering when main family matches,
-            but content of 'families' actually matter.
-            (For example 'review' in 'families' should result in adding to
-            Ftrack)
+        Triggered for more detailed filtering when main family matches,
+        but content of 'families' actually matter.
+        (For example 'review' in 'families' should result in adding to
+        Ftrack)
 
-            Args:
-                additional_filters (dict) - from Setting
-                families (list) - subfamilies
-                add_ftrack_family (bool) - add ftrack to families if True
+        Args:
+            additional_filters (dict) - from Setting
+            families (set[str]) - subfamilies
+            add_ftrack_family (bool) - add ftrack to families if True
         """
+
         override_filter = None
         override_filter_value = -1
         for additional_filter in additional_filters:

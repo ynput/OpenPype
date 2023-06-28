@@ -4,15 +4,10 @@ import pyblish.api
 
 import openpype.hosts.maya.api.lib as mayalib
 from openpype.pipeline.context_tools import get_current_project_asset
-from math import ceil
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateSceneOrder,
 )
-
-
-def float_round(num, places=0, direction=ceil):
-    return direction(num * (10**places)) / float(10**places)
 
 
 class ValidateMayaUnits(pyblish.api.ContextPlugin):
@@ -36,18 +31,12 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         # Collected units
         linearunits = context.data.get('linearUnits')
         angularunits = context.data.get('angularUnits')
-        # TODO(antirotor): This is hack as for framerates having multiple
-        # decimal places. FTrack is ceiling decimal values on
-        # fps to two decimal places but Maya 2019+ is reporting those fps
-        # with much higher resolution. As we currently cannot fix Ftrack
-        # rounding, we have to round those numbers coming from Maya.
-        # NOTE: this must be revisited yet again as it seems that Ftrack is
-        # now flooring the value?
-        fps = float_round(context.data.get('fps'), 2, ceil)
 
-        # TODO repace query with using 'context.data["assetEntity"]'
+        fps = context.data.get('fps')
+
+        # TODO replace query with using 'context.data["assetEntity"]'
         asset_doc = get_current_project_asset()
-        asset_fps = asset_doc["data"]["fps"]
+        asset_fps = mayalib.convert_to_maya_fps(asset_doc["data"]["fps"])
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
@@ -97,7 +86,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        # TODO repace query with using 'context.data["assetEntity"]'
+        # TODO replace query with using 'context.data["assetEntity"]'
         asset_doc = get_current_project_asset()
         asset_fps = asset_doc["data"]["fps"]
         mayalib.set_scene_fps(asset_fps)

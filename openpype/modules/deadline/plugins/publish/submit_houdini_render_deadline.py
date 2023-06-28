@@ -1,6 +1,7 @@
 import os
 import json
 import getpass
+from datetime import datetime
 
 import requests
 import pyblish.api
@@ -8,6 +9,8 @@ import pyblish.api
 # import hou  ???
 
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
@@ -44,6 +47,9 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
         batch_name = filename
         if code:
             batch_name = "{0} - {1}".format(code, batch_name)
+
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Output driver to render
         driver = instance[0]
@@ -100,9 +106,13 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             # Submit along the current Avalon tool setup that we launched
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
-            "AVALON_TOOLS",
-            "OPENPYPE_VERSION"
+            "AVALON_TOOLS"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")

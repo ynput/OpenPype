@@ -12,6 +12,14 @@
             "collapsible": true,
             "children": [
                 {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                },
+                {
                     "key": "ocio",
                     "type": "dict",
                     "label": "OpenColorIO (OCIO)",
@@ -24,11 +32,82 @@
                             "label": "Set OCIO variable for Fusion"
                         },
                         {
+                            "type": "label",
+                            "label": "<b style='color:red'>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                        },
+                        {
                             "type": "path",
                             "key": "configFilePath",
                             "label": "OCIO Config File Path",
                             "multiplatform": true,
                             "multipath": true
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "copy_fusion_settings",
+            "collapsible": true,
+            "label": "Local Fusion profile settings",
+            "children": [
+                {
+                    "key": "copy_path",
+                    "type": "path",
+                    "label": "Local Fusion profile directory"
+                },
+                {
+                    "type": "boolean",
+                    "key": "copy_status",
+                    "label": "Copy profile on first launch"
+                },
+                {
+                    "key":"force_sync",
+                    "type": "boolean",
+                    "label": "Resync profile on each launch"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateSaver",
+                    "label": "Create Saver",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "key": "instance_attributes",
+                            "label": "Instance attributes",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {
+                                    "reviewable": "Reviewable"
+                                },
+                                {
+                                    "farm_rendering": "Farm rendering"
+                                }
+                            ]
                         }
                     ]
                 }

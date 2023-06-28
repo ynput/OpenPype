@@ -1,5 +1,4 @@
 import pyblish.api
-import argparse
 import sys
 from pprint import pformat
 
@@ -11,20 +10,40 @@ class CollectCelactionCliKwargs(pyblish.api.Collector):
     order = pyblish.api.Collector.order - 0.1
 
     def process(self, context):
-        parser = argparse.ArgumentParser(prog="celaction")
-        parser.add_argument("--currentFile",
-                            help="Pass file to Context as `currentFile`")
-        parser.add_argument("--chunk",
-                            help=("Render chanks on farm"))
-        parser.add_argument("--frameStart",
-                            help=("Start of frame range"))
-        parser.add_argument("--frameEnd",
-                            help=("End of frame range"))
-        parser.add_argument("--resolutionWidth",
-                            help=("Width of resolution"))
-        parser.add_argument("--resolutionHeight",
-                            help=("Height of resolution"))
-        passing_kwargs = parser.parse_args(sys.argv[1:]).__dict__
+        args = list(sys.argv[1:])
+        self.log.info(str(args))
+        missing_kwargs = []
+        passing_kwargs = {}
+        for key in (
+            "chunk",
+            "frameStart",
+            "frameEnd",
+            "resolutionWidth",
+            "resolutionHeight",
+            "currentFile",
+        ):
+            arg_key = f"--{key}"
+            if arg_key not in args:
+                missing_kwargs.append(key)
+                continue
+            arg_idx = args.index(arg_key)
+            args.pop(arg_idx)
+            if key != "currentFile":
+                value = args.pop(arg_idx)
+            else:
+                path_parts = []
+                while arg_idx < len(args):
+                    path_parts.append(args.pop(arg_idx))
+                value = " ".join(path_parts).strip('"')
+
+            passing_kwargs[key] = value
+
+        if missing_kwargs:
+            self.log.debug("Missing arguments {}".format(
+                ", ".join(
+                    [f'"{key}"' for key in missing_kwargs]
+                )
+            ))
 
         self.log.info("Storing kwargs ...")
         self.log.debug("_ passing_kwargs: {}".format(pformat(passing_kwargs)))

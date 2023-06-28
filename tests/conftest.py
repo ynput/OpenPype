@@ -24,6 +24,11 @@ def pytest_addoption(parser):
         help="Overwrite default timeout"
     )
 
+    parser.addoption(
+        "--setup_only", action="store", default=None,
+        help="True - only setup test, do not run any tests"
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -43,6 +48,11 @@ def app_variant(request):
 @pytest.fixture(scope="module")
 def timeout(request):
     return request.config.getoption("--timeout")
+
+
+@pytest.fixture(scope="module")
+def setup_only(request):
+    return request.config.getoption("--setup_only")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

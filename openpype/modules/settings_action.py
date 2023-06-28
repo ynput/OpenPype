@@ -2,7 +2,7 @@ from openpype.modules import OpenPypeModule, ITrayAction
 
 
 class SettingsAction(OpenPypeModule, ITrayAction):
-    """Action to show Setttings tool."""
+    """Action to show Settings tool."""
     name = "settings"
     label = "Studio Settings"
     admin_action = True
@@ -73,7 +73,7 @@ class SettingsAction(OpenPypeModule, ITrayAction):
 
 
 class LocalSettingsAction(OpenPypeModule, ITrayAction):
-    """Action to show Setttings tool."""
+    """Action to show Settings tool."""
     name = "local_settings"
     label = "Settings"
 
@@ -105,7 +105,7 @@ class LocalSettingsAction(OpenPypeModule, ITrayAction):
 
         Raises:
             AssertionError: Window must be already created. Call
-                `create_settings_window` before callint this method.
+                `create_settings_window` before calling this method.
         """
         if not self.settings_window:
             raise AssertionError("Window is not initialized.")

@@ -2,7 +2,6 @@ import collections
 import os
 import sys
 import atexit
-import subprocess
 
 import platform
 
@@ -11,8 +10,9 @@ from qtpy import QtCore, QtGui, QtWidgets
 import openpype.version
 from openpype import resources, style
 from openpype.lib import (
-    get_openpype_execute_args,
     Logger,
+    get_openpype_execute_args,
+    run_detached_process,
 )
 from openpype.lib.openpype_version import (
     op_version_control_available,
@@ -21,8 +21,9 @@ from openpype.lib.openpype_version import (
     is_current_version_studio_latest,
     is_current_version_higher_than_expected,
     is_running_from_build,
-    is_running_staging,
     get_openpype_version,
+    is_running_staging,
+    is_staging_enabled,
 )
 from openpype.modules import TrayModulesManager
 from openpype.settings import (
@@ -200,6 +201,68 @@ class VersionUpdateDialog(QtWidgets.QDialog):
         self._restart_accepted = True
         self.restart_requested.emit()
         self.accept()
+
+
+class ProductionStagingDialog(QtWidgets.QDialog):
+    """Tell user that he has enabled staging but is in production version.
+
+    This is showed only when staging is enabled with '--use-staging' and it's
+    version is the same as production's version.
+    """
+
+    def __init__(self, parent=None):
+        super(ProductionStagingDialog, self).__init__(parent)
+
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowTitle("Production and Staging versions are the same")
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+
+        top_widget = QtWidgets.QWidget(self)
+
+        staging_pixmap = QtGui.QPixmap(
+            resources.get_openpype_staging_icon_filepath()
+        )
+        staging_icon_label = PixmapLabel(staging_pixmap, top_widget)
+        message = (
+            "Because production and staging versions are the same"
+            " your changes and work will affect both."
+        )
+        content_label = QtWidgets.QLabel(message, self)
+        content_label.setWordWrap(True)
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(10)
+        top_layout.addWidget(
+            staging_icon_label, 0,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        )
+        top_layout.addWidget(content_label, 1)
+
+        footer_widget = QtWidgets.QWidget(self)
+        ok_btn = QtWidgets.QPushButton("I understand", footer_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(ok_btn)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(top_widget, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(footer_widget, 0)
+
+        self.setStyleSheet(style.load_stylesheet())
+        self.resize(400, 140)
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+
+    def _on_ok_clicked(self):
+        self.close()
 
 
 class BuildVersionDialog(QtWidgets.QDialog):
@@ -462,6 +525,10 @@ class TrayManager:
             dialog = BuildVersionDialog()
             dialog.exec_()
 
+        elif is_staging_enabled() and not is_running_staging():
+            dialog = ProductionStagingDialog()
+            dialog.exec_()
+
     def _validate_settings_defaults(self):
         valid = True
         try:
@@ -562,9 +629,7 @@ class TrayManager:
                 logic will decide which version will be used.
         """
         args = get_openpype_execute_args()
-        kwargs = {
-            "env": dict(os.environ.items())
-        }
+        envs = dict(os.environ.items())
 
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
@@ -573,31 +638,33 @@ class TrayManager:
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
 
+        cleanup_additional_args = False
         if use_expected_version:
+            cleanup_additional_args = True
             expected_version = get_expected_version()
             if expected_version is not None:
                 reset_version = False
-                kwargs["env"]["OPENPYPE_VERSION"] = str(expected_version)
+                envs["OPENPYPE_VERSION"] = str(expected_version)
             else:
                 # Trigger reset of version if expected version was not found
                 reset_version = True
 
         # Pop OPENPYPE_VERSION
         if reset_version:
-            # Add staging flag if was running from staging
-            if is_running_staging():
-                args.append("--use-staging")
-            kwargs["env"].pop("OPENPYPE_VERSION", None)
+            cleanup_additional_args = True
+            envs.pop("OPENPYPE_VERSION", None)
+
+        if cleanup_additional_args:
+            _additional_args = []
+            for arg in additional_args:
+                if arg == "--use-staging" or arg.startswith("--use-version"):
+                    continue
+                _additional_args.append(arg)
+            additional_args = _additional_args
 
         args.extend(additional_args)
-        if platform.system().lower() == "windows":
-            flags = (
-                subprocess.CREATE_NEW_PROCESS_GROUP
-                | subprocess.DETACHED_PROCESS
-            )
-            kwargs["creationflags"] = flags
 
-        subprocess.Popen(args, **kwargs)
+        run_detached_process(args, env=envs)
         self.exit()
 
     def exit(self):

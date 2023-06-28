@@ -787,7 +787,7 @@ class SyncToAvalonEvent(BaseEvent):
         # Filter updates where name is changing
         for ftrack_id, ent_info in updated.items():
             ent_keys = ent_info["keys"]
-            # Seprate update info from rename
+            # Separate update info from rename
             if "name" not in ent_keys:
                 continue
 
@@ -827,7 +827,7 @@ class SyncToAvalonEvent(BaseEvent):
             # 5.) Process updated
             self.process_updated()
             time_6 = time.time()
-            # 6.) Process changes in hierarchy or hier custom attribues
+            # 6.) Process changes in hierarchy or hier custom attributes
             self.process_hier_cleanup()
             time_7 = time.time()
             self.process_task_updates()
@@ -973,7 +973,7 @@ class SyncToAvalonEvent(BaseEvent):
                 except Exception:
                     # TODO logging
                     # TODO report
-                    self.process_session.rolback()
+                    self.process_session.rollback()
                     ent_path_items = [self.cur_project["full_name"]]
                     ent_path_items.extend([
                         par for par in avalon_entity["data"]["parents"]
@@ -1016,7 +1016,7 @@ class SyncToAvalonEvent(BaseEvent):
                 except Exception:
                     # TODO logging
                     # TODO report
-                    self.process_session.rolback()
+                    self.process_session.rollback()
                     error_msg = (
                         "Couldn't update custom attributes after recreation"
                         " of entity in Ftrack"
@@ -1094,7 +1094,7 @@ class SyncToAvalonEvent(BaseEvent):
     def check_names_synchronizable(self, names):
         """Check if entities with specific names are importable.
 
-        This check should happend after removing entity or renaming entity.
+        This check should happen after removing entity or renaming entity.
         When entity was removed or renamed then it's name is possible to sync.
         """
         joined_passed_names = ", ".join(
@@ -1338,7 +1338,7 @@ class SyncToAvalonEvent(BaseEvent):
             try:
                 self.process_session.commit()
             except Exception:
-                self.process_session.rolback()
+                self.process_session.rollback()
                 # TODO logging
                 # TODO report
                 error_msg = (
@@ -1743,7 +1743,7 @@ class SyncToAvalonEvent(BaseEvent):
 
     def process_moved(self):
         """
-            Handles moved entities to different place in hiearchy.
+            Handles moved entities to different place in hierarchy.
             (Not tasks - handled separately.)
         """
         if not self.ftrack_moved:
@@ -1792,7 +1792,7 @@ class SyncToAvalonEvent(BaseEvent):
                     self.log.warning("{} <{}>".format(error_msg, ent_path))
                     continue
 
-                # THIS MUST HAPPEND AFTER CREATING NEW ENTITIES !!!!
+                # THIS MUST HAPPEN AFTER CREATING NEW ENTITIES !!!!
                 # - because may be moved to new created entity
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
@@ -2323,7 +2323,7 @@ class SyncToAvalonEvent(BaseEvent):
                 items.append("{} - \"{}\"".format(ent_path, value))
             self.report_items["error"][fps_msg] = items
 
-        # Get dictionary with not None hierarchical values to pull to childs
+        # Get dictionary with not None hierarchical values to pull to children
         project_values = {}
         for key, value in (
             entities_dict[ftrack_project_id]["hier_attrs"].items()
@@ -2460,7 +2460,7 @@ class SyncToAvalonEvent(BaseEvent):
     def update_entities(self):
         """
             Update Avalon entities by mongo bulk changes.
-            Expects self.updates which are transfered to $set part of update
+            Expects self.updates which are transferred to $set part of update
             command.
             Resets self.updates afterwards.
         """

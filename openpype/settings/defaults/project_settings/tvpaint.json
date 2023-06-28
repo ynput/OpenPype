@@ -1,9 +1,57 @@
 {
-    "stop_timer_on_application_exit": false,
-    "publish": {
-        "CollectRenderScene": {
+    "imageio": {
+        "ocio_config": {
             "enabled": false,
-            "render_layer": "Main"
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
+    "stop_timer_on_application_exit": false,
+    "create": {
+        "create_workfile": {
+            "enabled": true,
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_review": {
+            "enabled": true,
+            "active_on_create": true,
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_scene": {
+            "enabled": true,
+            "active_on_create": false,
+            "mark_for_review": true,
+            "default_pass_name": "beauty",
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_layer": {
+            "mark_for_review": false,
+            "default_pass_name": "beauty",
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_pass": {
+            "mark_for_review": false,
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "auto_detect_render": {
+            "enabled": false,
+            "allow_group_rename": true,
+            "group_name_template": "L{group_index}",
+            "group_idx_offset": 10,
+            "group_idx_padding": 3
+        }
+    },
+    "publish": {
+        "CollectRenderInstances": {
+            "ignore_render_pass_transparency": false
         },
         "ExtractSequence": {
             "review_bg": [

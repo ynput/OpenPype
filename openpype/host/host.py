@@ -1,3 +1,4 @@
+import os
 import logging
 import contextlib
 from abc import ABCMeta, abstractproperty
@@ -17,7 +18,7 @@ class HostBase(object):
     Compared to 'avalon' concept:
     What was before considered as functions in host implementation folder. The
     host implementation should primarily care about adding ability of creation
-    (mark subsets to be published) and optionaly about referencing published
+    (mark subsets to be published) and optionally about referencing published
     representations as containers.
 
     Host may need extend some functionality like working with workfiles
@@ -76,6 +77,18 @@ class HostBase(object):
 
         pass
 
+    def install(self):
+        """Install host specific functionality.
+
+        This is where should be added menu with tools, registered callbacks
+        and other host integration initialization.
+
+        It is called automatically when 'openpype.pipeline.install_host' is
+        triggered.
+        """
+
+        pass
+
     @property
     def log(self):
         if self._log is None:
@@ -88,30 +101,49 @@ class HostBase(object):
 
         pass
 
+    def get_current_project_name(self):
+        """
+        Returns:
+            Union[str, None]: Current project name.
+        """
+
+        return os.environ.get("AVALON_PROJECT")
+
+    def get_current_asset_name(self):
+        """
+        Returns:
+            Union[str, None]: Current asset name.
+        """
+
+        return os.environ.get("AVALON_ASSET")
+
+    def get_current_task_name(self):
+        """
+        Returns:
+            Union[str, None]: Current task name.
+        """
+
+        return os.environ.get("AVALON_TASK")
+
     def get_current_context(self):
         """Get current context information.
 
         This method should be used to get current context of host. Usage of
-        this method can be crutial for host implementations in DCCs where
+        this method can be crucial for host implementations in DCCs where
         can be opened multiple workfiles at one moment and change of context
-        can't be catched properly.
+        can't be caught properly.
 
         Default implementation returns values from 'legacy_io.Session'.
 
         Returns:
-            dict: Context with 3 keys 'project_name', 'asset_name' and
-                'task_name'. All of them can be 'None'.
+            Dict[str, Union[str, None]]: Context with 3 keys 'project_name',
+                'asset_name' and 'task_name'. All of them can be 'None'.
         """
 
-        from openpype.pipeline import legacy_io
-
-        if legacy_io.is_installed():
-            legacy_io.install()
-
         return {
-            "project_name": legacy_io.Session["AVALON_PROJECT"],
-            "asset_name": legacy_io.Session["AVALON_ASSET"],
-            "task_name": legacy_io.Session["AVALON_TASK"]
+            "project_name": self.get_current_project_name(),
+            "asset_name": self.get_current_asset_name(),
+            "task_name": self.get_current_task_name()
         }
 
     def get_context_title(self):

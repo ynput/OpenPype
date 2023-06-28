@@ -22,6 +22,8 @@ class ExtractGLB(publish.Extractor):
 
         self.log.info("Extracting GLB to: {}".format(path))
 
+        cmds.loadPlugin("maya2glTF", quiet=True)
+
         nodes = instance[:]
 
         self.log.info("Instance: {0}".format(nodes))
@@ -45,6 +47,7 @@ class ExtractGLB(publish.Extractor):
             "glb": True,
             "vno": True    # visibleNodeOnly
         }
+
         with lib.maintained_selection():
             cmds.select(nodes, hi=True, noExpand=True)
             extract_gltf(staging_dir,

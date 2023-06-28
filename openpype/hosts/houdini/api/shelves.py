@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import platform
 
@@ -66,9 +67,9 @@ def generate_shelves():
                 )
                 continue
 
-            mandatory_attributes = {'name', 'script'}
+            mandatory_attributes = {'label', 'script'}
             for tool_definition in shelf_definition.get('tools_list'):
-                # We verify that the name and script attibutes of the tool
+                # We verify that the name and script attributes of the tool
                 # are set
                 if not all(
                     tool_definition[key] for key in mandatory_attributes
@@ -152,31 +153,32 @@ def get_or_create_tool(tool_definition, shelf):
     Returns:
         hou.Tool: The tool updated or the new one
     """
-    existing_tools = shelf.tools()
-    tool_label = tool_definition.get('label')
 
+    tool_label = tool_definition.get("label")
+    if not tool_label:
+        log.warning("Skipped shelf without label")
+        return
+
+    script_path = tool_definition["script"]
+    if not script_path or not os.path.exists(script_path):
+        log.warning("This path doesn't exist - {}".format(script_path))
+        return
+
+    existing_tools = shelf.tools()
     existing_tool = next(
         (tool for tool in existing_tools if tool.label() == tool_label),
         None
     )
+
+    with open(script_path) as stream:
+        script = stream.read()
+
+    tool_definition["script"] = script
+
     if existing_tool:
-        tool_definition.pop('name', None)
-        tool_definition.pop('label', None)
+        tool_definition.pop("label", None)
         existing_tool.setData(**tool_definition)
         return existing_tool
 
-    tool_name = tool_label.replace(' ', '_').lower()
-
-    if not os.path.exists(tool_definition['script']):
-        log.warning(
-            "This path doesn't exist - {}".format(tool_definition['script'])
-        )
-        return
-
-    with open(tool_definition['script']) as f:
-        script = f.read()
-        tool_definition.update({'script': script})
-
-    new_tool = hou.shelves.newTool(name=tool_name, **tool_definition)
-
-    return new_tool
+    tool_name = re.sub(r"[^\w\d]+", "_", tool_label).lower()
+    return hou.shelves.newTool(name=tool_name, **tool_definition)

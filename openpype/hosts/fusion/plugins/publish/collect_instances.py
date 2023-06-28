@@ -3,25 +3,7 @@ import os
 import pyblish.api
 
 
-def get_comp_render_range(comp):
-    """Return comp's start-end render range and global start-end range."""
-    comp_attrs = comp.GetAttrs()
-    start = comp_attrs["COMPN_RenderStart"]
-    end = comp_attrs["COMPN_RenderEnd"]
-    global_start = comp_attrs["COMPN_GlobalStart"]
-    global_end = comp_attrs["COMPN_GlobalEnd"]
-
-    # Whenever render ranges are undefined fall back
-    # to the comp's global start and end
-    if start == -1000000000:
-        start = global_start
-    if end == -1000000000:
-        end = global_end
-
-    return start, end, global_start, global_end
-
-
-class CollectInstances(pyblish.api.ContextPlugin):
+class CollectInstanceData(pyblish.api.InstancePlugin):
     """Collect Fusion saver instances
 
     This additionally stores the Comp start and end render range in the
@@ -30,76 +12,68 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.CollectorOrder
-    label = "Collect Instances"
+    label = "Collect Instances Data"
     hosts = ["fusion"]
 
-    def process(self, context):
+    def process(self, instance):
         """Collect all image sequence tools"""
 
-        from openpype.hosts.fusion.api.lib import get_frame_path
+        context = instance.context
 
-        comp = context.data["currentComp"]
+        # Include creator attributes directly as instance data
+        creator_attributes = instance.data["creator_attributes"]
+        instance.data.update(creator_attributes)
 
-        # Get all savers in the comp
-        tools = comp.GetToolList(False).values()
-        savers = [tool for tool in tools if tool.ID == "Saver"]
+        # Include start and end render frame in label
+        subset = instance.data["subset"]
+        start = context.data["frameStart"]
+        end = context.data["frameEnd"]
+        label = "{subset} ({start}-{end})".format(subset=subset,
+                                                  start=int(start),
+                                                  end=int(end))
+        instance.data.update({
+            "label": label,
 
-        start, end, global_start, global_end = get_comp_render_range(comp)
-        context.data["frameStart"] = int(start)
-        context.data["frameEnd"] = int(end)
-        context.data["frameStartHandle"] = int(global_start)
-        context.data["frameEndHandle"] = int(global_end)
+            # todo: Allow custom frame range per instance
+            "frameStart": context.data["frameStart"],
+            "frameEnd": context.data["frameEnd"],
+            "frameStartHandle": context.data["frameStartHandle"],
+            "frameEndHandle": context.data["frameStartHandle"],
+            "handleStart": context.data["handleStart"],
+            "handleEnd": context.data["handleEnd"],
+            "fps": context.data["fps"],
+        })
 
-        for tool in savers:
+        # Add review family if the instance is marked as 'review'
+        # This could be done through a 'review' Creator attribute.
+        if instance.data.get("review", False):
+            self.log.info("Adding review family..")
+            instance.data["families"].append("review")
+
+        if instance.data["family"] == "render":
+            # TODO: This should probably move into a collector of
+            #       its own for the "render" family
+            from openpype.hosts.fusion.api.lib import get_frame_path
+            comp = context.data["currentComp"]
+
+            # This is only the case for savers currently but not
+            # for workfile instances. So we assume saver here.
+            tool = instance.data["transientData"]["tool"]
             path = tool["Clip"][comp.TIME_UNDEFINED]
-
-            tool_attrs = tool.GetAttrs()
-            active = not tool_attrs["TOOLB_PassThrough"]
-
-            if not path:
-                self.log.warning("Skipping saver because it "
-                                 "has no path set: {}".format(tool.Name))
-                continue
 
             filename = os.path.basename(path)
             head, padding, tail = get_frame_path(filename)
             ext = os.path.splitext(path)[1]
             assert tail == ext, ("Tail does not match %s" % ext)
-            subset = head.rstrip("_. ")   # subset is head of the filename
 
-            # Include start and end render frame in label
-            label = "{subset} ({start}-{end})".format(subset=subset,
-                                                      start=int(start),
-                                                      end=int(end))
-
-            instance = context.create_instance(subset)
             instance.data.update({
-                "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
-                "subset": subset,
                 "path": path,
                 "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant
-                "label": label,
-                "frameStart": context.data["frameStart"],
-                "frameEnd": context.data["frameEnd"],
-                "frameStartHandle": context.data["frameStartHandle"],
-                "frameEndHandle": context.data["frameStartHandle"],
-                "fps": context.data["fps"],
-                "families": ["render", "review"],
-                "family": "render",
-                "active": active,
-                "publish": active   # backwards compatibility
+                "ext": ext,  # todo: should be redundant?
+
+                # Backwards compatibility: embed tool in instance.data
+                "tool": tool
             })
 
+            # Add tool itself as member
             instance.append(tool)
-
-            self.log.info("Found: \"%s\" " % path)
-
-        # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=self.sort_by_family)
-
-        return context
-
-    def sort_by_family(self, instance):
-        """Sort by family"""
-        return instance.data.get("families", instance.data.get("family"))

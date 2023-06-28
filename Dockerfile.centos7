@@ -1,6 +1,6 @@
 # Build Pype docker image
 FROM centos:7 AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.7.12
+ARG OPENPYPE_PYTHON_VERSION=3.9.12
 
 LABEL org.opencontainers.image.name="pypeclub/openpype"
 LABEL org.opencontainers.image.title="OpenPype Docker Image"
@@ -52,7 +52,7 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 
 # we need to build our own patchelf
 WORKDIR /temp-patchelf
-RUN git clone https://github.com/NixOS/patchelf.git . \
+RUN git clone -b 0.17.0 --single-branch https://github.com/NixOS/patchelf.git . \
     && source scl_source enable devtoolset-7 \
     && ./bootstrap.sh \
     && ./configure \
@@ -96,11 +96,11 @@ RUN source $HOME/.bashrc \
 RUN source $HOME/.bashrc \
     && bash ./tools/build.sh
 
-RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.7/vendor/python/PySide2/Qt/lib
+RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.9/vendor/python/PySide2/Qt/lib
 
 RUN cd /opt/openpype \
     rm -rf ./vendor/bin

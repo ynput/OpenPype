@@ -1,5 +1,5 @@
 import uuid
-from Qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 
 from openpype.pipeline import discover_legacy_creator_plugins
 
@@ -23,6 +23,8 @@ class CreatorsModel(QtGui.QStandardItemModel):
         items = []
         creators = discover_legacy_creator_plugins()
         for creator in creators:
+            if not creator.enabled:
+                continue
             item_id = str(uuid.uuid4())
             self._creators_by_id[item_id] = creator
 
@@ -39,6 +41,7 @@ class CreatorsModel(QtGui.QStandardItemModel):
             item.setData(False, QtCore.Qt.ItemIsEnabled)
             items.append(item)
 
+        items.sort(key=lambda item: item.text())
         self.invisibleRootItem().appendRows(items)
 
     def get_creator_by_id(self, item_id):

@@ -102,7 +102,7 @@ class ExtractMultiverseUsdOverride(publish.Extractor):
                               long=True)
             self.log.info("Collected object {}".format(members))
 
-            # TODO: Deal with asset, composition, overide with options.
+            # TODO: Deal with asset, composition, override with options.
             import multiverse
 
             time_opts = None

@@ -33,8 +33,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
-        self.log.debug(pformat(instance.data))
-
         creator_identifier = instance.data["creator_identifier"]
         if "editorial" not in creator_identifier:
             return
@@ -82,7 +80,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         ]
 
         otio_clip = clips.pop()
-        self.log.debug(f"__ otioclip.parent: {otio_clip.parent}")
 
         return otio_clip
 
@@ -172,7 +169,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         }
 
         parents = instance.data.get('parents', [])
-        self.log.debug(f"parents: {pformat(parents)}")
 
         actual = {name: in_info}
 
@@ -190,7 +186,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
 
         # adding hierarchy context to instance
         context.data["hierarchyContext"] = final_context
-        self.log.debug(pformat(final_context))
 
     def _update_dict(self, ex_dict, new_dict):
         """ Recursion function

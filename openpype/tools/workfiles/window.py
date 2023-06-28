@@ -1,7 +1,7 @@
 import os
 import datetime
 import copy
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
     get_asset_by_name,

@@ -440,7 +440,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             for res in self.collect_resources(n):
                 instance.data["resources"].append(res)
 
-        self.log.info("Collected resources: {}".format(instance.data["resources"]))
+        self.log.info("Collected resources: {}".format(
+            instance.data["resources"]))
 
         # Log warning when no relevant sets were retrieved for the look.
         if (
@@ -548,9 +549,14 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if not cmds.attributeQuery(attr, node=node, exists=True):
                     continue
                 attribute = "{}.{}".format(node, attr)
+                # We don't support mixed-type attributes yet.
+                if cmds.attributeQuery(attr, node=node, multi=True):
+                    self.log.warning("Attribute '{}' is mixed-type and is "
+                                     "not supported yet.".format(attribute))
+                    continue
                 if cmds.getAttr(attribute, type=True) == "message":
                     continue
-                node_attributes[attr] = cmds.getAttr(attribute)
+                node_attributes[attr] = cmds.getAttr(attribute, asString=True)
             # Only include if there are any properties we care about
             if not node_attributes:
                 continue

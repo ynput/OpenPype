@@ -3,10 +3,9 @@
 import os
 
 import unreal
-from unreal import EditorAssetLibrary as eal
-from unreal import EditorLevelLibrary as ell
 
 from openpype.pipeline import publish
+from openpype.hosts.unreal.api.pipeline import UNREAL_VERSION
 
 
 class ExtractCamera(publish.Extractor):
@@ -18,6 +17,8 @@ class ExtractCamera(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
         # Define extract output file path
         staging_dir = self.staging_dir(instance)
         fbx_filename = "{}.fbx".format(instance.name)
@@ -26,23 +27,54 @@ class ExtractCamera(publish.Extractor):
         self.log.info("Performing extraction..")
 
         # Check if the loaded level is the same of the instance
-        current_level = ell.get_editor_world().get_path_name()
+        if UNREAL_VERSION.major == 5:
+            world = unreal.UnrealEditorSubsystem().get_editor_world()
+        else:
+            world = unreal.EditorLevelLibrary.get_editor_world()
+        current_level = world.get_path_name()
         assert current_level == instance.data.get("level"), \
             "Wrong level loaded"
 
-        for member in instance[:]:
-            data = eal.find_asset_data(member)
-            if data.asset_class == "LevelSequence":
-                ar = unreal.AssetRegistryHelpers.get_asset_registry()
-                sequence = ar.get_asset_by_object_path(member).get_asset()
-                unreal.SequencerTools.export_fbx(
-                    ell.get_editor_world(),
-                    sequence,
-                    sequence.get_bindings(),
-                    unreal.FbxExportOption(),
-                    os.path.join(staging_dir, fbx_filename)
-                )
-                break
+        for member in instance.data.get('members'):
+            data = ar.get_asset_by_object_path(member)
+            if UNREAL_VERSION.major == 5:
+                is_level_sequence = (
+                    data.asset_class_path.asset_name == "LevelSequence")
+            else:
+                is_level_sequence = (data.asset_class == "LevelSequence")
+
+            if is_level_sequence:
+                sequence = data.get_asset()
+                if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor >= 1:
+                    params = unreal.SequencerExportFBXParams(
+                        world=world,
+                        root_sequence=sequence,
+                        sequence=sequence,
+                        bindings=sequence.get_bindings(),
+                        master_tracks=sequence.get_master_tracks(),
+                        fbx_file_name=os.path.join(staging_dir, fbx_filename)
+                    )
+                    unreal.SequencerTools.export_level_sequence_fbx(params)
+                elif UNREAL_VERSION.major == 4 and UNREAL_VERSION.minor == 26:
+                    unreal.SequencerTools.export_fbx(
+                        world,
+                        sequence,
+                        sequence.get_bindings(),
+                        unreal.FbxExportOption(),
+                        os.path.join(staging_dir, fbx_filename)
+                    )
+                else:
+                    # Unreal 5.0 or 4.27
+                    unreal.SequencerTools.export_level_sequence_fbx(
+                        world,
+                        sequence,
+                        sequence.get_bindings(),
+                        unreal.FbxExportOption(),
+                        os.path.join(staging_dir, fbx_filename)
+                    )
+
+                if not os.path.isfile(os.path.join(staging_dir, fbx_filename)):
+                    raise RuntimeError("Failed to extract camera")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

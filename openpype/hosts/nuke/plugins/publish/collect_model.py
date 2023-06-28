@@ -2,7 +2,6 @@ import pyblish.api
 import nuke
 
 
-@pyblish.api.log
 class CollectModel(pyblish.api.InstancePlugin):
     """Collect Model node instance and its content
     """
@@ -14,12 +13,12 @@ class CollectModel(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        grpn = instance[0]
+        geo_node = instance.data["transientData"]["node"]
 
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])
         # make label nicer
-        instance.data["label"] = grpn.name()
+        instance.data["label"] = geo_node.name()
 
         # Get frame range
         handle_start = instance.context.data["handleStart"]
@@ -29,7 +28,6 @@ class CollectModel(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
@@ -45,5 +43,4 @@ class CollectModel(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Model content collected: `{}`".format(instance[:]))
         self.log.info("Model instance collected: `{}`".format(instance))

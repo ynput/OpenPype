@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Working thread for update."""
-from Qt.QtCore import QThread, Signal, QObject  # noqa
+from qtpy import QtCore
 
 from .bootstrap_repos import (
     BootstrapRepos,
@@ -8,7 +8,7 @@ from .bootstrap_repos import (
 )
 
 
-class UpdateThread(QThread):
+class UpdateThread(QtCore.QThread):
     """Install Worker thread.
 
     This class takes care of finding OpenPype version on user entered path
@@ -19,13 +19,13 @@ class UpdateThread(QThread):
     user data dir.
 
     """
-    progress = Signal(int)
-    message = Signal((str, bool))
+    progress = QtCore.Signal(int)
+    message = QtCore.Signal((str, bool))
 
     def __init__(self, parent=None):
         self._result = None
         self._openpype_version = None
-        QThread.__init__(self, parent)
+        super().__init__(parent)
 
     def set_version(self, openpype_version: OpenPypeVersion):
         self._openpype_version = openpype_version
