@@ -107,6 +107,17 @@
                             "label": "Skip Timeline Check  for Tasks"
                         }
                     ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "docstring": "Check if loaded container in scene are latest versions.",
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
                 }
             ]
         },
