@@ -130,7 +130,8 @@ version = "6.4.3"
 package = "PySide2"
 version = "5.15.2"
 
-# DCC packages supply their own opencolorio, lets not interfere with theirs
+# Python dependencies that will be available only in runtime of
+#   OpenPype process - do not interfere with DCCs dependencies
 [openpype.runtime-deps]
 opencolorio = "2.2.1"
 opentimelineio = "0.14.1"
