@@ -164,7 +164,7 @@ def deliver_single_file(
     if not os.path.exists(delivery_folder):
         os.makedirs(delivery_folder)
 
-    if has_renumber_shot and shot_number != 0:
+    if has_renumber_shot:
         src_dir = os.path.dirname(src_path)
         src_filepaths = os.listdir(src_dir)
         src_collections, remainders = clique.assemble(src_filepaths)
@@ -336,15 +336,15 @@ def deliver_sequence(
             os.path.join(dir_path, src_file_name)
         )
 
-        if has_renumber_shot and shot_number != 0:
-            dsp_index = (shot_number - int(index)) + 1
-            if dsp_index < 0:
+        if has_renumber_shot:
+            dst_index = (shot_number - int(index)) + 1
+            if dst_index < 0:
                 msg = "Renumber frame has a smaller number than original frame"     # noqa
                 report_items[msg].append(src_file_name)
                 log.warning("{} <{}>".format(msg, context))
                 return report_items, 0
 
-            dst_padding = dst_collection.format("{padding}") % dsp_index
+            dst_padding = dst_collection.format("{padding}") % dst_index
             dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
             dst = os.path.normpath(
                 os.path.join(delivery_folder, dst)
