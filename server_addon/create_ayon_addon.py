@@ -93,7 +93,7 @@ def main():
     openpype_addon_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     server_dir = openpype_addon_dir / "server"
     package_root = openpype_addon_dir / "package"
-    pyproject_path = openpype_addon_dir / "pyproject.toml"
+    pyproject_path = openpype_addon_dir / "client"/ "pyproject.toml"
 
     root_dir = openpype_addon_dir.parent
     openpype_dir = root_dir / "openpype"
@@ -119,16 +119,21 @@ def main():
     for subitem in server_dir.iterdir():
         shutil.copy(str(subitem), str(output_dir / subitem.name))
 
-    # Zip client
+    # Make sure private dir exists
     private_dir.mkdir(parents=True)
+
+    # Copy pyproject.toml
+    shutil.copy(
+        str(pyproject_path),
+        (private_dir / pyproject_path.name)
+    )
+
+    # Zip client
     zip_filepath = private_dir / "client.zip"
     with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         # Add client code content to zip
         for path, sub_path in find_files_in_subdir(str(openpype_dir)):
             zipf.write(path, f"{openpype_dir.name}/{sub_path}")
-
-        # Add pyproject.toml
-        zipf.write(str(pyproject_path), pyproject_path.name)
 
 
 if __name__ == "__main__":
