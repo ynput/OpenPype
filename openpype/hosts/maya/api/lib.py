@@ -1213,6 +1213,12 @@ def extract_alembic(file,
     # Alembic Exporter requires forward slashes
     file = file.replace('\\', '/')
 
+    # Ensure list arguments are valid.
+    args = [attr, attrPrefix, root]
+    for arg in args:
+        if arg is None:
+            arg = []
+
     # Pass the start and end frame on as `frameRange` so that it
     # never conflicts with that argument
     if not frameRange:
