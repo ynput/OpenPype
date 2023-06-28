@@ -113,12 +113,15 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
 
         self.scene_path = context.data["currentFile"]
         if self.use_published:
-            file_path = get_published_workfile_instance(context)
+            published_workfile = get_published_workfile_instance(context)
 
             # fallback if nothing was set
-            if not file_path:
+            if published_workfile is None:
                 self.log.warning("Falling back to workfile")
                 file_path = context.data["currentFile"]
+            else:
+                workfile_repre = published_workfile.data["representations"][0]
+                file_path = workfile_repre["published_path"]
 
             self.scene_path = file_path
             self.log.info(
