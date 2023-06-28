@@ -39,8 +39,8 @@ def _value_match_regexes(value: str, regexes: Iterable[re.Pattern]) -> bool:
 
 def find_files_in_subdir(
     src_path: str,
-    ignore_file_patterns: Optional[list[re.Pattern]]=None,
-    ignore_dir_patterns: Optional[list[re.Pattern]]=None
+    ignore_file_patterns: Optional[list[re.Pattern]] = None,
+    ignore_dir_patterns: Optional[list[re.Pattern]] = None
 ):
     """Find all files to copy in subdirectories of given path.
 
