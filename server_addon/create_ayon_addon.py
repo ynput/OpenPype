@@ -93,7 +93,7 @@ def main():
     openpype_addon_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     server_dir = openpype_addon_dir / "server"
     package_root = openpype_addon_dir / "package"
-    pyproject_path = openpype_addon_dir / "client"/ "pyproject.toml"
+    pyproject_path = openpype_addon_dir / "client" / "pyproject.toml"
 
     root_dir = openpype_addon_dir.parent
     openpype_dir = root_dir / "openpype"
