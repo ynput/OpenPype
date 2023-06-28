@@ -35,7 +35,7 @@ class CollectBatchData(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.495
     label = "Collect batch data"
     hosts = ["photoshop"]
-    targets = ["automated"]
+    targets = ["webpublish"]
 
     def process(self, context):
         self.log.info("CollectBatchData")
