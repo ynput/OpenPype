@@ -41,8 +41,6 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         """Nuke creates multiple RR jobs - for baking etc."""
         # get output path
         render_path = instance.data['path']
-        self.log.info("render::{}".format(render_path))
-        self.log.info("expected::{}".format(instance.data.get("expectedFiles")))
         script_path = self.scene_path
         node = self._instance.data["transientData"]["node"]
 

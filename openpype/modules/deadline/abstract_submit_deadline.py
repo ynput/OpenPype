@@ -23,8 +23,7 @@ from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
 )
 from openpype.pipeline.publish.lib import (
-    replace_published_scene,
-    get_published_workfile_instance
+    replace_published_scene
 )
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
