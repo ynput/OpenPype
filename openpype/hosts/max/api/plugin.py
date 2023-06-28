@@ -172,7 +172,7 @@ class MaxCreator(Creator, MaxCreatorBase):
             # Setting the property
             rt.setProperty(
                 instance_node.openPypeData, "all_handles", node_list)
-
+        self.log.debug(f"{instance}")
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
 
@@ -184,6 +184,7 @@ class MaxCreator(Creator, MaxCreatorBase):
             created_instance = CreatedInstance.from_existing(
                 read(rt.GetNodeByName(instance)), self
             )
+            self.log.debug(f"{created_instance}")
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
