@@ -64,6 +64,10 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         cls.log.debug("Checking for attribute: %s" % path_attr)
 
+        if not isinstance(output_node, hou.SopNode):
+            cls.log.warning("No geometry output node found, skipping check..")
+            return
+
         # Check if the primitive attribute exists
         frame = instance.data.get("frameStart", 0)
         geo = output_node.geometryAtFrame(frame)
@@ -111,8 +115,24 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
+        """Repair action if `Path Attribute` wasn't exist.
+
+        It Adds a "name" node before the the output node to automatically
+        force a path attribute on the geometry. Be aware that this will
+        create a `default single name` and thus will merge all geometry in one shape.
+        """
+
         output_node = instance.data.get("output_node")
         rop_node = hou.node(instance.data["instance_node"])
+
+        if not (isinstance(output_node, hou.SopNode) and \
+                 output_node.type().name() == "output"):
+            # In the case someone has explicitly set an Object
+            # node instead of a SOP Output node in Geometry context
+            # then for now we ignore - this allows us to also
+            # export object transforms.
+            cls.log.warning("No geometry output node found, skipping Repair Action..")
+            return
 
         frame = instance.data.get("frameStart", 0)
         geo = output_node.geometryAtFrame(frame)
@@ -122,6 +142,8 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                     geo.primStringAttribValues(path_attr)
 
         if not paths:
+
+            cls.log.debug("'%s' attribute was not found!" % path_attr)
             output_node = instance.data.get("output_node")
             path_node = output_node.parent().createNode("name", "AUTO_PATH")
             path_node.parm("attribname").set(path_attr)
@@ -131,3 +153,6 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             path_node.moveToGoodPosition()
             output_node.setFirstInput(path_node)
             output_node.moveToGoodPosition()
+
+            cls.log.debug("'%s' was created, It adds '%s' with a default single value" \
+                          % (path_node, path_attr))
