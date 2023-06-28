@@ -1214,10 +1214,10 @@ def extract_alembic(file,
     file = file.replace('\\', '/')
 
     # Ensure list arguments are valid.
-    args = [attr, attrPrefix, root]
-    for arg in args:
-        if arg is None:
-            arg = []
+    local_vars = locals()
+    for key in ["attr", "attrPrefix", "root"]:
+        if local_vars[key] is None:
+            local_vars[key] = []
 
     # Pass the start and end frame on as `frameRange` so that it
     # never conflicts with that argument
