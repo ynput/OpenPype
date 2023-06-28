@@ -2,6 +2,7 @@ import os
 import errno
 import logging
 import contextlib
+import shutil
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
@@ -113,6 +114,9 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
+        register_event_callback(
+            "workfile.save.before", workfile_save_before_xgen
+        )
         register_event_callback("workfile.save.before", after_workfile_save)
 
     def open_workfile(self, filepath):
@@ -679,6 +683,105 @@ def before_workfile_save(event):
     workdir_path = event["workdir_path"]
     if workdir_path:
         create_workspace_mel(workdir_path, project_name)
+
+
+def display_warning(message, show_cancel=False):
+    """Show feedback to user.
+
+        Returns:
+            bool
+        """
+
+    from qtpy import QtWidgets
+
+    accept = QtWidgets.QMessageBox.Ok
+    if show_cancel:
+        buttons = accept | QtWidgets.QMessageBox.Cancel
+    else:
+        buttons = accept
+
+    state = QtWidgets.QMessageBox.warning(
+        None,
+        "",
+        message,
+        buttons=buttons,
+        defaultButton=accept
+    )
+
+    return state == accept
+
+
+def workfile_save_before_xgen(event):
+    current_work_dir = legacy_io.Session["AVALON_WORKDIR"].replace("\\", "/")
+    expected_work_dir = event.data["workdir_path"].replace("\\", "/")
+    if current_work_dir == expected_work_dir:
+        return
+
+    palettes = cmds.ls(type="xgmPalette", long=True)
+    if not palettes:
+        return
+
+    import xgenm
+
+    transfers = []
+    overwrites = []
+    attribute_changes = {}
+    attrs = ["xgFileName", "xgBaseFile"]
+    for palette in palettes:
+        project_path = xgenm.getAttr("xgProjectPath", palette.replace("|", ""))
+        _, maya_extension = os.path.splitext(event.data["filename"])
+
+        for attr in attrs:
+            node_attr = "{}.{}".format(palette, attr)
+            attr_value = cmds.getAttr(node_attr)
+
+            if not attr_value:
+                continue
+
+            source = os.path.join(project_path, attr_value)
+
+            attr_value = event.data["filename"].replace(
+                maya_extension,
+                "__{}{}".format(
+                    palette.replace("|", "").replace(":", "__"),
+                    os.path.splitext(attr_value)[1]
+                )
+            )
+            target = os.path.join(expected_work_dir, attr_value)
+
+            transfers.append((source, target))
+            attribute_changes[node_attr] = attr_value
+
+        relative_path = xgenm.getAttr(
+            "xgDataPath", palette.replace("|", "")
+        ).split(os.pathsep)[0]
+        absolute_path = relative_path.replace("${PROJECT}", project_path)
+        for root, _, files in os.walk(absolute_path):
+            for f in files:
+                source = os.path.join(root, f).replace("\\", "/")
+                target = source.replace(project_path, expected_work_dir + "/")
+                transfers.append((source, target))
+                if os.path.exists(target):
+                    overwrites.append(target)
+
+    # Ask user about overwriting files.
+    msg = (
+        "WARNING! Potential loss of data.\n\n"
+        "Found duplicate Xgen files in new context.\n"
+        "Do you want to overwrite?\n\n{}".format("\n".join(overwrites))
+    )
+    if overwrites:
+        accept = display_warning(msg, show_cancel=True)
+        if not accept:
+            return
+
+    for attribute, value in attribute_changes.items():
+        cmds.setAttr(attribute, value, type="string")
+
+    for source, destination in transfers:
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
+        shutil.copy(source, destination)
 
 
 def after_workfile_save(event):
