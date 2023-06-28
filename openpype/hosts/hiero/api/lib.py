@@ -38,10 +38,10 @@ from openpype.pipeline.colorspace import (
 )
 
 
-class CTX:
-    _has_been_setup = False
-    _has_menu = False
-    _parent_gui = None
+class _CTX:
+    has_been_setup = False
+    has_menu = False
+    parent_gui = None
 
 
 class DeprecatedWarning(DeprecationWarning):
