@@ -2261,7 +2261,7 @@ def get_frame_range(include_animation_range=False):
     return frame_range
 
 
-def reset_frame_range(playback=True, render=True, fps=True, instances=True):
+def reset_frame_range(playback=True, render=True, fps=True, instances=False):
     """Set frame range to current asset
 
     Args:
@@ -2302,11 +2302,10 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
-    if instances:
-        project_name = get_current_project_name()
-        settings = get_project_settings(project_name)
-        if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-            update_instances_frame_range()
+    project_name = get_current_project_name()
+    settings = get_project_settings(project_name)
+    if instances or settings["maya"]["update_publishable_frame_range"]["enabled"]:
+        update_instances_frame_range()
 
 
 def reset_scene_resolution():
