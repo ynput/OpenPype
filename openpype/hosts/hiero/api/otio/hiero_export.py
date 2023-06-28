@@ -11,20 +11,21 @@ import hiero.core
 import hiero.ui
 
 
+TRACK_TYPE_MAP = {
+    hiero.core.VideoTrack: otio.schema.TrackKind.Video,
+    hiero.core.AudioTrack: otio.schema.TrackKind.Audio
+}
+MARKER_COLOR_MAP = {
+    "magenta": otio.schema.MarkerColor.MAGENTA,
+    "red": otio.schema.MarkerColor.RED,
+    "yellow": otio.schema.MarkerColor.YELLOW,
+    "green": otio.schema.MarkerColor.GREEN,
+    "cyan": otio.schema.MarkerColor.CYAN,
+    "blue": otio.schema.MarkerColor.BLUE,
+}
+    
 class CTX:
-    track_types = {
-        hiero.core.VideoTrack: otio.schema.TrackKind.Video,
-        hiero.core.AudioTrack: otio.schema.TrackKind.Audio
-    }
     project_fps = None
-    marker_color_map = {
-        "magenta": otio.schema.MarkerColor.MAGENTA,
-        "red": otio.schema.MarkerColor.RED,
-        "yellow": otio.schema.MarkerColor.YELLOW,
-        "green": otio.schema.MarkerColor.GREEN,
-        "cyan": otio.schema.MarkerColor.CYAN,
-        "blue": otio.schema.MarkerColor.BLUE,
-    }
     timeline = None
     include_tags = True
 
