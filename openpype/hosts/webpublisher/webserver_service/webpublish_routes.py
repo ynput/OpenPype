@@ -230,7 +230,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'publishfromapp'
-                    "targets": ["remotepublish"]
+                    "targets": ["automated"]
                 },
                 # does publish need to be handled by a queue, eg. only
                 # single process running concurrently?
