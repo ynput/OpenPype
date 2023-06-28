@@ -4,10 +4,10 @@ import shutil
 import zipfile
 import collections
 from pathlib import Path
-
+from typing import Any, Optional, Iterable
 
 # Patterns of directories to be skipped for server part of addon
-IGNORE_DIR_PATTERNS = [
+IGNORE_DIR_PATTERNS: list[re.Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip directories starting with '.'
@@ -18,7 +18,7 @@ IGNORE_DIR_PATTERNS = [
 ]
 
 # Patterns of files to be skipped for server part of addon
-IGNORE_FILE_PATTERNS = [
+IGNORE_FILE_PATTERNS: list[re.Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip files starting with '.'
@@ -30,17 +30,17 @@ IGNORE_FILE_PATTERNS = [
 ]
 
 
-def _value_match_regexes(value, regexes):
-    for regex in regexes:
-        if regex.search(value):
-            return True
-    return False
+def _value_match_regexes(value: str, regexes: Iterable[re.Pattern]) -> bool:
+    return any(
+        regex.search(value)
+        for regex in regexes
+    )
 
 
 def find_files_in_subdir(
-    src_path,
-    ignore_file_patterns=None,
-    ignore_dir_patterns=None
+    src_path: str,
+    ignore_file_patterns: Optional[list[re.Pattern]]=None,
+    ignore_dir_patterns: Optional[list[re.Pattern]]=None
 ):
     """Find all files to copy in subdirectories of given path.
 
@@ -65,12 +65,12 @@ def find_files_in_subdir(
 
     if ignore_dir_patterns is None:
         ignore_dir_patterns = IGNORE_DIR_PATTERNS
-    output = []
+    output: list[tuple[str, str]] = []
 
     hierarchy_queue = collections.deque()
     hierarchy_queue.append((src_path, []))
     while hierarchy_queue:
-        item = hierarchy_queue.popleft()
+        item: tuple[str, str] = hierarchy_queue.popleft()
         dirpath, parents = item
         for name in os.listdir(dirpath):
             path = os.path.join(dirpath, name)
@@ -100,10 +100,10 @@ def main():
     version_path = openpype_dir / "version.py"
 
     # Read version
-    version_content = {}
+    version_content: dict[str, Any] = {}
     with open(str(version_path), "r") as stream:
         exec(stream.read(), version_content)
-    addon_version = version_content["__version__"]
+    addon_version: str = version_content["__version__"]
 
     output_dir = package_root / "openpype" / addon_version
     private_dir = output_dir / "private"
