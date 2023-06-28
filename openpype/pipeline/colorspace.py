@@ -375,7 +375,11 @@ def get_imageio_config(
     # This is for backward compatibility.
     # TODO: in future rewrite this to be more explicit
     activate_host_color_management = imageio_host.get(
-        "activate_host_color_management", True)
+        "activate_host_color_management")
+
+    # TODO: remove this in future - backward compatibility
+    if activate_host_color_management is None:
+        activate_host_color_management = host_ocio_config.get("enabled", False)
 
     if not activate_host_color_management:
         # if host settings are disabled return False because

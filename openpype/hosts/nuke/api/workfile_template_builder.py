@@ -25,6 +25,7 @@ from .lib import (
     select_nodes,
     duplicate_node,
     node_tempfile,
+    get_main_window
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
@@ -189,7 +190,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -603,7 +604,7 @@ class NukePlaceholderCreatePlugin(
     def get_placeholder_options(self, options=None):
         return self.get_create_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -963,8 +964,9 @@ def update_workfile_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = NukeTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder)
-    window.exec_()
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
+    window.show()
 
 
 def update_placeholder(*args):
@@ -988,6 +990,7 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()
