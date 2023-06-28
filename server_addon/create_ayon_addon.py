@@ -42,6 +42,24 @@ def find_files_in_subdir(
     ignore_file_patterns=None,
     ignore_dir_patterns=None
 ):
+    """Find all files to copy in subdirectories of given path.
+
+    All files that match any of the patterns in 'ignore_file_patterns' will
+        be skipped and any directories that match any of the patterns in
+        'ignore_dir_patterns' will be skipped with all subfiles.
+
+    Args:
+        src_path (str): Path to directory to search in.
+        ignore_file_patterns (Optional[list[re.Pattern]]): List of regexes
+            to match files to ignore.
+        ignore_dir_patterns (Optional[list[re.Pattern]]): List of regexes
+            to match directories to ignore.
+
+    Returns:
+        list[tuple[str, str]]: List of tuples with path to file and parent
+            directories relative to 'src_path'.
+    """
+
     if ignore_file_patterns is None:
         ignore_file_patterns = IGNORE_FILE_PATTERNS
 
