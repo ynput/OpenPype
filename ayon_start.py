@@ -200,7 +200,7 @@ from ayon_common.connection.credentials import (
     create_global_connection,
     confirm_server_login,
 )
-from ayon_common.distribution.addon_distribution import AyonDistribution
+from ayon_common.distribution import AyonDistribution
 
 
 def set_global_environments() -> None:
@@ -288,6 +288,9 @@ def _check_and_update_from_ayon_server():
     distribution = AyonDistribution()
     distribution.distribute()
     distribution.validate_distribution()
+    bundle_name = distribution.bundle_name_to_use
+    if bundle_name:
+        os.environ["AYON_BUNDLE_NAME"] = bundle_name
 
     python_paths = [
         path

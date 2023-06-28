@@ -4,24 +4,28 @@ import json
 import traceback
 import collections
 import datetime
-from enum import Enum
-from abc import abstractmethod
-import attr
 import logging
-import platform
 import shutil
 import threading
-from abc import ABCMeta
+import platform
+import attr
+from enum import Enum
 
 import ayon_api
 
-from ayon_common.utils import get_ayon_appdirs
-from .file_handler import RemoteFileHandler
-from .addon_info import (
-    AddonInfo,
-    UrlType,
-    DependencyItem,
+from .utils import (
+    get_addons_dir,
+    get_dependencies_dir,
 )
+from .downloaders import get_default_download_factory
+from .data_structures import (
+    AddonInfo,
+    DependencyItem,
+    Installer,
+    Bundle,
+)
+
+NOT_SET = type("UNKNOWN", (), {"__bool__": lambda: False})()
 
 
 class UpdateState(Enum):
@@ -30,326 +34,6 @@ class UpdateState(Enum):
     OUTDATED = "outdated"
     UPDATE_FAILED = "failed"
     MISS_SOURCE_FILES = "miss_source_files"
-
-
-def get_local_dir(*subdirs):
-    """Get product directory in user's home directory.
-
-    Each user on machine have own local directory where are downloaded updates,
-    addons etc.
-
-    Returns:
-        str: Path to product local directory.
-    """
-
-    if not subdirs:
-        raise ValueError("Must fill dir_name if nothing else provided!")
-
-    local_dir = get_ayon_appdirs(*subdirs)
-    if not os.path.isdir(local_dir):
-        try:
-            os.makedirs(local_dir)
-        except Exception:  # TODO fix exception
-            raise RuntimeError(f"Cannot create {local_dir}")
-
-    return local_dir
-
-
-def get_addons_dir():
-    """Directory where addon packages are stored.
-
-    Path to addons is defined using python module 'appdirs' which
-
-    The path is stored into environment variable 'AYON_ADDONS_DIR'.
-    Value of environment variable can be overriden, but we highly recommended
-    to use that option only for development purposes.
-
-    Returns:
-        str: Path to directory where addons should be downloaded.
-    """
-
-    addons_dir = os.environ.get("AYON_ADDONS_DIR")
-    if not addons_dir:
-        addons_dir = get_local_dir("addons")
-        os.environ["AYON_ADDONS_DIR"] = addons_dir
-    return addons_dir
-
-
-def get_dependencies_dir():
-    """Directory where dependency packages are stored.
-
-    Path to addons is defined using python module 'appdirs' which
-
-    The path is stored into environment variable 'AYON_DEPENDENCIES_DIR'.
-    Value of environment variable can be overriden, but we highly recommended
-    to use that option only for development purposes.
-
-    Returns:
-        str: Path to directory where dependency packages should be downloaded.
-    """
-
-    dependencies_dir = os.environ.get("AYON_DEPENDENCIES_DIR")
-    if not dependencies_dir:
-        dependencies_dir = get_local_dir("dependency_packages")
-        os.environ["AYON_DEPENDENCIES_DIR"] = dependencies_dir
-    return dependencies_dir
-
-
-class SourceDownloader(metaclass=ABCMeta):
-    log = logging.getLogger(__name__)
-
-    @classmethod
-    @abstractmethod
-    def download(cls, source, destination_dir, data, transfer_progress):
-        """Returns url to downloaded addon zip file.
-
-        Tranfer progress can be ignored, in that case file transfer won't
-        be shown as 0-100% but as 'running'. First step should be to set
-        destination content size and then add transferred chunk sizes.
-
-        Args:
-            source (dict): {type:"http", "url":"https://} ...}
-            destination_dir (str): local folder to unzip
-            data (dict): More information about download content. Always have
-                'type' key in.
-            transfer_progress (ayon_api.TransferProgress): Progress of
-                transferred (copy/download) content.
-
-        Returns:
-            (str) local path to addon zip file
-        """
-
-        pass
-
-    @classmethod
-    @abstractmethod
-    def cleanup(cls, source, destination_dir, data):
-        """Cleanup files when distribution finishes or crashes.
-
-        Cleanup e.g. temporary files (downloaded zip) or other related stuff
-        to downloader.
-        """
-
-        pass
-
-    @classmethod
-    def check_hash(cls, addon_path, addon_hash, hash_type="sha256"):
-        """Compares 'hash' of downloaded 'addon_url' file.
-
-        Args:
-            addon_path (str): Local path to addon file.
-            addon_hash (str): Hash of downloaded file.
-            hash_type (str): Type of hash.
-
-        Raises:
-            ValueError if hashes doesn't match
-        """
-
-        if not os.path.exists(addon_path):
-            raise ValueError(f"{addon_path} doesn't exist.")
-        if not RemoteFileHandler.check_integrity(addon_path,
-                                                 addon_hash,
-                                                 hash_type=hash_type):
-            raise ValueError(f"{addon_path} doesn't match expected hash.")
-
-    @classmethod
-    def unzip(cls, addon_zip_path, destination_dir):
-        """Unzips local 'addon_zip_path' to 'destination'.
-
-        Args:
-            addon_zip_path (str): local path to addon zip file
-            destination_dir (str): local folder to unzip
-        """
-
-        RemoteFileHandler.unzip(addon_zip_path, destination_dir)
-        os.remove(addon_zip_path)
-
-
-class DownloadFactory:
-    def __init__(self):
-        self._downloaders = {}
-
-    def register_format(self, downloader_type, downloader):
-        """Register downloader for download type.
-
-        Args:
-            downloader_type (UrlType): Type of source.
-            downloader (SourceDownloader): Downloader which cares about
-                download, hash check and unzipping.
-        """
-
-        self._downloaders[downloader_type.value] = downloader
-
-    def get_downloader(self, downloader_type):
-        """Registered downloader for type.
-
-        Args:
-            downloader_type (UrlType): Type of source.
-
-        Returns:
-            SourceDownloader: Downloader object which should care about file
-                distribution.
-
-        Raises:
-            ValueError: If type does not have registered downloader.
-        """
-
-        if downloader := self._downloaders.get(downloader_type):
-            return downloader()
-        raise ValueError(f"{downloader_type} not implemented")
-
-
-class OSDownloader(SourceDownloader):
-    @classmethod
-    def download(cls, source, destination_dir, data, transfer_progress):
-        # OS doesn't need to download, unzip directly
-        addon_url = source["path"].get(platform.system().lower())
-        if not os.path.exists(addon_url):
-            raise ValueError(f"{addon_url} is not accessible")
-        return addon_url
-
-    @classmethod
-    def cleanup(cls, source, destination_dir, data):
-        # Nothing to do - download does not copy anything
-        pass
-
-
-class HTTPDownloader(SourceDownloader):
-    CHUNK_SIZE = 100000
-
-    @staticmethod
-    def get_filename(source):
-        source_url = source["url"]
-        filename = source.get("filename")
-        if not filename:
-            filename = os.path.basename(source_url)
-            basename, ext = os.path.splitext(filename)
-            allowed_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
-            if ext.replace(".", "") not in allowed_exts:
-                filename = f"{basename}.zip"
-        return filename
-
-    @classmethod
-    def download(cls, source, destination_dir, data, transfer_progress):
-        source_url = source["url"]
-        cls.log.debug(f"Downloading {source_url} to {destination_dir}")
-        headers = source.get("headers")
-        filename = cls.get_filename(source)
-
-        # TODO use transfer progress
-        RemoteFileHandler.download_url(
-            source_url,
-            destination_dir,
-            filename,
-            headers=headers
-        )
-
-        return os.path.join(destination_dir, filename)
-
-    @classmethod
-    def cleanup(cls, source, destination_dir, data):
-        # Nothing to do - download does not copy anything
-        filename = cls.get_filename(source)
-        filepath = os.path.join(destination_dir, filename)
-        if os.path.exists(filepath) and os.path.isfile(filepath):
-            os.remove(filepath)
-
-
-class AyonServerDownloader(SourceDownloader):
-    """Downloads static resource file from v4 Server.
-
-    Expects filled env var AYON_SERVER_URL.
-    """
-
-    CHUNK_SIZE = 8192
-
-    @classmethod
-    def download(cls, source, destination_dir, data, transfer_progress):
-        path = source["path"]
-        filename = source["filename"]
-        if path and not filename:
-            filename = path.split("/")[-1]
-
-        cls.log.debug(f"Downloading {filename} to {destination_dir}")
-
-        _, ext = os.path.splitext(filename)
-        clear_ext = ext.lower().replace(".", "")
-        valid_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
-        if clear_ext not in valid_exts:
-            raise ValueError(
-                "Invalid file extension \"{}\". Expected {}".format(
-                    clear_ext, ", ".join(valid_exts)
-                ))
-
-        if path:
-            filepath = os.path.join(destination_dir, filename)
-            return ayon_api.download_file(
-                path,
-                filepath,
-                chunk_size=cls.CHUNK_SIZE,
-                progress=transfer_progress
-            )
-
-        # dst_filepath = os.path.join(destination_dir, filename)
-        if data["type"] == "dependency_package":
-            return ayon_api.download_dependency_package(
-                data["name"],
-                destination_dir,
-                filename,
-                platform_name=data["platform"],
-                chunk_size=cls.CHUNK_SIZE,
-                progress=transfer_progress
-            )
-
-        if data["type"] == "addon":
-            return ayon_api.download_addon_private_file(
-                data["name"],
-                data["version"],
-                filename,
-                destination_dir,
-                chunk_size=cls.CHUNK_SIZE,
-                progress=transfer_progress
-            )
-
-        raise ValueError(f"Unknown type to download \"{data['type']}\"")
-
-    @classmethod
-    def cleanup(cls, source, destination_dir, data):
-        # Nothing to do - download does not copy anything
-        filename = source["filename"]
-        filepath = os.path.join(destination_dir, filename)
-        if os.path.exists(filepath) and os.path.isfile(filepath):
-            os.remove(filepath)
-
-
-def get_dependency_package(package_name=None):
-    """Returns info about currently used dependency package.
-
-    Dependency package means .venv created from all activated addons from the
-    server (plus libraries for core Tray app TODO confirm).
-    This package needs to be downloaded, unpacked and added to sys.path for
-    Tray app to work.
-
-    Args:
-        package_name (str): Name of package. Production package name is used
-            if not entered.
-
-    Returns:
-        Union[DependencyItem, None]: Item or None if package with the name was
-            not found.
-    """
-
-    dependencies_info = ayon_api.get_dependencies_info()
-
-    dependency_list = dependencies_info["packages"]
-    # Use production package if package is not specified
-    if package_name is None:
-        package_name = dependencies_info["productionPackage"]
-
-    for dependency in dependency_list:
-        dependency_package = DependencyItem.from_dict(dependency)
-        if dependency_package.name == package_name:
-            return dependency_package
 
 
 class DistributeTransferProgress:
@@ -733,9 +417,16 @@ class AyonDistribution:
         dependency_dirpath (Optional[str]): Where dependencies will be stored.
         dist_factory (Optional[DownloadFactory]): Factory which cares about
             downloading of items based on source type.
-        addons_info (Optional[List[AddonInfo]]): List of prepared addons' info.
-        dependency_package_info (Optional[Union[Dict[str, Any], None]]): Info
-            about package from server. Defaults to '-1'.
+        addons_info (Optional[list[dict[str, Any]]): List of prepared
+            addons' info.
+        dependency_packages_info (Optional[list[dict[str, Any]]): Info
+            about packages from server.
+        bundles_info (Optional[Dict[str, Any]]): Info about
+            bundles.
+        bundle_name (Optional[str]): Name of bundle to use. If not passed
+            an environment variable 'AYON_BUNDLE_NAME' is checked for value.
+            When both are not available the bundle is defined by 'use_staging'
+            value.
         use_staging (Optional[bool]): Use staging versions of an addon.
             If not passed, an environment variable 'OPENPYPE_USE_STAGING' is
             checked for value '1'.
@@ -746,10 +437,17 @@ class AyonDistribution:
         addon_dirpath=None,
         dependency_dirpath=None,
         dist_factory=None,
-        addons_info=None,
-        dependency_package_info=-1,
+        addons_info=NOT_SET,
+        dependency_packages_info=NOT_SET,
+        bundles_info=NOT_SET,
+        bundle_name=NOT_SET,
         use_staging=None
     ):
+        self._log = None
+
+        self._dist_started = False
+        self._dist_finished = False
+
         self._addons_dirpath = addon_dirpath or get_addons_dir()
         self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
         self._dist_factory = (
@@ -758,84 +456,285 @@ class AyonDistribution:
 
         if isinstance(addons_info, list):
             addons_info = {item.full_name: item for item in addons_info}
-        self._dist_started = False
-        self._dist_finished = False
-        self._log = None
+
+        if bundle_name is NOT_SET:
+            bundle_name = os.environ.get("AYON_BUNDLE_NAME", NOT_SET)
+
+        # Raw addons data from server
         self._addons_info = addons_info
-        self._addons_dist_items = None
-        self._dependency_package = dependency_package_info
-        self._dependency_dist_item = -1
+        # Prepared data as Addon objects
+        self._addon_items = NOT_SET
+        # Distrubtion items of addons
+        #   - only those addons and versions that should be distributed
+        self._addon_dist_items = NOT_SET
+
+        # Raw dependency packages data from server
+        self._dependency_packages_info = dependency_packages_info
+        # Prepared dependency packages as objects
+        self._dependency_packages_items = NOT_SET
+        # Dependency package item that should be used
+        self._dependency_package_item = NOT_SET
+        # Distribution item of dependency package
+        self._dependency_dist_item = NOT_SET
+
+        # Raw bundles data from server
+        self._bundles_info = bundles_info
+        # Bundles as objects
+        self._bundle_items = NOT_SET
+
+        # Bundle that should be used in production
+        self._production_bundle = NOT_SET
+        # Bundle that should be used in staging
+        self._staging_bundle = NOT_SET
+        # Boolean that defines if staging bundle should be used
         self._use_staging = use_staging
+
+        # Specific bundle name should be used
+        self._bundle_name = bundle_name
+        # Final bundle that will be used
+        self._bundle = NOT_SET
 
     @property
     def use_staging(self):
+        """Staging version of a bundle should be used.
+
+        This value is completely ignored if specific bundle name should
+            be used.
+
+        Returns:
+            bool: True if staging version should be used.
+        """
+
         if self._use_staging is None:
             self._use_staging = os.getenv("OPENPYPE_USE_STAGING") == "1"
         return self._use_staging
 
     @property
     def log(self):
+        """Helper to access logger.
+
+        Returns:
+             logging.Logger: Logger instance.
+        """
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
+    def bundles_info(self):
+        """
+
+        Returns:
+            dict[str, dict[str, Any]]: Bundles information from server.
+        """
+
+        if self._bundles_info is NOT_SET:
+            self._bundles_info = ayon_api.get_bundles()
+        return self._bundles_info
+
+    @property
+    def bundle_items(self):
+        """
+
+        Returns:
+            list[Bundle]: List of bundles info.
+        """
+
+        if self._bundle_items is NOT_SET:
+            self._bundle_items = [
+                Bundle.from_dict(info)
+                for info in self.bundles_info["bundles"]
+            ]
+        return self._bundle_items
+
+    def _prepare_production_staging_bundles(self):
+        production_bundle = None
+        staging_bundle = None
+        for bundle in self.bundle_items:
+            if bundle.is_production:
+                production_bundle = bundle
+            if bundle.is_staging:
+                staging_bundle = bundle
+        self._production_bundle = production_bundle
+        self._staging_bundle = staging_bundle
+
+    @property
+    def production_bundle(self):
+        """
+        Returns:
+            Union[Bundle, None]: Bundle that should be used in production.
+        """
+
+        if self._production_bundle is NOT_SET:
+            self._prepare_production_staging_bundles()
+        return self._production_bundle
+
+    @property
+    def staging_bundle(self):
+        """
+        Returns:
+            Union[Bundle, None]: Bundle that should be used in staging.
+        """
+
+        if self._staging_bundle is NOT_SET:
+            self._prepare_production_staging_bundles()
+        return self._staging_bundle
+
+    @property
+    def bundle_to_use(self):
+        """Bundle that will be used for distribution.
+
+        Bundle that should be used can be affected by 'bundle_name'
+            or 'use_staging'.
+
+        Returns:
+            Union[Bundle, None]: Bundle that will be used for distribution
+                or None.
+        """
+
+        if self._bundle is NOT_SET:
+            if self._bundle_name is not NOT_SET:
+                bundle = next(
+                    (
+                        bundle
+                        for bundle in self.bundle_items
+                        if bundle.name == self._bundle_name
+                    ),
+                    None
+                )
+                if bundle is None:
+                    raise ValueError(
+                        f"Bundle '{self._bundle_name}'"
+                        " is not available on server"
+                    )
+                self._bundle = bundle
+            elif self.use_staging:
+                self._bundle = self.staging_bundle
+            else:
+                self._bundle = self.production_bundle
+        return self._bundle
+
+    @property
+    def bundle_name_to_use(self):
+        bundle = self.bundle_to_use
+        return None if bundle is None else bundle.name
+
+    @property
     def addons_info(self):
+        """Server information about available addons.
+
+        Returns:
+            Dict[str, dict[str, Any]: Addon info by addon name.
+        """
+
+        if self._addons_info is NOT_SET:
+            self._addons_info = ayon_api.get_addons_info(details=True)
+        return self._addons_info
+
+    @property
+    def addon_items(self):
         """Information about available addons on server.
 
         Addons may require distribution of files. For those addons will be
         created 'DistributionItem' handling distribution itself.
 
-        Todos:
-            Add support for staging versions. Right now is supported only
-                production version.
-
         Returns:
-            Dict[str, AddonInfo]: Addon info by full name.
+            Dict[str, AddonInfo]: Addon info object by addon name.
         """
 
-        if self._addons_info is None:
+        if self._addon_items is NOT_SET:
             addons_info = {}
-            server_addons_info = ayon_api.get_addons_info(details=True)
-            for addon in server_addons_info["addons"]:
-                addon_info = AddonInfo.from_dict(addon, self.use_staging)
-                if addon_info is None:
-                    continue
-                addons_info[addon_info.full_name] = addon_info
-
-            self._addons_info = addons_info
-        return self._addons_info
+            for addon in self.addons_info["addons"]:
+                addon_info = AddonInfo.from_dict(addon)
+                addons_info[addon_info.name] = addon_info
+            self._addon_items = addons_info
+        return self._addon_items
 
     @property
-    def dependency_package(self):
-        """Information about dependency package from server.
-
-        Receive and cache dependency package information from server.
+    def dependency_packages_info(self):
+        """Server information about available dependency packages.
 
         Notes:
-            For testing purposes it is possible to pass dependency package
+            For testing purposes it is possible to pass dependency packages
                 information to '__init__'.
 
         Returns:
-            Union[None, Dict[str, Any]]: None if server does not have specified
-                dependency package.
+            list[dict[str, Any]]: Dependency packages information.
         """
 
-        if self._dependency_package == -1:
-            self._dependency_package = get_dependency_package()
-        return self._dependency_package
+        if self._dependency_packages_info is NOT_SET:
+            self._dependency_packages_info = (
+                ayon_api.get_dependency_packages())
+        return self._dependency_packages_info
 
-    def _prepare_current_addons_dist_items(self):
+    @property
+    def dependency_packages_items(self):
+        """Dependency packages as objects.
+
+        Returns:
+            dict[str, DependencyItem]: Dependency packages as objects by name.
+        """
+
+        if self._dependency_packages_items is NOT_SET:
+            dependenc_package_items = {}
+            for item in self.dependency_packages_info["packages"]:
+                item = DependencyItem.from_dict(item)
+                dependenc_package_items[item.name] = item
+            self._dependency_packages_items = dependenc_package_items
+        return self._dependency_packages_items
+
+    @property
+    def dependency_package_item(self):
+        """Dependency package item that should be used by bundle.
+
+        Returns:
+            Union[None, Dict[str, Any]]: None if bundle does not have
+                specified dependency package.
+        """
+
+        if self._dependency_package_item is NOT_SET:
+            dependency_package_item = None
+            bundle = self.bundle_to_use
+            if bundle is not None:
+                package_name = bundle.dependency_packages.get(
+                    platform.system().lower()
+                )
+                dependency_package_item = self.dependency_packages_items.get(
+                    package_name)
+            self._dependency_package_item = dependency_package_item
+        return self._dependency_package_item
+
+    def _prepare_current_addon_dist_items(self):
         addons_metadata = self.get_addons_metadata()
-        output = {}
-        for full_name, addon_info in self.addons_info.items():
-            if not addon_info.require_distribution:
+        output = []
+        addon_versions = {}
+        bundle = self.bundle_to_use
+        if bundle is not None:
+            addon_versions = bundle.addon_versions
+        for addon_name, addon_item in self.addons_info.items():
+            addon_version = addon_versions.get(addon_name)
+            # Addon is not in bundle -> Skip
+            if addon_version is None:
                 continue
+
+            addon_version_item = addon_item.versions.get(addon_version)
+            # Addon version is not available in addons info
+            # - TODO handle this case (raise error, skip, store, report, ...)
+            if addon_version_item is None:
+                print(
+                    f"Version '{addon_version}' of addon '{addon_name}'"
+                    " is not available on server."
+                )
+                continue
+
+            if not addon_version_item.require_distribution:
+                continue
+            full_name = addon_version_item.full_name
             addon_dest = os.path.join(self._addons_dirpath, full_name)
             self.log.debug(f"Checking {full_name} in {addon_dest}")
             addon_in_metadata = (
-                addon_info.name in addons_metadata
-                and addon_info.version in addons_metadata[addon_info.name]
+                addon_name in addons_metadata
+                and addon_version_item.version in addons_metadata[addon_name]
             )
             if addon_in_metadata and os.path.isdir(addon_dest):
                 self.log.debug(
@@ -848,25 +747,32 @@ class AyonDistribution:
 
             downloader_data = {
                 "type": "addon",
-                "name": addon_info.name,
-                "version": addon_info.version
+                "name": addon_name,
+                "version": addon_version
             }
 
-            output[full_name] = DistributionItem(
+            dist_item = DistributionItem(
                 state,
                 addon_dest,
                 addon_dest,
-                addon_info.hash,
+                addon_version_item.hash,
                 self._dist_factory,
-                list(addon_info.sources),
+                list(addon_version_item.sources),
                 downloader_data,
                 full_name,
                 self.log
             )
+            output.append({
+                "dist_item": dist_item,
+                "addon_name": addon_name,
+                "addon_version": addon_version,
+                "addon_item": addon_item,
+                "addon_version_item": addon_version_item,
+            })
         return output
 
     def _prepare_dependency_progress(self):
-        package = self.dependency_package
+        package = self.dependency_package_item
         if package is None or not package.require_distribution:
             return None
 
@@ -898,20 +804,34 @@ class AyonDistribution:
             self.log,
         )
 
-    def get_addons_dist_items(self):
+    def get_addon_dist_items(self):
         """Addon distribution items.
 
         These items describe source files required by addon to be available on
         machine. Each item may have 0-n source information from where can be
         obtained. If file is already available it's state will be 'UPDATED'.
 
+        Example output:
+            [
+                {
+                    "dist_item": DistributionItem,
+                    "addon_name": str,
+                    "addon_version": str,
+                    "addon_item": AddonInfo,
+                    "addon_version_item": AddonVersionInfo
+                }, {
+                    ...
+                }
+            ]
+
         Returns:
-             Dict[str, DistributionItem]: Distribution items by addon fullname.
+             list[dict[str, Any]]: Distribution items with addon version item.
         """
 
-        if self._addons_dist_items is None:
-            self._addons_dist_items = self._prepare_current_addons_dist_items()
-        return self._addons_dist_items
+        if self._addon_dist_items is NOT_SET:
+            self._addon_dist_items = (
+                self._prepare_current_addon_dist_items())
+        return self._addon_dist_items
 
     def get_dependency_dist_item(self):
         """Dependency package distribution item.
@@ -928,7 +848,7 @@ class AyonDistribution:
                 does not have specified any dependency package.
         """
 
-        if self._dependency_dist_item == -1:
+        if self._dependency_dist_item is NOT_SET:
             self._dependency_dist_item = self._prepare_dependency_progress()
         return self._dependency_dist_item
 
@@ -1049,7 +969,8 @@ class AyonDistribution:
                 self.update_dependency_metadata(package.name, data)
 
         addons_info = {}
-        for full_name, dist_item in self.get_addons_dist_items().items():
+        for item in self.get_addon_dist_items():
+            dist_item = item["dist_item"]
             if (
                 not dist_item.need_distribution
                 or dist_item.state != UpdateState.UPDATED
@@ -1059,10 +980,11 @@ class AyonDistribution:
             source_data = dist_item.used_source
             if not source_data:
                 continue
-            addon_info = self.addons_info[full_name]
-            if addon_info.name not in addons_info:
-                addons_info[addon_info.name] = {}
-            addons_info[addon_info.name][addon_info.version] = {
+
+            addon_name = item["addon_name"]
+            addon_version = item["addon_version"]
+            addons_info.setdefault(addon_name, {})
+            addons_info[addon_name][addon_version] = {
                 "source": source_data,
                 "file_hash": dist_item.file_hash,
                 "distributed_dt": stored_time
@@ -1082,12 +1004,14 @@ class AyonDistribution:
             List[DistributionItem]: Distribution items required by server.
         """
 
-        output = []
+        output = [
+            item["dist_item"]
+            for item in self.get_addon_dist_items()
+        ]
         dependency_dist_item = self.get_dependency_dist_item()
         if dependency_dist_item is not None:
-            output.append(dependency_dist_item)
-        for dist_item in self.get_addons_dist_items().values():
-            output.append(dist_item)
+            output.insert(0, dependency_dist_item)
+
         return output
 
     def distribute(self, threaded=False):
@@ -1136,9 +1060,10 @@ class AyonDistribution:
         ):
             invalid.append("Dependency package")
 
-        for addon_name, dist_item in self.get_addons_dist_items().items():
+        for item in self.get_addon_dist_items():
+            dist_item = item["dist_item"]
             if dist_item.state != UpdateState.UPDATED:
-                invalid.append(addon_name)
+                invalid.append(item["addon_name"])
 
         if not invalid:
             return
@@ -1170,14 +1095,6 @@ class AyonDistribution:
             if unzip_dirpath and os.path.exists(unzip_dirpath):
                 output.append(unzip_dirpath)
         return output
-
-
-def get_default_download_factory():
-    download_factory = DownloadFactory()
-    download_factory.register_format(UrlType.FILESYSTEM, OSDownloader)
-    download_factory.register_format(UrlType.HTTP, HTTPDownloader)
-    download_factory.register_format(UrlType.SERVER, AyonServerDownloader)
-    return download_factory
 
 
 def cli(*args):

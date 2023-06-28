@@ -9,21 +9,21 @@ import hashlib
 import tarfile
 import zipfile
 
-
 USER_AGENT = "openpype"
 
 
 class RemoteFileHandler:
     """Download file from url, might be GDrive shareable link"""
 
-    IMPLEMENTED_ZIP_FORMATS = ['zip', 'tar', 'tgz',
-                               'tar.gz', 'tar.xz', 'tar.bz2']
+    IMPLEMENTED_ZIP_FORMATS = [
+        "zip", "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
+    ]
 
     @staticmethod
     def calculate_md5(fpath, chunk_size=10000):
         md5 = hashlib.md5()
-        with open(fpath, 'rb') as f:
-            for chunk in iter(lambda: f.read(chunk_size), b''):
+        with open(fpath, "rb") as f:
+            for chunk in iter(lambda: f.read(chunk_size), b""):
                 md5.update(chunk)
         return md5.hexdigest()
 
@@ -45,7 +45,7 @@ class RemoteFileHandler:
         h = hashlib.sha256()
         b = bytearray(128 * 1024)
         mv = memoryview(b)
-        with open(fpath, 'rb', buffering=0) as f:
+        with open(fpath, "rb", buffering=0) as f:
             for n in iter(lambda: f.readinto(mv), 0):
                 h.update(mv[:n])
         return h.hexdigest()
@@ -69,21 +69,27 @@ class RemoteFileHandler:
 
     @staticmethod
     def download_url(
-        url, root, filename=None,
-        sha256=None, max_redirect_hops=3, headers=None
+        url,
+        root,
+        filename=None,
+        sha256=None,
+        max_redirect_hops=3,
+        headers=None
     ):
-        """Download a file from a url and place it in root.
+        """Download a file from url and place it in root.
         Args:
             url (str): URL to download file from
             root (str): Directory to place downloaded file in
             filename (str, optional): Name to save the file under.
                 If None, use the basename of the URL
-            sha256 (str, optional): sha256 checksum of the download.
+            sha256 (Optional[str]): sha256 checksum of the download.
                 If None, do not check
-            max_redirect_hops (int, optional): Maximum number of redirect
+            max_redirect_hops (Optional[int]): Maximum number of redirect
                 hops allowed
-            headers (dict): additional required headers - Authentication etc..
+            headers (Optional[dict[str, str]]): Additional required headers
+                - Authentication etc..
         """
+
         root = os.path.expanduser(root)
         if not filename:
             filename = os.path.basename(url)
@@ -92,15 +98,15 @@ class RemoteFileHandler:
         os.makedirs(root, exist_ok=True)
 
         # check if file is already present locally
-        if RemoteFileHandler.check_integrity(fpath,
-                                             sha256, hash_type="sha256"):
+        if RemoteFileHandler.check_integrity(
+            fpath, sha256, hash_type="sha256"
+        ):
             print(f"Using downloaded and verified file: {fpath}")
             return
 
         # expand redirect chain if needed
-        url = RemoteFileHandler._get_redirect_url(url,
-                                                  max_hops=max_redirect_hops,
-                                                  headers=headers)
+        url = RemoteFileHandler._get_redirect_url(
+            url, max_hops=max_redirect_hops, headers=headers)
 
         # check if file is located on Google Drive
         file_id = RemoteFileHandler._get_google_drive_file_id(url)
@@ -112,27 +118,27 @@ class RemoteFileHandler:
         try:
             print(f"Downloading {url} to {fpath}")
             RemoteFileHandler._urlretrieve(url, fpath, headers=headers)
-        except (urllib.error.URLError, IOError) as e:
-            if url[:5] == "https":
-                url = url.replace("https:", "http:")
-                print((
-                    "Failed download. Trying https -> http instead."
-                    f" Downloading {url} to {fpath}"
-                ))
-                RemoteFileHandler._urlretrieve(url, fpath,
-                                               headers=headers)
-            else:
-                raise e
+        except (urllib.error.URLError, IOError) as exc:
+            if url[:5] != "https":
+                raise exc
+
+            url = url.replace("https:", "http:")
+            print((
+                "Failed download. Trying https -> http instead."
+                f" Downloading {url} to {fpath}"
+            ))
+            RemoteFileHandler._urlretrieve(url, fpath, headers=headers)
 
         # check integrity of downloaded file
-        if not RemoteFileHandler.check_integrity(fpath,
-                                                 sha256, hash_type="sha256"):
+        if not RemoteFileHandler.check_integrity(
+            fpath, sha256, hash_type="sha256"
+        ):
             raise RuntimeError("File not found or corrupted.")
 
     @staticmethod
-    def download_file_from_google_drive(file_id, root,
-                                        filename=None,
-                                        sha256=None):
+    def download_file_from_google_drive(
+        file_id, root, filename=None, sha256=None
+    ):
         """Download a Google Drive file from  and place it in root.
         Args:
             file_id (str): id of file to be downloaded
@@ -143,6 +149,7 @@ class RemoteFileHandler:
                 If None, do not check
         """
         # Based on https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url # noqa
+
         import requests
         url = "https://docs.google.com/uc?export=download"
 
@@ -155,15 +162,15 @@ class RemoteFileHandler:
 
         if os.path.isfile(fpath) and RemoteFileHandler.check_integrity(
                 fpath, sha256, hash_type="sha256"):
-            print('Using downloaded and verified file: ' + fpath)
+            print("Using downloaded and verified file: " + fpath)
         else:
             session = requests.Session()
 
-            response = session.get(url, params={'id': file_id}, stream=True)
+            response = session.get(url, params={"id": file_id}, stream=True)
             token = RemoteFileHandler._get_confirm_token(response)
 
             if token:
-                params = {'id': file_id, 'confirm': token}
+                params = {"id": file_id, "confirm": token}
                 response = session.get(url, params=params, stream=True)
 
             response_content_generator = response.iter_content(32768)
@@ -191,28 +198,28 @@ class RemoteFileHandler:
             destination_path = os.path.dirname(path)
 
         _, archive_type = os.path.splitext(path)
-        archive_type = archive_type.lstrip('.')
+        archive_type = archive_type.lstrip(".")
 
-        if archive_type in ['zip']:
+        if archive_type in ["zip"]:
             print("Unzipping {}->{}".format(path, destination_path))
             zip_file = zipfile.ZipFile(path)
             zip_file.extractall(destination_path)
             zip_file.close()
 
         elif archive_type in [
-            'tar', 'tgz', 'tar.gz', 'tar.xz', 'tar.bz2'
+            "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
         ]:
             print("Unzipping {}->{}".format(path, destination_path))
-            if archive_type == 'tar':
-                tar_type = 'r:'
-            elif archive_type.endswith('xz'):
-                tar_type = 'r:xz'
-            elif archive_type.endswith('gz'):
-                tar_type = 'r:gz'
-            elif archive_type.endswith('bz2'):
-                tar_type = 'r:bz2'
+            if archive_type == "tar":
+                tar_type = "r:"
+            elif archive_type.endswith("xz"):
+                tar_type = "r:xz"
+            elif archive_type.endswith("gz"):
+                tar_type = "r:gz"
+            elif archive_type.endswith("bz2"):
+                tar_type = "r:bz2"
             else:
-                tar_type = 'r:*'
+                tar_type = "r:*"
             try:
                 tar_file = tarfile.open(path, tar_type)
             except tarfile.ReadError:
@@ -229,9 +236,8 @@ class RemoteFileHandler:
         chunk_size = chunk_size or 8192
         with open(filename, "wb") as fh:
             with urllib.request.urlopen(
-                urllib.request.Request(url,
-                                       headers=final_headers)) \
-                    as response:
+                urllib.request.Request(url, headers=final_headers)
+            ) as response:
                 for chunk in iter(lambda: response.read(chunk_size), ""):
                     if not chunk:
                         break
@@ -245,12 +251,12 @@ class RemoteFileHandler:
             final_headers.update(headers)
         for _ in range(max_hops + 1):
             with urllib.request.urlopen(
-                    urllib.request.Request(url,
-                                           headers=final_headers)) as response:
+                urllib.request.Request(url, headers=final_headers)
+            ) as response:
                 if response.url == url or response.url is None:
                     return url
 
-                url = response.url
+                return response.url
         else:
             raise RecursionError(
                 f"Request to {initial_url} exceeded {max_hops} redirects. "
@@ -260,7 +266,7 @@ class RemoteFileHandler:
     @staticmethod
     def _get_confirm_token(response):
         for key, value in response.cookies.items():
-            if key.startswith('download_warning'):
+            if key.startswith("download_warning"):
                 return value
 
         # handle antivirus warning for big zips
