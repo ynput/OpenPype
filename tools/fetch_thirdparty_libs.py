@@ -118,7 +118,7 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
 
 
 def install_runtime_dependencies(pyproject, openpype_root):
-    _print("Installing PyOpenColorIO")
+    _print("Installing Runtime Dependencies ...")
     runtime_deps = pyproject["openpype"]["runtime-deps"]
     for package, version in runtime_deps.items():
         _pip_install(openpype_root, package, version)
