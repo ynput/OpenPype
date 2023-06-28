@@ -32,6 +32,9 @@ from .pipeline import containerise
 from . import lib
 
 
+log = Logger.get_logger()
+
+
 def _get_attr(node, attr, default=None):
     """Helper to get attribute which allows attribute to not exist."""
     if not cmds.attributeQuery(attr, node=node, exists=True):
@@ -39,69 +42,27 @@ def _get_attr(node, attr, default=None):
     return cmds.getAttr("{}.{}".format(node, attr))
 
 
-def get_reference_node(members, log=None):
-    """Get the reference node from the container members
-    Args:
-        members: list of node names
-
-    Returns:
-        str: Reference node name.
-
+# Backwards compatibility: these functions has been moved to lib.
+def get_reference_node(*args, **kwargs):
     """
-
-    # Collect the references without .placeHolderList[] attributes as
-    # unique entries (objects only) and skipping the sharedReferenceNode.
-    references = set()
-    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
-
-        # Ignore any `:sharedReferenceNode`
-        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
-            continue
-
-        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
-        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
-            continue
-
-        references.add(ref)
-
-    assert references, "No reference node found in container"
-
-    # Get highest reference node (least parents)
-    highest = min(references,
-                  key=lambda x: len(get_reference_node_parents(x)))
-
-    # Warn the user when we're taking the highest reference node
-    if len(references) > 1:
-        if not log:
-            log = Logger.get_logger(__name__)
-
-        log.warning("More than one reference node found in "
-                    "container, using highest reference node: "
-                    "%s (in: %s)", highest, list(references))
-
-    return highest
-
-
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
+    Deprecated:
+        This function was moved and will be removed in 3.16.x.
     """
-    parent = cmds.referenceQuery(ref,
-                                 referenceNode=True,
-                                 parent=True)
-    parents = []
-    while parent:
-        parents.append(parent)
-        parent = cmds.referenceQuery(parent,
-                                     referenceNode=True,
-                                     parent=True)
-    return parents
+    msg = "Function 'get_reference_node' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node(*args, **kwargs)
+
+
+def get_reference_node_parents(*args, **kwargs):
+    """
+    Deprecated:
+        This function was moved and will be removed in 3.16.x.
+    """
+    msg = "Function 'get_reference_node_parents' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node_parents(*args, **kwargs)
 
 
 class Creator(LegacyCreator):
@@ -598,7 +559,7 @@ class ReferenceLoader(Loader):
             if not nodes:
                 return
 
-            ref_node = get_reference_node(nodes, self.log)
+            ref_node = lib.get_reference_node(nodes, self.log)
             container = containerise(
                 name=name,
                 namespace=namespace,
@@ -627,7 +588,7 @@ class ReferenceLoader(Loader):
 
         # Get reference node from container members
         members = get_container_members(node)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
         namespace = cmds.referenceQuery(reference_node, namespace=True)
 
         file_type = {
@@ -775,7 +736,7 @@ class ReferenceLoader(Loader):
 
         # Assume asset has been referenced
         members = cmds.sets(node, query=True)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
 
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")
