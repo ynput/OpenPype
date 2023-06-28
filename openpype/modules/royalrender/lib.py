@@ -155,7 +155,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         render_dir = os.path.normpath(os.path.dirname(render_path))
-        output_filename_0 = self.preview_fname(render_path)
+        output_filename_0 = self.pad_file_name(render_path, str(start_frame))
         file_name, file_ext = os.path.splitext(
             os.path.basename(output_filename_0))
 
@@ -278,14 +278,16 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         )
         return expected_files
 
-    def preview_fname(self, path):
+    def pad_file_name(self, path, first_frame):
         """Return output file path with #### for padding.
 
         RR requires the path to be formatted with # in place of numbers.
         For example `/path/to/render.####.png`
 
         Args:
-            path (str): path to rendered images
+            path (str): path to rendered image
+            first_frame (str): from representation to cleany replace with #
+                padding
 
         Returns:
             str
@@ -298,4 +300,10 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             return int(search_results[1])
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
+            return path
+
+        if first_frame:
+            padding = len(first_frame)
+            path = path.replace(first_frame, "#" * padding)
+
         return path
