@@ -251,7 +251,12 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
-        reset_frame_range(playback=False, render=False, fps=False)
+        reset_frame_range(
+            playback=False,
+            render=False,
+            fps=False,
+            instances=True
+        )
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
