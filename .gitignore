@@ -37,6 +37,7 @@ Temporary Items
 ###########
 /build
 /dist/
+/server_addon/package/*
 
 /vendor/bin/*
 /vendor/python/*
