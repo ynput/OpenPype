@@ -121,8 +121,8 @@ def deliver_single_file(
     format_dict,
     report_items,
     log,
-    renumber_frame=False,
-    re_frame_value=0
+    has_renumber_shot=False,
+    shot_number=0
 ):
     """Copy single file to calculated path based on template
 
@@ -164,7 +164,7 @@ def deliver_single_file(
     if not os.path.exists(delivery_folder):
         os.makedirs(delivery_folder)
 
-    if renumber_frame:
+    if has_renumber_shot and shot_number != 0:
         src_dir = os.path.dirname(src_path)
         src_filepaths = os.listdir(src_dir)
         src_collections, remainders = clique.assemble(src_filepaths)
@@ -173,7 +173,7 @@ def deliver_single_file(
         src_indexes = list(src_collection.indexes)
 
         destination_indexes = [
-            re_frame_value + idx
+            shot_number + idx
             for idx in range(len(src_indexes))
         ]
 
@@ -212,8 +212,8 @@ def deliver_sequence(
     format_dict,
     report_items,
     log,
-    renumber_frame=False,
-    re_frame_value=0
+    has_renumber_shot=False,
+    shot_number=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
         contain files.
@@ -336,8 +336,8 @@ def deliver_sequence(
             os.path.join(dir_path, src_file_name)
         )
 
-        if renumber_frame:
-            dsp_index = (re_frame_value - int(index)) + 1
+        if has_renumber_shot and shot_number != 0:
+            dsp_index = (shot_number - int(index)) + 1
             if dsp_index < 0:
                 msg = "Renumber frame has a smaller number than original frame"     # noqa
                 report_items[msg].append(src_file_name)
