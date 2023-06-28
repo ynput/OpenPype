@@ -337,7 +337,11 @@ def deliver_sequence(
         )
 
         if has_renumber_shot:
-            dst_index = (shot_number - int(index)) + 1
+            dst_index = None
+            if shot_number != 0:
+                dst_index = (shot_number - int(index)) + 1
+            else:
+                dst_index = shot_number - int(index)
             if dst_index < 0:
                 msg = "Renumber frame has a smaller number than original frame"     # noqa
                 report_items[msg].append(src_file_name)
