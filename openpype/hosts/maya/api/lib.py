@@ -3164,12 +3164,6 @@ def update_instances_frame_range():
         if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
             continue
 
-        if (
-            cmds.attributeQuery('family', node=instance, exists=True) and
-            cmds.getAttr("{}.family".format(instance)) == "render"
-        ):
-            continue
-
         for key, value in frames_attributes.items():
             if cmds.attributeQuery(key, node=instance, exists=True):
                 if key == 'asset':
