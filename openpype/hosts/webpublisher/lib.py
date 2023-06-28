@@ -231,7 +231,7 @@ def find_variant_key(application_manager, host):
 def get_task_data(batch_dir):
     """Return parsed data from first task manifest.json
 
-        Used for `remotepublishfromapp` command where batch contains only
+        Used for `publishfromapp` command where batch contains only
         single task with publishable workfile.
 
         Returns:
