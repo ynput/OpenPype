@@ -2304,7 +2304,8 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=False):
 
     project_name = get_current_project_name()
     settings = get_project_settings(project_name)
-    if instances or settings["maya"]["update_publishable_frame_range"]["enabled"]:
+    if instances or settings["maya"]["update_publishable_frame_range"][
+            "enabled"]:
         update_instances_frame_range()
 
 
