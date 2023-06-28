@@ -6,22 +6,29 @@ import six
 
 from openpype.settings import get_project_settings
 from openpype.lib import Logger
-
+import shutil
 from .anatomy import Anatomy
 from .template_data import get_project_template_data
-
-
+import win32file
+import sys
+import subprocess
 def concatenate_splitted_paths(split_paths, anatomy):
     log = Logger.get_logger("concatenate_splitted_paths")
     pattern_array = re.compile(r"\[.*\]")
+    pattern_symlink = re.compile(r"symlink\.[^.,\],\s,]*")
     output = []
     for path_items in split_paths:
         clean_items = []
+        links = []
         if isinstance(path_items, str):
             path_items = [path_items]
 
         for path_item in path_items:
             if not re.match(r"{.+}", path_item):
+                link = re.findall(pattern_symlink,path_item)
+                #Hornet > create symlink
+                if len(link) > 0:
+                    make_link(path_item,path_items,anatomy)
                 path_item = re.sub(pattern_array, "", path_item)
             clean_items.append(path_item)
 
@@ -40,6 +47,48 @@ def concatenate_splitted_paths(split_paths, anatomy):
         output.append(os.path.normpath(os.path.sep.join(clean_items)))
 
     return output
+
+def make_link(link_item,path_items, anatomy):
+    DRIVES = {
+        'edit': '//fse.hellohornet.lan/edit/',
+        'producers': '//fs.hellohornet.lan/producers/',
+        'resources': '//fs.hellohornet.lan/resources/'
+    }
+    drive_letter_pattern = r"[A-Z]:[\\/]"
+    unc_pattern = r"(\\\\[\w\s.$_-]+[\\/](?:[\w\s.$_-]+[\\/])+[\w\s.$_-]+)"
+    pattern_symlink = re.compile(r"symlink\.[^.,\],\s,]*")
+
+    log = Logger.get_logger("concatenate_splitted_paths")
+    clean_items = path_items
+    if "__project_root__" in path_items:
+            for root, root_path in anatomy.roots.items():
+                if not os.path.exists(str(root_path)):
+                    log.debug("Root {} path path {} not exist on \
+                        computer!".format(root, root_path))
+                    continue
+                clean_items = ["{{root[{}]}}".format(root),
+                               r"{project[name]}"] + clean_items[1:]
+
+    stack = fill_paths(clean_items,anatomy)
+    link_alias = link_item.split('[')[0]
+    link_loc = stack[:stack.index(link_item)]
+    link_drive = link_item.split('.')[1].strip('[]')
+    link_file = ('/'.join(link_loc)).replace('\\','/')
+    link_path = '/'.join(link_loc)
+    link_target = re.sub(drive_letter_pattern, DRIVES[link_drive],link_path)
+    link_target = re.sub(unc_pattern, DRIVES[link_drive],link_target).replace('\\','/')
+    log.debug('linking to drive ' + link_drive)
+    log.debug('link at ' + link_file)
+    log.debug('link target: ' + link_target)
+    log.debug('----')
+    try:
+        if sys.platform == 'darwin':
+            print(f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_at}"\'')
+            subprocess.Popen( f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_at}"\'',shell=True)
+        elif sys.platform == 'win32':
+            win32file.CreateSymbolicLink(link_file,link_target,1)
+    except Exception as e:
+        log.debug(e)
 
 
 def fill_paths(path_list, anatomy):
@@ -65,11 +114,10 @@ def create_project_folders(project_name, basic_paths=None):
 
     concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
     filled_paths = fill_paths(concat_paths, anatomy)
-
     # Create folders
     for path in filled_paths:
         if os.path.exists(path):
-            log.debug("Folder already exists: {}".format(path))
+            log.debug("folder already exists: {}".format(path))
         else:
             log.debug("Creating folder: {}".format(path))
             os.makedirs(path)
