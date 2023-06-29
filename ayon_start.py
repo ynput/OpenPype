@@ -72,12 +72,6 @@ if "--use-staging" in sys.argv:
     sys.argv.remove("--use-staging")
     os.environ["OPENPYPE_USE_STAGING"] = "1"
 
-_silent_commands = {
-    "run",
-    "standalonepublisher",
-    "extractenvironments",
-    "version"
-}
 if "--headless" in sys.argv:
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
     sys.argv.remove("--headless")
@@ -86,7 +80,6 @@ elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
 
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
 HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
-SILENT_MODE_ENABLED = any(arg in _silent_commands for arg in sys.argv)
 
 _pythonpath = os.getenv("PYTHONPATH", "")
 _python_paths = _pythonpath.split(os.pathsep)
@@ -163,9 +156,7 @@ if sys.__stdout__:
     term = blessed.Terminal()
 
     def _print(message: str):
-        if SILENT_MODE_ENABLED:
-            pass
-        elif message.startswith("!!! "):
+        if message.startswith("!!! "):
             print(f'{term.orangered2("!!! ")}{message[4:]}')
         elif message.startswith(">>> "):
             print(f'{term.aquamarine3(">>> ")}{message[4:]}')
@@ -189,8 +180,7 @@ if sys.__stdout__:
             print(message)
 else:
     def _print(message: str):
-        if not SILENT_MODE_ENABLED:
-            print(message)
+        print(message)
 
 
 # if SSL_CERT_FILE is not set prior to OpenPype launch, we set it to point
