@@ -27,6 +27,20 @@ from .data_structures import (
 NOT_SET = type("UNKNOWN", (), {"__bool__": lambda: False})()
 
 
+class BundleNotFoundError(Exception):
+    """Bundle name is defined but is not available on server.
+
+    Args:
+        bundle_name (str): Name of bundle that was not found.
+    """
+
+    def __init__(self, bundle_name):
+        self.bundle_name = bundle_name
+        super().__init__(
+            f"Bundle '{bundle_name}' is not available on server"
+        )
+
+
 class UpdateState(Enum):
     UNKNOWN = "unknown"
     UPDATED = "udated"
@@ -589,6 +603,10 @@ class AyonDistribution:
         Returns:
             Union[Bundle, None]: Bundle that will be used for distribution
                 or None.
+
+        Raises:
+            BundleNotFoundError: When bundle name to use is defined
+                but is not available on server.
         """
 
         if self._bundle is NOT_SET:
@@ -602,10 +620,8 @@ class AyonDistribution:
                     None
                 )
                 if bundle is None:
-                    raise ValueError(
-                        f"Bundle '{self._bundle_name}'"
-                        " is not available on server"
-                    )
+                    raise BundleNotFoundError(self._bundle_name)
+
                 self._bundle = bundle
             elif self.use_staging:
                 self._bundle = self.staging_bundle
