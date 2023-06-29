@@ -467,9 +467,6 @@ class AyonDistribution:
             dist_factory or get_default_download_factory()
         )
 
-        if isinstance(addons_info, list):
-            addons_info = {item.full_name: item for item in addons_info}
-
         if bundle_name is NOT_SET:
             bundle_name = os.environ.get("AYON_BUNDLE_NAME", NOT_SET)
 
