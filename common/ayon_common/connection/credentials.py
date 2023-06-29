@@ -13,6 +13,8 @@ import json
 import platform
 import datetime
 import contextlib
+import subprocess
+import tempfile
 from typing import Optional, Union, Any
 
 import ayon_api
@@ -25,7 +27,11 @@ from ayon_api.utils import (
     logout_from_server,
 )
 
-from ayon_common.utils import get_ayon_appdirs, get_local_site_id
+from ayon_common.utils import (
+    get_ayon_appdirs,
+    get_local_site_id,
+    get_ayon_launch_args,
+)
 
 
 class ChangeUserResult:
@@ -258,6 +264,8 @@ def ask_to_login_ui(
     credentials are invalid. To change credentials use 'change_user_ui'
     function.
 
+    Use a subprocess to show UI.
+
     Args:
         url (Optional[str]): Server url that could be prefilled in UI.
         always_on_top (Optional[bool]): Window will be drawn on top of
@@ -267,12 +275,33 @@ def ask_to_login_ui(
         tuple[str, str, str]: Url, user's token and username.
     """
 
-    from .ui import ask_to_login
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    ui_dir = os.path.join(current_dir, "ui")
 
     if url is None:
         url = get_last_server()
     username = get_last_username_by_url(url)
-    return ask_to_login(url, username, always_on_top=always_on_top)
+    data = {
+        "url": url,
+        "username": username,
+        "always_on_top": always_on_top,
+    }
+
+    with tempfile.TemporaryFile(
+        mode="w", prefix="ayon_login", suffix=".json", delete=False
+    ) as tmp:
+        output = tmp.name
+        json.dump(data, tmp)
+
+    code = subprocess.call(
+        get_ayon_launch_args(ui_dir, "--skip-bootstrap", output))
+    if code != 0:
+        raise RuntimeError("Failed to show login UI")
+
+    with open(output, "r") as stream:
+        data = json.load(stream)
+    os.remove(output)
+    return data["output"]
 
 
 def change_user_ui() -> ChangeUserResult:

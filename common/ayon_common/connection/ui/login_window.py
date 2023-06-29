@@ -15,7 +15,7 @@ from .widgets import (
     PressHoverButton,
     PlaceholderLineEdit,
 )
-from .lib import set_style_property
+from .lib import set_style_property, get_qt_app
 
 
 class LogoutConfirmDialog(QtWidgets.QDialog):
@@ -650,16 +650,7 @@ def ask_to_login(url=None, username=None, always_on_top=False):
             be changed during dialog lifetime that's why the url is returned.
     """
 
-    app_instance = QtWidgets.QApplication.instance()
-    if app_instance is None:
-        for attr_name in (
-            "AA_EnableHighDpiScaling",
-            "AA_UseHighDpiPixmaps"
-        ):
-            attr = getattr(QtCore.Qt, attr_name, None)
-            if attr is not None:
-                QtWidgets.QApplication.setAttribute(attr)
-        app_instance = QtWidgets.QApplication([])
+    app_instance = get_qt_app()
 
     window = ServerLoginWindow()
     if always_on_top:

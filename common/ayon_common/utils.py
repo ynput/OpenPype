@@ -1,5 +1,8 @@
 import os
+import sys
 import appdirs
+
+IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
 
 
 def get_ayon_appdirs(*args):
@@ -19,7 +22,12 @@ def get_ayon_appdirs(*args):
 
 
 def _create_local_site_id():
-    """Create a local site identifier."""
+    """Create a local site identifier.
+
+    Returns:
+        str: Randomly generated site id.
+    """
+
     from coolname import generate_slug
 
     new_id = generate_slug(3)
@@ -33,6 +41,9 @@ def get_local_site_id():
     """Get local site identifier.
 
     Site id is created if does not exist yet.
+
+    Returns:
+        str: Site id.
     """
 
     # used for background syncing
@@ -50,3 +61,20 @@ def get_local_site_id():
         with open(site_id_path, "w") as stream:
             stream.write(site_id)
     return site_id
+
+
+def get_ayon_launch_args(*args):
+    """Launch arguments that can be used to launch ayon process.
+
+    Args:
+        *args (str): Additional arguments.
+
+    Returns:
+        list[str]: Launch arguments.
+    """
+
+    output = [sys.executable]
+    if not IS_BUILT_APPLICATION:
+        output.append(sys.argv[0])
+    output.extend(args)
+    return output
