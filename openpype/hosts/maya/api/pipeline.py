@@ -685,7 +685,7 @@ def before_workfile_save(event):
         create_workspace_mel(workdir_path, project_name)
 
 
-def display_warning(message, show_cancel=False):
+def prompt_warning(message, show_cancel=False):
     """Show feedback to user.
 
         Returns:
@@ -784,7 +784,7 @@ def workfile_save_before_xgen(event):
             "Found duplicate Xgen files in new context.\n"
             "Do you want to overwrite?\n\n{}".format("\n".join(overwrites))
         )
-        accept = display_warning(msg, show_cancel=True)
+        accept = prompt_warning(msg, show_cancel=True)
         if not accept:
             return
 
