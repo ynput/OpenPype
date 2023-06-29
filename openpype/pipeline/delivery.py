@@ -176,18 +176,13 @@ def deliver_single_file(
             report_items[msg].append(src_path)
             log.warning("{} <{}>".format(msg, src_filepaths))
             return report_items, 0
-        src_collections, remainders = clique.assemble(src_filepaths)
 
+        src_collections, remainders = clique.assemble(src_filepaths)
         src_collection = src_collections[0]
         src_indexes = list(src_collection.indexes)
 
-        destination_indexes = [
-            renumber_frame + idx
-            for idx in range(len(src_indexes))
-        ]
-
         dst_filepaths = []
-        for index in destination_indexes:
+        for index in src_indexes:
             template_data = copy.deepcopy(anatomy_data)
             template_data["frame"] = index
             template_obj = anatomy.templates_obj["delivery"][template_name]
@@ -197,6 +192,9 @@ def deliver_single_file(
             dst_filepaths.append(template_filled)
 
         dst_collection = clique.assemble(dst_filepaths)[0][0]
+        relative = not has_renumbered_frame
+        dst_collection = shift_collection(
+            dst_collection, renumber_frame, relative=relative)
 
         for src_file_name, dst in zip(src_collection, dst_collection):
             src_path = os.path.join(src_dir, src_file_name)
@@ -374,3 +372,35 @@ def deliver_sequence(
         uploaded += 1
 
     return report_items, uploaded
+
+
+def shift_collection(collection, start_offset, relative=True):
+    """Shift frames of a clique.Collection.
+
+    When relative is True `start_offset` will be an offset from
+    the current start frame of the collection shifting it by `start_offset`.
+    When relative is False `start_offset` will be the new start
+    frame of the sequence - shifting the rest of the frames along.
+
+    Arguments:
+        collection (clique.Collection): Input collection.
+        start_offset (int): Offset to apply (or start frame to set if
+            relative is False)
+        relative (bool): Whether the start offset is relative or the
+            the absolute new start frame.
+
+    Returns:
+        clique.Collection: Shifted collection
+
+    """
+    first_frame = next(iter(collection.indexes))
+    if relative:
+        shift = start_offset
+    else:
+        shift = start_offset - first_frame
+    return clique.Collection(
+        head=collection.head,
+        tail=collection.tail,
+        padding=collection.padding,
+        indexes={idx + shift for idx in collection.indexes}
+    )
