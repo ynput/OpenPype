@@ -9,6 +9,7 @@ import site
 import traceback
 import contextlib
 
+
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
     expected_values = (
@@ -48,10 +49,12 @@ if "--verbose" in sys.argv:
         ))
 
     os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
+    os.environ["AYON_LOG_LEVEL"] = str(log_level)
 
 # Enable debug mode, may affect log level if log level is not defined
 if "--debug" in sys.argv:
     sys.argv.remove("--debug")
+    os.environ["AYON_DEBUG"] = "1"
     os.environ["OPENPYPE_DEBUG"] = "1"
 
 if "--automatic-tests" in sys.argv:
@@ -70,16 +73,31 @@ if "--skip-bootstrap" in sys.argv:
 
 if "--use-staging" in sys.argv:
     sys.argv.remove("--use-staging")
+    os.environ["AYON_USE_STAGING"] = "1"
     os.environ["OPENPYPE_USE_STAGING"] = "1"
 
 if "--headless" in sys.argv:
+    os.environ["AYON_HEADLESS_MODE"] = "1"
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
     sys.argv.remove("--headless")
-elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+
+elif (
+    os.getenv("AYON_HEADLESS_MODE") != "1"
+    or os.getenv("OPENPYPE_HEADLESS_MODE") != "1"
+):
+    os.environ.pop("AYON_HEADLESS_MODE", None)
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+elif (
+    os.getenv("AYON_HEADLESS_MODE")
+    != os.getenv("OPENPYPE_HEADLESS_MODE")
+):
+    os.environ["OPENPYPE_HEADLESS_MODE"] = (
+        os.environ["AYON_HEADLESS_MODE"]
+    )
+
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
-HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
+HEADLESS_MODE_ENABLED = os.getenv("AYON_HEADLESS_MODE") == "1"
 
 _pythonpath = os.getenv("PYTHONPATH", "")
 _python_paths = _pythonpath.split(os.pathsep)
@@ -132,10 +150,12 @@ os.environ["PYTHONPATH"] = os.pathsep.join(_python_paths)
 os.environ["USE_AYON_SERVER"] = "1"
 # Set this to point either to `python` from venv in case of live code
 #    or to `ayon` or `ayon_console` in case of frozen code
+os.environ["AYON_EXECUTABLE"] = sys.executable
 os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
 os.environ["AYON_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
+os.environ["AYON_MENU_LABEL"] = "AYON"
 os.environ["AVALON_LABEL"] = "AYON"
 # Set name of pyblish UI import
 os.environ["PYBLISH_GUI"] = "pyblish_pype"
