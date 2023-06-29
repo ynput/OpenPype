@@ -101,6 +101,7 @@ from ._api import (
     get_addon_studio_settings,
     get_addon_project_settings,
     get_addon_settings,
+    get_bundle_settings,
     get_addons_studio_settings,
     get_addons_project_settings,
     get_addons_settings,
@@ -116,6 +117,7 @@ from ._api import (
     get_folder_by_name,
     get_folder_by_path,
     get_folders,
+    get_folders_hierarchy,
 
     get_tasks,
 
@@ -279,6 +281,7 @@ __all__ = (
     "get_addon_studio_settings",
     "get_addon_project_settings",
     "get_addon_settings",
+    "get_bundle_settings",
     "get_addons_studio_settings",
     "get_addons_project_settings",
     "get_addons_settings",
