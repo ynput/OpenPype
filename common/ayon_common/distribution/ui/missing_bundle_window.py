@@ -3,7 +3,6 @@ import sys
 from qtpy import QtWidgets, QtGui
 
 from ayon_common.resources import (
-    get_resource_path,
     get_icon_path,
     load_stylesheet,
 )
