@@ -117,7 +117,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback(
             "workfile.save.before", workfile_save_before_xgen
         )
-        register_event_callback("workfile.save.before", after_workfile_save)
+        register_event_callback("workfile.save.after", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
