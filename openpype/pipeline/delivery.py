@@ -166,7 +166,16 @@ def deliver_single_file(
 
     if has_renumbered_frame:
         src_dir = os.path.dirname(src_path)
-        src_filepaths = os.listdir(src_dir)
+        src_filepaths =[]
+        for repre_file in repre["files"]:
+            src_path = anatomy.fill_root(repre_file["path"])
+            base_path = os.path.basename(src_path)
+            src_filepaths.append(base_path)
+        if not src_filepaths:
+            msg = "Source files not found, cannot find collection"
+            report_items[msg].append(src_path)
+            log.warning("{} <{}>".format(msg, src_filepaths))
+            return report_items, 0
         src_collections, remainders = clique.assemble(src_filepaths)
 
         src_collection = src_collections[0]
