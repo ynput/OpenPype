@@ -113,7 +113,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
-        register_event_callback("workfile.save.before", after_workfile_save)
+        register_event_callback("workfile.save.after", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
