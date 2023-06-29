@@ -3,12 +3,12 @@
 import hou  # noqa
 
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
 from openpype.lib import EnumDef
 
 
 class CreateRedshiftROP(plugin.HoudiniCreator):
     """Redshift ROP"""
+
     identifier = "io.openpype.creators.houdini.redshift_rop"
     label = "Redshift ROP"
     family = "redshift_rop"
@@ -57,6 +57,8 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
         )
 
+        ext_format_index = {"exr": 0, "tif": 1, "jpg": 2, "png": 3}
+
         parms = {
             # Render frame range
             "trange": 1,
@@ -64,6 +66,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             "RS_outputFileNamePrefix": filepath,
             "RS_outputMultilayerMode": "1",  # no multi-layered exr
             "RS_outputBeautyAOVSuffix": "beauty",
+            "RS_outputFileFormat": ext_format_index[ext],
         }
 
         if self.selected_nodes:
@@ -93,8 +96,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
     def get_pre_create_attr_defs(self):
         attrs = super(CreateRedshiftROP, self).get_pre_create_attr_defs()
         image_format_enum = [
-            "bmp", "cin", "exr", "jpg", "pic", "pic.gz", "png",
-            "rad", "rat", "rta", "sgi", "tga", "tif",
+            "exr", "tif", "jpg", "png",
         ]
 
         return attrs + [
