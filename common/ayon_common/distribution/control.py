@@ -640,7 +640,8 @@ class AyonDistribution:
         """
 
         if self._addons_info is NOT_SET:
-            self._addons_info = ayon_api.get_addons_info(details=True)
+            server_info = ayon_api.get_addons_info(details=True)
+            self._addons_info = server_info["addons"]
         return self._addons_info
 
     @property
@@ -656,7 +657,7 @@ class AyonDistribution:
 
         if self._addon_items is NOT_SET:
             addons_info = {}
-            for addon in self.addons_info["addons"]:
+            for addon in self.addons_info:
                 addon_info = AddonInfo.from_dict(addon)
                 addons_info[addon_info.name] = addon_info
             self._addon_items = addons_info
@@ -676,7 +677,7 @@ class AyonDistribution:
 
         if self._dependency_packages_info is NOT_SET:
             self._dependency_packages_info = (
-                ayon_api.get_dependency_packages())
+                ayon_api.get_dependency_packages())["packages"]
         return self._dependency_packages_info
 
     @property
@@ -689,7 +690,7 @@ class AyonDistribution:
 
         if self._dependency_packages_items is NOT_SET:
             dependenc_package_items = {}
-            for item in self.dependency_packages_info["packages"]:
+            for item in self.dependency_packages_info:
                 item = DependencyItem.from_dict(item)
                 dependenc_package_items[item.name] = item
             self._dependency_packages_items = dependenc_package_items
