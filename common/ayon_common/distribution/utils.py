@@ -1,5 +1,7 @@
 import os
-from ayon_common.utils import get_ayon_appdirs
+import subprocess
+
+from ayon_common.utils import get_ayon_appdirs, get_ayon_launch_args
 
 
 def get_local_dir(*subdirs):
@@ -63,3 +65,26 @@ def get_dependencies_dir():
         dependencies_dir = get_local_dir("dependency_packages")
         os.environ["AYON_DEPENDENCIES_DIR"] = dependencies_dir
     return dependencies_dir
+
+
+def show_missing_bundle_information(url, bundle_name=None):
+    """Show missing bundle information window.
+
+    This function should be called when server does not have set bundle for
+    production or staging, or when bundle that should be used is not available
+    on server.
+
+    Using subprocess to show the dialog. Is blocking and is waiting until
+    dialog is closed.
+
+    Args:
+        url (str): Server url where bundle is not set.
+        bundle_name (Optional[str]): Name of bundle that was not found.
+    """
+
+    ui_dir = os.path.join(os.path.dirname(__file__), "ui")
+    script_path = os.path.join(ui_dir, "missing_bundle_window.py")
+    args = get_ayon_launch_args(script_path, "--skip-bootstrap", "--url", url)
+    if bundle_name:
+        args.extend(["--bundle", bundle_name])
+    subprocess.call(args)
