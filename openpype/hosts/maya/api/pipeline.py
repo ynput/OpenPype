@@ -712,6 +712,20 @@ def display_warning(message, show_cancel=False):
 
 
 def workfile_save_before_xgen(event):
+    """Manage Xgen external files when switching context.
+
+    Xgen has various external files that needs to be unique and relative to the
+    workfile, so we need to copy and potentially overwrite these files when
+    switching context.
+
+    Args:
+        event (Event) - openpype/lib/events.py
+    """
+    if not cmds.pluginInfo("xgenToolkit", query=True, loaded=True):
+        return
+
+    import xgenm
+
     current_work_dir = legacy_io.Session["AVALON_WORKDIR"].replace("\\", "/")
     expected_work_dir = event.data["workdir_path"].replace("\\", "/")
     if current_work_dir == expected_work_dir:
@@ -721,14 +735,13 @@ def workfile_save_before_xgen(event):
     if not palettes:
         return
 
-    import xgenm
-
     transfers = []
     overwrites = []
     attribute_changes = {}
     attrs = ["xgFileName", "xgBaseFile"]
     for palette in palettes:
-        project_path = xgenm.getAttr("xgProjectPath", palette.replace("|", ""))
+        sanitized_palette = palette.replace("|", "")
+        project_path = xgenm.getAttr("xgProjectPath", sanitized_palette)
         _, maya_extension = os.path.splitext(event.data["filename"])
 
         for attr in attrs:
@@ -743,7 +756,7 @@ def workfile_save_before_xgen(event):
             attr_value = event.data["filename"].replace(
                 maya_extension,
                 "__{}{}".format(
-                    palette.replace("|", "").replace(":", "__"),
+                    sanitized_palette.replace(":", "__"),
                     os.path.splitext(attr_value)[1]
                 )
             )
@@ -753,7 +766,7 @@ def workfile_save_before_xgen(event):
             attribute_changes[node_attr] = attr_value
 
         relative_path = xgenm.getAttr(
-            "xgDataPath", palette.replace("|", "")
+            "xgDataPath", sanitized_palette
         ).split(os.pathsep)[0]
         absolute_path = relative_path.replace("${PROJECT}", project_path)
         for root, _, files in os.walk(absolute_path):
@@ -765,23 +778,23 @@ def workfile_save_before_xgen(event):
                     overwrites.append(target)
 
     # Ask user about overwriting files.
-    msg = (
-        "WARNING! Potential loss of data.\n\n"
-        "Found duplicate Xgen files in new context.\n"
-        "Do you want to overwrite?\n\n{}".format("\n".join(overwrites))
-    )
     if overwrites:
+        msg = (
+            "WARNING! Potential loss of data.\n\n"
+            "Found duplicate Xgen files in new context.\n"
+            "Do you want to overwrite?\n\n{}".format("\n".join(overwrites))
+        )
         accept = display_warning(msg, show_cancel=True)
         if not accept:
             return
-
-    for attribute, value in attribute_changes.items():
-        cmds.setAttr(attribute, value, type="string")
 
     for source, destination in transfers:
         if not os.path.exists(os.path.dirname(destination)):
             os.makedirs(os.path.dirname(destination))
         shutil.copy(source, destination)
+
+    for attribute, value in attribute_changes.items():
+        cmds.setAttr(attribute, value, type="string")
 
 
 def after_workfile_save(event):
