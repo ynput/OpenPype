@@ -210,6 +210,7 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
+from ayon_api import get_base_url
 from ayon_api.constants import SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
@@ -220,7 +221,11 @@ from ayon_common.connection.credentials import (
     create_global_connection,
     confirm_server_login,
 )
-from ayon_common.distribution import AyonDistribution
+from ayon_common.distribution import (
+    AyonDistribution,
+    BundleNotFoundError,
+    show_missing_bundle_information,
+)
 
 
 def set_global_environments() -> None:
@@ -306,11 +311,44 @@ def _check_and_update_from_ayon_server():
     """
 
     distribution = AyonDistribution()
+    bundle = None
+    bundle_name = None
+    try:
+        bundle = distribution.bundle_to_use
+        if bundle is not None:
+            bundle_name = bundle.name
+    except BundleNotFoundError as exc:
+        bundle_name = exc.bundle_name
+        if HEADLESS_MODE_ENABLED:
+            _print("!!! Server does not have defined bundle to use.")
+            _print(
+                "!!! Make sure server has set bundle."
+            )
+            sys.exit(1)
+
+    if bundle is None:
+        url = get_base_url()
+        if not HEADLESS_MODE_ENABLED:
+            show_missing_bundle_information(url, bundle_name)
+
+        elif bundle_name:
+            _print((
+                f"!!! Requested bundle '{bundle_name}'"
+                " is not available on server."
+            ))
+            _print(
+                f"!!! Check if server '{url}' still have bundle available.")
+
+        else:
+            _print("!!! Server does not have defined bundle to use.")
+            _print(
+                f"!!! Make sure server '{url}' has set bundle."
+            )
+        sys.exit(1)
+
     distribution.distribute()
     distribution.validate_distribution()
-    bundle_name = distribution.bundle_name_to_use
-    if bundle_name:
-        os.environ["AYON_BUNDLE_NAME"] = bundle_name
+    os.environ["AYON_BUNDLE_NAME"] = bundle_name
 
     python_paths = [
         path
