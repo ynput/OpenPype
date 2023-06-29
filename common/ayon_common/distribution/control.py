@@ -21,7 +21,6 @@ from .downloaders import get_default_download_factory
 from .data_structures import (
     AddonInfo,
     DependencyItem,
-    Installer,
     Bundle,
 )
 
