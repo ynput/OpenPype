@@ -166,7 +166,7 @@ def deliver_single_file(
 
     if has_renumbered_frame:
         src_dir = os.path.dirname(src_path)
-        src_filepaths =[]
+        src_filepaths = []
         for repre_file in repre["files"]:
             src_path = anatomy.fill_root(repre_file["path"])
             base_path = os.path.basename(src_path)
