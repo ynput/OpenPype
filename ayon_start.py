@@ -314,8 +314,6 @@ def boot():
     os.environ["OPENPYPE_VERSION"] = __version__
     os.environ["AYON_VERSION"] = __version__
 
-    use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
-
     _connect_to_ayon_server()
     _check_and_update_from_ayon_server()
 
