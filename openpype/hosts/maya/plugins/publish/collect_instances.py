@@ -114,11 +114,16 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     if key not in data:
                         data[key] = context.data[key]
 
-                data["frameStartHandle"] = data["frameStart"] - data["handleStart"]  # noqa: E501
-                data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]  # noqa: E501
+                data["frameStartHandle"] = int(
+                    data["frameStart"] - data["handleStart"]
+                )
+                data["frameEndHandle"] = int(
+                    data["frameEnd"] + data["handleEnd"]
+                )
 
-                label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
-                                              int(data["frameEndHandle"]))
+                label += "  [{0}-{1}]".format(
+                    data["frameStartHandle"], data["frameEndHandle"]
+                )
 
             instance.data["label"] = label
 
