@@ -215,6 +215,12 @@ class AnimationFBXLoader(UnrealBaseLoader):
         send_request("save_current_level")
         send_request("load_level", params={"level_path": master_level})
 
+        return send_request(
+            "list_assets", params={
+                "directory_path": asset_dir,
+                "recursive": True,
+                "include_folder": True})
+
     def update(self, container, representation):
         filename = get_representation_path(representation)
         asset_dir = container["namespace"]

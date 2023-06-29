@@ -102,6 +102,12 @@ class AnimationAlembicLoader(UnrealBaseLoader):
 
         containerise(asset_dir, container_name, data)
 
+        return send_request(
+            "list_assets", params={
+                "directory_path": asset_dir,
+                "recursive": True,
+                "include_folder": True})
+
     def update(self, container, representation):
         filename = get_representation_path(representation)
         asset_dir = container["namespace"]

@@ -263,6 +263,12 @@ class CameraLoader(UnrealBaseLoader):
         send_request("save_all_dirty_levels")
         send_request("load_level", params={"level_path": master_level})
 
+        return send_request(
+            "list_assets", params={
+                "directory_path": asset_dir,
+                "recursive": True,
+                "include_folder": True})
+
     def update(self, container, representation):
         context = representation.get("context")
         asset = container.get('asset')

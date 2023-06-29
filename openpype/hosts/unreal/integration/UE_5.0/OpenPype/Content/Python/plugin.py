@@ -645,6 +645,9 @@ def process_family(params):
                                  'instance_name', 'transform', 'basis',
                                  'sequence_path')
 
+    basis = eval(basis)
+    transform = eval(transform)
+
     actors = []
     bindings = []
 
