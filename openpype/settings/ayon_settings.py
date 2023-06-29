@@ -13,7 +13,8 @@ Main entrypoints are functions:
 - get_ayon_project_settings - replacement for 'get_project_settings'
 - get_ayon_system_settings - replacement for 'get_system_settings'
 """
-
+import os
+import collections
 import json
 import copy
 import time
@@ -1275,9 +1276,15 @@ def convert_project_settings(ayon_settings, default_settings):
 class CacheItem:
     lifetime = 10
 
-    def __init__(self, value):
+    def __init__(self, value, outdate_time=None):
         self._value = value
-        self._outdate_time = time.time() + self.lifetime
+        if outdate_time is None:
+            outdate_time = time.time() + self.lifetime
+        self._outdate_time = outdate_time
+
+    @classmethod
+    def create_outdated(cls):
+        return cls({}, 0)
 
     def get_value(self):
         return copy.deepcopy(self._value)
@@ -1291,57 +1298,89 @@ class CacheItem:
         return time.time() > self._outdate_time
 
 
-class AyonSettingsCache:
-    _cache_by_project_name = {}
-    _production_settings = None
+class _AyonSettingsCache:
+    use_bundles = None
+    variant = None
+    addon_versions = CacheItem.create_outdated()
+    studio_settings = CacheItem.create_outdated()
+    cache_by_project_name = collections.defaultdict(
+        CacheItem.create_outdated)
 
     @classmethod
-    def get_production_settings(cls):
-        if (
-            cls._production_settings is None
-            or cls._production_settings.is_outdated
-        ):
+    def _use_bundles(cls):
+        if _AyonSettingsCache.use_bundles is None:
+            major, minor, _, _, _ = ayon_api.get_server_version_tuple()
+            _AyonSettingsCache.use_bundles = major == 0 and minor >= 3
+        return _AyonSettingsCache.use_bundles
+
+    @classmethod
+    def _get_variant(cls):
+        if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            variant = "staging" if is_staging_enabled() else "production"
-            value = ayon_api.get_addons_settings(
-                only_values=False, variant=variant)
-            if cls._production_settings is None:
-                cls._production_settings = CacheItem(value)
-            else:
-                cls._production_settings.update_value(value)
-        return cls._production_settings.get_value()
+            _AyonSettingsCache.variant = (
+                "staging" if is_staging_enabled() else "production"
+            )
+        return _AyonSettingsCache.variant
+
+    @classmethod
+    def _get_bundle_name(cls):
+        return os.environ["AYON_BUNDLE_NAME"]
 
     @classmethod
     def get_value_by_project(cls, project_name):
-        production_settings = cls.get_production_settings()
-        addon_versions = production_settings["versions"]
-        if project_name is None:
-            return production_settings["settings"], addon_versions
-
-        cache_item = cls._cache_by_project_name.get(project_name)
-        if cache_item is None or cache_item.is_outdated:
-            value = ayon_api.get_addons_settings(project_name)
-            if cache_item is None:
-                cache_item = CacheItem(value)
-                cls._cache_by_project_name[project_name] = cache_item
+        cache_item = _AyonSettingsCache.cache_by_project_name[project_name]
+        if cache_item.is_outdated:
+            if cls._use_bundles():
+                value = ayon_api.get_addons_settings(
+                    bundle_name=cls._get_bundle_name(),
+                    project_name=project_name
+                )
             else:
-                cache_item.update_value(value)
+                value = ayon_api.get_addons_settings(project_name)
+            cache_item.update_value(value)
+        return cache_item.get_value()
 
-        return cache_item.get_value(), addon_versions
+    @classmethod
+    def _get_addon_versions_from_bundle(cls):
+        expected_bundle = cls._get_bundle_name()
+        bundles = ayon_api.get_bundles()["bundles"]
+        bundle = next(
+            (
+                bundle
+                for bundle in bundles
+                if bundle["name"] == expected_bundle
+            ),
+            None
+        )
+        if bundle is not None:
+            return bundle["addons"]
+        return {}
+
+    @classmethod
+    def get_addon_versions(cls):
+        cache_item = _AyonSettingsCache.addon_versions
+        if cache_item.is_outdated:
+            if cls._use_bundles():
+                addons = cls._get_addon_versions_from_bundle()
+            else:
+                settings_data = ayon_api.get_addons_settings(
+                    only_values=False, variant=cls._get_variant())
+                addons = settings_data["versions"]
+            cache_item.update_value(addons)
+
+        return cache_item.get_value()
 
 
 def get_ayon_project_settings(default_values, project_name):
-    ayon_settings, addon_versions = (
-        AyonSettingsCache.get_value_by_project(project_name)
-    )
+    ayon_settings = _AyonSettingsCache.get_value_by_project(project_name)
     return convert_project_settings(ayon_settings, default_values)
 
 
 def get_ayon_system_settings(default_values):
-    ayon_settings, addon_versions = (
-        AyonSettingsCache.get_value_by_project(None)
-    )
+    addon_versions = _AyonSettingsCache.get_addon_versions()
+    ayon_settings = _AyonSettingsCache.get_value_by_project(None)
+
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
