@@ -724,7 +724,7 @@ class AyonDistribution:
         bundle = self.bundle_to_use
         if bundle is not None:
             addon_versions = bundle.addon_versions
-        for addon_name, addon_item in self.addons_info.items():
+        for addon_name, addon_item in self.addon_items.items():
             addon_version = addon_versions.get(addon_name)
             # Addon is not in bundle -> Skip
             if addon_version is None:
