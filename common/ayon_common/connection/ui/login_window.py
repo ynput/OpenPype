@@ -10,12 +10,12 @@ from ayon_common.resources import (
     get_icon_path,
     load_stylesheet,
 )
+from ayon_common.ui_utils import set_style_property, get_qt_app
 
 from .widgets import (
     PressHoverButton,
     PlaceholderLineEdit,
 )
-from .lib import set_style_property, get_qt_app
 
 
 class LogoutConfirmDialog(QtWidgets.QDialog):
@@ -692,17 +692,7 @@ def change_user(url, username, api_key, always_on_top=False):
             during dialog lifetime that's why the url is returned.
     """
 
-    app_instance = QtWidgets.QApplication.instance()
-    if app_instance is None:
-        for attr_name in (
-            "AA_EnableHighDpiScaling",
-            "AA_UseHighDpiPixmaps"
-        ):
-            attr = getattr(QtCore.Qt, attr_name, None)
-            if attr is not None:
-                QtWidgets.QApplication.setAttribute(attr)
-        app_instance = QtWidgets.QApplication([])
-
+    app_instance = get_qt_app()
     window = ServerLoginWindow()
     if always_on_top:
         window.setWindowFlags(
