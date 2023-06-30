@@ -182,7 +182,7 @@ class RemoteFileHandler:
         archive_type = archive_type.lstrip(".")
 
         if archive_type in ["zip"]:
-            print("Unzipping {}->{}".format(path, destination_path))
+            print(f"Unzipping {path}->{destination_path}")
             zip_file = zipfile.ZipFile(path)
             zip_file.extractall(destination_path)
             zip_file.close()
@@ -190,7 +190,7 @@ class RemoteFileHandler:
         elif archive_type in [
             "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
         ]:
-            print("Unzipping {}->{}".format(path, destination_path))
+            print(f"Unzipping {path}->{destination_path}")
             if archive_type == "tar":
                 tar_type = "r:"
             elif archive_type.endswith("xz"):

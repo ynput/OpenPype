@@ -122,8 +122,8 @@ class AddonVersionInfo(object):
             AddonVersionInfo: Addon version info.
         """
 
-        full_name = "{}_{}".format(addon_name, addon_version)
-        title = "{} {}".format(addon_title, addon_version)
+        full_name = f"{addon_name}_{addon_version}"
+        title = f"{addon_title} {addon_version}"
 
         source_info = version_data.get("clientSourceInfo")
         require_distribution = source_info is not None
