@@ -1964,6 +1964,24 @@ class ServerAPI(object):
         result.raise_for_status()
         return result.data
 
+    def _get_dependency_package_route(
+        self, filename=None, platform_name=None
+    ):
+        major, minor, patch, _, _ = self.server_version_tuple
+        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
+            base = "desktop/dependency_packages"
+            if not filename:
+                return base
+            return "{}/{}".format(base, filename)
+
+        # Backwards compatibility for AYON server 0.2.0 and lower
+        if platform_name is None:
+            platform_name = platform.system().lower()
+        base = "dependencies"
+        if not filename:
+            return base
+        return "{}/{}/{}".format(base, filename, platform_name)
+
     def create_dependency_package(
         self,
         filename,
@@ -2014,7 +2032,8 @@ class ServerAPI(object):
         if sources:
             post_body["sources"] = sources
 
-        response = self.post("desktop/dependency_packages", **post_body)
+        route = self._get_dependency_package_route()
+        response = self.post(route, **post_body)
         response.raise_for_status()
 
     def update_dependency_package(self, filename, sources):
@@ -2028,7 +2047,7 @@ class ServerAPI(object):
         """
 
         response = self.patch(
-            "desktop/dependency_packages/{}".format(filename),
+            self._get_dependency_package_route(filename),
             sources=sources
         )
         response.raise_for_status()
@@ -2044,16 +2063,8 @@ class ServerAPI(object):
                 Deprecated since version 0.2.1
         """
 
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
-            url = "desktop/dependency_packages/{}".format(filename)
-        else:
-            # Backwards compatibility for AYON server 0.2.0 and lower
-            if platform_name is None:
-                platform_name = platform.system().lower()
-            url = "dependencies/{}/{}".format(filename, platform_name)
-
-        response = self.delete(url)
+        route = self._get_dependency_package_route(filename, platform_name)
+        response = self.delete(route)
         if response.status != 200:
             raise ServerError("Failed to delete dependency file")
         return response.data
@@ -2089,18 +2100,10 @@ class ServerAPI(object):
             str: Filepath to downloaded file.
        """
 
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
-            url = "desktop/dependency_packages/{}".format(src_filename)
-        else:
-            # Backwards compatibility for AYON server 0.2.0 and lower
-            if platform_name is None:
-                platform_name = platform.system().lower()
-            url = "dependencies/{}/{}".format(src_filename, platform_name)
-
+        route = self._get_dependency_package_route(src_filename, platform_name)
         package_filepath = os.path.join(dst_directory, dst_filename)
         self.download_file(
-            url,
+            route,
             package_filepath,
             chunk_size=chunk_size,
             progress=progress
@@ -2122,16 +2125,8 @@ class ServerAPI(object):
                 upload state.
         """
 
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
-            url = "desktop/dependency_packages/{}".format(dst_filename)
-        else:
-            # Backwards compatibility for AYON server 0.2.0 and lower
-            if platform_name is None:
-                platform_name = platform.system().lower()
-            url = "dependencies/{}/{}".format(dst_filename, platform_name)
-
-        self.upload_file(url, src_filepath, progress=progress)
+        route = self._get_dependency_package_route(dst_filename, platform_name)
+        self.upload_file(route, src_filepath, progress=progress)
 
     def create_dependency_package_basename(self, platform_name=None):
         """Create basename for dependency package file.
@@ -2150,6 +2145,14 @@ class ServerAPI(object):
         now_date = datetime.datetime.now()
         time_stamp = now_date.strftime("%y%m%d%H%M")
         return "ayon_{}_{}".format(time_stamp, platform_name)
+
+    def _get_bundles_route(self):
+        major, minor, patch, _, _ = self.server_version_tuple
+        # Backwards compatibility for AYON server 0.3.0
+        # - first version where bundles were available
+        if major == 0 and minor == 3 and patch == 0:
+            return "desktop/bundles"
+        return "bundles"
 
     def get_bundles(self):
         """Server bundles with basic information.
@@ -2181,7 +2184,7 @@ class ServerAPI(object):
             dict[str, Any]: Server bundles with basic information.
         """
 
-        response = self.get("desktop/bundles")
+        response = self.get(self._get_bundles_route())
         response.raise_for_status()
         return response.data
 
@@ -2224,7 +2227,7 @@ class ServerAPI(object):
             if value is not None:
                 body[key] = value
 
-        response = self.post("desktop/bundles", **body)
+        response = self.post(self._get_bundles_route(), **body)
         response.raise_for_status()
 
     def update_bundle(
@@ -2259,7 +2262,8 @@ class ServerAPI(object):
             if value is not None
         }
         response = self.patch(
-            "desktop/bundles/{}".format(bundle_name), **body
+            "{}/{}".format(self._get_bundles_route(), bundle_name),
+            **body
         )
         response.raise_for_status()
 
@@ -2270,7 +2274,9 @@ class ServerAPI(object):
             bundle_name (str): Name of bundle to delete.
         """
 
-        response = self.delete("desktop/bundles/{}".format(bundle_name))
+        response = self.delete(
+            "{}/{}".format(self._get_bundles_route(), bundle_name)
+        )
         response.raise_for_status()
 
     # Anatomy presets
