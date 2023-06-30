@@ -70,7 +70,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     # are considered non-essential to this
                     # particular publishing pipeline.
                     value = None
-                if attr in ["handleStart", "handleEnd", "frameStart", "frameEnd"]:
+                if attr in ["handleStart", "handleEnd",
+                            "frameStart", "frameEnd"]:
                     data[attr] = int(value)
                 else:
                     data[attr] = value
