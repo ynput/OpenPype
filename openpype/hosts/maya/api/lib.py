@@ -2370,23 +2370,27 @@ def build_first_workfile_from_template_builder():
     project_name = get_current_project_name()
     project_settings = get_project_settings(project_name)
 
+    build_workfile_profiles = project_settings['maya']['templated_workfile_build'].get('profiles')  # noqa
+
+    if not build_workfile_profiles:
+        return
+
     asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
     task_name = get_current_task_name()
     current_tasks = asset.get("data").get("tasks")
+    task_type = current_tasks[task_name]['type']
 
-    build_workfile_profiles = project_settings['maya']['templated_workfile_build'].get('profiles')  # noqa
+    for profile in build_workfile_profiles:
+        if not profile['autobuild_first_version']:
+            continue
 
-    if build_workfile_profiles:
-        for profile in build_workfile_profiles:
-            is_task_name = task_name in profile['task_names']
-            is_task_type = current_tasks[task_name]['type'] in \
-                profile['task_types']
-            is_create_first_version = profile['autobuild_first_version']
+        is_task_name = task_name in profile['task_names']
+        is_task_type = task_type in profile['task_tyep']
 
-            if (is_task_name or is_task_type) and is_create_first_version:
-                from .workfile_template_builder import build_workfile_template
-                build_workfile_template()
+        if (is_task_name or is_task_type):
+            from .workfile_template_builder import build_workfile_template
+            build_workfile_template()
 
 
 # Valid FPS
