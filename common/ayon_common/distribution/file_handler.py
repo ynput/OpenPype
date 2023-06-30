@@ -17,9 +17,9 @@ USER_AGENT = "AYON-launcher"
 class RemoteFileHandler:
     """Download file from url, might be GDrive shareable link"""
 
-    IMPLEMENTED_ZIP_FORMATS = [
+    IMPLEMENTED_ZIP_FORMATS = {
         "zip", "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
-    ]
+    }
 
     @staticmethod
     def calculate_md5(fpath, chunk_size=10000):
