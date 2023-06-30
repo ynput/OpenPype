@@ -17,7 +17,7 @@ class SourceDownloader(metaclass=ABCMeta):
     @classmethod
     @abstractmethod
     def download(cls, source, destination_dir, data, transfer_progress):
-        """Returns url to downloaded addon zip file.
+        """Returns url of downloaded addon zip file.
 
         Tranfer progress can be ignored, in that case file transfer won't
         be shown as 0-100% but as 'running'. First step should be to set
