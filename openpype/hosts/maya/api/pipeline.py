@@ -480,18 +480,16 @@ def on_init():
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
-    from .customize import (
-        override_component_mask_commands,
-        override_toolbox_ui
-    )
-    safe_deferred(override_component_mask_commands)
-
-    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
-
-    if launch_workfiles:
-        safe_deferred(host_tools.show_workfiles)
-
     if not lib.IS_HEADLESS:
+        launch_workfiles = os.environ.get("WORKFILES_STARTUP")
+        if launch_workfiles:
+            safe_deferred(host_tools.show_workfiles)
+
+        from .customize import (
+            override_component_mask_commands,
+            override_toolbox_ui
+        )
+        safe_deferred(override_component_mask_commands)
         safe_deferred(override_toolbox_ui)
 
 
