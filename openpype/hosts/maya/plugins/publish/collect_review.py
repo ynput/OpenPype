@@ -94,6 +94,10 @@ class CollectReview(pyblish.api.InstancePlugin):
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
             data['step'] = instance.data['step']
+            # this (with other time related data) should be set on
+            # representations. Once plugins like Extract Review start
+            # using representations, this should be removed from here
+            # as Extract Playblast is already adding fps to representation.
             data['fps'] = instance.context.data['fps']
             data['review_width'] = instance.data['review_width']
             data['review_height'] = instance.data['review_height']
@@ -131,6 +135,11 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data["frameEndHandle"]
             instance.data["displayLights"] = display_lights
             instance.data["burninDataMembers"] = burninDataMembers
+            # this (with other time related data) should be set on
+            # representations. Once plugins like Extract Review start
+            # using representations, this should be removed from here
+            # as Extract Playblast is already adding fps to representation.
+            instance.data["fps"] = instance.context.data["fps"]
 
             # make ftrack publishable
             instance.data.setdefault("families", []).append('ftrack')
