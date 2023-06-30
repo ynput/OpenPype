@@ -3,7 +3,6 @@
 import os
 from pprint import pformat
 import sys
-import platform
 import uuid
 import re
 
