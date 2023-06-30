@@ -112,7 +112,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # Take handles from context if not set locally on the instance
                 for key in ["handleStart", "handleEnd"]:
                     if key not in data:
-                        data[key] = context.data[key]
+                        data[key] = int(context.data[key])
 
                 data["frameStartHandle"] = int(
                     data["frameStart"] - data["handleStart"]
