@@ -70,11 +70,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     # are considered non-essential to this
                     # particular publishing pipeline.
                     value = None
-                if attr in ["handleStart", "handleEnd",
-                            "frameStart", "frameEnd"]:
-                    data[attr] = int(value)
-                else:
-                    data[attr] = value
+                data[attr] = value
 
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307
@@ -108,8 +104,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
-            label = "{0} ({1})".format(name,
-                                       data["asset"])
+            label = "{0} ({1})".format(name, data["asset"])
+
+            # Convert frame values to integers
+            for attr_name in (
+                "handleStart", "handleEnd", "frameStart", "frameEnd",
+            ):
+                value = data.get(attr_name)
+                if value is not None:
+                    data[attr_name] = int(value)
 
             # Append start frame and end frame to label if present
             if "frameStart" in data and "frameEnd" in data:
