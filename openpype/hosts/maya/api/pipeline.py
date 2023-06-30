@@ -686,30 +686,6 @@ def before_workfile_save(event):
         create_workspace_mel(workdir_path, project_name)
 
 
-def prompt_warning(message, show_cancel=False):
-    """Show feedback to user.
-
-    Returns:
-        bool
-    """
-
-    accept = QtWidgets.QMessageBox.Ok
-    if show_cancel:
-        buttons = accept | QtWidgets.QMessageBox.Cancel
-    else:
-        buttons = accept
-
-    state = QtWidgets.QMessageBox.warning(
-        None,
-        "",
-        message,
-        buttons=buttons,
-        defaultButton=accept
-    )
-
-    return state == accept
-
-
 def workfile_save_before_xgen(event):
     """Manage Xgen external files when switching context.
 
@@ -778,14 +754,13 @@ def workfile_save_before_xgen(event):
 
     # Ask user about overwriting files.
     if overwrites:
-        msg = (
+        log.warning(
             "WARNING! Potential loss of data.\n\n"
-            "Found duplicate Xgen files in new context.\n"
-            "Do you want to overwrite?\n\n{}".format("\n".join(overwrites))
+            "Found duplicate Xgen files in new context.\n{}".format(
+                "\n".join(overwrites)
+            )
         )
-        accept = prompt_warning(msg, show_cancel=True)
-        if not accept:
-            return
+        return
 
     for source, destination in transfers:
         if not os.path.exists(os.path.dirname(destination)):
