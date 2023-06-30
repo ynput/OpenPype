@@ -569,7 +569,6 @@ def _update_render_layer_observers():
 def on_open():
     """On scene open let's assume the containers have changed."""
 
-    from qtpy import QtWidgets
     from openpype.widgets import popup
 
     utils.executeDeferred(_update_render_layer_observers)
@@ -583,10 +582,7 @@ def on_open():
         log.warning("Scene has outdated content.")
 
         # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
-        parent = top_level_widgets.get("MayaWindow", None)
-
+        parent = lib.get_main_window()
         if parent is None:
             log.info("Skipping outdated content pop-up "
                      "because Maya window can't be found.")
