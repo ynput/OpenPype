@@ -309,7 +309,8 @@ class DistributionItem:
             try:
                 downloader = self.factory.get_downloader(source.type)
             except Exception:
-                source_progress.set_failed(f"Unknown downloader {source.type}")
+                message = f"Unknown downloader {source.type}"
+                source_progress.set_failed(message)
                 self.log.warning(message, exc_info=True)
                 continue
 
