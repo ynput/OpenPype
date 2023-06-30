@@ -1,6 +1,7 @@
 """Host API required Work Files tool"""
 import os
 import nuke
+from .utils import is_headless
 
 
 def file_extensions():
@@ -25,6 +26,12 @@ def open_file(filepath):
     # To remain in the same window, we have to clear the script and read
     # in the contents of the workfile.
     nuke.scriptClear()
+    if not is_headless():
+        autosave = nuke.toNode("preferences")["AutoSaveName"].evaluate()
+        autosave_prmpt = "Autosave detected.\nWould you like to load the autosave file?"       # noqa
+        if os.path.isfile(autosave) and nuke.ask(autosave_prmpt):
+            filepath = autosave
+
     nuke.scriptReadFile(filepath)
     nuke.Root()["name"].setValue(filepath)
     nuke.Root()["project_directory"].setValue(os.path.dirname(filepath))

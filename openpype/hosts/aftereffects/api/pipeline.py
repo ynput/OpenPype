@@ -10,6 +10,10 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.hosts.aftereffects.api.workfile_template_builder import (
+    AEPlaceholderLoadPlugin,
+    AEPlaceholderCreatePlugin
+)
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
 
@@ -115,6 +119,12 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item = data
         item["id"] = "publish_context"
         self.stub.imprint(item["id"], item)
+
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            AEPlaceholderLoadPlugin,
+            AEPlaceholderCreatePlugin
+        ]
 
     # created instances section
     def list_instances(self):

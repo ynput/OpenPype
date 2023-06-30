@@ -10,8 +10,10 @@ This code runs in a separate process to the main Resolve process.
 
 """
 import os
-
+from openpype.lib import Logger
 import openpype.hosts.resolve.api
+
+log = Logger.get_logger(__name__)
 
 
 def ensure_installed_host():
@@ -44,17 +46,22 @@ def open_file(path):
 def main():
     # Open last workfile
     workfile_path = os.environ.get("OPENPYPE_RESOLVE_OPEN_ON_LAUNCH")
-    if workfile_path:
+
+    if workfile_path and os.path.exists(workfile_path):
+        log.info(f"Opening last workfile: {workfile_path}")
         open_file(workfile_path)
     else:
-        print("No last workfile set to open. Skipping..")
+        log.info("No last workfile set to open. Skipping..")
 
     # Launch OpenPype menu
     from openpype.settings import get_project_settings
     from openpype.pipeline.context_tools import get_current_project_name
     project_name = get_current_project_name()
+    log.info(f"Current project name in context: {project_name}")
+
     settings = get_project_settings(project_name)
     if settings.get("resolve", {}).get("launch_openpype_menu_on_start", True):
+        log.info("Launching OpenPype menu..")
         launch_menu()
 
 
