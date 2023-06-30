@@ -549,13 +549,9 @@ def on_save():
     Any transform of a mesh, without an existing ID, is given one
     automatically on file save.
     """
-
     log.info("Running callback on save..")
     # remove lockfile if users jumps over from one scene to another
     _remove_workfile_lock()
-
-    # # Update current task for the current scene
-    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
@@ -577,8 +573,6 @@ def on_open():
     from openpype.widgets import popup
 
     utils.executeDeferred(_update_render_layer_observers)
-    # # Update current task for the current scene
-    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
