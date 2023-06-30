@@ -31,6 +31,7 @@ from ayon_common.utils import (
     get_ayon_appdirs,
     get_local_site_id,
     get_ayon_launch_args,
+    is_staging_enabled,
 )
 
 
@@ -450,15 +451,18 @@ def set_environments(url: str, token: str):
 def create_global_connection():
     """Create global connection with site id and client version.
 
-
     Make sure the global connection in 'ayon_api' have entered site id and
     client version.
+
+    Set default settings variant to use based on 'is_staging_enabled'.
     """
 
-    if hasattr(ayon_api, "create_connection"):
-        ayon_api.create_connection(
-            get_local_site_id(), os.environ.get("AYON_VERSION")
-        )
+    ayon_api.create_connection(
+        get_local_site_id(), os.environ.get("AYON_VERSION")
+    )
+    ayon_api.set_default_settings_variant(
+        "staging" if is_staging_enabled() else "production"
+    )
 
 
 def need_server_or_login() -> bool:

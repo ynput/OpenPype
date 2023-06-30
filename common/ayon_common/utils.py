@@ -21,6 +21,16 @@ def get_ayon_appdirs(*args):
     )
 
 
+def is_staging_enabled():
+    """Check if staging is enabled.
+
+    Returns:
+        bool: True if staging is enabled.
+    """
+
+    return os.getenv("AYON_USE_STAGING") == "1"
+
+
 def _create_local_site_id():
     """Create a local site identifier.
 
