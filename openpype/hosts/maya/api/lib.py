@@ -2811,19 +2811,22 @@ def get_attr_in_layer(attr, layer):
 
 def fix_incompatible_containers():
     """Backwards compatibility: old containers to use new ReferenceLoader"""
-
+    old_loaders = {
+        "MayaAsciiLoader",
+        "AbcLoader",
+        "ModelLoader",
+        "CameraLoader",
+        "RigLoader",
+        "FBXLoader"
+    }
     host = registered_host()
     for container in host.ls():
         loader = container['loader']
-
-        print(container['loader'])
-
-        if loader in ["MayaAsciiLoader",
-                      "AbcLoader",
-                      "ModelLoader",
-                      "CameraLoader",
-                      "RigLoader",
-                      "FBXLoader"]:
+        if loader in old_loaders:
+            log.info(
+                "Converting legacy container loader {} to "
+                "ReferenceLoader: {}".format(loader, container["objectName"])
+            )
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
 
