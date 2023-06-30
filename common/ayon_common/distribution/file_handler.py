@@ -145,7 +145,7 @@ class RemoteFileHandler:
         os.makedirs(root, exist_ok=True)
 
         if os.path.isfile(fpath) and RemoteFileHandler.check_integrity(fpath):
-            print("Using downloaded and verified file: " + fpath)
+            print(f"Using downloaded and verified file: {fpath}")
         else:
             session = requests.Session()
 
