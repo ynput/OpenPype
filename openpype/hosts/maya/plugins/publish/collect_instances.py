@@ -42,24 +42,24 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
             instance.data.update(creator_attributes)
 
         members = cmds.sets(objset, query=True) or []
-        if not members:
-            self.log.warning("Empty instance: \"%s\" " % objset)
-        else:
+        if members:
             # Collect members
             members = cmds.ls(members, long=True) or []
 
             dag_members = cmds.ls(members, type="dagNode", long=True)
             children = get_all_children(dag_members)
             children = cmds.ls(children, noIntermediate=True, long=True)
-            parents = []
-            if creator_attributes.get("includeParentHierarchy", True):
-                # If `includeParentHierarchy` then include the parents
-                # so they will also be picked up in the instance by validators
-                parents = self.get_all_parents(members)
+            parents = (
+                self.get_all_parents(members)
+                if creator_attributes.get("includeParentHierarchy", True)
+                else []
+            )
             members_hierarchy = list(set(members + children + parents))
 
             instance[:] = members_hierarchy
 
+        elif instance.data["family"] != "workfile":
+            self.log.warning("Empty instance: \"%s\" " % objset)
         # Store the exact members of the object set
         instance.data["setMembers"] = members
 
