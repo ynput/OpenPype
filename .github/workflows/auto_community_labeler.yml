@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Add Contributor Label
         run: |
-          author_type = $((github.event.pull_request.author_association))
+          author_type = ${{ github.event.pull_request.author_association }}
           echo "::debug::$author_type"
 
   auto_Issue_labeler:
