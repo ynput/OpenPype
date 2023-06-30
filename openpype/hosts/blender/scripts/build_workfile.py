@@ -418,18 +418,26 @@ def create_gdeformer_collection(parent_collection: bpy.types.Collection):
     Args:
         parent_collection (bpy.types.Collection): Collection to create GDEFORMER col in
     """
-    # Create GDEFORMER collection
-    gdeformer_col = bpy.data.collections.new("GDEFORMER")
-    parent_collection.children.link(gdeformer_col)
+
+    # Check if there are GDEFORM objects
+    gdeform_check = False
     for obj in bpy.context.scene.objects:
         if obj.name.startswith("GDEFORM"):
-            gdeformer_col.objects.link(obj)
+            gdeform_check = True
 
-        # Assign collection to sol(s) object(s)
-        if obj.name.lower().startswith("sol") and obj.modifiers.get(
-            "GroundDeform"
-        ):
-            obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
+    # Create GDEFORMER collection
+    if gdeform_check:
+        gdeformer_col = bpy.data.collections.new("GDEFORMER")
+        parent_collection.children.link(gdeformer_col)
+        for obj in bpy.context.scene.objects:
+            if obj.name.startswith("GDEFORM"):
+                gdeformer_col.objects.link(obj)
+
+            # Assign collection to sol(s) object(s)
+            if obj.name.lower().startswith("sol") and obj.modifiers.get(
+                "GroundDeform"
+            ):
+                obj.modifiers["GroundDeform"]["Input_2"] = gdeformer_col
 
 
 def build_layout(project_name, asset_name):
