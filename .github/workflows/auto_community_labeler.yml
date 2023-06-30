@@ -6,7 +6,7 @@ on:
   issues:
 
 jobs:
-  auto_community_labeler:
+  auto_PR_labeler:
     name: Auto PR Community Labeler
     runs-on: ubuntu-latest
     if: >
@@ -24,7 +24,7 @@ jobs:
         with:
           labels: community contribution
 
-  author-issue-labeler:
+  auto_Issue_labeler:
     name: Auto Issue Community Labeler
     runs-on: ubuntu-latest
     if: >
