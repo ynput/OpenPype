@@ -9,10 +9,9 @@ jobs:
   auto_PR_labeler:
     name: Auto PR Community Labeler
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
-
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER' }}
     steps:
-      - name: Add Contributer Label
+      - name: Add Contributor Label
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: community contribution
@@ -20,9 +19,9 @@ jobs:
   auto_Issue_labeler:
     name: Auto Issue Community Labeler
     runs-on: ubuntu-latest
-    if: github.event_name == 'issues' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
+    if: ${{ github.event_name == 'issues' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER' }}
     steps:
-      - name: Add Contributer Label
+      - name: Add Contributor Label
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: community contribution
