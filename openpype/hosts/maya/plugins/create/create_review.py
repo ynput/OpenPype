@@ -136,7 +136,7 @@ class CreateReview(plugin.MayaCreator):
                     default=True),
             EnumDef("displayLights",
                     label="Display Lights",
-                    items=lib.DISPLAY_LIGHTS_LABELS),
+                    items=lib.DISPLAY_LIGHTS_ENUM),
         ])
 
         return defs
