@@ -70,7 +70,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     # are considered non-essential to this
                     # particular publishing pipeline.
                     value = None
-                data[attr] = value
+                if attr in ["handleStart", "handleEnd", "frameStart", "frameEnd"]:
+                    data[attr] = int(value)
+                else:
+                    data[attr] = value
 
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307
@@ -126,8 +129,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 )
 
             instance.data["label"] = label
-
             instance.data.update(data)
+            self.log.debug("{}".format(instance.data))
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
