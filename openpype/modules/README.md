@@ -138,7 +138,8 @@ class ClockifyModule(
  "publish": [],
  "create": [],
  "load": [],
- "actions": []
+ "actions": [],
+ "inventory": []
  }
  ```
 

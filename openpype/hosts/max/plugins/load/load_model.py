@@ -1,8 +1,5 @@
-
 import os
-from openpype.pipeline import (
-    load, get_representation_path
-)
+from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
@@ -24,24 +21,20 @@ class ModelAbcLoader(load.LoaderPlugin):
         file_path = os.path.normpath(self.fname)
 
         abc_before = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
-        abc_import_cmd = (f"""
-AlembicImport.ImportToRoot = false
-AlembicImport.CustomAttributes = true
-AlembicImport.UVs = true
-AlembicImport.VertexColors = true
-
-importFile @"{file_path}" #noPrompt
-        """)
-
-        self.log.debug(f"Executing command: {abc_import_cmd}")
-        rt.execute(abc_import_cmd)
+        rt.AlembicImport.ImportToRoot = False
+        rt.AlembicImport.CustomAttributes = True
+        rt.AlembicImport.UVs = True
+        rt.AlembicImport.VertexColors = True
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
@@ -54,31 +47,34 @@ importFile @"{file_path}" #noPrompt
         abc_container = abc_containers.pop()
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__)
+            name, [abc_container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
-        path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        rt.select(node.Children)
 
-        for alembic in rt.selection:
-            abc = rt.getNodeByName(alembic.name)
-            rt.select(abc.Children)
-            for abc_con in rt.selection:
-                container = rt.getNodeByName(abc_con.name)
+        path = get_representation_path(representation)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Select(node.Children)
+
+        for alembic in rt.Selection:
+            abc = rt.GetNodeByName(alembic.name)
+            rt.Select(abc.Children)
+            for abc_con in rt.Selection:
+                container = rt.GetNodeByName(abc_con.name)
                 container.source = path
-                rt.select(container.Children)
-                for abc_obj in rt.selection:
-                    alembic_obj = rt.getNodeByName(abc_obj.name)
+                rt.Select(container.Children)
+                for abc_obj in rt.Selection:
+                    alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -86,8 +82,8 @@ importFile @"{file_path}" #noPrompt
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):
@@ -102,7 +98,7 @@ importFile @"{file_path}" #noPrompt
 
         filtered = []
         for child in list_children(parent):
-            class_type = str(rt.classOf(child.baseObject))
+            class_type = str(rt.ClassOf(child.baseObject))
             if class_type == type_name:
                 filtered.append(child)
 

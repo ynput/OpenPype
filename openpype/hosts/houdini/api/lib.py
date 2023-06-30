@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import re
 import uuid
 import logging
 from contextlib import contextmanager
@@ -581,3 +582,74 @@ def splitext(name, allowed_multidot_extensions):
             return name[:-len(ext)], ext
 
     return os.path.splitext(name)
+
+
+def get_top_referenced_parm(parm):
+
+    processed = set()  # disallow infinite loop
+    while True:
+        if parm.path() in processed:
+            raise RuntimeError("Parameter references result in cycle.")
+
+        processed.add(parm.path())
+
+        ref = parm.getReferencedParm()
+        if ref.path() == parm.path():
+            # It returns itself when it doesn't reference
+            # another parameter
+            return ref
+        else:
+            parm = ref
+
+
+def evalParmNoFrame(node, parm, pad_character="#"):
+
+    parameter = node.parm(parm)
+    assert parameter, "Parameter does not exist: %s.%s" % (node, parm)
+
+    # If the parameter has a parameter reference, then get that
+    # parameter instead as otherwise `unexpandedString()` fails.
+    parameter = get_top_referenced_parm(parameter)
+
+    # Substitute out the frame numbering with padded characters
+    try:
+        raw = parameter.unexpandedString()
+    except hou.Error as exc:
+        print("Failed: %s" % parameter)
+        raise RuntimeError(exc)
+
+    def replace(match):
+        padding = 1
+        n = match.group(2)
+        if n and int(n):
+            padding = int(n)
+        return pad_character * padding
+
+    expression = re.sub(r"(\$F([0-9]*))", replace, raw)
+
+    with hou.ScriptEvalContext(parameter):
+        return hou.expandStringAtFrame(expression, 0)
+
+
+def get_color_management_preferences():
+    """Get default OCIO preferences"""
+    data = {
+        "config": hou.Color.ocio_configPath()
+
+    }
+
+    # Get default display and view from OCIO
+    display = hou.Color.ocio_defaultDisplay()
+    disp_regex = re.compile(r"^(?P<name>.+-)(?P<display>.+)$")
+    disp_match = disp_regex.match(display)
+
+    view = hou.Color.ocio_defaultView()
+    view_regex = re.compile(r"^(?P<name>.+- )(?P<view>.+)$")
+    view_match = view_regex.match(view)
+    data.update({
+        "display": disp_match.group("display"),
+        "view": view_match.group("view")
+
+    })
+
+    return data
