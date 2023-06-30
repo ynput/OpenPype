@@ -140,6 +140,9 @@ def _template_replacements_to_v3(template):
 
 
 def _convert_template_item(template):
+    # Others won't have 'directory'
+    if "directory" not in template:
+        return
     folder = _template_replacements_to_v3(template.pop("directory"))
     template["folder"] = folder
     template["file"] = _template_replacements_to_v3(template["file"])
