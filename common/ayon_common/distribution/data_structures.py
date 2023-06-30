@@ -253,9 +253,9 @@ class Bundle:
     def from_dict(cls, data):
         return cls(
             name=data["name"],
-            installer_version=data["installerVersion"],
-            addon_versions=data["addons"],
-            dependency_packages=data["dependencyPackages"],
+            installer_version=data.get("installerVersion"),
+            addon_versions=data.get("addons", {}),
+            dependency_packages=data.get("dependencyPackages", {}),
             is_production=data["isProduction"],
             is_staging=data["isStaging"],
         )
