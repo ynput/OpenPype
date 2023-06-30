@@ -240,7 +240,7 @@ def compatibility_check():
     """Making sure PyOpenColorIO is importable"""
     try:
         import PyOpenColorIO  # noqa: F401
-    except (ImportError, ModuleNotFoundError):
+    except ImportError:
         return False
     return True
 
