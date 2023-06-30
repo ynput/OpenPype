@@ -9,7 +9,9 @@ import hashlib
 import tarfile
 import zipfile
 
-USER_AGENT = "openpype"
+import requests
+
+USER_AGENT = "AYON-launcher"
 
 
 class RemoteFileHandler:
@@ -76,6 +78,7 @@ class RemoteFileHandler:
         headers=None
     ):
         """Download a file from url and place it in root.
+
         Args:
             url (str): URL to download file from
             root (str): Directory to place downloaded file in
@@ -132,7 +135,6 @@ class RemoteFileHandler:
         """
         # Based on https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url # noqa
 
-        import requests
         url = "https://docs.google.com/uc?export=download"
 
         root = os.path.expanduser(root)
