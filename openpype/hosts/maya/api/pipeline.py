@@ -563,21 +563,20 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
+def _update_render_layer_observers():
+    # Helper to trigger update for all renderlayer observer logic
+    lib.remove_render_layer_observer()
+    lib.add_render_layer_observer()
+    lib.add_render_layer_change_observer()
+
+
 def on_open():
     """On scene open let's assume the containers have changed."""
 
     from qtpy import QtWidgets
     from openpype.widgets import popup
 
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.remove_render_layer_observer()")
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.add_render_layer_observer()")
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.add_render_layer_change_observer()")
+    utils.executeDeferred(_update_render_layer_observers)
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
 
@@ -618,16 +617,9 @@ def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     with lib.suspended_refresh():
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.remove_render_layer_observer()")
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.add_render_layer_observer()")
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
+
+    utils.executeDeferred(_update_render_layer_observers)
     _remove_workfile_lock()
 
 
