@@ -688,9 +688,9 @@ def before_workfile_save(event):
 def prompt_warning(message, show_cancel=False):
     """Show feedback to user.
 
-        Returns:
-            bool
-        """
+    Returns:
+        bool
+    """
 
     from qtpy import QtWidgets
 
