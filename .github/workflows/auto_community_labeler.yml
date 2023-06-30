@@ -9,25 +9,20 @@ jobs:
   auto_PR_labeler:
     name: Auto PR Community Labeler
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'CONTRIBUTOR'
 
     steps:
       - name: Add Contributer Label
         uses: actions-ecosystem/action-add-labels@v1
-        if: github.event.pull_request.author_association == 'COLLABORATOR' || github.event.pull_request.author_association == 'CONTRIBUTOR'
-
         with:
           labels: community contribution
 
   auto_Issue_labeler:
     name: Auto Issue Community Labeler
     runs-on: ubuntu-latest
-    if: github.event_name == 'issue'
-
+    if: github.event_name == 'issue' && github.event.issue.author_association == 'COLLABORATOR' || github.event.issue.author_association == 'CONTRIBUTOR'
     steps:
       - name: Add Contributer Label
         uses: actions-ecosystem/action-add-labels@v1
-        if: github.event.issue.author_association == 'COLLABORATOR' || github.event.issue.author_association == 'CONTRIBUTOR'
-
         with:
           labels: community contribution
