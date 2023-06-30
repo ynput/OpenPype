@@ -8,7 +8,6 @@ from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
 
 import pyblish.api
-from qtpy import QtWidgets
 
 from openpype.settings import get_project_settings
 from openpype.host import (
