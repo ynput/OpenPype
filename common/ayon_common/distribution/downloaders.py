@@ -105,7 +105,7 @@ class HTTPDownloader(SourceDownloader):
             filename = os.path.basename(source_url)
             basename, ext = os.path.splitext(filename)
             allowed_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
-            if ext.replace(".", "") not in allowed_exts:
+            if ext.lower().lstrip(".") not in allowed_exts:
                 filename = f"{basename}.zip"
         return filename
 
@@ -153,7 +153,7 @@ class AyonServerDownloader(SourceDownloader):
         cls.log.debug(f"Downloading {filename} to {destination_dir}")
 
         _, ext = os.path.splitext(filename)
-        clear_ext = ext.lower().replace(".", "")
+        clear_ext = ext.lower().lstrip(".")
         valid_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
         if clear_ext not in valid_exts:
             raise ValueError(
