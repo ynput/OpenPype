@@ -16,16 +16,6 @@ jobs:
         with:
           labels: community contribution
 
-  debug_PR_labeler:
-    name: Debug PR Community Labeler
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER' }}
-    steps:
-      - name: Add Contributor Label
-        run: |
-          author_type = ${{ github.event.pull_request.author_association }}
-          echo "::debug::$author_type"
-
   auto_Issue_labeler:
     name: Auto Issue Community Labeler
     runs-on: ubuntu-latest
