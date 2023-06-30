@@ -233,36 +233,40 @@ class RepairAction(pyblish.api.Action):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the errored instances
-        self.log.info("Finding failed instances..")
+        self.log.debug("Finding failed instances..")
         errored_instances = get_errored_instances_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
         for instance in instances:
+            self.log.debug(
+                "Attempting repair for instance: {} ...".format(instance)
+            )
             plugin.repair(instance)
 
 
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
-    To process the repairing this requires a static `repair(instance)` method
+    To process the repairing this requires a static `repair(context)` method
     is available on the plugin.
     """
 
     label = "Repair"
     on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the failed instances
-        self.log.info("Finding failed instances..")
+        self.log.debug("Finding failed plug-ins..")
         failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         if plugin in failed_plugins:
-            self.log.info("Attempting fix ...")
+            self.log.debug("Attempting repair ...")
             plugin.repair(context)
 
 
