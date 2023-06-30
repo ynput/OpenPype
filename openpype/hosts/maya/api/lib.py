@@ -2954,7 +2954,7 @@ def _get_render_instances():
         list: list of instances
 
     """
-    objectset = cmds.ls("*.id", long=True, type="objectSet",
+    objectset = cmds.ls("*.id", long=True, exactType="objectSet",
                         recursive=True, objectsOnly=True)
 
     instances = []
