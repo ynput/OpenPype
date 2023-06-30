@@ -240,7 +240,7 @@ def get_data_subprocess(config_path, data_type):
 def compatible_python():
     """Only 3.9 or higher can directly use PyOpenColorIO in ocio_wrapper"""
     compatible = False
-    if sys.version[0] == 3 and sys.version[1] >= 9:
+    if sys.version_info.major == 3 and sys.version_info.minor >= 9:
         compatible = True
     return compatible
 
