@@ -13,6 +13,8 @@ from enum import Enum
 
 import ayon_api
 
+from ayon_common.utils import is_staging_enabled
+
 from .utils import (
     get_addons_dir,
     get_dependencies_dir,
@@ -442,8 +444,7 @@ class AyonDistribution:
             When both are not available the bundle is defined by 'use_staging'
             value.
         use_staging (Optional[bool]): Use staging versions of an addon.
-            If not passed, an environment variable 'OPENPYPE_USE_STAGING' is
-            checked for value '1'.
+            If not passed, 'is_staging_enabled' is used as default value.
     """
 
     def __init__(
@@ -517,7 +518,7 @@ class AyonDistribution:
         """
 
         if self._use_staging is None:
-            self._use_staging = os.getenv("OPENPYPE_USE_STAGING") == "1"
+            self._use_staging = is_staging_enabled()
         return self._use_staging
 
     @property
