@@ -9,23 +9,35 @@ jobs:
   auto_community_labeler:
     name: Auto PR Community Labeler
     runs-on: ubuntu-latest
-    if: github.event.pull_request.author_association != 'OWNER' &&  github.event.pull_request.author_association != 'MEMBER'
+    if: >
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER'
 
     steps:
       - name: Add Contributer Label
         uses: actions-ecosystem/action-add-labels@v1
-        if: github.event.pull_request.author_association == 'COLLABORATOR' ||  github.event.pull_request.author_association == 'CONTRIBUTOR'
+        if: >
+          github.event.pull_request.author_association == 'COLLABORATOR' ||
+          github.event.pull_request.author_association == 'CONTRIBUTOR'
+
         with:
-          labels: community contribution_
+          labels: community contribution
 
   author-issue-labeler:
     name: Auto Issue Community Labeler
     runs-on: ubuntu-latest
-    if: github.event.issue.author_association != 'OWNER' && github.event.issue.author_association != 'MEMBER'
+    if: >
+      github.event_name == 'issue' &&
+      github.event.issue.author_association != 'OWNER' &&
+      github.event.issue.author_association != 'MEMBER'
 
     steps:
       - name: Add Contributer Label
         uses: actions-ecosystem/action-add-labels@v1
-        if: github.event.issue.author_association == 'COLLABORATOR' ||  github.event.issue.author_association == 'CONTRIBUTOR'
+        if: >
+          github.event.issue.author_association == 'COLLABORATOR' ||
+          github.event.issue.author_association == 'CONTRIBUTOR'
+
         with:
           labels: community contribution
