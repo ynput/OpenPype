@@ -8,6 +8,7 @@ from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
 
 import pyblish.api
+from qtpy import QtWidgets
 
 from openpype.settings import get_project_settings
 from openpype.host import (
@@ -691,9 +692,6 @@ def prompt_warning(message, show_cancel=False):
         Returns:
             bool
         """
-
-    from qtpy import QtWidgets
-
     accept = QtWidgets.QMessageBox.Ok
     if show_cancel:
         buttons = accept | QtWidgets.QMessageBox.Cancel
