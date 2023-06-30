@@ -239,7 +239,7 @@ def get_data_subprocess(config_path, data_type):
 def compatibility_check():
     """Making sure PyOpenColorIO is importable"""
     try:
-        import PyOpenColorIO
+        import PyOpenColorIO  # noqa: F401
     except (ImportError, ModuleNotFoundError):
         return False
     return True
