@@ -10,6 +10,8 @@ from .data_structures import UrlType
 
 
 class SourceDownloader(metaclass=ABCMeta):
+    """Abstract class for source downloader."""
+
     log = logging.getLogger(__name__)
 
     @classmethod
@@ -80,6 +82,8 @@ class SourceDownloader(metaclass=ABCMeta):
 
 
 class OSDownloader(SourceDownloader):
+    """Downloader using files from file drive."""
+
     @classmethod
     def download(cls, source, destination_dir, data, transfer_progress):
         # OS doesn't need to download, unzip directly
@@ -95,6 +99,8 @@ class OSDownloader(SourceDownloader):
 
 
 class HTTPDownloader(SourceDownloader):
+    """Downloader using http or https protocol."""
+
     CHUNK_SIZE = 100000
 
     @staticmethod
@@ -128,7 +134,6 @@ class HTTPDownloader(SourceDownloader):
 
     @classmethod
     def cleanup(cls, source, destination_dir, data):
-        # Nothing to do - download does not copy anything
         filename = cls.get_filename(source)
         filepath = os.path.join(destination_dir, filename)
         if os.path.exists(filepath) and os.path.isfile(filepath):
@@ -136,7 +141,7 @@ class HTTPDownloader(SourceDownloader):
 
 
 class AyonServerDownloader(SourceDownloader):
-    """Downloads static resource file from v4 Server.
+    """Downloads static resource file from AYON Server.
 
     Expects filled env var AYON_SERVER_URL.
     """
@@ -195,7 +200,6 @@ class AyonServerDownloader(SourceDownloader):
 
     @classmethod
     def cleanup(cls, source, destination_dir, data):
-        # Nothing to do - download does not copy anything
         filename = source["filename"]
         filepath = os.path.join(destination_dir, filename)
         if os.path.exists(filepath) and os.path.isfile(filepath):
@@ -203,6 +207,8 @@ class AyonServerDownloader(SourceDownloader):
 
 
 class DownloadFactory:
+    """Factory for downloaders."""
+
     def __init__(self):
         self._downloaders = {}
 
