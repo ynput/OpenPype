@@ -32,6 +32,11 @@
             "skip_timelines_check": [
                 ".*"
             ]
+        },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "workfile_builder": {
