@@ -19,6 +19,9 @@ from openpype.pipeline.load import (
     switch_container,
     get_repres_contexts,
     loaders_from_repre_context,
+    LoaderSwitchNotImplementedError,
+    IncompatibleLoaderError,
+    LoaderNotFoundError
 )
 
 from .widgets import (
@@ -1300,7 +1303,18 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             try:
                 switch_container(container, repre_doc, loader)
-            except Exception:
+            except Exception as exc:
+                if isinstance(exc, (LoaderSwitchNotImplementedError,
+                                    IncompatibleLoaderError,
+                                    LoaderNotFoundError)):
+                    # Show error message directly
+                    text = str(exc)
+                else:
+                    text = (
+                        "Switch asset failed. "
+                        "Search console log for more details."
+                    )
+
                 msg = (
                     "Couldn't switch asset."
                     "See traceback for more information."
@@ -1308,9 +1322,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 log.warning(msg, exc_info=True)
                 dialog = QtWidgets.QMessageBox(self)
                 dialog.setWindowTitle("Switch asset failed")
-                dialog.setText(
-                    "Switch asset failed. Search console log for more details"
-                )
+                dialog.setText(text)
                 dialog.exec_()
 
         self.switched.emit()
