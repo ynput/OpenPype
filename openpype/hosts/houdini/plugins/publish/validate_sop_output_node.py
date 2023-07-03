@@ -5,6 +5,7 @@ from openpype.pipeline.publish import RepairAction
 
 import hou
 
+
 class SelectInvalidAction(RepairAction):
     label = "Select Invalid ROP"
     icon = "mdi.cursor-default-click"
