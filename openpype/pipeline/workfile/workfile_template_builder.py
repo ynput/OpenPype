@@ -1603,7 +1603,7 @@ class PlaceholderLoadMixin(object):
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
                 representation.
-            failed (bool): True if loading failed.
+            failed (bool): Loading of representation failed.
         """
 
         pass
