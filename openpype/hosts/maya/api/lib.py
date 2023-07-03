@@ -3137,9 +3137,8 @@ def remove_render_layer_observer():
         pass
 
 
-def update_instances_frame_range():
-    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'asset'
-    attributes of publishable instances (their objectSets) that got one.
+def set_attribute_instances(attribute, value):
+    """Set attribute value of publishable instances (their objectSets)
     """
     collected_instances = cmds.ls(
         "*.id",
@@ -3148,35 +3147,43 @@ def update_instances_frame_range():
         recursive=True,
         objectsOnly=True
     )
-    asset_doc = get_current_project_asset()
-
-    asset_data = asset_doc["data"]
-    frames_attributes = {
-        'frameStart': asset_data["frameStart"],
-        'frameEnd': asset_data["frameEnd"],
-        'handleStart': asset_data["handleStart"],
-        'handleEnd': asset_data["handleEnd"],
-        'asset': asset_doc['name']
-    }
 
     for instance in collected_instances:
         id_attr = "{}.id".format(instance)
         if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
             continue
 
-        for key, value in frames_attributes.items():
-            if cmds.attributeQuery(key, node=instance, exists=True):
-                if key == 'asset':
-                    cmds.setAttr(
-                        "{}.{}".format(instance, key),
-                        value,
-                        type="string"
-                    )
-                else:
-                    cmds.setAttr(
-                        "{}.{}".format(instance, key),
-                        value
-                    )
+        if not cmds.attributeQuery(attribute, node=instance, exists=True):
+            continue
+
+        attr = "{}.{}".format(instance, attribute)
+
+        if cmds.getAttr(attr, type=True) == "string":
+            cmds.setAttr(attr, value, type="string")
+        else:
+            cmds.setAttr(attr, value)
+
+
+def update_instances_asset_attribute():
+    """Update 'asset' attribute of publishable instances (their objectSets)
+    that got one.
+    """
+
+    set_attribute_instances("asset", get_current_project_asset()['name'])
+
+
+def update_instances_frame_range():
+    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'fps'
+    attributes of publishable instances (their objectSets) that got one.
+    """
+    asset_doc = get_current_project_asset()
+    asset_data = asset_doc["data"]
+
+    set_attribute_instances("frameStart", asset_data["frameStart"])
+    set_attribute_instances("frameEnd", asset_data["frameEnd"])
+    set_attribute_instances("handleStart", asset_data["handleStart"])
+    set_attribute_instances("handleEnd", asset_data["handleEnd"])
+    set_attribute_instances("fps", asset_data['fps'])
 
 
 def show_message(title, msg):
