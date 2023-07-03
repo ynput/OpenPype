@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint, reset_frame_range, get_main_window
+from .lib import read, imprint, update_instances_frame_range, get_main_window
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -251,12 +251,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
-        reset_frame_range(
-            playback=False,
-            render=False,
-            fps=False,
-            instances=True
-        )
+        update_instances_frame_range()
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
