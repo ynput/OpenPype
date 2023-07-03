@@ -1598,10 +1598,7 @@ class PlaceholderLoadMixin(object):
             placeholder.load_succeed(container)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
@@ -1788,10 +1785,7 @@ class PlaceholderCreateMixin(object):
             placeholder.create_succeed(creator_instance)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
