@@ -1547,6 +1547,8 @@ class PlaceholderLoadMixin(object):
         self._before_placeholder_load(
             placeholder
         )
+
+        failed = False
         for repre_load_context in repre_load_contexts.values():
             representation = repre_load_context["representation"]
             repre_context = representation["context"]
@@ -1571,9 +1573,10 @@ class PlaceholderLoadMixin(object):
 
             except Exception:
                 self.load_failed(placeholder, representation)
-
+                failed = True
             else:
                 self.load_succeed(placeholder, container)
+
         # Run post placeholder process after load of all representations
         self.post_placeholder_process(placeholder, failed)
 
