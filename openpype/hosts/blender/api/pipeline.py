@@ -6,10 +6,14 @@ from typing import Callable, Dict, Iterator, List, Optional
 import bpy
 
 from . import lib
-from . import ops
+from . import ops, properties
 
 import pyblish.api
 
+from openpype.host import(
+    HostBase,
+    IPublishHost,
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
@@ -47,6 +51,39 @@ IS_HEADLESS = bpy.app.background
 log = Logger.get_logger(__name__)
 
 
+class BlenderHost(HostBase, IPublishHost):
+    name = "blender"
+
+    def install(self):
+        """Override install method from HostBase.
+        Install Blender host functionality."""
+        install()
+
+    def ls(self) -> Iterator:
+        """List containers from active Blender scene."""
+        return ls()
+
+    def get_context_data(self):
+        """Override abstract method from IPublishHost.
+        Get global data related to creation-publishing from workfile.
+
+        Returns:
+            dict: Context data stored using 'update_context_data'.
+        """
+        return bpy.context.scene.openpype_context
+
+    def update_context_data(self, data, changes):
+        """Override abstract method from IPublishHost.
+        Store global context data to workfile.
+
+        Args:
+            data (dict): New data as are.
+            changes (dict): Only data that has been changed. Each value has
+                tuple with '(<old>, <new>)' value.
+        """
+        bpy.context.scene.openpype_context.update(data)
+
+
 def pype_excepthook_handler(*args):
     traceback.print_exception(*args)
 
@@ -72,6 +109,7 @@ def install():
 
     if not IS_HEADLESS:
         ops.register()
+        properties.register()
 
 
 def uninstall():
@@ -86,6 +124,7 @@ def uninstall():
 
     if not IS_HEADLESS:
         ops.unregister()
+        properties.unregister()
 
 
 def show_message(title, message):
