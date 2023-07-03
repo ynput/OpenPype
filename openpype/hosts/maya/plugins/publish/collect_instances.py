@@ -42,37 +42,52 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
             instance.data.update(creator_attributes)
 
         members = cmds.sets(objset, query=True) or []
-        if not members:
-            self.log.warning("Empty instance: \"%s\" " % objset)
-        else:
+        if members:
             # Collect members
             members = cmds.ls(members, long=True) or []
 
             dag_members = cmds.ls(members, type="dagNode", long=True)
             children = get_all_children(dag_members)
             children = cmds.ls(children, noIntermediate=True, long=True)
-            parents = []
-            if creator_attributes.get("includeParentHierarchy", True):
-                # If `includeParentHierarchy` then include the parents
-                # so they will also be picked up in the instance by validators
-                parents = self.get_all_parents(members)
+            parents = (
+                self.get_all_parents(members)
+                if creator_attributes.get("includeParentHierarchy", True)
+                else []
+            )
             members_hierarchy = list(set(members + children + parents))
 
             instance[:] = members_hierarchy
 
+        elif instance.data["family"] != "workfile":
+            self.log.warning("Empty instance: \"%s\" " % objset)
         # Store the exact members of the object set
         instance.data["setMembers"] = members
 
         # TODO: This might make more sense as a separate collector
-        # Collect frameStartHandle and frameEndHandle if frames present
-        if "frameStart" in instance.data:
-            handle_start = instance.data.get("handleStart", 0)
-            frame_start_handle = instance.data["frameStart"] - handle_start
-            instance.data["frameStartHandle"] = frame_start_handle
-        if "frameEnd" in instance.data:
-            handle_end = instance.data.get("handleEnd", 0)
-            frame_end_handle = instance.data["frameEnd"] + handle_end
-            instance.data["frameEndHandle"] = frame_end_handle
+        # Convert frame values to integers
+        for attr_name in (
+            "handleStart", "handleEnd", "frameStart", "frameEnd",
+        ):
+            value = instance.data.get(attr_name)
+            if value is not None:
+                instance.data[attr_name] = int(value)
+
+        # Append start frame and end frame to label if present
+        if "frameStart" in instance.data and "frameEnd" in instance.data:
+            # Take handles from context if not set locally on the instance
+            for key in ["handleStart", "handleEnd"]:
+                if key not in instance.data:
+                    value = instance.context.data[key]
+                    if value is not None:
+                        value = int(value)
+                    instance.data[key] = value
+
+            instance.data["frameStartHandle"] = int(
+                instance.data["frameStart"] - instance.data["handleStart"]
+            )
+            instance.data["frameEndHandle"] = int(
+                instance.data["frameEnd"] + instance.data["handleEnd"]
+            )
 
     def get_all_parents(self, nodes):
         """Get all parents by using string operations (optimization)

@@ -121,16 +121,14 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
-DISPLAY_LIGHTS_VALUES = [
-    "project_settings", "default", "all", "selected", "flat", "none"
-]
-DISPLAY_LIGHTS_LABELS = [
-    "Use Project Settings",
-    "Default Lighting",
-    "All Lights",
-    "Selected Lights",
-    "Flat Lighting",
-    "No Lights"
+
+DISPLAY_LIGHTS_ENUM = [
+    {"label": "Use Project Settings", "value": "project_settings"},
+    {"label": "Default Lighting", "value": "default"},
+    {"label": "All Lights", "value": "all"},
+    {"label": "Selected Lights", "value": "selected"},
+    {"label": "Flat Lighting", "value": "flat"},
+    {"label": "No Lights", "value": "none"}
 ]
 
 
@@ -2320,8 +2318,8 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
 
 def reset_scene_resolution():
@@ -3987,6 +3985,71 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
         capture_preset = plugin_settings["capture_preset"]
 
     return capture_preset or {}
+
+
+def get_reference_node(members, log=None):
+    """Get the reference node from the container members
+    Args:
+        members: list of node names
+
+    Returns:
+        str: Reference node name.
+
+    """
+
+    # Collect the references without .placeHolderList[] attributes as
+    # unique entries (objects only) and skipping the sharedReferenceNode.
+    references = set()
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        references.add(ref)
+
+    assert references, "No reference node found in container"
+
+    # Get highest reference node (least parents)
+    highest = min(references,
+                  key=lambda x: len(get_reference_node_parents(x)))
+
+    # Warn the user when we're taking the highest reference node
+    if len(references) > 1:
+        if not log:
+            log = logging.getLogger(__name__)
+
+        log.warning("More than one reference node found in "
+                    "container, using highest reference node: "
+                    "%s (in: %s)", highest, list(references))
+
+    return highest
+
+
+def get_reference_node_parents(ref):
+    """Return all parent reference nodes of reference node
+
+    Args:
+        ref (str): reference node.
+
+    Returns:
+        list: The upstream parent reference nodes.
+
+    """
+    parent = cmds.referenceQuery(ref,
+                                 referenceNode=True,
+                                 parent=True)
+    parents = []
+    while parent:
+        parents.append(parent)
+        parent = cmds.referenceQuery(parent,
+                                     referenceNode=True,
+                                     parent=True)
+    return parents
 
 
 def create_rig_animation_instance(
