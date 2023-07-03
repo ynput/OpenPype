@@ -1301,28 +1301,28 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 else:
                     repre_doc = repres_by_name[container_repre_name]
 
+            error = None
             try:
                 switch_container(container, repre_doc, loader)
-            except Exception as exc:
-                if isinstance(exc, (LoaderSwitchNotImplementedError,
-                                    IncompatibleLoaderError,
-                                    LoaderNotFoundError)):
-                    # Show error message directly
-                    text = str(exc)
-                else:
-                    text = (
-                        "Switch asset failed. "
-                        "Search console log for more details."
-                    )
-
-                msg = (
+            except (
+                LoaderSwitchNotImplementedError,
+                IncompatibleLoaderError,
+                LoaderNotFoundError,
+            ) as exc:
+                error = str(exc)
+            except Exception:
+                error = (
+                    "Switch asset failed. "
+                    "Search console log for more details."
+                )
+            if error is not None:
+                log.warning((
                     "Couldn't switch asset."
                     "See traceback for more information."
-                )
-                log.warning(msg, exc_info=True)
+                ), exc_info=True)
                 dialog = QtWidgets.QMessageBox(self)
                 dialog.setWindowTitle("Switch asset failed")
-                dialog.setText(text)
+                dialog.setText(error)
                 dialog.exec_()
 
         self.switched.emit()
