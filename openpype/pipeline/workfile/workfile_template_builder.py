@@ -44,6 +44,13 @@ from openpype.pipeline.load import (
     load_with_repre_context,
 )
 
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_name,
+    get_current_task_name,
+    get_current_host_name
+)
+
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
     CreateContext,
@@ -113,6 +120,7 @@ class AbstractTemplateBuilder(object):
         # Where created objects of placeholder plugins will be stored
         self._placeholder_plugins = None
         self._loaders_by_name = None
+        self._actions_by_name = None
         self._creators_by_name = None
         self._create_context = None
 
@@ -249,6 +257,12 @@ class AbstractTemplateBuilder(object):
         if self._loaders_by_name is None:
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
+
+    def get_actions_by_name(self):
+        if self._actions_by_name is None:
+            self._actions_by_name = test.get_actions_by_name()
+            print(f"ACTIONS BY NAME: {self._actions_by_name}")
+        return self._actions_by_name
 
     def _collect_legacy_creators(self):
         creators_by_name = {}
@@ -1248,6 +1262,13 @@ class PlaceholderLoadMixin(object):
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
 
+        print(f"BUILDER: {self.builder}")
+        actions_by_name = self.builder.get_actions_by_name()
+        # action_items = [
+        #     {"value": action_name, "label": action.label or action_name}
+        #     for action_name, action in actions_by_name.items()
+        # ]
+
         # Get families from all loaders excluding "*"
         families = set()
         for loader in loaders_by_name.values():
@@ -1308,6 +1329,19 @@ class PlaceholderLoadMixin(object):
                     "\nField is case sensitive."
                 )
             ),
+            # attribute_definitions.EnumDef(
+            #     "action",
+            #     label="Action",
+            #     default=options.get("action"),
+            #     items=action_items,
+            #     tooltip=(
+            #         "Loader"
+            #         "\nDefines what OpenPype loader will be used to"
+            #         " load assets."
+            #         "\nUseable loader depends on current host's loader list."
+            #         "\nField is case sensitive."
+            #     )
+            # ),
             attribute_definitions.TextDef(
                 "loader_args",
                 label="Loader Arguments",
@@ -1825,3 +1859,40 @@ class CreatePlaceholderItem(PlaceholderItem):
 
     def create_failed(self, creator_data):
         self._failed_created_publish_instances.append(creator_data)
+
+
+def build_first_workfile_from_template_builder():
+    print("#" * 100)
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
+
+    asset_name = get_current_asset_name()
+    asset = get_asset_by_name(project_name, asset_name)
+    task_name = get_current_task_name()
+    current_tasks = asset.get("data").get("tasks")
+    task_type = current_tasks[task_name]['type']
+    host = get_current_host_name()
+
+    build_workfile_profiles = project_settings[host]['templated_workfile_build']  # noqa
+
+    filtering_criteria = {
+        "task_names": task_name,
+        "task_types": task_type
+    }
+
+    if build_workfile_profiles["profiles"]:
+        profile = filter_profiles(
+            build_workfile_profiles["profiles"],
+            filtering_criteria
+        )
+
+    if not profile or not profile.get("autobuild_first_version"):
+        return False
+
+    is_task_name = task_name in profile['task_names']
+    is_task_type = task_type in profile['task_types']
+
+    if not is_task_name and not is_task_type:
+        return False
+
+    return True

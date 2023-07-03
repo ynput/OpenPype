@@ -2366,42 +2366,6 @@ def set_context_settings():
     set_colorspace()
 
 
-def build_first_workfile_from_template_builder():
-    project_name = get_current_project_name()
-    project_settings = get_project_settings(project_name)
-
-    asset_name = get_current_asset_name()
-    asset = get_asset_by_name(project_name, asset_name)
-    task_name = get_current_task_name()
-    current_tasks = asset.get("data").get("tasks")
-    task_type = current_tasks[task_name]['type']
-
-    build_workfile_profiles = project_settings['maya']['templated_workfile_build']  # noqa
-
-    filtering_criteria = {
-        "task_names": task_name,
-        "task_types": task_type,
-        "autobuild_first_version": False
-    }
-
-    if build_workfile_profiles["profiles"]:
-        profile = filter_profiles(
-            build_workfile_profiles["profiles"],
-            filtering_criteria,
-            logger=log
-        )
-
-    if not profile:
-        return
-
-    is_task_name = task_name in profile['task_names']
-    is_task_type = task_type in profile['task_types']
-
-    if (is_task_name or is_task_type):
-        from .workfile_template_builder import build_workfile_template
-        build_workfile_template()
-
-
 # Valid FPS
 def validate_fps():
     """Validate current scene FPS and show pop-up when it is incorrect
