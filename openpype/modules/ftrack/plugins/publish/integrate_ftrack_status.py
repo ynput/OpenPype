@@ -75,7 +75,7 @@ class CollectFtrackTaskStatuses(pyblish.api.ContextPlugin):
         }
         context.data["ftrackTaskStatuses"] = task_statuses_by_type_id
         context.data["ftrackStatusByTaskId"] = {}
-        self.log.info("Collected ftrack task statuses.")
+        self.log.debug("Collected ftrack task statuses.")
 
 
 class IntegrateFtrackStatusBase(pyblish.api.InstancePlugin):
@@ -116,7 +116,7 @@ class IntegrateFtrackStatusBase(pyblish.api.InstancePlugin):
         profiles = self.get_status_profiles()
         if not profiles:
             project_name = context.data["projectName"]
-            self.log.info((
+            self.log.debug((
                 "Status profiles are not filled for project \"{}\". Skipping"
             ).format(project_name))
             return
@@ -124,7 +124,7 @@ class IntegrateFtrackStatusBase(pyblish.api.InstancePlugin):
         # Task statuses were not collected -> skip
         task_statuses_by_type_id = context.data.get("ftrackTaskStatuses")
         if not task_statuses_by_type_id:
-            self.log.info(
+            self.log.debug(
                 "Ftrack task statuses are not collected. Skipping.")
             return
 
@@ -364,12 +364,12 @@ class IntegrateFtrackTaskStatus(pyblish.api.ContextPlugin):
     def process(self, context):
         task_statuses_by_type_id = context.data.get("ftrackTaskStatuses")
         if not task_statuses_by_type_id:
-            self.log.info("Ftrack task statuses are not collected. Skipping.")
+            self.log.debug("Ftrack task statuses are not collected. Skipping.")
             return
 
         status_by_task_id = self._get_status_by_task_id(context)
         if not status_by_task_id:
-            self.log.info("No statuses to set. Skipping.")
+            self.log.debug("No statuses to set. Skipping.")
             return
 
         ftrack_session = context.data["ftrackSession"]

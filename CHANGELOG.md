@@ -1,6 +1,425 @@
 # Changelog
 
 
+## [3.15.11](https://github.com/ynput/OpenPype/tree/3.15.11)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.10...3.15.11)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Ftrack: Task status during publishing <a href="https://github.com/ynput/OpenPype/pull/5123">#5123</a></summary>
+
+Added option to change task status during publishing for 3 possible cases: "sending to farm", "local integration" and "on farm integration".
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Allow for more complex temp rendering paths <a href="https://github.com/ynput/OpenPype/pull/5132">#5132</a></summary>
+
+When changing the temporary rendering template (i.e., add `{asset}` to the path) to something a bit more complex the formatting was erroring due to missing keys.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Add support for custom path for app templates <a href="https://github.com/ynput/OpenPype/pull/5137">#5137</a></summary>
+
+This PR adds support for a custom App Templates path in Blender by setting the `BLENDER_USER_SCRIPTS` environment variable to the path specified in `OPENPYPE_APP_TEMPLATES_PATH`. This allows users to use their own custom app templates in Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher & StandalonePublisher: Specify version <a href="https://github.com/ynput/OpenPype/pull/5142">#5142</a></summary>
+
+Simple creators in TrayPublisher can affect which version will be integrated. Standalone publisher respects the version change from UI.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Workfile Builder UI: Workfile builder window is not modal <a href="https://github.com/ynput/OpenPype/pull/5131">#5131</a></summary>
+
+Workfile Templates Builder:
+- Create dialog is not a modal dialog
+- Create dialog remains open after create, so you can directly create a new placeholder with similar settings
+- In Maya allow to create root level placeholders (no selection during create) - **this felt more like a bugfix than anything else.**
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: Use custom modifiers to hold instance members <a href="https://github.com/ynput/OpenPype/pull/4931">#4931</a></summary>
+
+Moving logic to handle members of publishing instance from children/parent relationship on Container to tracking via custom attribute on modifier. This eliminates limitations where you couldn't have one node multiple times under one Container and because it stores those relationships as weak references, they are easily transferable even when original nodes are renamed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Add height, width and fps setup to project manager <a href="https://github.com/ynput/OpenPype/pull/5075">#5075</a></summary>
+
+Add Width, Height, FPS, Pixel Aspect and Frame Start/End to the Project creation dialogue in the Project Manager.I understand that the Project manager will be replaced in the upcoming Ayon, but for the time being I believe setting new project with these options available would be more fun.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: connect custom write node script to the OP setting <a href="https://github.com/ynput/OpenPype/pull/5113">#5113</a></summary>
+
+Allows user to customize the values of knobs attribute in the OP setting and use it in custom write node
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Keep `publisher.create_widget` variant when creating subsets <a href="https://github.com/ynput/OpenPype/pull/5119">#5119</a></summary>
+
+Whenever a person is creating a subset to publish, the "creator" widget resets (where you choose the variant, product, etc.) so if the person is publishing several images of the a variant which is not the default one, they have to keep selecting the correct one after every "create".
+
+This commit resets the original variant upon successful creation of a subset for publishing.
+
+Demo:
+[Screencast from 2023-06-08 10-46-40.webm](https://github.com/ynput/OpenPype/assets/1800151/ca1c91d4-b8f3-43d2-a7b7-35987f5b6a3f)
+
+## Testing notes:
+1. Launch AYON/OP
+2. Launch the publisher (select a project, shot, etc.)
+3. Crete a publish type (any works)
+4. Choose a variant for the publish that is not the default
+5. "Create >>"
+
+The Variant fields should still have the variant you choose.
+
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Color Management- added color management support for simple expected files on Deadline <a href="https://github.com/ynput/OpenPype/pull/5122">#5122</a></summary>
+
+Running of `ExtractOIIOTranscode` during Deadline publish was previously implemented only on DCCs with AOVs (Maya, Max).This PR extends this for other DCCs with flat structure of expected files.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>hide macos dock icon on build <a href="https://github.com/ynput/OpenPype/pull/5133">#5133</a></summary>
+
+Set `LSUIElement` to `1` in the `Info.plist` to hide OP icon from the macos dock by default.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Pack project: Raise exception with reasonable message <a href="https://github.com/ynput/OpenPype/pull/5145">#5145</a></summary>
+
+Pack project crashes with relevant message when destination directory is not set.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Allow "inventory" actions to be supplied by a Module/Addon. <a href="https://github.com/ynput/OpenPype/pull/5146">#5146</a></summary>
+
+Adds "inventory" as a possible key to the plugin paths to be returned from a module.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsmax: make code compatible with 3dsmax 2022 <a href="https://github.com/ynput/OpenPype/pull/5164">#5164</a></summary>
+
+Python 3.7 in 3dsmax 2022 is not supporting walrus operator. This is removing it from the code for the sake of compatibility
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Support same attribute names on different node types. <a href="https://github.com/ynput/OpenPype/pull/5054">#5054</a></summary>
+
+When validating render settings attributes, support same attribute names on different node types.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: bug fix the standin being not loaded when they are first loaded <a href="https://github.com/ynput/OpenPype/pull/5143">#5143</a></summary>
+
+fix the bug of raising error when the first two standins are loaded through the loaderThe bug mentioned in the related issue: https://github.com/ynput/OpenPype/issues/5129For some reason, `defaultArnoldRenderOptions.operator` is not listed in the connection node attribute even if `cmds.loadPlugin("mtoa", quiet=True)` executed before loading the object as standins for the first time.But if you manually turn on mtoa through plugin preference and load the standins for the first time, it won't raise the related  `defaultArnoldRenderOptions.operator` error.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: bug fix arnoldExportAss unable to export selected set members <a href="https://github.com/ynput/OpenPype/pull/5150">#5150</a></summary>
+
+See #5108 fix the bug arnoldExportAss being not able to export and error out during extraction.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Xgen multiple descriptions on single shape - OP-6039 <a href="https://github.com/ynput/OpenPype/pull/5160">#5160</a></summary>
+
+When having multiple descriptions on the same geometry, the extraction would produce redundant duplicate geometries.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Xgen export of Abc's during Render Publishing - OP-6206 <a href="https://github.com/ynput/OpenPype/pull/5167">#5167</a></summary>
+
+Shading assignments was missing duplicating the setup for Xgen publishing and the exporting of patches was getting the end frame incorrectly.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Include handles - OP-6236 <a href="https://github.com/ynput/OpenPype/pull/5175">#5175</a></summary>
+
+Render range was missing the handles.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>OCIO: Support working with single frame renders <a href="https://github.com/ynput/OpenPype/pull/5053">#5053</a></summary>
+
+When there is only 1 file, the datamember `files` on the representation should be a string.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Burnins: Refactored burnins script <a href="https://github.com/ynput/OpenPype/pull/5094">#5094</a></summary>
+
+Refactored list value for burnins and fixed command length limit by using temp file for filters string.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: open_file function can open autosave script <a href="https://github.com/ynput/OpenPype/pull/5107">#5107</a></summary>
+
+Fix the bug of the workfile dialog being unable to open autosave nuke script
+
+
+___
+
+</details>
+
+
+<details>
+<summary>ImageIO: Minor fixes <a href="https://github.com/ynput/OpenPype/pull/5147">#5147</a></summary>
+
+Resolve few minor fixes related to latest image io changes from PR.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix save shortcut <a href="https://github.com/ynput/OpenPype/pull/5148">#5148</a></summary>
+
+Save shortcut should work for both PySide2 and PySide6.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Pack Project: Fix files packing <a href="https://github.com/ynput/OpenPype/pull/5154">#5154</a></summary>
+
+Packing of project with files does work again.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Xgen version mismatch after publish - OP-6204 <a href="https://github.com/ynput/OpenPype/pull/5161">#5161</a></summary>
+
+Xgen was not updating correctly when for example adding or removing descriptions. This resolve the issue by overwritting the workspace xgen file.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Edge case fixes <a href="https://github.com/ynput/OpenPype/pull/5165">#5165</a></summary>
+
+Fix few edge case issues that may cause issues in Publisher UI.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Colorspace: host config path backward compatibility <a href="https://github.com/ynput/OpenPype/pull/5166">#5166</a></summary>
+
+Old project settings overrides are now fully backward compatible. The issue with host config paths overrides were solved and now once a project used to be set to ocio_config **enabled** with found filepaths - this is now considered as activated host ocio_config paths overrides.Nuke is having an popup dialogue which is letting know to a user that settings for config path were changed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: import workfile missing - OP-6233 <a href="https://github.com/ynput/OpenPype/pull/5174">#5174</a></summary>
+
+Missing `workfile` family to import.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Fix ignore sync filter <a href="https://github.com/ynput/OpenPype/pull/5176">#5176</a></summary>
+
+Ftrack ignore filter does not crash because of dictionary modifications during it's iteration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Webpublisher - headless publish shouldn't be blocking operation <a href="https://github.com/ynput/OpenPype/pull/5177">#5177</a></summary>
+
+`subprocess.call` was blocking, which resulted in UI non responsiveness as it was waiting for publish to finish.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix disappearing actions <a href="https://github.com/ynput/OpenPype/pull/5184">#5184</a></summary>
+
+Pyblish plugin actions are visible as expected.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Enhancement:animation family loaded as standing (abc) uses "use file sequence" <a href="https://github.com/ynput/OpenPype/pull/5110">#5110</a></summary>
+
+The changes are the following. We started by updating the the is_sequence(files) function allowing it to return True for a list of files which has only one file, since our animation in this provides just one alembic file. For the correct FPS number, we got the fps from the published ass/abc from the version data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>add label to matching family <a href="https://github.com/ynput/OpenPype/pull/5128">#5128</a></summary>
+
+I added the possibility to filter the `family smart select` with the label in addition to the family.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.10](https://github.com/ynput/OpenPype/tree/3.15.10)
 
 
