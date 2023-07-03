@@ -2261,7 +2261,7 @@ def get_frame_range(include_animation_range=False):
     return frame_range
 
 
-def reset_frame_range(playback=True, render=True, fps=True, instances=False):
+def reset_frame_range(playback=True, render=True, fps=True, instances=True):
     """Set frame range to current asset
 
     Args:
