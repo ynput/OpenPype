@@ -120,7 +120,6 @@ class AbstractTemplateBuilder(object):
         # Where created objects of placeholder plugins will be stored
         self._placeholder_plugins = None
         self._loaders_by_name = None
-        self._actions_by_name = None
         self._creators_by_name = None
         self._create_context = None
 
@@ -257,12 +256,6 @@ class AbstractTemplateBuilder(object):
         if self._loaders_by_name is None:
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
-
-    def get_actions_by_name(self):
-        if self._actions_by_name is None:
-            self._actions_by_name = test.get_actions_by_name()
-            print(f"ACTIONS BY NAME: {self._actions_by_name}")
-        return self._actions_by_name
 
     def _collect_legacy_creators(self):
         creators_by_name = {}
@@ -1262,13 +1255,6 @@ class PlaceholderLoadMixin(object):
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
 
-        print(f"BUILDER: {self.builder}")
-        actions_by_name = self.builder.get_actions_by_name()
-        # action_items = [
-        #     {"value": action_name, "label": action.label or action_name}
-        #     for action_name, action in actions_by_name.items()
-        # ]
-
         # Get families from all loaders excluding "*"
         families = set()
         for loader in loaders_by_name.values():
@@ -1329,19 +1315,6 @@ class PlaceholderLoadMixin(object):
                     "\nField is case sensitive."
                 )
             ),
-            # attribute_definitions.EnumDef(
-            #     "action",
-            #     label="Action",
-            #     default=options.get("action"),
-            #     items=action_items,
-            #     tooltip=(
-            #         "Loader"
-            #         "\nDefines what OpenPype loader will be used to"
-            #         " load assets."
-            #         "\nUseable loader depends on current host's loader list."
-            #         "\nField is case sensitive."
-            #     )
-            # ),
             attribute_definitions.TextDef(
                 "loader_args",
                 label="Loader Arguments",
