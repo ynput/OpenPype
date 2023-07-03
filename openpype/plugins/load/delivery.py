@@ -155,6 +155,10 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         self._update_selected_label()
         self._update_template_value()
+        
+        btn_delivery.clicked.connect(self.deliver)
+        dropdown.currentIndexChanged.connect(self._update_template_value)
+
         if not self.dropdown.count():
             self.text_area.setVisible(True)
             error_message = (
@@ -163,9 +167,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             )
             self.text_area.setText(error_message)
             self.log.error(error_message.replace("\n", " "))
-        else:
-            btn_delivery.clicked.connect(self.deliver)
-            dropdown.currentIndexChanged.connect(self._update_template_value)
 
     def deliver(self):
         """Main method to loop through all selected representations"""
