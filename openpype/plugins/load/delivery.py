@@ -155,7 +155,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         self._update_selected_label()
         self._update_template_value()
-        
+
         btn_delivery.clicked.connect(self.deliver)
         dropdown.currentIndexChanged.connect(self._update_template_value)
 
