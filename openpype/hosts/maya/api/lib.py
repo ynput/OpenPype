@@ -3139,7 +3139,7 @@ def remove_render_layer_observer():
 
 def update_instances_frame_range():
     """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'asset'
-    attributes of sets that got one, except if instance family is 'render'
+    attributes of publishable instances (their objectSets) that got one.
     """
     collected_instances = cmds.ls(
         "*.id",
