@@ -34,7 +34,6 @@ class CreateTextures(Creator):
         if not substance_painter.project.is_open():
             raise CreatorError("Can't create a Texture Set instance without "
                                "an open project.")
-
         instance = self.create_instance_in_context(subset_name,
                                                    instance_data)
         set_instance(
@@ -76,7 +75,6 @@ class CreateTextures(Creator):
         return instance
 
     def get_instance_attr_defs(self):
-
         return [
             EnumDef("exportPresetUrl",
                     items=get_export_presets(),
@@ -156,7 +154,3 @@ class CreateTextures(Creator):
             UILabelDef("*only used with "
                        "'Dilation + <x>' padding"),
         ]
-
-    def get_pre_create_attr_defs(self):
-        # Use same attributes as for instance attributes
-        return self.get_instance_attr_defs()
