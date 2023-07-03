@@ -26,7 +26,7 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         for job in jobs:
             job = self.update_job_with_host_specific(instance, job)
 
-        instance.data["rrJobs"].append(job)
+            instance.data["rrJobs"].append(job)
 
     def update_job_with_host_specific(self, instance, job):
         nuke_version = re.search(
