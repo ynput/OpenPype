@@ -20,28 +20,23 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Camera instance must only include"
-                                         "camera (and camera target)")
+            raise PublishValidationError(("Camera instance must only include"
+                                          "camera (and camera target). "
+                                          f"Invalid content {invalid}"))
 
     def get_invalid(self, instance):
         """
         Get invalid nodes if the instance is not camera
         """
-        invalid = list()
+        invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating look content for "
-                      "{}".format(container))
+        self.log.info(f"Validating camera content for {container}")
 
-        con = rt.getNodeByName(container)
-        selection_list = list(con.Children)
+        selection_list = instance.data["members"]
         for sel in selection_list:
             # to avoid Attribute Error from pymxs wrapper
             sel_tmp = str(sel)
-            found = False
-            for cam in self.camera_type:
-                if sel_tmp.startswith(cam):
-                    found = True
-                    break
+            found = any(sel_tmp.startswith(cam) for cam in self.camera_type)
             if not found:
                 self.log.error("Camera not found")
                 invalid.append(sel)

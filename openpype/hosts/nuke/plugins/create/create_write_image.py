@@ -86,7 +86,6 @@ class CreateWriteImage(napi.NukeWriteCreator):
                 "frame": nuke.frame()
             }
         )
-        self.add_info_knob(created_node)
 
         self._add_frame_range_limit(created_node, instance_data)
 
