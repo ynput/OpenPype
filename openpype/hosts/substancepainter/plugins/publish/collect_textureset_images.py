@@ -114,7 +114,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Clone the instance
         image_instance = context.create_instance(image_subset)
         image_instance[:] = instance[:]
-        image_instance.data.update(copy.deepcopy(dict(instance.data)))
+        image_instance.data.update(copy.deepcopy(instance.data))
         image_instance.data["name"] = image_subset
         image_instance.data["label"] = image_subset
         image_instance.data["subset"] = image_subset
@@ -157,7 +157,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             dict: Export config
 
         """
-        preset_url = instance.data["exportPresetUrl"]
+
+        creator_attrs = instance.data["creator_attributes"]
+        preset_url = creator_attrs["exportPresetUrl"]
         self.log.debug(f"Exporting using preset: {preset_url}")
 
         # See: https://substance3d.adobe.com/documentation/ptpy/api/substance_painter/export  # noqa
@@ -170,10 +172,10 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             "exportParameters": [
                 {
                     "parameters": {
-                        "fileFormat": instance.data["exportFileFormat"],
-                        "sizeLog2": instance.data["exportSize"],
-                        "paddingAlgorithm": instance.data["exportPadding"],
-                        "dilationDistance": instance.data["exportDilationDistance"]  # noqa
+                        "fileFormat": creator_attrs["exportFileFormat"],
+                        "sizeLog2": creator_attrs["exportSize"],
+                        "paddingAlgorithm": creator_attrs["exportPadding"],
+                        "dilationDistance": creator_attrs["exportDilationDistance"]  # noqa
                     }
                 }
             ]

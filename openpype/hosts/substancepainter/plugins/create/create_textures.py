@@ -35,6 +35,7 @@ class CreateTextures(Creator):
             raise CreatorError("Can't create a Texture Set instance without "
                                "an open project.")
         # Transfer settings from pre create to instance
+        creator_attributes = instance_data.setdefault("creator_attributes", dict())
         for key in [
             "exportPresetUrl",
             "exportFileFormat",
@@ -43,7 +44,7 @@ class CreateTextures(Creator):
             "exportDilationDistance"
         ]:
             if key in pre_create_data:
-                instance_data[key] = pre_create_data[key]
+                creator_attributes[key] = pre_create_data[key]
 
         instance = self.create_instance_in_context(subset_name,
                                                    instance_data)
