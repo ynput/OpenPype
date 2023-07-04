@@ -32,6 +32,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline.workfile import workfile_template_builder
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     remove_workfile_lock,
@@ -42,7 +43,10 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
-from .workfile_template_builder import MayaPlaceholderLoadPlugin
+from .workfile_template_builder import (
+    MayaPlaceholderLoadPlugin,
+    build_workfile_template
+)
 from .workio import (
     open_file,
     save_file,
@@ -614,6 +618,11 @@ def on_open():
     check_lock_on_current_file()
 
 
+def _auto_build_first_workfile():
+    if workfile_template_builder.should_build_first_workfile():
+        build_workfile_template()
+
+
 def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
@@ -627,14 +636,7 @@ def on_new():
         cmds.evalDeferred(
             "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
-        autobuild_first_workfile = """
-from openpype.pipeline.workfile import workfile_template_builder
-from openpype.hosts.maya.api.workfile_template_builder import build_workfile_template  # noqa
-builder = workfile_template_builder.build_first_workfile_from_template_builder()  # noqa
-if builder:
-    build_workfile_template()
-"""
-        cmds.evalDeferred(autobuild_first_workfile)
+        utils.executeDeferred(_auto_build_first_workfile)
         lib.set_context_settings()
     _remove_workfile_lock()
 
