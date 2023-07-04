@@ -377,7 +377,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         else:
             new_asset_version_data = {
-                "version": version,
+                "version": str(version),
                 "asset_id": asset_id
             }
             if task_id:

@@ -279,9 +279,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             asset_doc["_id"],
             fields=["name"]
         )
-        version = 1
+        version = 0
         if version_doc:
-            version += int(version_doc["name"])
+            version += int(version_doc["name"]) + 1
         return version
 
     def _get_number_of_frames(self, file_url):

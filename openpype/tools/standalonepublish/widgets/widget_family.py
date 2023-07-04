@@ -299,7 +299,7 @@ class FamilyWidget(QtWidgets.QWidget):
         project_name = self.dbcon.active_project()
         asset_name = self.asset_name
         subset_name = self.input_result.text()
-        version = 1
+        version = 0
 
         asset_doc = None
         subset_doc = None

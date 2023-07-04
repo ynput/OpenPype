@@ -105,7 +105,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "name": instance.data["subset"],
             },
             "assetversion_data": {
-                "version": version_number,
+                "version": str(version_number),
                 "comment": instance.context.data.get("comment") or "",
                 "status_name": status_name
             },

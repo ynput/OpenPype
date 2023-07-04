@@ -195,11 +195,11 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             if version_number is None:
                 # TODO we should be able to change default version by studio
                 # preferences (like start with version number `0`)
-                version_number = 1
+                version_number = 0
                 # use latest version (+1) if already any exist
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
-                    version_number += int(latest_version)
+                    version_number += int(latest_version) + 1
 
             anatomy_updates = {
                 "asset": instance.data["asset"],
