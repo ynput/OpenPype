@@ -319,12 +319,6 @@ def _check_and_update_from_ayon_server():
             bundle_name = bundle.name
     except BundleNotFoundError as exc:
         bundle_name = exc.bundle_name
-        if HEADLESS_MODE_ENABLED:
-            _print("!!! Server does not have defined bundle to use.")
-            _print(
-                "!!! Make sure server has set bundle."
-            )
-            sys.exit(1)
 
     if bundle is None:
         url = get_base_url()
