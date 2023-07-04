@@ -2,8 +2,6 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
 
 
 class CreateAnimation(plugin.Creator):
