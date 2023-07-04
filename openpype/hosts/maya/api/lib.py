@@ -3179,7 +3179,7 @@ def update_instances_frame_range():
         ]
 
         if instance_attrs:
-            attrs_per_instance [instance] = instance_attrs
+            attrs_per_instance[instance] = instance_attrs
 
     if not attrs_per_instance:
         # no instances with any frame related attributes
