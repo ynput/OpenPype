@@ -3,7 +3,6 @@ import re
 
 import pyblish
 
-from openpype.modules.base import ModulesManager
 from openpype.modules.timers_manager.plugins.publish.start_timer import (
     StartTimer,
 )
@@ -87,34 +86,33 @@ class UnpauseSyncServer(pyblish.api.ContextPlugin):
     order = StartTimer.order
 
     def process(self, context):
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
-        sync_server_module.unpause_server()
+        project_name = context.data["projectEntity"]["name"]
+        sync_server_module = context.data["openPypeModules"]["sync_server"]
+        sync_server_module.unpause_project(project_name)
 
         # Wait for all started futures to finish
         subprocess_errors = False
-        for instance in context:
-            for future in as_completed(
-                instance.data.get("representations_futures", [])
+        for future in as_completed(
+            context.data.get("representations_futures", [])
+        ):
+            result = future.result().decode()
+
+            # Iterate through matched errors
+            if errors_stack := list(
+                re.finditer(REGEX_BUILTIN_EXCEPTIONS, result)
             ):
-                result = future.result().decode()
+                # Match file path
+                blend_file = re.search(REGEX_BLEND_FILE, result)
 
-                # Iterate through matched errors
-                if errors_stack := list(
-                    re.finditer(REGEX_BUILTIN_EXCEPTIONS, result)
-                ):
-                    # Match file path
-                    blend_file = re.search(REGEX_BLEND_FILE, result)
-
-                    # Notify matched erros in log
-                    for stack in errors_stack:
-                        self.log.error(
-                            f"Blend file: {blend_file[1]}\n\n{stack[0]}\n"
-                            f"~~~~~\n\n{result}"
-                        )
-                    subprocess_errors = True
-                else:
-                    self.log.info(result)
+                # Notify matched erros in log
+                for stack in errors_stack:
+                    self.log.error(
+                        f"Blend file: {blend_file[1]}\n\n{stack[0]}\n"
+                        f"~~~~~\n\n{result}"
+                    )
+                subprocess_errors = True
+            else:
+                self.log.info(result)
 
         # Stop if errors
         if subprocess_errors:
