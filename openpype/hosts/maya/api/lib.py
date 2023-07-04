@@ -3178,7 +3178,7 @@ def update_instances_frame_range():
             if cmds.attributeQuery(attr, node=instance, exists=True)
         ]
 
-        if instance_attrs :
+        if instance_attrs:
             attrs_per_instance [instance] = instance_attrs
 
     if not attrs_per_instance:
