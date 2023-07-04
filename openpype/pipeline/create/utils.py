@@ -30,7 +30,8 @@ def get_last_versions_for_instances(
         asset_name = instance.data.get("asset")
         subset_name = instance.subset_name
         if not asset_name or not subset_name:
-            output[instance.id] = -2
+            if use_value_for_missing:
+                output[instance.id] = -2
             continue
 
         (
