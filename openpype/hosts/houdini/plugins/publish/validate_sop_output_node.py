@@ -6,8 +6,8 @@ from openpype.pipeline.publish import RepairAction
 import hou
 
 
-class SelectInvalidAction(RepairAction):
-    label = "Select Invalid ROP"
+class SelectROPAction(RepairAction):
+    label = "Select ROP"
     icon = "mdi.cursor-default-click"
 
 class ValidateSopOutputNode(pyblish.api.InstancePlugin):
@@ -26,7 +26,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
     families = ["pointcache", "vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
-    actions = [SelectInvalidAction]
+    actions = [SelectROPAction]
 
     def process(self, instance):
 
@@ -89,10 +89,10 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        """Select Invalid ROP.
+        """Select ROP.
 
-        It's used to select invalid ROP which tells the
-        artist which ROP node need to be fixed!
+        It's used to select the associated ROP for the selected instance
+        which tells the artist which ROP node need to be fixed!
         """
 
         rop_node = hou.node(instance.data["instance_node"])
