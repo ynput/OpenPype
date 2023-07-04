@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
-from openpype.pipeline.publish import RepairAction
-from openpype.hosts.houdini.api.action import SelectInvalidAction
+from openpype.hosts.houdini.api.action import (
+    SelectInvalidAction,
+    SelectROPAction,
+)
 
 import hou
 
-
-class SelectROPAction(RepairAction):
-    label = "Select ROP"
-    icon = "mdi.cursor-default-click"
 
 class ValidateSopOutputNode(pyblish.api.InstancePlugin):
     """Validate the instance SOP Output Node.
@@ -87,19 +85,3 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
                 "Output node `%s` has no geometry data." % output_node.path()
             )
             return [output_node]
-
-    @classmethod
-    def repair(cls, instance):
-        """Select ROP.
-
-        It's used to select the associated ROP for the selected instance
-        which tells the artist which ROP node need to be fixed!
-        """
-
-        rop_node = hou.node(instance.data["instance_node"])
-        rop_node.setSelected(True, clear_all_selected=True)
-
-        cls.log.debug(
-            '%s has been selected'
-            % rop_node.path()
-        )
