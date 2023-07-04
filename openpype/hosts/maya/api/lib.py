@@ -3137,31 +3137,19 @@ def remove_render_layer_observer():
         pass
 
 
-def set_attribute_instances(attribute, value):
-    """Set attribute value of publishable instances (their objectSets)
+def iter_publish_instances():
+    """Iterate over publishable instances (their objectSets).
     """
-    collected_instances = cmds.ls(
+    for node in cmds.ls(
         "*.id",
         long=True,
         type="objectSet",
         recursive=True,
         objectsOnly=True
-    )
-
-    for instance in collected_instances:
-        id_attr = "{}.id".format(instance)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+    ):
+        if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
             continue
-
-        if not cmds.attributeQuery(attribute, node=instance, exists=True):
-            continue
-
-        attr = "{}.{}".format(instance, attribute)
-
-        if cmds.getAttr(attr, type=True) == "string":
-            cmds.setAttr(attr, value, type="string")
-        else:
-            cmds.setAttr(attr, value)
+        yield node
 
 
 def update_instances_asset_attribute():
@@ -3169,21 +3157,43 @@ def update_instances_asset_attribute():
     that got one.
     """
 
-    set_attribute_instances("asset", get_current_project_asset()['name'])
+    for instance in iter_publish_instances():
+        if not cmds.attributeQuery("asset", node=instance, exists=True):
+            continue
+        attr = "{}.asset".format(instance)
+        cmds.setAttr(attr, get_current_project_asset()['name'], type="string")
 
 
 def update_instances_frame_range():
     """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'fps'
     attributes of publishable instances (their objectSets) that got one.
     """
-    asset_doc = get_current_project_asset()
+
+    attributes = ["frameStart", "frameEnd", "handleStart", "handleEnd", "fps"]
+
+    attrs_per_instance = {}
+    for instance in iter_publish_instances():
+        instance_attrs = [
+            attr for attr in attributes
+            if cmds.attributeQuery(attr, node=instance, exists=True)
+        ]
+
+        if instance_attrs :
+            attrs_per_instance [instance] = instance_attrs
+
+    if not attrs_per_instance:
+        # no instances with any frame related attributes
+        return
+
+    fields = ["data.{}".format(key) for key in attributes]
+    asset_doc = get_current_project_asset(fields=fields)
     asset_data = asset_doc["data"]
 
-    set_attribute_instances("frameStart", asset_data["frameStart"])
-    set_attribute_instances("frameEnd", asset_data["frameEnd"])
-    set_attribute_instances("handleStart", asset_data["handleStart"])
-    set_attribute_instances("handleEnd", asset_data["handleEnd"])
-    set_attribute_instances("fps", asset_data['fps'])
+    for node, attrs in attrs_per_instance.items():
+        for attr in attrs:
+            plug = "{}.{}".format(node, attr)
+            value = asset_data[attr]
+            cmds.setAttr(plug, value)
 
 
 def show_message(title, msg):
