@@ -49,8 +49,7 @@ class SelectInvalidAction(pyblish.api.Action):
 class SelectROPAction(pyblish.api.Action):
     """Select ROP.
 
-    It's used to select the associated ROPs with all errored instances
-    not necessarily the ones that errored on the plugin we're running the action on.
+    It's used to select the associated ROPs with the errored instances.
     """
 
     label = "Select ROP"
