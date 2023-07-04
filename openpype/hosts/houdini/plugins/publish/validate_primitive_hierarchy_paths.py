@@ -159,6 +159,13 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             output_node.moveToGoodPosition()
         else:
             # Connect after
-            output_node.setFirstInput(path_node)
+            path_node.setFirstInput(output_node)
             rop_node.parm('sop_path').set(path_node.path())
             path_node.moveToGoodPosition()
+            instance.data.update({"output_node" : path_node })
+
+            cls.log.debug(
+            "'%s' has set as the output node, "
+            "'%s' has updated"
+            % (path_node, rop_node)
+            )
