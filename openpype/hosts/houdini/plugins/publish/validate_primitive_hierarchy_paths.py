@@ -13,6 +13,7 @@ class AddDefaultPathAction(RepairAction):
     label = "Add a default path attribute"
     icon = "mdi.pencil-plus-outline"
 
+
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     """Validate all primitives build hierarchy from attribute when enabled.
 
@@ -48,7 +49,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Ensure a valid SOP output path is set." % rop_node.path()
             )
 
-            return [rop_node.path()]
+            return [rop_node]
 
         build_from_path = rop_node.parm("build_from_path").eval()
         if not build_from_path:
@@ -65,7 +66,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "value set, but 'Build Hierarchy from Attribute'"
                 "is enabled."
             )
-            return [rop_node.path()]
+            return [rop_node]
 
         cls.log.debug("Checking for attribute: %s" % path_attr)
 
@@ -92,7 +93,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Geometry Primitives are missing "
                 "path attribute: `%s`" % path_attr
             )
-            return [output_node.path()]
+            return [output_node]
 
         # Ensure at least a single string value is present
         if not attrib.strings():
@@ -100,7 +101,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Primitive path attribute has no "
                 "string values: %s" % path_attr
             )
-            return [output_node.path()]
+            return [output_node]
 
         paths = geo.primStringAttribValues(path_attr)
         # Ensure all primitives are set to a valid path
@@ -112,7 +113,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Prims have no value for attribute `%s` "
                 "(%s of %s prims)" % (path_attr, len(invalid_prims), num_prims)
             )
-            return [output_node.path()]
+            return [output_node]
 
     @classmethod
     def repair(cls, instance):
@@ -122,20 +123,23 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         which used to add a default single value.
         """
 
-        output_node = instance.data.get("output_node")
         rop_node = hou.node(instance.data["instance_node"])
+        output_node = rop_node.parm('sop_path').evalAsNode()
 
-        path_attr = rop_node.parm("path_attrib").eval()
-
-        frame = instance.data.get("frameStart", 0)
-        geo = output_node.geometryAtFrame(frame)
-
-        paths = geo.findPrimAttrib(path_attr) and \
-                    geo.primStringAttribValues(path_attr)
+        if not output_node:
+            cls.log.debug(
+                "Action isn't performed, empty SOP Path on %s"
+                % rop_node
+            )
+            return
 
         # This check to prevent the action from running multiple times.
-        if paths:
+        # git_invalid only returns [output_node] when
+        #   path attribute is the problem
+        if  cls.get_invalid(instance) != [output_node]:
             return
+
+        path_attr = rop_node.parm("path_attrib").eval()
 
         path_node = output_node.parent().createNode("name", "AUTO_PATH")
         path_node.parm("attribname").set(path_attr)
@@ -163,10 +167,8 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             path_node.setFirstInput(output_node)
             rop_node.parm('sop_path').set(path_node.path())
             path_node.moveToGoodPosition()
-            instance.data.update({"output_node" : path_node })
 
             cls.log.debug(
-            "'%s' has set as the output node, "
-            "'%s' has updated"
-            % (path_node, rop_node)
+            "SOP path on '%s' updated to new output node '%s'"
+            % (rop_node, path_node)
             )
