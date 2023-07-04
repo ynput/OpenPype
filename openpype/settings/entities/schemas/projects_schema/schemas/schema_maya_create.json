@@ -128,74 +128,10 @@
                     "label": "Enabled"
                 },
                 {
-                  "type": "boolean",
-                  "key": "includeUserDefinedAttributes",
-                  "label": "Include User Defined Attributes"
-                },
-                {
-                  "type": "boolean",
-                  "key": "eulerFilter",
-                  "label": "Euler Filter"
-                },
-                {
-                  "type": "boolean",
-                  "key": "noNormals",
-                  "label": "No Normals"
-                },
-                {
-                  "type": "boolean",
-                  "key": "preRoll",
-                  "label": "Pre Roll"
-                },
-                {
-                  "type": "boolean",
-                  "key": "renderableOnly",
-                  "label": "Renderable Only"
-                },
-                {
-                  "type": "boolean",
-                  "key": "uvWrite",
-                  "label": "UV Write"
-                },
-                {
-                  "type": "boolean",
-                  "key": "WriteColorSets",
-                  "label": "Write Color Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeFaceSets",
-                  "label": "Write Face Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "wholeFrameGeo",
-                  "label": "Whole Frame Geo"
-                },
-                {
-                  "type": "boolean",
-                  "key": "worldSpace",
-                  "label": "World Space"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeVisibility",
-                  "label": "Write Visibility"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeUVSets",
-                  "label": "Write UV Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeCreases",
-                  "label": "Write Creases"
-                },
-                {
-                  "type": "text",
-                  "key": "dataFormat",
-                  "label": "Data Format"
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
                 },
                 {
                   "type": "number",
@@ -205,60 +141,446 @@
                   "decimal": 4
                 },
                 {
-                  "type": "text",
-                  "key": "attr",
-                  "label": "Attr"
+                  "label": "Write Color Sets",
+                  "checkbox_key": "enabled",
+                  "key": "writeColorSets",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
                 },
                 {
-                  "type": "text",
-                  "key": "attrPrefix",
-                  "label": "Attr Prefix"
+                  "label": "Write Face Sets",
+                  "checkbox_key": "enabled",
+                  "key": "writeFaceSets",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
                 },
                 {
-                  "type": "boolean",
-                  "key": "stripNamespaces",
-                  "label": "StripNamespaces"
+                  "label": "Renderable Only",
+                  "checkbox_key": "enabled",
+                  "key": "renderableOnly",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
                 },
                 {
-                  "type": "boolean",
-                  "key": "verbose",
-                  "label": "Verbose"
-                },
-                {
-                  "type": "number",
-                  "key": "preRollStartFrame",
-                  "label": "Pre Roll Start Frame"
-                },
-                {
-                  "type": "boolean",
-                  "key": "farm",
-                  "label": "Farm"
-                },
-                {
-                  "type": "number",
-                  "key": "priority",
-                  "label": "Priority"
-                },
-                {
-                  "type": "boolean",
-                  "key": "includeParentHierarchy",
-                  "label": "Include Parent Hierarchy"
-                },
-                {
-                  "type": "boolean",
-                  "key": "refresh",
-                  "label": "Refresh"
-                },
-                {
-                  "type": "boolean",
+                  "label": "Visible Only",
+                  "checkbox_key": "enabled",
                   "key": "visibleOnly",
-                  "label": "Visible Only"
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
                 },
                 {
-                    "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
-                    "object_type": "text"
+                  "label": "Include Parent Hierarchy",
+                  "checkbox_key": "enabled",
+                  "key": "includeParentHierarchy",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "World Space",
+                  "checkbox_key": "enabled",
+                  "key": "worldSpace",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Farm",
+                  "checkbox_key": "enabled",
+                  "key": "farm",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Priority",
+                  "checkbox_key": "enabled",
+                  "key": "priority",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "number",
+                      "key": "value",
+                      "label": "Value",
+                      "minimum": 0
+                    }
+                  ]
+                },
+                {
+                  "label": "Include User Defined Attributes",
+                  "checkbox_key": "enabled",
+                  "key": "includeUserDefinedAttributes",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Attr",
+                  "checkbox_key": "enabled",
+                  "key": "attr",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "text",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Attr Prefix",
+                  "checkbox_key": "enabled",
+                  "key": "attrPrefix",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "text",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Data Format",
+                  "checkbox_key": "enabled",
+                  "key": "dataFormat",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "enum",
+                      "key": "value",
+                      "label": "Value",
+                      "enum_items": [
+                          {
+                              "ogawa": "ogawa"
+                          },
+                          {
+                              "HDF": "HDF"
+                          }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "label": "Euler Filter",
+                  "checkbox_key": "enabled",
+                  "key": "eulerFilter",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "No Normals",
+                  "checkbox_key": "enabled",
+                  "key": "noNormals",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Pre Roll",
+                  "checkbox_key": "enabled",
+                  "key": "preRoll",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Pre Roll Start Frame",
+                  "checkbox_key": "enabled",
+                  "key": "preRollStartFrame",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "number",
+                      "key": "value",
+                      "label": "Value",
+                      "minimum": 0
+                    }
+                  ]
+                },
+                {
+                  "label": "Refresh",
+                  "checkbox_key": "enabled",
+                  "key": "refresh",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Strip Namespaces",
+                  "checkbox_key": "enabled",
+                  "key": "stripNamespaces",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "UV Write",
+                  "checkbox_key": "enabled",
+                  "key": "uvWrite",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Verbose",
+                  "checkbox_key": "enabled",
+                  "key": "verbose",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Whole Frame Geo",
+                  "checkbox_key": "enabled",
+                  "key": "wholeFrameGeo",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Write Creases",
+                  "checkbox_key": "enabled",
+                  "key": "writeCreases",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Write UV Sets",
+                  "checkbox_key": "enabled",
+                  "key": "writeUVSets",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
+                },
+                {
+                  "label": "Write Visibility",
+                  "checkbox_key": "enabled",
+                  "key": "writeVisibility",
+                  "type": "dict",
+                  "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                      "type": "boolean",
+                      "key": "value",
+                      "label": "Value"
+                    }
+                  ]
                 },
                 {
                     "type": "boolean",

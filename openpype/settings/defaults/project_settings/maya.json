@@ -556,34 +556,106 @@
         },
         "CreateAnimation": {
             "enabled": false,
-            "includeUserDefinedAttributes": false,
-            "eulerFilter": true,
-            "noNormals": false,
-            "preRoll": false,
-            "renderableOnly": false,
-            "uvWrite": true,
-            "WriteColorSets": false,
-            "writeFaceSets": false,
-            "wholeFrameGeo": false,
-            "worldSpace": true,
-            "writeVisibility": true,
-            "writeUVSets": true,
-            "writeCreases": false,
-            "dataFormat": "ogawa",
-            "step": 1.0,
-            "attr": "",
-            "attrPrefix": "",
-            "stripNamespaces": true,
-            "verbose": false,
-            "preRollStartFrame": 0,
-            "farm": false,
-            "priority": 50,
-            "includeParentHierarchy": false,
-            "refresh": false,
-            "visibleOnly": false,
             "defaults": [
                 "Main"
             ],
+            "step": 1.0,
+            "writeColorSets": {
+                "enabled": true,
+                "value": false
+            },
+            "writeFaceSets": {
+                "enabled": true,
+                "value": false
+            },
+            "renderableOnly": {
+                "enabled": true,
+                "value": false
+            },
+            "visibleOnly": {
+                "enabled": true,
+                "value": false
+            },
+            "includeParentHierarchy": {
+                "enabled": true,
+                "value": false
+            },
+            "worldSpace": {
+                "enabled": true,
+                "value": true
+            },
+            "farm": {
+                "enabled": true,
+                "value": false
+            },
+            "priority": {
+                "enabled": true,
+                "value": 50
+            },
+            "includeUserDefinedAttributes": {
+                "enabled": true,
+                "value": true
+            },
+            "attr": {
+                "enabled": true,
+                "value": ""
+            },
+            "attrPrefix": {
+                "enabled": true,
+                "value": ""
+            },
+            "dataFormat": {
+                "enabled": false,
+                "value": "ogawa"
+            },
+            "eulerFilter": {
+                "enabled": false,
+                "value": true
+            },
+            "noNormals": {
+                "enabled": false,
+                "value": true
+            },
+            "preRoll": {
+                "enabled": false,
+                "value": true
+            },
+            "preRollStartFrame": {
+                "enabled": false,
+                "value": 0
+            },
+            "refresh": {
+                "enabled": false,
+                "value": false
+            },
+            "stripNamespaces": {
+                "enabled": false,
+                "value": true
+            },
+            "uvWrite": {
+                "enabled": false,
+                "value": true
+            },
+            "verbose": {
+                "enabled": false,
+                "value": true
+            },
+            "wholeFrameGeo": {
+                "enabled": false,
+                "value": true
+            },
+            "writeCreases": {
+                "enabled": false,
+                "value": true
+            },
+            "writeUVSets": {
+                "enabled": false,
+                "value": true
+            },
+            "writeVisibility": {
+                "enabled": false,
+                "value": true
+            },
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,

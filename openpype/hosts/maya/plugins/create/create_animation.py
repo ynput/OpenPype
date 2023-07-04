@@ -2,6 +2,8 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
 
 
 class CreateAnimation(plugin.Creator):
@@ -17,31 +19,7 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    includeUserDefinedAttributes = False
-    eulerFilter = True
-    noNormals = False
-    preRoll = False
-    renderableOnly = False
-    uvWrite = True
-    writeColorSets = False
-    writeFaceSets = False
-    wholeFrameGeo = False
-    worldSpace = True
-    writeVisibility = True
-    writeUVSets = True
-    writeCreases = False
-    dataFormat = "ogawa"
-    step = 1.0
-    attr = ""
-    attrPrefix = ""
-    stripNamespaces = True
-    verbose = False
-    preRollStartFrame = 0
-    farm = False
-    priority = 50
-    includeParentHierarchy = False  # Include parent groups
-    refresh = False  # Default to suspend refresh.
-    visibleOnly = False  # only nodes that are visible
+    writeNormals = True  # Multiverse specific attribute.
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -51,31 +29,43 @@ class CreateAnimation(plugin.Creator):
             self.data[key] = value
 
         attrs = [
+            "step",
+            "writeColorSets",
+            "writeFaceSets",
+            "renderableOnly",
+            "visibleOnly",
+            "includeParentHierarchy",
+            "worldSpace",
+            "farm",
+            "priority",
+            "writeNormals",
             "includeUserDefinedAttributes",
+            "attr",
+            "attrPrefix",
+            "dataFormat",
             "eulerFilter",
             "noNormals",
             "preRoll",
-            "renderableOnly",
-            "uvWrite",
-            "writeColorSets",
-            "writeFaceSets",
-            "wholeFrameGeo",
-            "worldSpace",
-            "writeVisibility",
-            "writeUVSets",
-            "writeCreases",
-            "dataFormat",
-            "step",
-            "attr",
-            "attrPrefix",
-            "stripNamespaces",
-            "verbose",
             "preRollStartFrame",
-            "farm",
-            "priority",
-            "includeParentHierarchy",
             "refresh",
-            "visibleOnly"
+            "stripNamespaces",
+            "uvWrite",
+            "verbose",
+            "wholeFrameGeo",
+            "writeCreases",
+            "writeUVSets",
+            "writeVisibility"
         ]
         for attr in attrs:
-            self.data[attr] = getattr(self, attr)
+            value = getattr(self, attr)
+            if isinstance(value, dict):
+                if not value["enabled"]:
+                    self.log.debug(
+                        "Skipping \"{}\" because its disabled in "
+                        "settings".format(attr)
+                    )
+                    continue
+                value = value["value"]
+
+            # Setting value from settings.
+            self.data[attr] = value

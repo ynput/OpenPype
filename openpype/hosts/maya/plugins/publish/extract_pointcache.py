@@ -54,27 +54,28 @@ class ExtractAlembic(publish.Extractor):
 
         options = {"selection": True}
         option_keys = [
+            "dataFormat",
             "eulerFilter",
             "noNormals",
             "preRoll",
+            "preRollStartFrame",
             "renderableOnly",
-            "uvWrite",
-            "writeColorSets",
-            "writeFaceSets",
-            "wholeFrameGeo",
-            "worldSpace",
-            "writeVisibility",
-            "writeUVSets",
-            "writeCreases",
-            "dataFormat",
             "step",
             "stripNamespaces",
+            "uvWrite",
             "verbose",
-            "preRollStartFrame"
+            "wholeFrameGeo",
+            "worldSpace",
+            "writeColorSets",
+            "writeCreases",
+            "writeFaceSets",
+            "writeUVSets",
+            "writeVisibility",
         ]
         for key in option_keys:
-            options[key] = instance.data[key]
-        self.log.info(options)
+            if key in instance.data:
+                options[key] = instance.data[key]
+
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
