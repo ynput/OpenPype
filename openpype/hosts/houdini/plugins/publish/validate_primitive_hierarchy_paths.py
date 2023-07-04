@@ -116,6 +116,12 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
+        """Add a default path attribute Action.
+
+        it's a helper action more than a repair action,
+        which used to add a default single value.
+        """
+
         output_node = instance.data.get("output_node")
         rop_node = hou.node(instance.data["instance_node"])
 
