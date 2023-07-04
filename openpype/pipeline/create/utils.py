@@ -107,7 +107,8 @@ def get_next_versions_for_instances(project_name, instances):
         instances (list[CreatedInstance]): Instances to get next versions for.
 
     Returns:
-        dict[str, int]: Next versions by instance id.
+        dict[str, Union[int, None]]: Next versions by instance id. Version is
+            'None' if instance has no asset or subset name.
     """
 
     last_versions = get_last_versions_for_instances(
