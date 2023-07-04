@@ -133,6 +133,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         paths = geo.findPrimAttrib(path_attr) and \
                     geo.primStringAttribValues(path_attr)
 
+        # This check to prevent the action from running multiple times.
         if paths:
             return
 
