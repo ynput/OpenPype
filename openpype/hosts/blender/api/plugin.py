@@ -230,13 +230,13 @@ class BlenderCreator(Creator):
                 Those may affect how creator works.
         """
         instance = CreatedInstance(
-            self.family, subset_name, instance_data
+            self.family, subset_name, instance_data, self
         )
 
-        collection = bpy.data.collections.new(name=self.data['subset'])
+        collection = bpy.data.collections.new(name=subset_name)
         bpy.context.scene.collection.children.link(collection)
 
-        if (self.options or {}).get("useSelection"):
+        if pre_create_data.get("useSelection"):
             for obj in get_selection():
                 collection.objects.link(obj)
 
