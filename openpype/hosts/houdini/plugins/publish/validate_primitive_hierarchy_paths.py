@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.pipeline import PublishValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
+
 import hou
 
+
+class AddDefaultPathAction(RepairAction):
+    label = "Add a default path attribute"
+    icon = "mdi.pencil-plus-outline"
 
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     """Validate all primitives build hierarchy from attribute when enabled.
@@ -18,6 +26,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Prims Hierarchy Path"
+    actions = [AddDefaultPathAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
@@ -104,3 +113,46 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "(%s of %s prims)" % (path_attr, len(invalid_prims), num_prims)
             )
             return [output_node.path()]
+
+    @classmethod
+    def repair(cls, instance):
+        output_node = instance.data.get("output_node")
+        rop_node = hou.node(instance.data["instance_node"])
+
+        path_attr = rop_node.parm("path_attrib").eval()
+
+        frame = instance.data.get("frameStart", 0)
+        geo = output_node.geometryAtFrame(frame)
+
+        paths = geo.findPrimAttrib(path_attr) and \
+                    geo.primStringAttribValues(path_attr)
+
+        if paths:
+            return
+
+        path_node = output_node.parent().createNode("name", "AUTO_PATH")
+        path_node.parm("attribname").set(path_attr)
+        path_node.parm("name1").set('`opname("..")`/`opname("..")`Shape')
+
+        cls.log.debug(
+            '%s node has been created'
+            % path_node
+        )
+
+        path_node.setGenericFlag(hou.nodeFlag.DisplayComment,True)
+        path_node.setComment(
+            'Auto path node created automatically by "Add a default path attribute"'
+            '\nFeel free to modify or replace it.'
+        )
+
+        if output_node.type().name() in ['null', 'output']:
+            # Connect before
+            path_node.setFirstInput(output_node.input(0))
+            path_node.moveToGoodPosition()
+            output_node.setFirstInput(path_node)
+            output_node.moveToGoodPosition()
+        else:
+            # Connect after
+            output_node.setFirstInput(path_node)
+            rop_node.parm('sop_path').set(path_node.path())
+            path_node.moveToGoodPosition()
