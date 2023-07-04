@@ -27,12 +27,12 @@ class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         """Plugin entry point."""
         super(CreateMayaRoyalRenderJob, self).process(instance)
 
-        expected_files = self._instance.data["expectedFiles"]
+        expected_files = instance.data["expectedFiles"]
         first_file_path = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file_path)
-        self._instance.data["outputDir"] = output_dir
+        instance.data["outputDir"] = output_dir
 
-        layer = self._instance.data["setMembers"]  # type: str
+        layer = instance.data["setMembers"]  # type: str
         layer_name = layer.removeprefix("rs_")
 
         job = self.get_job(instance, self.scene_path, first_file_path,

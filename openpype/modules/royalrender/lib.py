@@ -79,7 +79,6 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         ]
 
     def __init__(self, *args, **kwargs):
-        self._instance = None
         self._rr_root = None
         self.scene_path = None
         self.job = None
@@ -99,7 +98,6 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             "suspend_publish"]
 
         context = instance.context
-        self._instance = instance
 
         self._rr_root = self._resolve_rr_path(context, instance.data.get(
             "rrPathName"))  # noqa
@@ -128,11 +126,11 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
                 "Using published scene for render {}".format(self.scene_path)
             )
 
-        if not self._instance.data.get("expectedFiles"):
-            self._instance.data["expectedFiles"] = []
+        if not instance.data.get("expectedFiles"):
+            instance.data["expectedFiles"] = []
 
-        if not self._instance.data.get("rrJobs"):
-            self._instance.data["rrJobs"] = []
+        if not instance.data.get("rrJobs"):
+            instance.data["rrJobs"] = []
 
     def get_job(self, instance, script_path, render_path, node_name):
         """Get RR job based on current instance.
@@ -150,7 +148,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
         end_frame = int(instance.data["frameEndHandle"])
 
         batch_name = os.path.basename(script_path)
-        jobname = "%s - %s" % (batch_name, self._instance.name)
+        jobname = "%s - %s" % (batch_name, instance.name)
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
@@ -252,9 +250,6 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             list: List of expected files.
 
         """
-        if instance.data.get("expectedFiles"):
-            return instance.data["expectedFiles"]
-
         dir_name = os.path.dirname(path)
         file = os.path.basename(path)
 
@@ -269,7 +264,7 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             expected_files.append(path)
             return expected_files
 
-        if self._instance.data.get("slate"):
+        if instance.data.get("slate"):
             start_frame -= 1
 
         expected_files.extend(
@@ -293,13 +288,13 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             str
 
         """
-        self.log.debug("_ path: `{}`".format(path))
+        self.log.debug("pad_file_name path: `{}`".format(path))
         if "%" in path:
             search_results = re.search(r"(%0)(\d)(d.)", path).groups()
             self.log.debug("_ search_results: `{}`".format(search_results))
             return int(search_results[1])
         if "#" in path:
-            self.log.debug("_ path: `{}`".format(path))
+            self.log.debug("already padded: `{}`".format(path))
             return path
 
         if first_frame:

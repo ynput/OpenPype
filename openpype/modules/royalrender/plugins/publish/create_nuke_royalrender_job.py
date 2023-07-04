@@ -15,22 +15,22 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         super(CreateNukeRoyalRenderJob, self).process(instance)
 
         # redefinition of families
-        if "render" in self._instance.data["family"]:
-            self._instance.data["family"] = "write"
-            self._instance.data["families"].insert(0, "render2d")
-        elif "prerender" in self._instance.data["family"]:
-            self._instance.data["family"] = "write"
-            self._instance.data["families"].insert(0, "prerender")
+        if "render" in instance.data["family"]:
+            instance.data["family"] = "write"
+            instance.data["families"].insert(0, "render2d")
+        elif "prerender" in instance.data["family"]:
+            instance.data["family"] = "write"
+            instance.data["families"].insert(0, "prerender")
 
-        jobs = self.create_jobs(self._instance)
+        jobs = self.create_jobs(instance)
         for job in jobs:
             job = self.update_job_with_host_specific(instance, job)
 
-            instance.data["rrJobs"].append(job)
+        instance.data["rrJobs"].append(job)
 
     def update_job_with_host_specific(self, instance, job):
         nuke_version = re.search(
-            r"\d+\.\d+", self._instance.context.data.get("hostVersion"))
+            r"\d+\.\d+", instance.context.data.get("hostVersion"))
 
         job.Software = "Nuke"
         job.Version = nuke_version.group()
@@ -42,7 +42,7 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         # get output path
         render_path = instance.data['path']
         script_path = self.scene_path
-        node = self._instance.data["transientData"]["node"]
+        node = instance.data["transientData"]["node"]
 
         # main job
         jobs = [
@@ -54,7 +54,7 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
             )
         ]
 
-        for baking_script in self._instance.data.get("bakingNukeScripts", []):
+        for baking_script in instance.data.get("bakingNukeScripts", []):
             render_path = baking_script["bakeRenderPath"]
             script_path = baking_script["bakeScriptPath"]
             exe_node_name = baking_script["bakeWriteNodeName"]
