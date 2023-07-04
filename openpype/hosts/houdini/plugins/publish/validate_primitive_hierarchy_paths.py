@@ -141,8 +141,8 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         path_node.parm("name1").set('`opname("..")`/`opname("..")`Shape')
 
         cls.log.debug(
-            '%s node has been created'
-            % path_node
+            "'%s' was created. It adds '%s' with a default single value"
+            % (path_node, path_attr)
         )
 
         path_node.setGenericFlag(hou.nodeFlag.DisplayComment,True)
