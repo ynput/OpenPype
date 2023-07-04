@@ -1835,7 +1835,6 @@ class CreatePlaceholderItem(PlaceholderItem):
 
 
 def build_first_workfile_from_template_builder():
-    print("#" * 100)
     project_name = get_current_project_name()
     project_settings = get_project_settings(project_name)
 
