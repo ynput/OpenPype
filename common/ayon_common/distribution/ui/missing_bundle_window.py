@@ -2,6 +2,7 @@ import sys
 
 from qtpy import QtWidgets, QtGui
 
+from ayon_common import is_staging_enabled
 from ayon_common.resources import (
     get_icon_path,
     load_stylesheet,
@@ -13,7 +14,9 @@ class MissingBundleWindow(QtWidgets.QDialog):
     default_width = 410
     default_height = 170
 
-    def __init__(self, url=None, bundle_name=None, parent=None):
+    def __init__(
+        self, url=None, bundle_name=None, use_staging=None, parent=None
+    ):
         super().__init__(parent)
 
         icon_path = get_icon_path()
@@ -23,6 +26,7 @@ class MissingBundleWindow(QtWidgets.QDialog):
 
         self._url = url
         self._bundle_name = bundle_name
+        self._use_staging = use_staging
         self._first_show = True
 
         info_label = QtWidgets.QLabel("", self)
@@ -60,6 +64,12 @@ class MissingBundleWindow(QtWidgets.QDialog):
         self._bundle_name = bundle_name
         self._update_label()
 
+    def set_use_staging(self, use_staging):
+        if self._use_staging == use_staging:
+            return
+        self._use_staging = use_staging
+        self._update_label()
+
     def showEvent(self, event):
         super().showEvent(event)
         if self._first_show:
@@ -92,15 +102,17 @@ class MissingBundleWindow(QtWidgets.QDialog):
 
         if self._bundle_name:
             return (
-                f"Requested bundle <b>{self._bundle_name}</b>"
+                f"Requested release bundle <b>{self._bundle_name}</b>"
                 f" is not available on server{url_part}."
-                "<br/><br/>Try to restart AYON applications. Please"
+                "<br/><br/>Try to restart AYON desktop launcher. Please"
                 " contact your administrator if issue persist."
             )
+        mode = "staging" if self._use_staging else "production"
         return (
-            f"Server{url_part} does not have set bundle to use."
-            "<br/><br/>There is nothing to launch. Please contact your"
-            " administrator to define addons in a bundle."
+            f"No release bundle is set as {mode} on the AYON"
+            f" server{url_part} so there is nothing to launch."
+            "<br/><br/>Please contact your administrator"
+            " to resolve the issue."
         )
 
 
@@ -123,8 +135,9 @@ def main():
         if bundle_index < len(sys.argv):
             bundle_name = sys.argv[bundle_index]
 
+    use_staging = is_staging_enabled()
     app = get_qt_app()
-    window = MissingBundleWindow(url, bundle_name)
+    window = MissingBundleWindow(url, bundle_name, use_staging)
     window.show()
     app.exec_()
 
