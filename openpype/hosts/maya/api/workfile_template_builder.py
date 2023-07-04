@@ -19,7 +19,7 @@ from .lib import (
     imprint,
     get_main_window,
     update_instances_frame_range,
-    update_instances_asset_attribute,
+    update_instances_asset_name,
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
@@ -258,7 +258,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
         update_instances_frame_range()
-        update_instances_asset_attribute()
+        update_instances_asset_name()
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)

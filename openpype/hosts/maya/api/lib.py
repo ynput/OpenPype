@@ -3152,7 +3152,7 @@ def iter_publish_instances():
         yield node
 
 
-def update_instances_asset_attribute():
+def update_instances_asset_name():
     """Update 'asset' attribute of publishable instances (their objectSets)
     that got one.
     """
@@ -3161,7 +3161,7 @@ def update_instances_asset_attribute():
         if not cmds.attributeQuery("asset", node=instance, exists=True):
             continue
         attr = "{}.asset".format(instance)
-        cmds.setAttr(attr, get_current_project_asset()['name'], type="string")
+        cmds.setAttr(attr, get_current_asset_name(), type="string")
 
 
 def update_instances_frame_range():
