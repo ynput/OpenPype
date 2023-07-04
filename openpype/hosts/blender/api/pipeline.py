@@ -81,7 +81,7 @@ class BlenderHost(HostBase, IPublishHost):
             changes (dict): Only data that has been changed. Each value has
                 tuple with '(<old>, <new>)' value.
         """
-        bpy.context.scene.openpype_context.update(data)
+        bpy.context.scene.openpype_context |= data
 
 
 def pype_excepthook_handler(*args):
