@@ -28,12 +28,37 @@ class CreateTextures(Creator):
     icon = "picture-o"
 
     default_variant = "Main"
+    image_format = None
+    exportPresetUrl = None
+    exportSize = None
+    exportPadding = "infinite"
+    exportDilationDistance = 16
 
     def create(self, subset_name, instance_data, pre_create_data):
 
         if not substance_painter.project.is_open():
             raise CreatorError("Can't create a Texture Set instance without "
                                "an open project.")
+        self.exportPresetUrl = pre_create_data.get("exportPresetUrl",
+                                                   self.exportPresetUrl)
+        instance_data["exportPresetUrl"] = self.exportPresetUrl
+
+        self.image_format = pre_create_data.get("exportFileFormat",
+                                                self.image_format)
+        instance_data["exportFileFormat"] = self.image_format
+
+        self.exportSize = pre_create_data.get("exportSize",
+                                              self.exportSize)
+        instance_data["exportSize"] = self.exportSize
+
+        self.exportPadding = pre_create_data.get("exportPadding",
+                                                 self.exportPadding)
+        instance_data["exportPadding"] = self.exportPadding
+
+        self.exportDilationDistance = pre_create_data.get("exportDilationDistance",
+                                                          self.exportDilationDistance)
+        instance_data["exportDilationDistance"] = self.exportDilationDistance
+
         instance = self.create_instance_in_context(subset_name,
                                                    instance_data)
         set_instance(
@@ -75,9 +100,11 @@ class CreateTextures(Creator):
         return instance
 
     def get_instance_attr_defs(self):
+
         return [
             EnumDef("exportPresetUrl",
                     items=get_export_presets(),
+                    default=self.exportPresetUrl,
                     label="Output Template"),
             BoolDef("allowSkippedMaps",
                     label="Allow Skipped Output Maps",
@@ -118,7 +145,7 @@ class CreateTextures(Creator):
                         # "psd": "psd",
                         # "sbsar": "sbsar",
                     },
-                    default=None,
+                    default=self.image_format,
                     label="File type"),
             EnumDef("exportSize",
                     items={
@@ -132,7 +159,7 @@ class CreateTextures(Creator):
                         11: "2048",
                         12: "4096"
                     },
-                    default=None,
+                    default=self.exportSize,
                     label="Size"),
 
             EnumDef("exportPadding",
@@ -143,14 +170,18 @@ class CreateTextures(Creator):
                         "color": "Dilation + default background color",
                         "diffusion": "Dilation + diffusion"
                     },
-                    default="infinite",
+                    default=self.exportPadding,
                     label="Padding"),
             NumberDef("exportDilationDistance",
                       minimum=0,
                       maximum=256,
                       decimals=0,
-                      default=16,
+                      default=self.exportDilationDistance,
                       label="Dilation Distance"),
             UILabelDef("*only used with "
                        "'Dilation + <x>' padding"),
         ]
+
+    def get_pre_create_attr_defs(self):
+        # Use same attributes as for instance attributes
+        return self.get_instance_attr_defs()
