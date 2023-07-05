@@ -36,9 +36,8 @@ class CreatePointCache(plugin.HoudiniCreator):
         if self.selected_nodes:
             selected_node = self.selected_nodes[0]
 
-            # Although Houdini allows ObjNode path on `sop_path`rop node
-            #  However, it's preferred to set SopNode path explicitly
-            # These checks prevent using user selecting
+            # Although Houdini allows ObjNode path on `sop_path` for the
+            # the ROP node we prefer it set to the SopNode path explicitly
 
             # Allow sop level paths (e.g. /obj/geo1/box1)
             # but do not allow other sop level paths when
@@ -72,11 +71,11 @@ class CreatePointCache(plugin.HoudiniCreator):
 
             if not parms.get("sop_path", None):
                 self.log.debug(
-                "Selection isn't valid.'SOP Path' in ROP will be empty."
+                "Selection isn't valid. 'SOP Path' in ROP will be empty."
                 )
         else:
             self.log.debug(
-                "No Selection.'SOP Path' in ROP will be empty."
+                "No Selection. 'SOP Path' in ROP will be empty."
             )
 
         instance_node.setParms(parms)
@@ -95,13 +94,18 @@ class CreatePointCache(plugin.HoudiniCreator):
     def get_obj_output(self, obj_node):
         """Find output node with the smallest 'outputidx'."""
 
-        outputs = dict()
+        outputs = obj_node.subnetOutputs()
 
-        for sop_node in obj_node.children():
-            if sop_node.type().name() == 'output' :
-                outputs.update({sop_node : sop_node.parm('outputidx').eval()})
-
-        if outputs:
-            return min(outputs, key = outputs.get)
-        else:
+        # if obj_node is empty
+        if not outputs:
             return
+
+        # if obj_node has one output child whether its
+        # sop output node or a node with the render flag
+        elif len(outputs)==1:
+            return outputs[0]
+
+        # if there are more than one, then it have multiple ouput nodes
+        # return the one with the minimum 'outputidx'
+        else:
+            return (min(outputs, key=lambda node : node.parm('outputidx').eval()))
