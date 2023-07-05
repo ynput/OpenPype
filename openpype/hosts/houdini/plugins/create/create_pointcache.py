@@ -45,7 +45,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             #   the parent type is not 'geo' like
             #   Cameras, Dopnet nodes(sop solver)
             if isinstance(selected_node, hou.SopNode) and \
-                selected_node.parent().type().name() == 'geo':
+                selected_node.parent().type().name() in ['geo', 'subnet']:
                 parms["sop_path"] = selected_node.path()
                 self.log.debug(
                    "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
@@ -55,7 +55,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
             # but do not allow other object level nodes types like cameras, etc.
             elif isinstance(selected_node, hou.ObjNode) and \
-                    selected_node.type().name() == 'geo':
+                    selected_node.type().name() in ['geo']:
 
                 # get the output node with the minimum
                 # 'outputidx' or the node with display flag
