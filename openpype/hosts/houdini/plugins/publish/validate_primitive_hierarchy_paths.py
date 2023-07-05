@@ -136,7 +136,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         # This check to prevent the action from running multiple times.
         # git_invalid only returns [output_node] when
         #   path attribute is the problem
-        if  cls.get_invalid(instance) != [output_node]:
+        if cls.get_invalid(instance) != [output_node]:
             return
 
         path_attr = rop_node.parm("path_attrib").eval()
@@ -169,6 +169,6 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             path_node.moveToGoodPosition()
 
             cls.log.debug(
-            "SOP path on '%s' updated to new output node '%s'"
-            % (rop_node, path_node)
+                "SOP path on '%s' updated to new output node '%s'"
+                % (rop_node, path_node)
             )
