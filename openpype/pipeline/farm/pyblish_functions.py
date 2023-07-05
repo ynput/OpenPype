@@ -822,8 +822,6 @@ def attach_instances_to_subset(attach_to, instances):
           list: List of attached instances.
 
     """
-    #
-
     new_instances = []
     for attach_instance in attach_to:
         for i in instances:
