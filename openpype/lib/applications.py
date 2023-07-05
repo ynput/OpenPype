@@ -1666,10 +1666,6 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     system_settings = get_system_settings()
     data["project_settings"] = project_settings
     data["system_settings"] = system_settings
-    # Apply project specific environments on current env value
-    apply_project_environments_value(
-        project_name, data["env"], project_settings, env_group
-    )
 
     app = data["app"]
     context_env = {
@@ -1685,6 +1681,13 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         )
     )
     data["env"].update(context_env)
+
+    # Apply project specific environments on current env value
+    # - apply them once the context environments are set
+    apply_project_environments_value(
+        project_name, data["env"], project_settings, env_group
+    )
+
     if not app.is_host:
         return
 
