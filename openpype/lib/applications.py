@@ -1686,7 +1686,7 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         project_name, data["env"], project_settings, env_group
     )
 
-    if not app.is_host:
+    if not app.is_host or not asset_doc or not task_name:
         return
 
     workdir_data = get_template_data(
