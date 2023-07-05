@@ -844,7 +844,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         # Trigger update to latest
         try:
-            for item, item_version in enumerate(items, versions):
+            for item, item_version in zip(items, versions):
                 try:
                     update_container(item, item_version)
                 except AssertionError:
