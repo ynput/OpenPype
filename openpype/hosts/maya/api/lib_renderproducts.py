@@ -528,9 +528,6 @@ class RenderProductsArnold(ARenderProducts):
     def get_renderer_prefix(self):
 
         prefix = super(RenderProductsArnold, self).get_renderer_prefix()
-        if prefix is None:
-            return ""
-
         merge_aovs = self._get_attr("defaultArnoldDriver.mergeAOVs")
         if not merge_aovs and "<renderpass>" not in prefix.lower():
             # When Merge AOVs is disabled and <renderpass> token not present
