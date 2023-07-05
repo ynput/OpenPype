@@ -34,6 +34,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
         fn nodes_to_add node =
         (
             sceneObjs = #()
+            if classOf node == Container do return false
             n = node as string
             for obj in Objects do
             (
@@ -53,6 +54,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             )
             idx = findItem sceneObjs n
             if idx then return true else false
+            if classOf node == Container do return false
         )
 
         fn nodes_to_rmv node =
