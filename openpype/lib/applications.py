@@ -1649,11 +1649,7 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     project_doc = data["project_doc"]
     asset_doc = data["asset_doc"]
     task_name = data["task_name"]
-    if (
-        not project_doc
-        or not asset_doc
-        or not task_name
-    ):
+    if not project_doc:
         log.info(
             "Skipping context environments preparation."
             " Launch context does not contain required data."
@@ -1670,10 +1666,12 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     app = data["app"]
     context_env = {
         "AVALON_PROJECT": project_doc["name"],
-        "AVALON_ASSET": asset_doc["name"],
-        "AVALON_TASK": task_name,
         "AVALON_APP_NAME": app.full_name
     }
+    if asset_doc:
+        context_env["AVALON_ASSET"] = asset_doc["name"]
+        if task_name:
+            context_env["AVALON_TASK"] = task_name
 
     log.debug(
         "Context environments set:\n{}".format(
