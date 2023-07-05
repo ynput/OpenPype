@@ -225,7 +225,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     args[0] = src_path
                     if frame:
                         anatomy_data["frame"] = frame
-                    new_report_items, uploaded = deliver_single_file(*args)
+                        new_report_items, uploaded = deliver_sequence(*args)
+                    else:
+                        new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)
             else:  # fallback for Pype2 and representations without files

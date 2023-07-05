@@ -164,47 +164,8 @@ def deliver_single_file(
     if not os.path.exists(delivery_folder):
         os.makedirs(delivery_folder)
 
-    if has_renumbered_frame:
-        src_dir = os.path.dirname(src_path)
-        src_filepaths = []
-        for repre_file in repre["files"]:
-            src_path = anatomy.fill_root(repre_file["path"])
-            base_path = os.path.basename(src_path)
-            src_filepaths.append(base_path)
-        if not src_filepaths:
-            msg = "Source files not found, cannot find collection"
-            report_items[msg].append(src_path)
-            log.warning("{} <{}>".format(msg, src_filepaths))
-            return report_items, 0
-
-        src_collections, remainders = clique.assemble(src_filepaths)
-        src_collection = src_collections[0]
-        src_indexes = list(src_collection.indexes)
-
-        dst_filepaths = []
-        for index in src_indexes:
-            template_data = copy.deepcopy(anatomy_data)
-            template_data["frame"] = index
-            template_obj = anatomy.templates_obj["delivery"][template_name]
-            template_filled = template_obj.format_strict(
-                template_data
-            )
-            dst_filepaths.append(template_filled)
-
-        dst_collection = clique.assemble(dst_filepaths)[0][0]
-        relative = not has_renumbered_frame
-        dst_collection = shift_collection(
-            dst_collection, new_frame_start, relative=relative)
-
-        for src_file_name, dst in zip(src_collection, dst_collection):
-            src_path = os.path.join(src_dir, src_file_name)
-            delivery_path = os.path.join(delivery_folder, dst)
-            log.debug("Copying single: {} -> {}".format(
-                src_path, delivery_path))
-            _copy_file(src_path, delivery_path)
-    else:
-        log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
-        _copy_file(src_path, delivery_path)
+    log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
+    _copy_file(src_path, delivery_path)
 
 
     return report_items, 1
@@ -336,71 +297,30 @@ def deliver_sequence(
     src_head = src_collection.head
     src_tail = src_collection.tail
     uploaded = 0
+    first_frame = next(iter(src_collection.indexes))
     for index in src_collection.indexes:
         src_padding = src_collection.format("{padding}") % index
         src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
         src = os.path.normpath(
             os.path.join(dir_path, src_file_name)
         )
-
+        dst_index = index
         if has_renumbered_frame:
-            dst_index = None
-            if new_frame_start != 0:
-                dst_index = (new_frame_start - int(index)) + 1
-            else:
-                dst_index = new_frame_start - int(index)
+            # Calculate offset between first frame and current frame
+            # - '0' for first frame
+            offset = new_frame_start - first_frame
+            # Add offset to new frame start
+            dst_index = index + offset
             if dst_index < 0:
                 msg = "Renumber frame has a smaller number than original frame"     # noqa
                 report_items[msg].append(src_file_name)
                 log.warning("{} <{}>".format(msg, context))
                 return report_items, 0
-
-            dst_padding = dst_collection.format("{padding}") % dst_index
-            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
-            dst = os.path.normpath(
-                os.path.join(delivery_folder, dst)
-            )
-
-            _copy_file(src, dst)
-
-        else:
-            dst_padding = dst_collection.format("{padding}") % index
-            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
-            log.debug("Copying single: {} -> {}".format(src, dst))
-            _copy_file(src, dst)
+        dst_padding = dst_collection.format("{padding}") % dst_index
+        dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+        log.debug("Copying single: {} -> {}".format(src, dst))
+        _copy_file(src, dst)
 
         uploaded += 1
 
     return report_items, uploaded
-
-
-def shift_collection(collection, start_offset, relative=True):
-    """Shift frames of a clique.Collection.
-
-    When relative is True `start_offset` will be an offset from
-    the current start frame of the collection shifting it by `start_offset`.
-    When relative is False `start_offset` will be the new start
-    frame of the sequence - shifting the rest of the frames along.
-
-    Arguments:
-        collection (clique.Collection): Input collection.
-        start_offset (int): Offset to apply (or start frame to set if
-            relative is False)
-        relative (bool): Whether the start offset is relative or the
-            the absolute new start frame.
-
-    Returns:
-        clique.Collection: Shifted collection
-
-    """
-    first_frame = next(iter(collection.indexes))
-    if relative:
-        shift = start_offset
-    else:
-        shift = start_offset - first_frame
-    return clique.Collection(
-        head=collection.head,
-        tail=collection.tail,
-        padding=collection.padding,
-        indexes={idx + shift for idx in collection.indexes}
-    )
