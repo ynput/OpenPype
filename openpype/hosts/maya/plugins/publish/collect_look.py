@@ -45,6 +45,13 @@ FILE_NODES = {
     "PxrTexture": "filename"
 }
 
+# Keep only node types that actually exist
+all_node_types = set(cmds.allNodeTypes())
+for node_type in list(FILE_NODES.keys()):
+    if node_type not in all_node_types:
+        FILE_NODES.pop(node_type)
+del all_node_types
+
 # Cache pixar dependency node types so we can perform a type lookup against it
 PXR_NODES = set()
 if cmds.pluginInfo("RenderMan_for_Maya", query=True, loaded=True):
@@ -377,10 +384,13 @@ class CollectLook(pyblish.api.InstancePlugin):
                 )
 
             files = cmds.ls(history,
+                            # It's important only node types are passed that
+                            # exist (e.g. for loaded plugins) because otherwise
+                            # the result will turn back empty
                             type=list(FILE_NODES.keys()),
                             long=True)
 
-        self.log.info("Collected file nodes:{}".format(files))
+        self.log.info("Collected file nodes: {}".format(files))
         # Collect textures if any file nodes are found
         resources = []
         for node in files:
