@@ -42,6 +42,10 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             (
                 handle_name = node_to_name c
                 node_ref = NodeTransformMonitor node:c
+                idx = finditem list_node.items handle_name
+                if idx do (
+                    continue
+                )
                 append temp_arr handle_name
                 append i_node_arr node_ref
             )
@@ -207,7 +211,9 @@ class MaxCreator(Creator, MaxCreatorBase):
 
         """
         for instance in instances:
-            if instance_node := rt.GetNodeByName(instance.data.get("instance_node")):  # noqa
+            instance_node = rt.GetNodeByName(
+                instance.data.get("instance_node"))
+            if instance_node:
                 count = rt.custAttributes.count(instance_node)
                 rt.custAttributes.delete(instance_node, count)
                 rt.Delete(instance_node)

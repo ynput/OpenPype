@@ -1,7 +1,6 @@
 from copy import deepcopy
 import re
 import os
-import sys
 import json
 import platform
 import contextlib
@@ -237,12 +236,13 @@ def get_data_subprocess(config_path, data_type):
         return json.loads(return_json_data)
 
 
-def compatible_python():
-    """Only 3.9 or higher can directly use PyOpenColorIO in ocio_wrapper"""
-    compatible = False
-    if sys.version[0] == 3 and sys.version[1] >= 9:
-        compatible = True
-    return compatible
+def compatibility_check():
+    """Making sure PyOpenColorIO is importable"""
+    try:
+        import PyOpenColorIO  # noqa: F401
+    except ImportError:
+        return False
+    return True
 
 
 def get_ocio_config_colorspaces(config_path):
@@ -257,11 +257,14 @@ def get_ocio_config_colorspaces(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_colorspace_data
-        return _get_colorspace_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_colorspace_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_colorspace_data
+
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -290,11 +293,14 @@ def get_ocio_config_views(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_views_data
-        return _get_views_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_views_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_views_data
+
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):
@@ -375,7 +381,11 @@ def get_imageio_config(
     # This is for backward compatibility.
     # TODO: in future rewrite this to be more explicit
     activate_host_color_management = imageio_host.get(
-        "activate_host_color_management", True)
+        "activate_host_color_management")
+
+    # TODO: remove this in future - backward compatibility
+    if activate_host_color_management is None:
+        activate_host_color_management = host_ocio_config.get("enabled", False)
 
     if not activate_host_color_management:
         # if host settings are disabled return False because

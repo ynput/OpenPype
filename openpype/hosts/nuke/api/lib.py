@@ -30,6 +30,7 @@ from openpype.lib import (
     env_value_to_bool,
     Logger,
     get_version_from_path,
+    StringTemplate,
 )
 
 from openpype.settings import (
@@ -1300,13 +1301,8 @@ def create_write_node(
 
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = data["fpath_template"].format(
-        work=fdir,
-        version=data["version"],
-        subset=data["subset"],
-        frame=data["frame"],
-        ext=ext
-    )
+    data["work"] = fdir
+    fpath = StringTemplate(data["fpath_template"]).format_strict(data)
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
@@ -2064,10 +2060,42 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value_, dict):
                 continue
+            # skip empty values
+            if not value_:
+                continue
             if self._root_node[knob].value() not in value_:
                 self._root_node[knob].setValue(str(value_))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
                     knob, value_))
+
+        # set ocio config path
+        if config_data:
+            current_ocio_path = os.getenv("OCIO")
+            if current_ocio_path != config_data["path"]:
+                message = """
+It seems like there's a mismatch between the OCIO config path set in your Nuke
+settings and the actual path set in your OCIO environment.
+
+To resolve this, please follow these steps:
+1. Close Nuke if it's currently open.
+2. Reopen Nuke.
+
+Please note the paths for your reference:
+
+- The OCIO environment path currently set:
+  `{env_path}`
+
+- The path in your current Nuke settings:
+  `{settings_path}`
+
+Reopening Nuke should synchronize these paths and resolve any discrepancies.
+"""
+                nuke.message(
+                    message.format(
+                        env_path=current_ocio_path,
+                        settings_path=config_data["path"]
+                    )
+                )
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
@@ -2164,7 +2192,7 @@ class WorkfileSettings(object):
 
         log.debug(changes)
         if changes:
-            msg = "Read nodes are not set to correct colospace:\n\n"
+            msg = "Read nodes are not set to correct colorspace:\n\n"
             for nname, knobs in changes.items():
                 msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
@@ -2222,16 +2250,15 @@ class WorkfileSettings(object):
             log.warning(msg)
             nuke.message(msg)
             return
-        data = self._asset_entity["data"]
 
-        log.debug("__ asset data: `{}`".format(data))
+        asset_data = self._asset_entity["data"]
 
         missing_cols = []
         check_cols = ["fps", "frameStart", "frameEnd",
                       "handleStart", "handleEnd"]
 
         for col in check_cols:
-            if col not in data:
+            if col not in asset_data:
                 missing_cols.append(col)
 
         if len(missing_cols) > 0:
@@ -2243,12 +2270,12 @@ class WorkfileSettings(object):
             return
 
         # get handles values
-        handle_start = data["handleStart"]
-        handle_end = data["handleEnd"]
+        handle_start = asset_data["handleStart"]
+        handle_end = asset_data["handleEnd"]
 
-        fps = float(data["fps"])
-        frame_start_handle = int(data["frameStart"]) - handle_start
-        frame_end_handle = int(data["frameEnd"]) + handle_end
+        fps = float(asset_data["fps"])
+        frame_start_handle = int(asset_data["frameStart"]) - handle_start
+        frame_end_handle = int(asset_data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
@@ -2256,21 +2283,18 @@ class WorkfileSettings(object):
         self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
-        # setting active viewers
-        try:
-            nuke.frame(int(data["frameStart"]))
-        except Exception as e:
-            log.warning("no viewer in scene: `{}`".format(e))
+        # update node graph so knobs are updated
+        update_node_graph()
 
-        range = '{0}-{1}'.format(
-            int(data["frameStart"]),
-            int(data["frameEnd"])
+        frame_range = '{0}-{1}'.format(
+            int(asset_data["frameStart"]),
+            int(asset_data["frameEnd"])
         )
 
         for node in nuke.allNodes(filter="Viewer"):
-            node['frame_range'].setValue(range)
+            node['frame_range'].setValue(frame_range)
             node['frame_range_lock'].setValue(True)
-            node['frame_range'].setValue(range)
+            node['frame_range'].setValue(frame_range)
             node['frame_range_lock'].setValue(True)
 
         if not ASSIST:
@@ -2292,12 +2316,9 @@ class WorkfileSettings(object):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
         project_name = legacy_io.active_project()
-        project = get_project(project_name)
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        asset = get_asset_by_name(project_name, asset_name)
-        asset_data = asset.get('data', {})
+        asset_data = self._asset_entity["data"]
 
-        data = {
+        format_data = {
             "width": int(asset_data.get(
                 'resolutionWidth',
                 asset_data.get('resolution_width'))),
@@ -2307,36 +2328,39 @@ class WorkfileSettings(object):
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": project["name"]
+            "name": project_name
         }
 
-        if any(x for x in data.values() if x is None):
+        if any(x_ for x_ in format_data.values() if x_ is None):
             msg = ("Missing set shot attributes in DB."
                    "\nContact your supervisor!."
                    "\n\nWidth: `{width}`"
                    "\nHeight: `{height}`"
-                   "\nPixel Asspect: `{pixel_aspect}`").format(**data)
+                   "\nPixel Aspect: `{pixel_aspect}`").format(**format_data)
             log.error(msg)
             nuke.message(msg)
 
         existing_format = None
         for format in nuke.formats():
-            if data["name"] == format.name():
+            if format_data["name"] == format.name():
                 existing_format = format
                 break
 
         if existing_format:
             # Enforce existing format to be correct.
-            existing_format.setWidth(data["width"])
-            existing_format.setHeight(data["height"])
-            existing_format.setPixelAspect(data["pixel_aspect"])
+            existing_format.setWidth(format_data["width"])
+            existing_format.setHeight(format_data["height"])
+            existing_format.setPixelAspect(format_data["pixel_aspect"])
         else:
-            format_string = self.make_format_string(**data)
+            format_string = self.make_format_string(**format_data)
             log.info("Creating new format: {}".format(format_string))
             nuke.addFormat(format_string)
 
-        nuke.root()["format"].setValue(data["name"])
+        nuke.root()["format"].setValue(format_data["name"])
         log.info("Format is set.")
+
+        # update node graph so knobs are updated
+        update_node_graph()
 
     def make_format_string(self, **kwargs):
         if kwargs.get("r"):
@@ -2454,6 +2478,20 @@ def get_dependent_nodes(nodes):
             })
 
     return connections_in, connections_out
+
+
+def update_node_graph():
+    # Resetting frame will update knob values
+    try:
+        root_node_lock = nuke.root()["lock_range"].value()
+        nuke.root()["lock_range"].setValue(not root_node_lock)
+        nuke.root()["lock_range"].setValue(root_node_lock)
+
+        current_frame = nuke.frame()
+        nuke.frame(1)
+        nuke.frame(int(current_frame))
+    except Exception as error:
+        log.warning(error)
 
 
 def find_free_space_to_paste_nodes(
