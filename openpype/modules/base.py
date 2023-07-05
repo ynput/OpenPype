@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import copy
 import os
 import sys
 import json
@@ -319,7 +320,35 @@ def _get_ayon_addons_information():
         List[Dict[str, Any]]: List of addon information to use.
     """
 
-    return ayon_api.get_addons_info()["addons"]
+    output = []
+    bundle_name = os.getenv("AYON_BUNDLE_NAME")
+    bundles = ayon_api.get_bundles()["bundles"]
+    final_bundle = next(
+        (
+            bundle
+            for bundle in bundles
+            if bundle["name"] == bundle_name
+        ),
+        None
+    )
+    if final_bundle is None:
+        return output
+
+    bundle_addons = final_bundle["addons"]
+    addons = ayon_api.get_addons_info()["addons"]
+    for addon in addons:
+        name = addon["name"]
+        versions = addon.get("versions")
+        addon_version = bundle_addons.get(name)
+        if addon_version is None or not versions:
+            continue
+        version = versions.get(addon_version)
+        if version:
+            version = copy.deepcopy(version)
+            version["name"] = name
+            version["version"] = addon_version
+            output.append(version)
+    return output
 
 
 def _load_ayon_addons(openpype_modules, modules_key, log):
@@ -354,15 +383,9 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         ))
         return v3_addons_to_skip
 
-    version_key = (
-        "stagingVersion" if is_staging_enabled()
-        else "productionVersion"
-    )
     for addon_info in addons_info:
         addon_name = addon_info["name"]
-        addon_version = addon_info.get(version_key)
-        if not addon_version:
-            continue
+        addon_version = addon_info["version"]
 
         folder_name = "{}_{}".format(addon_name, addon_version)
         addon_dir = os.path.join(addons_dir, folder_name)

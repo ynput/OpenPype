@@ -1,5 +1,7 @@
 import os
 
+from ayon_common.utils import is_staging_enabled
+
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -10,7 +12,7 @@ def get_resource_path(*args):
 
 
 def get_icon_path():
-    if os.environ.get("OPENPYPE_USE_STAGING") == "1":
+    if is_staging_enabled():
         return get_resource_path("AYON_staging.png")
     return get_resource_path("AYON.png")
 
