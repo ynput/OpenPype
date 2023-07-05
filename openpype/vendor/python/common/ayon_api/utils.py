@@ -2,6 +2,7 @@ import re
 import datetime
 import uuid
 import string
+import platform
 import collections
 try:
     # Python 3
@@ -449,3 +450,22 @@ class TransferProgress:
     destination_url = property(get_destination_url, set_destination_url)
     content_size = property(get_content_size, set_content_size)
     transferred_size = property(get_transferred_size, set_transferred_size)
+
+
+def create_dependency_package_basename(platform_name=None):
+    """Create basename for dependency package file.
+
+    Args:
+        platform_name (Optional[str]): Name of platform for which the
+            bundle is targeted. Default value is current platform.
+
+    Returns:
+        str: Dependency package name with timestamp and platform.
+    """
+
+    if platform_name is None:
+        platform_name = platform.system().lower()
+
+    now_date = datetime.datetime.now()
+    time_stamp = now_date.strftime("%y%m%d%H%M")
+    return "ayon_{}_{}".format(time_stamp, platform_name)
