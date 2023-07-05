@@ -42,7 +42,11 @@ def get_last_versions_for_instances(
         )
         subset_names_by_asset_name[asset_name].add(subset_name)
 
-    if not subset_names_by_asset_name:
+    subset_names = set()
+    for names in subset_names_by_asset_name.values():
+        subset_names |= names
+
+    if not subset_names:
         return output
 
     asset_docs = get_assets(
@@ -54,24 +58,15 @@ def get_last_versions_for_instances(
         asset_doc["_id"]: asset_doc["name"]
         for asset_doc in asset_docs
     }
-    asset_ids_by_name = {
-        asset_name: asset_id
-        for asset_id, asset_name in asset_names_by_id.items()
-    }
-    subset_names = set()
-    for names in subset_names_by_asset_name.values():
-        subset_names |= names
-
-    if not asset_ids_by_name or not subset_names:
+    if not asset_names_by_id:
         return output
 
     subset_docs = get_subsets(
         project_name,
-        asset_ids=asset_ids_by_name.values(),
+        asset_ids=asset_names_by_id.keys(),
         subset_names=subset_names,
         fields=["_id", "name", "parent"]
     )
-    subset_docs_by_asset_id = collections.defaultdict(list)
     subset_docs_by_id = {}
     for subset_doc in subset_docs:
         # Filter subset docs by subset names under parent
@@ -81,7 +76,9 @@ def get_last_versions_for_instances(
         if subset_name not in subset_names_by_asset_name[asset_name]:
             continue
         subset_docs_by_id[subset_doc["_id"]] = subset_doc
-        subset_docs_by_asset_id[asset_id].append(subset_doc)
+
+    if not subset_docs_by_id:
+        return output
 
     last_versions_by_subset_id = get_last_versions(
         project_name,
