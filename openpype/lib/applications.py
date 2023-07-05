@@ -1686,8 +1686,17 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         project_name, data["env"], project_settings, env_group
     )
 
-    if not app.is_host or not asset_doc or not task_name:
+    if not app.is_host:
         return
+
+    data["env"]["AVALON_APP"] = app.host_name
+
+    if not not asset_doc or not task_name:
+        # QUESTION replace with log.info and skip workfile discovery?
+        # - technically it should be possible to launch host without context
+        raise ApplicationLaunchFailed(
+            "Host launch require asset and task context."
+        )
 
     workdir_data = get_template_data(
         project_doc, asset_doc, task_name, app.host_name, system_settings
@@ -1726,7 +1735,6 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
                 "Couldn't create workdir because: {}".format(str(exc))
             )
 
-    data["env"]["AVALON_APP"] = app.host_name
     data["env"]["AVALON_WORKDIR"] = workdir
 
     _prepare_last_workfile(data, workdir, modules_manager)
