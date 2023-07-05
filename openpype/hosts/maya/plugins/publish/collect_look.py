@@ -346,7 +346,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             "rman__displacement"
         ]
         if look_sets:
-            self.log.debug("Found look sets:\n{}".format(look_sets))
+            self.log.debug("Found look sets: {}".format(look_sets))
 
             # Get all material attrs for all look sets to retrieve their inputs
             existing_attrs = []
