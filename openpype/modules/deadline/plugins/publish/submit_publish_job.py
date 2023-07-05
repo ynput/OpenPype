@@ -15,6 +15,7 @@ from openpype.client import (
 from openpype.pipeline import (
     legacy_io,
 )
+from openpype.pipeline.publish import ColormanagedPyblishPluginMixin
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.pyblish_functions import (
@@ -53,7 +54,8 @@ def get_resource_files(resources, frame_range=None):
     return list(res_collection)
 
 
-class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
+class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
+                                ColormanagedPyblishPluginMixin):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -118,7 +120,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION",
         "OPENPYPE_SG_USER"
     ]
 
