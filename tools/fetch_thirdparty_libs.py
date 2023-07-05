@@ -104,6 +104,8 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
     version = qtbinding_def.get("version")
     _pip_install(openpype_root, package, version)
 
+    python_vendor_dir = openpype_root / "vendor" / "python"
+
     # Remove libraries for QtSql which don't have available libraries
     #   by default and Postgre library would require to modify rpath of
     #   dependency
@@ -115,12 +117,11 @@ def install_qtbinding(pyproject, openpype_root, platform_name):
             os.remove(str(filepath))
 
 
-def install_opencolorio(pyproject, openpype_root):
-    _print("Installing PyOpenColorIO")
-    opencolorio_def = pyproject["openpype"]["opencolorio"]
-    package = opencolorio_def["package"]
-    version = opencolorio_def.get("version")
-    _pip_install(openpype_root, package, version)
+def install_runtime_dependencies(pyproject, openpype_root):
+    _print("Installing Runtime Dependencies ...")
+    runtime_deps = pyproject["openpype"]["runtime-deps"]
+    for package, version in runtime_deps.items():
+        _pip_install(openpype_root, package, version)
 
 
 def install_thirdparty(pyproject, openpype_root, platform_name):
@@ -232,7 +233,7 @@ def main():
     pyproject = toml.load(openpype_root / "pyproject.toml")
     platform_name = platform.system().lower()
     install_qtbinding(pyproject, openpype_root, platform_name)
-    install_opencolorio(pyproject, openpype_root)
+    install_runtime_dependencies(pyproject, openpype_root)
     install_thirdparty(pyproject, openpype_root, platform_name)
     end_time = time.time_ns()
     total_time = (end_time - start_time) / 1000000000
