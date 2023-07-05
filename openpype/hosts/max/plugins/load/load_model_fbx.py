@@ -6,7 +6,7 @@ from openpype.hosts.max.api.lib import maintained_selection
 
 
 class FbxModelLoader(load.LoaderPlugin):
-    """Fbx Model Loader"""
+    """Fbx Model Loader."""
 
     families = ["model"]
     representations = ["fbx"]
@@ -23,12 +23,12 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
-        container = rt.getNodeByName(f"{name}")
+        container = rt.GetNodeByName(name)
         if not container:
-            container = rt.container()
-            container.name = f"{name}"
+            container = rt.Container()
+            container.name = name
 
-        for selection in rt.getCurrentSelection():
+        for selection in rt.GetCurrentSelection():
             selection.Parent = container
 
         return containerise(
@@ -37,7 +37,6 @@ class FbxModelLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
         from pymxs import runtime as rt
-
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
         rt.select(node.Children)
@@ -50,7 +49,7 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(
             container["instance_node"],
@@ -63,5 +62,5 @@ class FbxModelLoader(load.LoaderPlugin):
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

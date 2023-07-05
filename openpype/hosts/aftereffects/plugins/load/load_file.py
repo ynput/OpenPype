@@ -1,14 +1,11 @@
 import re
 
 from openpype.pipeline import get_representation_path
-from openpype.hosts.aftereffects.api import (
-    AfterEffectsLoader,
-    containerise
-)
+from openpype.hosts.aftereffects import api
 from openpype.hosts.aftereffects.api.lib import get_unique_layer_name
 
 
-class FileLoader(AfterEffectsLoader):
+class FileLoader(api.AfterEffectsLoader):
     """Load images
 
     Stores the imported asset in a container named after the asset.
@@ -64,7 +61,7 @@ class FileLoader(AfterEffectsLoader):
         self[:] = [comp]
         namespace = namespace or comp_name
 
-        return containerise(
+        return api.containerise(
             name,
             namespace,
             comp,

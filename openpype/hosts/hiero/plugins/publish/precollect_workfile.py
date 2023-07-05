@@ -8,7 +8,6 @@ from qtpy.QtGui import QPixmap
 import hiero.ui
 
 from openpype.pipeline import legacy_io
-from openpype.hosts.hiero import api as phiero
 from openpype.hosts.hiero.api.otio import hiero_export
 
 
@@ -22,8 +21,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
 
         asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
-        project = phiero.get_current_project()
         active_timeline = hiero.ui.activeSequence()
+        project = active_timeline.project()
         fps = active_timeline.framerate().toFloat()
 
         # adding otio timeline to context

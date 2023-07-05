@@ -3,20 +3,18 @@
 
 import os
 import re
-import sys
 import ast
 import opentimelineio as otio
 from . import utils
 import hiero.core
 import hiero.ui
 
-self = sys.modules[__name__]
-self.track_types = {
+
+TRACK_TYPE_MAP = {
     hiero.core.VideoTrack: otio.schema.TrackKind.Video,
     hiero.core.AudioTrack: otio.schema.TrackKind.Audio
 }
-self.project_fps = None
-self.marker_color_map = {
+MARKER_COLOR_MAP = {
     "magenta": otio.schema.MarkerColor.MAGENTA,
     "red": otio.schema.MarkerColor.RED,
     "yellow": otio.schema.MarkerColor.YELLOW,
@@ -24,30 +22,21 @@ self.marker_color_map = {
     "cyan": otio.schema.MarkerColor.CYAN,
     "blue": otio.schema.MarkerColor.BLUE,
 }
-self.timeline = None
-self.include_tags = True
 
 
-def flatten(_list):
-    for item in _list:
-        if isinstance(item, (list, tuple)):
-            for sub_item in flatten(item):
+class CTX:
+    project_fps = None
+    timeline = None
+    include_tags = True
+
+
+def flatten(list_):
+    for item_ in list_:
+        if isinstance(item_, (list, tuple)):
+            for sub_item in flatten(item_):
                 yield sub_item
         else:
-            yield item
-
-
-def get_current_hiero_project(remove_untitled=False):
-    projects = flatten(hiero.core.projects())
-    if not remove_untitled:
-        return next(iter(projects))
-
-    # if remove_untitled
-    for proj in projects:
-        if "Untitled" in proj.name():
-            proj.close()
-        else:
-            return proj
+            yield item_
 
 
 def create_otio_rational_time(frame, fps):
@@ -152,7 +141,7 @@ def create_otio_reference(clip):
     file_head = media_source.filenameHead()
     is_sequence = not media_source.singleFile()
     frame_duration = media_source.duration()
-    fps = utils.get_rate(clip) or self.project_fps
+    fps = utils.get_rate(clip) or CTX.project_fps
     extension = os.path.splitext(path)[-1]
 
     if is_sequence:
@@ -217,8 +206,8 @@ def get_marker_color(tag):
     res = re.search(pat, icon)
     if res:
         color = res.groupdict().get('color')
-        if color.lower() in self.marker_color_map:
-            return self.marker_color_map[color.lower()]
+        if color.lower() in MARKER_COLOR_MAP:
+            return MARKER_COLOR_MAP[color.lower()]
 
     return otio.schema.MarkerColor.RED
 
@@ -232,7 +221,7 @@ def create_otio_markers(otio_item, item):
             # Hiero adds this tag to a lot of clips
             continue
 
-        frame_rate = utils.get_rate(item) or self.project_fps
+        frame_rate = utils.get_rate(item) or CTX.project_fps
 
         marked_range = otio.opentime.TimeRange(
             start_time=otio.opentime.RationalTime(
@@ -279,7 +268,7 @@ def create_otio_clip(track_item):
 
     duration = int(track_item.duration())
 
-    fps = utils.get_rate(track_item) or self.project_fps
+    fps = utils.get_rate(track_item) or CTX.project_fps
     name = track_item.name()
 
     media_reference = create_otio_reference(clip)
@@ -296,7 +285,7 @@ def create_otio_clip(track_item):
     )
 
     # Add tags as markers
-    if self.include_tags:
+    if CTX.include_tags:
         create_otio_markers(otio_clip, track_item)
         create_otio_markers(otio_clip, track_item.source())
 
@@ -319,13 +308,13 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
 
 
 def _create_otio_timeline():
-    project = get_current_hiero_project(remove_untitled=False)
-    metadata = _get_metadata(self.timeline)
+    project = CTX.timeline.project()
+    metadata = _get_metadata(CTX.timeline)
 
     metadata.update({
-        "openpype.timeline.width": int(self.timeline.format().width()),
-        "openpype.timeline.height": int(self.timeline.format().height()),
-        "openpype.timeline.pixelAspect": int(self.timeline.format().pixelAspect()),  # noqa
+        "openpype.timeline.width": int(CTX.timeline.format().width()),
+        "openpype.timeline.height": int(CTX.timeline.format().height()),
+        "openpype.timeline.pixelAspect": int(CTX.timeline.format().pixelAspect()),  # noqa
         "openpype.project.useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),  # noqa
         "openpype.project.lutSetting16Bit": project.lutSetting16Bit(),
         "openpype.project.lutSetting8Bit": project.lutSetting8Bit(),
@@ -339,10 +328,10 @@ def _create_otio_timeline():
     })
 
     start_time = create_otio_rational_time(
-        self.timeline.timecodeStart(), self.project_fps)
+        CTX.timeline.timecodeStart(), CTX.project_fps)
 
     return otio.schema.Timeline(
-        name=self.timeline.name(),
+        name=CTX.timeline.name(),
         global_start_time=start_time,
         metadata=metadata
     )
@@ -351,7 +340,7 @@ def _create_otio_timeline():
 def create_otio_track(track_type, track_name):
     return otio.schema.Track(
         name=track_name,
-        kind=self.track_types[track_type]
+        kind=TRACK_TYPE_MAP[track_type]
     )
 
 
@@ -363,7 +352,7 @@ def add_otio_gap(track_item, otio_track, prev_out):
     gap = otio.opentime.TimeRange(
         duration=otio.opentime.RationalTime(
             gap_length,
-            self.project_fps
+            CTX.project_fps
         )
     )
     otio_gap = otio.schema.Gap(source_range=gap)
@@ -396,14 +385,14 @@ def create_otio_timeline():
             return track_item.parent().items()[itemindex - 1]
 
     # get current timeline
-    self.timeline = hiero.ui.activeSequence()
-    self.project_fps = self.timeline.framerate().toFloat()
+    CTX.timeline = hiero.ui.activeSequence()
+    CTX.project_fps = CTX.timeline.framerate().toFloat()
 
     # convert timeline to otio
     otio_timeline = _create_otio_timeline()
 
     # loop all defined track types
-    for track in self.timeline.items():
+    for track in CTX.timeline.items():
         # skip if track is disabled
         if not track.isEnabled():
             continue
@@ -441,7 +430,7 @@ def create_otio_timeline():
             otio_track.append(otio_clip)
 
         # Add tags as markers
-        if self.include_tags:
+        if CTX.include_tags:
             create_otio_markers(otio_track, track)
 
         # add track to otio timeline
