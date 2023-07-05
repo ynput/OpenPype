@@ -57,15 +57,12 @@ class SelectROPAction(pyblish.api.Action):
     icon = "mdi.cursor-default-click"
 
     def process(self, context, plugin):
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        errored_instances = get_errored_instances_from_context(context, plugin)
 
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding ROP nodes..")
         rop_nodes = list()
-        for instance in instances:
+        for instance in errored_instances:
             node_path = instance.data.get("instance_node")
             if not node_path:
                 continue
