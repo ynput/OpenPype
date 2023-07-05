@@ -165,7 +165,6 @@ def deliver_single_file(
     log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
     _copy_file(src_path, delivery_path)
 
-
     return report_items, 1
 
 
