@@ -122,7 +122,7 @@ def deliver_single_file(
     report_items,
     log,
     has_renumbered_frame=False,
-    renumber_frame=0
+    new_frame_start=0
 ):
     """Copy single file to calculated path based on template
 
@@ -194,7 +194,7 @@ def deliver_single_file(
         dst_collection = clique.assemble(dst_filepaths)[0][0]
         relative = not has_renumbered_frame
         dst_collection = shift_collection(
-            dst_collection, renumber_frame, relative=relative)
+            dst_collection, new_frame_start, relative=relative)
 
         for src_file_name, dst in zip(src_collection, dst_collection):
             src_path = os.path.join(src_dir, src_file_name)
@@ -220,7 +220,7 @@ def deliver_sequence(
     report_items,
     log,
     has_renumbered_frame=False,
-    renumber_frame=0
+    new_frame_start=0
 ):
     """ For Pype2(mainly - works in 3 too) where representation might not
         contain files.
@@ -345,10 +345,10 @@ def deliver_sequence(
 
         if has_renumbered_frame:
             dst_index = None
-            if renumber_frame != 0:
-                dst_index = (renumber_frame - int(index)) + 1
+            if new_frame_start != 0:
+                dst_index = (new_frame_start - int(index)) + 1
             else:
-                dst_index = renumber_frame - int(index)
+                dst_index = new_frame_start - int(index)
             if dst_index < 0:
                 msg = "Renumber frame has a smaller number than original frame"     # noqa
                 report_items[msg].append(src_file_name)
