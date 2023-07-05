@@ -345,7 +345,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             existing_attrs = []
             for look in look_sets:
                 for attr in shader_attrs:
-                    if cmds.attributeQuery(attr, node=look_sets, exists=True):
+                    if cmds.attributeQuery(attr, node=look, exists=True):
                         existing_attrs.append("{}.{}".format(look, attr))
             materials = cmds.listConnections(existing_attrs,
                                              source=True,
