@@ -248,7 +248,8 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     args[0] = src_path
                     # Renumber frames
                     if renumber_frame and frame is not None:
-                        # Calculate offset between first frame and current frame
+                        # Calculate offset between
+                        # first frame and current frame
                         # - '0' for first frame
                         offset = frame_offset - int(first_frame)
                         # Add offset to new frame start
