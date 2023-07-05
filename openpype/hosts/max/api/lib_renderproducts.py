@@ -124,7 +124,7 @@ class RenderProducts(object):
         """Get all the Arnold AOVs name"""
         aov_name = []
 
-        amw = rt.MaxtoAOps.AOVsManagerWindow()
+        amw = rt.MaxToAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
         # Check if there is any aov group set in AOV manager
         aov_group_num = len(aov_mgr.drivers)

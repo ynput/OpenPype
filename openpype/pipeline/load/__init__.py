@@ -4,6 +4,8 @@ from .utils import (
     LoadError,
     IncompatibleLoaderError,
     InvalidRepresentationContext,
+    LoaderSwitchNotImplementedError,
+    LoaderNotFoundError,
 
     get_repres_contexts,
     get_contexts_for_repre_docs,
@@ -55,6 +57,8 @@ __all__ = (
     "LoadError",
     "IncompatibleLoaderError",
     "InvalidRepresentationContext",
+    "LoaderSwitchNotImplementedError",
+    "LoaderNotFoundError",
 
     "get_repres_contexts",
     "get_contexts_for_repre_docs",

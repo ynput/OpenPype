@@ -53,7 +53,8 @@ def get_resource_files(resources, frame_range=None):
     return list(res_collection)
 
 
-class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
+class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
+                                publish.ColormanagedPyblishPluginMixin):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -118,7 +119,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION",
         "OPENPYPE_SG_USER"
     ]
 
