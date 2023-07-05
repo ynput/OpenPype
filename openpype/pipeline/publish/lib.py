@@ -882,10 +882,11 @@ def get_published_workfile_instance(context):
         return i
 
 
-def replace_published_scene(instance, replace_in_path=True):
-    """Switch work scene for published scene.
+def replace_with_published_scene_path(instance, replace_in_path=True):
+    """Switch work scene path for published scene.
     If rendering/exporting from published scenes is enabled, this will
     replace paths from working scene to published scene.
+    This only works if publish contains workfile instance!
     Args:
         instance (pyblish.api.Instance): Pyblish instance.
         replace_in_path (bool): if True, it will try to find
