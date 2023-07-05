@@ -237,13 +237,35 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     src_paths.append(src_path)
                 sources_and_frames = collect_frames(src_paths)
 
+                frames = set(sources_and_frames.values())
+                frames.discard(None)
+                first_frame = None
+                if frames:
+                    first_frame = next(iter(frames))
+
+
                 for src_path, frame in sources_and_frames.items():
                     args[0] = src_path
-                    if frame:
-                        anatomy_data["frame"] = frame
-                        new_report_items, uploaded = deliver_sequence(*args)
-                    else:
-                        new_report_items, uploaded = deliver_single_file(*args)
+                    # Renumber frames
+                    if renumber_frame and frame is not None:
+                        # Calculate offset between first frame and current frame
+                        # - '0' for first frame
+                        offset = frame_offset - int(first_frame)
+                        # Add offset to new frame start
+                        frame = int(frame)
+                        dst_frame = frame + offset
+                        if dst_frame < 0:
+                            msg = "Renumber frame has a smaller number than original frame"     # noqa
+                            report_items[msg].append(src_path)
+                            self.log.warning("{} <{}>".format(
+                                msg, dst_frame))
+                            continue
+                        frame = dst_frame
+
+                    if frame is not None:
+                        if frame:
+                            anatomy_data["frame"] = frame
+                    new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)
             else:  # fallback for Pype2 and representations without files

@@ -120,7 +120,9 @@ def deliver_single_file(
     anatomy_data,
     format_dict,
     report_items,
-    log
+    log,
+    has_renumbered_frame=False,
+    new_frame_start=0
 ):
     """Copy single file to calculated path based on template
 
