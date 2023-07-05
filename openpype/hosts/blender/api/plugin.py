@@ -216,6 +216,8 @@ class BlenderCreator(Creator):
                                     avalon_prop
                                 )
 
+        return shared_data
+
 
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
@@ -232,6 +234,7 @@ class BlenderCreator(Creator):
         instance = CreatedInstance(
             self.family, subset_name, instance_data, self
         )
+        self._add_instance_to_context(instance)
 
         collection = bpy.data.collections.new(name=subset_name)
         bpy.context.scene.collection.children.link(collection)

@@ -16,6 +16,28 @@ class CreatePointcache(plugin.BlenderCreator):
     family = "pointcache"
     icon = "gears"
 
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
+
+        name = openpype.hosts.blender.api.plugin.asset_name(
+            instance_data["asset"], subset_name
+        )
+        collection = bpy.data.collections.new(name=name)
+        bpy.context.scene.collection.children.link(collection)
+        instance_data['task'] = get_current_task_name()
+        lib.imprint(collection, instance_data)
+
+        if pre_create_data.get("useSelection"):
+            objects = lib.get_selection()
+            for obj in objects:
+                collection.objects.link(obj)
+                if obj.type == 'EMPTY':
+                    objects.extend(obj.children)
+
+        return collection
+
+    # Deprecated
     def process(self):
         """ Run the creator on Blender main thread"""
         mti = ops.MainThreadItem(self._process)
