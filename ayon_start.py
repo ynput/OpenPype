@@ -9,6 +9,7 @@ import site
 import traceback
 import contextlib
 
+
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
     expected_values = (
@@ -48,35 +49,55 @@ if "--verbose" in sys.argv:
         ))
 
     os.environ["OPENPYPE_LOG_LEVEL"] = str(log_level)
+    os.environ["AYON_LOG_LEVEL"] = str(log_level)
 
 # Enable debug mode, may affect log level if log level is not defined
 if "--debug" in sys.argv:
     sys.argv.remove("--debug")
+    os.environ["AYON_DEBUG"] = "1"
     os.environ["OPENPYPE_DEBUG"] = "1"
 
 if "--automatic-tests" in sys.argv:
     sys.argv.remove("--automatic-tests")
     os.environ["IS_TEST"] = "1"
 
+SKIP_HEADERS = False
+if "--skip-headers" in sys.argv:
+    sys.argv.remove("--skip-headers")
+    SKIP_HEADERS = True
+
+SKIP_BOOTSTRAP = False
+if "--skip-bootstrap" in sys.argv:
+    sys.argv.remove("--skip-bootstrap")
+    SKIP_BOOTSTRAP = True
+
 if "--use-staging" in sys.argv:
     sys.argv.remove("--use-staging")
+    os.environ["AYON_USE_STAGING"] = "1"
     os.environ["OPENPYPE_USE_STAGING"] = "1"
 
-_silent_commands = {
-    "run",
-    "standalonepublisher",
-    "extractenvironments",
-    "version"
-}
 if "--headless" in sys.argv:
+    os.environ["AYON_HEADLESS_MODE"] = "1"
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
     sys.argv.remove("--headless")
-elif os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+
+elif (
+    os.getenv("AYON_HEADLESS_MODE") != "1"
+    or os.getenv("OPENPYPE_HEADLESS_MODE") != "1"
+):
+    os.environ.pop("AYON_HEADLESS_MODE", None)
     os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
+elif (
+    os.getenv("AYON_HEADLESS_MODE")
+    != os.getenv("OPENPYPE_HEADLESS_MODE")
+):
+    os.environ["OPENPYPE_HEADLESS_MODE"] = (
+        os.environ["AYON_HEADLESS_MODE"]
+    )
+
 IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
-HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
-SILENT_MODE_ENABLED = any(arg in _silent_commands for arg in sys.argv)
+HEADLESS_MODE_ENABLED = os.getenv("AYON_HEADLESS_MODE") == "1"
 
 _pythonpath = os.getenv("PYTHONPATH", "")
 _python_paths = _pythonpath.split(os.pathsep)
@@ -129,10 +150,12 @@ os.environ["PYTHONPATH"] = os.pathsep.join(_python_paths)
 os.environ["USE_AYON_SERVER"] = "1"
 # Set this to point either to `python` from venv in case of live code
 #    or to `ayon` or `ayon_console` in case of frozen code
+os.environ["AYON_EXECUTABLE"] = sys.executable
 os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
 os.environ["AYON_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
+os.environ["AYON_MENU_LABEL"] = "AYON"
 os.environ["AVALON_LABEL"] = "AYON"
 # Set name of pyblish UI import
 os.environ["PYBLISH_GUI"] = "pyblish_pype"
@@ -153,9 +176,7 @@ if sys.__stdout__:
     term = blessed.Terminal()
 
     def _print(message: str):
-        if SILENT_MODE_ENABLED:
-            pass
-        elif message.startswith("!!! "):
+        if message.startswith("!!! "):
             print(f'{term.orangered2("!!! ")}{message[4:]}')
         elif message.startswith(">>> "):
             print(f'{term.aquamarine3(">>> ")}{message[4:]}')
@@ -179,8 +200,7 @@ if sys.__stdout__:
             print(message)
 else:
     def _print(message: str):
-        if not SILENT_MODE_ENABLED:
-            print(message)
+        print(message)
 
 
 # if SSL_CERT_FILE is not set prior to OpenPype launch, we set it to point
@@ -190,7 +210,9 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
+from ayon_api import get_base_url
 from ayon_api.constants import SERVER_URL_ENV_KEY, SERVER_API_ENV_KEY
+from ayon_common import is_staging_enabled
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
@@ -200,7 +222,11 @@ from ayon_common.connection.credentials import (
     create_global_connection,
     confirm_server_login,
 )
-from ayon_common.distribution.addon_distribution import AyonDistribution
+from ayon_common.distribution import (
+    AyonDistribution,
+    BundleNotFoundError,
+    show_missing_bundle_information,
+)
 
 
 def set_global_environments() -> None:
@@ -286,8 +312,44 @@ def _check_and_update_from_ayon_server():
     """
 
     distribution = AyonDistribution()
+    bundle = None
+    bundle_name = None
+    try:
+        bundle = distribution.bundle_to_use
+        if bundle is not None:
+            bundle_name = bundle.name
+    except BundleNotFoundError as exc:
+        bundle_name = exc.bundle_name
+
+    if bundle is None:
+        url = get_base_url()
+        if not HEADLESS_MODE_ENABLED:
+            show_missing_bundle_information(url, bundle_name)
+
+        elif bundle_name:
+            _print((
+                f"!!! Requested release bundle '{bundle_name}'"
+                " is not available on server."
+            ))
+            _print(
+                "!!! Check if selected release bundle"
+                f" is available on the server '{url}'."
+            )
+
+        else:
+            mode = "staging" if is_staging_enabled() else "production"
+            _print(
+                f"!!! No release bundle is set as {mode} on the AYON server."
+            )
+            _print(
+                "!!! Make sure there is a release bundle set"
+                f" as \"{mode}\" on the AYON server '{url}'."
+            )
+        sys.exit(1)
+
     distribution.distribute()
     distribution.validate_distribution()
+    os.environ["AYON_BUNDLE_NAME"] = bundle_name
 
     python_paths = [
         path
@@ -311,8 +373,6 @@ def boot():
     os.environ["OPENPYPE_VERSION"] = __version__
     os.environ["AYON_VERSION"] = __version__
 
-    use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
-
     _connect_to_ayon_server()
     _check_and_update_from_ayon_server()
 
@@ -328,7 +388,10 @@ def boot():
         with contextlib.suppress(AttributeError, KeyError):
             del sys.modules[module_name]
 
+
+def main_cli():
     from openpype import cli
+    from openpype.version import __version__
     from openpype.lib import terminal as t
 
     _print(">>> loading environments ...")
@@ -338,8 +401,8 @@ def boot():
     set_addons_environments()
 
     # print info when not running scripts defined in 'silent commands'
-    if not SILENT_MODE_ENABLED:
-        info = get_info(use_staging)
+    if not SKIP_HEADERS:
+        info = get_info(is_staging_enabled())
         info.insert(0, f">>> Using AYON from [ {AYON_ROOT} ]")
 
         t_width = 20
@@ -361,6 +424,29 @@ def boot():
         sys.exit(1)
 
 
+def script_cli():
+    """Run and execute script."""
+
+    filepath = os.path.abspath(sys.argv[1])
+
+    # Find '__main__.py' in directory
+    if os.path.isdir(filepath):
+        new_filepath = os.path.join(filepath, "__main__.py")
+        if not os.path.exists(new_filepath):
+            raise RuntimeError(
+                f"can't find '__main__' module in '{filepath}'")
+        filepath = new_filepath
+
+    # Add parent dir to sys path
+    sys.path.insert(0, os.path.dirname(filepath))
+
+    # Read content and execute
+    with open(filepath, "r") as stream:
+        content = stream.read()
+
+    exec(compile(content, filepath, "exec"), globals())
+
+
 def get_info(use_staging=None) -> list:
     """Print additional information to console."""
 
@@ -369,6 +455,7 @@ def get_info(use_staging=None) -> list:
         inf.append(("AYON variant", "staging"))
     else:
         inf.append(("AYON variant", "production"))
+    inf.append(("AYON bundle", os.getenv("AYON_BUNDLE")))
 
     # NOTE add addons information
 
@@ -380,5 +467,17 @@ def get_info(use_staging=None) -> list:
     return formatted
 
 
+def main():
+    if not SKIP_BOOTSTRAP:
+        boot()
+
+    args = list(sys.argv)
+    args.pop(0)
+    if args and os.path.exists(args[0]):
+        script_cli()
+    else:
+        main_cli()
+
+
 if __name__ == "__main__":
-    boot()
+    main()

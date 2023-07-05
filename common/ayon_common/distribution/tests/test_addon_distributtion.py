@@ -1,20 +1,33 @@
-import pytest
-import attr
+import os
+import sys
+import copy
 import tempfile
 
-from common.ayon_common.distribution.addon_distribution import (
+
+import attr
+import pytest
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "..", ".."))
+sys.path.append(root_dir)
+
+from common.ayon_common.distribution.downloaders import (
     DownloadFactory,
     OSDownloader,
     HTTPDownloader,
-    AddonInfo,
-    AyonDistribution,
-    UpdateState
 )
-from common.ayon_common.distribution.addon_info import UrlType
+from common.ayon_common.distribution.control import (
+    AyonDistribution,
+    UpdateState,
+)
+from common.ayon_common.distribution.data_structures import (
+    AddonInfo,
+    UrlType,
+)
 
 
 @pytest.fixture
-def addon_download_factory():
+def download_factory():
     addon_downloader = DownloadFactory()
     addon_downloader.register_format(UrlType.FILESYSTEM, OSDownloader)
     addon_downloader.register_format(UrlType.HTTP, HTTPDownloader)
@@ -23,65 +36,84 @@ def addon_download_factory():
 
 
 @pytest.fixture
-def http_downloader(addon_download_factory):
-    yield addon_download_factory.get_downloader(UrlType.HTTP.value)
+def http_downloader(download_factory):
+    yield download_factory.get_downloader(UrlType.HTTP.value)
 
 
 @pytest.fixture
 def temp_folder():
-    yield tempfile.mkdtemp()
+    yield tempfile.mkdtemp(prefix="ayon_test_")
+
+
+@pytest.fixture
+def sample_bundles():
+    yield {
+        "bundles": [
+            {
+                "name": "TestBundle",
+                "createdAt": "2023-06-29T00:00:00.0+00:00",
+                "installerVersion": None,
+                "addons": {
+                    "slack": "1.0.0"
+                },
+                "dependencyPackages": {},
+                "isProduction": True,
+                "isStaging": False
+            }
+        ],
+        "productionBundle": "TestBundle",
+        "stagingBundle": None
+    }
 
 
 @pytest.fixture
 def sample_addon_info():
-    addon_info = {
-       "versions": {
+    yield {
+        "name": "slack",
+        "title": "Slack addon",
+        "versions": {
             "1.0.0": {
-                 "clientPyproject": {
-                      "tool": {
-                           "poetry": {
+                "hasSettings": True,
+                "hasSiteSettings": False,
+                "clientPyproject": {
+                    "tool": {
+                        "poetry": {
                             "dependencies": {
-                             "nxtools": "^1.6",
-                             "orjson": "^3.6.7",
-                             "typer": "^0.4.1",
-                             "email-validator": "^1.1.3",
-                             "python": "^3.10",
-                             "fastapi": "^0.73.0"
+                                "nxtools": "^1.6",
+                                "orjson": "^3.6.7",
+                                "typer": "^0.4.1",
+                                "email-validator": "^1.1.3",
+                                "python": "^3.10",
+                                "fastapi": "^0.73.0"
                             }
-                       }
-                  }
-                 },
-                 "hasSettings": True,
-                 "clientSourceInfo": [
-                     {
-                         "type": "http",
-                         "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
-                         "filename": "dummy.zip"
-                     },
-                     {
-                         "type": "filesystem",
-                         "path": {
-                             "windows": ["P:/sources/some_file.zip",
-                                         "W:/sources/some_file.zip"],  # noqa
-                             "linux": ["/mnt/srv/sources/some_file.zip"],
-                             "darwin": ["/Volumes/srv/sources/some_file.zip"]
-                         }
-                     }
-                 ],
-                 "frontendScopes": {
-                      "project": {
-                       "sidebar": "hierarchy"
-                      }
-                 }
+                        }
+                    }
+                },
+                "clientSourceInfo": [
+                    {
+                        "type": "http",
+                        "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
+                        "filename": "dummy.zip"
+                    },
+                    {
+                        "type": "filesystem",
+                        "path": {
+                            "windows": "P:/sources/some_file.zip",
+                            "linux": "/mnt/srv/sources/some_file.zip",
+                            "darwin": "/Volumes/srv/sources/some_file.zip"
+                        }
+                    }
+                ],
+                "frontendScopes": {
+                    "project": {
+                        "sidebar": "hierarchy",
+                    }
+                },
+                "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"  # noqa
             }
-       },
-       "description": "",
-       "title": "Slack addon",
-       "name": "openpype_slack",
-       "productionVersion": "1.0.0",
-       "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"  # noqa
+        },
+        "description": ""
     }
-    yield addon_info
 
 
 def test_register(printer):
@@ -103,21 +135,16 @@ def test_get_downloader(printer, download_factory):
 def test_addon_info(printer, sample_addon_info):
     """Tests parsing of expected payload from v4 server into AadonInfo."""
     valid_minimum = {
-        "name": "openpype_slack",
-         "productionVersion": "1.0.0",
-         "versions": {
-             "1.0.0": {
-                 "clientSourceInfo": [
-                     {
-                         "type": "filesystem",
-                         "path": {
-                             "windows": [
-                                 "P:/sources/some_file.zip",
-                                 "W:/sources/some_file.zip"],
-                             "linux": [
-                                 "/mnt/srv/sources/some_file.zip"],
-                             "darwin": [
-                                 "/Volumes/srv/sources/some_file.zip"]  # noqa
+        "name": "slack",
+        "versions": {
+            "1.0.0": {
+                "clientSourceInfo": [
+                    {
+                        "type": "filesystem",
+                        "path": {
+                            "windows": "P:/sources/some_file.zip",
+                            "linux": "/mnt/srv/sources/some_file.zip",
+                            "darwin": "/Volumes/srv/sources/some_file.zip"
                          }
                      }
                  ]
@@ -127,18 +154,10 @@ def test_addon_info(printer, sample_addon_info):
 
     assert AddonInfo.from_dict(valid_minimum), "Missing required fields"
 
-    valid_minimum["versions"].pop("1.0.0")
-    with pytest.raises(KeyError):
-        assert not AddonInfo.from_dict(valid_minimum), "Must fail without version data"  # noqa
-
-    valid_minimum.pop("productionVersion")
-    assert not AddonInfo.from_dict(
-        valid_minimum), "none if not productionVersion"  # noqa
-
     addon = AddonInfo.from_dict(sample_addon_info)
     assert addon, "Should be created"
-    assert addon.name == "openpype_slack", "Incorrect name"
-    assert addon.version == "1.0.0", "Incorrect version"
+    assert addon.name == "slack", "Incorrect name"
+    assert "1.0.0" in addon.versions, "Version is not in versions"
 
     with pytest.raises(TypeError):
         assert addon["name"], "Dict approach not implemented"
@@ -147,37 +166,83 @@ def test_addon_info(printer, sample_addon_info):
     assert addon_as_dict["name"], "Dict approach should work"
 
 
-def test_update_addon_state(printer, sample_addon_info,
-                            temp_folder, download_factory):
+def _get_dist_item(dist_items, name, version):
+    final_dist_info = next(
+        (
+            dist_info
+            for dist_info in dist_items
+            if (
+                dist_info["addon_name"] == name
+                and dist_info["addon_version"] == version
+            )
+        ),
+        {}
+    )
+    return final_dist_info["dist_item"]
+
+
+def test_update_addon_state(
+    printer, sample_addon_info, temp_folder, download_factory, sample_bundles
+):
     """Tests possible cases of addon update."""
-    addon_info = AddonInfo.from_dict(sample_addon_info)
-    orig_hash = addon_info.hash
+
+    addon_version = list(sample_addon_info["versions"])[0]
+    broken_addon_info = copy.deepcopy(sample_addon_info)
 
     # Cause crash because of invalid hash
-    addon_info.hash = "brokenhash"
+    broken_addon_info["versions"][addon_version]["hash"] = "brokenhash"
     distribution = AyonDistribution(
-        temp_folder, temp_folder, download_factory, [addon_info], None
+        addon_dirpath=temp_folder,
+        dependency_dirpath=temp_folder,
+        dist_factory=download_factory,
+        addons_info=[broken_addon_info],
+        dependency_packages_info=[],
+        bundles_info=sample_bundles
     )
     distribution.distribute()
-    dist_items = distribution.get_addons_dist_items()
-    slack_state = dist_items["openpype_slack_1.0.0"].state
+    dist_items = distribution.get_addon_dist_items()
+    slack_dist_item = _get_dist_item(
+        dist_items,
+        sample_addon_info["name"],
+        addon_version
+    )
+    slack_state = slack_dist_item.state
     assert slack_state == UpdateState.UPDATE_FAILED, (
         "Update should have failed because of wrong hash")
 
     # Fix cache and validate if was updated
-    addon_info.hash = orig_hash
     distribution = AyonDistribution(
-        temp_folder, temp_folder, download_factory, [addon_info], None
+        addon_dirpath=temp_folder,
+        dependency_dirpath=temp_folder,
+        dist_factory=download_factory,
+        addons_info=[sample_addon_info],
+        dependency_packages_info=[],
+        bundles_info=sample_bundles
     )
     distribution.distribute()
-    dist_items = distribution.get_addons_dist_items()
-    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+    dist_items = distribution.get_addon_dist_items()
+    slack_dist_item = _get_dist_item(
+        dist_items,
+        sample_addon_info["name"],
+        addon_version
+    )
+    assert slack_dist_item.state == UpdateState.UPDATED, (
         "Addon should have been updated")
 
     # Is UPDATED without calling distribute
     distribution = AyonDistribution(
-        temp_folder, temp_folder, download_factory, [addon_info], None
+        addon_dirpath=temp_folder,
+        dependency_dirpath=temp_folder,
+        dist_factory=download_factory,
+        addons_info=[sample_addon_info],
+        dependency_packages_info=[],
+        bundles_info=sample_bundles
     )
-    dist_items = distribution.get_addons_dist_items()
-    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+    dist_items = distribution.get_addon_dist_items()
+    slack_dist_item = _get_dist_item(
+        dist_items,
+        sample_addon_info["name"],
+        addon_version
+    )
+    assert slack_dist_item.state == UpdateState.UPDATED, (
         "Addon should already exist")

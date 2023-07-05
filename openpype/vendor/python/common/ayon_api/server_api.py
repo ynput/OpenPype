@@ -61,6 +61,7 @@ from .utils import (
     entity_data_json_default,
     failed_json_default,
     TransferProgress,
+    create_dependency_package_basename,
 )
 
 PatternType = type(re.compile(""))
@@ -115,6 +116,10 @@ class RestApiResponse(object):
         self._data = data
 
     @property
+    def text(self):
+        return self._response.text
+
+    @property
     def orig_response(self):
         return self._response
 
@@ -150,11 +155,13 @@ class RestApiResponse(object):
     def status_code(self):
         return self.status
 
-    def raise_for_status(self):
+    def raise_for_status(self, message=None):
         try:
             self._response.raise_for_status()
         except requests.exceptions.HTTPError as exc:
-            raise HTTPRequestError(str(exc), exc.response)
+            if message is None:
+                message = str(exc)
+            raise HTTPRequestError(message, exc.response)
 
     def __enter__(self, *args, **kwargs):
         return self._response.__enter__(*args, **kwargs)
@@ -1303,13 +1310,15 @@ class ServerAPI(object):
             progress.set_transfer_done()
         return progress
 
-    def _upload_file(self, url, filepath, progress):
+    def _upload_file(self, url, filepath, progress, request_type=None):
+        if request_type is None:
+            request_type = RequestTypes.put
         kwargs = {}
         if self._session is None:
             kwargs["headers"] = self.get_headers()
-            post_func = self._base_functions_mapping[RequestTypes.post]
+            post_func = self._base_functions_mapping[request_type]
         else:
-            post_func = self._session_functions_mapping[RequestTypes.post]
+            post_func = self._session_functions_mapping[request_type]
 
         with open(filepath, "rb") as stream:
             stream.seek(0, io.SEEK_END)
@@ -1320,7 +1329,9 @@ class ServerAPI(object):
         response.raise_for_status()
         progress.set_transferred_size(size)
 
-    def upload_file(self, endpoint, filepath, progress=None):
+    def upload_file(
+        self, endpoint, filepath, progress=None, request_type=None
+    ):
         """Upload file to server.
 
         Todos:
@@ -1331,6 +1342,8 @@ class ServerAPI(object):
             filepath (str): Source filepath.
             progress (Optional[TransferProgress]): Object that gives ability
                 to track upload progress.
+            request_type (Optional[RequestType]): Type of request that will
+                be used to upload file.
         """
 
         if endpoint.startswith(self._base_url):
@@ -1349,7 +1362,7 @@ class ServerAPI(object):
         progress.set_started()
 
         try:
-            self._upload_file(url, filepath, progress)
+            self._upload_file(url, filepath, progress, request_type)
 
         except Exception as exc:
             progress.set_failed(str(exc))
@@ -1486,13 +1499,11 @@ class ServerAPI(object):
         """
 
         response = self.delete("attributes/{}".format(attribute_name))
-        if response.status_code != 204:
-            # TODO raise different exception
-            raise ValueError(
-                "Attribute \"{}\" was not created/updated. {}".format(
-                    attribute_name, response.detail
-                )
+        response.raise_for_status(
+            "Attribute \"{}\" was not created/updated. {}".format(
+                attribute_name, response.detail
             )
+        )
 
         self.reset_attributes_schema()
 
@@ -1732,8 +1743,9 @@ class ServerAPI(object):
         python_version,
         platform_name,
         python_modules,
+        runtime_python_modules,
         checksum,
-        checksum_type,
+        checksum_algorithm,
         file_size,
         sources=None,
     ):
@@ -1742,6 +1754,10 @@ class ServerAPI(object):
         This step will create only metadata. Make sure to upload installer
             to the server using 'upload_installer' method.
 
+        Runtime python modules are modules that are required to run AYON
+            desktop application, but are not added to PYTHONPATH for any
+            subprocess.
+
         Args:
             filename (str): Installer filename.
             version (str): Version of installer.
@@ -1749,8 +1765,10 @@ class ServerAPI(object):
             platform_name (str): Name of platform.
             python_modules (dict[str, str]): Python modules that are available
                 in installer.
+            runtime_python_modules (dict[str, str]): Runtime python modules
+                that are available in installer.
             checksum (str): Installer file checksum.
-            checksum_type (str): Type of checksum used to create checksum.
+            checksum_algorithm (str): Type of checksum used to create checksum.
             file_size (int): File size.
             sources (Optional[list[dict[str, Any]]]): List of sources that
                 can be used to download file.
@@ -1762,8 +1780,9 @@ class ServerAPI(object):
             "pythonVersion": python_version,
             "platform": platform_name,
             "pythonModules": python_modules,
+            "runtimePythonModules": runtime_python_modules,
             "checksum": checksum,
-            "checksumType": checksum_type,
+            "checksumAlgorithm": checksum_algorithm,
             "size": file_size,
         }
         if sources:
@@ -1781,7 +1800,7 @@ class ServerAPI(object):
                 can be used to download file. Fully replaces existing sources.
         """
 
-        response = self.post(
+        response = self.patch(
             "desktop/installers/{}".format(filename),
             sources=sources
         )
@@ -1794,7 +1813,7 @@ class ServerAPI(object):
             filename (str): Installer filename.
         """
 
-        response = self.delete("dekstop/installers/{}".format(filename))
+        response = self.delete("desktop/installers/{}".format(filename))
         response.raise_for_status()
 
     def download_installer(
@@ -1929,8 +1948,7 @@ class ServerAPI(object):
             checksum=checksum,
             **kwargs
         )
-        if response.status not in (200, 201, 204):
-            raise ServerError("Failed to create/update dependency")
+        response.raise_for_status("Failed to create/update dependency")
         return response.data
 
     def get_dependency_packages(self):
@@ -2065,8 +2083,7 @@ class ServerAPI(object):
 
         route = self._get_dependency_package_route(filename, platform_name)
         response = self.delete(route)
-        if response.status != 200:
-            raise ServerError("Failed to delete dependency file")
+        response.raise_for_status("Failed to delete dependency file")
         return response.data
 
     def download_dependency_package(
@@ -2131,6 +2148,10 @@ class ServerAPI(object):
     def create_dependency_package_basename(self, platform_name=None):
         """Create basename for dependency package file.
 
+        Deprecated:
+            Use 'create_dependency_package_basename' from `ayon_api` or
+                `ayon_api.utils` instead.
+
         Args:
             platform_name (Optional[str]): Name of platform for which the
                 bundle is targeted. Default value is current platform.
@@ -2139,12 +2160,7 @@ class ServerAPI(object):
             str: Dependency package name with timestamp and platform.
         """
 
-        if platform_name is None:
-            platform_name = platform.system().lower()
-
-        now_date = datetime.datetime.now()
-        time_stamp = now_date.strftime("%y%m%d%H%M")
-        return "ayon_{}_{}".format(time_stamp, platform_name)
+        return create_dependency_package_basename(platform_name)
 
     def _get_bundles_route(self):
         major, minor, patch, _, _ = self.server_version_tuple
