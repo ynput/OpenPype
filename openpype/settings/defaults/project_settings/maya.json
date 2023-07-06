@@ -457,6 +457,9 @@
         "include_handles_default": false,
         "per_task_type": []
     },
+    "update_publishable_frame_range": {
+        "enabled": true
+    },
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [
