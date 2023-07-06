@@ -16,10 +16,9 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
     def process(self, instance):
         frame_data = self.get_frame_data_from_repre_sequence(instance)
         for key, value in frame_data.items():
-            if key not in instance.data :
+            if key not in instance.data:
                 instance.data[key] = value
                 self.log.debug(f"Frame range data {key} has been collected ")
-
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")

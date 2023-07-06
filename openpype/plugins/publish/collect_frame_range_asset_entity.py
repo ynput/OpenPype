@@ -3,7 +3,7 @@ from openpype.pipeline import OptionalPyblishPluginMixin
 
 
 class CollectFrameDataFromAssetEntity(pyblish.api.InstancePlugin,
-                                     OptionalPyblishPluginMixin):
+                                      OptionalPyblishPluginMixin):
     """Collect Frame Range data From Asset Entity
     """
 
