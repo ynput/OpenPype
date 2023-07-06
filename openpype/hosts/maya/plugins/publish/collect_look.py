@@ -383,6 +383,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                     or []
                 )
 
+            # Ensure unique entries only
+            history = list(set(history))
+
             files = cmds.ls(history,
                             # It's important only node types are passed that
                             # exist (e.g. for loaded plugins) because otherwise
@@ -390,10 +393,13 @@ class CollectLook(pyblish.api.InstancePlugin):
                             type=list(FILE_NODES.keys()),
                             long=True)
 
+            # Sort for log readability
+            files.sort()
+
         self.log.info("Collected file nodes: {}".format(files))
         # Collect textures if any file nodes are found
         resources = []
-        for node in files:
+        for node in files:  # sort for log readability
             resources.extend(self.collect_resources(node))
         instance.data["resources"] = resources
         self.log.debug("Collected resources: {}".format(resources))
