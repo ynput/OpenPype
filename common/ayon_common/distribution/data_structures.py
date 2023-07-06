@@ -196,7 +196,11 @@ class DependencyItem(object):
 
     @classmethod
     def from_dict(cls, package):
-        sources, unknown_sources = prepare_sources(package.get("sources"))
+        src_sources = package.get("sources") or []
+        for source in src_sources:
+            if source.get("type") == "server" and not source.get("filename"):
+                source["filename"] = package["filename"]
+        sources, unknown_sources = prepare_sources(src_sources)
         return cls(
             name=package["filename"],
             platform_name=package["platform"],
