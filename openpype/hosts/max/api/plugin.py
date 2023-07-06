@@ -54,7 +54,6 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             )
             idx = findItem sceneObjs n
             if idx then return true else false
-            if classOf node == Container do return false
         )
 
         fn nodes_to_rmv node =
