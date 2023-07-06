@@ -49,6 +49,7 @@ from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
     NukePlaceholderCreatePlugin,
     build_workfile_template,
+    open_template,
     create_placeholder,
     update_placeholder,
 )
@@ -302,7 +303,7 @@ def _install_menu():
         lambda: BuildWorkfile().process()
     )
 
-    menu_template = menu.addMenu("Template Builder")  # creating template menu
+    menu_template = menu.addMenu("Template Builder")
     menu_template.addCommand(
         "Build Workfile from template",
         lambda: build_workfile_template()
@@ -310,6 +311,10 @@ def _install_menu():
 
     if not ASSIST:
         menu_template.addSeparator()
+        menu_template.addCommand(
+            "Open template",
+            lambda: open_template()
+        )
         menu_template.addCommand(
             "Create Place Holder",
             lambda: create_placeholder()

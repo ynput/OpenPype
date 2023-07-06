@@ -7,7 +7,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     LoadPlaceholderItem,
     CreatePlaceholderItem,
     PlaceholderLoadMixin,
-    PlaceholderCreateMixin
+    PlaceholderCreateMixin,
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
@@ -959,6 +959,11 @@ def build_workfile_template(*args, **kwargs):
 def update_workfile_template(*args):
     builder = NukeTemplateBuilder(registered_host())
     builder.rebuild_template()
+
+
+def open_template(*args):
+    builder = NukeTemplateBuilder(registered_host())
+    builder.open_template()
 
 
 def create_placeholder(*args):

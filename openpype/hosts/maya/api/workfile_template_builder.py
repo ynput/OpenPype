@@ -335,6 +335,11 @@ def update_workfile_template(*args):
     builder.rebuild_template()
 
 
+def open_template(*args):
+    builder = MayaTemplateBuilder(registered_host())
+    builder.open_template()
+
+
 def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateBuilder(host)

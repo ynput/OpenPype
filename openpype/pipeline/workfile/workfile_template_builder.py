@@ -536,6 +536,47 @@ class AbstractTemplateBuilder(object):
 
         self.clear_shared_populate_data()
 
+    def open_template(self):
+        """Open template file in default application.
+
+        Args:
+            template_path (str): Fullpath for current task and
+                host's template file.
+        """
+        from openpype.widgets import message_window
+
+        module_name = 'openpype.hosts.{}.api.lib'.format(self.host_name)
+        api_lib = __import__(module_name, fromlist=['get_main_window'])
+        main_window = api_lib.get_main_window()
+
+        try:
+            template_preset = self.get_template_preset()
+            template_path = template_preset["path"]
+
+        except (
+            TemplateNotFound,
+            TemplateProfileNotFound,
+            TemplateLoadFailed
+        ) as e:
+            message_window.message(
+                title="Template Load Failed",
+                message=str(e),
+                parent=main_window,
+                level="critical"
+            )
+            return
+
+        result = message_window.message(
+            title="Opening template",
+            message="Caution! This will overwrite your current scene.\n"
+            "Do you want to continue?",
+            parent=main_window,
+            level="ask",
+        )
+
+        if result:
+            self.host.open_file(template_path)
+
     @abstractmethod
     def import_template(self, template_path):
         """
