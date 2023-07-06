@@ -40,11 +40,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             # the ROP node we prefer it set to the SopNode path explicitly
 
             # Allow sop level paths (e.g. /obj/geo1/box1)
-            # but do not allow other sop level paths when
-            #   the parent type is not 'geo' like
-            #   Cameras, Dopnet nodes(sop solver)
-            if isinstance(selected_node, hou.SopNode) and \
-                    selected_node.parent().type().name() in ["geo", "subnet"]:
+            if isinstance(selected_node, hou.SopNode):
                 parms["sop_path"] = selected_node.path()
                 self.log.debug(
                    "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
