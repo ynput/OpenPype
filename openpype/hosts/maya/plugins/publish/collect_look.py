@@ -548,27 +548,28 @@ class CollectLook(pyblish.api.InstancePlugin):
                 node,
                 attribute
             ))
-            computed_attribute = "{}.{}".format(node, attribute)
-            if attribute == "fileTextureName":
-                computed_attribute = node + ".computedFileTextureNamePattern"
 
-            self.log.info("  - file source: {}".format(source))
             color_space_attr = "{}.colorSpace".format(node)
             try:
                 color_space = cmds.getAttr(color_space_attr)
             except ValueError:
                 # node doesn't have colorspace attribute
                 color_space = "Raw"
+
             # Compare with the computed file path, e.g. the one with
             # the <UDIM> pattern in it, to generate some logging information
             # about this difference
-            computed_source = cmds.getAttr(computed_attribute)
-            if source != computed_source:
-                self.log.debug("Detected computed file pattern difference "
-                               "from original pattern: {0} "
-                               "({1} -> {2})".format(node,
-                                                     source,
-                                                     computed_source))
+            # Only for file nodes with `fileTextureName` attribute
+            if attribute == "fileTextureName":
+                computed_source = cmds.getAttr(
+                    "{}.computedFileTextureNamePattern".format(node)
+                )
+                if source != computed_source:
+                    self.log.debug("Detected computed file pattern difference "
+                                   "from original pattern: {0} "
+                                   "({1} -> {2})".format(node,
+                                                         source,
+                                                         computed_source))
 
             # renderman allows nodes to have filename attribute empty while
             # you can have another incoming connection from different node.
