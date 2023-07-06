@@ -29,7 +29,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, options):
-        import maya.cmds as cmds
+        from maya import cmds
 
         with lib.maintained_selection():
             file_url = self.prepare_root_value(self.fname,
@@ -125,7 +125,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         Returns
             <list> node names
         """
-        import maya.cmds as cmds
+        from maya import cmds
 
         for shader in shader_nodes:
             future = cmds.listHistory(shader, future=True)
