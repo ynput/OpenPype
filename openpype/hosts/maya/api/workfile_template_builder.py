@@ -17,6 +17,7 @@ from openpype.tools.workfile_template_build import (
 from .lib import (
     read,
     imprint,
+    get_reference_node,
     get_main_window,
     update_instances_frame_range,
     update_instances_asset_name,
@@ -249,16 +250,20 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Hide placeholder, add them to placeholder set
         """
-        node = placeholder._scene_identifier
+        node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
         update_instances_frame_range()
         update_instances_asset_name()
+
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        cmds.delete(placeholder.scene_identifier)
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
@@ -276,9 +281,24 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             return
 
         roots = cmds.sets(container, q=True)
+        ref_node = None
+        try:
+            ref_node = get_reference_node(roots)
+        except AssertionError as e:
+            self.log.info(e.args[0])
+
         nodes_to_parent = []
         for root in roots:
+            if ref_node:
+                ref_root = cmds.referenceQuery(root, nodes=True)[0]
+                ref_root = (
+                    cmds.listRelatives(ref_root, parent=True, path=True) or
+                    [ref_root]
+                )
+                nodes_to_parent.extend(ref_root)
+                continue
             if root.endswith("_RN"):
+                # Backwards compatibility for hardcoded reference names.
                 refRoot = cmds.referenceQuery(root, n=True)[0]
                 refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
                 nodes_to_parent.extend(refRoot)
@@ -295,10 +315,17 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             matrix=True,
             worldSpace=True
         )
+        scene_parent = cmds.listRelatives(
+            placeholder.scene_identifier, parent=True, fullPath=True
+        )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
             cmds.reorder(node, relative=placeholder.data["index"])
             cmds.xform(node, matrix=placeholder_form, ws=True)
+            if scene_parent:
+                cmds.parent(node, scene_parent)
+            else:
+                cmds.parent(node, world=True)
 
         holding_sets = cmds.listSets(object=placeholder.scene_identifier)
         if not holding_sets:

@@ -2,6 +2,7 @@ import os
 import errno
 import logging
 import contextlib
+import shutil
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
@@ -113,7 +114,10 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
-        register_event_callback("workfile.save.before", after_workfile_save)
+        register_event_callback(
+            "workfile.save.before", workfile_save_before_xgen
+        )
+        register_event_callback("workfile.save.after", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
@@ -480,18 +484,16 @@ def on_init():
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
-    from .customize import (
-        override_component_mask_commands,
-        override_toolbox_ui
-    )
-    safe_deferred(override_component_mask_commands)
-
-    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
-
-    if launch_workfiles:
-        safe_deferred(host_tools.show_workfiles)
-
     if not lib.IS_HEADLESS:
+        launch_workfiles = os.environ.get("WORKFILES_STARTUP")
+        if launch_workfiles:
+            safe_deferred(host_tools.show_workfiles)
+
+        from .customize import (
+            override_component_mask_commands,
+            override_toolbox_ui
+        )
+        safe_deferred(override_component_mask_commands)
         safe_deferred(override_toolbox_ui)
 
 
@@ -549,13 +551,9 @@ def on_save():
     Any transform of a mesh, without an existing ID, is given one
     automatically on file save.
     """
-
     log.info("Running callback on save..")
     # remove lockfile if users jumps over from one scene to another
     _remove_workfile_lock()
-
-    # # Update current task for the current scene
-    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
@@ -563,23 +561,19 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
+def _update_render_layer_observers():
+    # Helper to trigger update for all renderlayer observer logic
+    lib.remove_render_layer_observer()
+    lib.add_render_layer_observer()
+    lib.add_render_layer_change_observer()
+
+
 def on_open():
     """On scene open let's assume the containers have changed."""
 
-    from qtpy import QtWidgets
     from openpype.widgets import popup
 
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.remove_render_layer_observer()")
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.add_render_layer_observer()")
-    cmds.evalDeferred(
-        "from openpype.hosts.maya.api import lib;"
-        "lib.add_render_layer_change_observer()")
-    # # Update current task for the current scene
-    # update_task_from_path(cmds.file(query=True, sceneName=True))
+    utils.executeDeferred(_update_render_layer_observers)
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -590,10 +584,7 @@ def on_open():
         log.warning("Scene has outdated content.")
 
         # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
-        parent = top_level_widgets.get("MayaWindow", None)
-
+        parent = lib.get_main_window()
         if parent is None:
             log.info("Skipping outdated content pop-up "
                      "because Maya window can't be found.")
@@ -618,16 +609,9 @@ def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     with lib.suspended_refresh():
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.remove_render_layer_observer()")
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.add_render_layer_observer()")
-        cmds.evalDeferred(
-            "from openpype.hosts.maya.api import lib;"
-            "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
+
+    utils.executeDeferred(_update_render_layer_observers)
     _remove_workfile_lock()
 
 
@@ -680,6 +664,91 @@ def before_workfile_save(event):
     workdir_path = event["workdir_path"]
     if workdir_path:
         create_workspace_mel(workdir_path, project_name)
+
+
+def workfile_save_before_xgen(event):
+    """Manage Xgen external files when switching context.
+
+    Xgen has various external files that needs to be unique and relative to the
+    workfile, so we need to copy and potentially overwrite these files when
+    switching context.
+
+    Args:
+        event (Event) - openpype/lib/events.py
+    """
+    if not cmds.pluginInfo("xgenToolkit", query=True, loaded=True):
+        return
+
+    import xgenm
+
+    current_work_dir = legacy_io.Session["AVALON_WORKDIR"].replace("\\", "/")
+    expected_work_dir = event.data["workdir_path"].replace("\\", "/")
+    if current_work_dir == expected_work_dir:
+        return
+
+    palettes = cmds.ls(type="xgmPalette", long=True)
+    if not palettes:
+        return
+
+    transfers = []
+    overwrites = []
+    attribute_changes = {}
+    attrs = ["xgFileName", "xgBaseFile"]
+    for palette in palettes:
+        sanitized_palette = palette.replace("|", "")
+        project_path = xgenm.getAttr("xgProjectPath", sanitized_palette)
+        _, maya_extension = os.path.splitext(event.data["filename"])
+
+        for attr in attrs:
+            node_attr = "{}.{}".format(palette, attr)
+            attr_value = cmds.getAttr(node_attr)
+
+            if not attr_value:
+                continue
+
+            source = os.path.join(project_path, attr_value)
+
+            attr_value = event.data["filename"].replace(
+                maya_extension,
+                "__{}{}".format(
+                    sanitized_palette.replace(":", "__"),
+                    os.path.splitext(attr_value)[1]
+                )
+            )
+            target = os.path.join(expected_work_dir, attr_value)
+
+            transfers.append((source, target))
+            attribute_changes[node_attr] = attr_value
+
+        relative_path = xgenm.getAttr(
+            "xgDataPath", sanitized_palette
+        ).split(os.pathsep)[0]
+        absolute_path = relative_path.replace("${PROJECT}", project_path)
+        for root, _, files in os.walk(absolute_path):
+            for f in files:
+                source = os.path.join(root, f).replace("\\", "/")
+                target = source.replace(project_path, expected_work_dir + "/")
+                transfers.append((source, target))
+                if os.path.exists(target):
+                    overwrites.append(target)
+
+    # Ask user about overwriting files.
+    if overwrites:
+        log.warning(
+            "WARNING! Potential loss of data.\n\n"
+            "Found duplicate Xgen files in new context.\n{}".format(
+                "\n".join(overwrites)
+            )
+        )
+        return
+
+    for source, destination in transfers:
+        if not os.path.exists(os.path.dirname(destination)):
+            os.makedirs(os.path.dirname(destination))
+        shutil.copy(source, destination)
+
+    for attribute, value in attribute_changes.items():
+        cmds.setAttr(attribute, value, type="string")
 
 
 def after_workfile_save(event):
