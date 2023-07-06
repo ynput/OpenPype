@@ -78,6 +78,14 @@ def read(container) -> dict:
                 value.startswith(JSON_PREFIX):
             with contextlib.suppress(json.JSONDecodeError):
                 value = json.loads(value[len(JSON_PREFIX):])
+
+        # default value behavior
+        # convert maxscript boolean values
+        if value == "true":
+            value = True
+        elif value == "false":
+            value = False
+
         data[key.strip()] = value
 
     data["instance_node"] = container.Name
