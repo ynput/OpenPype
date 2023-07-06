@@ -46,6 +46,9 @@ class IntegrateBlenderAsset(pyblish.api.ContextPlugin):
         # Process all instances
         context.data.setdefault("representations_futures", [])
         for instance in context:
+            # Skip unpublished instances
+            if not instance.data.get("publish"):
+                continue
             # Get published and hero representations
             representations = instance.data.get("published_representations")
             representations.update(
