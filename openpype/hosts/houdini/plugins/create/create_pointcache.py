@@ -58,8 +58,7 @@ class CreatePointCache(plugin.HoudiniCreator):
 
                 # get the output node with the minimum
                 # 'outputidx' or the node with display flag
-                sop_path = self.get_obj_output(selected_node) or \
-                    selected_node.displayNode()
+                sop_path = self.get_obj_output(selected_node)
 
                 if sop_path:
                     parms["sop_path"] = sop_path.path()
