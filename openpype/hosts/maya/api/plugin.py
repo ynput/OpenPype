@@ -1,5 +1,4 @@
 import os
-import re
 
 from maya import cmds
 
@@ -97,7 +96,12 @@ class Creator(LegacyCreator):
             instance = cmds.sets(nodes, name=self.name)
             lib.imprint(instance, self.data)
 
+        self.post_imprint(instance)
+
         return instance
+
+    def post_imprint(self, objset):
+        pass
 
 
 class Loader(LoaderPlugin):

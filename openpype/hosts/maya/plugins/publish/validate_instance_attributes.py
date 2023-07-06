@@ -57,4 +57,9 @@ class ValidateInstanceAttributes(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        imprint(instance.data["objset"], cls.get_missing_attributes(instance))
+        missing_attributes = cls.get_missing_attributes(instance)
+        imprint(instance.data["objset"], missing_attributes)
+
+        plugin = cls.plugins_by_family[instance.data["family"]]
+        if hasattr(plugin, "post_imprint"):
+            plugin.post_imprint(plugin, instance.data["objset"])

@@ -1,3 +1,5 @@
+from maya import cmds
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -17,7 +19,34 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    writeNormals = True  # Multiverse specific attribute.
+    settings_attrs = [
+        "step",
+        "writeColorSets",
+        "writeFaceSets",
+        "renderableOnly",
+        "visibleOnly",
+        "includeParentHierarchy",
+        "worldSpace",
+        "farm",
+        "priority",
+        "writeNormals",
+        "includeUserDefinedAttributes",
+        "attr",
+        "attrPrefix",
+        "dataFormat",
+        "eulerFilter",
+        "noNormals",
+        "preRoll",
+        "preRollStartFrame",
+        "refresh",
+        "stripNamespaces",
+        "uvWrite",
+        "verbose",
+        "wholeFrameGeo",
+        "writeCreases",
+        "writeUVSets",
+        "writeVisibility"
+    ]
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -26,44 +55,26 @@ class CreateAnimation(plugin.Creator):
         for key, value in lib.collect_animation_data().items():
             self.data[key] = value
 
-        attrs = [
-            "step",
-            "writeColorSets",
-            "writeFaceSets",
-            "renderableOnly",
-            "visibleOnly",
-            "includeParentHierarchy",
-            "worldSpace",
-            "farm",
-            "priority",
-            "writeNormals",
-            "includeUserDefinedAttributes",
-            "attr",
-            "attrPrefix",
-            "dataFormat",
-            "eulerFilter",
-            "noNormals",
-            "preRoll",
-            "preRollStartFrame",
-            "refresh",
-            "stripNamespaces",
-            "uvWrite",
-            "verbose",
-            "wholeFrameGeo",
-            "writeCreases",
-            "writeUVSets",
-            "writeVisibility"
-        ]
-        for attr in attrs:
-            value = getattr(self, attr)
-            if isinstance(value, dict):
-                if not value["enabled"]:
-                    self.log.debug(
-                        "Skipping \"{}\" because its disabled in "
-                        "settings".format(attr)
-                    )
-                    continue
-                value = value["value"]
+        # Setting value from settings.
+        for attr in self.settings_attrs:
+            if not hasattr(self, attr):
+                continue
 
-            # Setting value from settings.
-            self.data[attr] = value
+            self.data[attr] = getattr(self, attr)
+
+    def post_imprint(self, objset):
+        for attr in self.settings_attrs:
+            editable = attr + "_editable"
+
+            if not hasattr(self, editable):
+                continue
+
+            if getattr(self, editable):
+                continue
+
+            self.log.debug(
+                "Locking \"{}\" because its disabled in settings".format(attr)
+            )
+            cmds.setAttr(
+                objset + "." + attr, channelBox=False, lock=True
+            )

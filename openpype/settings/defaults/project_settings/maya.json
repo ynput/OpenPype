@@ -560,102 +560,57 @@
                 "Main"
             ],
             "step": 1.0,
-            "writeColorSets": {
-                "enabled": true,
-                "value": false
-            },
-            "writeFaceSets": {
-                "enabled": true,
-                "value": false
-            },
-            "renderableOnly": {
-                "enabled": true,
-                "value": false
-            },
-            "visibleOnly": {
-                "enabled": true,
-                "value": false
-            },
-            "includeParentHierarchy": {
-                "enabled": true,
-                "value": false
-            },
-            "worldSpace": {
-                "enabled": true,
-                "value": true
-            },
-            "farm": {
-                "enabled": true,
-                "value": false
-            },
-            "priority": {
-                "enabled": true,
-                "value": 50
-            },
-            "includeUserDefinedAttributes": {
-                "enabled": true,
-                "value": true
-            },
-            "attr": {
-                "enabled": true,
-                "value": ""
-            },
-            "attrPrefix": {
-                "enabled": true,
-                "value": ""
-            },
-            "dataFormat": {
-                "enabled": false,
-                "value": "ogawa"
-            },
-            "eulerFilter": {
-                "enabled": false,
-                "value": true
-            },
-            "noNormals": {
-                "enabled": false,
-                "value": true
-            },
-            "preRoll": {
-                "enabled": false,
-                "value": true
-            },
-            "preRollStartFrame": {
-                "enabled": false,
-                "value": 0
-            },
-            "refresh": {
-                "enabled": false,
-                "value": false
-            },
-            "stripNamespaces": {
-                "enabled": false,
-                "value": true
-            },
-            "uvWrite": {
-                "enabled": false,
-                "value": true
-            },
-            "verbose": {
-                "enabled": false,
-                "value": true
-            },
-            "wholeFrameGeo": {
-                "enabled": false,
-                "value": true
-            },
-            "writeCreases": {
-                "enabled": false,
-                "value": true
-            },
-            "writeUVSets": {
-                "enabled": false,
-                "value": true
-            },
-            "writeVisibility": {
-                "enabled": false,
-                "value": true
-            },
+            "step_editable": true,
+            "writeColorSets": false,
+            "writeColorSets_editable": true,
+            "writeFaceSets": false,
+            "writeFaceSets_editable": true,
+            "renderableOnly": false,
+            "renderableOnly_editable": true,
+            "visibleOnly": false,
+            "visibleOnly_editable": true,
+            "includeParentHierarchy": false,
+            "includeParentHierarchy_editable": true,
+            "worldSpace": true,
+            "worldSpace_editable": true,
+            "farm": false,
+            "farm_editable": true,
+            "priority": 50,
+            "priority_editable": true,
+            "writeNormals": true,
+            "writeNormals_editable": true,
+            "includeUserDefinedAttributes": true,
+            "includeUserDefinedAttributes_editable": true,
+            "attr": "",
+            "attr_editable": true,
+            "attrPrefix": "",
+            "attrPrefix_editable": true,
+            "dataFormat": "ogawa",
+            "dataFormat_editable": false,
+            "eulerFilter": false,
+            "eulerFilter_editable": false,
+            "noNormals": false,
+            "noNormals_editable": false,
+            "preRoll": false,
+            "preRoll_editable": false,
+            "preRollStartFrame": 0,
+            "preRollStartFrame_editable": false,
+            "refresh": false,
+            "refresh_editable": false,
+            "stripNamespaces": false,
+            "stripNamespaces_editable": false,
+            "uvWrite": true,
+            "uvWrite_editable": false,
+            "verbose": false,
+            "verbose_editable": false,
+            "wholeFrameGeo": false,
+            "wholeFrameGeo_editable": false,
+            "writeCreases": false,
+            "writeCreases_editable": false,
+            "writeUVSets": false,
+            "writeUVSets_editable": false,
+            "writeVisibility": true,
+            "writeVisibility_editable": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
