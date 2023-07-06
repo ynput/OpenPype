@@ -1,7 +1,6 @@
 """Load a layout in Blender."""
 import bpy
 
-from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api import plugin
 
@@ -19,8 +18,6 @@ class LayoutLoader(plugin.AssetLoader):
         Args:
             container (OpenpypeContainer): Loaded container
         """
-        task = legacy_io.Session.get("AVALON_TASK")
-        asset = legacy_io.Session.get("AVALON_ASSET")
 
         for obj in {
             d
@@ -33,16 +30,15 @@ class LayoutLoader(plugin.AssetLoader):
             loaded_action = obj.datablock.animation_data.action
             loaded_action.use_fake_user = True
 
-            # Get local action name with namespace from linked action.
-            # TODO uniformize name building with load rig
-            action_name = loaded_action.name.split(":")[-1]
-            local_name = f"{asset}_{task}:{action_name}"
+            # Get orignal action name and add suffix for reference.
+            orignal_action_name = loaded_action.name
+            loaded_action.name += ".ref"
             # Make local action, rename and upadate local_actions dict.
             if loaded_action.library:
                 local_action = loaded_action.make_local()
             else:
                 local_action = loaded_action.copy()
-            local_action.name = local_name
+            local_action.name = orignal_action_name
 
             # Assign local action.
             obj.datablock.animation_data.action = local_action
@@ -53,6 +49,9 @@ class LayoutLoader(plugin.AssetLoader):
     def load(self, *args, **kwargs):
         """Override `load` to create one animation instance by loaded rig."""
         container, datablocks = super().load(*args, **kwargs)
+
+        # Make loaded actions local, original ones are kept for reference.
+        self._make_local_actions(container)
 
         return container, datablocks
 
@@ -84,15 +83,6 @@ class LinkLayoutLoader(LayoutLoader):
 
     load_type = "LINK"
 
-    def load(self, *args, **kwargs):
-        """Override `load` to make loaded actions local.
-
-        Original ones are kept for reference.
-        """
-        container, datablocks = super().load(*args, **kwargs)
-        self._make_local_actions(container)
-        return container, datablocks
-
 
 class AppendLayoutLoader(LayoutLoader):
     """Append layout from a .blend file."""
@@ -105,12 +95,3 @@ class AppendLayoutLoader(LayoutLoader):
     order = 2
 
     load_type = "APPEND"
-
-    def load(self, *args, **kwargs):
-        """Override `load` to make loaded actions local.
-
-        Original ones are kept for reference.
-        """
-        container, datablocks = super().load(*args, **kwargs)
-        self._make_local_actions(container)
-        return container, datablocks
