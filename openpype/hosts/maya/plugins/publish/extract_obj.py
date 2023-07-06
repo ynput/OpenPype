@@ -2,7 +2,6 @@
 import os
 
 from maya import cmds
-# import maya.mel as mel
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
