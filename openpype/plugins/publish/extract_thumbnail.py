@@ -10,6 +10,7 @@ from openpype.lib import (
     run_subprocess,
     path_to_subprocess_arg,
 )
+from openpype.lib.transcoding import convert_colorspace
 
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
@@ -98,8 +99,18 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 self.log.debug("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
+                colorspace_data = repre["colorspaceData"]
+                source_colorspace = colorspace_data["colorspace"]
+                config_path = colorspace_data.get("config", {}).get("path")
+                display = colorspace_data["display"]
+                view = colorspace_data["view"]
                 thumbnail_created = self.create_thumbnail_oiio(
-                    full_input_path, full_output_path
+                    full_input_path,
+                    full_output_path,
+                    config_path,
+                    source_colorspace,
+                    display,
+                    view
                 )
 
             # Try to use FFMPEG if OIIO is not supported or for cases when
@@ -172,24 +183,28 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-    def create_thumbnail_oiio(self, src_path, dst_path):
+    def create_thumbnail_oiio(
+        self,
+        src_path,
+        dst_path,
+        config_path,
+        source_colorspace,
+        display,
+        view
+    ):
         self.log.info("Extracting thumbnail {}".format(dst_path))
-        oiio_tool_path = get_oiio_tools_path()
-        oiio_cmd = [
-            oiio_tool_path,
-            "-a", src_path,
-            "-o", dst_path
-        ]
-        self.log.debug("running: {}".format(" ".join(oiio_cmd)))
-        try:
-            run_subprocess(oiio_cmd, logger=self.log)
-            return True
-        except Exception:
-            self.log.warning(
-                "Failed to create thumbnail using oiiotool",
-                exc_info=True
-            )
-            return False
+
+        convert_colorspace(
+            src_path,
+            dst_path,
+            config_path,
+            source_colorspace,
+            view=view,
+            display=display,
+            input_args=["-i:ch=R,G,B"]
+        )
+
+        return dst_path
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
