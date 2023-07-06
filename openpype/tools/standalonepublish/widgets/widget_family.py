@@ -8,7 +8,7 @@ from openpype.client import (
     get_subsets,
     get_last_version_by_subset_id,
 )
-from openpype.settings import get_project_settings
+from openpype.settings import get_project_settings, get_versioning_start
 from openpype.pipeline import LegacyCreator
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
@@ -299,7 +299,7 @@ class FamilyWidget(QtWidgets.QWidget):
         project_name = self.dbcon.active_project()
         asset_name = self.asset_name
         subset_name = self.input_result.text()
-        version = 0
+        version = get_versioning_start()
 
         asset_doc = None
         subset_doc = None

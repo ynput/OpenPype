@@ -22,6 +22,7 @@ from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
 from openpype.pipeline import publish
+from openpype.settings import get_versioning_start
 
 
 def get_resources(project_name, version, extension=None):
@@ -1228,7 +1229,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = 0
+                version = get_versioning_start()
 
         template_data["subset"] = subset
         template_data["family"] = "render"

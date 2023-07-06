@@ -1,5 +1,6 @@
 {
     "defaults": {
+        "version_start_at_zero": true,
         "version_padding": 3,
         "version": "v{version:0>{@version_padding}}",
         "frame_padding": 4,

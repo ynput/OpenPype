@@ -16,6 +16,11 @@
                     "label": "The list of existing placeholders is available here:<br> https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys "
                 },
                 {
+                    "type": "boolean",
+                    "key": "version_start_at_zero",
+                    "label": "Start Versioning At 0"
+                },
+                {
                     "type": "number",
                     "key": "version_padding",
                     "label": "Version Padding",

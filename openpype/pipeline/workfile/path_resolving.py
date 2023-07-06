@@ -4,7 +4,7 @@ import copy
 import platform
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.settings import get_project_settings
+from openpype.settings import get_project_settings, get_versioning_start
 from openpype.lib import (
     filter_profiles,
     Logger,
@@ -316,7 +316,7 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        data["version"] = 0
+        data["version"] = get_versioning_start()
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]

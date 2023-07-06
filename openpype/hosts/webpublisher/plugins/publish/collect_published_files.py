@@ -25,6 +25,7 @@ from openpype.lib import (
 )
 from openpype.pipeline.create import get_subset_name
 from openpype_modules.webpublisher.lib import parse_json
+from openpype.settings import get_versioning_start
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -279,7 +280,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             asset_doc["_id"],
             fields=["name"]
         )
-        version = 0
+        version = get_versioning_start()
         if version_doc:
             version += int(version_doc["name"]) + 1
         return version

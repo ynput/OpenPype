@@ -12,6 +12,7 @@ from openpype.pipeline import (
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
+from openpype.settings import get_versioning_start
 
 log = logging.getLogger(__name__)
 
@@ -218,7 +219,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Version number input
         version_input = QtWidgets.QSpinBox(version_widget)
-        version_input.setMinimum(0)
+        version_input.setMinimum(get_versioning_start())
         version_input.setMaximum(9999)
 
         # Last version checkbox
@@ -420,7 +421,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             )[1]
 
             if version is None:
-                version = 0
+                version = get_versioning_start()
             else:
                 version += 1
 

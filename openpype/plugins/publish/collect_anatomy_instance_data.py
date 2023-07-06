@@ -32,6 +32,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
+from openpype.settings import get_versioning_start
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -193,9 +194,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 version_number = instance.data.get("version")
             # If version is not specified for instance or context
             if version_number is None:
-                # TODO we should be able to change default version by studio
-                # preferences (like start with version number `0`)
-                version_number = 0
+                version_number = get_versioning_start()
                 # use latest version (+1) if already any exist
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
