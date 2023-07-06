@@ -107,6 +107,6 @@ class CreatePointCache(plugin.HoudiniCreator):
 
         # if there are more than one, then it have multiple ouput nodes
         # return the one with the minimum 'outputidx'
-        else :
+        else:
             return min(outputs,
-                        key=lambda node : node.parm('outputidx').eval())
+                    key=lambda node : node.parm('outputidx').eval())
