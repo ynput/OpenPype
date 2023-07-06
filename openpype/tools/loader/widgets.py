@@ -1033,6 +1033,18 @@ class FamilyListView(QtWidgets.QListView):
     def __init__(self, dbcon, family_config_cache, parent=None):
         super(FamilyListView, self).__init__(parent=parent)
 
+        from Qt import QtCore, QtWidgets
+        try:
+            settings = QtCore.QSettings("OpenPype", "FamilyList")
+        except Exception:
+            settings = None
+
+        self._settings = settings
+        self._last_families_setting = self._settings.value('enabled_families')
+
+        print("settings: ", settings.allKeys())
+        print("enabled_families", settings.value('enabled_families'))
+
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1041,9 +1053,7 @@ class FamilyListView(QtWidgets.QListView):
         proxy_model = FamilyProxyFiler()
         proxy_model.setDynamicSortFilter(True)
         proxy_model.setSourceModel(family_model)
-
         self.setModel(proxy_model)
-
         family_model.dataChanged.connect(self._on_data_change)
         self.customContextMenuRequested.connect(self._on_context_menu)
 
@@ -1052,7 +1062,6 @@ class FamilyListView(QtWidgets.QListView):
 
     def set_enabled_families(self, families):
         self._proxy_model.set_enabled_families(families)
-
         self.set_enabled_family_filtering(True)
 
     def set_enabled_family_filtering(self, enabled=None):
@@ -1060,13 +1069,17 @@ class FamilyListView(QtWidgets.QListView):
 
     def refresh(self):
         self._family_model.refresh()
-
         self.active_changed.emit(self.get_enabled_families())
+
+        if self._last_families_setting is not None:
+            self.set_last_families(self._last_families_setting)
+            self._last_families_setting = None
 
     def get_enabled_families(self):
         """Return the checked family items"""
         model = self._family_model
         checked_families = []
+
         for row in range(model.rowCount()):
             index = model.index(row, 0)
             checked = checkstate_int_to_enum(
@@ -1075,8 +1088,19 @@ class FamilyListView(QtWidgets.QListView):
             if checked == QtCore.Qt.Checked:
                 family = index.data(QtCore.Qt.DisplayRole)
                 checked_families.append(family)
-
         return checked_families
+
+    def set_last_families(self, families):
+        if not families:
+            return
+
+        model = self._family_model
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            family = index.data(QtCore.Qt.DisplayRole)
+            new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked 
+            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)  
+        self.blockSignals(False)
 
     def set_all_unchecked(self):
         self._set_checkstates(False, self._get_all_indexes())
@@ -1103,8 +1127,6 @@ class FamilyListView(QtWidgets.QListView):
         else:
             state = QtCore.Qt.Unchecked
 
-        self.blockSignals(True)
-
         for index in indexes:
             index_state = checkstate_int_to_enum(
                 index.data(QtCore.Qt.CheckStateRole)
@@ -1121,8 +1143,6 @@ class FamilyListView(QtWidgets.QListView):
 
             index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
 
-        self.blockSignals(False)
-
         self.active_changed.emit(self.get_enabled_families())
 
     def _change_selection_state(self, checked):
@@ -1130,7 +1150,9 @@ class FamilyListView(QtWidgets.QListView):
         self._set_checkstates(checked, indexes)
 
     def _on_data_change(self, *_args):
-        self.active_changed.emit(self.get_enabled_families())
+        enabled_families = self.get_enabled_families()
+        self.active_changed.emit(enabled_families)
+        self._settings.setValue('enabled_families', enabled_families)
 
     def _on_context_menu(self, pos):
         """Build RMB menu under mouse at current position (within widget)"""
