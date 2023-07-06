@@ -108,4 +108,4 @@ class CreatePointCache(plugin.HoudiniCreator):
         # return the one with the minimum 'outputidx'
         else:
             return min(outputs,
-                       key=lambda node : node.evalParm('outputidx'))
+                       key=lambda node: node.evalParm('outputidx'))
