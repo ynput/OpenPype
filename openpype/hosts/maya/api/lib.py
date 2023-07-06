@@ -3158,12 +3158,12 @@ def update_instances_asset_name():
     """Update 'asset' attribute of publishable instances (their objectSets)
     that got one.
     """
-
+    asset_name = get_current_asset_name()
     for instance in iter_publish_instances():
         if not cmds.attributeQuery("asset", node=instance, exists=True):
             continue
         attr = "{}.asset".format(instance)
-        cmds.setAttr(attr, get_current_asset_name(), type="string")
+        cmds.setAttr(attr, asset_name, type="string")
 
 
 def update_instances_frame_range():
