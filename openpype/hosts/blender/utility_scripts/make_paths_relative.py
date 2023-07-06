@@ -17,6 +17,12 @@ if __name__ == "__main__":
     errors = []
     # Resolve path from source filepath with the relative filepath
     for datablock in get_datablocks_with_filepath(relative=False):
+        # skip render result, compositing and generated images
+        if (
+            isinstance(datablock, bpy.types.Images)
+            and datablock.source in {"GENERATED", "VIEWER"}
+        ):
+            continue
         try:
             datablock.filepath = bpy.path.relpath(
                 str(Path(datablock.filepath).resolve()),
