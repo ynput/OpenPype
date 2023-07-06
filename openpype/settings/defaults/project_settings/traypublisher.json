@@ -329,7 +329,7 @@
         }
     },
     "publish": {
-        "CollectFrameRangeData": {
+        "CollectFrameDataFromAssetEntity": {
             "enabled": true,
             "optional": true,
             "active": true
