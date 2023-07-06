@@ -369,9 +369,13 @@ def get_datablocks_with_filepath(
                 datablock
                 and hasattr(datablock, "filepath")
                 and not datablock.is_property_readonly("filepath")
-                and not datablock.filepath == ""
+                and datablock.filepath != ""
                 and not datablock.library
                 and not datablock.is_library_indirect
+                and not (
+                    isinstance(datablock, bpy.types.Library)
+                    and datablock.parent
+                )
             ):
                 if relative and datablock.filepath.startswith("//"):
                     datablocks.add(datablock)
