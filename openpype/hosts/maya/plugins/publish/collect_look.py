@@ -540,7 +540,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
-        self.log.debug("processing: {} ({})".format(node, cmds.nodeType(node)))
+        self.log.debug(
+            "Collecting resource: {} ({})".format(node, cmds.nodeType(node))
+        )
 
         attributes = get_attributes(FILE_NODES, cmds.nodeType(node), node)
         for attribute in attributes:
