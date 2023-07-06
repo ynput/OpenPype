@@ -19,7 +19,7 @@ if __name__ == "__main__":
     for datablock in get_datablocks_with_filepath(relative=False):
         # skip render result, compositing and generated images
         if (
-            isinstance(datablock, bpy.types.Images)
+            isinstance(datablock, bpy.types.Image)
             and datablock.source in {"GENERATED", "VIEWER"}
         ):
             continue
