@@ -4,6 +4,9 @@ import clique
 
 class CollectSequenceFrameData(pyblish.api.InstancePlugin):
     """Collect Sequence Frame Data
+    If the representation includes files with frame numbers,
+    then set `frameStart` and `frameEnd` for the instance to the
+    start and end frame respectively
     """
 
     order = pyblish.api.CollectorOrder + 0.2
@@ -15,10 +18,13 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         frame_data = self.get_frame_data_from_repre_sequence(instance)
+        if not frame_data:
+            # if no dict data skip collecting the frame range data
+            return
         for key, value in frame_data.items():
             if key not in instance.data:
                 instance.data[key] = value
-                self.log.debug(f"Frame range data {key} has been collected ")
+                self.log.debug(f"Collected Frame range data '{key}':{value} ")
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
