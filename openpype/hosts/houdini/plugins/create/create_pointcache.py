@@ -44,7 +44,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             #   the parent type is not 'geo' like
             #   Cameras, Dopnet nodes(sop solver)
             if isinstance(selected_node, hou.SopNode) and \
-                selected_node.parent().type().name() in ['geo', 'subnet']:
+                    selected_node.parent().type().name() in ["geo", "subnet"]:
                 parms["sop_path"] = selected_node.path()
                 self.log.debug(
                    "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
@@ -54,7 +54,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
             # but do not allow other object level nodes types like cameras, etc.
             elif isinstance(selected_node, hou.ObjNode) and \
-                    selected_node.type().name() in ['geo']:
+                    selected_node.type().name() in ["geo"]:
 
                 # get the output node with the minimum
                 # 'outputidx' or the node with display flag
@@ -71,7 +71,7 @@ class CreatePointCache(plugin.HoudiniCreator):
 
             if not parms.get("sop_path", None):
                 self.log.debug(
-                "Selection isn't valid. 'SOP Path' in ROP will be empty."
+                    "Selection isn't valid. 'SOP Path' in ROP will be empty."
                 )
         else:
             self.log.debug(
@@ -102,10 +102,11 @@ class CreatePointCache(plugin.HoudiniCreator):
 
         # if obj_node has one output child whether its
         # sop output node or a node with the render flag
-        elif len(outputs)==1:
+        elif len(outputs) == 1:
             return outputs[0]
 
         # if there are more than one, then it have multiple ouput nodes
         # return the one with the minimum 'outputidx'
-        else:
-            return (min(outputs, key=lambda node : node.parm('outputidx').eval()))
+        else :
+            return min(outputs,
+                        key=lambda node : node.parm('outputidx').eval())
