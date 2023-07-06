@@ -2,7 +2,6 @@ import pyblish.api
 import clique
 from openpype.pipeline import publish
 from openpype.lib import BoolDef
-from openpype.lib.transcoding import IMAGE_EXTENSIONS
 
 
 class CollectFrameRangeData(pyblish.api.InstancePlugin,
@@ -22,21 +21,22 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin,
         asset_data = None
         if repres:
             first_repre = repres[0]
-            ext = ".{}".format(first_repre["ext"])
             if "ext" not in first_repre:
-                self.log.warning(f"Cannot find file extension"
+                self.log.warning("Cannot find file extension"
                                  " in representation data")
-                return
-            if ext not in IMAGE_EXTENSIONS:
-                self.log.info("Collecting frame range data"
-                              " only supported for image extensions")
                 return
 
             files = first_repre["files"]
-            repres_files, remainder = clique.assemble(files)
-            repres_frames = list()
-            for repres_file in repres_files:
-                repres_frames = list(repres_file.indexes)
+            collections, remainder = clique.assemble(files)
+            if not collections:
+                # No sequences detected and we can't retrieve
+                # frame range
+                self.log.debug(
+                    "No sequences detected in the representation data."
+                    " Skipping collecting frame range data.")
+                return
+            collection = collections[0]
+            repres_frames = list(collection.indexes)
             asset_data = {
                 "frameStart": repres_frames[0],
                 "frameEnd": repres_frames[-1],
@@ -44,7 +44,7 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin,
 
         else:
             self.log.info(
-                "No representation data.. Use Asset Entity data instead")
+                "No representation data. Using Asset Entity data instead")
             asset_doc = instance.data.get("assetEntity")
 
             attr_values = self.get_attr_values_from_data(instance.data)
@@ -55,7 +55,7 @@ class CollectFrameRangeData(pyblish.api.InstancePlugin,
                     return
                 self.log.debug(
                     "Falling back to collect frame range"
-                    " data from asset entity set.")
+                    " data from set asset entity.")
                 asset_data = asset_doc["data"]
             else:
                 self.log.debug("Skipping collecting frame range data.")
