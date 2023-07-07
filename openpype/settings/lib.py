@@ -1097,11 +1097,13 @@ def clear_metadata_from_settings(values):
 
 def get_versioning_start():
     """Get anatomy versioning start"""
-    project_name = os.environ.get("AVALON_PROJECT")
     version_start = 1
-    settings = get_anatomy_settings(project_name)
-    if "version_start_at_zero" not in settings["templates"]["defaults"]:
+    project_name = os.environ.get("AVALON_PROJECT")
+    settings = None
+    if project_name is None:
         settings = get_default_anatomy_settings()
+    else:
+        settings = get_anatomy_settings(project_name)
 
     if settings["templates"]["defaults"]["version_start_at_zero"]:
         version_start = 0
