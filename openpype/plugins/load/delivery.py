@@ -97,9 +97,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         renumber_frame = QtWidgets.QCheckBox()
 
-        renumber_frame_value = QtWidgets.QSpinBox()
+        first_frame_start = QtWidgets.QSpinBox()
         max_int = (1 << 32) // 2
-        renumber_frame_value.setRange(-max_int, max_int - 1)
+        first_frame_start.setRange(0, max_int - 1)
 
         root_line_edit = QtWidgets.QLineEdit()
 
@@ -125,7 +125,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Delivery template", dropdown)
         input_layout.addRow("Template value", template_label)
         input_layout.addRow("Renumber Frame", renumber_frame)
-        input_layout.addRow("Renumber start frame", renumber_frame_value)
+        input_layout.addRow("Renumber start frame", first_frame_start)
         input_layout.addRow("Root", root_line_edit)
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
@@ -153,7 +153,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.selected_label = selected_label
         self.template_label = template_label
         self.dropdown = dropdown
-        self.renumber_frame_value = renumber_frame_value
+        self.first_frame_start = first_frame_start
         self.renumber_frame = renumber_frame
         self.root_line_edit = root_line_edit
         self.progress_bar = progress_bar
@@ -192,7 +192,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
         renumber_frame = self.renumber_frame.isChecked()
-        frame_offset = self.renumber_frame_value.value()
+        frame_offset = self.first_frame_start.value()
         for repre in self._representations:
             if repre["name"] not in selected_repres:
                 continue
@@ -223,13 +223,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 self.log
             ]
 
-            if renumber_frame:
-                optional_args = [
-                    renumber_frame,
-                    frame_offset
-                ]
-                args.extend(optional_args)
-
             if repre.get("files"):
                 src_paths = []
                 for repre_file in repre["files"]:
@@ -241,8 +234,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 frames.discard(None)
                 first_frame = None
                 if frames:
-                    first_frame = next(iter(frames))
-
+                    first_frame = min(frames)
 
                 for src_path, frame in sources_and_frames.items():
                     args[0] = src_path
@@ -253,8 +245,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                         # - '0' for first frame
                         offset = frame_offset - int(first_frame)
                         # Add offset to new frame start
-                        frame = int(frame)
-                        dst_frame = frame + offset
+                        dst_frame = int(frame) + offset
                         if dst_frame < 0:
                             msg = "Renumber frame has a smaller number than original frame"     # noqa
                             report_items[msg].append(src_path)
@@ -274,7 +265,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if frame:
                     repre["context"]["frame"] = len(str(frame)) * "#"
 
-                if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
                     new_report_items, uploaded = deliver_sequence(*args)
