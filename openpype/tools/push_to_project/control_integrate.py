@@ -966,13 +966,12 @@ class ProjectPushItemProcess:
 
             return
 
-        if version is None:
-            last_version_doc = get_last_version_by_subset_id(
-                project_name, subset_id
-            )
-            version = get_versioning_start()
-            if last_version_doc:
-                version += int(last_version_doc["name"])
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, subset_id
+        )
+        version = get_versioning_start()
+        if last_version_doc:
+            version += int(last_version_doc["name"])
 
         version_doc = new_version_doc(
             version, subset_id, version_data
