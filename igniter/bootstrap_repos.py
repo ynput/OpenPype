@@ -53,6 +53,20 @@ def sha256sum(filename):
     return h.hexdigest()
 
 
+class ZipFileLongPaths(ZipFile):
+
+    def _extract_member(self, member, targetpath, pwd):
+        if platform.system().lower() == "windows":
+            targetpath = os.path.abspath(targetpath)
+
+            if targetpath.startswith("\\\\"):
+                targetpath = "\\\\?\\UNC\\" + targetpath[2:]
+            else:
+                targetpath = "\\\\?\\" + targetpath
+
+        return ZipFile._extract_member(self, member, targetpath, pwd)
+
+
 class OpenPypeVersion(semver.VersionInfo):
     """Class for storing information about OpenPype version.
 
@@ -226,7 +240,7 @@ class OpenPypeVersion(semver.VersionInfo):
             return False, "Not a zip"
 
         try:
-            with ZipFile(zip_item, "r") as zip_file:
+            with ZipFileLongPaths(zip_item, "r") as zip_file:
                 with zip_file.open(
                         "openpype/version.py") as version_file:
                     zip_version = {}
@@ -734,7 +748,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            with ZipFile(temp_zip, "w") as zip_file:
+            with ZipFileLongPaths(temp_zip, "w") as zip_file:
                 progress = 0
                 openpype_inc = 98.0 / float(len(openpype_list))
                 file: Path
@@ -756,7 +770,7 @@ class BootstrapRepos:
     def _create_openpype_zip(self, zip_path: Path, openpype_path: Path) -> None:
         """Pack repositories and OpenPype into zip.
 
-        We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
+        We are using :mod:`ZipFileLongPaths` instead :meth:`shutil.make_archive`
         because we need to decide what file and directories to include in zip
         and what not. They are determined by :attr:`zip_filter` on file level
         and :attr:`openpype_filter` on top level directory in OpenPype
@@ -781,7 +795,7 @@ class BootstrapRepos:
 
         openpype_inc = 98.0 / float(openpype_files)
 
-        with ZipFile(zip_path, "w") as zip_file:
+        with ZipFileLongPaths(zip_path, "w") as zip_file:
             progress = 0
             openpype_root = openpype_path.resolve()
             # generate list of filtered paths
@@ -855,7 +869,7 @@ class BootstrapRepos:
     @staticmethod
     def _validate_zip(path: Path) -> tuple:
         """Validate content of zip file."""
-        with ZipFile(path, "r") as zip_file:
+        with ZipFileLongPaths(path, "r") as zip_file:
             # read checksums
             try:
                 checksums_data = str(zip_file.read("checksums"))
@@ -1246,7 +1260,7 @@ class BootstrapRepos:
 
         # extract zip there
         self._print("Extracting zip to destination ...")
-        with ZipFile(version.path, "r") as zip_ref:
+        with ZipFileLongPaths(version.path, "r") as zip_ref:
             zip_ref.extractall(destination)
 
         self._print(f"Installed as {version.path.stem}")
@@ -1362,7 +1376,7 @@ class BootstrapRepos:
 
         # extract zip there
         self._print("extracting zip to destination ...")
-        with ZipFile(openpype_version.path, "r") as zip_ref:
+        with ZipFileLongPaths(openpype_version.path, "r") as zip_ref:
             self._progress_callback(75)
             zip_ref.extractall(destination)
             self._progress_callback(100)
@@ -1451,7 +1465,7 @@ class BootstrapRepos:
             return False
 
         try:
-            with ZipFile(zip_item, "r") as zip_file:
+            with ZipFileLongPaths(zip_item, "r") as zip_file:
                 with zip_file.open(
                         "openpype/version.py") as version_file:
                     zip_version = {}
