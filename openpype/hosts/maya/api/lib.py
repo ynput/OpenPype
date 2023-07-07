@@ -1522,7 +1522,15 @@ def set_attribute(attribute, value, node):
         cmds.addAttr(node, longName=attribute, **kwargs)
 
     node_attr = "{}.{}".format(node, attribute)
-    if "dataType" in kwargs:
+    enum_type = cmds.attributeQuery(attribute, node=node, enum=True)
+    if enum_type and value_type == "str":
+        enum_string_values = cmds.attributeQuery(
+            attribute, node=node, listEnum=True
+        )[0].split(":")
+        cmds.setAttr(
+            "{}.{}".format(node, attribute), enum_string_values.index(value)
+        )
+    elif "dataType" in kwargs:
         attr_type = kwargs["dataType"]
         cmds.setAttr(node_attr, value, type=attr_type)
     else:
