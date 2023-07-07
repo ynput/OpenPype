@@ -254,8 +254,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def delete_placeholder(self, placeholder):
         """Remove placeholder if building was successful"""
-        cmds.sets(placeholder.scene_identifier, rm= PLACEHOLDER_SET )
-        print (placeholder.scene_identifier)
+        cmds.sets(placeholder.scene_identifier, rm= PLACEHOLDER_SET)
         cmds.delete(placeholder.scene_identifier)
 
     def load_succeed(self, placeholder, container):
