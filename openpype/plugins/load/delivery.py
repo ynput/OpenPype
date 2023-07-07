@@ -255,8 +255,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                         frame = dst_frame
 
                     if frame is not None:
-                        if frame:
-                            anatomy_data["frame"] = frame
+                        anatomy_data["frame"] = frame
                     new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)
@@ -265,6 +264,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 if frame:
                     repre["context"]["frame"] = len(str(frame)) * "#"
 
+                if not frame:
                     new_report_items, uploaded = deliver_single_file(*args)
                 else:
                     new_report_items, uploaded = deliver_sequence(*args)
