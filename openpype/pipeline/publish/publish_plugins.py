@@ -234,11 +234,9 @@ class RepairAction(pyblish.api.Action):
 
         # Get the errored instances
         self.log.debug("Finding failed instances..")
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
-        for instance in instances:
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
+        for instance in errored_instances:
             self.log.debug(
                 "Attempting repair for instance: {} ...".format(instance)
             )
