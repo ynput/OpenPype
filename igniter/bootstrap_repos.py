@@ -34,6 +34,20 @@ LOG_WARNING = 1
 LOG_ERROR = 3
 
 
+def sanitize_long_path(path, encoding=None):
+    if platform.system().lower() == "windows":
+        path = os.path.abspath(path)
+
+        if path.startswith("\\\\"):
+            path = "\\\\?\\UNC\\" + path[2:]
+        else:
+            path = "\\\\?\\" + path
+
+        return path
+
+    return path
+
+
 def sha256sum(filename):
     """Calculate sha256 for content of the file.
 
@@ -56,15 +70,9 @@ def sha256sum(filename):
 class ZipFileLongPaths(ZipFile):
 
     def _extract_member(self, member, targetpath, pwd):
-        if platform.system().lower() == "windows":
-            targetpath = os.path.abspath(targetpath)
-
-            if targetpath.startswith("\\\\"):
-                targetpath = "\\\\?\\UNC\\" + targetpath[2:]
-            else:
-                targetpath = "\\\\?\\" + targetpath
-
-        return ZipFile._extract_member(self, member, targetpath, pwd)
+        return ZipFile._extract_member(
+            self, member, sanitize_long_path(targetpath), pwd
+        )
 
 
 class OpenPypeVersion(semver.VersionInfo):
@@ -240,7 +248,7 @@ class OpenPypeVersion(semver.VersionInfo):
             return False, "Not a zip"
 
         try:
-            with ZipFileLongPaths(zip_item, "r") as zip_file:
+            with ZipFile(zip_item, "r") as zip_file:
                 with zip_file.open(
                         "openpype/version.py") as version_file:
                     zip_version = {}
@@ -748,7 +756,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            with ZipFileLongPaths(temp_zip, "w") as zip_file:
+            with ZipFile(temp_zip, "w") as zip_file:
                 progress = 0
                 openpype_inc = 98.0 / float(len(openpype_list))
                 file: Path
@@ -770,7 +778,7 @@ class BootstrapRepos:
     def _create_openpype_zip(self, zip_path: Path, openpype_path: Path) -> None:
         """Pack repositories and OpenPype into zip.
 
-        We are using :mod:`ZipFileLongPaths` instead :meth:`shutil.make_archive`
+        We are using :mod:`ZipFile` instead :meth:`shutil.make_archive`
         because we need to decide what file and directories to include in zip
         and what not. They are determined by :attr:`zip_filter` on file level
         and :attr:`openpype_filter` on top level directory in OpenPype
@@ -795,7 +803,7 @@ class BootstrapRepos:
 
         openpype_inc = 98.0 / float(openpype_files)
 
-        with ZipFileLongPaths(zip_path, "w") as zip_file:
+        with ZipFile(zip_path, "w") as zip_file:
             progress = 0
             openpype_root = openpype_path.resolve()
             # generate list of filtered paths
@@ -824,7 +832,7 @@ class BootstrapRepos:
 
                 checksums.append(
                     (
-                        sha256sum(file.as_posix()),
+                        sha256sum(sanitize_long_path(file.as_posix())),
                         file.resolve().relative_to(openpype_root)
                     )
                 )
@@ -869,7 +877,7 @@ class BootstrapRepos:
     @staticmethod
     def _validate_zip(path: Path) -> tuple:
         """Validate content of zip file."""
-        with ZipFileLongPaths(path, "r") as zip_file:
+        with ZipFile(path, "r") as zip_file:
             # read checksums
             try:
                 checksums_data = str(zip_file.read("checksums"))
@@ -948,7 +956,9 @@ class BootstrapRepos:
             if platform.system().lower() == "windows":
                 file_name = file_name.replace("/", "\\")
             try:
-                current = sha256sum((path / file_name).as_posix())
+                current = sha256sum(
+                    sanitize_long_path((path / file_name).as_posix())
+                )
             except FileNotFoundError:
                 return False, f"Missing file [ {file_name} ]"
 
@@ -1465,7 +1475,7 @@ class BootstrapRepos:
             return False
 
         try:
-            with ZipFileLongPaths(zip_item, "r") as zip_file:
+            with ZipFile(zip_item, "r") as zip_file:
                 with zip_file.open(
                         "openpype/version.py") as version_file:
                     zip_version = {}
