@@ -164,8 +164,8 @@ class LoadClip(plugin.NukeLoader):
                         "handleStart", "handleEnd"]
 
             data_imprint = {}
-            for k in add_keys:
-                if k == 'version':
+            for key in add_keys:
+                if key == 'version':
                     version_doc = context["version"]
                     if version_doc["type"] == "hero_version":
                         version = "hero"
@@ -173,17 +173,20 @@ class LoadClip(plugin.NukeLoader):
                         version = version_doc.get("name")
 
                     if version:
-                        data_imprint[k] = version
+                        data_imprint[key] = version
 
-                elif k == 'colorspace':
-                    colorspace = representation["data"].get(k)
-                    colorspace = colorspace or version_data.get(k)
+                elif key == 'colorspace':
+                    colorspace = representation["data"].get(key)
+                    colorspace = colorspace or version_data.get(key)
                     data_imprint["db_colorspace"] = colorspace
                     if used_colorspace:
                         data_imprint["used_colorspace"] = used_colorspace
                 else:
-                    data_imprint[k] = context["version"]['data'].get(
-                        k, str(None))
+                    value_ = context["version"]['data'].get(
+                        key, str(None))
+                    if isinstance(value_, (str)):
+                        value_ = value_.replace("\\", "/")
+                    data_imprint[key] = value_
 
             data_imprint["objectName"] = read_name
 
