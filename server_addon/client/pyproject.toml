@@ -12,6 +12,7 @@ shotgun_api3 = {git = "https://github.com/shotgunsoftware/python-api.git", rev =
 gazu = "^0.9.3"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
 jsonschema = "^2.6.0"
+pymongo = "^3.11.2"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
 pyblish-base = "^1.8.11"
