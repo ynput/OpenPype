@@ -34,8 +34,21 @@ LOG_WARNING = 1
 LOG_ERROR = 3
 
 
-def sanitize_long_path(path, encoding=None):
-    if platform.system().lower() == "windows":
+def sanitize_long_path(path):
+    """Sanitize long paths (260 characters) when on Windows.
+
+    Long paths are not capatible with ZipFile or reading a file, so we can
+    shorten the path to use.
+
+    Args:
+        path (str): path to either directory or file.
+
+    Returns:
+        str: sanitized path
+    """
+    if platform.system().lower() != "windows":
+        return path
+    else:
         path = os.path.abspath(path)
 
         if path.startswith("\\\\"):
@@ -44,8 +57,6 @@ def sanitize_long_path(path, encoding=None):
             path = "\\\\?\\" + path
 
         return path
-
-    return path
 
 
 def sha256sum(filename):
