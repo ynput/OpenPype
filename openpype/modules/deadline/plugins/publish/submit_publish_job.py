@@ -1228,7 +1228,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = get_versioning_start()
+                version = get_versioning_start(
+                    host_name=template_data["app"],
+                    task_name=template_data["task"]["name"],
+                    task_type=template_data["task"]["type"],
+                    families=["render"],
+                    subset=subset
+                )
 
         template_data["subset"] = subset
         template_data["family"] = "render"

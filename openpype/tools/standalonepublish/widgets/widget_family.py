@@ -299,7 +299,14 @@ class FamilyWidget(QtWidgets.QWidget):
         project_name = self.dbcon.active_project()
         asset_name = self.asset_name
         subset_name = self.input_result.text()
-        version = get_versioning_start()
+        plugin = self.list_families.currentItem().data(PluginRole)
+        family = plugin.family.rsplit(".", 1)[-1]
+        version = get_versioning_start(
+            host_name="standalonepublisher",
+            task_name=self.dbcon.Session["AVALON_TASK"],
+            families=[family],
+            subset=subset_name
+        )
 
         asset_doc = None
         subset_doc = None

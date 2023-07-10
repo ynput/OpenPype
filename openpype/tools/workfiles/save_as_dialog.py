@@ -219,7 +219,14 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Version number input
         version_input = QtWidgets.QSpinBox(version_widget)
-        version_input.setMinimum(get_versioning_start())
+        version_input.setMinimum(
+            get_versioning_start(
+                host_name=self.host,
+                task_name=self.data["task"]["name"],
+                task_type=self.data["task"]["type"],
+                families=["workfile"]
+            )
+        )
         version_input.setMaximum(9999)
 
         # Last version checkbox
@@ -421,7 +428,12 @@ class SaveAsDialog(QtWidgets.QDialog):
             )[1]
 
             if version is None:
-                version = get_versioning_start()
+                version = get_versioning_start(
+                    host_name=self.host,
+                    task_name=self.data["task"]["name"],
+                    task_type=self.data["task"]["type"],
+                    families=["workfile"]
+                )
             else:
                 version += 1
 

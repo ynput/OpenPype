@@ -1093,19 +1093,3 @@ def clear_metadata_from_settings(values):
     elif isinstance(values, list):
         for item in values:
             clear_metadata_from_settings(item)
-
-
-def get_versioning_start():
-    """Get anatomy versioning start"""
-    version_start = 1
-    project_name = os.environ.get("AVALON_PROJECT")
-    settings = None
-    if project_name is None:
-        settings = get_default_anatomy_settings()
-    else:
-        settings = get_anatomy_settings(project_name)
-
-    if settings["templates"]["defaults"]["version_start_at_zero"]:
-        version_start = 0
-
-    return version_start

@@ -316,7 +316,13 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        data["version"] = get_versioning_start()
+        data["version"] = get_versioning_start(
+            host_name=data["app"],
+            task_name=data["task"]["name"],
+            task_type=data["task"]["type"],
+            families=[data["family"]],
+            subset=data["subset"]
+        )
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]

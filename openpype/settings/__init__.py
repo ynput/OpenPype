@@ -23,14 +23,14 @@ from .lib import (
     get_project_settings,
     get_current_project_settings,
     get_anatomy_settings,
-    get_local_settings,
-    get_versioning_start
+    get_local_settings
 )
 from .entities import (
     SystemSettings,
     ProjectSettings,
     DefaultsNotDefined
 )
+from .version_start import get_versioning_start
 
 
 __all__ = (
@@ -57,9 +57,10 @@ __all__ = (
     "get_current_project_settings",
     "get_anatomy_settings",
     "get_local_settings",
-    "get_versioning_start",
 
     "SystemSettings",
     "ProjectSettings",
-    "DefaultsNotDefined"
+    "DefaultsNotDefined",
+
+    "get_versioning_start"
 )

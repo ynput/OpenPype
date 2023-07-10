@@ -26,9 +26,6 @@ log = logging.getLogger("Update Slap Comp")
 def _format_version_folder(folder):
     """Format a version folder based on the filepath
 
-    Assumption here is made that, if the path does not exists the folder
-    will be "v001"
-
     Args:
         folder: file path to a folder
 
@@ -36,9 +33,12 @@ def _format_version_folder(folder):
         str: new version folder name
     """
 
-    new_version = get_versioning_start()
+    new_version = get_versioning_start(
+        host_name="fusion",
+        families=["workfile"]
+    )
     if os.path.isdir(folder):
-        re_version = re.compile("v\d+$")
+        re_version = re.compile(r"v\d+$")
         versions = [i for i in os.listdir(folder) if os.path.isdir(i)
                     and re_version.match(i)]
         if versions:
