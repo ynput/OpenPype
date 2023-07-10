@@ -139,7 +139,7 @@ There is a simple support for publishing and loading **BGEO** files in all suppo
 
 ### Creating BGEO instances
 
-Just select your SOP node to be exported as BGEO. If your selection is object level, OpenPype will try to find there is `output` node inside, the one with the lowest index will be used:
+Select your SOP node to be exported as BGEO. If your selection is in the object level, OpenPype will try to find if there is an `output` node inside, the one with the lowest index will be used:
 
 ![BGEO output node](assets/houdini_bgeo_output_node.png)
 
@@ -147,8 +147,7 @@ Then you can open Publisher, in Create you select **BGEO PointCache**:
 
 ![BGEO Publisher](assets/houdini_bgeo-publisher.png)
 
-You can select compression type and if the current selection should be connected to ROPs SOP path parameter. Publishing
-will produce sequence of files based on your timeline settings.
+You can select compression type and if the current selection should be connected to ROPs SOP path parameter. Publishing will produce sequence of files based on your timeline settings.
 
 ### Loading BGEO
 
