@@ -19,6 +19,7 @@ log = Logger.get_logger(__name__)
 
 class CashedData:
     remapping = None
+    python3compatible = None
 
 
 @contextlib.contextmanager
@@ -118,15 +119,22 @@ def get_imageio_colorspace_from_filepath(
         if ext_match and file_match:
             colorspace_name = file_rule["colorspace"]
 
+    # if no file rule matched, try to get colorspace
+    # from filepath with OCIO v2 way
+    # QUESTION: should we override file rules from our settings and
+    #           in ocio v2 only focus on file rules set in config file?
+    if (
+        compatibility_check_config_version(config_data["path"], major=2)
+        and not colorspace_name
+    ):
+        colorspace_name = get_colorspace_from_filepath(
+            config_data["path"], path)
+
     if not colorspace_name:
         log.info("No imageio file rule matched input path: '{}'".format(
             path
         ))
         return None
-
-    if compatibility_check_config_version(config_data["path"], major=2):
-        colorspace_name = get_colorspace_from_filepath(
-            config_data["path"], path)
 
     # validate matching colorspace with config
     if validate and config_data:
@@ -312,33 +320,39 @@ def get_wrapped_with_subprocess(command_group, command, **kwargs):
 
 def compatibility_check():
     """Making sure PyOpenColorIO is importable"""
+    if CashedData.python3compatible is not None:
+        return CashedData.python3compatible
+
     try:
         import PyOpenColorIO  # noqa: F401
+        CashedData.python3compatible = True
     except ImportError:
-        return False
+        CashedData.python3compatible = False
 
     # compatible
-    return True
+    return CashedData.python3compatible
 
 
 def compatibility_check_config_version(config_path, major=1, minor=None):
     """Making sure PyOpenColorIO config version is compatible"""
-    try:
-        import PyOpenColorIO as ocio
-        config = ocio.Config().CreateFromFile(str(config_path))
 
-        config_version_major = config.getMajorVersion()
-        config_version_minor = config.getMinorVersion()
-        print(config_version_major, config_version_minor)
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        version_data = get_wrapped_with_subprocess(
+            "config", "get_version", config_path=config_path
+        )
 
-        # check major version
-        if config_version_major != major:
-            return False
-        # check minor version
-        if minor and config_version_minor != minor:
-            return False
+    from openpype.scripts.ocio_wrapper import _get_version_data
 
-    except ImportError:
+    version_data = _get_version_data(config_path)
+
+    # check major version
+    if version_data["major"] != major:
+        return False
+
+    # check minor version
+    if minor and version_data["minor"] != minor:
         return False
 
     # compatible

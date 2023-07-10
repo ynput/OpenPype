@@ -184,6 +184,68 @@ def _get_views_data(config_path):
     return data_
 
 
+@config.command(
+    name="get_version",
+    help=(
+        "return major and minor version from config file "
+        "--config_path input arg is required"
+        "--out_path input arg is required"
+    )
+)
+@click.option("--config_path", required=True,
+              help="path where to read ocio config file",
+              type=click.Path(exists=True))
+@click.option("--out_path", required=True,
+              help="path where to write output json file",
+              type=click.Path())
+def get_version(config_path, out_path):
+    """Get version of config.
+
+    Python 2 wrapped console command
+
+    Args:
+        config_path (str): ocio config file path string
+        out_path (str): temp json file path string
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py config get_version \
+        --config_path=<path> --out_path=<path>
+    """
+    json_path = Path(out_path)
+
+    out_data = _get_version_data(config_path)
+
+    with open(json_path, "w") as f_:
+        json.dump(out_data, f_)
+
+    print(f"Config version data are saved to '{json_path}'")
+
+
+def _get_version_data(config_path):
+    """Return major and minor version info.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+
+    Raises:
+        IOError: Input config does not exist.
+
+    Returns:
+        dict: minor and major keys with values
+    """
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+
+    return {
+        "major": config.getMajorVersion(),
+        "minor": config.getMinorVersion()
+    }
+
+
 @colorspace.command(
     name="get_colorspace_from_filepath",
     help=(
@@ -198,7 +260,7 @@ def _get_views_data(config_path):
               type=click.Path(exists=True))
 @click.option("--filepath", required=True,
               help="path to file to get colorspace from",
-              type=click.Path(exists=True))
+              type=click.Path())
 @click.option("--out_path", required=True,
               help="path where to write output json file",
               type=click.Path())

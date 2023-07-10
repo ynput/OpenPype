@@ -185,5 +185,70 @@ class TestPipelineColorspace(TestPipeline):
         assert expected_hiero == hiero_file_rules, (
             f"Not matching file rules {expected_hiero}")
 
+    def test_get_imageio_colorspace_from_filepath_p3(self, project_settings):
+        """Test Colorspace from filepath with python 3 compatibility mode
+
+        Also test ocio v2 file rules
+        """
+        nuke_filepath = "renderCompMain_baking_h264.mp4"
+        hiero_filepath = "prerenderCompMain.mp4"
+
+        expected_nuke = "Camera Rec.709"
+        expected_hiero = "Gamma 2.2 Rec.709 - Texture"
+
+        nuke_colorspace = colorspace.get_imageio_colorspace_from_filepath(
+            nuke_filepath,
+            "nuke",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_nuke == nuke_colorspace, (
+            f"Not matching colorspace {expected_nuke}")
+
+        hiero_colorspace = colorspace.get_imageio_colorspace_from_filepath(
+            hiero_filepath,
+            "hiero",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_hiero == hiero_colorspace, (
+            f"Not matching colorspace {expected_hiero}")
+
+    def test_get_imageio_colorspace_from_filepath_python2mode(
+            self, project_settings):
+        """Test Colorspace from filepath with python 2 compatibility mode
+
+        Also test ocio v2 file rules
+        """
+        nuke_filepath = "renderCompMain_baking_h264.mp4"
+        hiero_filepath = "prerenderCompMain.mp4"
+
+        expected_nuke = "Camera Rec.709"
+        expected_hiero = "Gamma 2.2 Rec.709 - Texture"
+
+        # switch to python 2 compatibility mode
+        colorspace.CashedData.python3compatible = False
+
+        nuke_colorspace = colorspace.get_imageio_colorspace_from_filepath(
+            nuke_filepath,
+            "nuke",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_nuke == nuke_colorspace, (
+            f"Not matching colorspace {expected_nuke}")
+
+        hiero_colorspace = colorspace.get_imageio_colorspace_from_filepath(
+            hiero_filepath,
+            "hiero",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_hiero == hiero_colorspace, (
+            f"Not matching colorspace {expected_hiero}")
+
+        # return to python 3 compatibility mode
+        colorspace.CashedData.python3compatible = None
+
 
 test_case = TestPipelineColorspace()
