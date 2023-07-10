@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint, get_reference_node, get_main_window
+from .lib import get_reference_node, get_main_window
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
