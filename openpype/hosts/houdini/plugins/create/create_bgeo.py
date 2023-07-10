@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating pointcache bgeo files."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
+from openpype.pipeline import CreatedInstance, CreatorError
 from openpype.lib import EnumDef
 
 
@@ -18,10 +18,6 @@ class CreateBGEO(plugin.HoudiniCreator):
         instance_data.pop("active", None)
 
         instance_data.update({"node_type": "geometry"})
-
-        if not instance_data.get("families"):
-            instance_data["families"] = []
-        instance_data["families"] += ["bgeo"]
 
         instance = super(CreateBGEO, self).create(
             subset_name,
@@ -40,6 +36,7 @@ class CreateBGEO(plugin.HoudiniCreator):
             "sopoutput": file_path
         }
 
+        instance_node.parm("trange").set(1)
         if self.selected_nodes:
             # if selection is on SOP level, use it
             if isinstance(self.selected_nodes[0], hou.SopNode):
@@ -50,11 +47,17 @@ class CreateBGEO(plugin.HoudiniCreator):
                     child for child in self.selected_nodes[0].children()
                     if child.type().name() == "output"
                 ]
+                if not outputs:
+                    instance_node.setParms(parms)
+                    raise CreatorError((
+                        "Missing output node in SOP level for the selection. "
+                        "Please select correct SOP path in created instance."
+                    ))
                 outputs.sort(key=lambda output: output.evalParm("outputidx"))
                 parms["soppath"] = outputs[0].path()
 
         instance_node.setParms(parms)
-        instance_node.parm("trange").set(1)
+
 
     def get_pre_create_attr_defs(self):
         attrs = super().get_pre_create_attr_defs()

@@ -16,10 +16,6 @@ class CreatePointCache(plugin.HoudiniCreator):
         instance_data.pop("active", None)
         instance_data.update({"node_type": "alembic"})
 
-        if not instance_data.get("families"):
-            instance_data["families"] = []
-        instance_data["families"] += ["abc"]
-
         instance = super(CreatePointCache, self).create(
             subset_name,
             instance_data,
