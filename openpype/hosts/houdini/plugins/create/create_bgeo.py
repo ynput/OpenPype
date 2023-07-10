@@ -58,7 +58,6 @@ class CreateBGEO(plugin.HoudiniCreator):
 
         instance_node.setParms(parms)
 
-
     def get_pre_create_attr_defs(self):
         attrs = super().get_pre_create_attr_defs()
         bgeo_enum = [
