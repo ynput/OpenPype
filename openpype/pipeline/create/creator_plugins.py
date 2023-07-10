@@ -21,6 +21,7 @@ from openpype.pipeline.plugin_discover import (
 )
 
 from .subset_name import get_subset_name
+from .utils import get_next_versions_for_instances
 from .legacy_create import LegacyCreator
 
 
@@ -481,6 +482,27 @@ class BaseCreator:
 
         self.create_context.thumbnail_paths_by_instance_id[instance_id] = (
             thumbnail_path
+        )
+
+    def get_next_versions_for_instances(self, instances):
+        """Prepare next versions for instances.
+
+        This is helper method to receive next possible versions for instances.
+        It is using context information on instance to receive them, 'asset'
+        and 'subset'.
+
+        Output will contain version by each instance id.
+
+        Args:
+            instances (list[CreatedInstance]): Instances for which to get next
+                versions.
+
+        Returns:
+            Dict[str, int]: Next versions by instance id.
+        """
+
+        return get_next_versions_for_instances(
+            self.create_context.project_name, instances
         )
 
 

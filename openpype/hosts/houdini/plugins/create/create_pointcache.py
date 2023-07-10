@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
 
 import hou
 
@@ -14,8 +13,6 @@ class CreatePointCache(plugin.HoudiniCreator):
     icon = "gears"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou
-
         instance_data.pop("active", None)
         instance_data.update({"node_type": "alembic"})
 
@@ -26,7 +23,7 @@ class CreatePointCache(plugin.HoudiniCreator):
         instance = super(CreatePointCache, self).create(
             subset_name,
             instance_data,
-            pre_create_data)  # type: CreatedInstance
+            pre_create_data)
 
         instance_node = hou.node(instance.get("instance_node"))
         parms = {
@@ -41,13 +38,44 @@ class CreatePointCache(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            parms["sop_path"] = self.selected_nodes[0].path()
+            selected_node = self.selected_nodes[0]
 
-            # try to find output node
-            for child in self.selected_nodes[0].children():
-                if child.type().name() == "output":
-                    parms["sop_path"] = child.path()
-                    break
+            # Although Houdini allows ObjNode path on `sop_path` for the
+            # the ROP node we prefer it set to the SopNode path explicitly
+
+            # Allow sop level paths (e.g. /obj/geo1/box1)
+            if isinstance(selected_node, hou.SopNode):
+                parms["sop_path"] = selected_node.path()
+                self.log.debug(
+                   "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
+                   % selected_node.path()
+                )
+
+            # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
+            # but do not allow other object level nodes types like cameras, etc.
+            elif isinstance(selected_node, hou.ObjNode) and \
+                    selected_node.type().name() in ["geo"]:
+
+                # get the output node with the minimum
+                # 'outputidx' or the node with display flag
+                sop_path = self.get_obj_output(selected_node)
+
+                if sop_path:
+                    parms["sop_path"] = sop_path.path()
+                    self.log.debug(
+                        "Valid ObjNode selection, 'SOP Path' in ROP will be set to "
+                        "the child path '%s'."
+                        % sop_path.path()
+                    )
+
+            if not parms.get("sop_path", None):
+                self.log.debug(
+                    "Selection isn't valid. 'SOP Path' in ROP will be empty."
+                )
+        else:
+            self.log.debug(
+                "No Selection. 'SOP Path' in ROP will be empty."
+            )
 
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)
@@ -61,3 +89,23 @@ class CreatePointCache(plugin.HoudiniCreator):
             hou.ropNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
+
+    def get_obj_output(self, obj_node):
+        """Find output node with the smallest 'outputidx'."""
+
+        outputs = obj_node.subnetOutputs()
+
+        # if obj_node is empty
+        if not outputs:
+            return
+
+        # if obj_node has one output child whether its
+        # sop output node or a node with the render flag
+        elif len(outputs) == 1:
+            return outputs[0]
+
+        # if there are more than one, then it have multiple ouput nodes
+        # return the one with the minimum 'outputidx'
+        else:
+            return min(outputs,
+                       key=lambda node: node.evalParm('outputidx'))

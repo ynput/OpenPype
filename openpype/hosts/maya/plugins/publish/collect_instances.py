@@ -104,25 +104,40 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
-            label = "{0} ({1})".format(name,
-                                       data["asset"])
+            label = "{0} ({1})".format(name, data["asset"])
+
+            # Convert frame values to integers
+            for attr_name in (
+                "handleStart", "handleEnd", "frameStart", "frameEnd",
+            ):
+                value = data.get(attr_name)
+                if value is not None:
+                    data[attr_name] = int(value)
 
             # Append start frame and end frame to label if present
-            if "frameStart" and "frameEnd" in data:
+            if "frameStart" in data and "frameEnd" in data:
                 # Take handles from context if not set locally on the instance
                 for key in ["handleStart", "handleEnd"]:
                     if key not in data:
-                        data[key] = context.data[key]
+                        value = context.data[key]
+                        if value is not None:
+                            value = int(value)
+                        data[key] = value
 
-                data["frameStartHandle"] = data["frameStart"] - data["handleStart"]  # noqa: E501
-                data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]  # noqa: E501
+                data["frameStartHandle"] = int(
+                    data["frameStart"] - data["handleStart"]
+                )
+                data["frameEndHandle"] = int(
+                    data["frameEnd"] + data["handleEnd"]
+                )
 
-                label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
-                                              int(data["frameEndHandle"]))
+                label += "  [{0}-{1}]".format(
+                    data["frameStartHandle"], data["frameEndHandle"]
+                )
 
             instance.data["label"] = label
-
             instance.data.update(data)
+            self.log.debug("{}".format(instance.data))
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
