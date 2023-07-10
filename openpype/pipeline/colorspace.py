@@ -124,6 +124,10 @@ def get_imageio_colorspace_from_filepath(
         ))
         return None
 
+    if compatibility_check_config_version(config_data["path"], major=2):
+        colorspace_name = get_colorspace_from_filepath(
+            config_data["path"], path)
+
     # validate matching colorspace with config
     if validate and config_data:
         validate_imageio_colorspace_in_config(
@@ -312,6 +316,32 @@ def compatibility_check():
         import PyOpenColorIO  # noqa: F401
     except ImportError:
         return False
+
+    # compatible
+    return True
+
+
+def compatibility_check_config_version(config_path, major=1, minor=None):
+    """Making sure PyOpenColorIO config version is compatible"""
+    try:
+        import PyOpenColorIO as ocio
+        config = ocio.Config().CreateFromFile(str(config_path))
+
+        config_version_major = config.getMajorVersion()
+        config_version_minor = config.getMinorVersion()
+        print(config_version_major, config_version_minor)
+
+        # check major version
+        if config_version_major != major:
+            return False
+        # check minor version
+        if minor and config_version_minor != minor:
+            return False
+
+    except ImportError:
+        return False
+
+    # compatible
     return True
 
 
