@@ -661,7 +661,6 @@ def discover_convertor_plugins(*args, **kwargs):
 
 def discover_legacy_creator_plugins():
     from openpype.lib import Logger
-    import os
 
     log = Logger.get_logger("CreatorDiscover")
 
