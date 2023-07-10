@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name
+from openpype.pipeline import get_current_task_name, CreatedInstance
 import openpype.hosts.blender.api.plugin
 from openpype.hosts.blender.api import lib
 
@@ -19,6 +19,9 @@ class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
+        self._add_instance_to_context(
+            CreatedInstance(self.family, subset_name, instance_data, self)
+        )
 
         name = openpype.hosts.blender.api.plugin.asset_name(
             instance_data["asset"], subset_name

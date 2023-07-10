@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name
+from openpype.pipeline import get_current_task_name, CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -20,6 +20,10 @@ class CreateReview(plugin.BlenderCreator):
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
         """ Run the creator on Blender main thread"""
+        self._add_instance_to_context(
+            CreatedInstance(self.family, subset_name, instance_data, self)
+        )
+
         mti = ops.MainThreadItem(
             self._process, subset_name, instance_data, pre_create_data
         )
