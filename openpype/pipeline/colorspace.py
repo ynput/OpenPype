@@ -206,8 +206,9 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     return True
 
 
+# TODO: remove this in future - backward compatibility
 def get_data_subprocess(config_path, data_type):
-    """Get data via subprocess
+    """[Deprecated] Get data via subprocess
 
     Wrapper for Python 2 hosts.
 
@@ -221,8 +222,46 @@ def get_data_subprocess(config_path, data_type):
             "config", data_type,
             "--in_path", config_path,
             "--out_path", tmp_json_path
-
         ]
+        log.info("Executing: {}".format(" ".join(args)))
+
+        process_kwargs = {
+            "logger": log
+        }
+
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)
+
+
+def get_wrapped_with_subprocess(command_group, command, **kwargs):
+    """Get data via subprocess
+
+    Wrapper for Python 2 hosts.
+
+    Args:
+        command_group (str): command group name
+        command (str): command name
+        **kwargs: command arguments
+
+    Returns:
+        Any[dict, None]: data
+    """
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            command_group, command
+        ]
+
+        for key_, value_ in kwargs.items():
+            args.extend(("--{}".format(key_), value_))
+
+        args.append("--out_path")
+        args.append(tmp_json_path)
+
         log.info("Executing: {}".format(" ".join(args)))
 
         process_kwargs = {
@@ -260,15 +299,18 @@ def get_ocio_config_colorspaces(config_path):
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
-        return get_colorspace_data_subprocess(config_path)
+        return get_wrapped_with_subprocess(
+            "config", "get_colorspace", in_path=config_path
+        )
 
     from openpype.scripts.ocio_wrapper import _get_colorspace_data
 
     return _get_colorspace_data(config_path)
 
 
+# TODO: remove this in future - backward compatibility
 def get_colorspace_data_subprocess(config_path):
-    """Get colorspace data via subprocess
+    """[Deprecated] Get colorspace data via subprocess
 
     Wrapper for Python 2 hosts.
 
@@ -278,7 +320,9 @@ def get_colorspace_data_subprocess(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    return get_data_subprocess(config_path, "get_colorspace")
+    return get_wrapped_with_subprocess(
+        "config", "get_colorspace", in_path=config_path
+    )
 
 
 def get_ocio_config_views(config_path):
@@ -296,15 +340,18 @@ def get_ocio_config_views(config_path):
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
-        return get_views_data_subprocess(config_path)
+        return get_wrapped_with_subprocess(
+            "config", "get_views", in_path=config_path
+        )
 
     from openpype.scripts.ocio_wrapper import _get_views_data
 
     return _get_views_data(config_path)
 
 
+# TODO: remove this in future - backward compatibility
 def get_views_data_subprocess(config_path):
-    """Get viewers data via subprocess
+    """[Deprecated] Get viewers data via subprocess
 
     Wrapper for Python 2 hosts.
 
@@ -314,7 +361,9 @@ def get_views_data_subprocess(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    return get_data_subprocess(config_path, "get_views")
+    return get_wrapped_with_subprocess(
+        "config", "get_views", in_path=config_path
+    )
 
 
 def get_imageio_config(
