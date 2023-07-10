@@ -132,6 +132,37 @@ def get_imageio_colorspace_from_filepath(
     return colorspace_name
 
 
+def get_colorspace_from_filepath(config_path, filepath):
+    """Get colorspace from file path wrapper.
+
+    Wrapper function for getting colorspace from file path.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+        filepath (str): path leading to a file
+
+    Returns:
+        Any[str, None]: matching colorspace name
+    """
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        result_data = get_wrapped_with_subprocess(
+            "colorspace", "get_colorspace_from_filepath",
+            config_path=config_path,
+            filepath=filepath
+        )
+        if result_data:
+            return result_data[0]
+
+    from openpype.scripts.ocio_wrapper import _get_colorspace_from_filepath
+
+    result_data = _get_colorspace_from_filepath(config_path, filepath)
+
+    if result_data:
+        return result_data[0]
+
+
 def parse_colorspace_from_filepath(
     path, host_name, project_name,
     config_data=None,
