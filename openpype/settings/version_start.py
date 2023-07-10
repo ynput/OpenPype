@@ -7,7 +7,7 @@ from openpype.lib.profiles_filtering import filter_profiles
 
 
 def get_versioning_start(
-    host_name="", task_name="", task_type="", families=[], subset=""
+    host_name="", task_name="", task_type="", families=None, subset=""
 ):
     """Get anatomy versioning start"""
     version_start = 1
@@ -26,7 +26,7 @@ def get_versioning_start(
 
     filtering_criteria = {
         "hosts": host_name,
-        "families": families,
+        "families": families or [],
         "task_names": task_name,
         "task_types": task_type,
         "subsets": subset
