@@ -1122,10 +1122,10 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
-        """Attribute defintions defined by creator plugin.
+        """Attribute definitions defined by creator plugin.
 
         Returns:
-              List[AbstractAttrDef]: Attribute defitions.
+              List[AbstractAttrDef]: Attribute definitions.
         """
 
         return self.creator_attributes.attr_defs
@@ -1440,6 +1440,19 @@ class CreateContext:
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
+
+    def get_instance_by_id(self, instance_id):
+        """Receive instance by id.
+
+        Args:
+            instance_id (str): Instance id.
+
+        Returns:
+            Union[CreatedInstance, None]: Instance or None if instance with
+                given id is not available.
+        """
+
+        return self._instances_by_id.get(instance_id)
 
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.

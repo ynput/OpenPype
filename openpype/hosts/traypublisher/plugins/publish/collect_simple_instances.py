@@ -47,6 +47,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "Created temp staging directory for instance {}. {}"
         ).format(instance_label, tmp_folder))
 
+        self._fill_version(instance, instance_label)
+
         # Store filepaths for validation of their existence
         source_filepaths = []
         # Make sure there are no representations with same name
@@ -92,6 +94,28 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
                 ", ".join(repre_names)
             )
         )
+
+    def _fill_version(self, instance, instance_label):
+        """Fill instance version under which will be instance integrated.
+
+        Instance must have set 'use_next_version' to 'False'
+        and 'version_to_use' to version to use.
+
+        Args:
+            instance (pyblish.api.Instance): Instance to fill version for.
+            instance_label (str): Label of instance to fill version for.
+        """
+
+        creator_attributes = instance.data["creator_attributes"]
+        use_next_version = creator_attributes.get("use_next_version", True)
+        # If 'version_to_use' is '0' it means that next version should be used
+        version_to_use = creator_attributes.get("version_to_use", 0)
+        if use_next_version or not version_to_use:
+            return
+        instance.data["version"] = version_to_use
+        self.log.debug(
+            "Version for instance \"{}\" was set to \"{}\"".format(
+                instance_label, version_to_use))
 
     def _create_main_representations(
         self,

@@ -1,4 +1,5 @@
 import copy
+import platform
 from collections import defaultdict
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -83,6 +84,12 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.templates = self._get_templates(self.anatomy)
         for name, _ in self.templates.items():
             dropdown.addItem(name)
+        if self.templates and platform.system() == "Darwin":
+            # fix macos QCombobox Style
+            dropdown.setItemDelegate(QtWidgets.QStyledItemDelegate())
+            # update combo box length to longest entry
+            longest_key = max(self.templates.keys(), key=len)
+            dropdown.setMinimumContentsLength(len(longest_key))
 
         template_label = QtWidgets.QLabel()
         template_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
@@ -115,7 +122,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
         btn_delivery = QtWidgets.QPushButton("Deliver")
-        btn_delivery.setEnabled(bool(dropdown.currentText()))
+        btn_delivery.setEnabled(False)
 
         progress_bar = QtWidgets.QProgressBar(self)
         progress_bar.setMinimum = 0
@@ -151,6 +158,15 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         btn_delivery.clicked.connect(self.deliver)
         dropdown.currentIndexChanged.connect(self._update_template_value)
+
+        if not self.dropdown.count():
+            self.text_area.setVisible(True)
+            error_message = (
+                "No Delivery Templates found!\n"
+                "Add Template in [project_anatomy/templates/delivery]"
+            )
+            self.text_area.setText(error_message)
+            self.log.error(error_message.replace("\n", " "))
 
     def deliver(self):
         """Main method to loop through all selected representations"""
@@ -287,14 +303,17 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.files_selected, self.size_selected = \
             self._get_counts(selected_repres)
         self.selected_label.setText(self._prepare_label())
+        # update delivery button state if any templates found
+        if self.dropdown.count():
+            self.btn_delivery.setEnabled(bool(selected_repres))
 
     def _update_template_value(self, _index=None):
         """Sets template value to label after selection in dropdown."""
         name = self.dropdown.currentText()
         template_value = self.templates.get(name)
         if template_value:
-            self.btn_delivery.setEnabled(True)
             self.template_label.setText(template_value)
+            self.btn_delivery.setEnabled(bool(self._get_selected_repres()))
 
     def _update_progress(self, uploaded):
         """Update progress bar after each repre copied."""

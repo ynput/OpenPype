@@ -740,15 +740,16 @@ class ModulesManager:
         Unknown keys are logged out.
 
         Returns:
-            dict: Output is dictionary with keys "publish", "create", "load"
-                and "actions" each containing list of paths.
+            dict: Output is dictionary with keys "publish", "create", "load",
+                "actions" and "inventory" each containing list of paths.
         """
         # Output structure
         output = {
             "publish": [],
             "create": [],
             "load": [],
-            "actions": []
+            "actions": [],
+            "inventory": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -850,6 +851,21 @@ class ModulesManager:
 
         return self._collect_plugin_paths(
             "get_publish_plugin_paths",
+            host_name
+        )
+
+    def collect_inventory_action_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_inventory_action_paths",
             host_name
         )
 

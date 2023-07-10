@@ -17,10 +17,12 @@ class CollectMayaSceneTime(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         instance.data.update({
-            "frameStart": cmds.playbackOptions(query=True, minTime=True),
-            "frameEnd": cmds.playbackOptions(query=True, maxTime=True),
-            "frameStartHandle": cmds.playbackOptions(query=True,
-                                                     animationStartTime=True),
-            "frameEndHandle": cmds.playbackOptions(query=True,
-                                                   animationEndTime=True)
+            "frameStart": int(
+                cmds.playbackOptions(query=True, minTime=True)),
+            "frameEnd": int(
+                cmds.playbackOptions(query=True, maxTime=True)),
+            "frameStartHandle": int(
+                cmds.playbackOptions(query=True, animationStartTime=True)),
+            "frameEndHandle": int(
+                cmds.playbackOptions(query=True, animationEndTime=True))
         })
