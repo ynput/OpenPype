@@ -22,10 +22,8 @@ class ExtractBGEO(publish.Extractor):
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("sopoutput")
-        staging_dir = os.path.dirname(output)
+        staging_dir, file_name = os.path.split(output)
         instance.data["stagingDir"] = staging_dir
-
-        file_name = os.path.basename(output)
 
         # We run the render
         self.log.info("Writing bgeo files '{}' to '{}'.".format(
