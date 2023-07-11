@@ -1093,8 +1093,8 @@ class FamilyListView(QtWidgets.QListView):
         for row in range(model.rowCount()):
             index = model.index(row, 0)
             family = index.data(QtCore.Qt.DisplayRole)
-            new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked 
-            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)  
+            new_state = QtCore.Qt.Checked if family in families else QtCore.Qt.Unchecked
+            index.model().setData(index, new_state, QtCore.Qt.CheckStateRole)
         self.blockSignals(False)
 
     def set_all_unchecked(self):
