@@ -8,7 +8,10 @@ from openpype.client import get_last_version_by_subset_id
 from openpype import style
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.lib import qt_app_context
-from openpype.hosts.maya.api.lib import assign_look_by_version
+from openpype.hosts.maya.api.lib import (
+    assign_look_by_version,
+    get_main_window
+)
 
 from maya import cmds
 # old api for MFileIO
@@ -297,9 +300,7 @@ def show():
         pass
 
     # Get Maya main window
-    top_level_widgets = QtWidgets.QApplication.topLevelWidgets()
-    mainwindow = next(widget for widget in top_level_widgets
-                      if widget.objectName() == "MayaWindow")
+    mainwindow = get_main_window()
 
     with qt_app_context():
         window = MayaLookAssignerWindow(parent=mainwindow)

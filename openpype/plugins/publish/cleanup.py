@@ -86,8 +86,8 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
 
         if not os.path.normpath(staging_dir).startswith(temp_root):
-            self.log.info("Skipping cleanup. Staging directory is not in the "
-                          "temp folder: %s" % staging_dir)
+            self.log.debug("Skipping cleanup. Staging directory is not in the "
+                           "temp folder: %s" % staging_dir)
             return
 
         if not os.path.exists(staging_dir):

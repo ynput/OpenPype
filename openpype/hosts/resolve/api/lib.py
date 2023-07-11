@@ -15,7 +15,6 @@ log = Logger.get_logger(__name__)
 self = sys.modules[__name__]
 self.project_manager = None
 self.media_storage = None
-self.current_project = None
 
 # OpenPype sequential rename variables
 self.rename_index = 0
@@ -88,10 +87,7 @@ def get_media_storage():
 def get_current_project():
     """Get current project object.
     """
-    if not self.current_project:
-        self.current_project = get_project_manager().GetCurrentProject()
-
-    return self.current_project
+    return get_project_manager().GetCurrentProject()
 
 
 def get_current_timeline(new=False):

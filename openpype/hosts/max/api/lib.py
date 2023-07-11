@@ -78,6 +78,14 @@ def read(container) -> dict:
                 value.startswith(JSON_PREFIX):
             with contextlib.suppress(json.JSONDecodeError):
                 value = json.loads(value[len(JSON_PREFIX):])
+
+        # default value behavior
+        # convert maxscript boolean values
+        if value == "true":
+            value = True
+        elif value == "false":
+            value = False
+
         data[key.strip()] = value
 
     data["instance_node"] = container.Name
@@ -250,10 +258,7 @@ def reset_frame_range(fps: bool = True):
         frame_range["handleStart"]
     )
     frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    frange_cmd = (
-        f"animationRange = interval {frame_start_handle} {frame_end_handle}"
-    )
-    rt.Execute(frange_cmd)
+    set_timeline(frame_start_handle, frame_end_handle)
     set_render_frame_range(frame_start_handle, frame_end_handle)
 
 
@@ -285,3 +290,25 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+
+@contextlib.contextmanager
+def viewport_camera(camera):
+    original = rt.viewport.getCamera()
+    if not original:
+        # if there is no original camera
+        # use the current camera as original
+        original = rt.getNodeByName(camera)
+    review_camera = rt.getNodeByName(camera)
+    try:
+        rt.viewport.setCamera(review_camera)
+        yield
+    finally:
+        rt.viewport.setCamera(original)
+
+
+def set_timeline(frameStart, frameEnd):
+    """Set frame range for timeline editor in Max
+    """
+    rt.animationRange = rt.interval(frameStart, frameEnd)
+    return rt.animationRange

@@ -5,7 +5,7 @@ from openpype.lib import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
 
 
-class ResolvePrelaunch(PreLaunchHook):
+class PreLaunchResolveSetup(PreLaunchHook):
     """
     This hook will set up the Resolve scripting environment as described in
     Resolve's documentation found with the installed application at

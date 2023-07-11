@@ -442,7 +442,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp:
                 temp.write(filter_string)
                 filters_path = temp.name
-            filters = '-filter_script "{}"'.format(filters_path)
+            filters = '-filter_script:v "{}"'.format(filters_path)
             print("Filters:", filter_string)
             self.cleanup_paths.append(filters_path)
 

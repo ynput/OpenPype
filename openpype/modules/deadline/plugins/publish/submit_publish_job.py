@@ -147,7 +147,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION",
         "OPENPYPE_SG_USER"
     ]
 
