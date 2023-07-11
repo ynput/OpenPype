@@ -70,15 +70,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "active" in data:
                 data["publish"] = data["active"]
 
-            data.update(self.get_frame_data(node))
-
             # Create nice name if the instance has a frame range.
             label = data.get("name", node.name())
             label += " (%s)" % data["asset"]  # include asset in name
-
-            if "frameStart" in data and "frameEnd" in data:
-                frames = "[{frameStart} - {frameEnd}]".format(**data)
-                label = "{} {}".format(label, frames)
 
             instance = context.create_instance(label)
 
@@ -118,6 +112,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         data["frameStart"] = node.evalParm("f1")
         data["frameEnd"] = node.evalParm("f2")
-        data["steps"] = node.evalParm("f3")
+        data["byFrameStep"] = node.evalParm("f3")
 
         return data

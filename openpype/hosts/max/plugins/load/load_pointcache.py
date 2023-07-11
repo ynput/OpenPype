@@ -5,19 +5,15 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 
 """
 import os
-from openpype.pipeline import (
-    load, get_representation_path
-)
+from openpype.pipeline import load, get_representation_path
+from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
 
 
 class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
-    families = ["camera",
-                "animation",
-                "pointcache"]
+    families = ["camera", "animation", "pointcache"]
     label = "Load Alembic"
     representations = ["abc"]
     order = -10
@@ -30,21 +26,17 @@ class AbcLoader(load.LoaderPlugin):
         file_path = os.path.normpath(self.fname)
 
         abc_before = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
-        abc_export_cmd = (f"""
-AlembicImport.ImportToRoot = false
-
-importFile @"{file_path}" #noPrompt
-        """)
-
-        self.log.debug(f"Executing command: {abc_export_cmd}")
-        rt.execute(abc_export_cmd)
+        rt.AlembicImport.ImportToRoot = False
+        rt.importFile(file_path, rt.name("noPrompt"))
 
         abc_after = {
-            c for c in rt.rootNode.Children
+            c
+            for c in rt.rootNode.Children
             if rt.classOf(c) == rt.AlembicContainer
         }
 
@@ -56,22 +48,42 @@ importFile @"{file_path}" #noPrompt
 
         abc_container = abc_containers.pop()
 
+        for abc in rt.GetCurrentSelection():
+            for cam_shape in abc.Children:
+                cam_shape.playbackType = 2
+
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__)
+            name, [abc_container], context, loader=self.__class__.__name__
+        )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node = rt.GetNodeByName(container["instance_node"])
 
         alembic_objects = self.get_container_children(node, "AlembicObject")
         for alembic_object in alembic_objects:
             alembic_object.source = path
 
-        lib.imprint(container["instance_node"], {
-            "representation": str(representation["_id"])
-        })
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
+
+        with maintained_selection():
+            rt.Select(node.Children)
+
+            for alembic in rt.Selection:
+                abc = rt.GetNodeByName(alembic.name)
+                rt.Select(abc.Children)
+                for abc_con in rt.Selection:
+                    container = rt.GetNodeByName(abc_con.name)
+                    container.source = path
+                    rt.Select(container.Children)
+                    for abc_obj in rt.Selection:
+                        alembic_obj = rt.GetNodeByName(abc_obj.name)
+                        alembic_obj.source = path
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -79,8 +91,8 @@ importFile @"{file_path}" #noPrompt
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):

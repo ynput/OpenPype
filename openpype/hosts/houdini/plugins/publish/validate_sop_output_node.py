@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
+from openpype.hosts.houdini.api.action import (
+    SelectInvalidAction,
+    SelectROPAction,
+)
+
+import hou
 
 
 class ValidateSopOutputNode(pyblish.api.InstancePlugin):
@@ -19,6 +25,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
     families = ["pointcache", "vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
+    actions = [SelectROPAction, SelectInvalidAction]
 
     def process(self, instance):
 
@@ -31,9 +38,6 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-
-        import hou
-
         output_node = instance.data.get("output_node")
 
         if output_node is None:
@@ -43,7 +47,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
                 "Ensure a valid SOP output path is set." % node.path()
             )
 
-            return [node.path()]
+            return [node]
 
         # Output node must be a Sop node.
         if not isinstance(output_node, hou.SopNode):
@@ -53,7 +57,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
                 "instead found category type: %s"
                 % (output_node.path(), output_node.type().category().name())
             )
-            return [output_node.path()]
+            return [output_node]
 
         # For the sake of completeness also assert the category type
         # is Sop to avoid potential edge case scenarios even though
@@ -73,11 +77,11 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
             except hou.Error as exc:
                 cls.log.error("Cook failed: %s" % exc)
                 cls.log.error(output_node.errors()[0])
-                return [output_node.path()]
+                return [output_node]
 
         # Ensure the output node has at least Geometry data
         if not output_node.geometry():
             cls.log.error(
                 "Output node `%s` has no geometry data." % output_node.path()
             )
-            return [output_node.path()]
+            return [output_node]

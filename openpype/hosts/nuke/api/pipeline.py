@@ -237,15 +237,25 @@ def _install_menu():
 
     menu.addSeparator()
     if not ASSIST:
+        # only add parent if nuke version is 14 or higher
+        # known issue with no solution yet
         menu.addCommand(
             "Create...",
             lambda: host_tools.show_publisher(
+                parent=(
+                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
+                ),
                 tab="create"
             )
         )
+        # only add parent if nuke version is 14 or higher
+        # known issue with no solution yet
         menu.addCommand(
             "Publish...",
             lambda: host_tools.show_publisher(
+                parent=(
+                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
+                ),
                 tab="publish"
             )
         )
@@ -564,6 +574,7 @@ def remove_instance(instance):
     instance_node = instance.transient_data["node"]
     instance_knob = instance_node.knobs()[INSTANCE_DATA_KNOB]
     instance_node.removeKnob(instance_knob)
+    nuke.delete(instance_node)
 
 
 def select_instance(instance):

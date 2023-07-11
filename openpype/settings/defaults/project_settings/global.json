@@ -1,5 +1,6 @@
 {
     "imageio": {
+        "activate_global_color_management": false,
         "ocio_config": {
             "filepath": [
                 "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio",
@@ -7,7 +8,7 @@
             ]
         },
         "file_rules": {
-            "enabled": false,
+            "activate_global_file_rules": false,
             "rules": {
                 "example": {
                     "pattern": ".*(beauty).*",
@@ -45,6 +46,10 @@
         "collect_comment_per_instance": {
             "enabled": false,
             "families": []
+        },
+        "CollectFramesFixDef": {
+            "enabled": true,
+            "rewrite_version_enable": true
         },
         "ValidateEditorialAssetName": {
             "enabled": true,
@@ -252,10 +257,13 @@
                     }
                 },
                 {
-                    "families": ["review"],
+                    "families": [
+                        "review"
+                    ],
                     "hosts": [
                         "maya",
-                        "houdini"
+                        "houdini",
+                        "max"
                     ],
                     "task_types": [],
                     "task_names": [],
