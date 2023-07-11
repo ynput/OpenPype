@@ -288,7 +288,7 @@ def ask_to_login_ui(
         "always_on_top": always_on_top,
     }
 
-    with tempfile.TemporaryFile(
+    with tempfile.NamedTemporaryFile(
         mode="w", prefix="ayon_login", suffix=".json", delete=False
     ) as tmp:
         output = tmp.name
