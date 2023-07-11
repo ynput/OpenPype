@@ -9,7 +9,6 @@ from openpype.lib.attribute_definitions import (
     NumberDef,
     UISeparatorDef,
     EnumDef,
-    TextDef,
 )
 from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from openpype.pipeline.create import (
@@ -303,12 +302,6 @@ class SettingsCreator(TrayPublishCreator):
                 single_item=True,
                 label="Reviewable representations",
                 extensions_label="Single reviewable item"
-            ),
-            TextDef(
-                "input_colorspace",
-                label="Input Colorspace",
-                default="scene_linear",
-                placeholder="Colorspace of input media"
             ),
             EnumDef(
                 "render_target",
