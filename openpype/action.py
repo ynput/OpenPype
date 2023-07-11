@@ -49,7 +49,7 @@ def deprecated(new_destination):
 
 
 @deprecated("openpype.pipeline.publish.get_errored_instances_from_context")
-def get_errored_instances_from_context(context):
+def get_errored_instances_from_context(context, plugin=None):
     """
     Deprecated:
         Since 3.14.* will be removed in 3.16.* or later.
@@ -57,7 +57,7 @@ def get_errored_instances_from_context(context):
 
     from openpype.pipeline.publish import get_errored_instances_from_context
 
-    return get_errored_instances_from_context(context)
+    return get_errored_instances_from_context(context, plugin=plugin)
 
 
 @deprecated("openpype.pipeline.publish.get_errored_plugins_from_context")
@@ -97,11 +97,9 @@ class RepairAction(pyblish.api.Action):
 
         # Get the errored instances
         self.log.info("Finding failed instances..")
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
-        for instance in instances:
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
+        for instance in errored_instances:
             plugin.repair(instance)
 
 

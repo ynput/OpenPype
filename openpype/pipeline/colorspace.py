@@ -1,7 +1,6 @@
 from copy import deepcopy
 import re
 import os
-import sys
 import json
 import platform
 import contextlib
@@ -237,12 +236,13 @@ def get_data_subprocess(config_path, data_type):
         return json.loads(return_json_data)
 
 
-def compatible_python():
-    """Only 3.9 or higher can directly use PyOpenColorIO in ocio_wrapper"""
-    compatible = False
-    if sys.version_info.major == 3 and sys.version_info.minor >= 9:
-        compatible = True
-    return compatible
+def compatibility_check():
+    """Making sure PyOpenColorIO is importable"""
+    try:
+        import PyOpenColorIO  # noqa: F401
+    except ImportError:
+        return False
+    return True
 
 
 def get_ocio_config_colorspaces(config_path):
@@ -257,11 +257,14 @@ def get_ocio_config_colorspaces(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_colorspace_data
-        return _get_colorspace_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_colorspace_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_colorspace_data
+
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -290,11 +293,14 @@ def get_ocio_config_views(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_views_data
-        return _get_views_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_views_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_views_data
+
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):

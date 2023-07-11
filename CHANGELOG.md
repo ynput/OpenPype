@@ -1,6 +1,609 @@
 # Changelog
 
 
+## [3.15.12](https://github.com/ynput/OpenPype/tree/3.15.12)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.11...3.15.12)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Tray Publisher: User can set colorspace per instance explicitly <a href="https://github.com/ynput/OpenPype/pull/4901">#4901</a></summary>
+
+With this feature a user can set/override the colorspace for the representations of an instance explicitly instead of relying on the File Rules from project settings or alike. This way you can ingest any file and explicitly say "this file is colorspace X".
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Review Family in Max <a href="https://github.com/ynput/OpenPype/pull/5001">#5001</a></summary>
+
+Review Feature by creating preview animation in 3dsmax(The code is still cleaning up so there is going to be some updates until it is ready for review)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: support for workfile template builder <a href="https://github.com/ynput/OpenPype/pull/5163">#5163</a></summary>
+
+This PR add functionality of templated workfile builder. It allows someone to prepare AE workfile with placeholders as for automatically loading particular representation of particular subset of particular asset from context where workfile is opened.Selection from multiple prepared workfiles is provided with usage of templates, specific type of tasks could use particular workfile template etc.Artists then can build workfile from template when opening new workfile.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>CreatePlugin: Get next version helper <a href="https://github.com/ynput/OpenPype/pull/5242">#5242</a></summary>
+
+Implemented helper functions to get next available versions for create instances.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Improve Templates <a href="https://github.com/ynput/OpenPype/pull/4854">#4854</a></summary>
+
+Use library method for fetching reference node and support parent in hierarchy.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: Maya - xgen sidecar files arent moved when saving workfile as an new asset workfile changing context - OP-6222 <a href="https://github.com/ynput/OpenPype/pull/5215">#5215</a></summary>
+
+This PR manages the Xgen files when switching context in the Workfiles app.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>node references to check for duplicates in Max <a href="https://github.com/ynput/OpenPype/pull/5192">#5192</a></summary>
+
+No duplicates for node references in Max when users trying to select nodes before publishing
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Tweak profiles logging to debug level <a href="https://github.com/ynput/OpenPype/pull/5194">#5194</a></summary>
+
+Tweak profiles logging to debug level since they aren't artist facing logs.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: Reduce more visual clutter for artists in new publisher reports <a href="https://github.com/ynput/OpenPype/pull/5208">#5208</a></summary>
+
+Got this from one of our artists' reports - figured some of these logs were definitely not for the artist, reduced those logs to debug level.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Cosmetics: Tweak pyblish repair actions (icon, logs, docstring) <a href="https://github.com/ynput/OpenPype/pull/5213">#5213</a></summary>
+
+- Add icon to RepairContextAction
+- logs to debug level
+- also add attempt repair for RepairAction for consistency
+- fix RepairContextAction docstring to mention correct argument name
+
+#### Additional info
+
+We should not forget to remove this ["deprecated" actions.py file](https://github.com/ynput/OpenPype/blob/3501d0d23a78fbaef106da2fffe946cb49bef855/openpype/action.py) in 3.16 (next-minor)
+
+## Testing notes:
+
+1. Run some fabulous repairs!
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: fix save file prompt on launch last workfile with color management enabled + restructure `set_colorspace` <a href="https://github.com/ynput/OpenPype/pull/5225">#5225</a></summary>
+
+- Only set `configFilePath` when OCIO env var is not set since it doesn't do anything if OCIO var is set anyway.
+- Set the Maya 2022+ default OCIO path using the resources path instead of "" to avoid Maya Save File on new file after launch
+- **Bugfix: This is what fixes the Save prompt on open last workfile feature with Global color management enabled**
+- Move all code related to applying the maya settings together after querying the settings
+- Swap around the `if use_workfile_settings` since the check was reversed
+- Use `get_current_project_name()` instead of environment vars
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: More descriptive error messages for Loaders <a href="https://github.com/ynput/OpenPype/pull/5227">#5227</a></summary>
+
+Tweak raised errors and error messages for loader errors.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: add select invalid action for ValidateSopOutputNode <a href="https://github.com/ynput/OpenPype/pull/5231">#5231</a></summary>
+
+This PR adds `SelectROPAction` action to `houdini\api\action.py`and it's used in `Validate Output Node``SelectROPAction` is used to select the associated ROPs with the errored instances.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Remove new lines from the delivery template string <a href="https://github.com/ynput/OpenPype/pull/5235">#5235</a></summary>
+
+If the delivery template has a new line symbol at the end, say it was copied from the text editor, the delivery process will fail with `OSError` due to incorrect destination path. To avoid that I added `rstrip()` to the `delivery_path` processing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: better selection on pointcache creation  <a href="https://github.com/ynput/OpenPype/pull/5250">#5250</a></summary>
+
+Houdini  allows `ObjNode` path as `sop_path` in the `ROP` unlike OP/ Ayon require `sop_path` to be set to a sop node path explicitly In this code, better selection is used to filter out invalid selections from OP/ Ayon  point of viewValid selections are
+- `SopNode` that has parent of type `geo` or `subnet`
+- `ObjNode` of type `geo` that has
+- `SopNode` of type `output`
+- `SopNode` with render flag `on` (if no `Sopnode` of type `output`)this effectively  filter
+- empty `ObjNode`
+- `ObjNode`(s) of other types like `cam` and `dopnet`
+- `SopNode`(s) that thier parents of other types like `cam` and `sop solver`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Update scene inventory even if any errors occurred during update <a href="https://github.com/ynput/OpenPype/pull/5252">#5252</a></summary>
+
+When selecting many items in the scene inventory to update versions and one of the items would error out the updating stops. However, before this PR the scene inventory would also NOT refresh making you think it did nothing.Also implemented as method to allow some code deduplication.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Convert frame values to integers <a href="https://github.com/ynput/OpenPype/pull/5188">#5188</a></summary>
+
+Convert frame values to integers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: fix the register_event_callback correctly collecting workfile save after <a href="https://github.com/ynput/OpenPype/pull/5214">#5214</a></summary>
+
+fixing the bug of register_event_callback not being able to collect action of "workfile_save_after" for lock file action
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: aligning default settings to distributed aces 1.2 config <a href="https://github.com/ynput/OpenPype/pull/5233">#5233</a></summary>
+
+Maya colorspace setttings defaults are set the way they align our distributed ACES 1.2 config file set in global colorspace configs.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>RepairAction and SelectInvalidAction filter instances failed on the exact plugin <a href="https://github.com/ynput/OpenPype/pull/5240">#5240</a></summary>
+
+RepairAction and SelectInvalidAction actually filter to instances that failed on the exact plugin - not on "any failure"
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Bugfix look update nodes by id with non-unique shape names (query with `fullPath`) <a href="https://github.com/ynput/OpenPype/pull/5257">#5257</a></summary>
+
+Fixes a bug where updating attributes on nodes with assigned shader if shape name existed more than once in the scene due to `cmds.listRelatives` call not being done with the `fullPath=True` flag.Original error:
+```python
+# Traceback (most recent call last):
+#   File "E:\openpype\OpenPype\openpype\tools\sceneinventory\view.py", line 264, in <lambda>
+#     lambda: self._show_version_dialog(items))
+#   File "E:\openpype\OpenPype\openpype\tools\sceneinventory\view.py", line 722, in _show_version_dialog
+#     self._update_containers(items, version)
+#   File "E:\openpype\OpenPype\openpype\tools\sceneinventory\view.py", line 849, in _update_containers
+#     update_container(item, item_version)
+#   File "E:\openpype\OpenPype\openpype\pipeline\load\utils.py", line 502, in update_container
+#     return loader.update(container, new_representation)
+#   File "E:\openpype\OpenPype\openpype\hosts\maya\plugins\load\load_look.py", line 119, in update
+#     nodes_by_id[lib.get_id(n)].append(n)
+#   File "E:\openpype\OpenPype\openpype\hosts\maya\api\lib.py", line 1420, in get_id
+#     sel.add(node)
+```
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Create nodes with inpanel=False <a href="https://github.com/ynput/OpenPype/pull/5051">#5051</a></summary>
+
+This PR is meant to remove the annoyance of the UI changing focus to the properties window just for the property window of the newly created node to disappear. Instead of using node.hideControlPanel I'm implementing the concealment during the creation of the node which will not change the focus of the current window.
+___
+
+</details>
+
+
+<details>
+<summary>Fix the reset frame range not setting up the right timeline in Max <a href="https://github.com/ynput/OpenPype/pull/5187">#5187</a></summary>
+
+Resolve #5181
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: after launch automatization fixes <a href="https://github.com/ynput/OpenPype/pull/5193">#5193</a></summary>
+
+Workfile is no correctly created and aligned witch actual project. Also the launching mechanism is now fixed so even no workfile had been saved yet it will open OpenPype menu automatically.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Revert backward incompatible change of path to template to multiplatform <a href="https://github.com/ynput/OpenPype/pull/5197">#5197</a></summary>
+
+Now platformity is still handed by usage of `work[root]` (or any other root that is accessible across platforms.)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: root set format updating in node graph <a href="https://github.com/ynput/OpenPype/pull/5198">#5198</a></summary>
+
+Nuke root node needs to be reset on some values so any knobs could be updated in node graph. This works the same way as an user would change frame number so expressions would update its values in knobs.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Hiero: fixing otio current project and cosmetics <a href="https://github.com/ynput/OpenPype/pull/5200">#5200</a></summary>
+
+Otio were not returning correct current project once additional Untitled project was open in project manager stack.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Publisher instances dont hold its enabled disabled states when Publisher reopened again <a href="https://github.com/ynput/OpenPype/pull/5202">#5202</a></summary>
+
+Resolve #5183, general maxscript conversion issue to python (e.g. bool conversion, true in maxscript while True in Python)(Also resolve the ValueError when you change the subset to publish into list view menu)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Burnins: Filter script is defined only for video streams <a href="https://github.com/ynput/OpenPype/pull/5205">#5205</a></summary>
+
+Burnins are working for inputs with audio.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Colorspace lib fix compatible python version comparison <a href="https://github.com/ynput/OpenPype/pull/5212">#5212</a></summary>
+
+Fix python version comparison.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Fix `get_color_management_preferences` <a href="https://github.com/ynput/OpenPype/pull/5217">#5217</a></summary>
+
+Fix the issue described here where the logic for retrieving the current OCIO display and view was incorrectly trying to apply a regex to it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Redshift ROP image format bug <a href="https://github.com/ynput/OpenPype/pull/5218">#5218</a></summary>
+
+Problem : 
+"RS_outputFileFormat" parm value was missing 
+and there were more "image_format" than redshift rop supports 
+
+Fix: 
+1)  removed unnecessary formats from `image_format_enum`
+2) add the selected format value to `RS_outputFileFormat`
+___
+
+</details>
+
+
+<details>
+<summary>Colorspace: check PyOpenColorIO rather then python version <a href="https://github.com/ynput/OpenPype/pull/5223">#5223</a></summary>
+
+Fixing previously merged PR (https://github.com/ynput/OpenPype/pull/5212) And applying better way to check compatibility with PyOpenColorIO python api.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Validate delivery action representations status <a href="https://github.com/ynput/OpenPype/pull/5228">#5228</a></summary>
+
+- disable delivery button if no representations checked
+- fix macos combobox layout
+- add error message if no delivery templates found
+
+
+___
+
+</details>
+
+
+<details>
+<summary> Houdini: Add geometry check for pointcache family <a href="https://github.com/ynput/OpenPype/pull/5230">#5230</a></summary>
+
+When `sop_path`  on ABC ROP node points to a  non `SopNode`, these validators `validate_abc_primitive_to_detail.py`, `validate_primitive_hierarchy_paths.py` will error and crash when this line is executed `geo = output_node.geometryAtFrame(frame)`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add geometry check for VDB family <a href="https://github.com/ynput/OpenPype/pull/5232">#5232</a></summary>
+
+When `sop_path` on Geometry ROP node points to a non SopNode, this validator `validate_vdb_output_node.py` will error and crash when this line is executed`sop_node.geometryAtFrame(frame)`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Substance Painter: Include the setting only in publish tab <a href="https://github.com/ynput/OpenPype/pull/5234">#5234</a></summary>
+
+Instead of having two settings in both create and publish tab, there is solely one setting in the publish tab for users to set up the parameters.Resolve #5172
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix collecting arnold prefix when none <a href="https://github.com/ynput/OpenPype/pull/5243">#5243</a></summary>
+
+When no prefix is specified in render settings, the renderlayer collector would error.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: OPENPYPE_VERSION should only be added when running from build <a href="https://github.com/ynput/OpenPype/pull/5244">#5244</a></summary>
+
+When running from source the environment variable `OPENPYPE_VERSION` should not be added. This is a bugfix for the feature #4489
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix no prompt for "unsaved changes" showing when opening workfile in Houdini <a href="https://github.com/ynput/OpenPype/pull/5246">#5246</a></summary>
+
+Fix no prompt for "unsaved changes" showing when opening workfile in Houdini.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix no prompt for "unsaved changes" showing when opening workfile in Substance Painter <a href="https://github.com/ynput/OpenPype/pull/5248">#5248</a></summary>
+
+Fix no prompt for "unsaved changes" showing when opening workfile in Substance Painter.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: add the os library before os.environ.get <a href="https://github.com/ynput/OpenPype/pull/5249">#5249</a></summary>
+
+Adding os library into `creator_plugins.py` due to `os.environ.get` in line 667
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix set_attribute for enum attributes <a href="https://github.com/ynput/OpenPype/pull/5261">#5261</a></summary>
+
+Fix for #5260
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Move Qt imports away from module init <a href="https://github.com/ynput/OpenPype/pull/5268">#5268</a></summary>
+
+Importing `Window` creates errors in headless mode.
+```
+*** WRN: >>> { ModulesLoader }: [  FAILED to import host folder unreal  ]
+=============================
+No Qt bindings could be found
+=============================
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\OpenPype\.venv\lib\site-packages\qtpy\__init__.py", line 252, in <module>
+    from PySide6 import __version__ as PYSIDE_VERSION  # analysis:ignore
+ModuleNotFoundERROR: No module named 'PySide6'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\OpenPype\openpype\modules\base.py", line 385, in _load_modules
+    default_module = __import__(
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\unreal\__init__.py", line 1, in <module>
+    from .addon import UnrealAddon
+  File "C:\Users\tokejepsen\OpenPype\openpype\hosts\unreal\addon.py", line 4, in <module>
+    from openpype.widgets.message_window import Window
+  File "C:\Users\tokejepsen\OpenPype\openpype\widgets\__init__.py", line 1, in <module>
+    from .password_dialog import PasswordDialog
+  File "C:\Users\tokejepsen\OpenPype\openpype\widgets\password_dialog.py", line 1, in <module>
+    from qtpy import QtWidgets, QtCore, QtGui
+  File "C:\Users\tokejepsen\OpenPype\.venv\lib\site-packages\qtpy\__init__.py", line 259, in <module>
+    raise QtBindingsNotFoundERROR()
+qtpy.QtBindingsNotFoundERROR: No Qt bindings could be found
+```
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Maya: Minor refactoring and code cleanup <a href="https://github.com/ynput/OpenPype/pull/5226">#5226</a></summary>
+
+Some small cleanup and refactoring of logic. Removing old comments, unused imports and some minor optimization. Also removed the prints of the loader names of each container the scene in `fix_incompatible_containers` + optimizing by using `set` and defining only once. Moved some UI related code/tweaks to run `on_init` only if not in headless mode. Removed an empty `obj.py` file.Each commit message kind of describes why the change was made.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Bug: Template builder fails when loading data without outliner representation <a href="https://github.com/ynput/OpenPype/pull/5222">#5222</a></summary>
+
+I add an assertion management in case the container does not have a represention in outliner.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects - add container check validator to AE settings <a href="https://github.com/ynput/OpenPype/pull/5203">#5203</a></summary>
+
+Adds check if scene contains only latest version of loaded containers.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.15.11](https://github.com/ynput/OpenPype/tree/3.15.11)
 
 
