@@ -199,11 +199,19 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "dict-modifiable",
-                    "object_type": "text",
+                    "type": "text",
                     "key": "deadline_urls",
-                    "required_keys": ["default"],
                     "label": "Deadline Webservice URLs"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "object_type": {
+                        "type": "path",
+                        "multiplatform": true
+                    },
+                    "key": "deadline_paths",
+                    "required_keys": ["default"],
+                    "label": "Deadline Paths"
                 }
             ]
         },

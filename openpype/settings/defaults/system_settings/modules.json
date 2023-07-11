@@ -159,9 +159,14 @@
         "sites": {}
     },
     "deadline": {
-        "enabled": true,
-        "deadline_urls": {
-            "default": "http://127.0.0.1:8082"
+        "enabled": false,
+        "deadline_urls": "http://deadline.prs.vfx.int:8082",
+        "deadline_paths": {
+            "default": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""                  
+            }
         }
     },
     "muster": {
