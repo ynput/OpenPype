@@ -96,10 +96,10 @@ class LoadWorkfile(plugin.Loader):
 
         if version is None:
             version = get_versioning_start(
-                host_name="tvpaint",
+                host="tvpaint",
                 task_name=task_name,
                 task_type=data["task"]["type"],
-                families=["workfile"]
+                family="workfile"
             )
         else:
             version += 1

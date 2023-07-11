@@ -201,13 +201,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     asset_tasks = instance.data["assetEntity"]["data"]["tasks"]
                     task_type = asset_tasks.get(task_name, {}).get("type")
 
+                host = registered_host()
                 version_number = get_versioning_start(
-                    host_name=registered_host(),
+                    host=host.name if host else "",
                     task_name=task_name,
                     task_type=task_type,
-                    families=[instance.data["family"]],
+                    family=instance.data["family"],
                     subset=instance.data["subset"]
                 )
+
                 # use latest version (+1) if already any exist
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
@@ -277,7 +279,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             # Store anatomy data
             instance.data["projectEntity"] = project_doc
             instance.data["anatomyData"] = anatomy_data
-            self.log.info(anatomy_data)
             instance.data["version"] = version_number
 
             # Log collected data

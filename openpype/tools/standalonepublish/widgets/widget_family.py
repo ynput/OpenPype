@@ -302,9 +302,9 @@ class FamilyWidget(QtWidgets.QWidget):
         plugin = self.list_families.currentItem().data(PluginRole)
         family = plugin.family.rsplit(".", 1)[-1]
         version = get_versioning_start(
-            host_name="standalonepublisher",
+            host="standalonepublisher",
             task_name=self.dbcon.Session["AVALON_TASK"],
-            families=[family],
+            family=family,
             subset=subset_name
         )
 

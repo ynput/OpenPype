@@ -54,7 +54,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
             version_int += int(version_doc["name"])
         else:
             version_int = get_versioning_start(
-                host_name="photoshop",
+                host="photoshop",
                 task_name=context.data["task"],
                 task_type=context.data["taskType"]
             )

@@ -34,8 +34,8 @@ def _format_version_folder(folder):
     """
 
     new_version = get_versioning_start(
-        host_name="fusion",
-        families=["workfile"]
+        host="fusion",
+        family="workfile"
     )
     if os.path.isdir(folder):
         re_version = re.compile(r"v\d+$")

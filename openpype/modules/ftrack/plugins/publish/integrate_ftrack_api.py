@@ -11,10 +11,8 @@ Provides:
 """
 
 import os
-import sys
 import collections
 
-import six
 import pyblish.api
 import clique
 
@@ -377,7 +375,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         else:
             new_asset_version_data = {
-                "version": str(version),
+                "version": version,
                 "asset_id": asset_id
             }
             if task_id:
