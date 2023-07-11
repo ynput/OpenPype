@@ -123,6 +123,8 @@ def get_imageio_colorspace_from_filepath(
     # from filepath with OCIO v2 way
     # QUESTION: should we override file rules from our settings and
     #           in ocio v2 only focus on file rules set in config file?
+    # TODO: do the ocio v compatibility check inside of wrapper script
+    #       because of implementation `parseColorSpaceFromString`
     if (
         compatibility_check_config_version(config_data["path"], major=2)
         and not colorspace_name

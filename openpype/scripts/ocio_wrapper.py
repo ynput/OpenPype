@@ -308,6 +308,8 @@ def _get_colorspace_from_filepath(config_path, filepath):
             f"Input path `{config_path}` should be `config.ocio` file")
 
     config = ocio.Config().CreateFromFile(str(config_path))
+
+    # TODO: use `parseColorSpaceFromString` instead if ocio v1
     colorspace = config.getColorSpaceFromFilepath(str(filepath))
 
     return colorspace
