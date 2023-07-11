@@ -6,7 +6,11 @@ import logging
 
 import six
 
-import alembic.Abc
+# NOTE hornet update for alembic module clash in python 2.7
+# import alembic.Abc
+import alembic as alembic
+# END
+
 
 
 log = logging.getLogger(__name__)
