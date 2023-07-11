@@ -1042,9 +1042,6 @@ class FamilyListView(QtWidgets.QListView):
         self._settings = settings
         self._last_families_setting = self._settings.value('enabled_families')
 
-        print("settings: ", settings.allKeys())
-        print("enabled_families", settings.value('enabled_families'))
-
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setAlternatingRowColors(True)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1070,7 +1067,6 @@ class FamilyListView(QtWidgets.QListView):
     def refresh(self):
         self._family_model.refresh()
         self.active_changed.emit(self.get_enabled_families())
-
         if self._last_families_setting is not None:
             self.set_last_families(self._last_families_setting)
             self._last_families_setting = None
@@ -1079,7 +1075,6 @@ class FamilyListView(QtWidgets.QListView):
         """Return the checked family items"""
         model = self._family_model
         checked_families = []
-
         for row in range(model.rowCount()):
             index = model.index(row, 0)
             checked = checkstate_int_to_enum(
