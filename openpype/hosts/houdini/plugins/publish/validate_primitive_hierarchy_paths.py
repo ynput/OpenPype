@@ -150,9 +150,10 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             path_node, path_attr
         )
 
-        path_node.setGenericFlag(hou.nodeFlag.DisplayComment,True)
+        path_node.setGenericFlag(hou.nodeFlag.DisplayComment, True)
         path_node.setComment(
-            'Auto path node created automatically by "Add a default path attribute"'
+            'Auto path node was created automatically by '
+            '"Add a default path attribute"'
             '\nFeel free to modify or replace it.'
         )
 
