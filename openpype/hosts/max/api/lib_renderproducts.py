@@ -68,11 +68,9 @@ class RenderProducts(object):
                 if render_name:
                     for name in render_name:
                         aovs_frames.update({
-                            f"{camera}_{name}": (
-                                self.get_expected_render_elements(
+                            f"{camera}_{name}": self.get_expected_render_elements(
                                 filename, name, start_frame,
                                 end_frame, ext)
-                            )
                         })
             elif renderer == "Redshift_Renderer":
                 render_name = self.get_render_elements_name()
@@ -84,31 +82,25 @@ class RenderProducts(object):
                         for name in render_name:
                             if name == "RsCryptomatte":
                                 aovs_frames.update({
-                                    f"{camera}_{name}": (
-                                        self.get_expected_render_elements(
+                                    f"{camera}_{name}": self.get_expected_render_elements(
                                         filename, name, start_frame,
                                         end_frame, ext)
-                                    )
                                 })
                     else:
                         for name in render_name:
                             aovs_frames.update({
-                                f"{camera}_{name}": (
-                                    self.get_expected_render_elements(
+                                f"{camera}_{name}": self.get_expected_render_elements(
                                     filename, name, start_frame,
                                     end_frame, ext)
-                                )
                             })
             elif renderer == "Arnold":
                 render_name = self.get_arnold_product_name()
                 if render_name:
                     for name in render_name:
                         aovs_frames.update({
-                            f"{camera}_{name}": (
-                                self.get_expected_arnold_product(
+                            f"{camera}_{name}": self.get_expected_arnold_product(
                                 filename, name, start_frame,
                                 end_frame, ext)
-                            )
                         })
             elif renderer in [
                 "V_Ray_6_Hotfix_3",
@@ -119,11 +111,9 @@ class RenderProducts(object):
                     if render_name:
                         for name in render_name:
                             aovs_frames.update({
-                                f"{camera}_{name}": (
-                                    self.get_expected_render_elements(
-                                    filename, name, start_frame,
-                                    end_frame, ext)
-                                )
+                                f"{camera}_{name}": self.get_expected_render_elements(
+                                filename, name, start_frame,
+                                end_frame, ext)
                             })
 
         return aovs_frames
