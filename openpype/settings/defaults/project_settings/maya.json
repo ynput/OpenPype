@@ -615,8 +615,8 @@
             "maskOverride": false,
             "maskDriver": false,
             "maskFilter": false,
-            "maskColor_manager": false,
-            "maskOperator": false
+            "maskOperator": false,
+            "maskColor_manager": false
         },
         "CreateVrayProxy": {
             "enabled": true,

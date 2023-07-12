@@ -18,14 +18,10 @@ class CollectReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.debug('instance: {}'.format(instance))
-
-        task = legacy_io.Session["AVALON_TASK"]
-
         # Get panel.
         instance.data["panel"] = cmds.playblast(
             activeEditor=True
-        ).split("|")[-1]
+        ).rsplit("|", 1)[-1]
 
         # get cameras
         members = instance.data['setMembers']
@@ -34,11 +30,12 @@ class CollectReview(pyblish.api.InstancePlugin):
         camera = cameras[0] if cameras else None
 
         context = instance.context
-        objectset = context.data['objectsets']
+        objectset = {
+            i.data.get("instance_node") for i in context
+        }
 
-        # Convert enum attribute index to string for Display Lights.
-        index = instance.data.get("displayLights", 0)
-        display_lights = lib.DISPLAY_LIGHTS_VALUES[index]
+        # Collect display lights.
+        display_lights = instance.data.get("displayLights", "default")
         if display_lights == "project_settings":
             settings = instance.context.data["project_settings"]
             settings = settings["maya"]["publish"]["ExtractPlayblast"]
@@ -60,7 +57,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             burninDataMembers["focalLength"] = focal_length
 
         # Account for nested instances like model.
-        reviewable_subsets = list(set(members) & set(objectset))
+        reviewable_subsets = list(set(members) & objectset)
         if reviewable_subsets:
             if len(reviewable_subsets) > 1:
                 raise KnownPublishError(
@@ -97,7 +94,11 @@ class CollectReview(pyblish.api.InstancePlugin):
             data["frameStart"] = instance.data["frameStart"]
             data["frameEnd"] = instance.data["frameEnd"]
             data['step'] = instance.data['step']
-            data['fps'] = instance.data['fps']
+            # this (with other time related data) should be set on
+            # representations. Once plugins like Extract Review start
+            # using representations, this should be removed from here
+            # as Extract Playblast is already adding fps to representation.
+            data['fps'] = context.data['fps']
             data['review_width'] = instance.data['review_width']
             data['review_height'] = instance.data['review_height']
             data["isolate"] = instance.data["isolate"]
@@ -112,6 +113,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             instance.data['remove'] = True
 
         else:
+            task = legacy_io.Session["AVALON_TASK"]
             legacy_subset_name = task + 'Review'
             asset_doc = instance.context.data['assetEntity']
             project_name = legacy_io.active_project()
@@ -133,6 +135,11 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data["frameEndHandle"]
             instance.data["displayLights"] = display_lights
             instance.data["burninDataMembers"] = burninDataMembers
+            # this (with other time related data) should be set on
+            # representations. Once plugins like Extract Review start
+            # using representations, this should be removed from here
+            # as Extract Playblast is already adding fps to representation.
+            instance.data["fps"] = instance.context.data["fps"]
 
             # make ftrack publishable
             instance.data.setdefault("families", []).append('ftrack')

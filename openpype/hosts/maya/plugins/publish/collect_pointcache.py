@@ -16,14 +16,16 @@ class CollectPointcache(pyblish.api.InstancePlugin):
             instance.data["families"].append("publish.farm")
 
         proxy_set = None
-        for node in instance.data["setMembers"]:
-            if cmds.nodeType(node) != "objectSet":
-                continue
-            members = cmds.sets(node, query=True)
-            if members is None:
-                self.log.warning("Skipped empty objectset: \"%s\" " % node)
-                continue
+        for node in cmds.ls(instance.data["setMembers"],
+                            exactType="objectSet"):
+            # Find proxy_SET objectSet in the instance for proxy meshes
             if node.endswith("proxy_SET"):
+                members = cmds.sets(node, query=True)
+                if members is None:
+                    self.log.debug("Skipped empty proxy_SET: \"%s\" " % node)
+                    continue
+                self.log.debug("Found proxy set: {}".format(node))
+
                 proxy_set = node
                 instance.data["proxy"] = []
                 instance.data["proxyRoots"] = []
@@ -36,8 +38,9 @@ class CollectPointcache(pyblish.api.InstancePlugin):
                         cmds.listRelatives(member, shapes=True, fullPath=True)
                     )
                 self.log.debug(
-                    "proxy members: {}".format(instance.data["proxy"])
+                    "Found proxy members: {}".format(instance.data["proxy"])
                 )
+                break
 
         if proxy_set:
             instance.remove(proxy_set)

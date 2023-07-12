@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateVray(pyblish.api.InstancePlugin):
