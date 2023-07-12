@@ -33,6 +33,7 @@ class RenderProducts(object):
                 output_file, start_frame, end_frame, img_fmt
             )
         }
+
     def get_multiple_beauty(self, outputs, cameras):
         beauty_output_frames = dict()
         for output, camera in zip(outputs, cameras):
@@ -68,9 +69,9 @@ class RenderProducts(object):
                     for name in render_name:
                         aovs_frames.update({
                             f"{camera}_{name}": (
-                            self.get_expected_render_elements(
-                            filename, name, start_frame,
-                            end_frame, ext)
+                                self.get_expected_render_elements(
+                                filename, name, start_frame,
+                                end_frame, ext)
                             )
                         })
             elif renderer == "Redshift_Renderer":
@@ -84,9 +85,9 @@ class RenderProducts(object):
                             if name == "RsCryptomatte":
                                 aovs_frames.update({
                                     f"{camera}_{name}": (
-                                    self.get_expected_render_elements(
-                                    filename, name, start_frame,
-                                    end_frame, ext)
+                                        self.get_expected_render_elements(
+                                        filename, name, start_frame,
+                                        end_frame, ext)
                                     )
                                 })
                     else:
@@ -105,9 +106,9 @@ class RenderProducts(object):
                     for name in render_name:
                         aovs_frames.update({
                             f"{camera}_{name}": (
-                            self.get_expected_arnold_product(
-                            filename, name, start_frame,
-                            end_frame, ext)
+                                self.get_expected_arnold_product(
+                                filename, name, start_frame,
+                                end_frame, ext)
                             )
                         })
             elif renderer in [
@@ -120,9 +121,9 @@ class RenderProducts(object):
                         for name in render_name:
                             aovs_frames.update({
                                 f"{camera}_{name}": (
-                                self.get_expected_render_elements(
-                                filename, name, start_frame,
-                                end_frame, ext)
+                                    self.get_expected_render_elements(
+                                    filename, name, start_frame,
+                                    end_frame, ext)
                                 )
                             })
 
@@ -155,8 +156,8 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_render_elements(
-                        output_file, name, start_frame,
-                        end_frame, img_fmt)
+                            output_file, name, start_frame,
+                            end_frame, img_fmt)
                     })
         elif renderer == "Redshift_Renderer":
             render_name = self.get_render_elements_name()
@@ -169,15 +170,15 @@ class RenderProducts(object):
                         if name == "RsCryptomatte":
                             render_dict.update({
                                 name: self.get_expected_render_elements(
-                                output_file, name, start_frame,
-                                end_frame, img_fmt)
+                                    output_file, name, start_frame,
+                                    end_frame, img_fmt)
                             })
                 else:
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                            output_file, name, start_frame,
-                            end_frame, img_fmt)
+                                output_file, name, start_frame,
+                                end_frame, img_fmt)
                         })
 
         elif renderer == "Arnold":
@@ -186,7 +187,8 @@ class RenderProducts(object):
                 for name in render_name:
                     render_dict.update({
                         name: self.get_expected_arnold_product(
-                        output_file, name, start_frame, end_frame, img_fmt)
+                            output_file, name, start_frame,
+                            end_frame, img_fmt)
                     })
         elif renderer in [
             "V_Ray_6_Hotfix_3",
@@ -198,8 +200,8 @@ class RenderProducts(object):
                     for name in render_name:
                         render_dict.update({
                             name: self.get_expected_render_elements(
-                            output_file, name, start_frame,
-                            end_frame, img_fmt)      # noqa
+                                output_file, name, start_frame,
+                                end_frame, img_fmt)      # noqa
                         })
 
         return render_dict

@@ -17,7 +17,7 @@ class CreateRender(plugin.MaxCreator):
         file = rt.maxFileName
         filename, _ = os.path.splitext(file)
         instance_data["AssetName"] = filename
-        num_of_renderlayer =  rt.batchRenderMgr.numViews
+        num_of_renderlayer = rt.batchRenderMgr.numViews
         if num_of_renderlayer > 0:
             rt.batchRenderMgr.DeleteView(num_of_renderlayer)
 

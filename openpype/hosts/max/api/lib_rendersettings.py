@@ -192,7 +192,7 @@ class RenderSettings(object):
                 renderlayer = rt.batchRenderMgr.GetView(layer_no)
             # use camera name as renderlayer name
             renderlayer.name = cam
-            renderlayer.outputFilename ="{0}_{1}..{2}".format(
+            renderlayer.outputFilename = "{0}_{1}..{2}".format(
                 output, cam, img_fmt)
             outputs.append(renderlayer.outputFilename)
         return outputs
