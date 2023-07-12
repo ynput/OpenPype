@@ -1,0 +1,27 @@
+name: ➡ Update Deadline Repository
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+      - '*.*.*-*'
+      - 'CI/*.*.*-*'
+  workflow_dispatch:
+  
+
+jobs:
+  build-zip-patch:
+    runs-on: [self-hosted, ubuntu]
+      
+    steps:
+
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: ➡🏭 deadline deployment
+      env:
+          source: openpype/modules/deadline/repository/custom/
+          destination: /prod/softprod/apps/deadline/repo/custom/
+      run: cp -Rfv $source $destination

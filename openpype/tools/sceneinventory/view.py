@@ -1,6 +1,5 @@
 import collections
 import logging
-import itertools
 from functools import partial
 
 from qtpy import QtWidgets, QtCore
@@ -196,17 +195,20 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     version_name_by_id[version_doc["_id"]] = \
                         version_doc["name"]
 
-                # Specify version per item to update to
-                update_items = []
-                update_versions = []
                 for item in items:
                     repre_id = item["representation"]
                     version_id = version_id_by_repre_id.get(repre_id)
                     version_name = version_name_by_id.get(version_id)
                     if version_name is not None:
-                        update_items.append(item)
-                        update_versions.append(version_name)
-                self._update_containers(update_items, update_versions)
+                        try:
+                            update_container(item, version_name)
+                        except AssertionError:
+                            self._show_version_error_dialog(
+                                version_name, [item]
+                            )
+                            log.warning("Update failed", exc_info=True)
+
+                self.data_changed.emit()
 
             update_icon = qtawesome.icon(
                 "fa.asterisk",
@@ -223,6 +225,16 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         update_to_latest_action = None
         if has_outdated or has_loaded_hero_versions:
+            # update to latest version
+            def _on_update_to_latest(items):
+                for item in items:
+                    try:
+                        update_container(item, -1)
+                    except AssertionError:
+                        self._show_version_error_dialog(None, [item])
+                        log.warning("Update failed", exc_info=True)
+                self.data_changed.emit()
+
             update_icon = qtawesome.icon(
                 "fa.angle-double-up",
                 color=DEFAULT_COLOR
@@ -233,11 +245,21 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 menu
             )
             update_to_latest_action.triggered.connect(
-                lambda: self._update_containers(items, version=-1)
+                lambda: _on_update_to_latest(items)
             )
 
         change_to_hero = None
         if has_available_hero_version:
+            # change to hero version
+            def _on_update_to_hero(items):
+                for item in items:
+                    try:
+                        update_container(item, HeroVersionType(-1))
+                    except AssertionError:
+                        self._show_version_error_dialog('hero', [item])
+                        log.warning("Update failed", exc_info=True)
+                self.data_changed.emit()
+
             # TODO change icon
             change_icon = qtawesome.icon(
                 "fa.asterisk",
@@ -249,8 +271,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
                 menu
             )
             change_to_hero.triggered.connect(
-                lambda: self._update_containers(items,
-                                                version=HeroVersionType(-1))
+                lambda: _on_update_to_hero(items)
             )
 
         # set version
@@ -719,7 +740,14 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         if label:
             version = versions_by_label[label]
-            self._update_containers(items, version)
+            for item in items:
+                try:
+                    update_container(item, version)
+                except AssertionError:
+                    self._show_version_error_dialog(version, [item])
+                    log.warning("Update failed", exc_info=True)
+            # refresh model when done
+            self.data_changed.emit()
 
     def _show_switch_dialog(self, items):
         """Display Switch dialog"""
@@ -754,9 +782,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             Args:
                 version: str or int or None
         """
-        if version == -1:
+        if not version:
             version_str = "latest"
-        elif isinstance(version, HeroVersionType):
+        elif version == "hero":
             version_str = "hero"
         elif isinstance(version, int):
             version_str = "v{:03d}".format(version)
@@ -813,43 +841,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
             return
 
         # Trigger update to latest
-        self._update_containers(outdated_items, version=-1)
-
-    def _update_containers(self, items, version):
-        """Helper to update items to given version (or version per item)
-
-        If at least one item is specified this will always try to refresh
-        the inventory even if errors occurred on any of the items.
-
-        Arguments:
-            items (list): Items to update
-            version (int or list): Version to set to.
-                This can be a list specifying a version for each item.
-                Like `update_container` version -1 sets the latest version
-                and HeroTypeVersion instances set the hero version.
-
-        """
-
-        if isinstance(version, (list, tuple)):
-            # We allow a unique version to be specified per item. In that case
-            # the length must match with the items
-            assert len(items) == len(version), (
-                "Number of items mismatches number of versions: "
-                "{} items - {} versions".format(len(items), len(version))
-            )
-            versions = version
-        else:
-            # Repeat the same version infinitely
-            versions = itertools.repeat(version)
-
-        # Trigger update to latest
-        try:
-            for item, item_version in zip(items, versions):
-                try:
-                    update_container(item, item_version)
-                except AssertionError:
-                    self._show_version_error_dialog(item_version, [item])
-                    log.warning("Update failed", exc_info=True)
-        finally:
-            # Always update the scene inventory view, even if errors occurred
-            self.data_changed.emit()
+        for item in outdated_items:
+            try:
+                update_container(item, -1)
+            except AssertionError:
+                self._show_version_error_dialog(None, [item])
+                log.warning("Update failed", exc_info=True)
+        self.data_changed.emit()

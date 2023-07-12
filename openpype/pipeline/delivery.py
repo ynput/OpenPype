@@ -157,8 +157,6 @@ def deliver_single_file(
     delivery_path = delivery_path.replace("..", ".")
     # Make sure path is valid for all platforms
     delivery_path = os.path.normpath(delivery_path.replace("\\", "/"))
-    # Remove newlines from the end of the string to avoid OSError during copy
-    delivery_path = delivery_path.rstrip()
 
     delivery_folder = os.path.dirname(delivery_path)
     if not os.path.exists(delivery_folder):

@@ -119,9 +119,10 @@ class LoadImage(load.LoaderPlugin):
         with viewer_update_and_undo_stop():
             r = nuke.createNode(
                 "Read",
-                "name {}".format(read_name),
-                inpanel=False
-            )
+                "name {}".format(read_name))
+
+            # hide property panel
+            r.hideControlPanel()
 
             r["file"].setValue(file)
 

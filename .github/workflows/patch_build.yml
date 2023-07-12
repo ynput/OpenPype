@@ -1,0 +1,62 @@
+name: 📦 Build Zip Patch
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+      - '*.*.*-*'
+      - 'CI/*.*.*-*'
+  workflow_dispatch:
+    inputs:
+      name:
+        type: choice
+        description: Who to greet
+        options:
+        - monalisa
+        - cschleiden
+      message:
+        required: true
+      use-emoji:
+        type: boolean
+        description: Include  emojis
+      environment:
+        type: environment
+jobs:
+  build-zip-patch:
+    runs-on: [self-hosted, ubuntu]
+
+    steps:
+
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    # - name: "📝 Build Changelog"
+    #   id: changelog
+    #   uses: mikepenz/release-changelog-builder-action@v3.4.0
+    #   with:
+    #     # fromTag: "3.15.6"
+    #     # toTag: "3.15.8"
+    #     commitMode: true
+    #     failOnError: true
+    #     configuration: "configuration.json"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: 🧵 Install Requirements
+      run: ./tools/create_env.sh && ./tools/fetch_thirdparty_libs.sh
+
+    - name: 🔨 Build
+      run: tools/create_zip.sh --path /prod/softprod/apps/openpype/REPOSITORY/
+
+    # - name: 💬 Message to Release chat
+    #   uses: julb/action-post-googlechat-message@v1
+    #   with:
+    #     message: ${{ steps.changelog.outputs.changelog }}
+    #     gchat_webhook_url: ${{ secrets.GCHAT_RELEASE_WEBHOOK_URL }}

@@ -144,9 +144,10 @@ class LoadClip(plugin.NukeLoader):
         # Create the Loader with the filename path set
         read_node = nuke.createNode(
             "Read",
-            "name {}".format(read_name),
-            inpanel=False
-        )
+            "name {}".format(read_name))
+
+        # hide property panel
+        read_node.hideControlPanel()
 
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing

@@ -1,0 +1,25 @@
+name: 🔄 Sync Fork
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5' # Monday to friday at 00:00
+  workflow_dispatch:
+
+jobs:
+  sync-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: sync code
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.QUAD_PUBLIC_GITHUB_TOKEN }}
+          base: develop
+          head: develop
+#           pr_message: Automatic synchronization requires conflict resolution.
+#           merge_method: rebase
+
+      - name: sync tags
+        run: |
+          git remote add ynput https://github.com/ynput/OpenPype.git
+          git fetch ynput
+          git push origin --tags
