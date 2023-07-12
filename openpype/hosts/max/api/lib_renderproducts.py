@@ -77,7 +77,7 @@ class RenderProducts(object):
             elif renderer == "Redshift_Renderer":
                 render_name = self.get_render_elements_name()
                 if render_name:
-                    rs_aov_files = rt.Execute("renderers.current.separateAovFiles")
+                    rs_aov_files = rt.Execute("renderers.current.separateAovFiles")     # noqa
                     # this doesn't work, always returns False
                     # rs_AovFiles = rt.RedShift_Renderer().separateAovFiles
                     if ext == "exr" and not rs_aov_files:
@@ -97,9 +97,8 @@ class RenderProducts(object):
                                     self.get_expected_render_elements(
                                     filename, name, start_frame,
                                     end_frame, ext)
-                                    )
-                                })
-
+                                )
+                            })
             elif renderer == "Arnold":
                 render_name = self.get_arnold_product_name()
                 if render_name:
