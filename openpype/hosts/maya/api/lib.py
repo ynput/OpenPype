@@ -190,6 +190,44 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
+def get_custom_namespace(custom_namespace):
+    """Return unique namespace.
+
+    The input namespace can contain a single group
+    of '#' number tokens to indicate where the namespace's
+    unique index should go. The amount of tokens defines
+    the zero padding of the number, e.g ### turns into 001.
+
+    Warning: Note that a namespace will always be
+        prefixed with a _ if it starts with a digit
+
+    Example:
+        >>> get_custom_namespace("myspace_##_")
+        # myspace_01_
+        >>> get_custom_namespace("##_myspace")
+        # _01_myspace
+        >>> get_custom_namespace("myspace##")
+        # myspace01
+
+    """
+    split = re.split("([#]+)", custom_namespace, 1)
+
+    if len(split) == 3:
+        base, padding, suffix = split
+        padding = "%0{}d".format(len(padding))
+    else:
+        base = split[0]
+        padding = "%02d"  # default padding
+        suffix = ""
+
+    return unique_namespace(
+        base,
+        format=padding,
+        prefix="_" if not base or base[0].isdigit() else "",
+        suffix=suffix
+    )
+
+
 def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
     """Return unique namespace
 
@@ -330,7 +368,7 @@ def collect_animation_data(fps=False):
     data["frameEnd"] = frame_end
     data["handleStart"] = handle_start
     data["handleEnd"] = handle_end
-    data["step"] = 0.25
+    data["step"] = 1.0
 
     if fps:
         data["fps"] = mel.eval('currentTimeUnitToFPS()')
@@ -1212,7 +1250,7 @@ def extract_alembic(file,
     return file
 
 
-# region ID
+# # region ID
 def get_id_required_nodes(referenced_nodes=False, nodes=None):
     """Filter out any node which are locked (reference) or readOnly
 
@@ -1740,8 +1778,7 @@ def apply_shaders(relationships, shadernodes, nodes):
             filtered_nodes.extend(nodes_by_id[m_uuid])
 
         id_shading_engines = shading_engines_by_id[shader_uuid]
-        if not id_shading_engines and\
-        not shader_uuid == "None":  # H: support default shader
+        if not id_shading_engines:
             log.error("No shader found with cbId "
                       "'{}'".format(shader_uuid))
             continue
@@ -3234,7 +3271,11 @@ def set_colorspace():
 
     # enable color management
     cmds.colorManagementPrefs(e=True, cmEnabled=True)
-    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+    # NOTE hornet modification for color management error
+    try:
+        cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+    except:
+        pass
 
     # set config path
     custom_ocio_config = False
@@ -3250,15 +3291,19 @@ def set_colorspace():
 
         if resolved_path:
             filepath = str(resolved_path).replace("\\", "/")
+
             cmds.colorManagementPrefs(e=True, configFilePath=filepath)
             cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
             log.debug("maya '{}' changed to: {}".format(
                 "configFilePath", resolved_path))
             custom_ocio_config = True
         else:
-            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
-            cmds.colorManagementPrefs(e=True, configFilePath="")
-
+            try:
+                cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
+                cmds.colorManagementPrefs(e=True, configFilePath="")
+            except:
+                pass
+            # END
     # If no custom OCIO config file was set we make sure that Maya 2022+
     # either chooses between Maya's newer default v2 or legacy config based
     # on OpenPype setting to use ocio v2 or not.
@@ -3940,7 +3985,9 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     return capture_preset or {}
 
 
-def create_rig_animation_instance(nodes, context, namespace, log=None):
+def create_rig_animation_instance(
+    nodes, context, namespace, options=None, log=None
+):
     """Create an animation publish instance for loaded rigs.
 
     See the RecreateRigAnimationInstance inventory action on how to use this
@@ -3950,12 +3997,16 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
         nodes (list): Member nodes of the rig instance.
         context (dict): Representation context of the rig container
         namespace (str): Namespace of the rig container
+        options (dict, optional): Additional loader data
         log (logging.Logger, optional): Logger to log to if provided
 
     Returns:
         None
 
     """
+    if options is None:
+        options = {}
+
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
@@ -3973,6 +4024,23 @@ def create_rig_animation_instance(nodes, context, namespace, log=None):
 
     asset = legacy_io.Session["AVALON_ASSET"]
     dependency = str(context["representation"]["_id"])
+
+    custom_subset = options.get("animationSubsetName")
+    if custom_subset:
+        formatting_data = {
+            "asset_name": context['asset']['name'],
+            "asset_type": context['asset']['type'],
+            "subset": context['subset']['name'],
+            "family": (
+                context['subset']['data'].get('family') or
+                context['subset']['data']['families'][0]
+            )
+        }
+        namespace = get_custom_namespace(
+            custom_subset.format(
+                **formatting_data
+            )
+        )
 
     if log:
         log.info("Creating subset: {}".format(namespace))

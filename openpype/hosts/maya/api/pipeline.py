@@ -98,6 +98,17 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
             return
 
+        # NOTE Hornet hotfix for workspace
+        self.log.info("Hornet hotfix for workspace...")
+        # from openpype.settings import get_project_settings
+        # project_settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        if project_settings.get('maya'):
+            from maya import mel
+            mel_workspace = project_settings.get('maya')['mel_workspace']
+            mel.eval(mel_workspace)
+            cmds.workspace( s=True )
+        # END
+
         _set_project()
         self._register_callbacks()
 
