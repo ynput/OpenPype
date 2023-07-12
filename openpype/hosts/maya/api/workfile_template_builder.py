@@ -251,17 +251,16 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
-        model = cmds.ls(assemblies  = True)
+        model = cmds.ls(assemblies=True)
 
         filtered_model = []
-        exclude_list = ['persp', 'top', 'front',
-                         'side', 'root', 'wip']
+        exclude_list = ['persp','top','front','side','root','wip']
 
         for element in model:
             if not any(exclude_elem in element for exclude_elem in exclude_list):
                 filtered_model.append(element)
 
-        cameras = cmds.ls(type = 'camera')
+        cameras = cmds.ls(type='camera')
         renderable_camera = None
 
         for camera in cameras:
