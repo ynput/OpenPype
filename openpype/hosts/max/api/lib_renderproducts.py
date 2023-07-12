@@ -98,7 +98,7 @@ class RenderProducts(object):
                 if render_name:
                     for name in render_name:
                         aovs_frames.update({
-                            f"{camera}_{name}": self.get_expected_arnold_product(
+                            f"{camera}_{name}": self.get_expected_arnold_product(   # noqa
                                 filename, name, start_frame,
                                 end_frame, ext)
                         })
