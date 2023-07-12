@@ -19,7 +19,8 @@ import requests
 import pyblish.api
 from openpype.pipeline.publish import (
     AbstractMetaInstancePlugin,
-    KnownPublishError
+    KnownPublishError,
+    OpenPypePyblishPluginMixin
 )
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
@@ -35,7 +36,7 @@ def requests_post(*args, **kwargs):
 
     Warning:
         Disabling SSL certificate validation is defeating one line
-        of defense SSL is providing and it is not recommended.
+        of defense SSL is providing, and it is not recommended.
 
     """
     if 'verify' not in kwargs:
@@ -56,7 +57,7 @@ def requests_get(*args, **kwargs):
 
     Warning:
         Disabling SSL certificate validation is defeating one line
-        of defense SSL is providing and it is not recommended.
+        of defense SSL is providing, and it is not recommended.
 
     """
     if 'verify' not in kwargs:
@@ -395,14 +396,17 @@ class DeadlineJobInfo(object):
 
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
-class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
+class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
+                             OpenPypePyblishPluginMixin):
     """Class abstracting access to Deadline."""
 
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
+
     import_reference = False
     use_published = True
     asset_dependencies = False
+    default_priority = 50
 
     def __init__(self, *args, **kwargs):
         super(AbstractSubmitDeadline, self).__init__(*args, **kwargs)
@@ -651,18 +655,18 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
     @staticmethod
     def _get_workfile_instance(context):
         """Find workfile instance in context"""
-        for i in context:
+        for instance in context:
 
             is_workfile = (
-                "workfile" in i.data.get("families", []) or
-                i.data["family"] == "workfile"
+                "workfile" in instance.data.get("families", []) or
+                instance.data["family"] == "workfile"
             )
             if not is_workfile:
                 continue
 
             # test if there is instance of workfile waiting
             # to be published.
-            assert i.data.get("publish", True) is True, (
+            assert instance.data.get("publish", True) is True, (
                 "Workfile (scene) must be published along")
 
-            return i
+            return instance
