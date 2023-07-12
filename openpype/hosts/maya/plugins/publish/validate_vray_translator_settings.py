@@ -5,6 +5,7 @@ from openpype.pipeline.publish import (
     context_plugin_should_run,
     RepairContextAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 from maya import cmds
@@ -26,7 +27,10 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
         invalid = self.get_invalid(context)
         if invalid:
-            raise RuntimeError("Found invalid VRay Translator settings!")
+            raise PublishValidationError(
+                message="Found invalid VRay Translator settings",
+                title=self.label
+            )
 
     @classmethod
     def get_invalid(cls, context):
@@ -35,7 +39,11 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
         # Get vraySettings node
         vray_settings = cmds.ls(type="VRaySettingsNode")
-        assert vray_settings, "Please ensure a VRay Settings Node is present"
+        if not vray_settings:
+            raise PublishValidationError(
+                "Please ensure a VRay Settings Node is present",
+                title=cls.label
+            )
 
         node = vray_settings[0]
 
