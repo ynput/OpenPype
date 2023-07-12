@@ -633,23 +633,8 @@ def evalParmNoFrame(node, parm, pad_character="#"):
 
 def get_color_management_preferences():
     """Get default OCIO preferences"""
-    data = {
-        "config": hou.Color.ocio_configPath()
-
+    return {
+        "config": hou.Color.ocio_configPath(),
+        "display": hou.Color.ocio_defaultDisplay(),
+        "view": hou.Color.ocio_defaultView()
     }
-
-    # Get default display and view from OCIO
-    display = hou.Color.ocio_defaultDisplay()
-    disp_regex = re.compile(r"^(?P<name>.+-)(?P<display>.+)$")
-    disp_match = disp_regex.match(display)
-
-    view = hou.Color.ocio_defaultView()
-    view_regex = re.compile(r"^(?P<name>.+- )(?P<view>.+)$")
-    view_match = view_regex.match(view)
-    data.update({
-        "display": disp_match.group("display"),
-        "view": view_match.group("view")
-
-    })
-
-    return data

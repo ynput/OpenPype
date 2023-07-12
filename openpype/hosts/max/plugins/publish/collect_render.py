@@ -7,6 +7,7 @@ from pymxs import runtime as rt
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.max.api import colorspace
 from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
+from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
@@ -25,8 +26,22 @@ class CollectRender(pyblish.api.InstancePlugin):
         file = rt.maxFileName
         current_file = os.path.join(folder, file)
         filepath = current_file.replace("\\", "/")
-
+        container_name = instance.data.get("instance_node")
         context.data['currentFile'] = current_file
+        cameras = instance.data.get("members")
+        sel_cam = [
+            c.name for c in cameras
+            if rt.classOf(c) in rt.Camera.classes]
+        render_dir = os.path.dirname(rt.rendOutputFilename)
+        outputs = RenderSettings().create_batch_render_layer(
+            container_name, render_dir, sel_cam
+        )
+        aov_outputs = RenderSettings().get_batch_render_elements(
+            container_name, render_dir, sel_cam
+        )
+        files_aov = RenderProducts().get_multiple_beauty(outputs, cameras)
+        aovs = RenderProducts().get_multiple_aovs(outputs, cameras)
+        files_aov.update(aovs)
         asset = get_current_asset_name()
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
@@ -37,8 +52,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
             instance.data["files"] = list()
-            instance.data["expectedFiles"].append(files_by_aov)
-            instance.data["files"].append(files_by_aov)
+            instance.data["expectedFiles"].append(files_aov)
+            instance.data["files"].append(files_aov)
 
         img_format = RenderProducts().image_format()
         project_name = context.data["projectName"]
@@ -48,9 +63,6 @@ class CollectRender(pyblish.api.InstancePlugin):
                                                       instance.name,
                                                       asset_id)
         self.log.debug("version_doc: {0}".format(version_doc))
-        sel_obj = [
-            c.name for c in rt.Objects
-            if rt.classOf(c) in rt.Camera.classes]
 
         version_int = 1
         if version_doc:
@@ -82,11 +94,13 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
-            "cameras": sel_obj,
+            "cameras": sel_cam,
             "frameStart": int(rt.rendStart),
             "frameEnd": int(rt.rendEnd),
             "version": version_int,
-            "farm": True
+            "farm": True,
+            "renderoutput": outputs,
+            "aovoutput": aov_outputs
         }
         instance.data.update(data)
 

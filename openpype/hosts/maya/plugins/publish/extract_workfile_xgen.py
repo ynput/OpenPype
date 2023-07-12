@@ -57,7 +57,7 @@ class ExtractWorkfileXgen(publish.Extractor):
                 continue
 
             render_start_frame = instance.data["frameStart"]
-            render_end_frame = instance.data["frameStart"]
+            render_end_frame = instance.data["frameEnd"]
 
             if start_frame is None:
                 start_frame = render_start_frame

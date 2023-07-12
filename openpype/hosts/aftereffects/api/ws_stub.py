@@ -35,6 +35,8 @@ class AEItem(object):
     instance_id = attr.ib(default=None)  # New Publisher
     width = attr.ib(default=None)
     height = attr.ib(default=None)
+    is_placeholder = attr.ib(default=False)
+    uuid = attr.ib(default=False)
 
 
 class AfterEffectsServerStub():
@@ -220,6 +222,16 @@ class AfterEffectsServerStub():
               )
         return self._to_records(self._handle_return(res))
 
+    def select_items(self, items):
+        """
+            Select items in Project list
+        Args:
+            items (list): of int item ids
+        """
+        self.websocketserver.call(
+            self.client.call('AfterEffects.select_items', items=items))
+
+
     def get_selected_items(self, comps, folders=False, footages=False):
         """
             Same as get_items but using selected items only
@@ -239,6 +251,21 @@ class AfterEffectsServerStub():
                                          footages=footages)
                                         )
         return self._to_records(self._handle_return(res))
+
+    def add_item(self, name, item_type):
+        """
+            Adds either composition or folder to project item list.
+
+            Args:
+                name (str)
+                item_type (str): COMP|FOLDER
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item',
+                                         name=name,
+                                         item_type=item_type))
+
+        return self._handle_return(res)
 
     def get_item(self, item_id):
         """
@@ -316,7 +343,7 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def remove_instance(self, instance_id):
+    def remove_instance(self, instance_id, metadata=None):
         """
             Removes instance with 'instance_id' from file's metadata and
             saves them.
@@ -328,7 +355,10 @@ class AfterEffectsServerStub():
         """
         cleaned_data = []
 
-        for instance in self.get_metadata():
+        if metadata is None:
+            metadata = self.get_metadata()
+
+        for instance in metadata:
             inst_id = instance.get("instance_id") or instance.get("uuid")
             if inst_id != instance_id:
                 cleaned_data.append(instance)
@@ -534,6 +564,47 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
+    def add_item_instead_placeholder(self, placeholder_item_id, item_id):
+        """
+            Adds item_id to layers where plaeholder_item_id is present.
+
+            1 placeholder could result in multiple loaded containers (eg items)
+
+            Args:
+                placeholder_item_id (int): id of placeholder item
+                item_id (int): loaded FootageItem id
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item_instead_placeholder',  # noqa
+                                         placeholder_item_id=placeholder_item_id,  # noqa
+                                         item_id=item_id))
+
+        return self._handle_return(res)
+
+    def add_placeholder(self, name, width, height, fps, duration):
+        """
+            Adds new FootageItem as a placeholder for workfile builder
+
+            Placeholder requires width etc, currently probably only hardcoded
+            values.
+
+            Args:
+                name (str)
+                width (int)
+                height (int)
+                fps (float)
+                duration (int)
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_placeholder',
+                                         name=name,
+                                         width=width,
+                                         height=height,
+                                         fps=fps,
+                                         duration=duration))
+
+        return self._handle_return(res)
+
     def render(self, folder_url, comp_id):
         """
             Render all renderqueueitem to 'folder_url'
@@ -632,7 +703,8 @@ class AfterEffectsServerStub():
                           d.get('file_name'),
                           d.get("instance_id"),
                           d.get("width"),
-                          d.get("height"))
+                          d.get("height"),
+                          d.get("is_placeholder"))
 
             ret.append(item)
         return ret

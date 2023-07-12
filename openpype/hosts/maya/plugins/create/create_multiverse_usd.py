@@ -1,53 +1,135 @@
 from openpype.hosts.maya.api import plugin, lib
+from openpype.lib import (
+    BoolDef,
+    NumberDef,
+    TextDef,
+    EnumDef
+)
 
 
-class CreateMultiverseUsd(plugin.Creator):
+class CreateMultiverseUsd(plugin.MayaCreator):
     """Create Multiverse USD Asset"""
 
-    name = "mvUsdMain"
+    identifier = "io.openpype.creators.maya.mvusdasset"
     label = "Multiverse USD Asset"
     family = "usd"
     icon = "cubes"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateMultiverseUsd, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data first, since it maintains order.
-        self.data.update(lib.collect_animation_data(True))
+        defs = lib.collect_animation_defs(fps=True)
+        defs.extend([
+            EnumDef("fileFormat",
+                    label="File format",
+                    items=["usd", "usda", "usdz"],
+                    default="usd"),
+            BoolDef("stripNamespaces",
+                    label="Strip Namespaces",
+                    default=True),
+            BoolDef("mergeTransformAndShape",
+                    label="Merge Transform and Shape",
+                    default=False),
+            BoolDef("writeAncestors",
+                    label="Write Ancestors",
+                    default=True),
+            BoolDef("flattenParentXforms",
+                    label="Flatten Parent Xforms",
+                    default=False),
+            BoolDef("writeSparseOverrides",
+                    label="Write Sparse Overrides",
+                    default=False),
+            BoolDef("useMetaPrimPath",
+                    label="Use Meta Prim Path",
+                    default=False),
+            TextDef("customRootPath",
+                    label="Custom Root Path",
+                    default=''),
+            TextDef("customAttributes",
+                    label="Custom Attributes",
+                    tooltip="Comma-separated list of attribute names",
+                    default=''),
+            TextDef("nodeTypesToIgnore",
+                    label="Node Types to Ignore",
+                    tooltip="Comma-separated list of node types to be ignored",
+                    default=''),
+            BoolDef("writeMeshes",
+                    label="Write Meshes",
+                    default=True),
+            BoolDef("writeCurves",
+                    label="Write Curves",
+                    default=True),
+            BoolDef("writeParticles",
+                    label="Write Particles",
+                    default=True),
+            BoolDef("writeCameras",
+                    label="Write Cameras",
+                    default=False),
+            BoolDef("writeLights",
+                    label="Write Lights",
+                    default=False),
+            BoolDef("writeJoints",
+                    label="Write Joints",
+                    default=False),
+            BoolDef("writeCollections",
+                    label="Write Collections",
+                    default=False),
+            BoolDef("writePositions",
+                    label="Write Positions",
+                    default=True),
+            BoolDef("writeNormals",
+                    label="Write Normals",
+                    default=True),
+            BoolDef("writeUVs",
+                    label="Write UVs",
+                    default=True),
+            BoolDef("writeColorSets",
+                    label="Write Color Sets",
+                    default=False),
+            BoolDef("writeTangents",
+                    label="Write Tangents",
+                    default=False),
+            BoolDef("writeRefPositions",
+                    label="Write Ref Positions",
+                    default=True),
+            BoolDef("writeBlendShapes",
+                    label="Write BlendShapes",
+                    default=False),
+            BoolDef("writeDisplayColor",
+                    label="Write Display Color",
+                    default=True),
+            BoolDef("writeSkinWeights",
+                    label="Write Skin Weights",
+                    default=False),
+            BoolDef("writeMaterialAssignment",
+                    label="Write Material Assignment",
+                    default=False),
+            BoolDef("writeHardwareShader",
+                    label="Write Hardware Shader",
+                    default=False),
+            BoolDef("writeShadingNetworks",
+                    label="Write Shading Networks",
+                    default=False),
+            BoolDef("writeTransformMatrix",
+                    label="Write Transform Matrix",
+                    default=True),
+            BoolDef("writeUsdAttributes",
+                    label="Write USD Attributes",
+                    default=True),
+            BoolDef("writeInstancesAsReferences",
+                    label="Write Instances as References",
+                    default=False),
+            BoolDef("timeVaryingTopology",
+                    label="Time Varying Topology",
+                    default=False),
+            TextDef("customMaterialNamespace",
+                    label="Custom Material Namespace",
+                    default=''),
+            NumberDef("numTimeSamples",
+                      label="Num Time Samples",
+                      default=1),
+            NumberDef("timeSamplesSpan",
+                      label="Time Samples Span",
+                      default=0.0),
+        ])
 
-        self.data["fileFormat"] = ["usd", "usda", "usdz"]
-        self.data["stripNamespaces"] = True
-        self.data["mergeTransformAndShape"] = False
-        self.data["writeAncestors"] = True
-        self.data["flattenParentXforms"] = False
-        self.data["writeSparseOverrides"] = False
-        self.data["useMetaPrimPath"] = False
-        self.data["customRootPath"] = ''
-        self.data["customAttributes"] = ''
-        self.data["nodeTypesToIgnore"] = ''
-        self.data["writeMeshes"] = True
-        self.data["writeCurves"] = True
-        self.data["writeParticles"] = True
-        self.data["writeCameras"] = False
-        self.data["writeLights"] = False
-        self.data["writeJoints"] = False
-        self.data["writeCollections"] = False
-        self.data["writePositions"] = True
-        self.data["writeNormals"] = True
-        self.data["writeUVs"] = True
-        self.data["writeColorSets"] = False
-        self.data["writeTangents"] = False
-        self.data["writeRefPositions"] = True
-        self.data["writeBlendShapes"] = False
-        self.data["writeDisplayColor"] = True
-        self.data["writeSkinWeights"] = False
-        self.data["writeMaterialAssignment"] = False
-        self.data["writeHardwareShader"] = False
-        self.data["writeShadingNetworks"] = False
-        self.data["writeTransformMatrix"] = True
-        self.data["writeUsdAttributes"] = True
-        self.data["writeInstancesAsReferences"] = False
-        self.data["timeVaryingTopology"] = False
-        self.data["customMaterialNamespace"] = ''
-        self.data["numTimeSamples"] = 1
-        self.data["timeSamplesSpan"] = 0.0
+        return defs

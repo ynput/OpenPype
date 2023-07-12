@@ -261,8 +261,8 @@ class ExtractPlayblast(publish.Extractor):
             "ext": capture_preset["Codec"]["compression"],
             "files": collected_files,
             "stagingDir": stagingdir,
-            "frameStart": start,
-            "frameEnd": end,
+            "frameStart": int(start),
+            "frameEnd": int(end),
             "fps": fps,
             "tags": tags,
             "camera_name": camera_node_name

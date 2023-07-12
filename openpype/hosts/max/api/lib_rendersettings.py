@@ -34,10 +34,6 @@ class RenderSettings(object):
                 legacy_io.Session["AVALON_PROJECT"]
             )
 
-    def set_render_camera(self, selection):
-        # to avoid Attribute Error from pymxs wrapper
-        return rt.viewport.setCamera(selection[0])
-
     def render_output(self, container):
         folder = rt.maxFilePath
         # hard-coded, should be customized in the setting
@@ -70,7 +66,7 @@ class RenderSettings(object):
         output = os.path.join(output_dir, container)
         try:
             aov_separator = self._aov_chars[(
-                self._project_settings["maya"]
+                self._project_settings["max"]
                                       ["RenderSettings"]
                                       ["aov_separator"]
             )]
@@ -162,3 +158,41 @@ class RenderSettings(object):
             orig_render_elem.append(render_element)
 
         return orig_render_elem
+
+    def get_batch_render_elements(self, container,
+                                  output_dir, cameras):
+        render_element_list = list()
+        output = os.path.join(output_dir, container)
+        render_elem = rt.maxOps.GetCurRenderElementMgr()
+        render_elem_num = render_elem.NumRenderElements()
+        if render_elem_num < 0:
+            return
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
+        for cam in cameras:
+            for i in range(render_elem_num):
+                renderlayer_name = render_elem.GetRenderElement(i)
+                target, renderpass = str(renderlayer_name).split(":")
+                aov_name = "{0}_{1}_{2}..{3}".format(
+                    output, cam, renderpass, img_fmt)
+                render_element_list.append(aov_name)
+        return render_element_list
+
+    def create_batch_render_layer(self, container,
+                                  output_dir, cameras):
+        outputs = list()
+        output = os.path.join(output_dir, container)
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
+        for cam in cameras:
+            camera = rt.getNodeByName(cam)
+            layer_no = rt.batchRenderMgr.FindView(cam)
+            renderlayer = None
+            if layer_no is None:
+                renderlayer = rt.batchRenderMgr.CreateView(camera)
+            else:
+                renderlayer = rt.batchRenderMgr.GetView(layer_no)
+            # use camera name as renderlayer name
+            renderlayer.name = cam
+            renderlayer.outputFilename ="{0}_{1}..{2}".format(
+                output, cam, img_fmt)
+            outputs.append(renderlayer.outputFilename)
+        return outputs

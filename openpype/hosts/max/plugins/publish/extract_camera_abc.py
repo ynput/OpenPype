@@ -1,14 +1,14 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import maintained_selection, get_all_children
+
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
 class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
-    """
-    Extract Camera with AlembicExport
-    """
+    """Extract Camera with AlembicExport."""
 
     order = pyblish.api.ExtractorOrder - 0.1
     label = "Extract Alembic Camera"
@@ -31,20 +31,21 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
         path = os.path.join(stagingdir, filename)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (filename, stagingdir))
+        self.log.info(f"Writing alembic '{filename}' to '{stagingdir}'")
 
-        rt.AlembicExport.ArchiveType = rt.name("ogawa")
-        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.ArchiveType = rt.Name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.Name("maya")
         rt.AlembicExport.StartFrame = start
         rt.AlembicExport.EndFrame = end
         rt.AlembicExport.CustomAttributes = True
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.exportFile(
+            node_list = instance.data["members"]
+            rt.Select(node_list)
+            rt.ExportFile(
                 path,
-                rt.name("noPrompt"),
+                rt.Name("noPrompt"),
                 selectedOnly=True,
                 using=rt.AlembicExport,
             )
@@ -58,6 +59,8 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
             "ext": "abc",
             "files": filename,
             "stagingDir": stagingdir,
+            "frameStart": start,
+            "frameEnd": end,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+        self.log.info(f"Extracted instance '{instance.name}' to: {path}")

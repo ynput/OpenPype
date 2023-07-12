@@ -33,6 +33,100 @@ class RenderProducts(object):
                 output_file, start_frame, end_frame, img_fmt
             )
         }
+    def get_multiple_beauty(self, outputs, cameras):
+        beauty_output_frames = dict()
+        for output, camera in zip(outputs, cameras):
+            filename, ext = os.path.splitext(output)
+            start_frame = int(rt.rendStart)
+            end_frame = int(rt.rendEnd) + 1
+            new_beauty = self.get_expected_beauty(
+                filename, start_frame, end_frame, ext
+            )
+            beauty_output_frames = ({
+                f"{camera}_beauty": new_beauty
+            })
+        return beauty_output_frames
+
+    def get_multiple_aovs(self, outputs, cameras):
+        renderer_class = get_current_renderer()
+        renderer = str(renderer_class).split(":")[0]
+        aovs_frames = {}
+        for output, camera in zip(outputs, cameras):
+            filename, ext = os.path.splitext(output)
+            start_frame = int(rt.rendStart)
+            end_frame = int(rt.rendEnd) + 1
+
+            if renderer in [
+                "ART_Renderer",
+                "V_Ray_6_Hotfix_3",
+                "V_Ray_GPU_6_Hotfix_3",
+                "Default_Scanline_Renderer",
+                "Quicksilver_Hardware_Renderer",
+            ]:
+                render_name = self.get_render_elements_name()
+                if render_name:
+                    for name in render_name:
+                        aovs_frames.update({
+                            f"{camera}_{name}": (
+                            self.get_expected_render_elements(
+                            filename, name, start_frame,
+                            end_frame, ext)
+                            )
+                        })
+            elif renderer == "Redshift_Renderer":
+                render_name = self.get_render_elements_name()
+                if render_name:
+                    rs_aov_files = rt.Execute("renderers.current.separateAovFiles")
+                    # this doesn't work, always returns False
+                    # rs_AovFiles = rt.RedShift_Renderer().separateAovFiles
+                    if ext == "exr" and not rs_aov_files:
+                        for name in render_name:
+                            if name == "RsCryptomatte":
+                                aovs_frames.update({
+                                    f"{camera}_{name}": (
+                                    self.get_expected_render_elements(
+                                    filename, name, start_frame,
+                                    end_frame, ext)
+                                    )
+                                })
+                    else:
+                        for name in render_name:
+                            aovs_frames.update({
+                                f"{camera}_{name}": (
+                                    self.get_expected_render_elements(
+                                    filename, name, start_frame,
+                                    end_frame, ext)
+                                    )
+                                })
+
+            elif renderer == "Arnold":
+                render_name = self.get_arnold_product_name()
+                if render_name:
+                    for name in render_name:
+                        aovs_frames.update({
+                            f"{camera}_{name}": (
+                            self.get_expected_arnold_product(
+                            filename, name, start_frame,
+                            end_frame, ext)
+                            )
+                        })
+            elif renderer in [
+                "V_Ray_6_Hotfix_3",
+                "V_Ray_GPU_6_Hotfix_3"
+            ]:
+                if ext != "exr":
+                    render_name = self.get_render_elements_name()
+                    if render_name:
+                        for name in render_name:
+                            aovs_frames.update({
+                                f"{camera}_{name}": (
+                                self.get_expected_render_elements(
+                                filename, name, start_frame,
+                                end_frame, ext)
+                                )
+                            })
+
+        return aovs_frames
 
     def get_aovs(self, container):
         render_dir = os.path.dirname(rt.rendOutputFilename)
@@ -124,7 +218,7 @@ class RenderProducts(object):
         """Get all the Arnold AOVs name"""
         aov_name = []
 
-        amw = rt.MaxtoAOps.AOVsManagerWindow()
+        amw = rt.MaxToAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
         # Check if there is any aov group set in AOV manager
         aov_group_num = len(aov_mgr.drivers)
