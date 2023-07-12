@@ -290,9 +290,10 @@ def _add_review_families(families):
     return families
 
 
-def prepare_representations(instance, exp_files, anatomy, aov_filter,
+def prepare_representations(skeleton_data, exp_files, anatomy, aov_filter,
                             skip_integration_repre_list,
                             do_not_add_review,
+                            context,
                             color_managed_plugin):
     """Create representations for file sequences.
 
@@ -301,7 +302,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
     most cases, but if not - we create representation from each of them.
 
     Arguments:
-        instance (dict): instance data for which we are
+        skeleton_data (dict): instance data for which we are
                          setting representations
         exp_files (list): list of expected files
         anatomy (Anatomy):
@@ -328,9 +329,9 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         #   expected files contains more explicitly and from what
         #   should be review made.
         # - "review" tag is never added when is set to 'False'
-        if instance["useSequenceForReview"]:
+        if skeleton_data["useSequenceForReview"]:
             # toggle preview on if multipart is on
-            if instance.get("multipartExr", False):
+            if skeleton_data.get("multipartExr", False):
                 log.debug(
                     "Adding preview tag because its multipartExr"
                 )
@@ -355,8 +356,8 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
                 " This may cause issues on farm."
             ).format(staging))
 
-        frame_start = int(instance.get("frameStartHandle"))
-        if instance.get("slate"):
+        frame_start = int(skeleton_data.get("frameStartHandle"))
+        if skeleton_data.get("slate"):
             frame_start -= 1
 
         # explicitly disable review by user
@@ -366,10 +367,10 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
             "ext": ext,
             "files": [os.path.basename(f) for f in list(collection)],
             "frameStart": frame_start,
-            "frameEnd": int(instance.get("frameEndHandle")),
+            "frameEnd": int(skeleton_data.get("frameEndHandle")),
             # If expectedFile are absolute, we need only filenames
             "stagingDir": staging,
-            "fps": instance.get("fps"),
+            "fps": skeleton_data.get("fps"),
             "tags": ["review"] if preview else [],
         }
 
@@ -377,18 +378,19 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         if ext in skip_integration_repre_list:
             rep["tags"].append("delete")
 
-        if instance.get("multipartExr", False):
+        if skeleton_data.get("multipartExr", False):
             rep["tags"].append("multipartExr")
 
         # support conversion from tiled to scanline
-        if instance.get("convertToScanline"):
+        if skeleton_data.get("convertToScanline"):
             log.info("Adding scanline conversion.")
             rep["tags"].append("toScanline")
 
         representations.append(rep)
 
         if preview:
-            instance["families"] = _add_review_families(instance["families"])
+            skeleton_data["families"] = _add_review_families(
+                skeleton_data["families"])
 
     # add remainders as representations
     for remainder in remainders:
@@ -419,13 +421,14 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         preview = preview and not do_not_add_review
         if preview:
             rep.update({
-                "fps": instance.get("fps"),
+                "fps": skeleton_data.get("fps"),
                 "tags": ["review"]
             })
-            instance["families"] = _add_review_families(instance["families"])
+            skeleton_data["families"] = \
+                _add_review_families(skeleton_data["families"])
 
         already_there = False
-        for repre in instance.get("representations", []):
+        for repre in skeleton_data.get("representations", []):
             # might be added explicitly before by publish_on_farm
             already_there = repre.get("files") == rep["files"]
             if already_there:
@@ -438,8 +441,8 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
     for rep in representations:
         # inject colorspace data
         color_managed_plugin.set_representation_colorspace(
-            rep, instance.context,
-            colorspace=instance.data["colorspace"]
+            rep, context,
+            colorspace=skeleton_data["colorspace"]
         )
 
     return representations

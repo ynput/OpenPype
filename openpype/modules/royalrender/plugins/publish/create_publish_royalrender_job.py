@@ -110,6 +110,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
                 self.aov_filter,
                 self.skip_integration_repre_list,
                 do_not_add_review,
+                instance.context,
                 self
             )
 

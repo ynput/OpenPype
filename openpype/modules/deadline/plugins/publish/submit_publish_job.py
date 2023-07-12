@@ -57,6 +57,7 @@ def get_resource_files(resources, frame_range=None):
 
 
 class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
+                                publish.OpenPypePyblishPluginMixin,
                                 publish.ColormanagedPyblishPluginMixin):
     """Process Job submitted on farm.
 
@@ -396,6 +397,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 self.aov_filter,
                 self.skip_integration_repre_list,
                 do_not_add_review,
+                instance.context,
                 self
             )
 
