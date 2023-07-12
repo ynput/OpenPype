@@ -577,12 +577,14 @@ def remote_publish(log, close_plugin_name=None, raise_error=False):
                 raise RuntimeError(error_message)
 
 
-def get_errored_instances_from_context(context):
+def get_errored_instances_from_context(context, plugin=None):
     """Collect failed instances from pyblish context.
 
     Args:
         context (pyblish.api.Context): Publish context where we're looking
             for failed instances.
+        plugin (pyblish.api.Plugin): If provided then only consider errors
+            related to that plug-in.
 
     Returns:
         List[pyblish.lib.Instance]: Instances which failed during processing.
@@ -592,6 +594,9 @@ def get_errored_instances_from_context(context):
     for result in context.data["results"]:
         if result["instance"] is None:
             # When instance is None we are on the "context" result
+            continue
+
+        if plugin is not None and result.get("plugin") != plugin:
             continue
 
         if result["error"]:
@@ -882,10 +887,11 @@ def get_published_workfile_instance(context):
         return i
 
 
-def replace_published_scene(instance, replace_in_path=True):
-    """Switch work scene for published scene.
+def replace_with_published_scene_path(instance, replace_in_path=True):
+    """Switch work scene path for published scene.
     If rendering/exporting from published scenes is enabled, this will
     replace paths from working scene to published scene.
+    This only works if publish contains workfile instance!
     Args:
         instance (pyblish.api.Instance): Pyblish instance.
         replace_in_path (bool): if True, it will try to find

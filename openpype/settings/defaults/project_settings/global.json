@@ -262,7 +262,8 @@
                     ],
                     "hosts": [
                         "maya",
-                        "houdini"
+                        "houdini",
+                        "max"
                     ],
                     "task_types": [],
                     "task_names": [],

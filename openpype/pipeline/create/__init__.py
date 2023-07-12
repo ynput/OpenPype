@@ -4,6 +4,11 @@ from .constants import (
     PRE_CREATE_THUMBNAIL_KEY,
 )
 
+from .utils import (
+    get_last_versions_for_instances,
+    get_next_versions_for_instances,
+)
+
 from .subset_name import (
     TaskNotSetError,
     get_subset_name_template,
@@ -45,6 +50,9 @@ __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
     "DEFAULT_SUBSET_TEMPLATE",
     "PRE_CREATE_THUMBNAIL_KEY",
+
+    "get_last_versions_for_instances",
+    "get_next_versions_for_instances",
 
     "TaskNotSetError",
     "get_subset_name_template",

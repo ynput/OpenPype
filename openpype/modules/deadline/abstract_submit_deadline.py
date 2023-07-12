@@ -23,7 +23,7 @@ from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
 )
 from openpype.pipeline.publish.lib import (
-    replace_published_scene
+    replace_with_published_scene_path
 )
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
@@ -528,7 +528,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
             published.
 
         """
-        return replace_published_scene(self._instance, replace_in_path=True)
+        return replace_with_published_scene_path(
+            self._instance, replace_in_path=replace_in_path)
 
     def assemble_payload(
             self, job_info=None, plugin_info=None, aux_files=None):
