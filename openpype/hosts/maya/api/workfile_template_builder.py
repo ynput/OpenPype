@@ -254,7 +254,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         model = cmds.ls(assemblies=True)
 
         filtered_model = []
-        exclude_list = ['persp','top','front','side','root','wip']
+        exclude_list = ['persp', 'top', 'front', 'side', 'root', 'wip']
 
         for element in model:
             if not any(exclude_elem in element for exclude_elem in exclude_list):
@@ -265,10 +265,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
         for camera in cameras:
             if cmds.getAttr(camera + ".renderable"):
-                shapes = cmds.listRelatives(camera,
-                                        parent=True,
-                                        fullPath=True,
-                                        type="transform")
+                shapes = cmds.listRelatives(camera,parent=True,fullPath=True,type="transform")
                 if shapes:
                     renderable_camera = shapes[0]
                     break
