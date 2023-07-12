@@ -68,7 +68,7 @@ class RenderProducts(object):
                 if render_name:
                     for name in render_name:
                         aovs_frames.update({
-                            f"{camera}_{name}": self.get_expected_render_elements(
+                            f"{camera}_{name}": self.get_expected_aovs(
                                 filename, name, start_frame,
                                 end_frame, ext)
                         })
@@ -82,14 +82,14 @@ class RenderProducts(object):
                         for name in render_name:
                             if name == "RsCryptomatte":
                                 aovs_frames.update({
-                                    f"{camera}_{name}": self.get_expected_render_elements(
+                                    f"{camera}_{name}": self.get_expected_aovs(
                                         filename, name, start_frame,
                                         end_frame, ext)
                                 })
                     else:
                         for name in render_name:
                             aovs_frames.update({
-                                f"{camera}_{name}": self.get_expected_render_elements(
+                                f"{camera}_{name}": self.get_expected_aovs(
                                     filename, name, start_frame,
                                     end_frame, ext)
                             })
@@ -111,9 +111,9 @@ class RenderProducts(object):
                     if render_name:
                         for name in render_name:
                             aovs_frames.update({
-                                f"{camera}_{name}": self.get_expected_render_elements(
-                                filename, name, start_frame,
-                                end_frame, ext)
+                                f"{camera}_{name}": self.get_expected_aovs(
+                                    filename, name, start_frame,
+                                    end_frame, ext)
                             })
 
         return aovs_frames
@@ -144,7 +144,7 @@ class RenderProducts(object):
             if render_name:
                 for name in render_name:
                     render_dict.update({
-                        name: self.get_expected_render_elements(
+                        name: self.get_expected_aovs(
                             output_file, name, start_frame,
                             end_frame, img_fmt)
                     })
@@ -158,14 +158,14 @@ class RenderProducts(object):
                     for name in render_name:
                         if name == "RsCryptomatte":
                             render_dict.update({
-                                name: self.get_expected_render_elements(
+                                name: self.get_expected_aovs(
                                     output_file, name, start_frame,
                                     end_frame, img_fmt)
                             })
                 else:
                     for name in render_name:
                         render_dict.update({
-                            name: self.get_expected_render_elements(
+                            name: self.get_expected_aovs(
                                 output_file, name, start_frame,
                                 end_frame, img_fmt)
                         })
@@ -188,7 +188,7 @@ class RenderProducts(object):
                 if render_name:
                     for name in render_name:
                         render_dict.update({
-                            name: self.get_expected_render_elements(
+                            name: self.get_expected_aovs(
                                 output_file, name, start_frame,
                                 end_frame, img_fmt)      # noqa
                         })
@@ -251,8 +251,8 @@ class RenderProducts(object):
 
         return render_name
 
-    def get_expected_render_elements(self, folder, name,
-                                     start_frame, end_frame, fmt):
+    def get_expected_aovs(self, folder, name,
+                          start_frame, end_frame, fmt):
         """Get all the expected render element output files. """
         render_elements = []
         for f in range(start_frame, end_frame):
