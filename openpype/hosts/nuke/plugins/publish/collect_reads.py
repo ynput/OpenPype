@@ -103,7 +103,6 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
@@ -123,7 +122,8 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "colorspace": colorspace,
-            "handles": int(asset_doc["data"].get("handles", 0)),
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "step": 1,
             "fps": int(nuke.root()['fps'].value())
         })

@@ -1,31 +1,437 @@
 {
     "open_workfile_post_initialization": false,
+    "explicit_plugins_loading": {
+        "enabled": false,
+        "plugins_to_load": [
+            {
+                "enabled": false,
+                "name": "AbcBullet"
+            },
+            {
+                "enabled": true,
+                "name": "AbcExport"
+            },
+            {
+                "enabled": true,
+                "name": "AbcImport"
+            },
+            {
+                "enabled": false,
+                "name": "animImportExport"
+            },
+            {
+                "enabled": false,
+                "name": "ArubaTessellator"
+            },
+            {
+                "enabled": false,
+                "name": "ATFPlugin"
+            },
+            {
+                "enabled": false,
+                "name": "atomImportExport"
+            },
+            {
+                "enabled": false,
+                "name": "AutodeskPacketFile"
+            },
+            {
+                "enabled": false,
+                "name": "autoLoader"
+            },
+            {
+                "enabled": false,
+                "name": "bifmeshio"
+            },
+            {
+                "enabled": false,
+                "name": "bifrostGraph"
+            },
+            {
+                "enabled": false,
+                "name": "bifrostshellnode"
+            },
+            {
+                "enabled": false,
+                "name": "bifrostvisplugin"
+            },
+            {
+                "enabled": false,
+                "name": "blast2Cmd"
+            },
+            {
+                "enabled": false,
+                "name": "bluePencil"
+            },
+            {
+                "enabled": false,
+                "name": "Boss"
+            },
+            {
+                "enabled": false,
+                "name": "bullet"
+            },
+            {
+                "enabled": true,
+                "name": "cacheEvaluator"
+            },
+            {
+                "enabled": false,
+                "name": "cgfxShader"
+            },
+            {
+                "enabled": false,
+                "name": "cleanPerFaceAssignment"
+            },
+            {
+                "enabled": false,
+                "name": "clearcoat"
+            },
+            {
+                "enabled": false,
+                "name": "convertToComponentTags"
+            },
+            {
+                "enabled": false,
+                "name": "curveWarp"
+            },
+            {
+                "enabled": false,
+                "name": "ddsFloatReader"
+            },
+            {
+                "enabled": true,
+                "name": "deformerEvaluator"
+            },
+            {
+                "enabled": false,
+                "name": "dgProfiler"
+            },
+            {
+                "enabled": false,
+                "name": "drawUfe"
+            },
+            {
+                "enabled": false,
+                "name": "dx11Shader"
+            },
+            {
+                "enabled": false,
+                "name": "fbxmaya"
+            },
+            {
+                "enabled": false,
+                "name": "fltTranslator"
+            },
+            {
+                "enabled": false,
+                "name": "freeze"
+            },
+            {
+                "enabled": false,
+                "name": "Fur"
+            },
+            {
+                "enabled": false,
+                "name": "gameFbxExporter"
+            },
+            {
+                "enabled": false,
+                "name": "gameInputDevice"
+            },
+            {
+                "enabled": false,
+                "name": "GamePipeline"
+            },
+            {
+                "enabled": false,
+                "name": "gameVertexCount"
+            },
+            {
+                "enabled": false,
+                "name": "geometryReport"
+            },
+            {
+                "enabled": false,
+                "name": "geometryTools"
+            },
+            {
+                "enabled": false,
+                "name": "glslShader"
+            },
+            {
+                "enabled": true,
+                "name": "GPUBuiltInDeformer"
+            },
+            {
+                "enabled": false,
+                "name": "gpuCache"
+            },
+            {
+                "enabled": false,
+                "name": "hairPhysicalShader"
+            },
+            {
+                "enabled": false,
+                "name": "ik2Bsolver"
+            },
+            {
+                "enabled": false,
+                "name": "ikSpringSolver"
+            },
+            {
+                "enabled": false,
+                "name": "invertShape"
+            },
+            {
+                "enabled": false,
+                "name": "lges"
+            },
+            {
+                "enabled": false,
+                "name": "lookdevKit"
+            },
+            {
+                "enabled": false,
+                "name": "MASH"
+            },
+            {
+                "enabled": false,
+                "name": "matrixNodes"
+            },
+            {
+                "enabled": false,
+                "name": "mayaCharacterization"
+            },
+            {
+                "enabled": false,
+                "name": "mayaHIK"
+            },
+            {
+                "enabled": false,
+                "name": "MayaMuscle"
+            },
+            {
+                "enabled": false,
+                "name": "mayaUsdPlugin"
+            },
+            {
+                "enabled": false,
+                "name": "mayaVnnPlugin"
+            },
+            {
+                "enabled": false,
+                "name": "melProfiler"
+            },
+            {
+                "enabled": false,
+                "name": "meshReorder"
+            },
+            {
+                "enabled": true,
+                "name": "modelingToolkit"
+            },
+            {
+                "enabled": false,
+                "name": "mtoa"
+            },
+            {
+                "enabled": false,
+                "name": "mtoh"
+            },
+            {
+                "enabled": false,
+                "name": "nearestPointOnMesh"
+            },
+            {
+                "enabled": true,
+                "name": "objExport"
+            },
+            {
+                "enabled": false,
+                "name": "OneClick"
+            },
+            {
+                "enabled": false,
+                "name": "OpenEXRLoader"
+            },
+            {
+                "enabled": false,
+                "name": "pgYetiMaya"
+            },
+            {
+                "enabled": false,
+                "name": "pgyetiVrayMaya"
+            },
+            {
+                "enabled": false,
+                "name": "polyBoolean"
+            },
+            {
+                "enabled": false,
+                "name": "poseInterpolator"
+            },
+            {
+                "enabled": false,
+                "name": "quatNodes"
+            },
+            {
+                "enabled": false,
+                "name": "randomizerDevice"
+            },
+            {
+                "enabled": false,
+                "name": "redshift4maya"
+            },
+            {
+                "enabled": true,
+                "name": "renderSetup"
+            },
+            {
+                "enabled": false,
+                "name": "retargeterNodes"
+            },
+            {
+                "enabled": false,
+                "name": "RokokoMotionLibrary"
+            },
+            {
+                "enabled": false,
+                "name": "rotateHelper"
+            },
+            {
+                "enabled": false,
+                "name": "sceneAssembly"
+            },
+            {
+                "enabled": false,
+                "name": "shaderFXPlugin"
+            },
+            {
+                "enabled": false,
+                "name": "shotCamera"
+            },
+            {
+                "enabled": false,
+                "name": "snapTransform"
+            },
+            {
+                "enabled": false,
+                "name": "stage"
+            },
+            {
+                "enabled": true,
+                "name": "stereoCamera"
+            },
+            {
+                "enabled": false,
+                "name": "stlTranslator"
+            },
+            {
+                "enabled": false,
+                "name": "studioImport"
+            },
+            {
+                "enabled": false,
+                "name": "Substance"
+            },
+            {
+                "enabled": false,
+                "name": "substancelink"
+            },
+            {
+                "enabled": false,
+                "name": "substancemaya"
+            },
+            {
+                "enabled": false,
+                "name": "substanceworkflow"
+            },
+            {
+                "enabled": false,
+                "name": "svgFileTranslator"
+            },
+            {
+                "enabled": false,
+                "name": "sweep"
+            },
+            {
+                "enabled": false,
+                "name": "testify"
+            },
+            {
+                "enabled": false,
+                "name": "tiffFloatReader"
+            },
+            {
+                "enabled": false,
+                "name": "timeSliderBookmark"
+            },
+            {
+                "enabled": false,
+                "name": "Turtle"
+            },
+            {
+                "enabled": false,
+                "name": "Type"
+            },
+            {
+                "enabled": false,
+                "name": "udpDevice"
+            },
+            {
+                "enabled": false,
+                "name": "ufeSupport"
+            },
+            {
+                "enabled": false,
+                "name": "Unfold3D"
+            },
+            {
+                "enabled": false,
+                "name": "VectorRender"
+            },
+            {
+                "enabled": false,
+                "name": "vrayformaya"
+            },
+            {
+                "enabled": false,
+                "name": "vrayvolumegrid"
+            },
+            {
+                "enabled": false,
+                "name": "xgenToolkit"
+            },
+            {
+                "enabled": false,
+                "name": "xgenVray"
+            }
+        ]
+    },
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
+        },
+        "workfile": {
+            "enabled": false,
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference_v2": {
             "enabled": true,
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "renderSpace": "ACEScg",
             "displayName": "sRGB",
             "viewName": "ACES 1.0 SDR-video"
         },
         "colorManagementPreference": {
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "renderSpace": "scene-linear Rec 709/sRGB",
             "viewTransform": "sRGB gamma"
         }
@@ -46,6 +452,10 @@
             "source-path": [],
             "destination-path": []
         }
+    },
+    "include_handles": {
+        "include_handles_default": false,
+        "per_task_type": []
     },
     "scriptsmenu": {
         "name": "OpenPype Tools",
@@ -110,6 +520,7 @@
         "CreateLook": {
             "enabled": true,
             "make_tx": true,
+            "rs_tex": false,
             "defaults": [
                 "Main"
             ]
@@ -144,7 +555,7 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": true,
+            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
@@ -324,6 +735,7 @@
         "ValidateShaderName": {
             "enabled": false,
             "optional": true,
+            "active": true,
             "regex": "(?P<asset>.*)_(.*)_SHD"
         },
         "ValidateShadingEngine": {
@@ -868,7 +1280,6 @@
                     "dynamics": false,
                     "fluids": false,
                     "follicles": false,
-                    "gpuCacheDisplayFilter": false,
                     "greasePencils": false,
                     "grid": false,
                     "hairSystems": true,
@@ -895,7 +1306,10 @@
                     "polymeshes": true,
                     "strokes": false,
                     "subdivSurfaces": false,
-                    "textures": false
+                    "textures": false,
+                    "pluginObjects": {
+                        "gpuCacheDisplayFilter": false
+                    }
                 },
                 "Camera Options": {
                     "displayGateMask": false,
@@ -908,7 +1322,8 @@
                     "displayFilmOrigin": false,
                     "overscan": 1.0
                 }
-            }
+            },
+            "profiles": []
         },
         "ExtractMayaSceneRaw": {
             "enabled": true,
@@ -926,6 +1341,24 @@
             "enabled": true,
             "active": true,
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
+        },
+        "ExtractLook": {
+            "maketx_arguments": []
+        },
+        "ExtractGPUCache": {
+            "enabled": false,
+            "families": [
+                "model",
+                "animation",
+                "pointcache"
+            ],
+            "step": 1.0,
+            "stepSave": 1,
+            "optimize": true,
+            "optimizationThreshold": 40000,
+            "optimizeAnimationsForMotionBlur": true,
+            "writeMaterials": true,
+            "useBaseTessellation": true
         }
     },
     "load": {
@@ -1026,6 +1459,11 @@
                 125,
                 255
             ]
+        },
+        "reference_loader": {
+            "namespace": "{asset_name}_{subset}_##_",
+            "group_name": "_GRP",
+            "display_handle": true
         }
     },
     "workfile_build": {

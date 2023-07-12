@@ -45,7 +45,7 @@ class PublishValidationError(Exception):
 
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
-        self.title = title or "< Missing title >"
+        self.title = title
         self.description = description or message
         self.detail = detail
         super(PublishValidationError, self).__init__(message)
@@ -233,36 +233,40 @@ class RepairAction(pyblish.api.Action):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the errored instances
-        self.log.info("Finding failed instances..")
+        self.log.debug("Finding failed instances..")
         errored_instances = get_errored_instances_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
         for instance in instances:
+            self.log.debug(
+                "Attempting repair for instance: {} ...".format(instance)
+            )
             plugin.repair(instance)
 
 
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
-    To process the repairing this requires a static `repair(instance)` method
+    To process the repairing this requires a static `repair(context)` method
     is available on the plugin.
     """
 
     label = "Repair"
     on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the failed instances
-        self.log.info("Finding failed instances..")
+        self.log.debug("Finding failed plug-ins..")
         failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         if plugin in failed_plugins:
-            self.log.info("Attempting fix ...")
+            self.log.debug("Attempting repair ...")
             plugin.repair(context)
 
 
@@ -331,6 +335,11 @@ class ColormanagedPyblishPluginMixin(object):
             project_settings=project_settings_,
             anatomy_data=anatomy_data
         )
+
+        # in case host color management is not enabled
+        if not config_data:
+            return None
+
         file_rules = get_imageio_file_rules(
             project_name, host_name,
             project_settings=project_settings_
@@ -379,11 +388,18 @@ class ColormanagedPyblishPluginMixin(object):
 
         # check if ext in lower case is in self.allowed_ext
         if ext.lstrip(".").lower() not in self.allowed_ext:
-            self.log.debug("Extension is not in allowed extensions.")
+            self.log.debug(
+                "Extension '{}' is not in allowed extensions.".format(ext)
+            )
             return
 
         if colorspace_settings is None:
             colorspace_settings = self.get_colorspace_settings(context)
+
+        # in case host color management is not enabled
+        if not colorspace_settings:
+            self.log.warning("Host's colorspace management is disabled.")
+            return
 
         # unpack colorspace settings
         config_data, file_rules = colorspace_settings
@@ -393,8 +409,7 @@ class ColormanagedPyblishPluginMixin(object):
             self.log.warning("No colorspace management was defined")
             return
 
-        self.log.info("Config data is : `{}`".format(
-            config_data))
+        self.log.debug("Config data is: `{}`".format(config_data))
 
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
@@ -405,8 +420,7 @@ class ColormanagedPyblishPluginMixin(object):
         if isinstance(filename, list):
             filename = filename[0]
 
-        self.log.debug("__ filename: `{}`".format(
-            filename))
+        self.log.debug("__ filename: `{}`".format(filename))
 
         # get matching colorspace from rules
         colorspace = colorspace or get_imageio_colorspace_from_filepath(
@@ -415,8 +429,7 @@ class ColormanagedPyblishPluginMixin(object):
             file_rules=file_rules,
             project_settings=project_settings
         )
-        self.log.debug("__ colorspace: `{}`".format(
-            colorspace))
+        self.log.debug("__ colorspace: `{}`".format(colorspace))
 
         # infuse data to representation
         if colorspace:

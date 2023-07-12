@@ -890,8 +890,8 @@ class SyncEntitiesFactory:
             else:
                 parent_dict = self.entities_dict.get(parent_id, {})
 
-            for child_id in parent_dict.get("children", []):
-                # keep original `remove` value for all childs
+            for child_id in list(parent_dict.get("children", [])):
+                # keep original `remove` value for all children
                 _remove = (remove is True)
                 if not _remove:
                     if self.entities_dict[child_id]["avalon_attrs"].get(
@@ -1191,8 +1191,8 @@ class SyncEntitiesFactory:
         avalon_hier = []
         for item in items:
             value = item["value"]
-            # WARNING It is not possible to propage enumerate hierachical
-            # attributes with multiselection 100% right. Unseting all values
+            # WARNING It is not possible to propagate enumerate hierarchical
+            # attributes with multiselection 100% right. Unsetting all values
             # will cause inheritance from parent.
             if (
                 value is None
@@ -1231,7 +1231,7 @@ class SyncEntitiesFactory:
                 items.append("{} - \"{}\"".format(ent_path, value))
             self.report_items["error"][fps_msg] = items
 
-        # Get dictionary with not None hierarchical values to pull to childs
+        # Get dictionary with not None hierarchical values to pull to children
         top_id = self.ft_project_id
         project_values = {}
         for key, value in self.entities_dict[top_id]["hier_attrs"].items():
@@ -1749,7 +1749,7 @@ class SyncEntitiesFactory:
                 # TODO logging
                 ent_path = self.get_ent_path(ftrack_id)
                 msg = (
-                    "<Entity moved back in hierachy> It is not possible"
+                    "<Entity moved back in hierarchy> It is not possible"
                     " to change the hierarchy of an entity or it's parents,"
                     " if it already contained published data."
                 )
@@ -2584,8 +2584,8 @@ class SyncEntitiesFactory:
                 #
                 # ent_dict = self.entities_dict[found_by_name_id]
 
-                # TODO report - CRITICAL entity with same name alread exists in
-                # different hierarchy - can't recreate entity
+                # TODO report - CRITICAL entity with same name already exists
+                #     in different hierarchy - can't recreate entity
                 continue
 
             _vis_parent = deleted_entity["data"]["visualParent"]

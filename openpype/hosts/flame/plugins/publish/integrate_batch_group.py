@@ -50,7 +50,7 @@ class IntegrateBatchGroup(pyblish.api.InstancePlugin):
             self._load_clip_to_context(instance, bgroup)
 
     def _add_nodes_to_batch_with_links(self, instance, task_data, batch_group):
-        # get write file node properties > OrederDict because order does mater
+        # get write file node properties > OrederDict because order does matter
         write_pref_data = self._get_write_prefs(instance, task_data)
 
         batch_nodes = [

@@ -3,6 +3,8 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
 
+import hou
+
 
 class CreateUSD(plugin.HoudiniCreator):
     """Universal Scene Description"""
@@ -13,7 +15,6 @@ class CreateUSD(plugin.HoudiniCreator):
     enabled = False
 
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou  # noqa
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "usd"})
@@ -43,3 +44,9 @@ class CreateUSD(plugin.HoudiniCreator):
             "id",
         ]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_network_categories(self):
+        return [
+            hou.ropNodeTypeCategory(),
+            hou.lopNodeTypeCategory()
+        ]

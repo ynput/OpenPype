@@ -21,7 +21,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
         - nurbsSurface: _NRB
         - locator: _LOC
         - null/group: _GRP
-    Suffices can also be overriden by project settings.
+    Suffices can also be overridden by project settings.
 
     .. warning::
         This grabs the first child shape as a reference and doesn't use the

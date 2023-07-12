@@ -274,25 +274,18 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
-        for attribute, data in cls.get_nodes(instance, renderer).items():
-            # Validate the settings has values.
-            if not data["values"]:
-                cls.log.error(
-                    "Settings for {}.{} is missing values.".format(
-                        node, attribute
-                    )
-                )
-                continue
-
+        for data in cls.get_nodes(instance, renderer):
             for node in data["nodes"]:
                 try:
                     render_value = cmds.getAttr(
-                        "{}.{}".format(node, attribute)
+                        "{}.{}".format(node, data["attribute"])
                     )
                 except RuntimeError:
                     invalid = True
                     cls.log.error(
-                        "Cannot get value of {}.{}".format(node, attribute)
+                        "Cannot get value of {}.{}".format(
+                            node, data["attribute"]
+                        )
                     )
                 else:
                     if render_value not in data["values"]:
@@ -300,7 +293,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         cls.log.error(
                             "Invalid value {} set on {}.{}. Expecting "
                             "{}".format(
-                                render_value, node, attribute, data["values"]
+                                render_value,
+                                node,
+                                data["attribute"],
+                                data["values"]
                             )
                         )
 
@@ -314,8 +310,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 "{}_render_attributes".format(renderer)
             ) or []
         )
-        result = {}
+        result = []
         for attr, values in OrderedDict(validation_settings).items():
+            values = [convert_to_int_or_float(v) for v in values if v]
+
+            # Validate the settings has values.
+            if not values:
+                cls.log.error(
+                    "Settings for {} is missing values.".format(attr)
+                )
+                continue
+
             cls.log.debug("{}: {}".format(attr, values))
             if "." not in attr:
                 cls.log.warning(
@@ -323,8 +328,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     "settings: \"{}\"".format(attr)
                 )
                 continue
-
-            values = [convert_to_int_or_float(v) for v in values]
 
             node_type, attribute_name = attr.split(".", 1)
 
@@ -337,7 +340,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 )
                 continue
 
-            result[attribute_name] = {"nodes": nodes, "values": values}
+            result.append(
+                {
+                    "attribute": attribute_name,
+                    "nodes": nodes,
+                    "values": values
+                }
+            )
 
         return result
 
@@ -352,11 +361,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_")
         )
 
-        for attribute, data in cls.get_nodes(instance, renderer).items():
+        for data in cls.get_nodes(instance, renderer):
             if not data["values"]:
                 continue
             for node in data["nodes"]:
-                lib.set_attribute(attribute, data["values"][0], node)
+                lib.set_attribute(data["attribute"], data["values"][0], node)
 
         with lib.renderlayer(layer_node):
             default = lib.RENDER_ATTRS['default']
@@ -366,6 +375,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cmds.setAttr("defaultRenderGlobals.animation", True)
 
             # Repair prefix
+            if renderer == "arnold":
+                multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                if multipart:
+                    separator_variations = [
+                        "_<RenderPass>",
+                        "<RenderPass>_",
+                        "<RenderPass>",
+                    ]
+                    for variant in separator_variations:
+                        default_prefix = default_prefix.replace(variant, "")
+
             if renderer != "renderman":
                 node = render_attrs["node"]
                 prefix_attr = render_attrs["prefix"]

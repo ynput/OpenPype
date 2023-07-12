@@ -51,7 +51,7 @@ IMAGE_EXTENSIONS = {
     ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
     ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
     ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+    ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr", ".ras",
     ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
     ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
     ".xpm", ".xwd"
@@ -540,7 +540,7 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg or when containt unallowed symbols
+        #   for ffmpeg or when contain unallowed symbols
         erase_reason = "Missing reason"
         erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -680,7 +680,7 @@ def convert_input_paths_for_ffmpeg(
                 continue
 
             # Remove attributes that have string value longer than allowed
-            #   length for ffmpeg or when containt unallowed symbols
+            #   length for ffmpeg or when containing unallowed symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -968,7 +968,7 @@ def _ffmpeg_dnxhd_codec_args(stream_data, source_ffmpeg_cmd):
     if source_ffmpeg_cmd:
         # Define bitrate arguments
         bit_rate_args = ("-b:v", "-vb",)
-        # Seprate the two variables in case something else should be copied
+        # Separate the two variables in case something else should be copied
         #   from source command
         copy_args = []
         copy_args.extend(bit_rate_args)

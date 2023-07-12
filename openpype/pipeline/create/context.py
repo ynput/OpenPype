@@ -23,7 +23,7 @@ from openpype.lib.attribute_definitions import (
     get_default_values,
 )
 from openpype.host import IPublishHost, IWorkfileHost
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
@@ -596,7 +596,14 @@ class AttributeValues(object):
             self[_key] = _value
 
     def pop(self, key, default=None):
-        return self._data.pop(key, default)
+        value = self._data.pop(key, default)
+        # Remove attribute definition if is 'UnknownDef'
+        # - gives option to get rid of unknown values
+        attr_def = self._attr_defs_by_key.get(key)
+        if isinstance(attr_def, UnknownDef):
+            self._attr_defs_by_key.pop(key)
+            self._attr_defs.remove(attr_def)
+        return value
 
     def reset_values(self):
         self._data = {}
@@ -1376,6 +1383,8 @@ class CreateContext:
         self._current_task_name = None
         self._current_workfile_path = None
 
+        self._current_project_anatomy = None
+
         self._host_is_valid = host_is_valid
         # Currently unused variable
         self.headless = headless
@@ -1431,6 +1440,19 @@ class CreateContext:
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
+
+    def get_instance_by_id(self, instance_id):
+        """Receive instance by id.
+
+        Args:
+            instance_id (str): Instance id.
+
+        Returns:
+            Union[CreatedInstance, None]: Instance or None if instance with
+                given id is not available.
+        """
+
+        return self._instances_by_id.get(instance_id)
 
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.
@@ -1539,6 +1561,18 @@ class CreateContext:
 
         return self._current_workfile_path
 
+    def get_current_project_anatomy(self):
+        """Project anatomy for current project.
+
+        Returns:
+            Anatomy: Anatomy object ready to be used.
+        """
+
+        if self._current_project_anatomy is None:
+            self._current_project_anatomy = Anatomy(
+                self._current_project_name)
+        return self._current_project_anatomy
+
     @property
     def context_has_changed(self):
         """Host context has changed.
@@ -1561,6 +1595,7 @@ class CreateContext:
         )
 
     project_name = property(get_current_project_name)
+    project_anatomy = property(get_current_project_anatomy)
 
     @property
     def log(self):
@@ -1672,6 +1707,8 @@ class CreateContext:
         self._current_asset_name = asset_name
         self._current_task_name = task_name
         self._current_workfile_path = workfile_path
+
+        self._current_project_anatomy = None
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.

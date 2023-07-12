@@ -50,7 +50,7 @@ class ExtractPlayblast(publish.Extractor):
         # get isolate objects list
         isolate = instance.data("isolate", None)
 
-        # get ouput path
+        # get output path
         stagingdir = self.staging_dir(instance)
         filename = instance.name
         path = os.path.join(stagingdir, filename)
@@ -116,7 +116,6 @@ class ExtractPlayblast(publish.Extractor):
             "frameStart": start,
             "frameEnd": end,
             "fps": fps,
-            "preview": True,
             "tags": tags,
             "camera_name": camera
         }

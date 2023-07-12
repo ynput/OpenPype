@@ -4,7 +4,7 @@
 //                            openHarmony Library v0.01
 //
 //
-//         Developped by Mathieu Chaptel, Chris Fourney...
+//         Developed by Mathieu Chaptel, Chris Fourney...
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -338,7 +338,7 @@ Object.defineProperty($.oAttribute.prototype, "useSeparate", {
  * Returns the default value of the attribute for most keywords
  * @name $.oAttribute#defaultValue
  * @type {bool}
- * @todo switch the implentation to types?
+ * @todo switch the implementation to types?
  * @example
  * // to reset an attribute to its default value:
  * // (mostly used for position/angle/skew parameters of pegs and drawing nodes)
@@ -449,7 +449,7 @@ $.oAttribute.prototype.getLinkedColumns = function(){
 
 /**
  * Recursively sets an attribute to the same value as another. Both must have the same keyword.
- * @param {bool}    [duplicateColumns=false]      In the case that the attribute has a column, wether to duplicate the column before linking
+ * @param {bool}    [duplicateColumns=false]      In the case that the attribute has a column, whether to duplicate the column before linking
  * @private
  */
 $.oAttribute.prototype.setToAttributeValue = function(attributeToCopy, duplicateColumns){

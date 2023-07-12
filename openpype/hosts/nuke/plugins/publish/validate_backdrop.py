@@ -1,8 +1,12 @@
 import nuke
 import pyblish
 from openpype.hosts.nuke import api as napi
-from openpype.pipeline import PublishXmlValidationError
 
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 
 class SelectCenterInNodeGraph(pyblish.api.Action):
     """
@@ -46,12 +50,15 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         nuke.zoom(2, [min(all_xC), min(all_yC)])
 
 
-class ValidateBackdrop(pyblish.api.InstancePlugin):
+class ValidateBackdrop(
+    pyblish.api.InstancePlugin,
+    OptionalPyblishPluginMixin
+):
     """ Validate amount of nodes on backdrop node in case user
-    forgoten to add nodes above the publishing backdrop node.
+    forgotten to add nodes above the publishing backdrop node.
     """
 
-    order = pyblish.api.ValidatorOrder
+    order = ValidateContentsOrder
     optional = True
     families = ["nukenodes"]
     label = "Validate Backdrop"
@@ -59,6 +66,9 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
     actions = [SelectCenterInNodeGraph]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         child_nodes = instance.data["transientData"]["childNodes"]
         connections_out = instance.data["transientData"]["nodeConnectionsOut"]
 

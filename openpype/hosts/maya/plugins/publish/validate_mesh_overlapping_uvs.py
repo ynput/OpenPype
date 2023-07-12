@@ -1,10 +1,11 @@
-import pyblish.api
-import openpype.hosts.maya.api.action
 import math
-import maya.api.OpenMaya as om
-import pymel.core as pm
-
 from six.moves import xrange
+
+from maya import cmds
+import maya.api.OpenMaya as om
+import pyblish.api
+
+import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateMeshOrder
 
 
@@ -185,8 +186,7 @@ class GetOverlappingUVs(object):
 
         center, radius = self._createBoundingCircle(meshfn)
         for i in xrange(meshfn.numPolygons):  # noqa: F821
-            rayb1, face1Orig, face1Vec = self._createRayGivenFace(
-                                                    meshfn, i)
+            rayb1, face1Orig, face1Vec = self._createRayGivenFace(meshfn, i)
             if not rayb1:
                 continue
             cui = center[2*i]
@@ -206,8 +206,8 @@ class GetOverlappingUVs(object):
                 if (dsqr >= (ri + rj) * (ri + rj)):
                     continue
 
-                rayb2, face2Orig, face2Vec = self._createRayGivenFace(
-                                                    meshfn, j)
+                rayb2, face2Orig, face2Vec = self._createRayGivenFace(meshfn,
+                                                                      j)
                 if not rayb2:
                     continue
                 # Exclude the degenerate face
@@ -240,37 +240,45 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     optional = True
 
     @classmethod
-    def _get_overlapping_uvs(cls, node):
-        """ Check if mesh has overlapping UVs.
+    def _get_overlapping_uvs(cls, mesh):
+        """Return overlapping UVs of mesh.
 
-            :param node: node to check
-            :type node: str
-            :returns: True is has overlapping UVs, False otherwise
-            :rtype: bool
+        Args:
+            mesh (str): Mesh node name
+
+        Returns:
+            list: Overlapping uvs for the input mesh in all uv sets.
+
         """
         ovl = GetOverlappingUVs()
 
+        # Store original uv set
+        original_current_uv_set = cmds.polyUVSet(mesh,
+                                                 query=True,
+                                                 currentUVSet=True)[0]
+
         overlapping_faces = []
-        for i, uv in enumerate(pm.polyUVSet(node, q=1, auv=1)):
-            pm.polyUVSet(node, cuv=1, uvSet=uv)
-            overlapping_faces.extend(ovl._getOverlapUVFaces(str(node)))
+        for uv_set in cmds.polyUVSet(mesh, query=True, allUVSets=True):
+            cmds.polyUVSet(mesh, currentUVSet=True, uvSet=uv_set)
+            overlapping_faces.extend(ovl._getOverlapUVFaces(mesh))
+
+        # Restore original uv set
+        cmds.polyUVSet(mesh, currentUVSet=True, uvSet=original_current_uv_set)
 
         return overlapping_faces
 
     @classmethod
     def get_invalid(cls, instance, compute=False):
-        invalid = []
+
         if compute:
-            instance.data["overlapping_faces"] = []
-            for node in pm.ls(instance, type="mesh"):
+            invalid = []
+            for node in cmds.ls(instance, type="mesh"):
                 faces = cls._get_overlapping_uvs(node)
                 invalid.extend(faces)
-                # Store values for later.
-                instance.data["overlapping_faces"].extend(faces)
-        else:
-            invalid.extend(instance.data["overlapping_faces"])
 
-        return invalid
+            instance.data["overlapping_faces"] = invalid
+
+        return instance.data.get("overlapping_faces", [])
 
     def process(self, instance):
 

@@ -1,6 +1,7 @@
 """Standalone helper functions"""
 
 import os
+from pprint import pformat
 import sys
 import platform
 import uuid
@@ -32,7 +33,17 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.create import (
+    legacy_create,
+    get_legacy_creator_by_name,
+)
+from openpype.pipeline.context_tools import (
+    get_current_asset_name,
+    get_current_project_asset,
+    get_current_project_name,
+    get_current_task_name
+)
+from openpype.lib.profiles_filtering import filter_profiles
 
 
 self = sys.modules[__name__]
@@ -112,6 +123,18 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
+DISPLAY_LIGHTS_VALUES = [
+    "project_settings", "default", "all", "selected", "flat", "none"
+]
+DISPLAY_LIGHTS_LABELS = [
+    "Use Project Settings",
+    "Default Lighting",
+    "All Lights",
+    "Selected Lights",
+    "Flat Lighting",
+    "No Lights"
+]
+
 
 def get_main_window():
     """Acquire Maya's main window"""
@@ -166,6 +189,44 @@ def maintained_selection():
                         noExpand=True)
         else:
             cmds.select(clear=True)
+
+
+def get_custom_namespace(custom_namespace):
+    """Return unique namespace.
+
+    The input namespace can contain a single group
+    of '#' number tokens to indicate where the namespace's
+    unique index should go. The amount of tokens defines
+    the zero padding of the number, e.g ### turns into 001.
+
+    Warning: Note that a namespace will always be
+        prefixed with a _ if it starts with a digit
+
+    Example:
+        >>> get_custom_namespace("myspace_##_")
+        # myspace_01_
+        >>> get_custom_namespace("##_myspace")
+        # _01_myspace
+        >>> get_custom_namespace("myspace##")
+        # myspace01
+
+    """
+    split = re.split("([#]+)", custom_namespace, 1)
+
+    if len(split) == 3:
+        base, padding, suffix = split
+        padding = "%0{}d".format(len(padding))
+    else:
+        base = split[0]
+        padding = "%02d"  # default padding
+        suffix = ""
+
+    return unique_namespace(
+        base,
+        format=padding,
+        prefix="_" if not base or base[0].isdigit() else "",
+        suffix=suffix
+    )
 
 
 def unique_namespace(namespace, format="%02d", prefix="", suffix=""):
@@ -292,15 +353,22 @@ def collect_animation_data(fps=False):
     """
 
     # get scene values as defaults
-    start = cmds.playbackOptions(query=True, animationStartTime=True)
-    end = cmds.playbackOptions(query=True, animationEndTime=True)
+    frame_start = cmds.playbackOptions(query=True, minTime=True)
+    frame_end = cmds.playbackOptions(query=True, maxTime=True)
+    frame_start_handle = cmds.playbackOptions(
+        query=True, animationStartTime=True
+    )
+    frame_end_handle = cmds.playbackOptions(query=True, animationEndTime=True)
+
+    handle_start = frame_start - frame_start_handle
+    handle_end = frame_end_handle - frame_end
 
     # build attributes
     data = OrderedDict()
-    data["frameStart"] = start
-    data["frameEnd"] = end
-    data["handleStart"] = 0
-    data["handleEnd"] = 0
+    data["frameStart"] = frame_start
+    data["frameEnd"] = frame_end
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
     data["step"] = 1.0
 
     if fps:
@@ -1367,6 +1435,71 @@ def set_id(node, unique_id, overwrite=False):
         cmds.setAttr(attr, unique_id, type="string")
 
 
+def get_attribute(plug,
+                  asString=False,
+                  expandEnvironmentVariables=False,
+                  **kwargs):
+    """Maya getAttr with some fixes based on `pymel.core.general.getAttr()`.
+
+    Like Pymel getAttr this applies some changes to `maya.cmds.getAttr`
+      - maya pointlessly returned vector results as a tuple wrapped in a list
+        (ex.  '[(1,2,3)]'). This command unpacks the vector for you.
+      - when getting a multi-attr, maya would raise an error, but this will
+        return a list of values for the multi-attr
+      - added support for getting message attributes by returning the
+        connections instead
+
+    Note that the asString + expandEnvironmentVariables argument naming
+    convention matches the `maya.cmds.getAttr` arguments so that it can
+    act as a direct replacement for it.
+
+    Args:
+        plug (str): Node's attribute plug as `node.attribute`
+        asString (bool): Return string value for enum attributes instead
+            of the index. Note that the return value can be dependent on the
+            UI language Maya is running in.
+        expandEnvironmentVariables (bool): Expand any environment variable and
+            (tilde characters on UNIX) found in string attributes which are
+            returned.
+
+    Kwargs:
+        Supports the keyword arguments of `maya.cmds.getAttr`
+
+    Returns:
+        object: The value of the maya attribute.
+
+    """
+    attr_type = cmds.getAttr(plug, type=True)
+    if asString:
+        kwargs["asString"] = True
+    if expandEnvironmentVariables:
+        kwargs["expandEnvironmentVariables"] = True
+    try:
+        res = cmds.getAttr(plug, **kwargs)
+    except RuntimeError:
+        if attr_type == "message":
+            return cmds.listConnections(plug)
+
+        node, attr = plug.split(".", 1)
+        children = cmds.attributeQuery(attr, node=node, listChildren=True)
+        if children:
+            return [
+                get_attribute("{}.{}".format(node, child))
+                for child in children
+            ]
+
+        raise
+
+    # Convert vector result wrapped in tuple
+    if isinstance(res, list) and len(res):
+        if isinstance(res[0], tuple) and len(res):
+            if attr_type in {'pointArray', 'vectorArray'}:
+                return res
+            return res[0]
+
+    return res
+
+
 def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 
@@ -1881,6 +2014,12 @@ def remove_other_uv_sets(mesh):
             cmds.removeMultiInstance(attr, b=True)
 
 
+def get_node_parent(node):
+    """Return full path name for parent of node"""
+    parents = cmds.listRelatives(node, parent=True, fullPath=True)
+    return parents[0] if parents else None
+
+
 def get_id_from_sibling(node, history_only=True):
     """Return first node id in the history chain that matches this node.
 
@@ -1904,10 +2043,6 @@ def get_id_from_sibling(node, history_only=True):
 
     """
 
-    def _get_parent(node):
-        """Return full path name for parent of node"""
-        return cmds.listRelatives(node, parent=True, fullPath=True)
-
     node = cmds.ls(node, long=True)[0]
 
     # Find all similar nodes in history
@@ -1919,8 +2054,8 @@ def get_id_from_sibling(node, history_only=True):
     similar_nodes = [x for x in similar_nodes if x != node]
 
     # The node *must be* under the same parent
-    parent = _get_parent(node)
-    similar_nodes = [i for i in similar_nodes if _get_parent(i) == parent]
+    parent = get_node_parent(node)
+    similar_nodes = [i for i in similar_nodes if get_node_parent(i) == parent]
 
     # Check all of the remaining similar nodes and take the first one
     # with an id and assume it's the original.
@@ -2063,40 +2198,67 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def get_frame_range():
-    """Get the current assets frame range and handles."""
+def get_frame_range(include_animation_range=False):
+    """Get the current assets frame range and handles.
+
+    Args:
+        include_animation_range (bool, optional): Whether to include
+            `animationStart` and `animationEnd` keys to define the outer
+            range of the timeline. It is excluded by default.
+
+    Returns:
+        dict: Asset's expected frame range values.
+
+    """
 
     # Set frame start/end
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     asset = get_asset_by_name(project_name, asset_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
 
     if frame_start is None or frame_end is None:
         cmds.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
-    if handle_start is None:
-        handle_start = handles
+    handle_start = asset["data"].get("handleStart") or 0
+    handle_end = asset["data"].get("handleEnd") or 0
 
-    handle_end = asset["data"].get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
-
-    return {
+    frame_range = {
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "handleStart": handle_start,
         "handleEnd": handle_end
     }
+    if include_animation_range:
+        # The animation range values are only included to define whether
+        # the Maya time slider should include the handles or not.
+        # Some usages of this function use the full dictionary to define
+        # instance attributes for which we want to exclude the animation
+        # keys. That is why these are excluded by default.
+        task_name = get_current_task_name()
+        settings = get_project_settings(project_name)
+        include_handles_settings = settings["maya"]["include_handles"]
+        current_task = asset.get("data").get("tasks").get(task_name)
+
+        animation_start = frame_start
+        animation_end = frame_end
+
+        include_handles = include_handles_settings["include_handles_default"]
+        for item in include_handles_settings["per_task_type"]:
+            if current_task["type"] in item["task_type"]:
+                include_handles = item["include_handles"]
+                break
+        if include_handles:
+            animation_start -= int(handle_start)
+            animation_end += int(handle_end)
+
+        frame_range["animationStart"] = animation_start
+        frame_range["animationEnd"] = animation_end
+
+    return frame_range
 
 
 def reset_frame_range(playback=True, render=True, fps=True):
@@ -2109,30 +2271,34 @@ def reset_frame_range(playback=True, render=True, fps=True):
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
     """
-
     if fps:
         fps = convert_to_maya_fps(
             float(legacy_io.Session.get("AVALON_FPS", 25))
         )
         set_scene_fps(fps)
 
-    frame_range = get_frame_range()
+    frame_range = get_frame_range(include_animation_range=True)
+    if not frame_range:
+        # No frame range data found for asset
+        return
 
-    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
-    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
+    frame_start = frame_range["frameStart"]
+    frame_end = frame_range["frameEnd"]
+    animation_start = frame_range["animationStart"]
+    animation_end = frame_range["animationEnd"]
 
     if playback:
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
-        cmds.playbackOptions(animationStartTime=frame_start)
-        cmds.playbackOptions(animationEndTime=frame_end)
-        cmds.playbackOptions(minTime=frame_start)
-        cmds.playbackOptions(maxTime=frame_end)
+        cmds.playbackOptions(
+            minTime=frame_start,
+            maxTime=frame_end,
+            animationStartTime=animation_start,
+            animationEndTime=animation_end
+        )
         cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
 
 def reset_scene_resolution():
@@ -3074,75 +3240,6 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 def set_colorspace():
     """Set Colorspace from project configuration
     """
-    project_name = os.getenv("AVALON_PROJECT")
-    imageio = get_project_settings(project_name)["maya"]["imageio"]
-
-    # Maya 2022+ introduces new OCIO v2 color management settings that
-    # can override the old color managenement preferences. OpenPype has
-    # separate settings for both so we fall back when necessary.
-    use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
-    required_maya_version = 2022
-    maya_version = int(cmds.about(version=True))
-    maya_supports_ocio_v2 = maya_version >= required_maya_version
-    if use_ocio_v2 and not maya_supports_ocio_v2:
-        # Fallback to legacy behavior with a warning
-        log.warning("Color Management Preference v2 is enabled but not "
-                    "supported by current Maya version: {} (< {}). Falling "
-                    "back to legacy settings.".format(
-                        maya_version, required_maya_version)
-                    )
-        use_ocio_v2 = False
-
-    if use_ocio_v2:
-        root_dict = imageio["colorManagementPreference_v2"]
-    else:
-        root_dict = imageio["colorManagementPreference"]
-
-    if not isinstance(root_dict, dict):
-        msg = "set_colorspace(): argument should be dictionary"
-        log.error(msg)
-
-    log.debug(">> root_dict: {}".format(root_dict))
-
-    # enable color management
-    cmds.colorManagementPrefs(e=True, cmEnabled=True)
-    cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
-
-    # set config path
-    custom_ocio_config = False
-    if root_dict.get("configFilePath"):
-        unresolved_path = root_dict["configFilePath"]
-        ocio_paths = unresolved_path[platform.system().lower()]
-
-        resolved_path = None
-        for ocio_p in ocio_paths:
-            resolved_path = str(ocio_p).format(**os.environ)
-            if not os.path.exists(resolved_path):
-                continue
-
-        if resolved_path:
-            filepath = str(resolved_path).replace("\\", "/")
-            cmds.colorManagementPrefs(e=True, configFilePath=filepath)
-            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=True)
-            log.debug("maya '{}' changed to: {}".format(
-                "configFilePath", resolved_path))
-            custom_ocio_config = True
-        else:
-            cmds.colorManagementPrefs(e=True, cmConfigFileEnabled=False)
-            cmds.colorManagementPrefs(e=True, configFilePath="")
-
-    # If no custom OCIO config file was set we make sure that Maya 2022+
-    # either chooses between Maya's newer default v2 or legacy config based
-    # on OpenPype setting to use ocio v2 or not.
-    if maya_supports_ocio_v2 and not custom_ocio_config:
-        if use_ocio_v2:
-            # Use Maya 2022+ default OCIO v2 config
-            log.info("Setting default Maya OCIO v2 config")
-            cmds.colorManagementPrefs(edit=True, configFilePath="")
-        else:
-            # Set the Maya default config file path
-            log.info("Setting default Maya OCIO v1 legacy config")
-            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
 
     # set color spaces for rendering space and view transforms
     def _colormanage(**kwargs):
@@ -3159,55 +3256,152 @@ def set_colorspace():
         except RuntimeError as exc:
             log.error(exc)
 
-    if use_ocio_v2:
-        _colormanage(renderingSpaceName=root_dict["renderSpace"])
-        _colormanage(displayName=root_dict["displayName"])
-        _colormanage(viewName=root_dict["viewName"])
-    else:
-        _colormanage(renderingSpaceName=root_dict["renderSpace"])
-        if maya_supports_ocio_v2:
-            _colormanage(viewName=root_dict["viewTransform"])
-            _colormanage(displayName="legacy")
+    project_name = os.getenv("AVALON_PROJECT")
+    imageio = get_project_settings(project_name)["maya"]["imageio"]
+
+    # ocio compatibility variables
+    ocio_v2_maya_version = 2022
+    maya_version = int(cmds.about(version=True))
+    ocio_v2_support = use_ocio_v2 = maya_version >= ocio_v2_maya_version
+
+    root_dict = {}
+    use_workfile_settings = imageio.get("workfile", {}).get("enabled")
+
+    if use_workfile_settings:
+        # TODO: deprecated code from 3.15.5 - remove
+        # Maya 2022+ introduces new OCIO v2 color management settings that
+        # can override the old color management preferences. OpenPype has
+        # separate settings for both so we fall back when necessary.
+        use_ocio_v2 = imageio["colorManagementPreference_v2"]["enabled"]
+        if use_ocio_v2 and not ocio_v2_support:
+            # Fallback to legacy behavior with a warning
+            log.warning(
+                "Color Management Preference v2 is enabled but not "
+                "supported by current Maya version: {} (< {}). Falling "
+                "back to legacy settings.".format(
+                    maya_version, ocio_v2_maya_version)
+            )
+
+        if use_ocio_v2:
+            root_dict = imageio["colorManagementPreference_v2"]
         else:
-            _colormanage(viewTransformName=root_dict["viewTransform"])
+            root_dict = imageio["colorManagementPreference"]
+
+        if not isinstance(root_dict, dict):
+            msg = "set_colorspace(): argument should be dictionary"
+            log.error(msg)
+
+    else:
+        root_dict = imageio["workfile"]
+
+    log.debug(">> root_dict: {}".format(pformat(root_dict)))
+
+    if root_dict:
+        # enable color management
+        cmds.colorManagementPrefs(e=True, cmEnabled=True)
+        cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+
+        # backward compatibility
+        # TODO: deprecated code from 3.15.5 - refactor to use new settings
+        view_name = root_dict.get("viewTransform")
+        if view_name is None:
+            view_name = root_dict.get("viewName")
+
+        if use_ocio_v2:
+            # Use Maya 2022+ default OCIO v2 config
+            log.info("Setting default Maya OCIO v2 config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="")
+
+            # set rendering space and view transform
+            _colormanage(renderingSpaceName=root_dict["renderSpace"])
+            _colormanage(viewName=view_name)
+            _colormanage(displayName=root_dict["displayName"])
+        else:
+            # Set the Maya default config file path
+            log.info("Setting default Maya OCIO v1 legacy config")
+            cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
+
+            # set rendering space and view transform
+            _colormanage(renderingSpaceName=root_dict["renderSpace"])
+            _colormanage(viewTransformName=view_name)
 
 
 @contextlib.contextmanager
 def parent_nodes(nodes, parent=None):
     # type: (list, str) -> list
     """Context manager to un-parent provided nodes and return them back."""
-    import pymel.core as pm  # noqa
 
-    parent_node = None
+    def _as_mdagpath(node):
+        """Return MDagPath for node path."""
+        if not node:
+            return
+        sel = OpenMaya.MSelectionList()
+        sel.add(node)
+        return sel.getDagPath(0)
+
+    # We can only parent dag nodes so we ensure input contains only dag nodes
+    nodes = cmds.ls(nodes, type="dagNode", long=True)
+    if not nodes:
+        # opt-out early
+        yield
+        return
+
+    parent_node_path = None
     delete_parent = False
-
     if parent:
         if not cmds.objExists(parent):
-            parent_node = pm.createNode("transform", n=parent, ss=False)
+            parent_node = cmds.createNode("transform",
+                                          name=parent,
+                                          skipSelect=False)
             delete_parent = True
         else:
-            parent_node = pm.PyNode(parent)
+            parent_node = parent
+        parent_node_path = cmds.ls(parent_node, long=True)[0]
+
+    # Store original parents
     node_parents = []
     for node in nodes:
-        n = pm.PyNode(node)
-        try:
-            root = pm.listRelatives(n, parent=1)[0]
-        except IndexError:
-            root = None
-        node_parents.append((n, root))
+        node_parent = get_node_parent(node)
+        node_parents.append((_as_mdagpath(node), _as_mdagpath(node_parent)))
+
     try:
-        for node in node_parents:
-            if not parent:
-                node[0].setParent(world=True)
+        for node, node_parent in node_parents:
+            node_parent_path = node_parent.fullPathName() if node_parent else None  # noqa
+            if node_parent_path == parent_node_path:
+                # Already a child
+                continue
+
+            if parent_node_path:
+                cmds.parent(node.fullPathName(), parent_node_path)
             else:
-                node[0].setParent(parent_node)
+                cmds.parent(node.fullPathName(), world=True)
+
         yield
     finally:
-        for node in node_parents:
-            if node[1]:
-                node[0].setParent(node[1])
+        # Reparent to original parents
+        for node, original_parent in node_parents:
+            node_path = node.fullPathName()
+            if not node_path:
+                # Node must have been deleted
+                continue
+
+            node_parent_path = get_node_parent(node_path)
+
+            original_parent_path = None
+            if original_parent:
+                original_parent_path = original_parent.fullPathName()
+                if not original_parent_path:
+                    # Original parent node must have been deleted
+                    continue
+
+            if node_parent_path != original_parent_path:
+                if not original_parent_path:
+                    cmds.parent(node_path, world=True)
+                else:
+                    cmds.parent(node_path, original_parent_path)
+
         if delete_parent:
-            pm.delete(parent_node)
+            cmds.delete(parent_node_path)
 
 
 @contextlib.contextmanager
@@ -3558,7 +3752,17 @@ def get_color_management_preferences():
     # Split view and display from view_transform. view_transform comes in
     # format of "{view} ({display})".
     regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    if int(cmds.about(version=True)) <= 2020:
+        # view_transform comes in format of "{view} {display}" in 2020.
+        regex = re.compile(r"^(?P<view>.+) (?P<display>.+)$")
+
     match = regex.match(data["view_transform"])
+    if not match:
+        raise ValueError(
+            "Unable to parse view and display from Maya view transform: '{}' "
+            "using regex '{}'".format(data["view_transform"], regex.pattern)
+        )
+
     data.update({
         "display": match.group("display"),
         "view": match.group("view")
@@ -3675,3 +3879,226 @@ def len_flattened(components):
         else:
             n += 1
     return n
+
+
+def get_all_children(nodes):
+    """Return all children of `nodes` including each instanced child.
+    Using maya.cmds.listRelatives(allDescendents=True) includes only the first
+    instance. As such, this function acts as an optimal replacement with a
+    focus on a fast query.
+
+    """
+
+    sel = OpenMaya.MSelectionList()
+    traversed = set()
+    iterator = OpenMaya.MItDag(OpenMaya.MItDag.kDepthFirst)
+    for node in nodes:
+
+        if node in traversed:
+            # Ignore if already processed as a child
+            # before
+            continue
+
+        sel.clear()
+        sel.add(node)
+        dag = sel.getDagPath(0)
+
+        iterator.reset(dag)
+        # ignore self
+        iterator.next()  # noqa: B305
+        while not iterator.isDone():
+
+            path = iterator.fullPathName()
+
+            if path in traversed:
+                iterator.prune()
+                iterator.next()  # noqa: B305
+                continue
+
+            traversed.add(path)
+            iterator.next()  # noqa: B305
+
+    return list(traversed)
+
+
+def get_capture_preset(task_name, task_type, subset, project_settings, log):
+    """Get capture preset for playblasting.
+
+    Logic for transitioning from old style capture preset to new capture preset
+    profiles.
+
+    Args:
+        task_name (str): Task name.
+        take_type (str): Task type.
+        subset (str): Subset name.
+        project_settings (dict): Project settings.
+        log (object): Logging object.
+    """
+    capture_preset = None
+    filtering_criteria = {
+        "hosts": "maya",
+        "families": "review",
+        "task_names": task_name,
+        "task_types": task_type,
+        "subset": subset
+    }
+
+    plugin_settings = project_settings["maya"]["publish"]["ExtractPlayblast"]
+    if plugin_settings["profiles"]:
+        profile = filter_profiles(
+            plugin_settings["profiles"],
+            filtering_criteria,
+            logger=log
+        )
+        capture_preset = profile.get("capture_preset")
+    else:
+        log.warning("No profiles present for Extract Playblast")
+
+    # Backward compatibility for deprecated Extract Playblast settings
+    # without profiles.
+    if capture_preset is None:
+        log.debug(
+            "Falling back to deprecated Extract Playblast capture preset "
+            "because no new style playblast profiles are defined."
+        )
+        capture_preset = plugin_settings["capture_preset"]
+
+    return capture_preset or {}
+
+
+def get_reference_node(members, log=None):
+    """Get the reference node from the container members
+    Args:
+        members: list of node names
+
+    Returns:
+        str: Reference node name.
+
+    """
+
+    # Collect the references without .placeHolderList[] attributes as
+    # unique entries (objects only) and skipping the sharedReferenceNode.
+    references = set()
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        references.add(ref)
+
+    assert references, "No reference node found in container"
+
+    # Get highest reference node (least parents)
+    highest = min(references,
+                  key=lambda x: len(get_reference_node_parents(x)))
+
+    # Warn the user when we're taking the highest reference node
+    if len(references) > 1:
+        if not log:
+            log = logging.getLogger(__name__)
+
+        log.warning("More than one reference node found in "
+                    "container, using highest reference node: "
+                    "%s (in: %s)", highest, list(references))
+
+    return highest
+
+
+def get_reference_node_parents(ref):
+    """Return all parent reference nodes of reference node
+
+    Args:
+        ref (str): reference node.
+
+    Returns:
+        list: The upstream parent reference nodes.
+
+    """
+    parent = cmds.referenceQuery(ref,
+                                 referenceNode=True,
+                                 parent=True)
+    parents = []
+    while parent:
+        parents.append(parent)
+        parent = cmds.referenceQuery(parent,
+                                     referenceNode=True,
+                                     parent=True)
+    return parents
+
+
+def create_rig_animation_instance(
+    nodes, context, namespace, options=None, log=None
+):
+    """Create an animation publish instance for loaded rigs.
+
+    See the RecreateRigAnimationInstance inventory action on how to use this
+    for loaded rig containers.
+
+    Arguments:
+        nodes (list): Member nodes of the rig instance.
+        context (dict): Representation context of the rig container
+        namespace (str): Namespace of the rig container
+        options (dict, optional): Additional loader data
+        log (logging.Logger, optional): Logger to log to if provided
+
+    Returns:
+        None
+
+    """
+    if options is None:
+        options = {}
+
+    output = next((node for node in nodes if
+                   node.endswith("out_SET")), None)
+    controls = next((node for node in nodes if
+                     node.endswith("controls_SET")), None)
+
+    assert output, "No out_SET in rig, this is a bug."
+    assert controls, "No controls_SET in rig, this is a bug."
+
+    # Find the roots amongst the loaded nodes
+    roots = (
+        cmds.ls(nodes, assemblies=True, long=True) or
+        get_highest_in_hierarchy(nodes)
+    )
+    assert roots, "No root nodes in rig, this is a bug."
+
+    asset = legacy_io.Session["AVALON_ASSET"]
+    dependency = str(context["representation"]["_id"])
+
+    custom_subset = options.get("animationSubsetName")
+    if custom_subset:
+        formatting_data = {
+            "asset_name": context['asset']['name'],
+            "asset_type": context['asset']['type'],
+            "subset": context['subset']['name'],
+            "family": (
+                context['subset']['data'].get('family') or
+                context['subset']['data']['families'][0]
+            )
+        }
+        namespace = get_custom_namespace(
+            custom_subset.format(
+                **formatting_data
+            )
+        )
+
+    if log:
+        log.info("Creating subset: {}".format(namespace))
+
+    # Create the animation instance
+    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+    with maintained_selection():
+        cmds.select([output, controls] + roots, noExpand=True)
+        legacy_create(
+            creator_plugin,
+            name=namespace,
+            asset=asset,
+            options={"useSelection": True},
+            data={"dependencies": dependency}
+        )

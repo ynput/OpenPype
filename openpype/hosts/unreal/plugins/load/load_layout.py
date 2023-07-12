@@ -14,7 +14,7 @@ from openpype.pipeline import (
     loaders_from_representation,
     load_container,
     get_representation_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
@@ -566,7 +566,7 @@ class LayoutLoader(UnrealBaseLoader):
         data = get_current_project_settings()
         create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
 
-        # Create directory for asset and avalon container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
         root = self.root
         asset = context.get('asset').get('name')
@@ -608,8 +608,8 @@ class LayoutLoader(UnrealBaseLoader):
         send_request("save_current_level")
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -690,6 +690,13 @@ class LayoutLoader(UnrealBaseLoader):
             send_request("load_level", params={"level_path": master_level})
         elif prev_level:
             send_request("load_level", params={"level_path": prev_level})
+
+        if curr_level_sequence:
+            LevelSequenceLib.open_level_sequence(curr_level_sequence)
+            LevelSequenceLib.set_current_time(curr_time)
+            LevelSequenceLib.set_lock_camera_cut_to_viewport(is_cam_lock)
+
+        editor_subsystem.set_level_viewport_camera_info(vp_loc, vp_rot)
 
     def remove(self, container):
         """

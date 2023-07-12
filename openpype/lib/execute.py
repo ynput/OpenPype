@@ -163,18 +163,20 @@ def run_subprocess(*args, **kwargs):
 
 
 def clean_envs_for_openpype_process(env=None):
-    """Modify environemnts that may affect OpenPype process.
+    """Modify environments that may affect OpenPype process.
 
     Main reason to implement this function is to pop PYTHONPATH which may be
     affected by in-host environments.
     """
     if env is None:
         env = os.environ
-    return {
-        key: value
-        for key, value in env.items()
-        if key not in ("PYTHONPATH",)
-    }
+
+    # Exclude some environment variables from a copy of the environment
+    env = env.copy()
+    for key in ["PYTHONPATH", "PYTHONHOME"]:
+        env.pop(key, None)
+
+    return env
 
 
 def run_openpype_process(*args, **kwargs):
@@ -188,7 +190,7 @@ def run_openpype_process(*args, **kwargs):
 
     Example:
     ```
-    run_openpype_process("run", "<path to .py script>")
+    run_detached_process("run", "<path to .py script>")
     ```
 
     Args:

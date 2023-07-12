@@ -19,6 +19,7 @@ from openpype.lib import (
     should_convert_for_ffmpeg
 )
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractBurnin(publish.Extractor):
@@ -49,7 +50,8 @@ class ExtractBurnin(publish.Extractor):
         "webpublisher",
         "aftereffects",
         "photoshop",
-        "flame"
+        "flame",
+        "houdini"
         # "resolve"
     ]
 
@@ -78,9 +80,10 @@ class ExtractBurnin(publish.Extractor):
             self.log.warning("No profiles present for create burnin")
             return
 
-        # QUESTION what is this for and should we raise an exception?
-        if "representations" not in instance.data:
-            raise RuntimeError("Burnin needs already created mov to work on.")
+        if not instance.data.get("representations"):
+            self.log.info(
+                "Instance does not have filled representations. Skipping")
+            return
 
         self.main_process(instance)
 
@@ -263,6 +266,16 @@ class ExtractBurnin(publish.Extractor):
             first_output = True
 
             files_to_delete = []
+
+            repre_burnin_options = copy.deepcopy(burnin_options)
+            # Use fps from representation for output in options
+            fps = repre.get("fps")
+            if fps is not None:
+                repre_burnin_options["fps"] = fps
+                # TODO Should we use fps from source representation to fill
+                #  it in review?
+                # burnin_data["fps"] = fps
+
             for filename_suffix, burnin_def in repre_burnin_defs.items():
                 new_repre = copy.deepcopy(repre)
                 new_repre["stagingDir"] = src_repre_staging_dir
@@ -305,7 +318,7 @@ class ExtractBurnin(publish.Extractor):
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
-                    "options": copy.deepcopy(burnin_options),
+                    "options": repre_burnin_options,
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
                     "first_frame": temp_data["first_frame"],
@@ -336,8 +349,7 @@ class ExtractBurnin(publish.Extractor):
 
                 # Run burnin script
                 process_kwargs = {
-                    "logger": self.log,
-                    "env": {}
+                    "logger": self.log
                 }
 
                 run_openpype_process(*args, **process_kwargs)
@@ -351,6 +363,8 @@ class ExtractBurnin(publish.Extractor):
 
                 # Add new representation to instance
                 instance.data["representations"].append(new_repre)
+
+                add_repre_files_for_cleanup(instance, new_repre)
 
             # Cleanup temp staging dir after procesisng of output definitions
             if do_convert:
@@ -457,23 +471,13 @@ class ExtractBurnin(publish.Extractor):
             frame_end = 1
         frame_end = int(frame_end)
 
-        handles = instance.data.get("handles")
-        if handles is None:
-            handles = context.data.get("handles")
-            if handles is None:
-                handles = 0
-
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
-            handle_start = context.data.get("handleStart")
-            if handle_start is None:
-                handle_start = handles
+            handle_start = context.data.get("handleStart") or 0
 
         handle_end = instance.data.get("handleEnd")
         if handle_end is None:
-            handle_end = context.data.get("handleEnd")
-            if handle_end is None:
-                handle_end = handles
+            handle_end = context.data.get("handleEnd") or 0
 
         frame_start_handle = frame_start - handle_start
         frame_end_handle = frame_end + handle_end
@@ -522,8 +526,8 @@ class ExtractBurnin(publish.Extractor):
         """
 
         if "burnin" not in (repre.get("tags") or []):
-            self.log.info((
-                "Representation \"{}\" don't have \"burnin\" tag. Skipped."
+            self.log.debug((
+                "Representation \"{}\" does not have \"burnin\" tag. Skipped."
             ).format(repre["name"]))
             return False
 

@@ -63,7 +63,7 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
-![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
 
 ## Profile filters
 
@@ -170,12 +170,10 @@ A profile may generate multiple outputs from a single input. Each output must de
 
 - **`Letter Box`**
     - **Enabled** - Enable letter boxes
-    - **Ratio** - Ratio of letter boxes
-    - **Type** - **Letterbox** (horizontal bars) or **Pillarbox** (vertical bars)
+    - **Ratio** - Ratio of letter boxes. Ratio type is calculated from output image dimensions. If letterbox ratio > image ratio, _letterbox_ is applied. Otherwise _pillarbox_ will be rendered.
     - **Fill color** - Fill color of boxes (RGBA: 0-255)
     - **Line Thickness** - Line thickness on the edge of box (set to `0` to turn off)
-    - **Fill color** - Line color on the edge of box (RGBA: 0-255)
-    - **Example**
+    - **Line color** - Line color on the edge of box (RGBA: 0-255)
 
     ![global_extract_review_letter_box_settings](assets/global_extract_review_letter_box_settings.png)
     ![global_extract_review_letter_box](assets/global_extract_review_letter_box.png)
@@ -193,6 +191,74 @@ A profile may generate multiple outputs from a single input. Each output must de
     - Filtering by custom tags -> this is used for targeting to output definitions from other extractors using settings (at this moment only Nuke bake extractor can target using custom tags).
         - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/add_custom_tags`
     - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
+
+    
+### Extract Burnin
+
+Plugin is responsible for adding burnins into review representations.
+
+Burnins are text values painted on top of input and may be surrounded with box in 6 available positions `Top Left`, `Top Center`, `Top Right`, `Bottom Left`, `Bottom Center`, `Bottom Right`.
+
+![presets_plugins_extract_burnin](../assets/presets_plugins_extract_burnin_01.png)
+
+The Extract Burnin plugin creates new representations based on plugin presets, representations in instance and whether the reviewable matches the profile filter.
+A burnin can also be directly linked by name in the output definitions of the [Extract Review plug-in settings](#extract-review) so _can_ be triggered without a matching profile.
+
+#### Burnin formatting options (`options`)
+
+The formatting options define the font style for the burnin texts.
+The X and Y offset define the margin around texts and (background) boxes.
+
+#### Burnin profiles (`profiles`)
+
+Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each burnin profile may specify filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [Profile Filters](#profile-filters).
+
+#### Profile burnins
+
+A burnin profile may set multiple burnin outputs from one input. The burnin's name represents the unique **filename suffix** to avoid overriding files with same name.
+
+| Key | Description | Type | Example |
+| --- | --- | --- | --- |
+| **Top Left** | Top left corner content. | str | "{dd}.{mm}.{yyyy}" |
+| **Top Centered** | Top center content. | str | "v{version:0>3}" |
+| **Top Right** | Top right corner content. | str | "Static text" |
+| **Bottom Left** | Bottom left corner content. | str | "{asset}" |
+| **Bottom Centered** | Bottom center content. | str | "{username}" |
+| **Bottom Right** | Bottom right corner content. | str | "{frame_start}-{current_frame}-{frame_end}" |
+
+Each burnin profile can be configured with additional family filtering and can 
+add additional tags to the burnin representation, these can be configured under 
+the profile's **Additional filtering** section.
+
+:::note Filename suffix
+The filename suffix is appended to filename of the source representation. For 
+example, if the source representation has suffix **"h264"** and the burnin 
+suffix is **"client"** then the final suffix is **"h264_client"**.
+:::
+
+**Available keys in burnin content**
+
+- It is possible to use same keys as in [Anatomy](admin_settings_project_anatomy.md#available-template-keys).
+- It is allowed to use Anatomy templates themselves in burnins if they can be filled with available data.
+
+- Additional keys in burnins:
+
+  | Burnin key | Description |
+  | --- | --- |
+  | frame_start | First frame number. |
+  | frame_end | Last frame number. |
+  | current_frame | Frame number for each frame. |
+  | duration | Count number of frames. |
+  | resolution_width | Resolution width. |
+  | resolution_height | Resolution height. |
+  | fps | Fps of an output. |
+  | timecode | Timecode by frame start and fps. |
+  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
+
+:::warning
+`timecode` is a specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
+:::
+
 
 ### IntegrateAssetNew
 

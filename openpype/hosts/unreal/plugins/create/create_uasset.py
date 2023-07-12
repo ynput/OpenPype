@@ -13,10 +13,12 @@ from openpype.hosts.unreal.api.plugin import (
 class CreateUAsset(UnrealAssetCreator):
     """Create UAsset."""
 
-    identifier = "io.openpype.creators.unreal.uasset"
+    identifier = "io.ayon.creators.unreal.uasset"
     label = "UAsset"
     family = "uasset"
     icon = "cube"
+
+    extension = ".uasset"
 
     def create(self, subset_name, instance_data, pre_create_data):
         if pre_create_data.get("use_selection"):
@@ -35,10 +37,28 @@ class CreateUAsset(UnrealAssetCreator):
                     f"{Path(obj).name} is not on the disk. Likely it needs to"
                     "be saved first.")
 
-            if Path(sys_path).suffix != ".uasset":
-                raise CreatorError(f"{Path(sys_path).name} is not a UAsset.")
+            if Path(sys_path).suffix != self.extension:
+                raise CreatorError(
+                    f"{Path(sys_path).name} is not a {self.label}.")
 
         super(CreateUAsset, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)
+
+
+class CreateUMap(CreateUAsset):
+    """Create Level."""
+
+    identifier = "io.ayon.creators.unreal.umap"
+    label = "Level"
+    family = "uasset"
+    extension = ".umap"
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        instance_data["families"] = ["umap"]
+
+        super(CreateUMap, self).create(
             subset_name,
             instance_data,
             pre_create_data)

@@ -43,6 +43,7 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
+
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
     CreateContext,
@@ -158,7 +159,7 @@ class AbstractTemplateBuilder(object):
     def linked_asset_docs(self):
         if self._linked_asset_docs is None:
             self._linked_asset_docs = get_linked_assets(
-                self.current_asset_doc
+                self.project_name, self.current_asset_doc
             )
         return self._linked_asset_docs
 
@@ -477,7 +478,9 @@ class AbstractTemplateBuilder(object):
             create_first_version = template_preset["create_first_version"]
 
         # check if first version is created
-        created_version_workfile = self.create_first_workfile_version()
+        created_version_workfile = False
+        if create_first_version:
+            created_version_workfile = self.create_first_workfile_version()
 
         # if first version is created, import template
         # and populate placeholders
@@ -1151,13 +1154,10 @@ class PlaceholderItem(object):
         return self._log
 
     def __repr__(self):
-        name = None
-        if hasattr("name", self):
-            name = self.name
-        if hasattr("_scene_identifier ", self):
-            name = self._scene_identifier
-
-        return "< {} {} >".format(self.__class__.__name__, name)
+        return "< {} {} >".format(
+            self.__class__.__name__,
+            self._scene_identifier
+        )
 
     @property
     def order(self):
@@ -1249,6 +1249,16 @@ class PlaceholderLoadMixin(object):
 
         loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
+
+        # Get families from all loaders excluding "*"
+        families = set()
+        for loader in loaders_by_name.values():
+            families.update(loader.families)
+        families.discard("*")
+
+        # Sort for readability
+        families = list(sorted(families))
+
         return [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
@@ -1275,11 +1285,11 @@ class PlaceholderLoadMixin(object):
                     " field \"inputLinks\""
                 )
             ),
-            attribute_definitions.TextDef(
+            attribute_definitions.EnumDef(
                 "family",
                 label="Family",
                 default=options.get("family"),
-                placeholder="model, look, ..."
+                items=families
             ),
             attribute_definitions.TextDef(
                 "representation",
@@ -1419,16 +1429,7 @@ class PlaceholderLoadMixin(object):
                 "family": [placeholder.data["family"]]
             }
 
-        elif builder_type != "linked_asset":
-            context_filters = {
-                "asset": [re.compile(placeholder.data["asset"])],
-                "subset": [re.compile(placeholder.data["subset"])],
-                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
-                "representation": [placeholder.data["representation"]],
-                "family": [placeholder.data["family"]]
-            }
-
-        else:
+        elif builder_type == "linked_asset":
             asset_regex = re.compile(placeholder.data["asset"])
             linked_asset_names = []
             for asset_doc in linked_asset_docs:
@@ -1442,6 +1443,15 @@ class PlaceholderLoadMixin(object):
                 "hierarchy": [re.compile(placeholder.data["hierarchy"])],
                 "representation": [placeholder.data["representation"]],
                 "family": [placeholder.data["family"]],
+            }
+
+        else:
+            context_filters = {
+                "asset": [re.compile(placeholder.data["asset"])],
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representation": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]]
             }
 
         return list(get_representations(
@@ -1556,7 +1566,16 @@ class PlaceholderLoadMixin(object):
             else:
                 failed = False
                 self.load_succeed(placeholder, container)
-            self.cleanup_placeholder(placeholder, failed)
+            self.post_placeholder_process(placeholder, failed)
+
+        if failed:
+            self.log.debug(
+                "Placeholder cleanup skipped due to failed placeholder "
+                "population."
+            )
+            return
+        if not placeholder.data.get("keep_placeholder", True):
+            self.delete_placeholder(placeholder)
 
     def load_failed(self, placeholder, representation):
         if hasattr(placeholder, "load_failed"):
@@ -1566,7 +1585,7 @@ class PlaceholderLoadMixin(object):
         if hasattr(placeholder, "load_succeed"):
             placeholder.load_succeed(container)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is
@@ -1579,6 +1598,10 @@ class PlaceholderLoadMixin(object):
         """
 
         pass
+
+    def delete_placeholder(self, placeholder, failed):
+        """Called when all item population is done."""
+        self.log.debug("Clean up of placeholder is not implemented.")
 
 
 class PlaceholderCreateMixin(object):
@@ -1665,12 +1688,14 @@ class PlaceholderCreateMixin(object):
             )
         ]
 
-    def populate_create_placeholder(self, placeholder):
+    def populate_create_placeholder(self, placeholder, pre_create_data=None):
         """Create placeholder is going to create matching publishabe instance.
 
         Args:
             placeholder (PlaceholderItem): Placeholder item with information
                 about requested publishable instance.
+            pre_create_data (dict): dictionary of configuration from Creator
+                configuration in UI
         """
 
         legacy_create = self.builder.use_legacy_creators
@@ -1728,7 +1753,8 @@ class PlaceholderCreateMixin(object):
                     creator_plugin.identifier,
                     create_variant,
                     asset_doc,
-                    task_name=task_name
+                    task_name=task_name,
+                    pre_create_data=pre_create_data
                 )
 
         except:  # noqa: E722
@@ -1739,7 +1765,7 @@ class PlaceholderCreateMixin(object):
             failed = False
             self.create_succeed(placeholder, creator_instance)
 
-        self.cleanup_placeholder(placeholder, failed)
+        self.post_placeholder_process(placeholder, failed)
 
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
@@ -1749,7 +1775,7 @@ class PlaceholderCreateMixin(object):
         if hasattr(placeholder, "create_succeed"):
             placeholder.create_succeed(creator_instance)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
 
         Can be called multiple times during placeholder item populating and is

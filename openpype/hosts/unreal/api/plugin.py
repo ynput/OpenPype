@@ -28,7 +28,7 @@ from openpype.hosts.unreal.api.pipeline import (
 @six.add_metaclass(ABCMeta)
 class UnrealBaseCreator(Creator):
     """Base class for Unreal creator plugins."""
-    root = "/Game/OpenPype/PublishInstances"
+    root = "/Game/Ayon/AyonPublishInstances"
     suffix = "_INS"
 
     @staticmethod

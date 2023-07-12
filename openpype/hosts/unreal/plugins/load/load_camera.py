@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
@@ -100,6 +100,7 @@ class CameraLoader(UnrealBaseLoader):
         #   - variable 'elements' is modified during it's loop
         # Get all the sequences in the hierarchy. It will create them, if
         # they don't exist.
+        frame_ranges = []
         sequences = []
         frame_ranges = []
         for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
@@ -246,8 +247,8 @@ class CameraLoader(UnrealBaseLoader):
         self._process(sequences, frame_ranges, asset, asset_dir, self.fname)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

@@ -311,6 +311,7 @@ def _load_modules():
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
     module_dirs = get_module_dirs()
+
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -318,8 +319,11 @@ def _load_modules():
     module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
+    addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
+    module_dirs.append(addons_dir)
+
     processed_paths = set()
-    for dirpath in module_dirs:
+    for dirpath in frozenset(module_dirs):
         # Skip already processed paths
         if dirpath in processed_paths:
             continue
@@ -472,7 +476,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environemnt variables.
+            env (dict): Current environment variables.
         """
 
         pass
@@ -622,7 +626,7 @@ class ModulesManager:
 
                 # Check if class is abstract (Developing purpose)
                 if inspect.isabstract(modules_item):
-                    # Find missing implementations by convetion on `abc` module
+                    # Find abstract attributes by convention on `abc` module
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
@@ -708,13 +712,13 @@ class ModulesManager:
         ]
 
     def collect_global_environments(self):
-        """Helper to collect global enviornment variabled from modules.
+        """Helper to collect global environment variabled from modules.
 
         Returns:
             dict: Global environment variables from enabled modules.
 
         Raises:
-            AssertionError: Gobal environment variables must be unique for
+            AssertionError: Global environment variables must be unique for
                 all modules.
         """
         module_envs = {}
@@ -736,15 +740,16 @@ class ModulesManager:
         Unknown keys are logged out.
 
         Returns:
-            dict: Output is dictionary with keys "publish", "create", "load"
-                and "actions" each containing list of paths.
+            dict: Output is dictionary with keys "publish", "create", "load",
+                "actions" and "inventory" each containing list of paths.
         """
         # Output structure
         output = {
             "publish": [],
             "create": [],
             "load": [],
-            "actions": []
+            "actions": [],
+            "inventory": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -846,6 +851,21 @@ class ModulesManager:
 
         return self._collect_plugin_paths(
             "get_publish_plugin_paths",
+            host_name
+        )
+
+    def collect_inventory_action_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_inventory_action_paths",
             host_name
         )
 
@@ -1174,7 +1194,7 @@ class TrayModulesManager(ModulesManager):
 
 
 def get_module_settings_defs():
-    """Check loaded addons/modules for existence of thei settings definition.
+    """Check loaded addons/modules for existence of their settings definition.
 
     Check if OpenPype addon/module as python module has class that inherit
     from `ModuleSettingsDef` in python module variables (imported
@@ -1204,7 +1224,7 @@ def get_module_settings_defs():
                 continue
 
             if inspect.isabstract(attr):
-                # Find missing implementations by convetion on `abc` module
+                # Find missing implementations by convention on `abc` module
                 not_implemented = []
                 for attr_name in dir(attr):
                     attr = getattr(attr, attr_name, None)
@@ -1293,7 +1313,7 @@ class BaseModuleSettingsDef:
 
 
 class ModuleSettingsDef(BaseModuleSettingsDef):
-    """Settings definiton with separated system and procect settings parts.
+    """Settings definition with separated system and procect settings parts.
 
     Reduce conditions that must be checked and adds predefined methods for
     each case.

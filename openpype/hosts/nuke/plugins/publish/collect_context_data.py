@@ -49,8 +49,6 @@ class CollectContextData(pyblish.api.ContextPlugin):
             "resolutionHeight": resolution_height,
             "pixelAspect": pixel_aspect,
 
-            # backward compatibility handles
-            "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "step": 1,

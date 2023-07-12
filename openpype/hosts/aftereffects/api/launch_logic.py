@@ -1,49 +1,77 @@
 import os
+import sys
 import subprocess
 import collections
 import logging
 import asyncio
 import functools
+import traceback
+
 
 from wsrpc_aiohttp import (
     WebSocketRoute,
     WebSocketAsync
 )
 
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 
 from openpype.lib import Logger
-from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
+from openpype.tests.lib import is_in_tests
+from openpype.pipeline import install_host, legacy_io
+from openpype.modules import ModulesManager
 from openpype.tools.adobe_webserver.app import WebServerTool
 
-from .ws_stub import AfterEffectsServerStub
+from .ws_stub import get_stub
+from .lib import set_settings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ConnectionNotEstablishedYet(Exception):
-    pass
+def safe_excepthook(*args):
+    traceback.print_exception(*args)
 
 
-def get_stub():
-    """
-        Convenience function to get server RPC stub to call methods directed
-        for host (Photoshop).
-        It expects already created connection, started from client.
-        Currently created when panel is opened (PS: Window>Extensions>Avalon)
-    :return: <PhotoshopClientStub> where functions could be called from
-    """
-    ae_stub = AfterEffectsServerStub()
-    if not ae_stub.client:
-        raise ConnectionNotEstablishedYet("Connection is not created yet")
+def main(*subprocess_args):
+    """Main entrypoint to AE launching, called from pre hook."""
+    sys.excepthook = safe_excepthook
 
-    return ae_stub
+    from openpype.hosts.aftereffects.api import AfterEffectsHost
 
+    host = AfterEffectsHost()
+    install_host(host)
 
-def stub():
-    return get_stub()
+    os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
+    app = QtWidgets.QApplication([])
+    app.setQuitOnLastWindowClosed(False)
+
+    launcher = ProcessLauncher(subprocess_args)
+    launcher.start()
+
+    if os.environ.get("HEADLESS_PUBLISH"):
+        manager = ModulesManager()
+        webpublisher_addon = manager["webpublisher"]
+
+        launcher.execute_in_main_thread(
+            functools.partial(
+                webpublisher_addon.headless_publish,
+                log,
+                "CloseAE",
+                is_in_tests()
+            )
+        )
+
+    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
+        save = False
+        if os.getenv("WORKFILES_SAVE_AS"):
+            save = True
+
+        launcher.execute_in_main_thread(
+            lambda: host_tools.show_tool_by_name("workfiles", save=save)
+        )
+
+    sys.exit(app.exec_())
 
 
 def show_tool_by_name(tool_name):
@@ -55,6 +83,7 @@ def show_tool_by_name(tool_name):
 
 
 class ProcessLauncher(QtCore.QObject):
+    """Launches webserver, connects to it, runs main thread."""
     route_name = "AfterEffects"
     _main_thread_callbacks = collections.deque()
 
@@ -296,6 +325,15 @@ class AfterEffectsRoute(WebSocketRoute):
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
 
+    async def setresolution_route(self):
+        self._settings_route(False, True)
+
+    async def setframes_route(self):
+        self._settings_route(True, False)
+
+    async def setall_route(self):
+        self._settings_route(True, True)
+
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
 
@@ -304,6 +342,46 @@ class AfterEffectsRoute(WebSocketRoute):
 
         partial_method = functools.partial(show_tool_by_name,
                                            _tool_name)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def _settings_route(self, frames, resolution):
+        partial_method = functools.partial(set_settings,
+                                           frames,
+                                           resolution)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def create_placeholder_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            create_placeholder
+        partial_method = functools.partial(create_placeholder)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def update_placeholder_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            update_placeholder
+        partial_method = functools.partial(update_placeholder)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def build_workfile_template_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            build_workfile_template
+        partial_method = functools.partial(build_workfile_template)
 
         ProcessLauncher.execute_in_main_thread(partial_method)
 

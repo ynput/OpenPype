@@ -42,16 +42,17 @@ class CollectCustomStagingDir(pyblish.api.InstancePlugin):
         subset_name = instance.data["subset"]
         host_name = instance.context.data["hostName"]
         project_name = instance.context.data["projectName"]
-
+        project_settings = instance.context.data["project_settings"]
         anatomy = instance.context.data["anatomy"]
-        anatomy_data = copy.deepcopy(instance.data["anatomyData"])
-        task = anatomy_data.get("task", {})
+        task = instance.data["anatomyData"].get("task", {})
 
         transient_tml, is_persistent = get_custom_staging_dir_info(
             project_name, host_name, family, task.get("name"),
-            task.get("type"), subset_name, anatomy=anatomy, log=self.log)
-        result_str = "Not adding"
+            task.get("type"), subset_name, project_settings=project_settings,
+            anatomy=anatomy, log=self.log)
+
         if transient_tml:
+            anatomy_data = copy.deepcopy(instance.data["anatomyData"])
             anatomy_data["root"] = anatomy.roots
             scene_name = instance.context.data.get("currentFile")
             if scene_name:
@@ -61,7 +62,9 @@ class CollectCustomStagingDir(pyblish.api.InstancePlugin):
 
             instance.data["stagingDir_persistent"] = is_persistent
             result_str = "Adding '{}' as".format(transient_dir)
+        else:
+            result_str = "Not adding"
 
-        self.log.info("{} custom staging dir for instance with '{}'".format(
+        self.log.debug("{} custom staging dir for instance with '{}'".format(
             result_str, family
         ))

@@ -9,7 +9,7 @@ from openpype.pipeline import (
     loaders_from_representation,
     load_container,
     get_representation_path,
-    AVALON_CONTAINER_ID,
+    AYON_CONTAINER_ID,
     legacy_io,
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
@@ -48,8 +48,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
         container_name = f"{asset_name}_CON"
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -308,8 +308,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
         curr_level_path = Path(curr_level).parent.as_posix()
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": curr_level_path,
             "container_name": container_name,

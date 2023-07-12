@@ -22,6 +22,8 @@ from ..constants import (
     CREATOR_IDENTIFIER_ROLE,
     CREATOR_THUMBNAIL_ENABLED_ROLE,
     CREATOR_SORT_ROLE,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
 
 SEPARATORS = ("---separator---", "---")
@@ -198,6 +200,8 @@ class CreateWidget(QtWidgets.QWidget):
 
         variant_subset_layout = QtWidgets.QFormLayout(variant_subset_widget)
         variant_subset_layout.setContentsMargins(0, 0, 0, 0)
+        variant_subset_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        variant_subset_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         variant_subset_layout.addRow("Variant", variant_widget)
         variant_subset_layout.addRow("Subset", subset_name_input)
 
@@ -283,6 +287,9 @@ class CreateWidget(QtWidgets.QWidget):
         thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
         controller.event_system.add_callback(
+            "main.window.closed", self._on_main_window_close
+        )
+        controller.event_system.add_callback(
             "plugins.refresh.finished", self._on_plugins_refresh
         )
 
@@ -315,6 +322,10 @@ class CreateWidget(QtWidgets.QWidget):
         self._prereq_timer = prereq_timer
         self._first_show = True
         self._last_thumbnail_path = None
+
+        self._last_current_context_asset = None
+        self._last_current_context_task = None
+        self._use_current_context = True
 
     @property
     def current_asset_name(self):
@@ -356,11 +367,38 @@ class CreateWidget(QtWidgets.QWidget):
         if check_prereq:
             self._invalidate_prereq()
 
+    def _on_main_window_close(self):
+        """Publisher window was closed."""
+
+        # Use current context on next refresh
+        self._use_current_context = True
+
     def refresh(self):
+        current_asset_name = self._controller.current_asset_name
+        current_task_name = self._controller.current_task_name
+
         # Get context before refresh to keep selection of asset and
         #   task widgets
         asset_name = self._get_asset_name()
         task_name = self._get_task_name()
+
+        # Replace by current context if last loaded context was
+        #   'current context' before reset
+        if (
+            self._use_current_context
+            or (
+                self._last_current_context_asset
+                and asset_name == self._last_current_context_asset
+                and task_name == self._last_current_context_task
+            )
+        ):
+            asset_name = current_asset_name
+            task_name = current_task_name
+
+        # Store values for future refresh
+        self._last_current_context_asset = current_asset_name
+        self._last_current_context_task = current_task_name
+        self._use_current_context = False
 
         self._prereq_available = False
 
@@ -398,7 +436,10 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_name is None:
+        if (
+            self._context_change_is_enabled()
+            and self._get_asset_name() is None
+        ):
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -787,6 +828,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if success:
             self._set_creator(self._selected_creator)
+            self.variant_input.setText(variant)
             self._controller.emit_card_message("Creation finished...")
             self._last_thumbnail_path = None
             self._thumbnail_widget.set_current_thumbnails()

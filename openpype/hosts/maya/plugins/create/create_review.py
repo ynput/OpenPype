@@ -1,8 +1,14 @@
+import os
 from collections import OrderedDict
+import json
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.settings import get_project_settings
+from openpype.pipeline import get_current_project_name, get_current_task_name
+from openpype.client import get_asset_by_name
 
 
 class CreateReview(plugin.Creator):
@@ -32,6 +38,23 @@ class CreateReview(plugin.Creator):
         super(CreateReview, self).__init__(*args, **kwargs)
         data = OrderedDict(**self.data)
 
+        project_name = get_current_project_name()
+        asset_doc = get_asset_by_name(project_name, data["asset"])
+        task_name = get_current_task_name()
+        preset = lib.get_capture_preset(
+            task_name,
+            asset_doc["data"]["tasks"][task_name]["type"],
+            data["subset"],
+            get_project_settings(project_name),
+            self.log
+        )
+        if os.environ.get("OPENPYPE_DEBUG") == "1":
+            self.log.debug(
+                "Using preset: {}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
+            )
+
         # Option for using Maya or asset frame range in settings.
         frame_range = lib.get_frame_range()
         if self.useMayaTimeline:
@@ -40,12 +63,14 @@ class CreateReview(plugin.Creator):
             data[key] = value
 
         data["fps"] = lib.collect_animation_data(fps=True)["fps"]
-        data["review_width"] = self.Width
-        data["review_height"] = self.Height
-        data["isolate"] = self.isolate
+
         data["keepImages"] = self.keepImages
-        data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
-        data["panZoom"] = self.panZoom
+        data["review_width"] = preset["Resolution"]["width"]
+        data["review_height"] = preset["Resolution"]["height"]
+        data["isolate"] = preset["Generic"]["isolate_view"]
+        data["imagePlane"] = preset["Viewport Options"]["imagePlane"]
+        data["panZoom"] = preset["Generic"]["pan_zoom"]
+        data["displayLights"] = lib.DISPLAY_LIGHTS_LABELS
 
         self.data = data

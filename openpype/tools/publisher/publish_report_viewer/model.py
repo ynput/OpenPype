@@ -45,8 +45,13 @@ class InstancesModel(QtGui.QStandardItemModel):
             instance_items = report_item.instance_items_by_family[family]
             all_removed = True
             for instance_item in instance_items:
-                item = QtGui.QStandardItem(instance_item.label)
-                instance_label = html_escape(instance_item.label)
+                src_instance_label = instance_item.label
+                if src_instance_label is None:
+                    # Do not cause UI crash if label is 'None'
+                    src_instance_label = "No label"
+                instance_label = html_escape(src_instance_label)
+
+                item = QtGui.QStandardItem(src_instance_label)
                 item.setData(instance_label, ITEM_LABEL_ROLE)
                 item.setData(instance_item.errored, ITEM_ERRORED_ROLE)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
@@ -162,7 +167,8 @@ class PluginsModel(QtGui.QStandardItemModel):
 
             items = []
             for plugin_item in plugin_items:
-                item = QtGui.QStandardItem(plugin_item.label)
+                label = plugin_item.label or plugin_item.name
+                item = QtGui.QStandardItem(label)
                 item.setData(False, ITEM_IS_GROUP_ROLE)
                 item.setData(plugin_item.label, ITEM_LABEL_ROLE)
                 item.setData(plugin_item.id, ITEM_ID_ROLE)

@@ -5,7 +5,7 @@ import json
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
@@ -129,7 +129,7 @@ class AnimationFBXLoader(UnrealBaseLoader):
             options (dict): Those would be data to be imprinted. This is not
                             used now, data are imprinted by `containerise()`.
         """
-        # Create directory for asset and OpenPype container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
         root = self.root
         asset = context.get('asset').get('name')
@@ -198,8 +198,8 @@ class AnimationFBXLoader(UnrealBaseLoader):
                 "sequences": sequences})
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

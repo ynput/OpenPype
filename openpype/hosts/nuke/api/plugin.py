@@ -75,20 +75,6 @@ class NukeCreator(NewCreator):
         for pass_key in keys:
             creator_attrs[pass_key] = pre_create_data[pass_key]
 
-    def add_info_knob(self, node):
-        if "OP_info" in node.knobs().keys():
-            return
-
-        # add info text
-        info_knob = nuke.Text_Knob("OP_info", "")
-        info_knob.setValue("""
-<span style=\"color:#fc0303\">
-<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>To remove it use Publisher gui.</p>
-</span>
-        """)
-        node.addKnob(info_knob)
-
     def check_existing_subset(self, subset_name):
         """Make sure subset name is unique.
 
@@ -153,8 +139,6 @@ class NukeCreator(NewCreator):
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
 
-                self.add_info_knob(created_node)
-
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
                         created_node["key"].setValue(values)
@@ -208,12 +192,24 @@ class NukeCreator(NewCreator):
 
     def collect_instances(self):
         cached_instances = _collect_and_cache_nodes(self)
+        attr_def_keys = {
+            attr_def.key
+            for attr_def in self.get_instance_attr_defs()
+        }
+        attr_def_keys.discard(None)
+
         for (node, data) in cached_instances[self.identifier]:
             created_instance = CreatedInstance.from_existing(
                 data, self
             )
             created_instance.transient_data["node"] = node
             self._add_instance_to_context(created_instance)
+
+            for key in (
+                set(created_instance["creator_attributes"].keys())
+                - attr_def_keys
+            ):
+                created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
@@ -301,8 +297,11 @@ class NukeWriteCreator(NukeCreator):
     def get_instance_attr_defs(self):
         attr_defs = [
             self._get_render_target_enum(),
-            self._get_reviewable_bool()
         ]
+        # add reviewable attribute
+        if "reviewable" in self.instance_attributes:
+            attr_defs.append(self._get_reviewable_bool())
+
         return attr_defs
 
     def _get_render_target_enum(self):
@@ -322,7 +321,7 @@ class NukeWriteCreator(NukeCreator):
     def _get_reviewable_bool(self):
         return BoolDef(
             "review",
-            default=("reviewable" in self.instance_attributes),
+            default=True,
             label="Review"
         )
 
@@ -594,7 +593,7 @@ class ExporterReview(object):
                                         Defaults to None.
             range (bool, optional): flag for adding ranges.
                                     Defaults to False.
-            custom_tags (list[str], optional): user inputed custom tags.
+            custom_tags (list[str], optional): user inputted custom tags.
                                                Defaults to None.
         """
         add_tags = tags or []
@@ -1110,7 +1109,7 @@ class AbstractWriteRender(OpenPypeCreator):
     def is_legacy(self):
         """Check if it needs to run legacy code
 
-        In case where `type` key is missing in singe
+        In case where `type` key is missing in single
         knob it is legacy project anatomy.
 
         Returns:

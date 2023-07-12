@@ -38,13 +38,6 @@ class CreateWriteRender(napi.NukeWriteCreator):
         ]
         return attr_defs
 
-    def get_instance_attr_defs(self):
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool()
-        ]
-        return attr_defs
-
     def create_instance_node(self, subset_name, instance_data):
         # add fpath_template
         write_data = {
@@ -73,7 +66,6 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
 
         self.integrate_links(created_node, outputs=False)
 

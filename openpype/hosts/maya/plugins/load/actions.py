@@ -105,7 +105,8 @@ class ImportMayaLoader(load.LoaderPlugin):
         "camera",
         "rig",
         "camerarig",
-        "staticMesh"
+        "staticMesh",
+        "workfile"
     ]
 
     label = "Import"
@@ -118,7 +119,7 @@ class ImportMayaLoader(load.LoaderPlugin):
             "clean_import",
             label="Clean import",
             default=False,
-            help="Should all occurences of cbId be purged?"
+            help="Should all occurrences of cbId be purged?"
         )
     ]
 

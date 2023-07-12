@@ -9,6 +9,7 @@ import time
 
 import pyblish.api
 
+from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -21,13 +22,12 @@ from openpype.host import HostBase, ILoadHost, IPublishHost
 from openpype.hosts.unreal.api.communication_server import (
     CommunicationWrapper
 )
-
 logger = logging.getLogger("openpype.hosts.unreal")
 
-OPENPYPE_CONTAINERS = "OpenPypeContainers"
-CONTEXT_CONTAINER = "OpenPype/context.json"
+AYON_CONTAINERS = "AyonContainers"
+CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
-    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+    *os.getenv("AYON_UNREAL_VERSION").split(".")
 )
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
@@ -69,7 +69,6 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
                 "make_directory",
                 params={"directory_path": "/Game/OpenPype"})
 
-        #
         op_ctx = content_path + CONTEXT_CONTAINER
         attempts = 3
         for i in range(attempts):
@@ -102,19 +101,30 @@ def install():
     print("-=" * 40)
     logo = '''.
 .
-     ____________
-   / \\      __   \\
-   \\  \\     \\/_\\  \\
-    \\  \\     _____/ ______
-     \\  \\    \\___// \\     \\
-      \\  \\____\\   \\  \\_____\\
-       \\/_____/    \\/______/  PYPE Club .
+                    ·
+                    │
+                   ·∙/
+                 ·-∙•∙-·
+              / \\  /∙·  / \\
+             ∙   \\  │  /   ∙
+              \\   \\ · /   /
+              \\\\   ∙ ∙  //
+                \\\\/   \\//
+                   ___
+                  │   │
+                  │   │
+                  │   │
+                  │___│
+                    -·
+
+         ·-─═─-∙ A Y O N ∙-─═─-·
+                by  YNPUT
 .
 '''
     print(logo)
-    print("installing OpenPype for Unreal ...")
+    print("installing Ayon for Unreal ...")
     print("-=" * 40)
-    logger.info("installing OpenPype for Unreal")
+    logger.info("installing Ayon for Unreal")
     pyblish.api.register_host("unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
@@ -124,7 +134,7 @@ def install():
 
 
 def uninstall():
-    """Uninstall Unreal configuration for Avalon."""
+    """Uninstall Unreal configuration for Ayon."""
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
@@ -132,14 +142,14 @@ def uninstall():
 
 def _register_callbacks():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
 
 def _register_events():
     """
-    TODO: Implement callbacks if supported by UE4
+    TODO: Implement callbacks if supported by UE
     """
     pass
 
@@ -169,7 +179,6 @@ def unreal_log(message, level):
 
     """
     send_request("log", params={"message": message, "level": level})
-
 
 def imprint(node, data):
     """Imprint data to container.
@@ -214,7 +223,7 @@ def containerise(root, name, data, suffix="_CON"):
     Unreal doesn't support *groups* of assets that you can add metadata to.
     But it does support folders that helps to organize asset. Unfortunately
     those folders are just that - you cannot add any additional information
-    to them. OpenPype Integration Plugin is providing way out - Implementing
+    to them. Ayon Integration Plugin is providing way out - Implementing
     `AssetContainer` Blueprint class. This class when added to folder can
     handle metadata on it using standard
     :func:`unreal.EditorAssetLibrary.set_metadata_tag()` and
@@ -223,7 +232,7 @@ def containerise(root, name, data, suffix="_CON"):
     those assets is available as `assets` property.
 
     This is list of strings starting with asset type and ending with its path:
-    `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
+    `Material /Game/Ayon/Test/TestMaterial.TestMaterial`
 
     """
     return send_request(
@@ -234,12 +243,11 @@ def containerise(root, name, data, suffix="_CON"):
             "data": data,
             "suffix": suffix})
 
-
 def instantiate(root, name, data, assets=None, suffix="_INS"):
     """Bundles *nodes* into *container*.
 
     Marking it with metadata as publishable instance. If assets are provided,
-    they are moved to new path where `OpenPypePublishInstance` class asset is
+    they are moved to new path where `AyonPublishInstance` class asset is
     created and imprinted with metadata.
 
     This can then be collected for publishing by Pyblish for example.
@@ -261,7 +269,6 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
             "assets": assets,
             "suffix": suffix})
 
-
 def show_creator():
     host_tools.show_creator()
 
@@ -280,7 +287,6 @@ def show_manager():
 
 def show_experimental_tools():
     host_tools.show_experimental_tools_dialog()
-
 
 @contextmanager
 def maintained_selection():

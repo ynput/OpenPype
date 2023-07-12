@@ -123,7 +123,7 @@ class BaseRepresentationModel(object):
         self.remote_provider = remote_provider
 
 
-class SubsetsModel(TreeModel, BaseRepresentationModel):
+class SubsetsModel(BaseRepresentationModel, TreeModel):
     doc_fetched = QtCore.Signal()
     refreshed = QtCore.Signal(bool)
 
@@ -361,12 +361,11 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             version_data.get("endFrame", None)
         )
 
+        handles_label = None
         handle_start = version_data.get("handleStart", None)
         handle_end = version_data.get("handleEnd", None)
         if handle_start is not None and handle_end is not None:
-            handles = "{}-{}".format(str(handle_start), str(handle_end))
-        else:
-            handles = version_data.get("handles", None)
+            handles_label = "{}-{}".format(str(handle_start), str(handle_end))
 
         if frame_start is not None and frame_end is not None:
             # Remove superfluous zeros from numbers (3.0 -> 3) to improve
@@ -403,7 +402,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             "frameStart": frame_start,
             "frameEnd": frame_end,
             "duration": duration,
-            "handles": handles,
+            "handles": handles_label,
             "frames": frames,
             "step": version_data.get("step", None),
         })
@@ -447,6 +446,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         last_versions_by_subset_id = get_last_versions(
             project_name,
             subset_ids,
+            active=True,
             fields=["_id", "parent", "name", "type", "data", "schema"]
         )
 

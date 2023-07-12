@@ -42,7 +42,8 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
         resources = instance.data.get("resources", [])
         for resource in resources:
             files = resource["files"]
-            self.log.debug("Resouce '{}', files: [{}]".format(resource, files))
+            self.log.debug(
+                "Resource '{}', files: [{}]".format(resource, files))
             node = resource["node"]
             if len(files) == 0:
                 self.log.error("File node '{}' uses no or non-existing "

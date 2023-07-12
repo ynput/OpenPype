@@ -76,7 +76,7 @@ class ClockifyModule(OpenPypeModule, ITrayModule, IPluginPaths):
         return
 
     def get_plugin_paths(self):
-        """Implementaton of IPluginPaths to get plugin paths."""
+        """Implementation of IPluginPaths to get plugin paths."""
         actions_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "launcher_actions"
         )

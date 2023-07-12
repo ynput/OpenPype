@@ -238,12 +238,12 @@ For resolution and frame range, use **OpenPype → Set Frame Range** and
 
 Creating and publishing rigs with OpenPype follows similar workflow as with
 other data types. Create your rig and mark parts of your hierarchy in sets to
-help OpenPype validators and extractors to check it and publish it.
+help OpenPype validators and extractors to check and publish it.
 
 ### Preparing rig for publish
 
 When creating rigs, it is recommended (and it is in fact enforced by validators)
-to separate bones or driving objects, their controllers and geometry so they are
+to separate bones or driven objects, their controllers and geometry so they are
 easily managed. Currently OpenPype doesn't allow to publish model at the same time as
 its rig so for demonstration purposes, I'll first create simple model for robotic
 arm, just made out of simple boxes and I'll publish it.
@@ -252,41 +252,48 @@ arm, just made out of simple boxes and I'll publish it.
 
 For more information about publishing models, see [Publishing models](artist_hosts_maya.md#publishing-models).
 
-Now lets start with empty scene. Load your model - **OpenPype → Load...**, right
+Now let's start with empty scene. Load your model - **OpenPype → Load...**, right
 click on it and select **Reference (abc)**.
 
-I've created few bones and their controllers in two separate
-groups - `rig_GRP` and `controls_GRP`. Naming is not important - just adhere to
-your naming conventions.
+I've created a few bones in `rig_GRP`, their controllers in `controls_GRP` and
+placed the rig's output geometry in `geometry_GRP`. Naming of the groups is not important - just adhere to
+your naming conventions. Then I parented everything into a single top group named `arm_rig`.
 
-Then I've put everything into `arm_rig` group.
-
-When you've prepared your hierarchy, it's time to create *Rig instance* in OpenPype.
-Select your whole rig hierarchy and go **OpenPype → Create...**. Select **Rig**.
-Set is created in your scene to mark rig parts for export. Notice that it has
-two subsets - `controls_SET` and `out_SET`. Put your controls into `controls_SET`
+With the prepared hierarchy it is time to create a *Rig instance* in OpenPype.
+Select the top group of your rig and go to **OpenPype → Create...**. Select **Rig**.
+A publish set for your rig is created in your scene to mark rig parts for export.
+Notice that it has two subsets - `controls_SET` and `out_SET`. Put your controls into `controls_SET`
 and geometry to `out_SET`. You should end up with something like this:
 
 ![Maya - Rig Hierarchy Example](assets/maya-rig_hierarchy_example.jpg)
 
+:::note controls_SET and out_SET contents
+It is totally allowed to put the `geometry_GRP` in the `out_SET` as opposed to
+the individual meshes - it's even **recommended**. However, the `controls_SET`
+requires the individual controls in it that the artist is supposed to animate
+and manipulate so the publish validators can accurately check the rig's
+controls.
+:::
+
 ### Publishing rigs
 
-Publishing rig is done in same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. When you run validation you'll mostly run at first into
-few issues. Although number of them will seem to be intimidating at first, you'll
-find out they are mostly minor things easily fixed.
+Publishing rigs is done in a same way as publishing everything else. Save your scene
+and go **OpenPype → Publish**. When you run validation you'll most likely run into
+a few issues at first. Although a number of them will seem to be intimidating you
+will find out they are mostly minor things, easily fixed and are there to optimize
+your rig for consistency and safe usage by the artist.
 
-* **Non Duplicate Instance Members (ID)** - This will most likely fail because when
+- **Non Duplicate Instance Members (ID)** - This will most likely fail because when
 creating rigs, we usually duplicate few parts of it to reuse them. But duplication
 will duplicate also ID of original object and OpenPype needs every object to have
 unique ID. This is easily fixed by **Repair** action next to validator name. click
 on little up arrow on right side of validator name and select **Repair** form menu.
 
-* **Joints Hidden** - This is enforcing joints (bones) to be hidden for user as
+- **Joints Hidden** - This is enforcing joints (bones) to be hidden for user as
 animator usually doesn't need to see them and they clutter his viewports. So
 well behaving rig should have them hidden. **Repair** action will help here also.
 
-* **Rig Controllers** will check if there are no transforms on unlocked attributes
+- **Rig Controllers** will check if there are no transforms on unlocked attributes
 of controllers. This is needed because animator should have ease way to reset rig
 to it's default position. It also check that those attributes doesn't have any
 incoming connections from other parts of scene to ensure that published rig doesn't
@@ -296,6 +303,19 @@ have any missing dependencies.
 
 You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and **Reference** it.
+
+### Animation instances
+
+Whenever you load a rig an animation publish instance is automatically created
+for it. This means that if you load a rig you don't need to create a pointcache
+instance yourself to publish the geometry. This is all cleanly prepared for you
+when loading a published rig.
+
+:::tip Missing animation instance for your loaded rig?
+Did you accidentally delete the animation instance for a loaded rig? You can
+recreate it using the [**Recreate rig animation instance**](artist_hosts_maya.md#recreate-rig-animation-instance)
+inventory action.
+:::
 
 ## Point caches
 OpenPype is using Alembic format for point caches. Workflow is very similar as
@@ -646,3 +666,15 @@ Select 1 container of type `animation` or `pointcache`, then 1+ container of any
 The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
 
 The connection between geometries is done with a live blendshape.
+
+### Recreate rig animation instance
+
+This action can regenerate an animation instance for a loaded rig, for example
+for when it was accidentally deleted by the user.
+
+![Maya - Inventory Action Recreate Rig Animation Instance](assets/maya-inventory_action_recreate_animation_instance.png)
+
+#### Usage
+
+Select 1 or more container of type `rig` for which you want to recreate the
+animation instance.

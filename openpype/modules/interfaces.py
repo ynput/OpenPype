@@ -33,8 +33,8 @@ class OpenPypeInterface:
 class IPluginPaths(OpenPypeInterface):
     """Module has plugin paths to return.
 
-    Expected result is dictionary with keys "publish", "create", "load" or
-    "actions" and values as list or string.
+    Expected result is dictionary with keys "publish", "create", "load",
+    "actions" or "inventory" and values as list or string.
     {
         "publish": ["path/to/publish_plugins"]
     }
@@ -108,6 +108,21 @@ class IPluginPaths(OpenPypeInterface):
         """
 
         return self._get_plugin_paths_by_type("publish")
+
+    def get_inventory_action_paths(self, host_name):
+        """Receive inventory action paths.
+
+        Give addons ability to add inventory action plugin paths.
+
+        Notes:
+           Default implementation uses 'get_plugin_paths' and always return
+               all publish plugin paths.
+
+        Args:
+           host_name (str): For which host are the plugins meant.
+        """
+
+        return self._get_plugin_paths_by_type("inventory")
 
 
 class ILaunchHookPaths(OpenPypeInterface):
@@ -221,7 +236,7 @@ class ITrayModule(OpenPypeInterface):
             message (str): Content of message.
             icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
                 Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
+            msecs (int): Duration of message visibility in milliseconds.
                 Default is 10000 msecs, may differ by Qt version.
         """
 
@@ -395,13 +410,11 @@ class ITrayService(ITrayModule):
 
 
 class ISettingsChangeListener(OpenPypeInterface):
-    """Module has plugin paths to return.
+    """Module tries to listen to settings changes.
 
-    Expected result is dictionary with keys "publish", "create", "load" or
-    "actions" and values as list or string.
-    {
-        "publish": ["path/to/publish_plugins"]
-    }
+    Only settings changes in the current process are propagated.
+    Changes made in other processes or machines won't  trigger the callbacks.
+
     """
 
     @abstractmethod

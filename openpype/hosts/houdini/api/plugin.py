@@ -60,7 +60,7 @@ class Creator(LegacyCreator):
 
             def process(self):
                 instance =  super(CreateEpicNode, self, process()
-                # Set paramaters for Alembic node
+                # Set parameters for Alembic node
                 instance.setParms(
                     {"sop_path": "$HIP/%s.abc" % self.nodes[0]}
                 )
@@ -276,3 +276,19 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             color = hou.Color((0.616, 0.871, 0.769))
         node.setUserData('nodeshape', shape)
         node.setColor(color)
+
+    def get_network_categories(self):
+        """Return in which network view type this creator should show.
+
+        The node type categories returned here will be used to define where
+        the creator will show up in the TAB search for nodes in Houdini's
+        Network View.
+
+        This can be overridden in inherited classes to define where that
+        particular Creator should be visible in the TAB search.
+
+        Returns:
+            list: List of houdini node type categories
+
+        """
+        return [hou.ropNodeTypeCategory()]
