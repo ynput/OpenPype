@@ -29,7 +29,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, options):
-        import maya.cmds as cmds
+        from maya import cmds
 
         with lib.maintained_selection():
             file_url = self.prepare_root_value(self.fname,
@@ -113,8 +113,8 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # region compute lookup
         nodes_by_id = defaultdict(list)
-        for n in nodes:
-            nodes_by_id[lib.get_id(n)].append(n)
+        for node in nodes:
+            nodes_by_id[lib.get_id(node)].append(node)
         lib.apply_attributes(attributes, nodes_by_id)
 
     def _get_nodes_with_shader(self, shader_nodes):
@@ -125,14 +125,16 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         Returns
             <list> node names
         """
-        import maya.cmds as cmds
+        from maya import cmds
 
-        nodes_list = []
         for shader in shader_nodes:
-            connections = cmds.listConnections(cmds.listHistory(shader, f=1),
+            future = cmds.listHistory(shader, future=True)
+            connections = cmds.listConnections(future,
                                                type='mesh')
             if connections:
-                for connection in connections:
-                    nodes_list.extend(cmds.listRelatives(connection,
-                                                         shapes=True))
-        return nodes_list
+                # Ensure unique entries only to optimize query and results
+                connections = list(set(connections))
+                return cmds.listRelatives(connections,
+                                          shapes=True,
+                                          fullPath=True) or []
+        return []

@@ -5,10 +5,12 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateColorSets(pyblish.api.Validator):
+class ValidateColorSets(pyblish.api.Validator,
+                        OptionalPyblishPluginMixin):
     """Validate all meshes in the instance have unlocked normals
 
     These can be removed manually through:
@@ -40,6 +42,8 @@ class ValidateColorSets(pyblish.api.Validator):
 
     def process(self, instance):
         """Raise invalid when any of the meshes have ColorSets"""
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
 

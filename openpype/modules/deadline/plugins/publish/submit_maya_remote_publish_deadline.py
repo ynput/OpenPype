@@ -1,18 +1,33 @@
 import os
-import requests
+import attr
 from datetime import datetime
 
 from maya import cmds
 
 from openpype.pipeline import legacy_io, PublishXmlValidationError
-from openpype.settings import get_project_settings
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+from openpype_modules.deadline import abstract_submit_deadline
+from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 import pyblish.api
 
 
-class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
+@attr.s
+class MayaPluginInfo(object):
+    Build = attr.ib(default=None)  # Don't force build
+    StrictErrorChecking = attr.ib(default=True)
+
+    SceneFile = attr.ib(default=None)  # Input scene
+    Version = attr.ib(default=None)  # Mandatory for Deadline
+    ProjectPath = attr.ib(default=None)
+
+    ScriptJob = attr.ib(default=True)
+    ScriptFilename = attr.ib(default=None)
+
+
+class MayaSubmitRemotePublishDeadline(
+        abstract_submit_deadline.AbstractSubmitDeadline):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
@@ -36,13 +51,6 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
     targets = ["local"]
 
     def process(self, instance):
-        project_name = instance.context.data["projectName"]
-        # TODO settings can be received from 'context.data["project_settings"]'
-        settings = get_project_settings(project_name)
-        # use setting for publish job on farm, no reason to have it separately
-        deadline_publish_job_sett = (settings["deadline"]
-                                     ["publish"]
-                                     ["ProcessSubmittedJobOnFarm"])
 
         # Ensure no errors so far
         if not (all(result["success"]
@@ -54,54 +62,39 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
                              "Skipping submission..")
             return
 
+        super(MayaSubmitRemotePublishDeadline, self).process(instance)
+
+    def get_job_info(self):
+        instance = self._instance
+        context = instance.context
+
+        project_name = instance.context.data["projectName"]
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=project_name,
                                                scene=scenename)
+
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
-        # Generate the payload for Deadline submission
-        payload = {
-            "JobInfo": {
-                "Plugin": "MayaBatch",
-                "BatchName": batch_name,
-                "Name": job_name,
-                "UserName": instance.context.data["user"],
-                "Comment": instance.context.data.get("comment", ""),
-                # "InitialStatus": state
-                "Department": deadline_publish_job_sett["deadline_department"],
-                "ChunkSize": deadline_publish_job_sett["deadline_chunk_size"],
-                "Priority": deadline_publish_job_sett["deadline_priority"],
-                "Group": deadline_publish_job_sett["deadline_group"],
-                "Pool": deadline_publish_job_sett["deadline_pool"],
-            },
-            "PluginInfo": {
+        job_info = DeadlineJobInfo(Plugin="MayaBatch")
+        job_info.BatchName = batch_name
+        job_info.Name = job_name
+        job_info.UserName = context.data.get("user")
+        job_info.Comment = context.data.get("comment", "")
 
-                "Build": None,  # Don't force build
-                "StrictErrorChecking": True,
-                "ScriptJob": True,
+        # use setting for publish job on farm, no reason to have it separately
+        project_settings = context.data["project_settings"]
+        deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
+        job_info.Department = deadline_publish_job_sett["deadline_department"]
+        job_info.ChunkSize = deadline_publish_job_sett["deadline_chunk_size"]
+        job_info.Priority = deadline_publish_job_sett["deadline_priority"]
+        job_info.Group = deadline_publish_job_sett["deadline_group"]
+        job_info.Pool = deadline_publish_job_sett["deadline_pool"]
 
-                # Inputs
-                "SceneFile": scene,
-                "ScriptFilename": "{OPENPYPE_REPOS_ROOT}/openpype/scripts/remote_publish.py",   # noqa
-
-                # Mandatory for Deadline
-                "Version": cmds.about(version=True),
-
-                # Resolve relative references
-                "ProjectPath": cmds.workspace(query=True,
-                                              rootDirectory=True),
-
-            },
-
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": []
-        }
-
-        # Include critical environment variables with submission + api.Session
+        # Include critical environment variables with submission + Session
         keys = [
             "FTRACK_API_USER",
             "FTRACK_API_KEY",
@@ -126,20 +119,18 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
         environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
 
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
+        for key, value in environment.items():
+            job_info.EnvironmentKeyValue[key] = value
 
-        self.log.info("Submitting Deadline job ...")
-        deadline_url = instance.context.data["defaultDeadline"]
-        # if custom one is set in instance, use that
-        if instance.data.get("deadlineUrl"):
-            deadline_url = instance.data.get("deadlineUrl")
-        assert deadline_url, "Requires Deadline Webservice URL"
-        url = "{}/api/jobs".format(deadline_url)
-        response = requests.post(url, json=payload, timeout=10)
-        if not response.ok:
-            raise Exception(response.text)
+    def get_plugin_info(self):
+
+        scene = self._instance.context.data["currentFile"]
+
+        plugin_info = MayaPluginInfo()
+        plugin_info.SceneFile = scene
+        plugin_info.ScriptFilename = "{OPENPYPE_REPOS_ROOT}/openpype/scripts/remote_publish.py"  # noqa
+        plugin_info.Version = cmds.about(version=True)
+        plugin_info.ProjectPath = cmds.workspace(query=True,
+                                                 rootDirectory=True)
+
+        return attr.asdict(plugin_info)

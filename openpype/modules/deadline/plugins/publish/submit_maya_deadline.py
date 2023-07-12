@@ -30,8 +30,16 @@ import attr
 
 from maya import cmds
 
-from openpype.pipeline import legacy_io
-
+from openpype.pipeline import (
+    legacy_io,
+    OpenPypePyblishPluginMixin
+)
+from openpype.lib import (
+    BoolDef,
+    NumberDef,
+    TextDef,
+    EnumDef
+)
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 
@@ -92,7 +100,8 @@ class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
 
 
-class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                         OpenPypePyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["maya"]
@@ -106,6 +115,24 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = "none"
+    strict_error_checking = True
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.asset_dependencies = settings.get("asset_dependencies",
+                                              cls.asset_dependencies)
+        cls.import_reference = settings.get("import_reference",
+                                            cls.import_reference)
+        cls.use_published = settings.get("use_published", cls.use_published)
+        cls.priority = settings.get("priority", cls.priority)
+        cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
+        cls.limit = settings.get("limit", cls.limit)
+        cls.group = settings.get("group", cls.group)
+        cls.strict_error_checking = settings.get("strict_error_checking",
+                                                 cls.strict_error_checking)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -150,6 +177,19 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         if self.limit:
             job_info.LimitGroups = ",".join(self.limit)
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        render_globals = instance.data.setdefault("renderGlobals", dict())
+        machine_list = attr_values.get("machineList", "")
+        if machine_list:
+            if attr_values.get("whitelist", True):
+                machine_list_key = "Whitelist"
+            else:
+                machine_list_key = "Blacklist"
+            render_globals[machine_list_key] = machine_list
+
+        job_info.Priority = attr_values.get("priority")
+        job_info.ChunkSize = attr_values.get("chunkSize")
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -223,8 +263,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
-        strict_error_checking = instance.data.get("strict_error_checking",
-                                                  True)
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        strict_error_checking = attr_values.get("strict_error_checking",
+                                                self.strict_error_checking)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -422,11 +464,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get(
-            "tile_priority", self.tile_priority
-        )
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        assembly_job_info.Priority = attr_values.get("tile_priority",
+                                                     self.tile_priority)
         assembly_job_info.TileJob = False
 
+        # TODO: This should be a new publisher attribute definition
         pool = instance.context.data["project_settings"]["deadline"]
         pool = pool["publish"]["ProcessSubmittedJobOnFarm"]["deadline_pool"]
         assembly_job_info.Pool = pool or instance.data.get("primaryPool", "")
@@ -519,7 +563,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )
-            self.log.info(payload)
             assembly_job_id = self.submit(payload)
             assembly_job_ids.append(assembly_job_id)
 
@@ -781,6 +824,44 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         else:
             for file in exp:
                 yield file
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(MayaSubmitDeadline, cls).get_attribute_defs()
+
+        defs.extend([
+            NumberDef("priority",
+                      label="Priority",
+                      default=cls.default_priority,
+                      decimals=0),
+            NumberDef("chunkSize",
+                      label="Frames Per Task",
+                      default=1,
+                      decimals=0,
+                      minimum=1,
+                      maximum=1000),
+            TextDef("machineList",
+                    label="Machine List",
+                    default="",
+                    placeholder="machine1,machine2"),
+            EnumDef("whitelist",
+                    label="Machine List (Allow/Deny)",
+                    items={
+                        True: "Allow List",
+                        False: "Deny List",
+                    },
+                    default=False),
+            NumberDef("tile_priority",
+                      label="Tile Assembler Priority",
+                      decimals=0,
+                      default=cls.tile_priority),
+            BoolDef("strict_error_checking",
+                    label="Strict Error Checking",
+                    default=cls.strict_error_checking),
+
+        ])
+
+        return defs
 
 
 def _format_tiles(
