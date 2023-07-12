@@ -296,7 +296,7 @@ def deliver_sequence(
     src_head = src_collection.head
     src_tail = src_collection.tail
     uploaded = 0
-    first_frame = next(iter(src_collection.indexes))
+    first_frame = min(src_collection.indexes)
     for index in src_collection.indexes:
         src_padding = src_collection.format("{padding}") % index
         src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
