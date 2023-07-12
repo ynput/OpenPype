@@ -160,12 +160,14 @@
     },
     "deadline": {
         "enabled": false,
-        "deadline_urls": "http://deadline.prs.vfx.int:8082",
+        "deadline_urls": {
+            "default":"http://deadline.prs.vfx.int:8082"
+        },
         "deadline_paths": {
             "default": {
                 "windows": "",
                 "darwin": "",
-                "linux": ""                  
+                "linux": "/prod/softprod/apps/deadline/10.1.23.6/linux/deadlinemonitor10.desktop"
             }
         }
     },
