@@ -238,6 +238,7 @@ class BlenderCreator(Creator):
 
         collection = bpy.data.collections.new(name=subset_name)
         bpy.context.scene.collection.children.link(collection)
+        imprint(collection, instance_data)
 
         if pre_create_data.get("useSelection"):
             for obj in get_selection():

@@ -63,7 +63,7 @@ class BlenderHost(HostBase, IPublishHost):
         """List containers from active Blender scene."""
         return ls()
 
-    def get_context_data(self):
+    def get_context_data(self) -> dict:
         """Override abstract method from IPublishHost.
         Get global data related to creation-publishing from workfile.
 
@@ -72,7 +72,7 @@ class BlenderHost(HostBase, IPublishHost):
         """
         return bpy.context.scene.openpype_context
 
-    def update_context_data(self, data, changes):
+    def update_context_data(self, data: dict, changes: dict):
         """Override abstract method from IPublishHost.
         Store global context data to workfile.
 
