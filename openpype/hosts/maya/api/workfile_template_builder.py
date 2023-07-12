@@ -251,6 +251,32 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
+        model = cmds.ls(assemblies  = True)
+
+        filtered_model = []
+        exclude_list = ['persp', 'top', 'front',
+                         'side', 'root', 'wip']
+
+        for element in model:
+            if not any(exclude_elem in element for exclude_elem in exclude_list):
+                filtered_model.append(element)
+
+        cameras = cmds.ls(type = 'camera')
+        renderable_camera = None
+
+        for camera in cameras:
+            if cmds.getAttr(camera + ".renderable"):
+                shapes = cmds.listRelatives(camera,
+                                        parent=True,
+                                        fullPath=True,
+                                        type="transform")
+                if shapes:
+                    renderable_camera = shapes[0]
+                    break
+
+        cmds.lookThru(renderable_camera)
+        cmds.viewFit(filtered_model, f=0.6)
+
 
     def delete_placeholder(self, placeholder):
         """Remove placeholder if building was successful"""
