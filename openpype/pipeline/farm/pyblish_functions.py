@@ -243,7 +243,8 @@ def create_skeleton_instance(
         "jobBatchName": data.get("jobBatchName", ""),
         "useSequenceForReview": data.get("useSequenceForReview", True),
         # map inputVersions `ObjectId` -> `str` so json supports it
-        "inputVersions": list(map(str, data.get("inputVersions", [])))
+        "inputVersions": list(map(str, data.get("inputVersions", []))),
+        "colorspace": data.get("colorspace")
     }
 
     # skip locking version if we are creating v01
@@ -291,7 +292,8 @@ def _add_review_families(families):
 
 def prepare_representations(instance, exp_files, anatomy, aov_filter,
                             skip_integration_repre_list,
-                            do_not_add_review):
+                            do_not_add_review,
+                            color_managed_plugin):
     """Create representations for file sequences.
 
     This will return representations of expected files if they are not
@@ -306,7 +308,7 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
         aov_filter (dict): add review for specific aov names
         skip_integration_repre_list (list): exclude specific extensions,
         do_not_add_review (bool): explicitly skip review
-
+        color_managed_plugin (publish.ColormanagedPyblishPluginMixin)
     Returns:
         list of representations
 
@@ -432,6 +434,13 @@ def prepare_representations(instance, exp_files, anatomy, aov_filter,
 
         if not already_there:
             representations.append(rep)
+
+    for rep in representations:
+        # inject colorspace data
+        color_managed_plugin.set_representation_colorspace(
+            rep, instance.context,
+            colorspace=instance.data["colorspace"]
+        )
 
     return representations
 

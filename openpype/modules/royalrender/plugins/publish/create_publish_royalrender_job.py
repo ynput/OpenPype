@@ -23,9 +23,11 @@ from openpype.pipeline.farm.pyblish_functions import (
     prepare_representations,
     create_metadata_path
 )
+from openpype.pipeline import publish
 
 
-class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
+class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
+                                  publish.ColormanagedPyblishPluginMixin):
     """Creates job which publishes rendered files to publish area.
 
     Job waits until all rendering jobs are finished, triggers `publish` command
@@ -107,7 +109,8 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin):
                 self.anatomy,
                 self.aov_filter,
                 self.skip_integration_repre_list,
-                do_not_add_review
+                do_not_add_review,
+                self
             )
 
             if "representations" not in instance_skeleton_data.keys():

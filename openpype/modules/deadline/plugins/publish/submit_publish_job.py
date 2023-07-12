@@ -15,7 +15,7 @@ from openpype.client import (
 from openpype.pipeline import (
     legacy_io,
 )
-from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.pipeline import publish
 from openpype.lib import EnumDef
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
@@ -57,7 +57,7 @@ def get_resource_files(resources, frame_range=None):
 
 
 class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
-                                OpenPypePyblishPluginMixin):
+                                publish.ColormanagedPyblishPluginMixin):
     """Process Job submitted on farm.
 
     These jobs are dependent on a deadline or muster job
@@ -396,7 +396,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 anatomy,
                 self.aov_filter,
                 self.skip_integration_repre_list,
-                do_not_add_review
+                do_not_add_review,
+                self
             )
 
             if "representations" not in instance_skeleton_data.keys():
