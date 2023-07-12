@@ -291,7 +291,14 @@ class PypeCommands:
             folder = "../tests"
 
         # disable warnings and show captured stdout even if success
-        args = ["--disable-pytest-warnings", "-rP", folder]
+        args = [
+            "--disable-pytest-warnings",
+            "--capture=sys",
+            "--print",
+            "-W ignore::DeprecationWarning",
+            "-rP",
+            folder
+        ]
 
         if mark:
             args.extend(["-m", mark])

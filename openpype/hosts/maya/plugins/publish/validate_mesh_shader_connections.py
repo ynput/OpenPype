@@ -5,6 +5,7 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
+    PublishValidationError
 )
 
 
@@ -102,7 +103,7 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Shapes found with invalid shader "
+            raise PublishValidationError("Shapes found with invalid shader "
                                "connections: {0}".format(invalid))
 
     @staticmethod

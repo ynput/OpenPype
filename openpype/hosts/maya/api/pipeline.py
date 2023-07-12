@@ -1,3 +1,5 @@
+import json
+import base64
 import os
 import errno
 import logging
@@ -14,6 +16,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
+    IPublishHost,
     HostDirmap,
 )
 from openpype.tools.utils import host_tools
@@ -64,7 +67,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "maya"
 
     def __init__(self):
@@ -149,6 +152,20 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     def maintained_selection(self):
         with lib.maintained_selection():
             yield
+
+    def get_context_data(self):
+        data = cmds.fileInfo("OpenPypeContext", query=True)
+        if not data:
+            return {}
+
+        data = data[0]  # Maya seems to return a list
+        decoded = base64.b64decode(data).decode("utf-8")
+        return json.loads(decoded)
+
+    def update_context_data(self, data, changes):
+        json_str = json.dumps(data)
+        encoded = base64.b64encode(json_str.encode("utf-8"))
+        return cmds.fileInfo("OpenPypeContext", encoded)
 
     def _register_callbacks(self):
         for handler, event in self._op_events.copy().items():
