@@ -6,7 +6,7 @@ from maya import cmds
 from maya.api import OpenMaya as om
 
 from openpype.client import get_representation_by_id
-from openpype.pipeline import legacy_io, publish
+from openpype.pipeline import publish
 
 
 class ExtractLayout(publish.Extractor):
@@ -30,7 +30,7 @@ class ExtractLayout(publish.Extractor):
 
         json_data = []
         # TODO representation queries can be refactored to be faster
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
 
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
