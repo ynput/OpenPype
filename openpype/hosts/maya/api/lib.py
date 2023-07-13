@@ -27,20 +27,16 @@ from openpype.settings import get_project_settings
 from openpype.pipeline import (
     get_current_project_name,
     get_current_asset_name,
+    get_current_task_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
     load_container,
-    registered_host,
+    registered_host
 )
 from openpype.lib import NumberDef
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.create import CreateContext
-from openpype.pipeline.context_tools import (
-    get_current_asset_name,
-    get_current_project_name,
-    get_current_task_name
-)
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -4146,6 +4142,7 @@ def create_rig_animation_instance(
 
     host = registered_host()
     create_context = CreateContext(host)
+    create_context.creators.update(create_context.disabled_creators)
 
     # Create the animation instance
     with maintained_selection():

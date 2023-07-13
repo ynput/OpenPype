@@ -54,8 +54,8 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # Consider both disabled and enabled creators
         # e.g. the "animation" creator is disabled to be hidden
         # by the user
-        creators = self.create_context.disabled_creators.copy()
-        creators.update(self.create_context.creators.copy())
+        creators = self.create_context.creators.copy()
+        creators.update(self.create_context.disabled_creators.copy())
         for identifier, creator in creators.items():
             family = getattr(creator, "family", None)
             if not family:
