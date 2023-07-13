@@ -505,13 +505,9 @@ def is_oiio_supported():
     Returns:
         bool: OIIO tool executable is available.
     """
-    loaded_path = oiio_path = get_oiio_tools_path()
-    if oiio_path:
-        oiio_path = find_executable(oiio_path)
 
-    if not oiio_path:
-        log.debug("OIIOTool is not configured or not present at {}".format(
-            loaded_path
-        ))
+    args = get_oiio_tools_args()
+    if not args:
+        log.debug("OIIOTool is not configured or not present.")
         return False
-    return True
+    return _oiio_executable_validation(args)
