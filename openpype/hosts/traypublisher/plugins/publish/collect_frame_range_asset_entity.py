@@ -10,7 +10,7 @@ class CollectFrameDataFromAssetEntity(pyblish.api.InstancePlugin,
     are not yet collected for the instance.
     """
 
-    order = pyblish.api.CollectorOrder + 0.3
+    order = pyblish.api.CollectorOrder + 0.491
     label = "Collect Frame Data From Asset Entity"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
