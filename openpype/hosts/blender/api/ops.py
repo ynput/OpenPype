@@ -16,7 +16,7 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
@@ -283,7 +283,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": legacy_io.Session["AVALON_ASSET"]},
+            {"asset": get_current_asset_name()},
             refresh=True
         )
 
@@ -331,8 +331,8 @@ class LaunchWorkFiles(LaunchQtApp):
     def execute(self, context):
         result = super().execute(context)
         self._window.set_context({
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
+            "asset": get_current_asset_name(),
+            "task": get_current_task_name()
         })
         return result
 
@@ -362,8 +362,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = legacy_io.Session['AVALON_ASSET']
-        task = legacy_io.Session['AVALON_TASK']
+        asset = get_current_asset_name()
+        task = get_current_task_name()
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(
@@ -411,6 +411,7 @@ def register():
     pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), 'IMAGE')
     PREVIEW_COLLECTIONS["avalon"] = pcoll
 
+    BlenderApplication.get_app()
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)

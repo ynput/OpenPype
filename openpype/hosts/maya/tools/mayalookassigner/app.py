@@ -4,11 +4,14 @@ import logging
 
 from qtpy import QtWidgets, QtCore
 
-from openpype.client import get_last_version_by_subset_id
 from openpype import style
-from openpype.pipeline import legacy_io
+from openpype.client import get_last_version_by_subset_id
+from openpype.pipeline import get_current_project_name
 from openpype.tools.utils.lib import qt_app_context
-from openpype.hosts.maya.api.lib import assign_look_by_version
+from openpype.hosts.maya.api.lib import (
+    assign_look_by_version,
+    get_main_window
+)
 
 from maya import cmds
 # old api for MFileIO
@@ -213,7 +216,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         selection = self.assign_selected.isChecked()
         asset_nodes = self.asset_outliner.get_nodes(selection=selection)
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         start = time.time()
         for i, (asset, item) in enumerate(asset_nodes.items()):
 
@@ -297,9 +300,7 @@ def show():
         pass
 
     # Get Maya main window
-    top_level_widgets = QtWidgets.QApplication.topLevelWidgets()
-    mainwindow = next(widget for widget in top_level_widgets
-                      if widget.objectName() == "MayaWindow")
+    mainwindow = get_main_window()
 
     with qt_app_context():
         window = MayaLookAssignerWindow(parent=mainwindow)

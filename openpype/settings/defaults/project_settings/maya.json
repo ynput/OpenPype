@@ -421,9 +421,9 @@
         },
         "workfile": {
             "enabled": false,
-            "renderSpace": "ACEScg",
-            "displayName": "sRGB",
-            "viewName": "ACES 1.0 SDR-video"
+            "renderSpace": "ACES - ACEScg",
+            "displayName": "ACES",
+            "viewName": "sRGB"
         },
         "colorManagementPreference_v2": {
             "enabled": true,
@@ -615,8 +615,8 @@
             "maskOverride": false,
             "maskDriver": false,
             "maskFilter": false,
-            "maskColor_manager": false,
-            "maskOperator": false
+            "maskOperator": false,
+            "maskColor_manager": false
         },
         "CreateVrayProxy": {
             "enabled": true,

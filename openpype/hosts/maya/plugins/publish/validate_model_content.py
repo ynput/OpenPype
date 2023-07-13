@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateModelContent(pyblish.api.InstancePlugin):
@@ -28,7 +31,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         content_instance = instance.data.get("setMembers", None)
         if not content_instance:
             cls.log.error("Instance has no nodes!")
-            return True
+            return [instance.data["name"]]
 
         # All children will be included in the extracted export so we also
         # validate *all* descendents of the set members and we skip any
@@ -97,4 +100,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Model content is invalid. See log.")
+            raise PublishValidationError(
+                title="Model content is invalid",
+                message="See log for more details"
+            )

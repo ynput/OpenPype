@@ -30,6 +30,7 @@ from openpype.lib import (
     env_value_to_bool,
     Logger,
     get_version_from_path,
+    StringTemplate,
 )
 
 from openpype.settings import (
@@ -41,8 +42,10 @@ from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     get_current_project_name,
     discover_legacy_creator_plugins,
-    legacy_io,
     Anatomy,
+    get_current_host_name,
+    get_current_project_name,
+    get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
     get_current_project_asset,
@@ -552,7 +555,9 @@ def add_write_node_legacy(name, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(kwarg["file"])
 
@@ -588,7 +593,9 @@ def add_write_node(name, file_path, knobs, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(file_path)
 
@@ -965,7 +972,7 @@ def check_inventory_versions():
     if not repre_ids:
         return
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     # Find representations based on found containers
     repre_docs = get_representations(
         project_name,
@@ -1123,11 +1130,15 @@ def format_anatomy(data):
     anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    padding = int(
-        anatomy.templates["render"].get(
-            "frame_padding"
+    padding = None
+    if "frame_padding" in anatomy.templates.keys():
+        padding = int(anatomy.templates["frame_padding"])
+    elif "render" in anatomy.templates.keys():
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding"
+            )
         )
-    )
 
     version = data.get("version", None)
     if not version:
@@ -1137,7 +1148,7 @@ def format_anatomy(data):
     project_name = anatomy.project_name
     asset_name = data["asset"]
     task_name = data["task"]
-    host_name = os.environ["AVALON_APP"]
+    host_name = get_current_host_name()
     context_data = get_template_data_with_names(
         project_name, asset_name, task_name, host_name
     )
@@ -1191,8 +1202,10 @@ def create_prenodes(
 
         # create node
         now_node = nuke.createNode(
-            nodeclass, "name {}".format(name))
-        now_node.hideControlPanel()
+            nodeclass,
+            "name {}".format(name),
+            inpanel=False
+        )
 
         # add for dependency linking
         for_dependency[name] = {
@@ -1300,13 +1313,8 @@ def create_write_node(
 
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = data["fpath_template"].format(
-        work=fdir,
-        version=data["version"],
-        subset=data["subset"],
-        frame=data["frame"],
-        ext=ext
-    )
+    data["work"] = fdir
+    fpath = StringTemplate(data["fpath_template"]).format_strict(data)
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
@@ -1321,12 +1329,17 @@ def create_write_node(
             input_name = str(input.name()).replace(" ", "")
             # if connected input node was defined
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input_name))
+                "Input",
+                "name {}".format(input_name),
+                inpanel=False
+            )
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
 
         # creating pre-write nodes `prenodes`
         last_prenode = create_prenodes(
@@ -1346,15 +1359,13 @@ def create_write_node(
             imageio_writes["knobs"],
             **data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -1465,7 +1476,7 @@ def create_write_node_legacy(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
+    host_name = get_current_host_name()
     try:
         data.update({
             "app": host_name,
@@ -1521,8 +1532,10 @@ def create_write_node_legacy(
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
         # creating pre-write nodes `prenodes`
         if prenodes:
             for node in prenodes:
@@ -1534,8 +1547,10 @@ def create_write_node_legacy(
 
                 # create node
                 now_node = nuke.createNode(
-                    klass, "name {}".format(pre_node_name))
-                now_node.hideControlPanel()
+                    klass,
+                    "name {}".format(pre_node_name),
+                    inpanel=False
+                )
 
                 # add data to knob
                 for _knob in knobs:
@@ -1565,14 +1580,18 @@ def create_write_node_legacy(
                     if isinstance(dependent, (tuple or list)):
                         for i, node_name in enumerate(dependent):
                             input_node = nuke.createNode(
-                                "Input", "name {}".format(node_name))
-                            input_node.hideControlPanel()
+                                "Input",
+                                "name {}".format(node_name),
+                                inpanel=False
+                            )
                             now_node.setInput(1, input_node)
 
                     elif isinstance(dependent, str):
                         input_node = nuke.createNode(
-                            "Input", "name {}".format(node_name))
-                        input_node.hideControlPanel()
+                            "Input",
+                            "name {}".format(node_name),
+                            inpanel=False
+                        )
                         now_node.setInput(0, input_node)
 
                 else:
@@ -1587,15 +1606,13 @@ def create_write_node_legacy(
             "inside_{}".format(name),
             **_data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -1918,15 +1935,18 @@ class WorkfileSettings(object):
     def __init__(self, root_node=None, nodes=None, **kwargs):
         project_doc = kwargs.get("project")
         if project_doc is None:
-            project_name = legacy_io.active_project()
+            project_name = get_current_project_name()
             project_doc = get_project(project_name)
+        else:
+            project_name = project_doc["name"]
 
         Context._project_doc = project_doc
+        self._project_name = project_name
         self._asset = (
             kwargs.get("asset_name")
-            or legacy_io.Session["AVALON_ASSET"]
+            or get_current_asset_name()
         )
-        self._asset_entity = get_current_project_asset(self._asset)
+        self._asset_entity = get_asset_by_name(project_name, self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
 
@@ -2020,11 +2040,11 @@ class WorkfileSettings(object):
             # TODO: backward compatibility for old projects - remove later
             # perhaps old project overrides is having it set to older version
             # with use of `customOCIOConfigPath`
+            resolved_path = None
             if workfile_settings.get("customOCIOConfigPath"):
                 unresolved_path = workfile_settings["customOCIOConfigPath"]
                 ocio_paths = unresolved_path[platform.system().lower()]
 
-                resolved_path = None
                 for ocio_p in ocio_paths:
                     resolved_path = str(ocio_p).format(**os.environ)
                     if not os.path.exists(resolved_path):
@@ -2054,9 +2074,9 @@ class WorkfileSettings(object):
             self._root_node["colorManagement"].setValue("OCIO")
 
         # we dont need the key anymore
-        workfile_settings.pop("customOCIOConfigPath")
-        workfile_settings.pop("colorManagement")
-        workfile_settings.pop("OCIO_config")
+        workfile_settings.pop("customOCIOConfigPath", None)
+        workfile_settings.pop("colorManagement", None)
+        workfile_settings.pop("OCIO_config", None)
 
         # then set the rest
         for knob, value_ in workfile_settings.items():
@@ -2064,10 +2084,42 @@ class WorkfileSettings(object):
             # it will be dict in value
             if isinstance(value_, dict):
                 continue
+            # skip empty values
+            if not value_:
+                continue
             if self._root_node[knob].value() not in value_:
                 self._root_node[knob].setValue(str(value_))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
                     knob, value_))
+
+        # set ocio config path
+        if config_data:
+            current_ocio_path = os.getenv("OCIO")
+            if current_ocio_path != config_data["path"]:
+                message = """
+It seems like there's a mismatch between the OCIO config path set in your Nuke
+settings and the actual path set in your OCIO environment.
+
+To resolve this, please follow these steps:
+1. Close Nuke if it's currently open.
+2. Reopen Nuke.
+
+Please note the paths for your reference:
+
+- The OCIO environment path currently set:
+  `{env_path}`
+
+- The path in your current Nuke settings:
+  `{settings_path}`
+
+Reopening Nuke should synchronize these paths and resolve any discrepancies.
+"""
+                nuke.message(
+                    message.format(
+                        env_path=current_ocio_path,
+                        settings_path=config_data["path"]
+                    )
+                )
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
@@ -2164,7 +2216,7 @@ class WorkfileSettings(object):
 
         log.debug(changes)
         if changes:
-            msg = "Read nodes are not set to correct colospace:\n\n"
+            msg = "Read nodes are not set to correct colorspace:\n\n"
             for nname, knobs in changes.items():
                 msg += (
                     " - node: '{0}' is now '{1}' but should be '{2}'\n"
@@ -2222,16 +2274,15 @@ class WorkfileSettings(object):
             log.warning(msg)
             nuke.message(msg)
             return
-        data = self._asset_entity["data"]
 
-        log.debug("__ asset data: `{}`".format(data))
+        asset_data = self._asset_entity["data"]
 
         missing_cols = []
         check_cols = ["fps", "frameStart", "frameEnd",
                       "handleStart", "handleEnd"]
 
         for col in check_cols:
-            if col not in data:
+            if col not in asset_data:
                 missing_cols.append(col)
 
         if len(missing_cols) > 0:
@@ -2243,12 +2294,12 @@ class WorkfileSettings(object):
             return
 
         # get handles values
-        handle_start = data["handleStart"]
-        handle_end = data["handleEnd"]
+        handle_start = asset_data["handleStart"]
+        handle_end = asset_data["handleEnd"]
 
-        fps = float(data["fps"])
-        frame_start_handle = int(data["frameStart"]) - handle_start
-        frame_end_handle = int(data["frameEnd"]) + handle_end
+        fps = float(asset_data["fps"])
+        frame_start_handle = int(asset_data["frameStart"]) - handle_start
+        frame_end_handle = int(asset_data["frameEnd"]) + handle_end
 
         self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
@@ -2256,21 +2307,18 @@ class WorkfileSettings(object):
         self._root_node["last_frame"].setValue(frame_end_handle)
         self._root_node["lock_range"].setValue(True)
 
-        # setting active viewers
-        try:
-            nuke.frame(int(data["frameStart"]))
-        except Exception as e:
-            log.warning("no viewer in scene: `{}`".format(e))
+        # update node graph so knobs are updated
+        update_node_graph()
 
-        range = '{0}-{1}'.format(
-            int(data["frameStart"]),
-            int(data["frameEnd"])
+        frame_range = '{0}-{1}'.format(
+            int(asset_data["frameStart"]),
+            int(asset_data["frameEnd"])
         )
 
         for node in nuke.allNodes(filter="Viewer"):
-            node['frame_range'].setValue(range)
+            node['frame_range'].setValue(frame_range)
             node['frame_range_lock'].setValue(True)
-            node['frame_range'].setValue(range)
+            node['frame_range'].setValue(frame_range)
             node['frame_range_lock'].setValue(True)
 
         if not ASSIST:
@@ -2291,13 +2339,10 @@ class WorkfileSettings(object):
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project_name = legacy_io.active_project()
-        project = get_project(project_name)
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        asset = get_asset_by_name(project_name, asset_name)
-        asset_data = asset.get('data', {})
+        project_name = get_current_project_name()
+        asset_data = self._asset_entity["data"]
 
-        data = {
+        format_data = {
             "width": int(asset_data.get(
                 'resolutionWidth',
                 asset_data.get('resolution_width'))),
@@ -2307,36 +2352,39 @@ class WorkfileSettings(object):
             "pixel_aspect": asset_data.get(
                 'pixelAspect',
                 asset_data.get('pixel_aspect', 1)),
-            "name": project["name"]
+            "name": project_name
         }
 
-        if any(x for x in data.values() if x is None):
+        if any(x_ for x_ in format_data.values() if x_ is None):
             msg = ("Missing set shot attributes in DB."
                    "\nContact your supervisor!."
                    "\n\nWidth: `{width}`"
                    "\nHeight: `{height}`"
-                   "\nPixel Asspect: `{pixel_aspect}`").format(**data)
+                   "\nPixel Aspect: `{pixel_aspect}`").format(**format_data)
             log.error(msg)
             nuke.message(msg)
 
         existing_format = None
         for format in nuke.formats():
-            if data["name"] == format.name():
+            if format_data["name"] == format.name():
                 existing_format = format
                 break
 
         if existing_format:
             # Enforce existing format to be correct.
-            existing_format.setWidth(data["width"])
-            existing_format.setHeight(data["height"])
-            existing_format.setPixelAspect(data["pixel_aspect"])
+            existing_format.setWidth(format_data["width"])
+            existing_format.setHeight(format_data["height"])
+            existing_format.setPixelAspect(format_data["pixel_aspect"])
         else:
-            format_string = self.make_format_string(**data)
+            format_string = self.make_format_string(**format_data)
             log.info("Creating new format: {}".format(format_string))
             nuke.addFormat(format_string)
 
-        nuke.root()["format"].setValue(data["name"])
+        nuke.root()["format"].setValue(format_data["name"])
         log.info("Format is set.")
+
+        # update node graph so knobs are updated
+        update_node_graph()
 
     def make_format_string(self, **kwargs):
         if kwargs.get("r"):
@@ -2370,7 +2418,7 @@ class WorkfileSettings(object):
         from .utils import set_context_favorites
 
         work_dir = os.getenv("AVALON_WORKDIR")
-        asset = os.getenv("AVALON_ASSET")
+        asset = get_current_asset_name()
         favorite_items = OrderedDict()
 
         # project
@@ -2454,6 +2502,20 @@ def get_dependent_nodes(nodes):
             })
 
     return connections_in, connections_out
+
+
+def update_node_graph():
+    # Resetting frame will update knob values
+    try:
+        root_node_lock = nuke.root()["lock_range"].value()
+        nuke.root()["lock_range"].setValue(not root_node_lock)
+        nuke.root()["lock_range"].setValue(root_node_lock)
+
+        current_frame = nuke.frame()
+        nuke.frame(1)
+        nuke.frame(int(current_frame))
+    except Exception as error:
+        log.warning(error)
 
 
 def find_free_space_to_paste_nodes(
@@ -2779,7 +2841,8 @@ def add_scripts_menu():
         return
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     config = project_settings["nuke"]["scriptsmenu"]["definition"]
     _menu = project_settings["nuke"]["scriptsmenu"]["name"]
 
@@ -2797,7 +2860,8 @@ def add_scripts_menu():
 def add_scripts_gizmo():
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     platform_name = platform.system().lower()
 
     for gizmo_settings in project_settings["nuke"]["gizmo"]:

@@ -12,7 +12,7 @@ from openpype.hosts.fusion.api.lib import (
     set_asset_framerange,
     set_asset_resolution,
 )
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
 from openpype.resources import get_openpype_icon_filepath
 
 from .pipeline import FusionEventHandler
@@ -125,7 +125,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_task_changed(self):
         # Update current context label
-        label = legacy_io.Session["AVALON_ASSET"]
+        label = get_current_asset_name()
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
