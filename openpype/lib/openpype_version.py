@@ -13,6 +13,7 @@ import os
 import sys
 
 import openpype.version
+from openpype import AYON_SERVER_ENABLED
 
 from .python_module_tools import import_filepath
 
@@ -87,6 +88,9 @@ def is_running_staging():
     Returns:
         bool: Using staging version or not.
     """
+
+    if AYON_SERVER_ENABLED:
+        return is_staging_enabled()
 
     if os.environ.get("OPENPYPE_IS_STAGING") == "1":
         return True

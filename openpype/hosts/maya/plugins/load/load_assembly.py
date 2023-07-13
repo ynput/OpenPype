@@ -30,7 +30,7 @@ class AssemblyLoader(load.LoaderPlugin):
         )
 
         containers = setdress.load_package(
-            filepath=self.fname,
+            filepath=self.filepath_from_context(context),
             name=name,
             namespace=namespace
         )

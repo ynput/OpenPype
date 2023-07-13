@@ -45,7 +45,7 @@ class ExtractAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting pointcache..")
+        self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
 
         parent_dir = self.staging_dir(instance)
@@ -86,7 +86,6 @@ class ExtractAlembic(publish.Extractor):
                                                      end=end))
 
         suspend = not instance.data.get("refresh", False)
-        self.log.info(nodes)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)

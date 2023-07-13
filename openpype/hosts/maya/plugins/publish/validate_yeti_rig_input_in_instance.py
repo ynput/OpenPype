@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
@@ -19,7 +22,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Yeti Rig has invalid input meshes")
+            raise PublishValidationError("Yeti Rig has invalid input meshes")
 
     @classmethod
     def get_invalid(cls, instance):
