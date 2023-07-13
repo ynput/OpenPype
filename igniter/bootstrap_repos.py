@@ -48,15 +48,13 @@ def sanitize_long_path(path):
     """
     if platform.system().lower() != "windows":
         return path
+    path = os.path.abspath(path)
+
+    if path.startswith("\\\\"):
+        path = "\\\\?\\UNC\\" + path[2:]
     else:
-        path = os.path.abspath(path)
-
-        if path.startswith("\\\\"):
-            path = "\\\\?\\UNC\\" + path[2:]
-        else:
-            path = "\\\\?\\" + path
-
-        return path
+        path = "\\\\?\\" + path
+    return path
 
 
 def sha256sum(filename):
