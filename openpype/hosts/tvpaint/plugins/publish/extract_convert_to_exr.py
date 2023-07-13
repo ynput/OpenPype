@@ -9,7 +9,7 @@ import json
 
 import pyblish.api
 from openpype.lib import (
-    get_oiio_tools_path,
+    get_oiio_tools_args,
     run_subprocess,
 )
 from openpype.pipeline import KnownPublishError
@@ -34,10 +34,10 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
         if not repres:
             return
 
-        oiio_path = get_oiio_tools_path()
+        oiio_args = get_oiio_tools_args()
         # Raise an exception when oiiotool is not available
         # - this can currently happen on MacOS machines
-        if not os.path.exists(oiio_path):
+        if not oiio_args:
             KnownPublishError(
                 "OpenImageIO tool is not available on this machine."
             )
@@ -64,8 +64,8 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
 
                 src_filepaths.add(src_filepath)
 
-                args = [
-                    oiio_path, src_filepath,
+                args = oiio_args + [
+                    src_filepath,
                     "--compression", self.exr_compression,
                     # TODO how to define color conversion?
                     "--colorconvert", "sRGB", "linear",

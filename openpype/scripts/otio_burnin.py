@@ -8,21 +8,15 @@ from string import Formatter
 
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
     convert_ffprobe_fps_value,
-    convert_ffprobe_fps_to_float,
 )
 
-
-ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-ffprobe_path = get_ffmpeg_tool_path("ffprobe")
-
-
 FFMPEG = (
-    '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
-).format(ffmpeg_path)
+    '{}%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
+).format(subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg")))
 
 DRAWTEXT = (
     "drawtext@'%(label)s'=fontfile='%(font)s':text=\\'%(text)s\\':"
@@ -46,8 +40,7 @@ def _get_ffprobe_data(source):
     :param str source: source media file
     :rtype: [{}, ...]
     """
-    command = [
-        ffprobe_path,
+    command = get_ffmpeg_tool_args("ffprobe") + [
         "-v", "quiet",
         "-print_format", "json",
         "-show_format",

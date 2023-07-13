@@ -3,6 +3,7 @@ import re
 import copy
 import json
 import shutil
+import subprocess
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -11,7 +12,7 @@ import speedcopy
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     filter_profiles,
     path_to_subprocess_arg,
     run_subprocess,
@@ -71,9 +72,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
     supported_exts = image_exts + video_exts
 
     alpha_exts = ["exr", "png", "dpx"]
-
-    # FFmpeg tools paths
-    ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
     # Preset attributes
     profiles = None
@@ -788,7 +786,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     audio_filters.append(arg)
 
         all_args = []
-        all_args.append(path_to_subprocess_arg(self.ffmpeg_path))
+        all_args.append(
+            subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg"))
+        )
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v")

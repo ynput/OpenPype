@@ -1,10 +1,11 @@
 import os
+import subprocess
 import tempfile
 
 import pyblish.api
 from openpype.lib import (
-    get_ffmpeg_tool_path,
-    get_oiio_tools_path,
+    get_ffmpeg_tool_args,
+    get_oiio_tools_args,
     is_oiio_supported,
 
     run_subprocess,
@@ -174,9 +175,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def create_thumbnail_oiio(self, src_path, dst_path):
         self.log.info("Extracting thumbnail {}".format(dst_path))
-        oiio_tool_path = get_oiio_tools_path()
-        oiio_cmd = [
-            oiio_tool_path,
+        oiio_cmd = get_oiio_tools_args() + [
             "-a", src_path,
             "-o", dst_path
         ]
@@ -194,27 +193,27 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
-        jpeg_items = []
-        jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
-        # override file if already exists
-        jpeg_items.append("-y")
+        jpeg_items = [
+            subprocess.list2cmdline(ffmpeg_path_args)
+        ]
         # flag for large file sizes
         max_int = 2147483647
-        jpeg_items.append("-analyzeduration {}".format(max_int))
-        jpeg_items.append("-probesize {}".format(max_int))
+        jpeg_items.extend([
+            "-y",
+            "-analyzeduration", str(max_int),
+            "-probesize", str(max_int),
+        ])
         # use same input args like with mov
         jpeg_items.extend(ffmpeg_args.get("input") or [])
         # input file
-        jpeg_items.append("-i {}".format(
-            path_to_subprocess_arg(src_path)
-        ))
+        jpeg_items.extend(["-i", path_to_subprocess_arg(src_path)])
         # output arguments from presets
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
-        jpeg_items.append("-vframes 1")
+        jpeg_items.extend(["-vframes", "1"])
         # output file
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)

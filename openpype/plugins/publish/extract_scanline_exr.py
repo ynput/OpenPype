@@ -5,7 +5,7 @@ import shutil
 
 import pyblish.api
 
-from openpype.lib import run_subprocess, get_oiio_tools_path
+from openpype.lib import run_subprocess, get_oiio_tools_args
 
 
 class ExtractScanlineExr(pyblish.api.InstancePlugin):
@@ -45,10 +45,9 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
-            oiio_tool_path = get_oiio_tools_path()
-            if not os.path.exists(oiio_tool_path):
-                self.log.error(
-                    "OIIO tool not found in {}".format(oiio_tool_path))
+            oiio_tool_args = get_oiio_tools_args()
+            if not oiio_tool_args:
+                self.log.error("OIIO tool not found.")
                 raise AssertionError("OIIO tool not found")
 
             for file in input_files:
@@ -57,8 +56,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 temp_name = os.path.join(stagingdir, "__{}".format(file))
                 # move original render to temp location
                 shutil.move(original_name, temp_name)
-                oiio_cmd = [
-                    oiio_tool_path,
+                oiio_cmd = oiio_tool_args + [
                     os.path.join(stagingdir, temp_name), "--scanline", "-o",
                     os.path.join(stagingdir, original_name)
                 ]

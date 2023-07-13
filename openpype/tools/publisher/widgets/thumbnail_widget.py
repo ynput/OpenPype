@@ -7,8 +7,8 @@ from openpype.style import get_objected_colors
 from openpype.lib import (
     run_subprocess,
     is_oiio_supported,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
+    get_oiio_tools_args,
+    get_ffmpeg_tool_args,
 )
 from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS,
@@ -481,8 +481,7 @@ def _convert_thumbnail_oiio(src_path, dst_path):
     if not is_oiio_supported():
         return None
 
-    oiio_cmd = [
-        get_oiio_tools_path(),
+    oiio_cmd = get_oiio_tools_args() + [
         "-i", src_path,
         "--subimage", "0",
         "-o", dst_path
@@ -495,8 +494,10 @@ def _convert_thumbnail_oiio(src_path, dst_path):
 
 
 def _convert_thumbnail_ffmpeg(src_path, dst_path):
-    ffmpeg_cmd = [
-        get_ffmpeg_tool_path(),
+    ffmpeg_args = get_ffmpeg_tool_args()
+    if not ffmpeg_args:
+        return None
+    ffmpeg_cmd = ffmpeg_args + [
         "-y",
         "-i", src_path,
         dst_path

@@ -16,7 +16,7 @@ import pyblish.api
 from maya import cmds  # noqa
 
 from openpype.lib.vendor_bin_utils import find_executable
-from openpype.lib import source_hash, run_subprocess, get_oiio_tools_path
+from openpype.lib import source_hash, run_subprocess, get_oiio_tools_args
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 
@@ -267,11 +267,10 @@ class MakeTX(TextureProcessor):
 
         """
 
-        maketx_path = get_oiio_tools_path("maketx")
-
-        if not maketx_path:
+        maketx_args = get_oiio_tools_args("maketx")
+        if not maketx_args:
             raise AssertionError(
-                "OIIO 'maketx' tool not found. Result: {}".format(maketx_path)
+                "OIIO 'maketx' tool not found."
             )
 
         # Define .tx filepath in staging if source file is not .tx
@@ -328,8 +327,7 @@ class MakeTX(TextureProcessor):
 
         self.log.info("Generating .tx file for %s .." % source)
 
-        subprocess_args = [
-            maketx_path,
+        subprocess_args = maketx_args + [
             "-v",  # verbose
             "-u",  # update mode
             # --checknan doesn't influence the output file but aborts the

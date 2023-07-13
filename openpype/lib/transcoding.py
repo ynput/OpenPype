@@ -11,8 +11,8 @@ import xml.etree.ElementTree
 
 from .execute import run_subprocess
 from .vendor_bin_utils import (
-    get_ffmpeg_tool_path,
-    get_oiio_tools_path,
+    get_ffmpeg_tool_args,
+    get_oiio_tools_args,
     is_oiio_supported,
 )
 
@@ -83,8 +83,7 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
 
     Stdout should contain xml format string.
     """
-    args = [
-        get_oiio_tools_path(),
+    args = get_oiio_tools_args() + [
         "--info",
         "-v"
     ]
@@ -486,9 +485,7 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = [
-        get_oiio_tools_path(),
-
+    oiio_cmd = get_oiio_tools_args() + [
         # Don't add any additional attributes
         "--nosoftwareattrib",
     ]
@@ -656,9 +653,7 @@ def convert_input_paths_for_ffmpeg(
 
     for input_path in input_paths:
         # Prepare subprocess arguments
-        oiio_cmd = [
-            get_oiio_tools_path(),
-
+        oiio_cmd = get_oiio_tools_args() + [
             # Don't add any additional attributes
             "--nosoftwareattrib",
         ]
@@ -729,8 +724,8 @@ def get_ffprobe_data(path_to_file, logger=None):
     logger.info(
         "Getting information about input \"{}\".".format(path_to_file)
     )
-    args = [
-        get_ffmpeg_tool_path("ffprobe"),
+    ffprobe_args = get_ffmpeg_tool_args("ffprobe")
+    args = ffprobe_args + [
         "-hide_banner",
         "-loglevel", "fatal",
         "-show_error",
@@ -1084,8 +1079,7 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    oiio_cmd = [
-        get_oiio_tools_path(),
+    oiio_cmd = get_oiio_tools_args() + [
         input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",

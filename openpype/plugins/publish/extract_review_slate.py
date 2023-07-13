@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 from pprint import pformat
 
 import pyblish.api
@@ -7,7 +8,7 @@ import pyblish.api
 from openpype.lib import (
     path_to_subprocess_arg,
     run_subprocess,
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -46,8 +47,6 @@ class ExtractReviewSlate(publish.Extractor):
             }
 
         self.log.info("_ slates_data: {}".format(pformat(slates_data)))
-
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -260,7 +259,7 @@ class ExtractReviewSlate(publish.Extractor):
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                path_to_subprocess_arg(ffmpeg_path),
+                subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg")),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
@@ -281,7 +280,6 @@ class ExtractReviewSlate(publish.Extractor):
                     os.path.splitext(slate_v_path))
                 _remove_at_end.append(slate_silent_path)
                 self._create_silent_slate(
-                    ffmpeg_path,
                     slate_v_path,
                     slate_silent_path,
                     audio_codec,
@@ -309,8 +307,7 @@ class ExtractReviewSlate(publish.Extractor):
                     "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
                     "-map", '[v]'
                 ]
-            concat_args = [
-                ffmpeg_path,
+            concat_args = get_ffmpeg_tool_args("ffmpeg") + [
                 "-y",
                 "-i", slate_v_path,
                 "-i", input_path,
@@ -490,7 +487,6 @@ class ExtractReviewSlate(publish.Extractor):
 
     def _create_silent_slate(
         self,
-        ffmpeg_path,
         src_path,
         dst_path,
         audio_codec,
@@ -515,8 +511,7 @@ class ExtractReviewSlate(publish.Extractor):
             one_frame_duration = str(int(one_frame_duration)) + "us"
         self.log.debug("One frame duration is {}".format(one_frame_duration))
 
-        slate_silent_args = [
-            ffmpeg_path,
+        slate_silent_args = get_ffmpeg_tool_args("ffmpeg") + [
             "-i", src_path,
             "-f", "lavfi", "-i",
             "anullsrc=r={}:cl={}:d={}".format(
