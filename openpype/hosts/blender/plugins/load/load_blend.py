@@ -37,6 +37,17 @@ class BlendLoader(plugin.AssetLoader):
 
         return None
 
+    @staticmethod
+    def get_all_container_parents(asset_group):
+        parent_containers = []
+        parent = asset_group.parent
+        while parent:
+            if parent.get(AVALON_PROPERTY):
+                parent_containers.append(parent)
+            parent = parent.parent
+
+        return parent_containers
+
     def _post_process_layout(self, container, asset, representation):
         rigs = [
             obj for obj in container.children_recursive
@@ -202,6 +213,13 @@ class BlendLoader(plugin.AssetLoader):
 
         imprint(asset_group, new_data)
 
+        # We need to update all the parent container members
+        parent_containers = self.get_all_container_parents(asset_group)
+
+        for parent_container in parent_containers:
+            parent_members = parent_container[AVALON_PROPERTY]["members"]
+            parent_container[AVALON_PROPERTY]["members"] = parent_members + members
+
     def exec_remove(self, container: Dict) -> bool:
         """
         Remove an existing container from a Blender scene.
@@ -217,9 +235,19 @@ class BlendLoader(plugin.AssetLoader):
             )
         ]
 
+        members = asset_group.get(AVALON_PROPERTY).get("members", [])
+
+        # We need to update all the parent container members
+        parent_containers = self.get_all_container_parents(asset_group)
+
+        for parent in parent_containers:
+            parent.get(AVALON_PROPERTY)["members"] = list(filter(
+                lambda i: i not in members,
+                parent.get(AVALON_PROPERTY)["members"]))
+
         for attr in attrs:
             for data in getattr(bpy.data, attr):
-                if data in asset_group.get(AVALON_PROPERTY).get("members", []):
+                if data in members:
                     # Skip the asset group
                     if data == asset_group:
                         continue
