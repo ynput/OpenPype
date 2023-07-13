@@ -370,7 +370,6 @@ def get_oiio_tools_args(tool_name="oiiotool"):
         if args:
             return args
 
-    raise ValueError("This is test")
     path = get_oiio_tools_path(tool_name)
     if path:
         return [path]
