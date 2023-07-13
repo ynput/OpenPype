@@ -85,7 +85,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
                 continue
 
             creator_id = family_to_id[family]
-            creator = self.create_context.creators[creator_id]
+            creator = creators[creator_id]
             data["creator_identifier"] = creator_id
 
             if isinstance(creator, plugin.RenderlayerCreator):
