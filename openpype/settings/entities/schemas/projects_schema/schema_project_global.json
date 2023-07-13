@@ -21,7 +21,7 @@
                       "type": "dict",
                       "children": [
                           {
-                              "key": "hosts",
+                              "key": "host_names",
                               "label": "Host names",
                               "type": "hosts-enum",
                               "multiselection": true
