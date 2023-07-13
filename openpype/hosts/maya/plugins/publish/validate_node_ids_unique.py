@@ -17,7 +17,6 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["model",
                 "look",
-                "rig",
                 "yetiRig"]
 
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
