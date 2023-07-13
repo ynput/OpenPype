@@ -295,7 +295,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             fields=["name"]
         )
         if version_doc:
-            version += int(version_doc["name"]) + 1
+            version = int(version_doc["name"]) + 1
         else:
             version = get_versioning_start(
                 host="webpublisher",
