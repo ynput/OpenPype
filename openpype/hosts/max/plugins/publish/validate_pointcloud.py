@@ -1,15 +1,6 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 from pymxs import runtime as rt
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
-
-
-def get_setting(project_setting=None):
-    project_setting = get_project_settings(
-        legacy_io.Session["AVALON_PROJECT"]
-    )
-    return project_setting["max"]["PointCloud"]
 
 
 class ValidatePointCloud(pyblish.api.InstancePlugin):
@@ -35,12 +26,16 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
 
         """
         report = []
-        if invalid := self.get_tyflow_object(instance):  # noqa
-            report.append(f"Non tyFlow object found: {invalid}")
 
-        if invalid := self.get_tyflow_operator(instance):  # noqa
-            report.append(
-                f"tyFlow ExportParticle operator not found: {invalid}")
+        invalid_object = self.get_tyflow_object(instance)
+        if invalid_object:
+            report.append(f"Non tyFlow object found: {invalid_object}")
+
+        invalid_operator = self.get_tyflow_operator(instance)
+        if invalid_operator:
+            report.append((
+                "tyFlow ExportParticle operator not "
+                f"found: {invalid_operator}"))
 
         if self.validate_export_mode(instance):
             report.append("The export mode is not at PRT")
@@ -49,9 +44,10 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
             report.append(("tyFlow Partition setting is "
                            "not at the default value"))
 
-        if invalid := self.validate_custom_attribute(instance):  # noqa
+        invalid_attribute = self.validate_custom_attribute(instance)
+        if invalid_attribute:
             report.append(("Custom Attribute not found "
-                           f":{invalid}"))
+                           f":{invalid_attribute}"))
 
         if report:
             raise PublishValidationError(f"{report}")
@@ -103,6 +99,9 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
             f"Validating tyFlow custom attributes for {container}")
 
         selection_list = instance.data["members"]
+
+        project_setting = instance.data["project_setting"]
+        attr_settings = project_setting["max"]["PointCloud"]["attribute"]
         for sel in selection_list:
             obj = sel.baseobject
             anim_names = rt.GetSubAnimNames(obj)
@@ -113,8 +112,7 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
                     event_name = sub_anim.name
                     opt = "${0}.{1}.export_particles".format(sel.name,
                                                              event_name)
-                    attributes = get_setting()["attribute"]
-                    for key, value in attributes.items():
+                    for key, value in attr_settings.items():
                         custom_attr = "{0}.PRTChannels_{1}".format(opt,
                                                                    value)
                         try:

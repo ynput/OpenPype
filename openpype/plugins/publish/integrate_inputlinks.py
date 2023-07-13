@@ -3,6 +3,7 @@ from collections import OrderedDict
 from bson.objectid import ObjectId
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 
 
@@ -34,6 +35,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
             plugin.
 
         """
+
         workfile = None
         publishing = []
 
@@ -133,3 +135,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
                 {"_id": version_doc["_id"]},
                 {"$set": {"data.inputLinks": input_links}}
             )
+
+
+if AYON_SERVER_ENABLED:
+    del IntegrateInputLinks

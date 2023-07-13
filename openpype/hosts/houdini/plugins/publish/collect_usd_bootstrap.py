@@ -1,7 +1,6 @@
 import pyblish.api
 
 from openpype.client import get_subset_by_name, get_asset_by_name
-from openpype.pipeline import legacy_io
 import openpype.lib.usdlib as usdlib
 
 
@@ -51,7 +50,7 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         self.log.debug("Add bootstrap for: %s" % bootstrap)
 
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
         asset = get_asset_by_name(project_name, instance.data["asset"])
         assert asset, "Asset must exist: %s" % asset
 

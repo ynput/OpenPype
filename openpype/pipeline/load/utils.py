@@ -79,6 +79,16 @@ class InvalidRepresentationContext(ValueError):
     pass
 
 
+class LoaderSwitchNotImplementedError(NotImplementedError):
+    """Error when `switch` is used with Loader that has no implementation."""
+    pass
+
+
+class LoaderNotFoundError(RuntimeError):
+    """Error when Loader plugin for a loader name is not found."""
+    pass
+
+
 def get_repres_contexts(representation_ids, dbcon=None):
     """Return parenthood context for representation.
 
@@ -304,7 +314,12 @@ def load_with_repre_context(
         )
     )
 
-    loader = Loader(repre_context)
+    loader = Loader()
+
+    # Backwards compatibility: Originally the loader's __init__ required the
+    # representation context to set `fname` attribute to the filename to load
+    loader.fname = get_representation_path_from_context(repre_context)
+
     return loader.load(repre_context, name, namespace, options)
 
 
@@ -328,8 +343,7 @@ def load_with_subset_context(
         )
     )
 
-    loader = Loader(subset_context)
-    return loader.load(subset_context, name, namespace, options)
+    return Loader().load(subset_context, name, namespace, options)
 
 
 def load_with_subset_contexts(
@@ -354,8 +368,7 @@ def load_with_subset_contexts(
         "Running '{}' on '{}'".format(Loader.__name__, joined_subset_names)
     )
 
-    loader = Loader(subset_contexts)
-    return loader.load(subset_contexts, name, namespace, options)
+    return Loader().load(subset_contexts, name, namespace, options)
 
 
 def load_container(
@@ -432,10 +445,12 @@ def remove_container(container):
 
     Loader = _get_container_loader(container)
     if not Loader:
-        raise RuntimeError("Can't remove container. See log for details.")
+        raise LoaderNotFoundError(
+            "Can't remove container because loader '{}' was not found."
+            .format(container.get("loader"))
+        )
 
-    loader = Loader(get_representation_context(container["representation"]))
-    return loader.remove(container)
+    return Loader().remove(container)
 
 
 def update_container(container, version=-1):
@@ -480,10 +495,12 @@ def update_container(container, version=-1):
     # Run update on the Loader for this container
     Loader = _get_container_loader(container)
     if not Loader:
-        raise RuntimeError("Can't update container. See log for details.")
+        raise LoaderNotFoundError(
+            "Can't update container because loader '{}' was not found."
+            .format(container.get("loader"))
+        )
 
-    loader = Loader(get_representation_context(container["representation"]))
-    return loader.update(container, new_representation)
+    return Loader().update(container, new_representation)
 
 
 def switch_container(container, representation, loader_plugin=None):
@@ -502,15 +519,18 @@ def switch_container(container, representation, loader_plugin=None):
         loader_plugin = _get_container_loader(container)
 
     if not loader_plugin:
-        raise RuntimeError("Can't switch container. See log for details.")
+        raise LoaderNotFoundError(
+            "Can't switch container because loader '{}' was not found."
+            .format(container.get("loader"))
+        )
 
     if not hasattr(loader_plugin, "switch"):
         # Backwards compatibility (classes without switch support
         # might be better to just have "switch" raise NotImplementedError
         # on the base class of Loader\
-        raise RuntimeError("Loader '{}' does not support 'switch'".format(
-            loader_plugin.label
-        ))
+        raise LoaderSwitchNotImplementedError(
+            "Loader {} does not support 'switch'".format(loader_plugin.label)
+        )
 
     # Get the new representation to switch to
     project_name = legacy_io.active_project()
@@ -520,7 +540,11 @@ def switch_container(container, representation, loader_plugin=None):
 
     new_context = get_representation_context(new_representation)
     if not is_compatible_loader(loader_plugin, new_context):
-        raise AssertionError("Must be compatible Loader")
+        raise IncompatibleLoaderError(
+            "Loader {} is incompatible with {}".format(
+                loader_plugin.__name__, new_context["subset"]["name"]
+            )
+        )
 
     loader = loader_plugin(new_context)
 
@@ -612,7 +636,7 @@ def get_representation_path(representation, root=None, dbcon=None):
 
         root = registered_root()
 
-    def path_from_represenation():
+    def path_from_representation():
         try:
             template = representation["data"]["template"]
         except KeyError:
@@ -736,7 +760,7 @@ def get_representation_path(representation, root=None, dbcon=None):
                 return os.path.normpath(path)
 
     return (
-        path_from_represenation() or
+        path_from_representation() or
         path_from_config() or
         path_from_data()
     )

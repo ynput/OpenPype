@@ -4,79 +4,85 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    BoolDef,
+    TextDef
+)
 
 
-class CreatePointCache(plugin.Creator):
+class CreatePointCache(plugin.MayaCreator):
     """Alembic pointcache for animated data"""
 
-    name = "pointcache"
-    label = "Point Cache"
+    identifier = "io.openpype.creators.maya.pointcache"
+    label = "Pointcache"
     family = "pointcache"
     icon = "gears"
-    includeUserDefinedAttributes = False
-    eulerFilter = True
-    noNormals = False
-    preRoll = False
-    renderableOnly = False
-    uvWrite = True
-    writeColorSets = False
-    writeFaceSets = False
-    wholeFrameGeo = False
-    worldSpace = True
-    writeVisibility = True
-    writeUVSets = True
-    writeCreases = False
-    dataFormat = "ogawa"
-    step = 1.0
-    attr = ""
-    attrPrefix = ""
-    stripNamespaces = True
-    verbose = False
-    preRollStartFrame = 0
-    farm = False
-    priority = 50
-    includeParentHierarchy = False  # Include parent groups
-    refresh = False  # Default to suspend refresh.
-    visibleOnly = False  # only nodes that are visible
+    write_color_sets = False
+    write_face_sets = False
+    include_user_defined_attributes = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data
-        self.data.update(lib.collect_animation_data())
+        defs = lib.collect_animation_defs()
 
-        attrs = [
-            "includeUserDefinedAttributes",
-            "eulerFilter",
-            "noNormals",
-            "preRoll",
-            "renderableOnly",
-            "uvWrite",
-            "writeColorSets",
-            "writeFaceSets",
-            "wholeFrameGeo",
-            "worldSpace",
-            "writeVisibility",
-            "writeUVSets",
-            "writeCreases",
-            "dataFormat",
-            "step",
-            "attr",
-            "attrPrefix",
-            "stripNamespaces",
-            "verbose",
-            "preRollStartFrame",
-            "farm",
-            "priority",
-            "includeParentHierarchy",
-            "refresh",
-            "visibleOnly"
-        ]
-        for attr in attrs:
-            self.data[attr] = getattr(self, attr)
+        defs.extend([
+            BoolDef("writeColorSets",
+                    label="Write vertex colors",
+                    tooltip="Write vertex colors with the geometry",
+                    default=False),
+            BoolDef("writeFaceSets",
+                    label="Write face sets",
+                    tooltip="Write face sets with the geometry",
+                    default=False),
+            BoolDef("renderableOnly",
+                    label="Renderable Only",
+                    tooltip="Only export renderable visible shapes",
+                    default=False),
+            BoolDef("visibleOnly",
+                    label="Visible Only",
+                    tooltip="Only export dag objects visible during "
+                            "frame range",
+                    default=False),
+            BoolDef("includeParentHierarchy",
+                    label="Include Parent Hierarchy",
+                    tooltip="Whether to include parent hierarchy of nodes in "
+                            "the publish instance",
+                    default=False),
+            BoolDef("worldSpace",
+                    label="World-Space Export",
+                    default=True),
+            BoolDef("refresh",
+                    label="Refresh viewport during export",
+                    default=False),
+            BoolDef("includeUserDefinedAttributes",
+                    label="Include User Defined Attributes",
+                    default=self.include_user_defined_attributes),
+            TextDef("attr",
+                    label="Custom Attributes",
+                    default="",
+                    placeholder="attr1, attr2"),
+            TextDef("attrPrefix",
+                    label="Custom Attributes Prefix",
+                    default="",
+                    placeholder="prefix1, prefix2")
+        ])
 
-    def process(self):
-        instance = super(CreatePointCache, self).process()
+        # TODO: Implement these on a Deadline plug-in instead?
+        """
+        # Default to not send to farm.
+        self.data["farm"] = False
+        self.data["priority"] = 50
+        """
 
-        assProxy = cmds.sets(name=instance + "_proxy_SET", empty=True)
-        cmds.sets(assProxy, forceElement=instance)
+        return defs
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        instance = super(CreatePointCache, self).create(
+            subset_name, instance_data, pre_create_data
+        )
+        instance_node = instance.get("instance_node")
+
+        # For Arnold standin proxy
+        proxy_set = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
+        cmds.sets(proxy_set, forceElement=instance_node)

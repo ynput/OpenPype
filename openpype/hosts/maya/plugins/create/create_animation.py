@@ -1,12 +1,14 @@
-from maya import cmds
-
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    BoolDef,
+    TextDef
+)
 
 
-class CreateAnimation(plugin.Creator):
+class CreateAnimation(plugin.MayaCreator):
     """Animation output for character rigs"""
 
     # We hide the animation creator from the UI since the creation of it
@@ -15,66 +17,71 @@ class CreateAnimation(plugin.Creator):
     # Note: This setting is actually applied from project settings
     enabled = False
 
+    identifier = "io.openpype.creators.maya.animation"
     name = "animationDefault"
     label = "Animation"
     family = "animation"
     icon = "male"
-    settings_attrs = [
-        "step",
-        "writeColorSets",
-        "writeFaceSets",
-        "renderableOnly",
-        "visibleOnly",
-        "includeParentHierarchy",
-        "worldSpace",
-        "farm",
-        "priority",
-        "writeNormals",
-        "includeUserDefinedAttributes",
-        "attr",
-        "attrPrefix",
-        "dataFormat",
-        "eulerFilter",
-        "noNormals",
-        "preRoll",
-        "preRollStartFrame",
-        "refresh",
-        "stripNamespaces",
-        "uvWrite",
-        "verbose",
-        "wholeFrameGeo",
-        "writeCreases",
-        "writeUVSets",
-        "writeVisibility"
-    ]
 
-    def __init__(self, *args, **kwargs):
-        super(CreateAnimation, self).__init__(*args, **kwargs)
+    write_color_sets = False
+    write_face_sets = False
+    include_parent_hierarchy = False
+    include_user_defined_attributes = False
 
-        # get basic animation data : start / end / handles / steps
-        for key, value in lib.collect_animation_data().items():
-            self.data[key] = value
+    # TODO: Would be great if we could visually hide this from the creator
+    #       by default but do allow to generate it through code.
 
-        # Setting value from settings.
-        for attr in self.settings_attrs:
-            if not hasattr(self, attr):
-                continue
+    def get_instance_attr_defs(self):
 
-            self.data[attr] = getattr(self, attr)
+        defs = lib.collect_animation_defs()
 
-    def post_imprint(self, objset):
-        for attr in self.settings_attrs:
-            editable = attr + "_editable"
+        defs.extend([
+            BoolDef("writeColorSets",
+                    label="Write vertex colors",
+                    tooltip="Write vertex colors with the geometry",
+                    default=self.write_color_sets),
+            BoolDef("writeFaceSets",
+                    label="Write face sets",
+                    tooltip="Write face sets with the geometry",
+                    default=self.write_face_sets),
+            BoolDef("writeNormals",
+                    label="Write normals",
+                    tooltip="Write normals with the deforming geometry",
+                    default=True),
+            BoolDef("renderableOnly",
+                    label="Renderable Only",
+                    tooltip="Only export renderable visible shapes",
+                    default=False),
+            BoolDef("visibleOnly",
+                    label="Visible Only",
+                    tooltip="Only export dag objects visible during "
+                            "frame range",
+                    default=False),
+            BoolDef("includeParentHierarchy",
+                    label="Include Parent Hierarchy",
+                    tooltip="Whether to include parent hierarchy of nodes in "
+                            "the publish instance",
+                    default=self.include_parent_hierarchy),
+            BoolDef("worldSpace",
+                    label="World-Space Export",
+                    default=True),
+            BoolDef("includeUserDefinedAttributes",
+                    label="Include User Defined Attributes",
+                    default=self.include_user_defined_attributes),
+            TextDef("attr",
+                    label="Custom Attributes",
+                    default="",
+                    placeholder="attr1, attr2"),
+            TextDef("attrPrefix",
+                    label="Custom Attributes Prefix",
+                    placeholder="prefix1, prefix2")
+        ])
 
-            if not hasattr(self, editable):
-                continue
+        # TODO: Implement these on a Deadline plug-in instead?
+        """
+        # Default to not send to farm.
+        self.data["farm"] = False
+        self.data["priority"] = 50
+        """
 
-            if getattr(self, editable):
-                continue
-
-            self.log.debug(
-                "Locking \"{}\" because its disabled in settings".format(attr)
-            )
-            cmds.setAttr(
-                objset + "." + attr, channelBox=False, lock=True
-            )
+        return defs

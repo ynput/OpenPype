@@ -4,7 +4,8 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
-    ValidateMeshOrder
+    ValidateMeshOrder,
+    PublishValidationError
 )
 
 
@@ -49,6 +50,6 @@ class ValidateMeshEmpty(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Meshes found in instance without any vertices: %s" % invalid
             )

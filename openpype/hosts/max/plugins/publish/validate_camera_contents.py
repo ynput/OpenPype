@@ -11,14 +11,15 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["camera"]
+    families = ["camera", "review"]
     hosts = ["max"]
     label = "Camera Contents"
     camera_type = ["$Free_Camera", "$Target_Camera",
                    "$Physical_Camera", "$Target"]
 
     def process(self, instance):
-        if invalid := self.get_invalid(instance):  # noqa
+        invalid = self.get_invalid(instance)
+        if invalid:
             raise PublishValidationError(("Camera instance must only include"
                                           "camera (and camera target). "
                                           f"Invalid content {invalid}"))

@@ -7,7 +7,7 @@ from qtpy import QtWidgets
 
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     get_representation_path,
 )
 import openpype.hosts.maya.api.plugin
@@ -29,11 +29,13 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, options):
-        import maya.cmds as cmds
+        from maya import cmds
 
         with lib.maintained_selection():
-            file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["name"])
+            file_url = self.prepare_root_value(
+                file_url=self.filepath_from_context(context),
+                project_name=context["project"]["name"]
+            )
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
@@ -76,7 +78,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         shader_nodes = cmds.ls(members, type='shadingEngine')
         nodes = set(self._get_nodes_with_shader(shader_nodes))
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         json_representation = get_representation_by_name(
             project_name, "json", representation["parent"]
         )
@@ -113,8 +115,8 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         # region compute lookup
         nodes_by_id = defaultdict(list)
-        for n in nodes:
-            nodes_by_id[lib.get_id(n)].append(n)
+        for node in nodes:
+            nodes_by_id[lib.get_id(node)].append(node)
         lib.apply_attributes(attributes, nodes_by_id)
 
     def _get_nodes_with_shader(self, shader_nodes):
@@ -125,14 +127,16 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         Returns
             <list> node names
         """
-        import maya.cmds as cmds
+        from maya import cmds
 
-        nodes_list = []
         for shader in shader_nodes:
-            connections = cmds.listConnections(cmds.listHistory(shader, f=1),
+            future = cmds.listHistory(shader, future=True)
+            connections = cmds.listConnections(future,
                                                type='mesh')
             if connections:
-                for connection in connections:
-                    nodes_list.extend(cmds.listRelatives(connection,
-                                                         shapes=True))
-        return nodes_list
+                # Ensure unique entries only to optimize query and results
+                connections = list(set(connections))
+                return cmds.listRelatives(connections,
+                                          shapes=True,
+                                          fullPath=True) or []
+        return []

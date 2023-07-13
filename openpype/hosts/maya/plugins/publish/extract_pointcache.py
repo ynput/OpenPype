@@ -45,36 +45,25 @@ class ExtractAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting pointcache..")
+        self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
 
         parent_dir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        options = {"selection": True}
-        option_keys = [
-            "dataFormat",
-            "eulerFilter",
-            "noNormals",
-            "preRoll",
-            "preRollStartFrame",
-            "renderableOnly",
-            "step",
-            "stripNamespaces",
-            "uvWrite",
-            "verbose",
-            "wholeFrameGeo",
-            "worldSpace",
-            "writeColorSets",
-            "writeCreases",
-            "writeFaceSets",
-            "writeUVSets",
-            "writeVisibility",
-        ]
-        for key in option_keys:
-            if key in instance.data:
-                options[key] = instance.data[key]
+        options = {
+            "step": instance.data.get("step", 1.0),
+            "attr": attrs,
+            "attrPrefix": attr_prefixes,
+            "writeVisibility": True,
+            "writeCreases": True,
+            "writeColorSets": instance.data.get("writeColorSets", False),
+            "writeFaceSets": instance.data.get("writeFaceSets", False),
+            "uvWrite": True,
+            "selection": True,
+            "worldSpace": instance.data.get("worldSpace", True)
+        }
 
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
@@ -82,18 +71,21 @@ class ExtractAlembic(publish.Extractor):
             # direct members of the set
             options["root"] = roots
 
+        if int(cmds.about(version=True)) >= 2017:
+            # Since Maya 2017 alembic supports multiple uv sets - write them.
+            options["writeUVSets"] = True
+
         if instance.data.get("visibleOnly", False):
             # If we only want to include nodes that are visible in the frame
             # range then we need to do our own check. Alembic's `visibleOnly`
             # flag does not filter out those that are only hidden on some
             # frames as it counts "animated" or "connected" visibilities as
             # if it's always visible.
-            nodes = list(
-                iter_visible_nodes_in_range(nodes, start=start, end=end)
-            )
+            nodes = list(iter_visible_nodes_in_range(nodes,
+                                                     start=start,
+                                                     end=end))
 
         suspend = not instance.data.get("refresh", False)
-        self.log.debug(nodes)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
