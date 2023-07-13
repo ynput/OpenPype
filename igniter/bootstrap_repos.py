@@ -77,7 +77,6 @@ def sha256sum(filename):
 
 
 class ZipFileLongPaths(ZipFile):
-
     def _extract_member(self, member, targetpath, pwd):
         return ZipFile._extract_member(
             self, member, sanitize_long_path(targetpath), pwd
