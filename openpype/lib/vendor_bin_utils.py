@@ -306,12 +306,12 @@ def _get_ayon_oiio_tool_args(tool_name):
 
 
 def get_oiio_tools_path(tool="oiiotool"):
-    """Path to vendorized OpenImageIO tool executables.
+    """Path to OpenImageIO tool executables.
 
-    On Window it adds .exe extension if missing from tool argument.
+    On Windows it adds .exe extension if missing from tool argument.
 
     Args:
-        tool (string): Tool name (oiiotool, maketx, ...).
+        tool (string): Tool name 'oiiotool', 'maketx', etc.
             Default is "oiiotool".
     """
 
@@ -431,7 +431,7 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Path to vendorized FFmpeg executable.
 
     Args:
-        tool (string): Tool name (ffmpeg, ffprobe, ...).
+        tool (str): Tool name 'ffmpeg', 'ffprobe', etc.
             Default is "ffmpeg".
 
     Returns:
