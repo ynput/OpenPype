@@ -107,6 +107,17 @@ function main(websocket_url){
             });
     });
 
+    RPC.addRoute('AfterEffects.add_item', function (data) {
+        log.warn('Server called client route "add_item":', data);
+        var escapedName = EscapeStringForJSX(data.name);
+        return runEvalScript("addItem('" + escapedName +"', " +
+                                     "'" + data.item_type + "')")
+            .then(function(result){
+                log.warn("get_items: " + result);
+                return result;
+            });
+    });
+
     RPC.addRoute('AfterEffects.get_items', function (data) {
         log.warn('Server called client route "get_items":', data);
         return runEvalScript("getItems("  + data.comps + "," +
@@ -114,6 +125,15 @@ function main(websocket_url){
                                             data.footages + ")")
             .then(function(result){
                 log.warn("get_items: " + result);
+                return result;
+            });
+    });
+
+    RPC.addRoute('AfterEffects.select_items', function (data) {
+        log.warn('Server called client route "select_items":', data);
+        return runEvalScript("selectItems("  + JSON.stringify(data.items) + ")")
+            .then(function(result){
+                log.warn("select_items: " + result);
                 return result;
             });
     });
@@ -280,13 +300,23 @@ function main(websocket_url){
    RPC.addRoute('AfterEffects.add_item_as_layer', function (data) {
        log.warn('Server called client route "add_item_as_layer":', data);
        return runEvalScript("addItemAsLayerToComp(" + data.comp_id + ", " +
-                                                  data.item_id + "," +
+                                                      data.item_id + "," +
                                                   " null )")
            .then(function(result){
                log.warn("addItemAsLayerToComp: " + result);
                return result;
            });
    });
+
+   RPC.addRoute('AfterEffects.add_item_instead_placeholder', function (data) {
+    log.warn('Server called client route "add_item_instead_placeholder":', data);
+    return runEvalScript("addItemInstead(" + data.placeholder_item_id + ", " +
+                                             data.item_id + ")")
+        .then(function(result){
+            log.warn("add_item_instead_placeholder: " + result);
+            return result;
+        });
+});
 
    RPC.addRoute('AfterEffects.render', function (data) {
     log.warn('Server called client route "render":', data);
@@ -308,6 +338,20 @@ function main(websocket_url){
         return runEvalScript("getAppVersion()")
             .then(function(result){
                 log.warn("get_app_version: " + result);
+                return result;
+            });
+    });
+
+    RPC.addRoute('AfterEffects.add_placeholder', function (data) {
+        log.warn('Server called client route "add_placeholder":', data);
+        var escapedName = EscapeStringForJSX(data.name);
+        return runEvalScript("addPlaceholder('" + escapedName +"',"+
+                                              data.width + ',' +
+                                              data.height + ',' +
+                                              data.fps + ',' +
+                                              data.duration + ")")
+            .then(function(result){
+                log.warn("add_placeholder: " + result);
                 return result;
             });
     });

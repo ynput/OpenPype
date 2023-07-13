@@ -1,12 +1,11 @@
 import os
 
+import pyblish.api
+
 from maya import cmds
 
-import pyblish.api
 from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder,
-)
+    PublishValidationError, RepairAction, ValidateContentsOrder)
 
 
 class ValidateRenderImageRule(pyblish.api.InstancePlugin):
@@ -33,12 +32,12 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
             cmds.workspace(fileRuleEntry="images")
         )
 
-        assert current_images_rule == required_images_rule, (
-            "Invalid workspace `images` file rule value: '{}'. "
-            "Must be set to: '{}'".format(
-                current_images_rule, required_images_rule
-            )
-        )
+        if current_images_rule != required_images_rule:
+            raise PublishValidationError(
+                (
+                    "Invalid workspace `images` file rule value: '{}'. "
+                    "Must be set to: '{}'"
+                ).format(current_images_rule, required_images_rule))
 
     @classmethod
     def repair(cls, instance):

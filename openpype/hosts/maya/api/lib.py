@@ -3,7 +3,6 @@
 import os
 from pprint import pformat
 import sys
-import platform
 import uuid
 import re
 
@@ -33,13 +32,11 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
+from openpype.lib import NumberDef
+from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.create import CreateContext
 from openpype.pipeline.context_tools import (
     get_current_asset_name,
-    get_current_project_asset,
     get_current_project_name,
     get_current_task_name
 )
@@ -123,16 +120,14 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
-DISPLAY_LIGHTS_VALUES = [
-    "project_settings", "default", "all", "selected", "flat", "none"
-]
-DISPLAY_LIGHTS_LABELS = [
-    "Use Project Settings",
-    "Default Lighting",
-    "All Lights",
-    "Selected Lights",
-    "Flat Lighting",
-    "No Lights"
+
+DISPLAY_LIGHTS_ENUM = [
+    {"label": "Use Project Settings", "value": "project_settings"},
+    {"label": "Default Lighting", "value": "default"},
+    {"label": "All Lights", "value": "all"},
+    {"label": "Selected Lights", "value": "selected"},
+    {"label": "Flat Lighting", "value": "flat"},
+    {"label": "No Lights", "value": "none"}
 ]
 
 
@@ -344,8 +339,8 @@ def pairwise(iterable):
     return zip(a, a)
 
 
-def collect_animation_data(fps=False):
-    """Get the basic animation data
+def collect_animation_defs(fps=False):
+    """Get the basic animation attribute defintions for the publisher.
 
     Returns:
         OrderedDict
@@ -364,17 +359,42 @@ def collect_animation_data(fps=False):
     handle_end = frame_end_handle - frame_end
 
     # build attributes
-    data = OrderedDict()
-    data["frameStart"] = frame_start
-    data["frameEnd"] = frame_end
-    data["handleStart"] = handle_start
-    data["handleEnd"] = handle_end
-    data["step"] = 1.0
+    defs = [
+        NumberDef("frameStart",
+                  label="Frame Start",
+                  default=frame_start,
+                  decimals=0),
+        NumberDef("frameEnd",
+                  label="Frame End",
+                  default=frame_end,
+                  decimals=0),
+        NumberDef("handleStart",
+                  label="Handle Start",
+                  default=handle_start,
+                  decimals=0),
+        NumberDef("handleEnd",
+                  label="Handle End",
+                  default=handle_end,
+                  decimals=0),
+        NumberDef("step",
+                  label="Step size",
+                  tooltip="A smaller step size means more samples and larger "
+                          "output files.\n"
+                          "A 1.0 step size is a single sample every frame.\n"
+                          "A 0.5 step size is two samples per frame.\n"
+                          "A 0.2 step size is five samples per frame.",
+                  default=1.0,
+                  decimals=3),
+    ]
 
     if fps:
-        data["fps"] = mel.eval('currentTimeUnitToFPS()')
+        current_fps = mel.eval('currentTimeUnitToFPS()')
+        fps_def = NumberDef(
+            "fps", label="FPS", default=current_fps, decimals=5
+        )
+        defs.append(fps_def)
 
-    return data
+    return defs
 
 
 def imprint(node, data):
@@ -460,10 +480,10 @@ def lsattrs(attrs):
         attrs (dict): Name and value pairs of expected matches
 
     Example:
-        >> # Return nodes with an `age` of five.
-        >> lsattr({"age": "five"})
-        >> # Return nodes with both `age` and `color` of five and blue.
-        >> lsattr({"age": "five", "color": "blue"})
+        >>> # Return nodes with an `age` of five.
+        >>> lsattrs({"age": "five"})
+        >>> # Return nodes with both `age` and `color` of five and blue.
+        >>> lsattrs({"age": "five", "color": "blue"})
 
     Return:
          list: matching nodes.
@@ -1523,7 +1543,15 @@ def set_attribute(attribute, value, node):
         cmds.addAttr(node, longName=attribute, **kwargs)
 
     node_attr = "{}.{}".format(node, attribute)
-    if "dataType" in kwargs:
+    enum_type = cmds.attributeQuery(attribute, node=node, enum=True)
+    if enum_type and value_type == "str":
+        enum_string_values = cmds.attributeQuery(
+            attribute, node=node, listEnum=True
+        )[0].split(":")
+        cmds.setAttr(
+            "{}.{}".format(node, attribute), enum_string_values.index(value)
+        )
+    elif "dataType" in kwargs:
         attr_type = kwargs["dataType"]
         cmds.setAttr(node_attr, value, type=attr_type)
     else:
@@ -2297,8 +2325,8 @@ def reset_frame_range(playback=True, render=True, fps=True):
         cmds.currentTime(frame_start)
 
     if render:
-        cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
-        cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+        cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
+        cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
 
 def reset_scene_resolution():
@@ -2811,19 +2839,22 @@ def get_attr_in_layer(attr, layer):
 
 def fix_incompatible_containers():
     """Backwards compatibility: old containers to use new ReferenceLoader"""
-
+    old_loaders = {
+        "MayaAsciiLoader",
+        "AbcLoader",
+        "ModelLoader",
+        "CameraLoader",
+        "RigLoader",
+        "FBXLoader"
+    }
     host = registered_host()
     for container in host.ls():
         loader = container['loader']
-
-        print(container['loader'])
-
-        if loader in ["MayaAsciiLoader",
-                      "AbcLoader",
-                      "ModelLoader",
-                      "CameraLoader",
-                      "RigLoader",
-                      "FBXLoader"]:
+        if loader in old_loaders:
+            log.info(
+                "Converting legacy container loader {} to "
+                "ReferenceLoader: {}".format(loader, container["objectName"])
+            )
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
 
@@ -2951,7 +2982,7 @@ def _get_render_instances():
         list: list of instances
 
     """
-    objectset = cmds.ls("*.id", long=True, type="objectSet",
+    objectset = cmds.ls("*.id", long=True, exactType="objectSet",
                         recursive=True, objectsOnly=True)
 
     instances = []
@@ -3238,36 +3269,21 @@ def iter_shader_edits(relationships, shader_nodes, nodes_by_id, label=None):
 
 
 def set_colorspace():
-    """Set Colorspace from project configuration
-    """
+    """Set Colorspace from project configuration"""
 
-    # set color spaces for rendering space and view transforms
-    def _colormanage(**kwargs):
-        """Wrapper around `cmds.colorManagementPrefs`.
-
-        This logs errors instead of raising an error so color management
-        settings get applied as much as possible.
-
-        """
-        assert len(kwargs) == 1, "Must receive one keyword argument"
-        try:
-            cmds.colorManagementPrefs(edit=True, **kwargs)
-            log.debug("Setting Color Management Preference: {}".format(kwargs))
-        except RuntimeError as exc:
-            log.error(exc)
-
-    project_name = os.getenv("AVALON_PROJECT")
+    project_name = get_current_project_name()
     imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # ocio compatibility variables
     ocio_v2_maya_version = 2022
     maya_version = int(cmds.about(version=True))
     ocio_v2_support = use_ocio_v2 = maya_version >= ocio_v2_maya_version
+    is_ocio_set = bool(os.environ.get("OCIO"))
 
-    root_dict = {}
     use_workfile_settings = imageio.get("workfile", {}).get("enabled")
-
     if use_workfile_settings:
+        root_dict = imageio["workfile"]
+    else:
         # TODO: deprecated code from 3.15.5 - remove
         # Maya 2022+ introduces new OCIO v2 color management settings that
         # can override the old color management preferences. OpenPype has
@@ -3290,40 +3306,63 @@ def set_colorspace():
         if not isinstance(root_dict, dict):
             msg = "set_colorspace(): argument should be dictionary"
             log.error(msg)
+            return
 
-    else:
-        root_dict = imageio["workfile"]
+    # backward compatibility
+    # TODO: deprecated code from 3.15.5 - remove with deprecated code above
+    view_name = root_dict.get("viewTransform")
+    if view_name is None:
+        view_name = root_dict.get("viewName")
 
     log.debug(">> root_dict: {}".format(pformat(root_dict)))
+    if not root_dict:
+        return
 
-    if root_dict:
-        # enable color management
-        cmds.colorManagementPrefs(e=True, cmEnabled=True)
-        cmds.colorManagementPrefs(e=True, ocioRulesEnabled=True)
+    # set color spaces for rendering space and view transforms
+    def _colormanage(**kwargs):
+        """Wrapper around `cmds.colorManagementPrefs`.
 
-        # backward compatibility
-        # TODO: deprecated code from 3.15.5 - refactor to use new settings
-        view_name = root_dict.get("viewTransform")
-        if view_name is None:
-            view_name = root_dict.get("viewName")
+        This logs errors instead of raising an error so color management
+        settings get applied as much as possible.
 
-        if use_ocio_v2:
-            # Use Maya 2022+ default OCIO v2 config
+        """
+        assert len(kwargs) == 1, "Must receive one keyword argument"
+        try:
+            cmds.colorManagementPrefs(edit=True, **kwargs)
+            log.debug("Setting Color Management Preference: {}".format(kwargs))
+        except RuntimeError as exc:
+            log.error(exc)
+
+    # enable color management
+    cmds.colorManagementPrefs(edit=True, cmEnabled=True)
+    cmds.colorManagementPrefs(edit=True, ocioRulesEnabled=True)
+
+    if use_ocio_v2:
+        log.info("Using Maya OCIO v2")
+        if not is_ocio_set:
+            # Set the Maya 2022+ default OCIO v2 config file path
             log.info("Setting default Maya OCIO v2 config")
-            cmds.colorManagementPrefs(edit=True, configFilePath="")
+            # Note: Setting "" as value also sets this default however
+            # introduces a bug where launching a file on startup will prompt
+            # to save the empty scene before it, so we set using the path.
+            # This value has been the same for 2022, 2023 and 2024
+            path = "<MAYA_RESOURCES>/OCIO-configs/Maya2022-default/config.ocio"
+            cmds.colorManagementPrefs(edit=True, configFilePath=path)
 
-            # set rendering space and view transform
-            _colormanage(renderingSpaceName=root_dict["renderSpace"])
-            _colormanage(viewName=view_name)
-            _colormanage(displayName=root_dict["displayName"])
-        else:
+        # set rendering space and view transform
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        _colormanage(viewName=view_name)
+        _colormanage(displayName=root_dict["displayName"])
+    else:
+        log.info("Using Maya OCIO v1 (legacy)")
+        if not is_ocio_set:
             # Set the Maya default config file path
             log.info("Setting default Maya OCIO v1 legacy config")
             cmds.colorManagementPrefs(edit=True, configFilePath="legacy")
 
-            # set rendering space and view transform
-            _colormanage(renderingSpaceName=root_dict["renderSpace"])
-            _colormanage(viewTransformName=view_name)
+        # set rendering space and view transform
+        _colormanage(renderingSpaceName=root_dict["renderSpace"])
+        _colormanage(viewTransformName=view_name)
 
 
 @contextlib.contextmanager
@@ -3966,6 +4005,71 @@ def get_capture_preset(task_name, task_type, subset, project_settings, log):
     return capture_preset or {}
 
 
+def get_reference_node(members, log=None):
+    """Get the reference node from the container members
+    Args:
+        members: list of node names
+
+    Returns:
+        str: Reference node name.
+
+    """
+
+    # Collect the references without .placeHolderList[] attributes as
+    # unique entries (objects only) and skipping the sharedReferenceNode.
+    references = set()
+    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+        # Ignore any `:sharedReferenceNode`
+        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
+            continue
+
+        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+            continue
+
+        references.add(ref)
+
+    assert references, "No reference node found in container"
+
+    # Get highest reference node (least parents)
+    highest = min(references,
+                  key=lambda x: len(get_reference_node_parents(x)))
+
+    # Warn the user when we're taking the highest reference node
+    if len(references) > 1:
+        if not log:
+            log = logging.getLogger(__name__)
+
+        log.warning("More than one reference node found in "
+                    "container, using highest reference node: "
+                    "%s (in: %s)", highest, list(references))
+
+    return highest
+
+
+def get_reference_node_parents(ref):
+    """Return all parent reference nodes of reference node
+
+    Args:
+        ref (str): reference node.
+
+    Returns:
+        list: The upstream parent reference nodes.
+
+    """
+    parent = cmds.referenceQuery(ref,
+                                 referenceNode=True,
+                                 parent=True)
+    parents = []
+    while parent:
+        parents.append(parent)
+        parent = cmds.referenceQuery(parent,
+                                     referenceNode=True,
+                                     parent=True)
+    return parents
+
+
 def create_rig_animation_instance(
     nodes, context, namespace, options=None, log=None
 ):
@@ -4003,12 +4107,10 @@ def create_rig_animation_instance(
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
-    dependency = str(context["representation"]["_id"])
-
     custom_subset = options.get("animationSubsetName")
     if custom_subset:
         formatting_data = {
+            # TODO remove 'asset_type' and replace 'asset_name' with 'asset'
             "asset_name": context['asset']['name'],
             "asset_type": context['asset']['type'],
             "subset": context['subset']['name'],
@@ -4026,14 +4128,17 @@ def create_rig_animation_instance(
     if log:
         log.info("Creating subset: {}".format(namespace))
 
+    # Fill creator identifier
+    creator_identifier = "io.openpype.creators.maya.animation"
+
+    host = registered_host()
+    create_context = CreateContext(host)
+
     # Create the animation instance
-    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
     with maintained_selection():
         cmds.select([output, controls] + roots, noExpand=True)
-        legacy_create(
-            creator_plugin,
-            name=namespace,
-            asset=asset,
-            options={"useSelection": True},
-            data={"dependencies": dependency}
+        create_context.create(
+            creator_identifier=creator_identifier,
+            variant=namespace,
+            pre_create_data={"use_selection": True}
         )

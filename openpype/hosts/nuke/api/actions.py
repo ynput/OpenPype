@@ -25,15 +25,13 @@ class SelectInvalidAction(pyblish.api.Action):
         except ImportError:
             raise ImportError("Current host is not Nuke")
 
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
 
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes..")
         invalid = list()
-        for instance in instances:
+        for instance in errored_instances:
             invalid_nodes = plugin.get_invalid(instance)
 
             if invalid_nodes:
