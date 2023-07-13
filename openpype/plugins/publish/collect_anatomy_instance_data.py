@@ -201,9 +201,8 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     asset_tasks = instance.data["assetEntity"]["data"]["tasks"]
                     task_type = asset_tasks.get(task_name, {}).get("type")
 
-                host = registered_host()
                 version_number = get_versioning_start(
-                    host=host.name if host else "",
+                    host=instance.context.data["hostName"],
                     task_name=task_name,
                     task_type=task_type,
                     family=instance.data["family"],
