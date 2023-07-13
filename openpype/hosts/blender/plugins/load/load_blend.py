@@ -23,7 +23,7 @@ class BlendLoader(plugin.AssetLoader):
     families = ["model", "rig", "layout", "camera"]
     representations = ["blend"]
 
-    label = "Load Blend"
+    label = "Append Blend"
     icon = "code-fork"
     color = "orange"
 
@@ -70,10 +70,13 @@ class BlendLoader(plugin.AssetLoader):
             for attr in dir(data_to):
                 setattr(data_to, attr, getattr(data_from, attr))
 
+        members = []
+
         # Rename the object to add the asset name
         for attr in dir(data_to):
             for data in getattr(data_to, attr):
                 data.name = f"{group_name}:{data.name}"
+                members.append(data)
 
         container = self._get_asset_container(data_to.objects)
         assert container, "No asset group found"
@@ -92,7 +95,7 @@ class BlendLoader(plugin.AssetLoader):
         library = bpy.data.libraries.get(bpy.path.basename(libpath))
         bpy.data.libraries.remove(library)
 
-        return container
+        return container, members
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -126,7 +129,7 @@ class BlendLoader(plugin.AssetLoader):
             avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
             bpy.context.scene.collection.children.link(avalon_container)
 
-        container = self._process_data(libpath, group_name)
+        container, members = self._process_data(libpath, group_name)
 
         if family == "layout":
             self._post_process_layout(container, asset, representation)
@@ -144,7 +147,8 @@ class BlendLoader(plugin.AssetLoader):
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
-            "objectName": group_name
+            "objectName": group_name,
+            "members": members,
         }
 
         container[AVALON_PROPERTY] = data
@@ -175,7 +179,7 @@ class BlendLoader(plugin.AssetLoader):
 
         self.exec_remove(container)
 
-        asset_group = self._process_data(libpath, group_name)
+        asset_group, members = self._process_data(libpath, group_name)
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         avalon_container.objects.link(asset_group)
@@ -183,12 +187,17 @@ class BlendLoader(plugin.AssetLoader):
         asset_group.matrix_basis = transform
         asset_group.parent = parent
 
+        # Restore the old data, but reset memebers, as they don't exist anymore
+        # This avoids a crash, because the memory addresses of those members
+        # are not valid anymore
+        old_data["members"] = []
         asset_group[AVALON_PROPERTY] = old_data
 
         new_data = {
             "libpath": libpath,
             "representation": str(representation["_id"]),
             "parent": str(representation["parent"]),
+            "members": members,
         }
 
         imprint(asset_group, new_data)
@@ -210,7 +219,10 @@ class BlendLoader(plugin.AssetLoader):
 
         for attr in attrs:
             for data in getattr(bpy.data, attr):
-                if data.name.startswith(f"{group_name}:"):
+                if data in asset_group.get(AVALON_PROPERTY).get("members", []):
+                    # Skip the asset group
+                    if data == asset_group:
+                        continue
                     getattr(bpy.data, attr).remove(data)
 
         bpy.data.objects.remove(asset_group)
