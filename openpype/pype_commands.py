@@ -90,7 +90,10 @@ class PypeCommands:
         from openpype.lib import Logger
         from openpype.lib.applications import get_app_environments_for_context
         from openpype.modules import ModulesManager
-        from openpype.pipeline import install_openpype_plugins
+        from openpype.pipeline import (
+            install_openpype_plugins,
+            get_global_context,
+        )
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
 
@@ -112,12 +115,14 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        if os.getenv("AVALON_APP_NAME"):
+        app_full_name = os.getenv("AVALON_APP_NAME")
+        if app_full_name:
+            context = get_global_context()
             env = get_app_environments_for_context(
-                os.environ["AVALON_PROJECT"],
-                os.environ["AVALON_ASSET"],
-                os.environ["AVALON_TASK"],
-                os.environ["AVALON_APP_NAME"]
+                context["project_name"],
+                context["asset_name"],
+                context["task_name"],
+                app_full_name
             )
             os.environ.update(env)
 
@@ -259,12 +264,6 @@ class PypeCommands:
         from openpype.tools.context_dialog import main
 
         main(output_path, project_name, asset_name, strict)
-
-    def texture_copy(self, project, asset, path):
-        pass
-
-    def run_application(self, app, project, asset, task, tools, arguments):
-        pass
 
     def validate_jsons(self):
         pass

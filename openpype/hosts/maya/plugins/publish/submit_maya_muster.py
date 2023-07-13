@@ -265,6 +265,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         context = instance.context
         workspace = context.data["workspaceDir"]
+        project_name = context.data["projectName"]
+        asset_name = context.data["asset"]
 
         filepath = None
 
@@ -371,8 +373,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
-                    "project": os.environ.get('AVALON_PROJECT') or scene,
-                    "shot": os.environ.get('AVALON_ASSET') or scene,
+                    "project": project_name or scene,
+                    "shot": asset_name or scene,
                     "camera": instance.data.get("cameras")[0],
                     "dependMode": 0,
                     "packetSize": 4,
