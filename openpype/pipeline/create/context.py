@@ -1804,10 +1804,10 @@ class CreateContext:
                 self,
                 self.headless
             )
+            creators[creator_identifier] = creator
             if not creator.enabled:
                 disabled_creators[creator_identifier] = creator
                 continue
-            creators[creator_identifier] = creator
             if isinstance(creator, AutoCreator):
                 autocreators[creator_identifier] = creator
             elif isinstance(creator, Creator):
