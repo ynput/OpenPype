@@ -119,8 +119,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             if "review" in instance.data["families"]:
                 # to skip ExtractReview locally
                 instance.data["families"].remove("review")
-            if "client_review" in instance.data["families"]:
-                instance.data["families"].remove("client_review")
 
             if "expectedFiles" not in instance.data:
                 instance.data["expectedFiles"] = list()
