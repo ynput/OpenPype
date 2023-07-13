@@ -254,7 +254,7 @@ def _check_args_returncode(args):
     return proc.returncode == 0
 
 
-def _oiio_executable_validation(filepath):
+def _oiio_executable_validation(args):
     """Validate oiio tool executable if can be executed.
 
     Validation has 2 steps. First is using 'find_executable' to fill possible
@@ -272,17 +272,22 @@ def _oiio_executable_validation(filepath):
             should be used.
 
     Args:
-        filepath (str): Path to executable.
+        args (Union[str, list[str]]): Arguments to launch tool or
+            path to tool executable.
 
     Returns:
         bool: Filepath is valid executable.
     """
 
-    filepath = find_executable(filepath)
-    if not filepath:
+    if not args:
         return False
 
-    return _check_args_returncode([filepath, "--help"])
+    if not isinstance(args, list):
+        filepath = find_executable(args)
+        if not filepath:
+            return False
+        args = [filepath]
+    return _check_args_returncode(args + ["--help"])
 
 
 def _get_ayon_oiio_tool_args(tool_name):
@@ -361,7 +366,7 @@ def get_oiio_tools_args(tool_name="oiiotool"):
     return []
 
 
-def _ffmpeg_executable_validation(filepath):
+def _ffmpeg_executable_validation(args):
     """Validate ffmpeg tool executable if can be executed.
 
     Validation has 2 steps. First is using 'find_executable' to fill possible
@@ -378,17 +383,22 @@ def _ffmpeg_executable_validation(filepath):
         It does not validate if the executable is really a ffmpeg tool.
 
     Args:
-        filepath (str): Path to executable.
+        args (Union[str, list[str]]): Arguments to launch tool or
+            path to tool executable.
 
     Returns:
         bool: Filepath is valid executable.
     """
 
-    filepath = find_executable(filepath)
-    if not filepath:
+    if not args:
         return False
 
-    return _check_args_returncode([filepath, "-version"])
+    if not isinstance(args, list):
+        filepath = find_executable(args)
+        if not filepath:
+            return False
+        args = [filepath]
+    return _check_args_returncode(args + ["--help"])
 
 
 def _get_ayon_ffmpeg_tool_args(tool_name):
