@@ -3,6 +3,8 @@ import logging
 import platform
 import subprocess
 
+from openpype import AYON_SERVER_ENABLED
+
 log = logging.getLogger("Vendor utils")
 
 
@@ -283,6 +285,21 @@ def _oiio_executable_validation(filepath):
     return _check_args_returncode([filepath, "--help"])
 
 
+def _get_ayon_oiio_tool_args(tool_name):
+    try:
+        # Use 'ayon-third-party' addon to get ffmpeg arguments
+        from ayon_third_party import get_oiio_arguments
+    except Exception:
+        print("!!! Failed to import 'ayon_third_party' addon.")
+        return None
+
+    try:
+        return get_oiio_arguments(tool_name)
+    except Exception as exc:
+        print("!!! Failed to get OpenImageIO args. Reason: {}".format(exc))
+    return None
+
+
 def get_oiio_tools_path(tool="oiiotool"):
     """Path to vendorized OpenImageIO tool executables.
 
@@ -321,6 +338,29 @@ def get_oiio_tools_path(tool="oiiotool"):
     return tool_executable_path
 
 
+def get_oiio_tools_args(tool_name="oiiotool"):
+    """Arguments to launch OpenImageIO tool.
+
+    Args:
+        tool_name (str): Tool name 'oiiotool', 'maketx', etc.
+            Default is "oiiotool".
+
+    Returns:
+        list[str]: List of arguments.
+    """
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_oiio_tool_args(tool_name)
+        if args:
+            return args
+
+    raise ValueError("This is test")
+    path = get_oiio_tools_path(tool_name)
+    if path:
+        return [path]
+    return []
+
+
 def _ffmpeg_executable_validation(filepath):
     """Validate ffmpeg tool executable if can be executed.
 
@@ -349,6 +389,22 @@ def _ffmpeg_executable_validation(filepath):
         return False
 
     return _check_args_returncode([filepath, "-version"])
+
+
+def _get_ayon_ffmpeg_tool_args(tool_name):
+    try:
+        # Use 'ayon-third-party' addon to get ffmpeg arguments
+        from ayon_third_party import get_ffmpeg_arguments
+
+    except Exception:
+        print("!!! Failed to import 'ayon_third_party' addon.")
+        return None
+
+    try:
+        return get_ffmpeg_arguments(tool_name)
+    except Exception as exc:
+        print("!!! Failed to get FFmpeg args. Reason: {}".format(exc))
+    return None
 
 
 def get_ffmpeg_tool_path(tool="ffmpeg"):
@@ -388,6 +444,28 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
     CachedToolPaths.cache_executable_path(tool, tool_executable_path)
     return tool_executable_path
+
+
+def get_ffmpeg_tool_args(tool_name="ffmpeg"):
+    """Arguments to launch FFmpeg tool.
+
+    Args:
+        tool_name (str): Tool name 'ffmpeg', 'ffprobe', exc.
+            Default is "ffmpeg".
+
+    Returns:
+        list[str]: List of arguments.
+    """
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_ffmpeg_tool_args(tool_name)
+        if args:
+            return args
+
+    executable_path = get_ffmpeg_tool_path(tool_name)
+    if executable_path:
+        return [executable_path]
+    return []
 
 
 def is_oiio_supported():
