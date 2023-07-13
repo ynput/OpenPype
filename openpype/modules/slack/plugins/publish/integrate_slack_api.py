@@ -385,7 +385,7 @@ class SlackPython3Operations(AbstractSlackOperations):
                 error_str = self._enrich_error(str(e.response["error"]), channel)
             else:
                 error_str = self._enrich_error(str(e), channel)
-            self.log.warning("Error happened {}".format(error_str),
+            self.log.warning("Error happened: {}".format(error_str),
                              exc_info=True)
         except Exception as e:
             error_str = self._enrich_error(str(e), channel)
