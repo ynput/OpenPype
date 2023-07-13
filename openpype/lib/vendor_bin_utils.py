@@ -318,6 +318,17 @@ def get_oiio_tools_path(tool="oiiotool"):
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
 
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_oiio_tool_args(tool)
+        if args:
+            if len(args) > 1:
+                raise ValueError(
+                    "AYON oiio arguments consist of multiple arguments."
+                )
+            tool_executable_path = args[0]
+            CachedToolPaths.cache_executable_path(tool, tool_executable_path)
+            return tool_executable_path
+
     custom_paths_str = os.environ.get("OPENPYPE_OIIO_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
         custom_paths_str.split(os.pathsep),
@@ -430,6 +441,17 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_ffmpeg_tool_args(tool)
+        if args is not None:
+            if len(args) > 1:
+                raise ValueError(
+                    "AYON ffmpeg arguments consist of multiple arguments."
+                )
+            tool_executable_path = args[0]
+            CachedToolPaths.cache_executable_path(tool, tool_executable_path)
+            return tool_executable_path
 
     custom_paths_str = os.environ.get("OPENPYPE_FFMPEG_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
