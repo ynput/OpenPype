@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import get_errored_instances_from_context
 
 
@@ -80,7 +79,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
             asset_name = instance.data["asset"]
-            project_name = legacy_io.active_project()
+            project_name = instance.context.data["projectName"]
             self.log.info((
                 "Asset is not stored on instance."
                 " Querying by name \"{}\" from project \"{}\""

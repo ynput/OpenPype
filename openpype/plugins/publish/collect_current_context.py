@@ -6,7 +6,7 @@ Provides:
 """
 
 import pyblish.api
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_context
 
 
 class CollectCurrentContext(pyblish.api.ContextPlugin):
@@ -19,24 +19,20 @@ class CollectCurrentContext(pyblish.api.ContextPlugin):
     label = "Collect Current context"
 
     def process(self, context):
-        # Make sure 'legacy_io' is intalled
-        legacy_io.install()
-
         # Check if values are already set
         project_name = context.data.get("projectName")
         asset_name = context.data.get("asset")
         task_name = context.data.get("task")
+
+        current_context = get_current_context()
         if not project_name:
-            project_name = legacy_io.current_project()
-            context.data["projectName"] = project_name
+            context.data["projectName"] = current_context["project_name"]
 
         if not asset_name:
-            asset_name = legacy_io.Session.get("AVALON_ASSET")
-            context.data["asset"] = asset_name
+            context.data["asset"] = current_context["asset_name"]
 
         if not task_name:
-            task_name = legacy_io.Session.get("AVALON_TASK")
-            context.data["task"] = task_name
+            context.data["task"] = current_context["task_name"]
 
         # QUESTION should we be explicit with keys? (the same on instances)
         #   - 'asset' -> 'assetName'
