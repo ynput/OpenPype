@@ -218,7 +218,8 @@ class BlendLoader(plugin.AssetLoader):
 
         for parent_container in parent_containers:
             parent_members = parent_container[AVALON_PROPERTY]["members"]
-            parent_container[AVALON_PROPERTY]["members"] = parent_members + members
+            parent_container[AVALON_PROPERTY]["members"] = (
+                parent_members + members)
 
     def exec_remove(self, container: Dict) -> bool:
         """
