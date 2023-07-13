@@ -37,10 +37,12 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
         """
 
         if cmds.objExists(PLACEHOLDER_SET):
-            raise TemplateAlreadyImported((
-                "Build template already loaded\n"
-                "Clean scene if needed (File > New Scene)"
-            ))
+            raise TemplateAlreadyImported(
+                (
+                    "Build template already loaded\n"
+                    "Clean scene if needed (File > New Scene)"
+                )
+            )
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         new_nodes = cmds.file(
@@ -52,13 +54,14 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
         )
 
         # make default cameras non-renderable
-        default_cameras = [cam for cam in cmds.ls(cameras=True)
-                           if cmds.camera(cam, query=True, startupCamera=True)]
+        default_cameras = [
+            cam
+            for cam in cmds.ls(cameras=True)
+            if cmds.camera(cam, query=True, startupCamera=True)
+        ]
         for cam in default_cameras:
             if not cmds.attributeQuery("renderable", node=cam, exists=True):
-                self.log.debug(
-                    "Camera {} has no attribute 'renderable'".format(cam)
-                )
+                self.log.debug("Camera {} has no attribute 'renderable'".format(cam))
                 continue
             cmds.setAttr("{}.renderable".format(cam), 0)
 
@@ -78,8 +81,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             if not cmds.attributeQuery("asset", node=node, exists=True):
                 continue
 
-            cmds.setAttr(
-                "{}.asset".format(node), asset_name, type="string")
+            cmds.setAttr("{}.asset".format(node), asset_name, type="string")
 
         return True
 
@@ -90,16 +92,14 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
-        placeholder_nodes = self.builder.get_shared_populate_data(
-            "placeholder_nodes"
-        )
+        placeholder_nodes = self.builder.get_shared_populate_data("placeholder_nodes")
         if placeholder_nodes is None:
             attributes = cmds.ls("*.plugin_identifier", long=True)
             placeholder_nodes = {}
             for attribute in attributes:
                 node_name = attribute.rpartition(".")[0]
-                placeholder_nodes[node_name] = (
-                    self._parse_placeholder_node_data(node_name)
+                placeholder_nodes[node_name] = self._parse_placeholder_node_data(
+                    node_name
                 )
 
             self.builder.set_shared_populate_data(
@@ -123,10 +123,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         if current_index < 0:
             current_index = siblings.index(node_shortname)
 
-        placeholder_data.update({
-            "parent": parent_name,
-            "index": current_index
-        })
+        placeholder_data.update({"parent": parent_name, "index": current_index})
         return placeholder_data
 
     def _create_placeholder_name(self, placeholder_data):
@@ -142,7 +139,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         # add loader arguments if any
         loader_args = placeholder_data["loader_args"]
         if loader_args:
-            loader_args = json.loads(loader_args.replace('\'', '\"'))
+            loader_args = json.loads(loader_args.replace("'", '"'))
             values = [v for v in loader_args.values()]
             for value in values:
                 placeholder_name_parts.insert(pos, value)
@@ -163,8 +160,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
                 containers = []
 
             loaded_representation_ids = {
-                cmds.getAttr(container + ".representation")
-                for container in containers
+                cmds.getAttr(container + ".representation") for container in containers
             }
             self.builder.set_shared_populate_data(
                 "loaded_representation_ids", loaded_representation_ids
@@ -189,18 +185,13 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         imprint(placeholder, placeholder_data)
 
         # Add helper attributes to keep placeholder info
-        cmds.addAttr(
-            placeholder,
-            longName="parent",
-            hidden=True,
-            dataType="string"
-        )
+        cmds.addAttr(placeholder, longName="parent", hidden=True, dataType="string")
         cmds.addAttr(
             placeholder,
             longName="index",
             hidden=True,
             attributeType="short",
-            defaultValue=-1
+            defaultValue=-1,
         )
 
         cmds.setAttr(placeholder + ".parent", "", type="string")
@@ -227,9 +218,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
                 continue
 
             # TODO do data validations and maybe upgrades if they are invalid
-            output.append(
-                LoadPlaceholderItem(node_name, placeholder_data, self)
-            )
+            output.append(LoadPlaceholderItem(node_name, placeholder_data, self))
 
         return output
 
@@ -244,8 +233,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Hide placeholder, add them to placeholder set
-        """
+        """Hide placeholder, add them to placeholder set"""
         node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
@@ -254,25 +242,27 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         model = cmds.ls(assemblies=True)
 
         filtered_model = []
-        exclude_list = ['persp', 'top', 'front', 'side', 'root', 'wip']
+        exclude_list = ["persp", "top", "front", "side", "root", "wip"]
 
         for element in model:
             if not any(exclude_elem in element for exclude_elem in exclude_list):
                 filtered_model.append(element)
 
-        cameras = cmds.ls(type='camera')
+        cameras = cmds.ls(type="camera")
         renderable_camera = None
 
         for camera in cameras:
             if cmds.getAttr(camera + ".renderable"):
-                shapes = cmds.listRelatives(camera,parent=True,fullPath=True,type="transform")
+                shapes = cmds.listRelatives(
+                    camera, parent=True, fullPath=True, type="transform"
+                )
                 if shapes:
                     renderable_camera = shapes[0]
                     break
 
         cmds.lookThru(renderable_camera)
-        cmds.viewFit(filtered_model, f=0.6)
-
+        print("filtered_model: ", filtered_model)
+        cmds.viewFit(filtered_model)
 
     def delete_placeholder(self, placeholder):
         """Remove placeholder if building was successful"""
@@ -304,10 +294,9 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         for root in roots:
             if ref_node:
                 ref_root = cmds.referenceQuery(root, nodes=True)[0]
-                ref_root = (
-                    cmds.listRelatives(ref_root, parent=True, path=True) or
-                    [ref_root]
-                )
+                ref_root = cmds.listRelatives(ref_root, parent=True, path=True) or [
+                    ref_root
+                ]
                 nodes_to_parent.extend(ref_root)
                 continue
             if root.endswith("_RN"):
@@ -323,10 +312,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_form = cmds.xform(
-            placeholder.scene_identifier,
-            q=True,
-            matrix=True,
-            worldSpace=True
+            placeholder.scene_identifier, q=True, matrix=True, worldSpace=True
         )
         scene_parent = cmds.listRelatives(
             placeholder.scene_identifier, parent=True, fullPath=True
@@ -360,8 +346,7 @@ def update_workfile_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder,
-                                            parent=get_main_window())
+    window = WorkfileBuildPlaceholderDialog(host, builder, parent=get_main_window())
     window.show()
 
 
@@ -385,7 +370,6 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder,
-                                            parent=get_main_window())
+    window = WorkfileBuildPlaceholderDialog(host, builder, parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()
