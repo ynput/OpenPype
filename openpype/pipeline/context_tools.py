@@ -37,6 +37,7 @@ from . import (
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
 )
+from .version_start import get_versioning_start
 
 
 _is_installed = False
@@ -633,3 +634,34 @@ def get_process_id():
     if _process_id is None:
         _process_id = str(uuid.uuid4())
     return _process_id
+
+
+def get_current_versioning_start(
+    project_name=None,
+    project_settings=None,
+    host=None,
+    task_name=None,
+    task_type=None,
+    family=None,
+    subset=None
+):
+
+    if project_name is None and project_settings is None:
+        raise ValueError(
+            "No project arguments found. Either pass \"project_name\" or "
+            "\"project_settings\""
+        )
+
+    if project_settings is None:
+        if project_name is None:
+            project_name = os.environ.get("AVALON_PROJECT")
+        project_settings = get_project_settings(project_name)
+
+    return get_versioning_start(
+        project_settings,
+        host,
+        task_name,
+        task_type,
+        family,
+        subset
+    )

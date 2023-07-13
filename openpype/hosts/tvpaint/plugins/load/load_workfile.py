@@ -18,7 +18,7 @@ from openpype.hosts.tvpaint.api.lib import (
 from openpype.hosts.tvpaint.api.pipeline import (
     get_current_workfile_context,
 )
-from openpype.settings import get_versioning_start
+from openpype.pipeline import get_current_versioning_start
 
 
 class LoadWorkfile(plugin.Loader):
@@ -95,7 +95,7 @@ class LoadWorkfile(plugin.Loader):
         )[1]
 
         if version is None:
-            version = get_versioning_start(
+            version = get_current_versioning_start(
                 host="tvpaint",
                 task_name=task_name,
                 task_type=data["task"]["type"],

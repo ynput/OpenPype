@@ -4,13 +4,13 @@ import copy
 import platform
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.settings import get_project_settings, get_versioning_start
+from openpype.settings import get_project_settings
 from openpype.lib import (
     filter_profiles,
     Logger,
     StringTemplate,
 )
-from openpype.pipeline import Anatomy
+from openpype.pipeline import Anatomy, get_current_versioning_start
 from openpype.pipeline.template_data import get_template_data
 
 
@@ -316,7 +316,7 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        data["version"] = get_versioning_start(
+        data["version"] = get_current_versioning_start(
             host=data["app"],
             task_name=data["task"]["name"],
             task_type=data["task"]["type"],

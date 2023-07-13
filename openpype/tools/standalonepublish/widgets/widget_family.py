@@ -8,8 +8,8 @@ from openpype.client import (
     get_subsets,
     get_last_version_by_subset_id,
 )
-from openpype.settings import get_project_settings, get_versioning_start
-from openpype.pipeline import LegacyCreator
+from openpype.settings import get_project_settings
+from openpype.pipeline import LegacyCreator, get_current_versioning_start
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
@@ -301,7 +301,7 @@ class FamilyWidget(QtWidgets.QWidget):
         subset_name = self.input_result.text()
         plugin = self.list_families.currentItem().data(PluginRole)
         family = plugin.family.rsplit(".", 1)[-1]
-        version = get_versioning_start(
+        version = get_current_versioning_start(
             host="standalonepublisher",
             task_name=self.dbcon.Session["AVALON_TASK"],
             family=family,

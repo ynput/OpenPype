@@ -32,8 +32,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
-from openpype.settings import get_versioning_start
-from openpype.pipeline import registered_host
+from openpype.pipeline import get_current_versioning_start
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -193,26 +192,28 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 version_number = context.data('version')
             else:
                 version_number = instance.data.get("version")
+
+            # use latest version (+1) if already any exist
+            if version_number is None:
+                latest_version = instance.data["latestVersion"]
+                if latest_version is not None:
+                    version_number += int(latest_version) + 1
+
             # If version is not specified for instance or context
             if version_number is None:
                 task_name = instance.data.get("task", "")
-                task_type = ""
+                task_type = None
                 if task_name:
                     asset_tasks = instance.data["assetEntity"]["data"]["tasks"]
                     task_type = asset_tasks.get(task_name, {}).get("type")
 
-                version_number = get_versioning_start(
+                version_number = get_current_versioning_start(
                     host=instance.context.data["hostName"],
                     task_name=task_name,
                     task_type=task_type,
                     family=instance.data["family"],
                     subset=instance.data["subset"]
                 )
-
-                # use latest version (+1) if already any exist
-                latest_version = instance.data["latestVersion"]
-                if latest_version is not None:
-                    version_number += int(latest_version) + 1
 
             anatomy_updates = {
                 "asset": instance.data["asset"],

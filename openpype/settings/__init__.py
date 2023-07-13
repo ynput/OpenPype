@@ -30,7 +30,6 @@ from .entities import (
     ProjectSettings,
     DefaultsNotDefined
 )
-from .version_start import get_versioning_start
 
 
 __all__ = (
@@ -60,7 +59,5 @@ __all__ = (
 
     "SystemSettings",
     "ProjectSettings",
-    "DefaultsNotDefined",
-
-    "get_versioning_start"
+    "DefaultsNotDefined"
 )

@@ -18,7 +18,7 @@ Provides:
 import pyblish.api
 
 from openpype.client import get_last_version_by_subset_name
-from openpype.settings import get_versioning_start
+from openpype.pipeline import get_current_versioning_start
 
 
 class CollectPublishedVersion(pyblish.api.ContextPlugin):
@@ -53,7 +53,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         if version_doc:
             version_int += int(version_doc["name"])
         else:
-            version_int = get_versioning_start(
+            version_int = get_current_versioning_start(
                 host="photoshop",
                 task_name=context.data["task"],
                 task_type=context.data["taskType"]
