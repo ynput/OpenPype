@@ -381,7 +381,7 @@ class SlackPython3Operations(AbstractSlackOperations):
             return response.data["ts"], file_ids
         except SlackApiError as e:
             # # You will get a SlackApiError if "ok" is False
-            if e.response.get("errror"):
+            if e.response.get("error"):
                 error_str = self._enrich_error(str(e.response["error"]), channel)
             else:
                 error_str = self._enrich_error(str(e), channel)
