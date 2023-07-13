@@ -654,7 +654,7 @@ def get_current_versioning_start(
 
     if project_settings is None:
         if project_name is None:
-            project_name = os.environ.get("AVALON_PROJECT")
+            project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
 
     return get_versioning_start(
