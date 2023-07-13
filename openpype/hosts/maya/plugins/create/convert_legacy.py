@@ -51,7 +51,12 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # From all current new style manual creators find the mapping
         # from family to identifier
         family_to_id = {}
-        for identifier, creator in self.create_context.creators.items():
+        # Consider both disabled and enabled creators
+        # e.g. the "animation" creator is disabled to be hidden
+        # by the user
+        creators = self.create_context.disabled_creators.copy()
+        creators.update(self.create_context.creators.copy())
+        for identifier, creator in creators.items():
             family = getattr(creator, "family", None)
             if not family:
                 continue
