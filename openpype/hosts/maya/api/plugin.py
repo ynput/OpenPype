@@ -181,6 +181,8 @@ class MayaCreatorBase(object):
 @six.add_metaclass(ABCMeta)
 class MayaCreator(NewCreator, MayaCreatorBase):
 
+    settings_name = None
+
     def create(self, subset_name, instance_data, pre_create_data):
 
         members = list()
@@ -237,6 +239,24 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     label="Use selection",
                     default=True)
         ]
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        settings_name = self.settings_name
+        if settings_name is None:
+            settings_name = self.__class__.__name__
+
+        settings = project_settings["maya"]["create"]
+        settings = settings.get(settings_name)
+        if settings is None:
+            self.log.debug(
+                "No settings found for {}".format(self.__class__.__name__)
+            )
+            return
+
+        for key, value in settings.items():
+            setattr(self, key, value)
 
 
 def ensure_namespace(namespace):
