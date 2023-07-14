@@ -418,9 +418,9 @@ class LayoutLoader(UnrealBaseLoader):
             "get_assets_of_class",
             params={
                 "asset_list": assets,
-                "class_name": "AssetContainer"})
+                "class_name": "AyonAssetContainer"})
         assert len(asset_containers) == 1, (
-            "There should be only one AssetContainer in "
+            "There should be only one AyonAssetContainer in "
             "the loaded assets.")
         container = asset_containers[0]
 

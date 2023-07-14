@@ -53,7 +53,7 @@ class ExtractLayout(publish.Extractor):
                 try:
                     asset_container = ar.get_assets(filter)[0].get_asset()
                 except IndexError:
-                    self.log.error("AssetContainer not found.")
+                    self.log.error("AyonAssetContainer not found.")
                     return
 
                 parent_id = eal.get_metadata_tag(asset_container, "parent")
