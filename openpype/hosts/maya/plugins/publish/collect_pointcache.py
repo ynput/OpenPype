@@ -10,6 +10,11 @@ class CollectPointcache(pyblish.api.InstancePlugin):
     families = ["pointcache"]
     label = "Collect Pointcache"
     hosts = ["maya"]
+    legacy_settings = {
+        "write_color_sets": "writeColorSets",
+        "write_face_sets": "writeFaceSets",
+        "include_user_defined_attributes": "includeUserDefinedAttributes"
+    }
 
     def process(self, instance):
         if instance.data.get("farm"):
@@ -46,13 +51,25 @@ class CollectPointcache(pyblish.api.InstancePlugin):
             instance.remove(proxy_set)
             instance.data["setMembers"].remove(proxy_set)
 
+        # Apply default values not exposed to the user.
+        settings = instance.context.data["project_settings"]["maya"]["create"]
+        for key, value in settings["CreatePointCache"].items():
+            if key.endswith("_editable"):
+                continue
+
+            if key in instance.data:
+                continue
+
+            if key in self.legacy_settings.keys():
+                continue
+
+            self.log.debug(
+                "Adding \"{}:{}\" from settings.".format(key, value)
+            )
+            instance.data[key] = value
+
         # Backwards compatibility for attributes.
-        backwards_mapping = {
-            "write_color_sets": "writeColorSets",
-            "write_face_sets": "writeFaceSets",
-            "include_user_defined_attributes": "includeUserDefinedAttributes"
-        }
-        for key, value in backwards_mapping.items():
+        for key, value in self.legacy_settings.items():
             if key in instance.data:
                 self.log.debug(
                     "Using legacy attribute name '{}' since it exists.".format(

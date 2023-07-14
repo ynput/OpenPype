@@ -470,137 +470,282 @@
                     "label": "Enabled"
                 },
                 {
-                  "type": "boolean",
-                  "key": "includeUserDefinedAttributes",
-                  "label": "Include User Defined Attributes"
-                },
-                {
-                  "type": "boolean",
-                  "key": "eulerFilter",
-                  "label": "Euler Filter"
-                },
-                {
-                  "type": "boolean",
-                  "key": "noNormals",
-                  "label": "No Normals"
-                },
-                {
-                  "type": "boolean",
-                  "key": "preRoll",
-                  "label": "Pre Roll"
-                },
-                {
-                  "type": "boolean",
-                  "key": "renderableOnly",
-                  "label": "Renderable Only"
-                },
-                {
-                  "type": "boolean",
-                  "key": "uvWrite",
-                  "label": "UV Write"
-                },
-                {
-                  "type": "boolean",
-                  "key": "WriteColorSets",
-                  "label": "Write Color Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeFaceSets",
-                  "label": "Write Face Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "wholeFrameGeo",
-                  "label": "Whole Frame Geo"
-                },
-                {
-                  "type": "boolean",
-                  "key": "worldSpace",
-                  "label": "World Space"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeVisibility",
-                  "label": "Write Visibility"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeUVSets",
-                  "label": "Write UV Sets"
-                },
-                {
-                  "type": "boolean",
-                  "key": "writeCreases",
-                  "label": "Write Creases"
-                },
-                {
-                  "type": "text",
-                  "key": "dataFormat",
-                  "label": "Data Format"
-                },
-                {
-                  "type": "number",
-                  "key": "step",
-                  "label": "Step",
-                  "minimum": 0.0,
-                  "decimal": 4
-                },
-                {
-                  "type": "text",
-                  "key": "attr",
-                  "label": "Attr"
-                },
-                {
-                  "type": "text",
-                  "key": "attrPrefix",
-                  "label": "Attr Prefix"
-                },
-                {
-                  "type": "boolean",
-                  "key": "stripNamespaces",
-                  "label": "StripNamespaces"
-                },
-                {
-                  "type": "boolean",
-                  "key": "verbose",
-                  "label": "Verbose"
-                },
-                {
-                  "type": "number",
-                  "key": "preRollStartFrame",
-                  "label": "Pre Roll Start Frame"
-                },
-                {
-                  "type": "boolean",
-                  "key": "farm",
-                  "label": "Farm"
-                },
-                {
-                  "type": "number",
-                  "key": "priority",
-                  "label": "Priority"
-                },
-                {
-                  "type": "boolean",
-                  "key": "includeParentHierarchy",
-                  "label": "Include Parent Hierarchy"
-                },
-                {
-                  "type": "boolean",
-                  "key": "refresh",
-                  "label": "Refresh"
-                },
-                {
-                  "type": "boolean",
-                  "key": "visibleOnly",
-                  "label": "Visible Only"
-                },
-                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
                     "object_type": "text"
+                },
+                {
+                  "type": "number",
+                  "key": "step",
+                  "label": "Step default",
+                  "minimum": 0.0,
+                  "decimal": 4
+                },
+                {
+                  "type": "boolean",
+                  "key": "step_editable",
+                  "label": "Step editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeColorSets",
+                    "label": "Write Color Sets default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeColorSets_editable",
+                  "label": "Write Color Sets editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeFaceSets",
+                    "label": "Write Face Sets default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeFaceSets_editable",
+                  "label": "Write Face Sets editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "renderableOnly",
+                    "label": "Renderable Only default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "renderableOnly_editable",
+                  "label": "Renderable Only editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "visibleOnly",
+                    "label": "Visible Only default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "visibleOnly_editable",
+                  "label": "Visible Only editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "includeParentHierarchy",
+                    "label": "Include Parent Hierarchy default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "includeParentHierarchy_editable",
+                  "label": "Include Parent Hierarchy editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "worldSpace",
+                    "label": "World Space default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "worldSpace_editable",
+                  "label": "World Space editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "farm",
+                    "label": "Farm default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "farm_editable",
+                  "label": "Farm editable"
+                },
+                {
+                    "type": "number",
+                    "key": "priority",
+                    "label": "Priority default",
+                    "minimum": 0
+                },
+                {
+                  "type": "boolean",
+                  "key": "priority_editable",
+                  "label": "Priority editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeNormals",
+                    "label": "Write Normals default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeNormals_editable",
+                  "label": "Write Normals editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "includeUserDefinedAttributes",
+                    "label": "Include User Defined Attributes default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "includeUserDefinedAttributes_editable",
+                  "label": "Include User Defined Attributes editable"
+                },
+                {
+                    "type": "text",
+                    "key": "attr",
+                    "label": "Attr default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "attr_editable",
+                  "label": "Attr editable"
+                },
+                {
+                    "type": "text",
+                    "key": "attrPrefix",
+                    "label": "Attr Prefix default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "attrPrefix_editable",
+                  "label": "Attr Prefix editable"
+                },
+                {
+                    "type": "enum",
+                    "key": "dataFormat",
+                    "label": "Data Format default",
+                    "enum_items": [
+                        {
+                            "ogawa": "ogawa"
+                        },
+                        {
+                            "HDF": "HDF"
+                        }
+                    ]
+                },
+                {
+                  "type": "boolean",
+                  "key": "dataFormat_editable",
+                  "label": "Data Format editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "eulerFilter",
+                    "label": "Euler Filter default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "eulerFilter_editable",
+                  "label": "Euler Filter editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "noNormals",
+                    "label": "No Normals default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "noNormals_editable",
+                  "label": "No Normals editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "preRoll",
+                    "label": "Pre Roll default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "preRoll_editable",
+                  "label": "Pre Roll editable"
+                },
+                {
+                    "type": "number",
+                    "key": "preRollStartFrame",
+                    "label": "Pre Roll Start Frame default",
+                    "minimum": 0
+                },
+                {
+                  "type": "boolean",
+                  "key": "preRollStartFrame_editable",
+                  "label": "Pre Roll Start Frame editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "refresh",
+                    "label": "Refresh default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "refresh_editable",
+                  "label": "Refresh editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "stripNamespaces",
+                    "label": "Strip Namespaces default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "stripNamespaces_editable",
+                  "label": "Strip Namespaces editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "uvWrite",
+                    "label": "UV Write default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "uvWrite_editable",
+                  "label": "UV Write editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "verbose",
+                    "label": "Verbose default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "verbose_editable",
+                  "label": "Verbose editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "wholeFrameGeo",
+                    "label": "Whole Frame Geo default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "wholeFrameGeo_editable",
+                  "label": "Whole Frame Geo editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeCreases",
+                    "label": "Write Creases default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeCreases_editable",
+                  "label": "Write Creases editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeUVSets",
+                    "label": "Write UV Sets default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeUVSets_editable",
+                  "label": "Write UV Sets editable"
+                },
+                {
+                    "type": "boolean",
+                    "key": "writeVisibility",
+                    "label": "Write Visibility default"
+                },
+                {
+                  "type": "boolean",
+                  "key": "writeVisibility_editable",
+                  "label": "Write Visibility editable"
                 },
                 {
                     "type": "boolean",
