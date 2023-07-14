@@ -13,16 +13,28 @@ from openpype.lib import (
 from openpype.settings import get_current_project_settings#not needed if applying settings is merged.
 
 
-class CreatePointCache(plugin.MayaCreator):
-    """Alembic pointcache for animated data"""
+class CreateAnimation(plugin.MayaCreator):
+    """Animation output for character rigs"""
 
-    identifier = "io.openpype.creators.maya.pointcache"
-    label = "Pointcache"
-    family = "pointcache"
-    icon = "gears"
+    # We hide the animation creator from the UI since the creation of it
+    # is automated upon loading a rig. There's an inventory action to recreate
+    # it for loaded rigs if by chance someone deleted the animation instance.
+    # Note: This setting is actually applied from project settings
+    enabled = False
+
+    identifier = "io.openpype.creators.maya.animation"
+    name = "animationDefault"
+    label = "Animation"
+    family = "animation"
+    icon = "male"
+
     write_color_sets = False
     write_face_sets = False
+    include_parent_hierarchy = False
     include_user_defined_attributes = False
+
+    # TODO: Would be great if we could visually hide this from the creator
+    #       by default but do allow to generate it through code.
 
     def get_instance_attr_defs(self):
         defs = lib.collect_animation_defs()
@@ -90,7 +102,7 @@ class CreatePointCache(plugin.MayaCreator):
 
         # Collect editable state and default values.
         settings = get_current_project_settings()
-        settings = settings["maya"]["create"]["CreatePointCache"]
+        settings = settings["maya"]["create"][self.__class__.__name__]
         editable_attributes = {}
         for key, value in settings.items():
             if not key.endswith("_editable"):
@@ -114,6 +126,19 @@ class CreatePointCache(plugin.MayaCreator):
             resulting_defs.append(definition)
 
         return resulting_defs
+
+
+class CreatePointCache(CreateAnimation):
+    """Alembic pointcache for animated data"""
+
+    enabled = True
+    identifier = "io.openpype.creators.maya.pointcache"
+    label = "Pointcache"
+    family = "pointcache"
+    icon = "gears"
+    write_color_sets = False
+    write_face_sets = False
+    include_user_defined_attributes = False
 
     def create(self, subset_name, instance_data, pre_create_data):
 
