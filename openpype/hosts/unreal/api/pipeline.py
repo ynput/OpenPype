@@ -180,6 +180,7 @@ def unreal_log(message, level):
     """
     send_request("log", params={"message": message, "level": level})
 
+
 def imprint(node, data):
     """Imprint data to container.
 
