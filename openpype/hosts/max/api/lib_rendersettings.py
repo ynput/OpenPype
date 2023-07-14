@@ -177,8 +177,8 @@ class RenderSettings(object):
                 render_element_list.append(aov_name)
         return render_element_list
 
-    def create_batch_render_layer(self, container,
-                                  output_dir, cameras):
+    def batch_render_layer(self, container,
+                           output_dir, cameras):
         outputs = list()
         output = os.path.join(output_dir, container)
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
@@ -186,7 +186,7 @@ class RenderSettings(object):
             camera = rt.getNodeByName(cam)
             layer_no = rt.batchRenderMgr.FindView(cam)
             renderlayer = None
-            if layer_no is None:
+            if layer_no == 0:
                 renderlayer = rt.batchRenderMgr.CreateView(camera)
             else:
                 renderlayer = rt.batchRenderMgr.GetView(layer_no)

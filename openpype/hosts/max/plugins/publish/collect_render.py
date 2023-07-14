@@ -26,22 +26,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         file = rt.maxFileName
         current_file = os.path.join(folder, file)
         filepath = current_file.replace("\\", "/")
-        container_name = instance.data.get("instance_node")
         context.data['currentFile'] = current_file
-        cameras = instance.data.get("members")
-        sel_cam = [
-            c.name for c in cameras
-            if rt.classOf(c) in rt.Camera.classes]
-        render_dir = os.path.dirname(rt.rendOutputFilename)
-        outputs = RenderSettings().create_batch_render_layer(
-            container_name, render_dir, sel_cam
-        )
-        aov_outputs = RenderSettings().get_batch_render_elements(
-            container_name, render_dir, sel_cam
-        )
-        files_aov = RenderProducts().get_multiple_beauty(outputs, cameras)
-        aovs = RenderProducts().get_multiple_aovs(outputs, cameras)
-        files_aov.update(aovs)
         asset = get_current_asset_name()
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
@@ -49,11 +34,33 @@ class CollectRender(pyblish.api.InstancePlugin):
         aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 
+        if instance.data.get("multiCamera"):
+            cameras = instance.data.get("members")
+            if not cameras:
+                raise RuntimeError("There should be at least"
+                                   " one renderable camera in container")
+            sel_cam = [
+                c.name for c in cameras
+                if rt.classOf(c) in rt.Camera.classes]
+            container_name = instance.data.get("instance_node")
+            render_dir = os.path.dirname(rt.rendOutputFilename)
+            outputs = RenderSettings().batch_render_layer(
+                container_name, render_dir, sel_cam
+            )
+
+            instance.data["cameras"] = sel_cam
+
+            files_by_aov = RenderProducts().get_multiple_beauty(
+                outputs, sel_cam)
+            aovs = RenderProducts().get_multiple_aovs(
+                outputs, sel_cam)
+            files_by_aov.update(aovs)
+
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
             instance.data["files"] = list()
-            instance.data["expectedFiles"].append(files_aov)
-            instance.data["files"].append(files_aov)
+            instance.data["expectedFiles"].append(files_by_aov)
+            instance.data["files"].append(files_by_aov)
 
         img_format = RenderProducts().image_format()
         project_name = context.data["projectName"]
@@ -94,13 +101,10 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
-            "cameras": sel_cam,
             "frameStart": int(rt.rendStart),
             "frameEnd": int(rt.rendEnd),
             "version": version_int,
-            "farm": True,
-            "renderoutput": outputs,
-            "aovoutput": aov_outputs
+            "farm": True
         }
         instance.data.update(data)
 
