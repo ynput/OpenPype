@@ -4142,7 +4142,6 @@ def create_rig_animation_instance(
 
     host = registered_host()
     create_context = CreateContext(host)
-    create_context.creators.update(create_context.disabled_creators)
 
     # Create the animation instance
     with maintained_selection():

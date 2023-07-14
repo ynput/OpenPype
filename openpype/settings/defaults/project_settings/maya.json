@@ -555,7 +555,7 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": false,
+            "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,

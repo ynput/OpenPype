@@ -6,17 +6,16 @@ from openpype.lib import (
     BoolDef,
     TextDef
 )
+from openpype.pipeline.create import HiddenCreator
 
 
-class CreateAnimation(plugin.MayaCreator):
-    """Animation output for character rigs"""
+class CreateAnimation(plugin.MayaCreator, HiddenCreator):
+    """Animation output for character rigs
 
-    # We hide the animation creator from the UI since the creation of it
-    # is automated upon loading a rig. There's an inventory action to recreate
-    # it for loaded rigs if by chance someone deleted the animation instance.
-    # Note: This setting is actually applied from project settings
-    enabled = False
-
+    We hide the animation creator from the UI since the creation of it is
+    automated upon loading a rig. There's an inventory action to recreate it
+    for loaded rigs if by chance someone deleted the animation instance.
+    """
     identifier = "io.openpype.creators.maya.animation"
     name = "animationDefault"
     label = "Animation"
