@@ -50,7 +50,7 @@ class ThumbnailCache:
         """
 
         if self._thumbnails_dir is None:
-            directory = appdirs.user_data_dir("ayon", "ynput")
+            directory = appdirs.user_data_dir("AYON", "Ynput")
             self._thumbnails_dir = os.path.join(directory, "thumbnails")
         return self._thumbnails_dir
 
