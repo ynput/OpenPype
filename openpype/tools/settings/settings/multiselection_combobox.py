@@ -90,6 +90,13 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         super(MultiSelectionComboBox, self).hidePopup()
         self.view().clearFocus()
 
+    def _get_state_value(self, state):
+        try:
+            state = state.value  # fix for PySide6
+        except AttributeError:
+            pass
+        return state
+
     def _event_popup_shown(self, obj, event):
         if not self._popup_is_shown:
             return
@@ -139,9 +146,9 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                         new_state = QtCore.Qt.Checked
                     else:
                         new_state = QtCore.Qt.Unchecked
-
+            
         if new_state is not None:
-            new_state = new_state.value  # fix for PySide6
+            new_state = self._get_state_value(new_state)
             model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
             self.view().update(current_index)
             self.update_size_hint()
@@ -302,7 +309,8 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 check_state = QtCore.Qt.Checked
             else:
                 check_state = QtCore.Qt.Unchecked
-            self.setItemData(idx, check_state.value, QtCore.Qt.CheckStateRole)
+            check_state = self._get_state_value(check_state)
+            self.setItemData(idx, check_state, QtCore.Qt.CheckStateRole)
         self.update_size_hint()
 
     def value(self):
