@@ -135,19 +135,16 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
             if event.key() == QtCore.Qt.Key_Space:
                 # toggle the current items check state
-                if (
-                    index_flags & QtCore.Qt.ItemIsUserCheckable
-                    and index_flags & QtCore.Qt.ItemIsTristate
-                ):
-                    new_state = QtCore.Qt.CheckState((int(state) + 1) % 3)
-
-                elif index_flags & QtCore.Qt.ItemIsUserCheckable:
-                    if state != QtCore.Qt.Checked:
+                if index_flags & QtCore.Qt.ItemIsUserCheckable:
+                    if QtCore.Qt.ItemIsUserTristate:
+                        new_state = QtCore.Qt.CheckState((state.value + 1) % 3)
+                    elif state != QtCore.Qt.Checked:
                         new_state = QtCore.Qt.Checked
                     else:
                         new_state = QtCore.Qt.Unchecked
 
         if new_state is not None:
+            new_state = new_state.value  # fix for PySide6
             model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
             self.view().update(current_index)
             self.update_size_hint()
