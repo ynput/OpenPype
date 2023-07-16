@@ -132,12 +132,10 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         elif event.type() == QtCore.QEvent.KeyPress:
             # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
-            if event.key() == QtCore.Qt.Key_Space:
+            if event.key() == QtCore.Qt.Key_Space and index_flags:
                 # toggle the current items check state
-                if index_flags & QtCore.Qt.ItemIsUserCheckable:
-                    if QtCore.Qt.ItemIsUserTristate:
-                        new_state = QtCore.Qt.CheckState((state.value + 1) % 3)
-                    elif state != QtCore.Qt.Checked:
+                if QtCore.Qt.ItemIsUserTristate:
+                    if state != QtCore.Qt.Checked:
                         new_state = QtCore.Qt.Checked
                     else:
                         new_state = QtCore.Qt.Unchecked
