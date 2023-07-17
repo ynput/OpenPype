@@ -1320,7 +1320,9 @@ def convert_update_representation_to_v4(
     return flat_data
 
 
-def convert_update_workfile_info_to_v4(update_data):
+def convert_update_workfile_info_to_v4(
+    project_name, workfile_id, update_data, con
+):
     return {
         key: value
         for key, value in update_data.items()
