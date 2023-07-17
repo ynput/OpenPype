@@ -48,9 +48,10 @@ class RenderProducts(object):
             new_beauty = self.get_expected_beauty(
                 filename, start_frame, end_frame, ext
             )
-            beauty_output_frames = ({
+            beauty_output = ({
                 f"{camera}_beauty": new_beauty
             })
+            beauty_output_frames.update(beauty_output)
         return beauty_output_frames
 
     def get_multiple_aovs(self, outputs, cameras):
