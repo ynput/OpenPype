@@ -78,9 +78,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 if idx do (
                     continue
                 )
-
                 name = c as string
-
                 append temp_arr handle_name
                 append i_node_arr node_ref
                 append sel_list name
