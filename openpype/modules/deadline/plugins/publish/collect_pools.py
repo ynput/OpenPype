@@ -48,7 +48,8 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
             instance.data["secondaryPool"] = None
 
         self.log.info("prima::{}".format(instance.data["primaryPool"]))
-        self.log.info("secondaryPool::{}".format(instance.data["secondaryPool"]))
+        self.log.info(
+            "secondaryPool::{}".format(instance.data["secondaryPool"]))
 
     @classmethod
     def get_attribute_defs(cls):
