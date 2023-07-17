@@ -27,9 +27,6 @@ class CreateAnimation(plugin.MayaCreator, HiddenCreator):
     include_parent_hierarchy = False
     include_user_defined_attributes = False
 
-    # TODO: Would be great if we could visually hide this from the creator
-    #       by default but do allow to generate it through code.
-
     def get_instance_attr_defs(self):
 
         defs = lib.collect_animation_defs()
@@ -84,3 +81,12 @@ class CreateAnimation(plugin.MayaCreator, HiddenCreator):
         """
 
         return defs
+
+    def apply_settings(self, project_settings, system_settings):
+        super(CreateAnimation, self).apply_settings(
+            project_settings, system_settings
+        )
+        # Hardcoding creator to be enabled due to existing settings would
+        # disable the creator causing the creator plugin to not be
+        # discoverable.
+        self.enabled = True
