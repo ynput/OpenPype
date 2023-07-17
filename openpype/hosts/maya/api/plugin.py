@@ -1,36 +1,24 @@
-import os
 import json
-from abc import (
-    ABCMeta
-)
-import six
-import re
+import os
+from abc import ABCMeta
 
+import qargparse
+import six
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-import qargparse
-
-from openpype.lib import Logger
+from openpype.lib import BoolDef, Logger
+from openpype.pipeline import AVALON_CONTAINER_ID, Anatomy, CreatedInstance
+from openpype.pipeline import Creator as NewCreator
 from openpype.pipeline import (
-    legacy_io,
-    LoaderPlugin,
-    get_representation_path,
-    AVALON_CONTAINER_ID,
-    Anatomy,
-    LegacyCreator,
-    Creator as NewCreator,
-    CreatedInstance,
-    CreatorError
-)
-from openpype.lib import BoolDef
-from .lib import imprint, read
+    CreatorError, LegacyCreator, LoaderPlugin, get_representation_path,
+    legacy_io)
 from openpype.pipeline.load import LoadError
 from openpype.settings import get_project_settings
 
-from .pipeline import containerise
 from . import lib
-
+from .lib import imprint, read
+from .pipeline import containerise
 
 log = Logger.get_logger()
 
@@ -497,7 +485,8 @@ class ReferenceLoader(Loader):
         namespace=None,
         options=None
     ):
-        assert os.path.exists(self.fname), "%s does not exist." % self.fname
+        path = self.filepath_from_context(context)
+        assert os.path.exists(path), "%s does not exist." % path
 
         asset = context['asset']
         subset = context['subset']
@@ -581,6 +570,7 @@ class ReferenceLoader(Loader):
 
     def update(self, container, representation):
         from maya import cmds
+
         from openpype.hosts.maya.api.lib import get_container_members
 
         node = container["objectName"]

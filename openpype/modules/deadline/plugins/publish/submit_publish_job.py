@@ -182,6 +182,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
+
         output_dir = self._get_publish_folder(
             anatomy,
             deepcopy(instance.data["anatomyData"]),
@@ -197,9 +198,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             create_metadata_path(instance, anatomy)
 
         environment = {
-            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
-            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
-            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
+            "AVALON_PROJECT": instance.context.data["projectName"],
+            "AVALON_ASSET": instance.context.data["asset"],
+            "AVALON_TASK": instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
@@ -316,6 +317,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         deadline_publish_job_id = response.json()["_id"]
 
         return deadline_publish_job_id
+
 
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
@@ -547,8 +549,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 be stored
                 based on 'publish' template
         """
+
+        project_name = self.context.data["projectName"]
         if not version:
-            project_name = legacy_io.active_project()
             version = get_last_version_by_subset_name(
                 project_name,
                 subset,
@@ -571,7 +574,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."

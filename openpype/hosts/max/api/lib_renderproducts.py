@@ -7,15 +7,18 @@ import os
 from pymxs import runtime as rt
 
 from openpype.hosts.max.api.lib import get_current_renderer
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 from openpype.settings import get_project_settings
 
 
 class RenderProducts(object):
 
     def __init__(self, project_settings=None):
-        self._project_settings = project_settings or get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"])
+        self._project_settings = project_settings
+        if not self._project_settings:
+            self._project_settings = get_project_settings(
+                get_current_project_name()
+            )
 
     def get_beauty(self, container):
         render_dir = os.path.dirname(rt.rendOutputFilename)

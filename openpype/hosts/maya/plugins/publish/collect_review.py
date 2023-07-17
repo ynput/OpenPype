@@ -98,7 +98,7 @@ class CollectReview(pyblish.api.InstancePlugin):
             # representations. Once plugins like Extract Review start
             # using representations, this should be removed from here
             # as Extract Playblast is already adding fps to representation.
-            data['fps'] = instance.context.data['fps']
+            data['fps'] = context.data['fps']
             data['review_width'] = instance.data['review_width']
             data['review_height'] = instance.data['review_height']
             data["isolate"] = instance.data["isolate"]
