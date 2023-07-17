@@ -160,7 +160,7 @@ class RenderSettings(object):
         return orig_render_elem
 
     def get_batch_render_elements(self, container,
-                                  output_dir, cameras):
+                                  output_dir, camera):
         render_element_list = list()
         output = os.path.join(output_dir, container)
         render_elem = rt.maxOps.GetCurRenderElementMgr()
@@ -168,14 +168,19 @@ class RenderSettings(object):
         if render_elem_num < 0:
             return
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        for cam in cameras:
-            for i in range(render_elem_num):
-                renderlayer_name = render_elem.GetRenderElement(i)
-                target, renderpass = str(renderlayer_name).split(":")
-                aov_name = "{0}_{1}_{2}..{3}".format(
-                    output, cam, renderpass, img_fmt)
-                render_element_list.append(aov_name)
+
+        for i in range(render_elem_num):
+            renderlayer_name = render_elem.GetRenderElement(i)
+            target, renderpass = str(renderlayer_name).split(":")
+            aov_name = "{0}_{1}_{2}..{3}".format(
+                output, camera, renderpass, img_fmt)
+            render_element_list.append(aov_name)
         return render_element_list
+
+    def get_batch_render_output(self, camera):
+        target_layer_no = rt.batchRenderMgr.FindView(camera)
+        target_layer = rt.batchRenderMgr.GetView(target_layer_no)
+        return target_layer.outputFilename
 
     def batch_render_layer(self, container,
                            output_dir, cameras):

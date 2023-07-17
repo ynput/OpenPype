@@ -56,7 +56,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                     cls.priority)
         cls.chuck_size = settings.get("chunk_size", cls.chunk_size)
         cls.group = settings.get("group", cls.group)
-
+    # TODO: multiple camera instance, separate job infos
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
 
@@ -73,7 +73,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
-
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data["plugin"]
@@ -179,9 +178,19 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_published_name(payload_data)
-        job_info, plugin_info = payload
-        self.submit(self.assemble_payload(job_info, plugin_info))
+        #TODO: multiple camera options
+        if instance.data.get("multiCamera"):
+            payload = self._use_published_name_for_multiples(payload_data)
+            job_infos, plugin_infos = payload
+            for job_info, plugin_info in zip(job_infos, plugin_infos):
+                self.log.debug(f"job_info: {job_info}")
+                self.log.debug(f"plugin_info: {plugin_info}")
+                submission = self.assemble_payload(job_info, plugin_info)
+                self.submit(submission)
+        else:
+            payload = self._use_published_name(payload_data)
+            job_info, plugin_info = payload
+            self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _use_published_name(self, data):
         instance = self._instance
@@ -212,16 +221,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_data["RenderOutput"] = beauty_name
         # as 3dsmax has version with different languages
         plugin_data["Language"] = "ENU"
-        render_cameras = instance.data["cameras"]
-        if render_cameras:
-            for i, camera in enumerate(render_cameras):
-                cam_name = "Camera%s" % (i + 1)
-                plugin_data[cam_name] = camera
-                # set the default camera
-                plugin_data["Camera"] = camera
-            # set empty camera of Camera 0 for the '
-            # correct parameter submission
-            plugin_data["Camera0"] = None
 
         renderer_class = get_current_renderer()
 
@@ -249,6 +248,90 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    def get_job_info_through_camera(self, camera):
+        instance = self._instance
+        context = instance.context
+        job_info = copy.deepcopy(self.job_info)
+        exp = instance.data.get("expectedFiles")
+
+        src_filepath = context.data["currentFile"]
+        src_filename = os.path.basename(src_filepath)
+        job_info.Name = "%s - %s - %s" % (
+            src_filename, instance.name, camera)
+        for filepath in self._iter_expected_files(exp):
+            if camera not in filepath:
+                continue
+            job_info.OutputDirectory += os.path.dirname(filepath)
+            job_info.OutputFilename += os.path.basename(filepath)
+
+        return job_info
+        # set the output filepath with the relative camera
+
+    def get_plugin_info_through_camera(self, camera):
+        instance = self._instance
+        # set the target camera
+        plugin_info = copy.deepcopy(self.plugin_info)
+        plugin_data = {}
+        # set the output filepath with the relative camera
+        files = instance.data.get("expectedFiles")
+        if not files:
+            raise RuntimeError("No render elements found")
+        first_file = next(self._iter_expected_files(files))
+        old_output_dir = os.path.dirname(first_file)
+        rgb_output = RenderSettings().get_batch_render_output(camera)       # noqa
+        rgb_bname = os.path.basename(rgb_output)
+        dir = os.path.dirname(first_file)
+        beauty_name = f"{dir}/{rgb_bname}"
+        beauty_name = beauty_name.replace("\\", "/")
+        plugin_info["RenderOutput"] = beauty_name
+        renderer_class = get_current_renderer()
+
+        renderer = str(renderer_class).split(":")[0]
+        if renderer in [
+            "ART_Renderer",
+            "Redshift_Renderer",
+            "V_Ray_6_Hotfix_3",
+            "V_Ray_GPU_6_Hotfix_3",
+            "Default_Scanline_Renderer",
+            "Quicksilver_Hardware_Renderer",
+        ]:
+            render_elem_list = RenderSettings().get_batch_render_elements(
+                instance.name, old_output_dir, camera
+            )
+            for i, element in enumerate(render_elem_list):
+                elem_bname = os.path.basename(element)
+                new_elem = f"{dir}/{elem_bname}"
+                new_elem = new_elem.replace("/", "\\")
+                plugin_info["RenderElementOutputFilename%d" % i] = new_elem   # noqa
+
+        if camera:
+            # set the default camera
+            plugin_data["Camera"] = camera
+
+            plugin_data["Camera0"] = None
+
+        plugin_info.update(plugin_data)
+        return plugin_info
+
+    def _use_published_name_for_multiples(self, data):
+        """Process the parameters submission for deadline when
+            user enables multi-cameras option.
+        Args:
+            job_info_list (list): A list of multiple job infos
+            plugin_info_list (list): A list of multiple plugin infos
+        """
+        job_info_list = []
+        plugin_info_list = []
+        instance = self._instance
+        cameras = instance.data.get("cameras", [])
+        for cam in cameras:
+            job_info = self.get_job_info_through_camera(cam)
+            plugin_info = self.get_plugin_info_through_camera(cam)
+            job_info_list.append(job_info)
+            plugin_info_list.append(plugin_info)
+
+        return job_info_list, plugin_info_list
 
     def from_published_scene(self, replace_in_path=True):
         instance = self._instance

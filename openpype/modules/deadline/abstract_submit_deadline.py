@@ -592,6 +592,31 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
 
         return file_path
 
+    def get_job_info_through_camera(self, camera=None):
+        """Get the job parameters for deadline submission when
+        multi-camera is enabled.
+        Args:
+            infos(dict): a dictionary with job info.
+        """
+        pass
+
+    def get_plugin_info_through_camera(self, camera=None):
+        """Get the plugin parameters for deadline submission when
+        multi-camera is enabled.
+        Args:
+            infos(dict): a dictionary with plugin info.
+        """
+        pass
+
+    def _use_published_name_for_multiples(self, data):
+        """Process the parameters submission for deadline when
+            user enables multi-cameras option.
+        Args:
+            job_info_list (list): A list of multiple job infos
+            plugin_info_list (list): A list of multiple plugin infos
+        """
+        pass
+
     def assemble_payload(
             self, job_info=None, plugin_info=None, aux_files=None):
         """Assemble payload data from its various parts.
