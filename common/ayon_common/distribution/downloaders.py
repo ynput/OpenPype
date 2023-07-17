@@ -49,7 +49,7 @@ class SourceDownloader(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def check_hash(cls, addon_path, addon_hash, hash_type="sha256"):
+    def check_hash(cls, addon_path, addon_hash, hash_type="md5"):
         """Compares 'hash' of downloaded 'addon_url' file.
 
         Args:
