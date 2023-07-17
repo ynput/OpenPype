@@ -321,7 +321,7 @@ def get_current_host_name():
     """Current host name.
 
     Function is based on currently registered host integration or environment
-    variant 'AVALON_APP'.
+    variable 'AVALON_APP'.
 
     Returns:
         Union[str, None]: Name of host integration in current process or None.
@@ -334,6 +334,26 @@ def get_current_host_name():
 
 
 def get_global_context():
+    """Global context defined in environment variables.
+
+    Values here may not reflect current context of host integration. The
+    function can be used on startup before a host is registered.
+
+    Use 'get_current_context' to make sure you'll get current host integration
+    context info.
+
+    Example:
+        {
+            "project_name": "Commercial",
+            "asset_name": "Bunny",
+            "task_name": "Animation",
+        }
+
+    Returns:
+        dict[str, Union[str, None]]: Context defined with environment
+            variables.
+    """
+
     return {
         "project_name": os.environ.get("AVALON_PROJECT"),
         "asset_name": os.environ.get("AVALON_ASSET"),

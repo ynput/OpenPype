@@ -8,7 +8,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -99,7 +99,8 @@ class LoadClip(plugin.NukeLoader):
             representation = self._representation_with_hash_in_frame(
                 representation
             )
-        filepath = get_representation_path(representation).replace("\\", "/")
+        filepath = self.filepath_from_context(context)
+        filepath = filepath.replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
@@ -154,7 +155,7 @@ class LoadClip(plugin.NukeLoader):
             read_node["file"].setValue(filepath)
 
             used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"])
+                read_node, version_data, representation["data"], filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -164,8 +165,8 @@ class LoadClip(plugin.NukeLoader):
                         "handleStart", "handleEnd"]
 
             data_imprint = {}
-            for k in add_keys:
-                if k == 'version':
+            for key in add_keys:
+                if key == 'version':
                     version_doc = context["version"]
                     if version_doc["type"] == "hero_version":
                         version = "hero"
@@ -173,17 +174,20 @@ class LoadClip(plugin.NukeLoader):
                         version = version_doc.get("name")
 
                     if version:
-                        data_imprint[k] = version
+                        data_imprint[key] = version
 
-                elif k == 'colorspace':
-                    colorspace = representation["data"].get(k)
-                    colorspace = colorspace or version_data.get(k)
+                elif key == 'colorspace':
+                    colorspace = representation["data"].get(key)
+                    colorspace = colorspace or version_data.get(key)
                     data_imprint["db_colorspace"] = colorspace
                     if used_colorspace:
                         data_imprint["used_colorspace"] = used_colorspace
                 else:
-                    data_imprint[k] = context["version"]['data'].get(
-                        k, str(None))
+                    value_ = context["version"]['data'].get(
+                        key, str(None))
+                    if isinstance(value_, (str)):
+                        value_ = value_.replace("\\", "/")
+                    data_imprint[key] = value_
 
             data_imprint["objectName"] = read_name
 
@@ -266,7 +270,7 @@ class LoadClip(plugin.NukeLoader):
             if "addRetime" in key
         ]
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         version_data = version_doc.get("data", {})
@@ -303,8 +307,7 @@ class LoadClip(plugin.NukeLoader):
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
             used_colorspace = self._set_colorspace(
-                read_node, version_data, representation["data"],
-                path=filepath)
+                read_node, version_data, representation["data"], filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -451,9 +454,9 @@ class LoadClip(plugin.NukeLoader):
 
         return self.node_name_template.format(**name_data)
 
-    def _set_colorspace(self, node, version_data, repre_data, path=None):
+    def _set_colorspace(self, node, version_data, repre_data, path):
         output_color = None
-        path = path or self.fname.replace("\\", "/")
+        path = path.replace("\\", "/")
         # get colorspace
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")

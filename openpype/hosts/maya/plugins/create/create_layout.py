@@ -1,16 +1,21 @@
 from openpype.hosts.maya.api import plugin
+from openpype.lib import BoolDef
 
 
-class CreateLayout(plugin.Creator):
+class CreateLayout(plugin.MayaCreator):
     """A grouped package of loaded content"""
 
-    name = "layoutMain"
+    identifier = "io.openpype.creators.maya.layout"
     label = "Layout"
     family = "layout"
     icon = "cubes"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateLayout, self).__init__(*args, **kwargs)
-        # enable this when you want to
-        # publish group of loaded asset
-        self.data["groupLoadedAssets"] = False
+    def get_instance_attr_defs(self):
+
+        return [
+            BoolDef("groupLoadedAssets",
+                    label="Group Loaded Assets",
+                    tooltip="Enable this when you want to publish group of "
+                            "loaded asset",
+                    default=False)
+        ]

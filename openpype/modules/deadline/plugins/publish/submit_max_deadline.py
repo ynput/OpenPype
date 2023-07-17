@@ -20,6 +20,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import is_running_from_build
 
 
 @attr.s
@@ -110,9 +111,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION",
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -179,20 +184,18 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_published_name(payload_data)
+        project_settings = instance.context.data["project_settings"]
+        payload = self._use_published_name(payload_data, project_settings)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data):
+    def _use_published_name(self, data, project_settings):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
-        project_setting = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
 
-        multipass = get_multipass_setting(project_setting)
+        multipass = get_multipass_setting(project_settings)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:

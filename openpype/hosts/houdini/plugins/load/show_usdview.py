@@ -20,7 +20,8 @@ class ShowInUsdview(load.LoaderPlugin):
 
         usdview = find_executable("usdview")
 
-        filepath = os.path.normpath(self.fname)
+        filepath = self.filepath_from_context(context)
+        filepath = os.path.normpath(filepath)
         filepath = filepath.replace("\\", "/")
 
         if not os.path.exists(filepath):

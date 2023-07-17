@@ -88,6 +88,7 @@ from .context_tools import (
     deregister_host,
     get_process_id,
 
+    get_global_context,
     get_current_context,
     get_current_host_name,
     get_current_project_name,
@@ -188,6 +189,7 @@ __all__ = (
     "deregister_host",
     "get_process_id",
 
+    "get_global_context",
     "get_current_context",
     "get_current_host_name",
     "get_current_project_name",
