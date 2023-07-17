@@ -10,7 +10,7 @@ class ExtractBlend(publish.Extractor):
 
     label = "Extract Blend"
     hosts = ["blender"]
-    families = ["model", "camera", "rig", "action", "layout"]
+    families = ["model", "camera", "rig", "action", "layout", "blendScene"]
     optional = True
 
     def process(self, instance):

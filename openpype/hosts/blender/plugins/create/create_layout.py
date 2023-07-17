@@ -42,7 +42,9 @@ class CreateLayout(plugin.Creator):
             bpy.context.view_layer.objects.active = asset_group
             selected = lib.get_selection()
             for obj in selected:
-                obj.select_set(True)
+                if obj.parent in selected:
+                    obj.select_set(False)
+                    continue
             selected.append(asset_group)
             bpy.ops.object.parent_set(keep_transform=True)
 
