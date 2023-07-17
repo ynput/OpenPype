@@ -394,6 +394,15 @@ class DeadlineJobInfo(object):
         for key, value in data.items():
             setattr(self, key, value)
 
+    def add_render_job_env_var(self):
+        """Check if in OP or AYON mode and use appropriate env var."""
+        render_job = (
+            "AYON_RENDER_JOB" if os.environ.get("USE_AYON_SERVER") == '1'
+            else "OPENPYPE_RENDER_JOB")
+
+        self.EnvironmentKeyValue[render_job] = "1"
+
+
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
 class AbstractSubmitDeadline(pyblish.api.InstancePlugin,

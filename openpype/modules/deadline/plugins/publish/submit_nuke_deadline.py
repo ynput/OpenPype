@@ -337,8 +337,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             if _path.lower().startswith('openpype_'):
                 environment[_path] = os.environ[_path]
 
-        # to recognize job from PYPE for turning Event On/Off
-        environment["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        render_job_label = (
+            "AYON_RENDER_JOB" if os.environ.get("USE_AYON_SERVER") == '1'
+            else "OPENPYPE_RENDER_JOB")
+        environment[render_job_label] = "1"
 
         # finally search replace in values of any key
         if self.env_search_replace_values:

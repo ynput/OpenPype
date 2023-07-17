@@ -422,7 +422,7 @@ def __main__(deadlinePlugin):
     openpype_publish_job = \
         job.GetJobEnvironmentKeyValue('OPENPYPE_PUBLISH_JOB') or '0'
     openpype_remote_job = \
-        job.GetJobEnvironmentKeyValue('OPENPYPE_REMOTE_JOB') or '0'
+        job.GetJobEnvironmentKeyValue('OPENPYPE_REMOTE_PUBLISH') or '0'
 
     print("--- Job type - render {}".format(openpype_render_job))
     print("--- Job type - publish {}".format(openpype_publish_job))

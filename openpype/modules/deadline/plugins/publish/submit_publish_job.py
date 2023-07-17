@@ -255,12 +255,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
-            "OPENPYPE_PUBLISH_JOB": "1",
-            "OPENPYPE_RENDER_JOB": "0",
-            "OPENPYPE_REMOTE_JOB": "0",
             "OPENPYPE_LOG_NO_COLORS": "1",
             "IS_TEST": str(int(is_in_tests()))
         }
+
+        if os.environ.get("USE_AYON_SERVER") == '1':
+            environment["AYON_PUBLISH_JOB"] = "1"
+            environment["AYON_RENDER_JOB"] = "0"
+            environment["AYON_REMOTE_PUBLISH"] = "0"
+        else:
+            environment["OPENPYPE_PUBLISH_JOB"] = "1"
+            environment["OPENPYPE_RENDER_JOB"] = "0"
+            environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
