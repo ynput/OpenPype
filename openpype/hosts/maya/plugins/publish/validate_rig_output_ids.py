@@ -46,7 +46,7 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         invalid = {}
 
         if compute:
-            out_set = next(x for x in instance if x.endswith("out_SET"))
+            out_set = next(x for x in instance if x.startswith("out_SET"))
 
             instance_nodes = cmds.sets(out_set, query=True, nodesOnly=True)
             instance_nodes = cmds.ls(instance_nodes, long=True)
