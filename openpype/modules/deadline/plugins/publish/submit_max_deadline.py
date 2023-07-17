@@ -131,11 +131,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         # Add list of expected files to job
         # ---------------------------------
-        exp = instance.data.get("expectedFiles")
-
-        for filepath in self._iter_expected_files(exp):
-            job_info.OutputDirectory += os.path.dirname(filepath)
-            job_info.OutputFilename += os.path.basename(filepath)
+        if not instance.data.get("multiCamera"):
+            exp = instance.data.get("expectedFiles")
+            for filepath in self._iter_expected_files(exp):
+                job_info.OutputDirectory += os.path.dirname(filepath)
+                job_info.OutputFilename += os.path.basename(filepath)
 
         return job_info
 
@@ -178,7 +178,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        #TODO: multiple camera options
+
         if instance.data.get("multiCamera"):
             payload = self._use_published_name_for_multiples(payload_data)
             job_infos, plugin_infos = payload
@@ -306,9 +306,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 plugin_info["RenderElementOutputFilename%d" % i] = new_elem   # noqa
 
         if camera:
-            # set the default camera
+            # set the default camera and target camera
+            # (weird parameters from max)
             plugin_data["Camera"] = camera
-
+            plugin_data["Camera1"] = camera
             plugin_data["Camera0"] = None
 
         plugin_info.update(plugin_data)
