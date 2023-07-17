@@ -39,7 +39,8 @@ from openpype.lib import (
 
 from openpype.lib.file_transaction import FileTransaction
 from openpype.settings import get_project_settings
-from openpype.pipeline import Anatomy, get_current_versioning_start
+from openpype.pipeline import Anatomy
+from openpype.pipeline.version_start import get_versioning_start
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.publish import get_publish_template_name
 from openpype.pipeline.create import get_subset_name
@@ -943,8 +944,9 @@ class ProjectPushItemProcess:
             if last_version_doc:
                 version += int(last_version_doc["name"])
             else:
-                version = get_current_versioning_start(
-                    host=self.host_name,
+                version = get_versioning_start(
+                    project_name,
+                    self.host_name,
                     task_name=self.task_info["name"],
                     task_type=self.task_info["type"],
                     family=families[0],

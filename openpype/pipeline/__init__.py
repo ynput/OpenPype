@@ -93,10 +93,8 @@ from .context_tools import (
     get_current_host_name,
     get_current_project_name,
     get_current_asset_name,
-    get_current_task_name,
-    get_current_versioning_start
+    get_current_task_name
 )
-from .version_start import get_versioning_start
 install = install_host
 uninstall = uninstall_host
 
@@ -195,9 +193,6 @@ __all__ = (
     "get_current_project_name",
     "get_current_asset_name",
     "get_current_task_name",
-    "get_current_versioning_start",
-
-    "get_versioning_start",
 
     # Backwards compatible function names
     "install",

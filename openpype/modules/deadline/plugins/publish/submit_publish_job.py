@@ -23,8 +23,7 @@ from openpype.lib import EnumDef
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 from openpype.lib import is_running_from_build
-from openpype.pipeline import publish
-from openpype.pipeline import get_current_versioning_start
+from openpype.pipeline.version_start import get_versioning_start
 
 
 def get_resources(project_name, version, extension=None):
@@ -1236,8 +1235,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = get_current_versioning_start(
-                    host=template_data["app"],
+                version = get_versioning_start(
+                    project_name,
+                    template_data["app"],
                     task_name=template_data["task"]["name"],
                     task_type=template_data["task"]["type"],
                     family="render",

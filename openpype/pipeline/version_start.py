@@ -1,15 +1,20 @@
 from openpype.lib.profiles_filtering import filter_profiles
+from . import context_tools
 
 
 def get_versioning_start(
-    project_settings=None,
-    host=None,
+    project_name,
+    host_name,
     task_name=None,
     task_type=None,
     family=None,
-    subset=None
+    subset=None,
+    project_settings=None,
 ):
     """Get anatomy versioning start"""
+    if not project_settings:
+        project_settings = context_tools.get_project_settings(project_name)
+
     version_start = 1
     settings = project_settings["global"]
     profiles = settings.get("version_start_category", {}).get("profiles", [])
@@ -18,7 +23,7 @@ def get_versioning_start(
         return version_start
 
     filtering_criteria = {
-        "host_names": host,
+        "host_names": host_name,
         "families": family,
         "task_names": task_name,
         "task_types": task_type,

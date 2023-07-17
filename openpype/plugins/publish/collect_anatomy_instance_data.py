@@ -32,7 +32,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
-from openpype.pipeline import get_current_versioning_start
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -207,8 +207,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     asset_tasks = instance.data["assetEntity"]["data"]["tasks"]
                     task_type = asset_tasks.get(task_name, {}).get("type")
 
-                version_number = get_current_versioning_start(
-                    host=instance.context.data["hostName"],
+                version_number = get_versioning_start(
+                    context.data["projectName"],
+                    instance.context.data["hostName"],
                     task_name=task_name,
                     task_type=task_type,
                     family=instance.data["family"],

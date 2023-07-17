@@ -25,7 +25,7 @@ from openpype.lib import (
 )
 from openpype.pipeline.create import get_subset_name
 from openpype_modules.webpublisher.lib import parse_json
-from openpype.pipeline import get_current_versioning_start
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -297,9 +297,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         if version_doc:
             version = int(version_doc["name"]) + 1
         else:
-            version = get_current_versioning_start(
-                project_name=project_name,
-                host="webpublisher",
+            version = get_versioning_start(
+                project_name,
+                "webpublisher",
                 task_name=task_name,
                 task_type=task_type,
                 family=family,

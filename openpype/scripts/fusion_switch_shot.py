@@ -19,7 +19,7 @@ from openpype.pipeline import (
 )
 
 from openpype.pipeline.context_tools import get_workdir_from_session
-from openpype.pipeline import get_current_versioning_start
+from openpype.pipeline.version_start import get_versioning_start
 
 log = logging.getLogger("Update Slap Comp")
 
@@ -34,8 +34,9 @@ def _format_version_folder(folder):
         str: new version folder name
     """
 
-    new_version = get_current_versioning_start(
-        host="fusion",
+    new_version = get_versioning_start(
+        get_current_project_name(),
+        "fusion",
         family="workfile"
     )
     if os.path.isdir(folder):
