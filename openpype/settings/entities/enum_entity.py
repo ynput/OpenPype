@@ -479,8 +479,7 @@ class TaskTypeEnumEntity(BaseEnumEntity):
                 self.set(value_on_not_set)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class FarmRootEnumEntity(BaseEnumEntity):
+class DynamicEnumEntity(BaseEnumEntity):
     schema_types = []
 
     def _item_initialization(self):
@@ -500,7 +499,7 @@ class FarmRootEnumEntity(BaseEnumEntity):
         self.placeholder = self.schema_data.get("placeholder")
 
     def set_override_state(self, *args, **kwargs):
-        super(FarmRootEnumEntity, self).set_override_state(*args, **kwargs)
+        super(DynamicEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
         if self.multiselection:
@@ -522,7 +521,7 @@ class FarmRootEnumEntity(BaseEnumEntity):
         pass
 
 
-class DeadlineUrlEnumEntity(FarmRootEnumEntity):
+class DeadlineUrlEnumEntity(DynamicEnumEntity):
     schema_types = ["deadline_url-enum"]
 
     def _get_enum_values(self):
@@ -540,7 +539,7 @@ class DeadlineUrlEnumEntity(FarmRootEnumEntity):
         return enum_items_list, valid_keys
 
 
-class RoyalRenderRootEnumEntity(FarmRootEnumEntity):
+class RoyalRenderRootEnumEntity(DynamicEnumEntity):
     schema_types = ["rr_root-enum"]
 
     def _get_enum_values(self):
@@ -558,7 +557,7 @@ class RoyalRenderRootEnumEntity(FarmRootEnumEntity):
         return enum_items_list, valid_keys
 
 
-class ShotgridUrlEnumEntity(FarmRootEnumEntity):
+class ShotgridUrlEnumEntity(DynamicEnumEntity):
     schema_types = ["shotgrid_url-enum"]
 
     def _get_enum_values(self):
