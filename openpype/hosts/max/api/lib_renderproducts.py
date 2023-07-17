@@ -41,6 +41,8 @@ class RenderProducts(object):
         beauty_output_frames = dict()
         for output, camera in zip(outputs, cameras):
             filename, ext = os.path.splitext(output)
+            filename = filename.replace(".", "")
+            ext = ext.replace(".", "")
             start_frame = int(rt.rendStart)
             end_frame = int(rt.rendEnd) + 1
             new_beauty = self.get_expected_beauty(
@@ -57,6 +59,8 @@ class RenderProducts(object):
         aovs_frames = {}
         for output, camera in zip(outputs, cameras):
             filename, ext = os.path.splitext(output)
+            filename = filename.replace(".", "")
+            ext = ext.replace(".", "")
             start_frame = int(rt.rendStart)
             end_frame = int(rt.rendEnd) + 1
 
