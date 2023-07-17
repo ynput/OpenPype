@@ -314,7 +314,12 @@ def load_with_repre_context(
         )
     )
 
-    loader = Loader(repre_context)
+    loader = Loader()
+
+    # Backwards compatibility: Originally the loader's __init__ required the
+    # representation context to set `fname` attribute to the filename to load
+    loader.fname = get_representation_path_from_context(repre_context)
+
     return loader.load(repre_context, name, namespace, options)
 
 
@@ -338,8 +343,7 @@ def load_with_subset_context(
         )
     )
 
-    loader = Loader(subset_context)
-    return loader.load(subset_context, name, namespace, options)
+    return Loader().load(subset_context, name, namespace, options)
 
 
 def load_with_subset_contexts(
@@ -364,8 +368,7 @@ def load_with_subset_contexts(
         "Running '{}' on '{}'".format(Loader.__name__, joined_subset_names)
     )
 
-    loader = Loader(subset_contexts)
-    return loader.load(subset_contexts, name, namespace, options)
+    return Loader().load(subset_contexts, name, namespace, options)
 
 
 def load_container(
@@ -447,8 +450,7 @@ def remove_container(container):
             .format(container.get("loader"))
         )
 
-    loader = Loader(get_representation_context(container["representation"]))
-    return loader.remove(container)
+    return Loader().remove(container)
 
 
 def update_container(container, version=-1):
@@ -498,8 +500,7 @@ def update_container(container, version=-1):
             .format(container.get("loader"))
         )
 
-    loader = Loader(get_representation_context(container["representation"]))
-    return loader.update(container, new_representation)
+    return Loader().update(container, new_representation)
 
 
 def switch_container(container, representation, loader_plugin=None):
@@ -635,7 +636,7 @@ def get_representation_path(representation, root=None, dbcon=None):
 
         root = registered_root()
 
-    def path_from_represenation():
+    def path_from_representation():
         try:
             template = representation["data"]["template"]
         except KeyError:
@@ -759,7 +760,7 @@ def get_representation_path(representation, root=None, dbcon=None):
                 return os.path.normpath(path)
 
     return (
-        path_from_represenation() or
+        path_from_representation() or
         path_from_config() or
         path_from_data()
     )

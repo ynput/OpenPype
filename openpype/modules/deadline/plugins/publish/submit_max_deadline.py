@@ -20,6 +20,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import is_running_from_build
 
 
 @attr.s
@@ -109,9 +110,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION",
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -178,30 +183,25 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-
+        project_settings = instance.context.data["project_settings"]
         if instance.data.get("multiCamera"):
-            payload = self._use_published_name_for_multiples(payload_data)
+            payload = self._use_published_name_for_multiples(
+                payload_data, project_settings)
             job_infos, plugin_infos = payload
             for job_info, plugin_info in zip(job_infos, plugin_infos):
-                self.log.debug(f"job_info: {job_info}")
-                self.log.debug(f"plugin_info: {plugin_info}")
-                submission = self.assemble_payload(job_info, plugin_info)
-                self.submit(submission)
+                self.submit(self.assemble_payload(job_info, plugin_info))
         else:
-            payload = self._use_published_name(payload_data)
+            payload = self._use_published_name(payload_data, project_settings)
             job_info, plugin_info = payload
             self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data):
+    def _use_published_name(self, data, project_settings):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
-        project_setting = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
 
-        multipass = get_multipass_setting(project_setting)
+        multipass = get_multipass_setting(project_settings)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:
@@ -315,7 +315,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_info.update(plugin_data)
         return plugin_info
 
-    def _use_published_name_for_multiples(self, data):
+    def _use_published_name_for_multiples(self, data, project_settings):
         """Process the parameters submission for deadline when
             user enables multi-cameras option.
         Args:
@@ -326,9 +326,16 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         plugin_info_list = []
         instance = self._instance
         cameras = instance.data.get("cameras", [])
+        plugin_data = {}
+        multipass = get_multipass_setting(project_settings)
+        if multipass:
+            plugin_data["DisableMultipass"] = 0
+        else:
+            plugin_data["DisableMultipass"] = 1
         for cam in cameras:
             job_info = self.get_job_info_through_camera(cam)
             plugin_info = self.get_plugin_info_through_camera(cam)
+            plugin_info.update(plugin_data)
             job_info_list.append(job_info)
             plugin_info_list.append(plugin_info)
 
