@@ -2,7 +2,7 @@
 """Tools to work with FBX."""
 import logging
 
-import pyblish.api
+from pyblish.api import Instance
 
 from maya import cmds  # noqa
 import maya.mel as mel  # noqa
@@ -141,7 +141,7 @@ class FBXExtractor:
         return options
 
     def set_options_from_instance(self, instance):
-        # type: (pyblish.api.Instance) -> None
+        # type: (Instance) -> None
         """Sets FBX export options from data in the instance.
 
         Args:
