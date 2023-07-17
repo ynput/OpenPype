@@ -797,9 +797,9 @@ class AyonDistribution:
             "name": package.name,
             "platform": package.platform_name
         }
-        zip_dir = package_dir = os.path.join(
-            self._dependency_dirpath, package.name
-        )
+
+        zip_dir = package_dir = self._dependency_dirpath
+
         self.log.debug(f"Checking {package.name} in {package_dir}")
 
         if not os.path.isdir(package_dir) or package.name not in metadata:
@@ -973,7 +973,6 @@ class AyonDistribution:
             and dependency_dist_item.need_distribution
             and dependency_dist_item.state == UpdateState.UPDATED
         ):
-            package = self.dependency_package
             source = dependency_dist_item.used_source
             if source is not None:
                 data = {
@@ -981,7 +980,8 @@ class AyonDistribution:
                     "file_hash": dependency_dist_item.file_hash,
                     "distributed_dt": stored_time
                 }
-                self.update_dependency_metadata(package.name, data)
+                package = dependency_dist_item
+                self.update_dependency_metadata(package.item_label, data)
 
         addons_info = {}
         for item in self.get_addon_dist_items():
