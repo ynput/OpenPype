@@ -188,6 +188,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             deepcopy(instance.data["anatomyData"]),
             instance.data.get("asset"),
             instances[0]["subset"],
+            instance.context,
             'render',
             override_version
         )
@@ -523,8 +524,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             json.dump(publish_job, f, indent=4, sort_keys=True)
 
     def _get_publish_folder(self, anatomy, template_data,
-                            asset, subset,
-                            family='render', version=None):
+                            asset, subset, context,
+                            family, version=None):
         """
             Extracted logic to pre-calculate real publish folder, which is
             calculated in IntegrateNew inside of Deadline process.
@@ -550,7 +551,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 based on 'publish' template
         """
 
-        project_name = self.context.data["projectName"]
+        project_name = context.data["projectName"]
         if not version:
             version = get_last_version_by_subset_name(
                 project_name,
@@ -563,7 +564,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 version = 1
 
         template_data["subset"] = subset
-        template_data["family"] = "render"
+        template_data["family"] = family
         template_data["version"] = version
 
         render_templates = anatomy.templates_obj["render"]
