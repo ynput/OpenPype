@@ -30,7 +30,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         QtCore.Qt.Key_PageDown,
         QtCore.Qt.Key_PageUp,
         QtCore.Qt.Key_Home,
-        QtCore.Qt.Key_End
+        QtCore.Qt.Key_End,
     }
 
     top_bottom_padding = 2
@@ -146,7 +146,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                         new_state = QtCore.Qt.Checked
                     else:
                         new_state = QtCore.Qt.Unchecked
-            
+
         if new_state is not None:
             new_state = self._get_state_value(new_state)
             model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
@@ -294,8 +294,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 + (2 * self.top_bottom_margins)
             )
         value.setHeight(
-            (lines * self.item_height)
-            + (2 * self.top_bottom_margins)
+            (lines * self.item_height) + (2 * self.top_bottom_margins)
         )
         return value
 
