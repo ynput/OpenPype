@@ -1,5 +1,5 @@
 from openpype.lib.profiles_filtering import filter_profiles
-from . import context_tools
+from openpype.settings import get_project_settings
 
 
 def get_versioning_start(
