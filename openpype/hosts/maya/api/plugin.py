@@ -174,7 +174,7 @@ class ReferenceLoader(Loader):
         qargparse.Boolean(
             "attach_to_root",
             label="Group imported asset",
-            default=True,
+            default=False,
             help="Should a group be created to encapsulate"
                  " imported representation ?"
         )

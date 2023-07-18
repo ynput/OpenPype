@@ -119,7 +119,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             family = "model"
 
         # True by default to keep legacy behaviours
-        attach_to_root = options.get("attach_to_root", True)
+        attach_to_root = options.get("attach_to_root", False)
         group_name = options["group_name"]
 
         with maintained_selection():
