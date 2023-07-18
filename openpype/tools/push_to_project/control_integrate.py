@@ -952,7 +952,6 @@ class ProjectPushItemProcess:
                     family=families[0],
                     subset=subset_doc["name"]
                 )
-                
 
         existing_version_doc = get_version_by_name(
             project_name, version, subset_id
