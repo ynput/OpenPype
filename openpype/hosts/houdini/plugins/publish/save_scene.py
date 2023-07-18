@@ -19,7 +19,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
             "Collected filename from current scene name."
         )
 
-        if host.has_unsaved_changes():
+        if host.workfile_has_unsaved_changes():
             self.log.info("Saving current file: {}".format(current_file))
             host.save_workfile(current_file)
         else:

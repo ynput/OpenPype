@@ -40,6 +40,7 @@ from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
     ConvertorsOperationFailed,
 )
+from openpype.pipeline.publish import get_publish_instance_label
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -346,7 +347,7 @@ class PublishReportMaker:
     def _extract_instance_data(self, instance, exists):
         return {
             "name": instance.data.get("name"),
-            "label": instance.data.get("label"),
+            "label": get_publish_instance_label(instance),
             "family": instance.data["family"],
             "families": instance.data.get("families") or [],
             "exists": exists,
@@ -397,12 +398,22 @@ class PublishReportMaker:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+
+            # Conversion of exception into string may crash
+            try:
+                msg = str(exception)
+            except BaseException:
+                msg = (
+                    "Publisher Controller: ERROR"
+                    " - Failed to get exception message"
+                )
+
             # Action result does not have 'is_validation_error'
             is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
                 "is_validation_error": is_validation_error,
-                "msg": str(exception),
+                "msg": msg,
                 "filename": str(fname),
                 "lineno": str(line_no),
                 "func": str(func),
@@ -432,29 +443,29 @@ class PublishPluginsProxy:
 
     def __init__(self, plugins):
         plugins_by_id = {}
-        actions_by_id = {}
+        actions_by_plugin_id = {}
         action_ids_by_plugin_id = {}
         for plugin in plugins:
             plugin_id = plugin.id
             plugins_by_id[plugin_id] = plugin
 
             action_ids = []
+            actions_by_id = {}
             action_ids_by_plugin_id[plugin_id] = action_ids
+            actions_by_plugin_id[plugin_id] = actions_by_id
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
                 action_id = action.id
-                if action_id in actions_by_id:
-                    continue
                 action_ids.append(action_id)
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
-        self._actions_by_id = actions_by_id
+        self._actions_by_plugin_id = actions_by_plugin_id
         self._action_ids_by_plugin_id = action_ids_by_plugin_id
 
-    def get_action(self, action_id):
-        return self._actions_by_id[action_id]
+    def get_action(self, plugin_id, action_id):
+        return self._actions_by_plugin_id[plugin_id][action_id]
 
     def get_plugin(self, plugin_id):
         return self._plugins_by_id[plugin_id]
@@ -486,7 +497,9 @@ class PublishPluginsProxy:
         """
 
         return [
-            self._create_action_item(self._actions_by_id[action_id], plugin_id)
+            self._create_action_item(
+                self.get_action(plugin_id, action_id), plugin_id
+            )
             for action_id in self._action_ids_by_plugin_id[plugin_id]
         ]
 
@@ -2297,7 +2310,7 @@ class PublisherController(BasePublisherController):
     def run_action(self, plugin_id, action_id):
         # TODO handle result in UI
         plugin = self._publish_plugins_proxy.get_plugin(plugin_id)
-        action = self._publish_plugins_proxy.get_action(action_id)
+        action = self._publish_plugins_proxy.get_action(plugin_id, action_id)
 
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id

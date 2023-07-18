@@ -8,18 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (derived to OCIO)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_derived"
                 }
-
             ]
         },
         {
@@ -277,18 +273,6 @@
                             "key": "review_bg",
                             "label": "Review BG color",
                             "use_alpha": false
-                        },
-                        {
-                            "type": "enum",
-                            "key": "families_to_review",
-                            "label": "Families to review",
-                            "multiselection": true,
-                            "enum_items": [
-                                {"review": "review"},
-                                {"renderpass": "renderPass"},
-                                {"renderlayer": "renderLayer"},
-                                {"renderscene": "renderScene"}
-                            ]
                         }
                     ]
                 },

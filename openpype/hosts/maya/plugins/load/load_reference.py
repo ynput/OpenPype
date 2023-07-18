@@ -33,7 +33,7 @@ def preserve_modelpanel_cameras(container, log=None):
     panel_cameras = {}
     for panel in cmds.getPanel(type="modelPanel"):
         cam = cmds.ls(cmds.modelPanel(panel, query=True, camera=True),
-                      long=True)
+                      long=True)[0]
 
         # Often but not always maya returns the transform from the
         # modelPanel as opposed to the camera shape, so we convert it
@@ -118,15 +118,16 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
+        project_name = context["project"]["name"]
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
+        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["name"])
 
+            file_url = self.prepare_root_value(path, project_name)
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -162,7 +163,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                settings = get_project_settings(os.environ['AVALON_PROJECT'])
+                settings = get_project_settings(project_name)
 
                 display_handle = settings['maya']['load'].get(
                     'reference_loader', {}
@@ -221,6 +222,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self._lock_camera_transforms(members)
 
     def _post_process_rig(self, name, namespace, context, options):
+
         nodes = self[:]
         create_rig_animation_instance(
             nodes, context, namespace, options=options, log=self.log

@@ -2,9 +2,13 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    BoolDef,
+    TextDef
+)
 
 
-class CreateAnimation(plugin.Creator):
+class CreateAnimation(plugin.MayaCreator):
     """Animation output for character rigs"""
 
     # We hide the animation creator from the UI since the creation of it
@@ -13,48 +17,71 @@ class CreateAnimation(plugin.Creator):
     # Note: This setting is actually applied from project settings
     enabled = False
 
+    identifier = "io.openpype.creators.maya.animation"
     name = "animationDefault"
     label = "Animation"
     family = "animation"
     icon = "male"
+
     write_color_sets = False
     write_face_sets = False
     include_parent_hierarchy = False
     include_user_defined_attributes = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreateAnimation, self).__init__(*args, **kwargs)
+    # TODO: Would be great if we could visually hide this from the creator
+    #       by default but do allow to generate it through code.
 
-        # create an ordered dict with the existing data first
+    def get_instance_attr_defs(self):
 
-        # get basic animation data : start / end / handles / steps
-        for key, value in lib.collect_animation_data().items():
-            self.data[key] = value
+        defs = lib.collect_animation_defs()
 
-        # Write vertex colors with the geometry.
-        self.data["writeColorSets"] = self.write_color_sets
-        self.data["writeFaceSets"] = self.write_face_sets
+        defs.extend([
+            BoolDef("writeColorSets",
+                    label="Write vertex colors",
+                    tooltip="Write vertex colors with the geometry",
+                    default=self.write_color_sets),
+            BoolDef("writeFaceSets",
+                    label="Write face sets",
+                    tooltip="Write face sets with the geometry",
+                    default=self.write_face_sets),
+            BoolDef("writeNormals",
+                    label="Write normals",
+                    tooltip="Write normals with the deforming geometry",
+                    default=True),
+            BoolDef("renderableOnly",
+                    label="Renderable Only",
+                    tooltip="Only export renderable visible shapes",
+                    default=False),
+            BoolDef("visibleOnly",
+                    label="Visible Only",
+                    tooltip="Only export dag objects visible during "
+                            "frame range",
+                    default=False),
+            BoolDef("includeParentHierarchy",
+                    label="Include Parent Hierarchy",
+                    tooltip="Whether to include parent hierarchy of nodes in "
+                            "the publish instance",
+                    default=self.include_parent_hierarchy),
+            BoolDef("worldSpace",
+                    label="World-Space Export",
+                    default=True),
+            BoolDef("includeUserDefinedAttributes",
+                    label="Include User Defined Attributes",
+                    default=self.include_user_defined_attributes),
+            TextDef("attr",
+                    label="Custom Attributes",
+                    default="",
+                    placeholder="attr1, attr2"),
+            TextDef("attrPrefix",
+                    label="Custom Attributes Prefix",
+                    placeholder="prefix1, prefix2")
+        ])
 
-        # Include only renderable visible shapes.
-        # Skips locators and empty transforms
-        self.data["renderableOnly"] = False
-
-        # Include only nodes that are visible at least once during the
-        # frame range.
-        self.data["visibleOnly"] = False
-
-        # Include the groups above the out_SET content
-        self.data["includeParentHierarchy"] = self.include_parent_hierarchy
-
-        # Default to exporting world-space
-        self.data["worldSpace"] = True
-
+        # TODO: Implement these on a Deadline plug-in instead?
+        """
         # Default to not send to farm.
         self.data["farm"] = False
         self.data["priority"] = 50
+        """
 
-        # Default to write normals.
-        self.data["writeNormals"] = True
-
-        value = self.include_user_defined_attributes
-        self.data["includeUserDefinedAttributes"] = value
+        return defs

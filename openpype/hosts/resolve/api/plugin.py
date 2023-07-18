@@ -291,7 +291,7 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, **options):
+    def __init__(self, cls, context, path, **options):
         """ Initialize object
 
         Arguments:
@@ -304,6 +304,7 @@ class ClipLoader:
         self.__dict__.update(cls.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
+        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
         self.with_handles = options.get("handles") or bool(
@@ -327,7 +328,10 @@ class ClipLoader:
                 self.active_timeline = options["timeline"]
             else:
                 # create new sequence
-                self.active_timeline = lib.get_current_timeline(new=True)
+                self.active_timeline = (
+                    lib.get_current_timeline() or
+                    lib.get_new_timeline()
+                )
         else:
             self.active_timeline = lib.get_current_timeline()
 

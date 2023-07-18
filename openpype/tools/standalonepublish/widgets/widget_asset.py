@@ -2,6 +2,7 @@ import contextlib
 from qtpy import QtWidgets, QtCore
 import qtawesome
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_projects,
     get_project,
@@ -181,7 +182,8 @@ class AssetWidget(QtWidgets.QWidget):
 
         filter = PlaceholderLineEdit()
         filter.textChanged.connect(proxy.setFilterFixedString)
-        filter.setPlaceholderText("Filter assets..")
+        filter.setPlaceholderText("Filter {}..".format(
+            "folders" if AYON_SERVER_ENABLED else "assets"))
 
         header.addWidget(filter)
         header.addWidget(refresh)

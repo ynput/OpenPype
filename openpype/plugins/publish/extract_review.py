@@ -23,7 +23,11 @@ from openpype.lib.transcoding import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
 )
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import (
+    KnownPublishError,
+    get_publish_instance_label,
+)
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -45,6 +49,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "maya",
         "blender",
         "houdini",
+        "max",
         "shell",
         "hiero",
         "premiere",
@@ -202,17 +207,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_defs
 
-    @staticmethod
-    def get_instance_label(instance):
-        return (
-            getattr(instance, "label", None)
-            or instance.data.get("label")
-            or instance.data.get("name")
-            or str(instance)
-        )
-
     def main_process(self, instance):
-        instance_label = self.get_instance_label(instance)
+        instance_label = get_publish_instance_label(instance)
         self.log.debug("Processing instance \"{}\"".format(instance_label))
         profile_outputs = self._get_outputs_for_instance(instance)
         if not profile_outputs:
@@ -424,6 +420,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Adding new representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
+
+            add_repre_files_for_cleanup(instance, new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""

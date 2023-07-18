@@ -41,7 +41,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
-from openpype.hosts.max.api import maintained_selection, get_all_children
+from openpype.hosts.max.api import maintained_selection
 
 
 class ExtractAlembic(publish.Extractor):
@@ -56,7 +56,7 @@ class ExtractAlembic(publish.Extractor):
 
         container = instance.data["instance_node"]
 
-        self.log.info("Extracting pointcache ...")
+        self.log.debug("Extracting pointcache ...")
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)
@@ -72,7 +72,8 @@ class ExtractAlembic(publish.Extractor):
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             rt.exportFile(
                 path,
                 rt.name("noPrompt"),

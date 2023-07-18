@@ -14,6 +14,8 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
     legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -26,6 +28,8 @@ from openpype.lib import (
     emit_event
 )
 import openpype.hosts.blender
+from openpype.settings import get_project_settings
+
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -58,6 +62,7 @@ def install():
     register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
+    lib.set_app_templates_path()
 
     register_event_callback("new", on_new)
     register_event_callback("open", on_open)
@@ -83,9 +88,34 @@ def uninstall():
         ops.unregister()
 
 
+def show_message(title, message):
+    from openpype.widgets.message_window import Window
+    from .ops import BlenderApplication
+
+    BlenderApplication.get_app()
+
+    Window(
+        parent=None,
+        title=title,
+        message=message,
+        level="warning")
+
+
+def message_window(title, message):
+    from .ops import (
+        MainThreadItem,
+        execute_in_main_thread,
+        _process_app_events
+    )
+
+    mti = MainThreadItem(show_message, title, message)
+    execute_in_main_thread(mti)
+    _process_app_events()
+
+
 def set_start_end_frames():
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     asset_doc = get_asset_by_name(project_name, asset_name)
 
     scene = bpy.context.scene
@@ -125,9 +155,35 @@ def set_start_end_frames():
 def on_new():
     set_start_end_frames()
 
+    project = os.environ.get("AVALON_PROJECT")
+    settings = get_project_settings(project)
+
+    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    unit_scale_enabled = unit_scale_settings.get("enabled")
+    if unit_scale_enabled:
+        unit_scale = unit_scale_settings.get("base_file_unit_scale")
+        bpy.context.scene.unit_settings.scale_length = unit_scale
+
 
 def on_open():
     set_start_end_frames()
+
+    project = os.environ.get("AVALON_PROJECT")
+    settings = get_project_settings(project)
+
+    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    unit_scale_enabled = unit_scale_settings.get("enabled")
+    apply_on_opening = unit_scale_settings.get("apply_on_opening")
+    if unit_scale_enabled and apply_on_opening:
+        unit_scale = unit_scale_settings.get("base_file_unit_scale")
+        prev_unit_scale = bpy.context.scene.unit_settings.scale_length
+
+        if unit_scale != prev_unit_scale:
+            bpy.context.scene.unit_settings.scale_length = unit_scale
+
+            message_window(
+                "Base file unit scale changed",
+                "Base file unit scale changed to match the project settings.")
 
 
 @bpy.app.handlers.persistent

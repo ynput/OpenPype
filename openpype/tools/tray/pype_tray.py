@@ -8,6 +8,7 @@ import platform
 from qtpy import QtCore, QtGui, QtWidgets
 
 import openpype.version
+from openpype import AYON_SERVER_ENABLED
 from openpype import resources, style
 from openpype.lib import (
     Logger,
@@ -35,7 +36,8 @@ from openpype.settings import (
 from openpype.tools.utils import (
     WrappedCallbackItem,
     paint_image_with_color,
-    get_warning_pixmap
+    get_warning_pixmap,
+    get_openpype_qt_app,
 )
 
 from .pype_info_widget import PypeInfoWidget
@@ -589,6 +591,11 @@ class TrayManager:
         self.tray_widget.showMessage(*args, **kwargs)
 
     def _add_version_item(self):
+        if AYON_SERVER_ENABLED:
+            login_action = QtWidgets.QAction("Login", self.tray_widget)
+            login_action.triggered.connect(self._on_ayon_login)
+            self.tray_widget.menu.addAction(login_action)
+
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
@@ -614,6 +621,19 @@ class TrayManager:
 
         self._restart_action = restart_action
 
+    def _on_ayon_login(self):
+        self.execute_in_main_thread(self._show_ayon_login)
+
+    def _show_ayon_login(self):
+        from ayon_common.connection.credentials import change_user_ui
+
+        result = change_user_ui()
+        if result.shutdown:
+            self.exit()
+
+        elif result.restart or result.token_changed:
+            self.restart()
+
     def _on_restart_action(self):
         self.restart(use_expected_version=True)
 
@@ -633,10 +653,10 @@ class TrayManager:
 
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
-        # Check last argument from `get_openpype_execute_args`
-        # - when running from code it is the same as first from sys.argv
-        if args[-1] == additional_args[0]:
-            additional_args.pop(0)
+        # Remove first argument from 'sys.argv'
+        # - when running from code the first argument is 'start.py'
+        # - when running from build the first argument is executable
+        additional_args.pop(0)
 
         cleanup_additional_args = False
         if use_expected_version:
@@ -663,7 +683,6 @@ class TrayManager:
             additional_args = _additional_args
 
         args.extend(additional_args)
-
         run_detached_process(args, env=envs)
         self.exit()
 
@@ -840,37 +859,7 @@ class PypeTrayStarter(QtCore.QObject):
 
 
 def main():
-    log = Logger.get_logger(__name__)
-    app = QtWidgets.QApplication.instance()
-
-    high_dpi_scale_attr = None
-    if not app:
-        # 'AA_EnableHighDpiScaling' must be set before app instance creation
-        high_dpi_scale_attr = getattr(
-            QtCore.Qt, "AA_EnableHighDpiScaling", None
-        )
-        if high_dpi_scale_attr is not None:
-            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
-
-        app = QtWidgets.QApplication([])
-
-    if high_dpi_scale_attr is None:
-        log.debug((
-            "Attribute 'AA_EnableHighDpiScaling' was not set."
-            " UI quality may be affected."
-        ))
-
-    for attr_name in (
-        "AA_UseHighDpiPixmaps",
-    ):
-        attr = getattr(QtCore.Qt, attr_name, None)
-        if attr is None:
-            log.debug((
-                "Missing QtCore.Qt attribute \"{}\"."
-                " UI quality may be affected."
-            ).format(attr_name))
-        else:
-            app.setAttribute(attr)
+    app = get_openpype_qt_app()
 
     starter = PypeTrayStarter(app)
 

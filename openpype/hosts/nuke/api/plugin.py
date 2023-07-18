@@ -19,7 +19,7 @@ from openpype.pipeline import (
     CreatorError,
     Creator as NewCreator,
     CreatedInstance,
-    legacy_io
+    get_current_task_name
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -74,20 +74,6 @@ class NukeCreator(NewCreator):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in keys:
             creator_attrs[pass_key] = pre_create_data[pass_key]
-
-    def add_info_knob(self, node):
-        if "OP_info" in node.knobs().keys():
-            return
-
-        # add info text
-        info_knob = nuke.Text_Knob("OP_info", "")
-        info_knob.setValue("""
-<span style=\"color:#fc0303\">
-<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>To remove it use Publisher gui.</p>
-</span>
-        """)
-        node.addKnob(info_knob)
 
     def check_existing_subset(self, subset_name):
         """Make sure subset name is unique.
@@ -152,8 +138,6 @@ class NukeCreator(NewCreator):
             with parent_node:
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
-
-                self.add_info_knob(created_node)
 
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
@@ -840,41 +824,6 @@ class ExporterReviewMov(ExporterReview):
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
-
-        # TODO: remove this when `reformat_nodes_config`
-        # is changed in settings
-        reformat_node_add = kwargs["reformat_node_add"]
-        reformat_node_config = kwargs["reformat_node_config"]
-
-        # TODO: make this required in future
-        reformat_nodes_config = kwargs.get("reformat_nodes_config", {})
-
-        # TODO: remove this once deprecated is removed
-        # make sure only reformat_nodes_config is used in future
-        if reformat_node_add and reformat_nodes_config.get("enabled"):
-            self.log.warning(
-                "`reformat_node_add` is deprecated. "
-                "Please use only `reformat_nodes_config` instead.")
-            reformat_nodes_config = None
-
-        # TODO: reformat code when backward compatibility is not needed
-        # warning if reformat_nodes_config is not set
-        if not reformat_nodes_config:
-            self.log.warning(
-                "Please set `reformat_nodes_config` in settings. "
-                "Using `reformat_node_config` instead."
-            )
-            reformat_nodes_config = {
-                "enabled": reformat_node_add,
-                "reposition_nodes": [
-                    {
-                        "node_class": "Reformat",
-                        "knobs": reformat_node_config
-                    }
-                ]
-            }
-
-
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -913,6 +862,7 @@ class ExporterReviewMov(ExporterReview):
         self._shift_to_previous_node_and_temp(subset, r_node, "Read...   `{}`")
 
         # add reformat node
+        reformat_nodes_config = kwargs["reformat_nodes_config"]
         if reformat_nodes_config["enabled"]:
             reposition_nodes = reformat_nodes_config["reposition_nodes"]
             for reposition_node in reposition_nodes:
@@ -1189,7 +1139,7 @@ def convert_to_valid_instaces():
 
     from openpype.hosts.nuke.api import workio
 
-    task_name = legacy_io.Session["AVALON_TASK"]
+    task_name = get_current_task_name()
 
     # save into new workfile
     current_file = workio.current_file()

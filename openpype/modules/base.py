@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import copy
 import os
 import sys
 import json
@@ -12,8 +13,12 @@ import collections
 import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
-import six
 
+import six
+import appdirs
+import ayon_api
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -30,8 +35,9 @@ from openpype.settings.lib import (
 from openpype.lib import (
     Logger,
     import_filepath,
-    import_module_from_dirpath
+    import_module_from_dirpath,
 )
+from openpype.lib.openpype_version import is_staging_enabled
 
 from .interfaces import (
     OpenPypeInterface,
@@ -186,7 +192,11 @@ def get_dynamic_modules_dirs():
     Returns:
         list: Paths loaded from studio overrides.
     """
+
     output = []
+    if AYON_SERVER_ENABLED:
+        return output
+
     value = get_studio_system_settings_overrides()
     for key in ("modules", "addon_paths", platform.system().lower()):
         if key not in value:
@@ -299,6 +309,134 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
+def _get_ayon_addons_information():
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    output = []
+    bundle_name = os.getenv("AYON_BUNDLE_NAME")
+    bundles = ayon_api.get_bundles()["bundles"]
+    final_bundle = next(
+        (
+            bundle
+            for bundle in bundles
+            if bundle["name"] == bundle_name
+        ),
+        None
+    )
+    if final_bundle is None:
+        return output
+
+    bundle_addons = final_bundle["addons"]
+    addons = ayon_api.get_addons_info()["addons"]
+    for addon in addons:
+        name = addon["name"]
+        versions = addon.get("versions")
+        addon_version = bundle_addons.get(name)
+        if addon_version is None or not versions:
+            continue
+        version = versions.get(addon_version)
+        if version:
+            version = copy.deepcopy(version)
+            version["name"] = name
+            version["version"] = addon_version
+            output.append(version)
+    return output
+
+
+def _load_ayon_addons(openpype_modules, modules_key, log):
+    """Load AYON addons based on information from server.
+
+    This function should not trigger downloading of any addons but only use
+    what is already available on the machine (at least in first stages of
+    development).
+
+    Args:
+        openpype_modules (_ModuleClass): Module object where modules are
+            stored.
+        log (logging.Logger): Logger object.
+
+    Returns:
+        List[str]: List of v3 addons to skip to load because v4 alternative is
+            imported.
+    """
+
+    v3_addons_to_skip = []
+
+    addons_info = _get_ayon_addons_information()
+    if not addons_info:
+        return v3_addons_to_skip
+    addons_dir = os.path.join(
+        appdirs.user_data_dir("AYON", "Ynput"),
+        "addons"
+    )
+    if not os.path.exists(addons_dir):
+        log.warning("Addons directory does not exists. Path \"{}\"".format(
+            addons_dir
+        ))
+        return v3_addons_to_skip
+
+    for addon_info in addons_info:
+        addon_name = addon_info["name"]
+        addon_version = addon_info["version"]
+
+        folder_name = "{}_{}".format(addon_name, addon_version)
+        addon_dir = os.path.join(addons_dir, folder_name)
+        if not os.path.exists(addon_dir):
+            log.warning((
+                "Directory for addon {} {} does not exists. Path \"{}\""
+            ).format(addon_name, addon_version, addon_dir))
+            continue
+
+        sys.path.insert(0, addon_dir)
+        imported_modules = []
+        for name in os.listdir(addon_dir):
+            path = os.path.join(addon_dir, name)
+            basename, ext = os.path.splitext(name)
+            is_dir = os.path.isdir(path)
+            is_py_file = ext.lower() == ".py"
+            if not is_py_file and not is_dir:
+                continue
+
+            try:
+                mod = __import__(basename, fromlist=("",))
+                imported_modules.append(mod)
+            except BaseException:
+                log.warning(
+                    "Failed to import \"{}\"".format(basename),
+                    exc_info=True
+                )
+
+        if not imported_modules:
+            log.warning("Addon {} {} has no content to import".format(
+                addon_name, addon_version
+            ))
+            continue
+
+        if len(imported_modules) == 1:
+            mod = imported_modules[0]
+            addon_alias = getattr(mod, "V3_ALIAS", None)
+            if not addon_alias:
+                addon_alias = addon_name
+            v3_addons_to_skip.append(addon_alias)
+            new_import_str = "{}.{}".format(modules_key, addon_alias)
+
+            sys.modules[new_import_str] = mod
+            setattr(openpype_modules, addon_alias, mod)
+
+        else:
+            log.info("More then one module was imported")
+
+    return v3_addons_to_skip
+
+
 def _load_modules():
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
@@ -307,6 +445,12 @@ def _load_modules():
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
     log = Logger.get_logger("ModulesLoader")
+
+    ignore_addon_names = []
+    if AYON_SERVER_ENABLED:
+        ignore_addon_names = _load_ayon_addons(
+            openpype_modules, modules_key, log
+        )
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -350,6 +494,9 @@ def _load_modules():
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
+
+            if basename in ignore_addon_names:
+                continue
 
             # Validations
             if os.path.isdir(fullpath):
@@ -740,15 +887,16 @@ class ModulesManager:
         Unknown keys are logged out.
 
         Returns:
-            dict: Output is dictionary with keys "publish", "create", "load"
-                and "actions" each containing list of paths.
+            dict: Output is dictionary with keys "publish", "create", "load",
+                "actions" and "inventory" each containing list of paths.
         """
         # Output structure
         output = {
             "publish": [],
             "create": [],
             "load": [],
-            "actions": []
+            "actions": [],
+            "inventory": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -850,6 +998,21 @@ class ModulesManager:
 
         return self._collect_plugin_paths(
             "get_publish_plugin_paths",
+            host_name
+        )
+
+    def collect_inventory_action_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_inventory_action_paths",
             host_name
         )
 

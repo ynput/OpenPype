@@ -1,11 +1,16 @@
 {
+    "launch_openpype_menu_on_start": false,
     "imageio": {
+        "activate_host_color_management": true,
+        "remapping": {
+            "rules": []
+        },
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },

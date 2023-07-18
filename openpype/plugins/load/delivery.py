@@ -1,4 +1,5 @@
 import copy
+import platform
 from collections import defaultdict
 
 from qtpy import QtWidgets, QtCore, QtGui
@@ -83,10 +84,22 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.templates = self._get_templates(self.anatomy)
         for name, _ in self.templates.items():
             dropdown.addItem(name)
+        if self.templates and platform.system() == "Darwin":
+            # fix macos QCombobox Style
+            dropdown.setItemDelegate(QtWidgets.QStyledItemDelegate())
+            # update combo box length to longest entry
+            longest_key = max(self.templates.keys(), key=len)
+            dropdown.setMinimumContentsLength(len(longest_key))
 
         template_label = QtWidgets.QLabel()
         template_label.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
         template_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+
+        renumber_frame = QtWidgets.QCheckBox()
+
+        first_frame_start = QtWidgets.QSpinBox()
+        max_int = (1 << 32) // 2
+        first_frame_start.setRange(0, max_int - 1)
 
         root_line_edit = QtWidgets.QLineEdit()
 
@@ -111,11 +124,13 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Selected representations", selected_label)
         input_layout.addRow("Delivery template", dropdown)
         input_layout.addRow("Template value", template_label)
+        input_layout.addRow("Renumber Frame", renumber_frame)
+        input_layout.addRow("Renumber start frame", first_frame_start)
         input_layout.addRow("Root", root_line_edit)
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
         btn_delivery = QtWidgets.QPushButton("Deliver")
-        btn_delivery.setEnabled(bool(dropdown.currentText()))
+        btn_delivery.setEnabled(False)
 
         progress_bar = QtWidgets.QProgressBar(self)
         progress_bar.setMinimum = 0
@@ -138,6 +153,8 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.selected_label = selected_label
         self.template_label = template_label
         self.dropdown = dropdown
+        self.first_frame_start = first_frame_start
+        self.renumber_frame = renumber_frame
         self.root_line_edit = root_line_edit
         self.progress_bar = progress_bar
         self.text_area = text_area
@@ -152,6 +169,15 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         btn_delivery.clicked.connect(self.deliver)
         dropdown.currentIndexChanged.connect(self._update_template_value)
 
+        if not self.dropdown.count():
+            self.text_area.setVisible(True)
+            error_message = (
+                "No Delivery Templates found!\n"
+                "Add Template in [project_anatomy/templates/delivery]"
+            )
+            self.text_area.setText(error_message)
+            self.log.error(error_message.replace("\n", " "))
+
     def deliver(self):
         """Main method to loop through all selected representations"""
         self.progress_bar.setVisible(True)
@@ -165,6 +191,8 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         datetime_data = get_datetime_data()
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
+        renumber_frame = self.renumber_frame.isChecked()
+        frame_offset = self.first_frame_start.value()
         for repre in self._representations:
             if repre["name"] not in selected_repres:
                 continue
@@ -202,9 +230,31 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     src_paths.append(src_path)
                 sources_and_frames = collect_frames(src_paths)
 
+                frames = set(sources_and_frames.values())
+                frames.discard(None)
+                first_frame = None
+                if frames:
+                    first_frame = min(frames)
+
                 for src_path, frame in sources_and_frames.items():
                     args[0] = src_path
-                    if frame:
+                    # Renumber frames
+                    if renumber_frame and frame is not None:
+                        # Calculate offset between
+                        # first frame and current frame
+                        # - '0' for first frame
+                        offset = frame_offset - int(first_frame)
+                        # Add offset to new frame start
+                        dst_frame = int(frame) + offset
+                        if dst_frame < 0:
+                            msg = "Renumber frame has a smaller number than original frame"     # noqa
+                            report_items[msg].append(src_path)
+                            self.log.warning("{} <{}>".format(
+                                msg, dst_frame))
+                            continue
+                        frame = dst_frame
+
+                    if frame is not None:
                         anatomy_data["frame"] = frame
                     new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
@@ -287,14 +337,17 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.files_selected, self.size_selected = \
             self._get_counts(selected_repres)
         self.selected_label.setText(self._prepare_label())
+        # update delivery button state if any templates found
+        if self.dropdown.count():
+            self.btn_delivery.setEnabled(bool(selected_repres))
 
     def _update_template_value(self, _index=None):
         """Sets template value to label after selection in dropdown."""
         name = self.dropdown.currentText()
         template_value = self.templates.get(name)
         if template_value:
-            self.btn_delivery.setEnabled(True)
             self.template_label.setText(template_value)
+            self.btn_delivery.setEnabled(bool(self._get_selected_repres()))
 
     def _update_progress(self, uploaded):
         """Update progress bar after each repre copied."""

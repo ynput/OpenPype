@@ -1,4 +1,5 @@
 import os
+import re
 from openpype.modules import IHostAddon, OpenPypeModule
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,6 +19,22 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         from pathlib import Path
 
         from .lib import get_compatible_integration
+
+        from openpype.widgets.message_window import Window
+
+        pattern = re.compile(r'^\d+-\d+$')
+
+        if not pattern.match(app.name):
+            msg = (
+                "Unreal application key in the settings must be in format"
+                "'5-0' or '5-1'"
+            )
+            Window(
+                parent=None,
+                title="Unreal application name format",
+                message=msg,
+                level="critical")
+            raise ValueError(msg)
 
         ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
