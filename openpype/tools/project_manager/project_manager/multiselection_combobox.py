@@ -127,7 +127,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                     index_flags & QtCore.Qt.ItemIsUserCheckable
                     and index_flags & ITEM_IS_USER_TRISTATE
                 ):
-                    new_state = (int(state) + 1) % 3
+                    new_state = (checkstate_enum_to_int(state) + 1) % 3
 
                 elif index_flags & QtCore.Qt.ItemIsUserCheckable:
                     if state != QtCore.Qt.Checked:
