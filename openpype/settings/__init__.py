@@ -23,7 +23,7 @@ from .lib import (
     get_project_settings,
     get_current_project_settings,
     get_anatomy_settings,
-    get_local_settings
+    get_local_settings,
 )
 from .entities import (
     SystemSettings,
