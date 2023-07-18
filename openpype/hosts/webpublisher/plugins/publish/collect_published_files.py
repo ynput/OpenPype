@@ -305,7 +305,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 task_name=task_name,
                 task_type=task_type,
                 family=family,
-                subset=subset_name
+                subset=subset_name,
+                project_settings=context.data["project_settings"]
             )
 
         return version
