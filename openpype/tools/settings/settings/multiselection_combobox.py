@@ -126,6 +126,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 self._block_mouse_release_timer.isActive()
                 or not current_index.isValid()
                 or not self.view().isVisible()
+                or not self.view().rect().contains(event.pos())
                 or not index_flags & QtCore.Qt.ItemIsSelectable
                 or not index_flags & QtCore.Qt.ItemIsEnabled
                 or not index_flags & QtCore.Qt.ItemIsUserCheckable
