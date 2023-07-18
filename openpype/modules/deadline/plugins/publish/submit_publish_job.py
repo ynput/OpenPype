@@ -3,7 +3,7 @@
 import os
 import json
 import re
-from copy import copy, deepcopy
+from copy import deepcopy
 import requests
 import clique
 
@@ -568,7 +568,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     task_name=template_data["task"]["name"],
                     task_type=template_data["task"]["type"],
                     family="render",
-                    subset=subset
+                    subset=subset,
+                    project_settings=context.data["project_settings"]
                 )
 
         template_data["subset"] = subset
