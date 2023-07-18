@@ -358,8 +358,9 @@ def inject_openpype_environment(deadlinePlugin):
         openpype_mongo = job.GetJobEnvironmentKeyValue("OPENPYPE_MONGO")
         if openpype_mongo:
             # inject env var for OP extractenvironments
-            deadlinePlugin.SetProcessEnvironmentVariable("OPENPYPE_MONGO",
-                                                         openpype_mongo)
+            # SetEnvironmentVariable is important, not SetProcessEnv...
+            deadlinePlugin.SetEnvironmentVariable("OPENPYPE_MONGO",
+                                                  openpype_mongo)
 
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
