@@ -12,7 +12,7 @@ from openpype.pipeline import (
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
-from openpype.pipeline import version_start
+from openpype.pipeline import version_start, get_current_host_name
 
 log = logging.getLogger(__name__)
 
@@ -222,7 +222,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         version_input.setMinimum(
             version_start.get_versioning_start(
                 self.data["project"]["name"],
-                self.host.name,
+                get_current_host_name(),
                 task_name=self.data["task"]["name"],
                 task_type=self.data["task"]["type"],
                 family="workfile"
@@ -431,7 +431,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             if version is None:
                 version = version_start.get_versioning_start(
                     data["project"]["name"],
-                    self.host.name,
+                    get_current_host_name(),
                     task_name=self.data["task"]["name"],
                     task_type=self.data["task"]["type"],
                     family="workfile"
