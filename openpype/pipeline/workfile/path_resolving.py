@@ -316,7 +316,6 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        print(data)
         data["version"] = version_start.get_versioning_start(
             data["project"]["name"],
             data["app"],
