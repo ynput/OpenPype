@@ -285,7 +285,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         task_name,
         task_type,
         family,
-        subset_name
+        subset_name,
+        context
     ):
         """Returns version number or 1 for 'asset' and 'subset'"""
 
