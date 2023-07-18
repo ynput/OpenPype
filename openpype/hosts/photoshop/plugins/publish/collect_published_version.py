@@ -56,7 +56,8 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
                 project_name,
                 "photoshop",
                 task_name=context.data["task"],
-                task_type=context.data["taskType"]
+                task_type=context.data["taskType"],
+                project_settings=context.data["project_settings"]
             )
 
         self.log.debug(f"Setting {version_int} to context.")
