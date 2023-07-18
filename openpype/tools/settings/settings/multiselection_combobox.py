@@ -1,5 +1,13 @@
 from qtpy import QtCore, QtGui, QtWidgets
-from openpype.tools.utils.lib import checkstate_int_to_enum
+from openpype.tools.utils.lib import (
+    checkstate_int_to_enum,
+    checkstate_enum_to_int,
+)
+from openpype.tools.utils.constants import (
+    CHECKED_INT,
+    UNCHECKED_INT,
+    ITEM_IS_USER_TRISTATE,
+)
 
 
 class ComboItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -90,13 +98,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         super(MultiSelectionComboBox, self).hidePopup()
         self.view().clearFocus()
 
-    def _get_state_value(self, state):
-        try:
-            state = state.value  # fix for PySide6
-        except AttributeError:
-            pass
-        return state
-
     def _event_popup_shown(self, obj, event):
         if not self._popup_is_shown:
             return
@@ -134,22 +135,27 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 return
 
             if state == QtCore.Qt.Unchecked:
-                new_state = QtCore.Qt.Checked
+                new_state = CHECKED_INT
             else:
-                new_state = QtCore.Qt.Unchecked
+                new_state = UNCHECKED_INT
 
         elif event.type() == QtCore.QEvent.KeyPress:
             # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
-            if event.key() == QtCore.Qt.Key_Space and index_flags:
-                # toggle the current items check state
-                if QtCore.Qt.ItemIsUserTristate:
+            if event.key() == QtCore.Qt.Key_Space:
+                if (
+                    index_flags & QtCore.Qt.ItemIsUserCheckable
+                    and index_flags & ITEM_IS_USER_TRISTATE
+                ):
+                    new_state = (checkstate_enum_to_int(state) + 1) % 3
+
+                elif index_flags & QtCore.Qt.ItemIsUserCheckable:
+                    # toggle the current items check state
                     if state != QtCore.Qt.Checked:
-                        new_state = QtCore.Qt.Checked
+                        new_state = CHECKED_INT
                     else:
-                        new_state = QtCore.Qt.Unchecked
+                        new_state = UNCHECKED_INT
 
         if new_state is not None:
-            new_state = self._get_state_value(new_state)
             model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
             self.view().update(current_index)
             self.update_size_hint()
@@ -251,7 +257,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             QtWidgets.QStyle.SC_ComboBoxArrow
         )
         total_width = option.rect.width() - btn_rect.width()
-        font_metricts = self.fontMetrics()
 
         line = 0
         self.lines = {line: []}
@@ -295,7 +300,8 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 + (2 * self.top_bottom_margins)
             )
         value.setHeight(
-            (lines * self.item_height) + (2 * self.top_bottom_margins)
+            (lines * self.item_height)
+            + (2 * self.top_bottom_margins)
         )
         return value
 
@@ -306,10 +312,9 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         for idx in range(self.count()):
             value = self.itemData(idx, role=QtCore.Qt.UserRole)
             if value in values:
-                check_state = QtCore.Qt.Checked
+                check_state = CHECKED_INT
             else:
-                check_state = QtCore.Qt.Unchecked
-            check_state = self._get_state_value(check_state)
+                check_state = UNCHECKED_INT
             self.setItemData(idx, check_state, QtCore.Qt.CheckStateRole)
         self.update_size_hint()
 
