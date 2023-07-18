@@ -13,7 +13,7 @@ def get_versioning_start(
 ):
     """Get anatomy versioning start"""
     if not project_settings:
-        project_settings = context_tools.get_project_settings(project_name)
+        project_settings = get_project_settings(project_name)
 
     version_start = 1
     settings = project_settings["global"]
