@@ -355,6 +355,12 @@ def inject_openpype_environment(deadlinePlugin):
                 " AVALON_TASK, AVALON_APP_NAME"
             ))
 
+        openpype_mongo = job.GetJobEnvironmentKeyValue("OPENPYPE_MONGO")
+        if openpype_mongo:
+            # inject env var for OP extractenvironments
+            deadlinePlugin.SetProcessEnvironmentVariable("OPENPYPE_MONGO",
+                                                         openpype_mongo)
+
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
