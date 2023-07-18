@@ -94,7 +94,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     label = "Submit image sequence jobs to Deadline or Muster"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
-    deadline_plugin = "OpenPype"
+
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
@@ -125,10 +125,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER"
     ]
-
-    # Add OpenPype version if we are running from build.
-    if is_running_from_build():
-        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -211,10 +207,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["AYON_PUBLISH_JOB"] = "1"
             environment["AYON_RENDER_JOB"] = "0"
             environment["AYON_REMOTE_PUBLISH"] = "0"
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            deadline_plugin = "Ayon"
         else:
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
+            deadline_plugin = "Openpype"
+            # Add OpenPype version if we are running from build.
+            if is_running_from_build():
+                self.environ_keys.append("OPENPYPE_VERSION")
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
@@ -258,7 +260,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         )
         payload = {
             "JobInfo": {
-                "Plugin": self.deadline_plugin,
+                "Plugin": deadline_plugin,
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
                 "UserName": job["Props"]["User"],
