@@ -109,7 +109,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 task_name,
                 task_type,
                 family,
-                subset_name
+                subset_name,
+                context
             )
             next_versions.append(version)
 
