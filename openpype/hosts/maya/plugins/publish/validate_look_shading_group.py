@@ -27,7 +27,7 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            self.log.warning(
                 "Found shading engines with incorrect naming:"
                 "\n{}".format(invalid)
             )
