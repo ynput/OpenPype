@@ -57,10 +57,10 @@ def create_container(
     """
     # Ensure container name
     name = ensure_unique_name(
-        name, bpy.context.scene.openpype_containers.keys()
+        name, bpy.context.window_manager.openpype_containers.keys()
     )
 
-    container = bpy.context.scene.openpype_containers.add()
+    container = bpy.context.window_manager.openpype_containers.add()
     container.name = name
 
     add_datablocks_to_container(datablocks, container)
@@ -112,7 +112,7 @@ def update_scene_containers() -> List[OpenpypeContainer]:
     Returns:
         List[OpenpypeContainer]: Created containers
     """
-    openpype_containers = bpy.context.scene.openpype_containers
+    openpype_containers = bpy.context.window_manager.openpype_containers
     scene_collection = bpy.context.scene.collection
 
     # Prepare datablocks to skip for containers auto creation
@@ -234,7 +234,7 @@ def update_scene_containers() -> List[OpenpypeContainer]:
         create_container(container_name, container_datablocks)
         # NOTE need to get it this way because memory could have changed
         # BUG: https://projects.blender.org/blender/blender/issues/105338
-        container = bpy.context.scene.openpype_containers[-1]
+        container = bpy.context.window_manager.openpype_containers[-1]
 
         # Keep objectName for update/switch
         container_metadata["objectName"] = container.name
@@ -248,7 +248,7 @@ def update_scene_containers() -> List[OpenpypeContainer]:
 
     # Clear containers when data has been deleted from the outliner
     for i, container in reversed(
-        list(enumerate(bpy.context.scene.openpype_containers))
+        list(enumerate(bpy.context.window_manager.openpype_containers))
     ):
         # In case all datablocks removed, remove container
         if not any(container.get_datablocks(only_local=False)):
@@ -269,7 +269,7 @@ def ls() -> Iterator:
     # Parse containers
     return [
         parse_container(container)
-        for container in bpy.context.scene.openpype_containers
+        for container in bpy.context.window_manager.openpype_containers
     ]
 
 

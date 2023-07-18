@@ -627,7 +627,7 @@ class SCENE_OT_RemoveOpenpypeInstance(
         # Get creator class
         Creator = get_legacy_creator_by_name(self.creator_name)
 
-        # NOTE Shunting legacy_create because of useless overhead 
+        # NOTE Shunting legacy_create because of useless overhead
         # and deprecated design.
         # Will see if compatible with new creator when implemented for Blender
         avalon_prop = op_instance["avalon"]
@@ -1066,7 +1066,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         if matched_container := next(
             (
                 container
-                for container in context.scene.openpype_containers
+                for container in context.window_manager.openpype_containers
                 if context.collection
                 in container.get_root_outliner_datablocks()
             ),
@@ -1090,7 +1090,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Recover required data
-        openpype_containers = context.scene.openpype_containers
+        openpype_containers = context.window_manager.openpype_containers
         container = openpype_containers.get(self.container_name)
         avalon_data = dict(container["avalon"])
 
@@ -1148,7 +1148,7 @@ def expose_container_content(container_name: str) -> List[bpy.types.ID]:
         List[bpy.types.ID]: List of root outliner datablocks.
     """
     # Recover required data
-    openpype_containers = bpy.context.scene.openpype_containers
+    openpype_containers = bpy.context.window_manager.openpype_containers
     container = openpype_containers.get(container_name)
 
     # Remove old container
@@ -1211,7 +1211,7 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
         if matched_container := next(
             (
                 container
-                for container in context.scene.openpype_containers
+                for container in context.window_manager.openpype_containers
                 if context.collection
                 in container.get_root_outliner_datablocks()
             ),

@@ -156,7 +156,7 @@ def remove_container(
         bpy.data.libraries.remove(container.library)
 
     # Delete container
-    openpype_containers = bpy.context.scene.openpype_containers
+    openpype_containers = bpy.context.window_manager.openpype_containers
     openpype_containers.remove(openpype_containers.find(container.name))
 
     # Orphan purge
@@ -666,7 +666,7 @@ class AssetLoader(Loader):
         Returns:
             Optional[OpenpypeContainer]: Scene container. Can be None.
         """
-        return bpy.context.scene.openpype_containers.get(
+        return bpy.context.window_manager.openpype_containers.get(
             container["objectName"]
         )
 
@@ -1358,7 +1358,7 @@ class AssetLoader(Loader):
             if container.name.startswith(container_basename)
             else ensure_unique_name(
                 container_basename,
-                bpy.context.scene.openpype_containers.keys(),
+                bpy.context.window_manager.openpype_containers.keys(),
             ),
         )
 

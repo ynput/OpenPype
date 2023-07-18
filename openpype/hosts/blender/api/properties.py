@@ -179,7 +179,7 @@ def register():
     bpy.types.Scene.openpype_instance_active_index = bpy.props.IntProperty(
         name="OpenPype Instance Active Index", options={"HIDDEN"}
     )
-    bpy.types.Scene.openpype_containers = bpy.props.CollectionProperty(
+    bpy.types.WindowManager.openpype_containers = bpy.props.CollectionProperty(
         name="OpenPype Containers", type=OpenpypeContainer, options={"HIDDEN"}
     )
 
@@ -191,4 +191,4 @@ def unregister():
     del bpy.types.Scene.openpype_instances
     del bpy.types.Scene.openpype_instance_active_index
 
-    del bpy.types.Scene.openpype_containers
+    del bpy.types.window_manager.openpype_containers

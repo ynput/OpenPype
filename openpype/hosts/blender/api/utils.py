@@ -290,7 +290,7 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
         datablock[AVALON_PROPERTY]["loader"] = loader_name or ""
 
         # Set to related container
-        container = bpy.context.scene.openpype_containers.get(datablock.name)
+        container = bpy.context.window_manager.openpype_containers.get(datablock.name)
         if container and container.get(AVALON_PROPERTY):
             container[AVALON_PROPERTY]["loader"] = loader_name
 
