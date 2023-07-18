@@ -15,3 +15,21 @@ CategoryOrder=1
 Index=0
 Default=
 Description=The path to the Ayon executable. Enter alternative paths on separate lines.
+
+[AyonServerUrl]
+Type=string
+Label=Ayon Server Url
+Category=Ayon Credentials
+CategoryOrder=2
+Index=0
+Default=
+Description=Url to Ayon server
+
+[AyonApiKey]
+Type=password
+Label=Ayon API key
+Category=Ayon Credentials
+CategoryOrder=2
+Index=0
+Default=
+Description=API key for service account on Ayon Server
