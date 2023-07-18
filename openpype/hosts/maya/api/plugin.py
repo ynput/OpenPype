@@ -132,7 +132,14 @@ class Creator(LegacyCreator):
             if (self.options or {}).get("useSelection"):
                 nodes = cmds.ls(selection=True)
 
-            instance = cmds.sets(nodes, name=self.name)
+            set_name = self.name
+            if (self.options or {}).get("animSet"):
+                if self.name.endswith("_"):
+                    set_name = self.name + "set"
+                else:
+                    set_name = self.name + "_set"
+
+            instance = cmds.sets(nodes, name=set_name)
             lib.imprint(instance, self.data)
 
         return instance
