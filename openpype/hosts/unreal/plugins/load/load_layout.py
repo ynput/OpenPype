@@ -15,7 +15,7 @@ from openpype.pipeline import (
     load_container,
     get_representation_path,
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_current_project_settings
@@ -38,17 +38,17 @@ class LayoutLoader(UnrealBaseLoader):
 
     @staticmethod
     def _create_levels(
-        hierarchy_dir_list, hierarchy, asset_path_parent, asset,
+        hierarchy_dir_list, hierarchy, asset_dir, asset,
         create_sequences_option
     ):
-        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        level = f"{asset_dir}/{asset}_map.{asset}_map"
         master_level = None
 
         if not send_request(
                 "does_asset_exist", params={"asset_path": level}):
             send_request(
                 "new_level",
-                params={"level_path": f"{asset_path_parent}/{asset}_map"})
+                params={"level_path": f"{asset_dir}/{asset}_map"})
 
         if create_sequences_option:
             # Create map for the shot, and create hierarchy of map. If the
@@ -76,7 +76,7 @@ class LayoutLoader(UnrealBaseLoader):
 
     @staticmethod
     def _get_frame_info(h_dir):
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset_data = get_asset_by_name(
             project_name,
             h_dir.split('/')[-1],
@@ -119,10 +119,9 @@ class LayoutLoader(UnrealBaseLoader):
                     "include_folder": False})
 
             if existing_sequences := send_request(
-                    "get_assets_of_class",
-                    params={
-                        "asset_list": root_content,
-                        "class_name": "LevelSequence"},
+                "get_assets_of_class",
+                params={
+                    "asset_list": root_content, "class_name": "LevelSequence"},
             ):
                 for sequence in existing_sequences:
                     sequences.append(sequence)
@@ -133,7 +132,7 @@ class LayoutLoader(UnrealBaseLoader):
             else:
                 start_frame, end_frame, fps = self._get_frame_info(h_dir)
                 sequence = send_request(
-                    "generate_master_sequence",
+                    "generate_sequence",
                     params={
                         "asset_name": h,
                         "asset_path": h_dir,
@@ -144,66 +143,7 @@ class LayoutLoader(UnrealBaseLoader):
                 sequences.append(sequence)
                 frame_ranges.append((start_frame, end_frame))
 
-        send_request(
-            "save_listed_assets",
-            params={"asset_list": sequences})
-
         return sequences, frame_ranges
-
-    @staticmethod
-    def _process_sequences(sequences, frame_ranges, asset, asset_dir, level):
-        project_name = legacy_io.active_project()
-        data = get_asset_by_name(project_name, asset)["data"]
-        start_frame = 0
-        end_frame = data.get('clipOut') - data.get('clipIn') + 1
-        fps = data.get("fps")
-
-        shot = send_request(
-            "generate_sequence",
-            params={
-                "asset_name": asset,
-                "asset_path": asset_dir,
-                "start_frame": start_frame,
-                "end_frame": end_frame,
-                "fps": fps})
-
-        # sequences and frame_ranges have the same length
-        for i in range(len(sequences) - 1):
-            send_request(
-                "set_sequence_hierarchy",
-                params={
-                    "parent_path": sequences[i],
-                    "child_path": sequences[i + 1],
-                    "child_start_frame": frame_ranges[i + 1][0],
-                    "child_end_frame": frame_ranges[i + 1][1]})
-            send_request(
-                "set_sequence_visibility",
-                params={
-                    "parent_path": sequences[i],
-                    "parent_end_frame": frame_ranges[i][1],
-                    "child_start_frame": frame_ranges[i + 1][0],
-                    "child_end_frame": frame_ranges[i + 1][1],
-                    "map_paths": [level]})
-
-        if sequences:
-            send_request(
-                "set_sequence_hierarchy",
-                params={
-                    "parent_path": sequences[-1],
-                    "child_path": shot,
-                    "child_start_frame": data.get('clipIn'),
-                    "child_end_frame": data.get('clipOut')})
-
-            send_request(
-                "set_sequence_visibility",
-                params={
-                    "parent_path": sequences[-1],
-                    "parent_end_frame": frame_ranges[-1][1],
-                    "child_start_frame": data.get('clipIn'),
-                    "child_end_frame": data.get('clipOut'),
-                    "map_paths": [level]})
-
-        return shot
 
     @staticmethod
     def _get_fbx_loader(loaders, family):
@@ -354,7 +294,7 @@ class LayoutLoader(UnrealBaseLoader):
         if not version_ids:
             return output
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         repre_docs = get_representations(
             project_name,
             representation_names=["fbx", "abc"],
@@ -419,9 +359,11 @@ class LayoutLoader(UnrealBaseLoader):
             params={
                 "asset_list": assets,
                 "class_name": "AyonAssetContainer"})
+
         assert len(asset_containers) == 1, (
             "There should be only one AyonAssetContainer in "
             "the loaded assets.")
+
         container = asset_containers[0]
 
         skeletons = send_request(
@@ -433,7 +375,7 @@ class LayoutLoader(UnrealBaseLoader):
             "There should be one skeleton at most in "
             "the loaded assets.")
         skeleton = skeletons[0] if skeletons else None
-        return assets, container, skeleton, loader
+        return assets, container, skeleton
 
     @staticmethod
     def _process_instances(
@@ -515,8 +457,7 @@ class LayoutLoader(UnrealBaseLoader):
 
                 family = element.get('family')
 
-                (assets, container,
-                 skeleton, loader) = self._load_representation(
+                assets, container, skeleton = self._load_representation(
                     family, representation, repr_format, instance_name,
                     all_loaders)
 
@@ -564,7 +505,7 @@ class LayoutLoader(UnrealBaseLoader):
                             used now, data are imprinted by `containerise()`.
         """
         data = get_current_project_settings()
-        create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
         # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
@@ -580,30 +521,43 @@ class LayoutLoader(UnrealBaseLoader):
 
         asset_dir, container_name = send_request(
             "create_unique_asset_name", params={
-                "root": root,
+                "root": hierarchy_dir,
                 "asset": asset,
                 "name": name})
-
-        asset_path_parent = Path(asset_dir).parent.as_posix()
 
         send_request("make_directory", params={"directory_path": asset_dir})
 
         shot = None
 
         level, master_level = self._create_levels(
-            hierarchy_dir_list, hierarchy, asset_path_parent, asset,
-            create_sequences_option)
+            hierarchy_dir_list, hierarchy, asset_dir, asset,
+            create_sequences)
 
-        if create_sequences_option:
+        if create_sequences:
             sequences, frame_ranges = self._get_sequences(
                 hierarchy_dir_list, hierarchy)
 
-            shot = self._process_sequences(
-                sequences, frame_ranges, asset, asset_dir, level)
+            project_name = get_current_project_name()
+            data = get_asset_by_name(project_name, asset)["data"]
+
+            shot = send_request(
+                "generate_layout_sequence",
+                params={
+                    "asset": asset,
+                    "asset_dir": asset_dir,
+                    "sequences": sequences,
+                    "frame_ranges": frame_ranges,
+                    "level": level,
+                    "fps": data.get("fps"),
+                    "clip_in": data.get("clipIn"),
+                    "clip_out": data.get("clipOut")})
 
             send_request("load_level", params={"level_path": level})
 
         loaded_assets = self._process_assets(self.fname, asset_dir, shot)
+
+        send_request(
+            "save_listed_assets", params={"asset_list": loaded_assets})
 
         send_request("save_current_level")
 
@@ -625,6 +579,18 @@ class LayoutLoader(UnrealBaseLoader):
 
         if master_level:
             send_request("load_level", params={"level_path": master_level})
+
+        save_dir = hierarchy_dir_list[0] if create_sequences else asset_dir
+
+        assets = send_request(
+            "list_assets", params={
+                "directory_path": save_dir,
+                "recursive": True,
+                "include_folder": False})
+
+        send_request("save_listed_assets", params={"asset_list": assets})
+
+        return assets
 
     @staticmethod
     def _remove_bound_assets(asset_dir):

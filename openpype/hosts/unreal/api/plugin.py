@@ -224,7 +224,7 @@ class UnrealActorCreator(UnrealBaseCreator):
 @six.add_metaclass(ABCMeta)
 class UnrealBaseLoader(LoaderPlugin):
     """Base class for Unreal loader plugins."""
-    root = "/Game/OpenPype"
+    root = "/Game/Ayon"
     suffix = "_CON"
 
     def update(self, container, representation):

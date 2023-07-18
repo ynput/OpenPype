@@ -5,7 +5,7 @@ from pathlib import Path
 from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
@@ -25,7 +25,7 @@ class CameraLoader(UnrealBaseLoader):
 
     @staticmethod
     def _create_levels(
-        hierarchy_dir_list, hierarchy, asset_path_parent, asset
+        hierarchy_dir_list, hierarchy, asset_dir, asset
     ):
         # Create map for the shot, and create hierarchy of map. If the maps
         # already exist, we will use them.
@@ -38,12 +38,12 @@ class CameraLoader(UnrealBaseLoader):
                 "new_level",
                 params={"level_path": f"{h_dir}/{h_asset}_map"})
 
-        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        level = f"{asset_dir}/{asset}_map_camera.{asset}_map_camera"
         if not send_request(
                 "does_asset_exist", params={"asset_path": level}):
             send_request(
                 "new_level",
-                params={"level_path": f"{asset_path_parent}/{asset}_map"})
+                params={"level_path": f"{asset_dir}/{asset}_map_camera"})
 
             send_request("load_level", params={"level_path": master_level})
             send_request("add_level_to_world", params={"level_path": level})
@@ -51,11 +51,11 @@ class CameraLoader(UnrealBaseLoader):
         send_request("save_all_dirty_levels")
         send_request("load_level", params={"level_path": level})
 
-        return master_level
+        return master_level, level
 
     @staticmethod
     def _get_frame_info(h_dir):
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset_data = get_asset_by_name(
             project_name,
             h_dir.split('/')[-1],
@@ -86,23 +86,8 @@ class CameraLoader(UnrealBaseLoader):
         return min_frame, max_frame, asset_data.get('data').get("fps")
 
     def _get_sequences(self, hierarchy_dir_list, hierarchy):
-        # TODO refactor
-        #   - Creationg of hierarchy should be a function in unreal integration
-        #       - it's used in multiple loaders but must not be loader's logic
-        #       - hard to say what is purpose of the loop
-        #   - variables does not match their meaning
-        #       - why scene is stored to sequences?
-        #       - asset documents vs. elements
-        #   - cleanup variable names in whole function
-        #       - e.g. 'asset', 'asset_name', 'asset_data', 'asset_doc'
-        #   - really inefficient queries of asset documents
-        #   - existing asset in scene is considered as "with correct values"
-        #   - variable 'elements' is modified during it's loop
-        # Get all the sequences in the hierarchy. It will create them, if
-        # they don't exist.
         frame_ranges = []
         sequences = []
-        frame_ranges = []
         for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
             root_content = send_request(
                 "list_assets", params={
@@ -124,7 +109,7 @@ class CameraLoader(UnrealBaseLoader):
             else:
                 start_frame, end_frame, fps = self._get_frame_info(h_dir)
                 sequence = send_request(
-                    "generate_master_sequence",
+                    "generate_sequence",
                     params={
                         "asset_name": h,
                         "asset_path": h_dir,
@@ -136,47 +121,6 @@ class CameraLoader(UnrealBaseLoader):
                 frame_ranges.append((start_frame, end_frame))
 
         return sequences, frame_ranges
-
-    @staticmethod
-    def _process(sequences, frame_ranges, asset, asset_dir, filename):
-        project_name = legacy_io.active_project()
-        data = get_asset_by_name(project_name, asset)["data"]
-        start_frame = 0
-        end_frame = data.get('clipOut') - data.get('clipIn') + 1
-        fps = data.get("fps")
-
-        cam_sequence = send_request(
-            "generate_sequence",
-            params={
-                "asset_name": f"{asset}_camera",
-                "asset_path": asset_dir,
-                "start_frame": start_frame,
-                "end_frame": end_frame,
-                "fps": fps})
-
-        # Add sequences data to hierarchy
-        for i in range(len(sequences) - 1):
-            send_request(
-                "set_sequence_hierarchy",
-                params={
-                    "parent_path": sequences[i],
-                    "child_path": sequences[i + 1],
-                    "child_start_frame": frame_ranges[i + 1][0],
-                    "child_end_frame": frame_ranges[i + 1][1]})
-
-        send_request(
-            "set_sequence_hierarchy",
-            params={
-                "parent_path": sequences[-1],
-                "child_path": cam_sequence,
-                "child_start_frame": data.get('clipIn'),
-                "child_end_frame": data.get('clipOut')})
-
-        send_request(
-            "import_camera",
-            params={
-                "sequence_path": cam_sequence,
-                "import_filename": filename})
 
     def load(self, context, name=None, namespace=None, options=None):
         """
@@ -234,17 +178,42 @@ class CameraLoader(UnrealBaseLoader):
                 "name": name,
                 "version": unique_number})
 
-        asset_path_parent = Path(asset_dir).parent.as_posix()
-
         send_request("make_directory", params={"directory_path": asset_dir})
 
-        master_level = self._create_levels(
-            hierarchy_dir_list, hierarchy, asset_path_parent, asset)
+        master_level, level = self._create_levels(
+            hierarchy_dir_list, hierarchy, asset_dir, asset)
 
         sequences, frame_ranges = self._get_sequences(
             hierarchy_dir_list, hierarchy)
 
-        self._process(sequences, frame_ranges, asset, asset_dir, self.fname)
+        project_name = get_current_project_name()
+        data = get_asset_by_name(project_name, asset)["data"]
+
+        cam_sequence = send_request(
+            "generate_camera_sequence",
+            params={
+                "asset": asset,
+                "asset_dir": asset_dir,
+                "sequences": sequences,
+                "frame_ranges": frame_ranges,
+                "level": level,
+                "fps": data.get("fps"),
+                "clip_in": data.get("clipIn"),
+                "clip_out": data.get("clipOut")})
+
+        send_request(
+            "import_camera",
+            params={
+                "sequence_path": cam_sequence,
+                "import_filename": self.filepath_from_context(context)})
+
+        send_request(
+            "set_sequences_range",
+            params={
+                "sequence": cam_sequence,
+                "clip_in": data.get("clipIn"),
+                "clip_out": data.get("clipOut"),
+                "frame_start": data.get("frameStart")})
 
         data = {
             "schema": "ayon:container-2.0",
@@ -264,11 +233,15 @@ class CameraLoader(UnrealBaseLoader):
         send_request("save_all_dirty_levels")
         send_request("load_level", params={"level_path": master_level})
 
-        return send_request(
+        assets = send_request(
             "list_assets", params={
-                "directory_path": asset_dir,
+                "directory_path": hierarchy_dir_list[0],
                 "recursive": True,
-                "include_folder": True})
+                "include_folder": False})
+
+        send_request("save_listed_assets", params={"asset_list": assets})
+
+        return assets
 
     def update(self, container, representation):
         context = representation.get("context")
