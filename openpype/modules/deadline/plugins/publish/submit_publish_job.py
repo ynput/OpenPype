@@ -361,7 +361,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         self.log.info("Submitting Deadline job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10, verify=False)
         if not response.ok:
             raise Exception(response.text)
 
@@ -472,6 +472,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         host_name = self.context.data["hostName"]
         subset = instance_data["subset"]
         cameras = instance_data.get("cameras", [])
+        self.log.info(f"camera: {cameras}")
         instances = []
         # go through aovs in expected files
         for aov, files in exp_files[0].items():
@@ -497,7 +498,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 task[0].upper(), task[1:],
                 subset[0].upper(), subset[1:])
 
-            cam = [c for c in cameras if c in col.head]
+            cam = [c for c in cameras if c in cols[0].head]
+            self.log.debug(f"cam: {cam}")
             if cam:
                 if aov:
                     subset_name = '{}_{}_{}'.format(group_name, cam, aov)
@@ -897,6 +899,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if key in instance.data.get("families", []):
                 for v in values:
                     instance_skeleton_data[v] = instance.data.get(v)
+
+        # if there are cameras, get the camera
+        # ]data for instance_skeleton_data
+        cameras = instance.data.get("cameras")
+        if cameras:
+            instance_skeleton_data["cameras"] = cameras
 
         # look into instance data if representations are not having any
         # which are having tag `publish_on_farm` and include them
