@@ -942,7 +942,7 @@ class ProjectPushItemProcess:
                 project_name, subset_id
             )
             if last_version_doc:
-                version += int(last_version_doc["name"])
+                version = int(last_version_doc["name"]) + 1
             else:
                 version = get_versioning_start(
                     project_name,
@@ -952,6 +952,7 @@ class ProjectPushItemProcess:
                     family=families[0],
                     subset=subset_doc["name"]
                 )
+                
 
         existing_version_doc = get_version_by_name(
             project_name, version, subset_id
