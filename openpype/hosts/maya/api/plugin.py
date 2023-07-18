@@ -485,7 +485,8 @@ class ReferenceLoader(Loader):
         namespace=None,
         options=None
     ):
-        assert os.path.exists(self.fname), "%s does not exist." % self.fname
+        path = self.filepath_from_context(context)
+        assert os.path.exists(path), "%s does not exist." % path
 
         asset = context['asset']
         subset = context['subset']

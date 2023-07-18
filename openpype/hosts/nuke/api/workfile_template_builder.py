@@ -25,7 +25,8 @@ from .lib import (
     select_nodes,
     duplicate_node,
     node_tempfile,
-    get_main_window
+    get_main_window,
+    WorkfileSettings,
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
@@ -954,6 +955,9 @@ class NukePlaceholderCreatePlugin(
 def build_workfile_template(*args, **kwargs):
     builder = NukeTemplateBuilder(registered_host())
     builder.build_template(*args, **kwargs)
+
+    # set all settings to shot context default
+    WorkfileSettings().set_context_settings()
 
 
 def update_workfile_template(*args):

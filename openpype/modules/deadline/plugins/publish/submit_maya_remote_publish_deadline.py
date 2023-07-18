@@ -110,8 +110,8 @@ class MayaSubmitRemotePublishDeadline(
 
         # TODO replace legacy_io with context.data
         environment["AVALON_PROJECT"] = project_name
-        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
+        environment["AVALON_ASSET"] = instance.context.data["asset"]
+        environment["AVALON_TASK"] = instance.context.data["task"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_REMOTE_JOB"] = "1"
