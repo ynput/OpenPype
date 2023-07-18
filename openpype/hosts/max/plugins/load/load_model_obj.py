@@ -18,7 +18,7 @@ class ObjLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.fname)
+        filepath = os.path.normpath(self.filepath_from_context(context))
         self.log.debug("Executing command to import..")
 
         rt.Execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')

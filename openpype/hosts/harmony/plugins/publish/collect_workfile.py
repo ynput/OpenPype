@@ -36,5 +36,5 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "family": family,
             "families": [family],
             "representations": [],
-            "asset": os.environ["AVALON_ASSET"]
+            "asset": context.data["asset"]
         })

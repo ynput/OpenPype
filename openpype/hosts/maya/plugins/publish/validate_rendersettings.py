@@ -9,6 +9,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError,
 )
 from openpype.hosts.maya.api import lib
 
@@ -112,17 +113,20 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
-        assert invalid is False, ("Invalid render settings "
-                                  "found for '{}'!".format(instance.name))
+        if invalid:
+            raise PublishValidationError(
+                title="Invalid Render Settings",
+                message=("Invalid render settings found "
+                         "for '{}'!".format(instance.name))
+            )
 
     @classmethod
     def get_invalid(cls, instance):
 
         invalid = False
-        multipart = False
 
         renderer = instance.data['renderer']
-        layer = instance.data['setMembers']
+        layer = instance.data['renderlayer']
         cameras = instance.data.get("cameras", [])
 
         # Get the node attributes for current renderer
@@ -280,7 +284,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     render_value = cmds.getAttr(
                         "{}.{}".format(node, data["attribute"])
                     )
-                except RuntimeError:
+                except PublishValidationError:
                     invalid = True
                     cls.log.error(
                         "Cannot get value of {}.{}".format(

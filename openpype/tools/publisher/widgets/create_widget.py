@@ -2,6 +2,7 @@ import re
 
 from qtpy import QtWidgets, QtCore, QtGui
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     PRE_CREATE_THUMBNAIL_KEY,
@@ -203,7 +204,9 @@ class CreateWidget(QtWidgets.QWidget):
         variant_subset_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
         variant_subset_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         variant_subset_layout.addRow("Variant", variant_widget)
-        variant_subset_layout.addRow("Subset", subset_name_input)
+        variant_subset_layout.addRow(
+            "Product" if AYON_SERVER_ENABLED else "Subset",
+            subset_name_input)
 
         creator_basics_layout = QtWidgets.QVBoxLayout(creator_basics_widget)
         creator_basics_layout.setContentsMargins(0, 0, 0, 0)

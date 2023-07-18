@@ -4,6 +4,11 @@ from .constants import (
     PRE_CREATE_THUMBNAIL_KEY,
 )
 
+from .utils import (
+    get_last_versions_for_instances,
+    get_next_versions_for_instances,
+)
+
 from .subset_name import (
     TaskNotSetError,
     get_subset_name_template,
@@ -46,6 +51,9 @@ __all__ = (
     "DEFAULT_SUBSET_TEMPLATE",
     "PRE_CREATE_THUMBNAIL_KEY",
 
+    "get_last_versions_for_instances",
+    "get_next_versions_for_instances",
+
     "TaskNotSetError",
     "get_subset_name_template",
     "get_subset_name",
@@ -65,6 +73,8 @@ __all__ = (
     "deregister_creator_plugin",
     "register_creator_plugin_path",
     "deregister_creator_plugin_path",
+
+    "cache_and_get_instances",
 
     "CreatedInstance",
     "CreateContext",

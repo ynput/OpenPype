@@ -60,11 +60,6 @@
                 255,
                 255,
                 255
-            ],
-            "families_to_review": [
-                "review",
-                "renderlayer",
-                "renderscene"
             ]
         },
         "ValidateProjectSettings": {

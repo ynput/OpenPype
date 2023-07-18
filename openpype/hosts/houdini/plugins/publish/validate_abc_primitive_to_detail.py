@@ -17,7 +17,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["pointcache"]
+    families = ["abc"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"
 
@@ -72,6 +72,14 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
         # wildcards for Primitive to Detail. This simplifies the check.
         cls.log.debug("Checking Primitive to Detail pattern: %s" % pattern)
         cls.log.debug("Checking with path attribute: %s" % path_attr)
+
+        if not hasattr(output_node, "geometry"):
+            # In the case someone has explicitly set an Object
+            # node instead of a SOP node in Geometry context
+            # then for now we ignore - this allows us to also
+            # export object transforms.
+            cls.log.warning("No geometry output node found, skipping check..")
+            return
 
         # Check if the primitive attribute exists
         frame = instance.data.get("frameStart", 0)

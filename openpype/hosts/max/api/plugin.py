@@ -15,6 +15,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
     parameters main rollout:OPparams
     (
         all_handles type:#maxObjectTab tabSize:0 tabSizeVariable:on
+        sel_list type:#stringTab tabSize:0 tabSizeVariable:on
     )
 
     rollout OPparams "OP Parameters"
@@ -30,11 +31,42 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             handle_name = obj_name + "<" + handle as string + ">"
             return handle_name
         )
+        fn nodes_to_add node =
+        (
+            sceneObjs = #()
+            if classOf node == Container do return false
+            n = node as string
+            for obj in Objects do
+            (
+                tmp_obj = obj as string
+                append sceneObjs tmp_obj
+            )
+            if sel_list != undefined do
+            (
+                for obj in sel_list do
+                (
+                    idx = findItem sceneObjs obj
+                    if idx do
+                    (
+                        deleteItem sceneObjs idx
+                    )
+                )
+            )
+            idx = findItem sceneObjs n
+            if idx then return true else false
+        )
+
+        fn nodes_to_rmv node =
+        (
+            n = node as string
+            idx = findItem sel_list n
+            if idx then return true else false
+        )
 
         on button_add pressed do
         (
             current_selection = selectByName title:"Select Objects to add to
-            the Container" buttontext:"Add"
+            the Container" buttontext:"Add" filter:nodes_to_add
             if current_selection == undefined then return False
             temp_arr = #()
             i_node_arr = #()
@@ -42,8 +74,14 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             (
                 handle_name = node_to_name c
                 node_ref = NodeTransformMonitor node:c
+                idx = finditem list_node.items handle_name
+                if idx do (
+                    continue
+                )
+                name = c as string
                 append temp_arr handle_name
                 append i_node_arr node_ref
+                append sel_list name
             )
             all_handles = join i_node_arr all_handles
             list_node.items = join temp_arr list_node.items
@@ -52,7 +90,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
         on button_del pressed do
         (
             current_selection = selectByName title:"Select Objects to remove
-            from the Container" buttontext:"Remove"
+            from the Container" buttontext:"Remove" filter: nodes_to_rmv
             if current_selection == undefined then return False
             temp_arr = #()
             i_node_arr = #()
@@ -63,6 +101,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
             (
                 node_ref = NodeTransformMonitor node:c as string
                 handle_name = node_to_name c
+                n = c as string
                 tmp_all_handles = #()
                 for i in all_handles do
                 (
@@ -79,6 +118,11 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 if idx do
                 (
                     new_temp_arr = DeleteItem list_node.items idx
+                )
+                idx = finditem sel_list n
+                if idx do
+                (
+                    sel_list = DeleteItem sel_list idx
                 )
             )
             all_handles = join i_node_arr new_i_node_arr
