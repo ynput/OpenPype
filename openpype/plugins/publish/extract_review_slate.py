@@ -442,11 +442,11 @@ class ExtractReviewSlate(publish.Extractor):
             input_width = width
             input_height = height
 
-            input_pixel_aspect = str(stream.get("sample_aspect_ratio"))
+            input_pixel_aspect = stream.get("sample_aspect_ratio")
             if input_pixel_aspect is not None:
                 try:
                     input_pixel_aspect = float(
-                        eval(input_pixel_aspect.replace(':', '/')))
+                        eval(str(input_pixel_aspect).replace(':', '/')))
                 except Exception:
                     self.log.debug(
                         "__Converting pixel aspect to float failed: {}".format(
