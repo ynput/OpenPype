@@ -197,7 +197,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             if version_number is None:
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
-                    version_number += int(latest_version) + 1
+                    version_number = int(latest_version) + 1
 
             # If version is not specified for instance or context
             if version_number is None:
