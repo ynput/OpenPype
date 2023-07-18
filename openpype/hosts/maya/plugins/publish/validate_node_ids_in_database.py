@@ -5,6 +5,7 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.client.entities import get_projects
 
 
 class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
@@ -43,12 +44,16 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                                                       nodes=instance[:])
 
         # check ids against database ids
-        project_name = legacy_io.active_project()
-        asset_docs = get_assets(project_name, fields=["_id"])
-        db_asset_ids = {
-            str(asset_doc["_id"])
-            for asset_doc in asset_docs
-        }
+        projects_list = [legacy_io.active_project()]
+        for project in get_projects(fields=["name", "data.library_project"]):
+            if project.get("data", {}).get("library_project", False):
+                projects_list.append(project["name"])
+
+        db_asset_ids = set()
+        for project_name in projects_list:
+            asset_docs = get_assets(project_name, fields=["_id"])
+            assets_ids = set( str(asset_doc["_id"]) for asset_doc in asset_docs )
+            db_asset_ids.update(assets_ids)
 
         # Get all asset IDs
         for node in id_required_nodes:
@@ -64,3 +69,12 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                 invalid.append(node)
 
         return invalid
+
+    def get_library_project_names(self):
+        libraries = list()
+
+        for project in get_projects(fields=["name", "data.library_project"]):
+            if project.get("data", {}).get("library_project", False):
+                libraries.append(project["name"])
+
+        return libraries
