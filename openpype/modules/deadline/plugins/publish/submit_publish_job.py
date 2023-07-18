@@ -575,7 +575,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         template_data["family"] = family
         template_data["version"] = version
 
-        render_templates = anatomy.templates_obj["render"]
+        # temporary fix, Ayon Settings don't have 'render' template, but they
+        # have "publish" TODO!!!
+        template_name = "render"
+        if os.environ.get("USE_AYON_SERVER") == '1':
+            template_name = "publish"
+
+        render_templates = anatomy.templates_obj[template_name]
         if "folder" in render_templates:
             publish_folder = render_templates["folder"].format_strict(
                 template_data
