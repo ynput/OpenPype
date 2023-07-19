@@ -3,15 +3,16 @@ import os
 import platform
 import re
 import subprocess
+import tempfile
 from distutils import dir_util
+from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import List, Union
-import tempfile
-from distutils.dir_util import copy_tree
-
-import openpype.hosts.unreal.lib as ue_lib
 
 from qtpy import QtCore
+
+import openpype.hosts.unreal.lib as ue_lib
+from openpype.settings import get_project_settings
 
 
 def parse_comp_progress(line: str, progress_signal: QtCore.Signal(int)):
@@ -54,24 +55,36 @@ class UEProjectGenerationWorker(QtCore.QObject):
     dev_mode = False
 
     def setup(self, ue_version: str,
-              project_name,
+              project_name: str,
+              unreal_project_name,
               engine_path: Path,
               project_dir: Path,
               dev_mode: bool = False,
               env: dict = None):
+        """Set the worker with necessary parameters.
+
+        Args:
+            ue_version (str): Unreal Engine version.
+            project_name (str): Name of the project in AYON.
+            unreal_project_name (str): Name of the project in Unreal.
+            engine_path (Path): Path to the Unreal Engine.
+            project_dir (Path): Path to the project directory.
+            dev_mode (bool, optional): Whether to run the project in dev mode.
+                Defaults to False.
+            env (dict, optional): Environment variables. Defaults to None.
+
+        """
 
         self.ue_version = ue_version
         self.project_dir = project_dir
         self.env = env or os.environ
 
-        preset = ue_lib.get_project_settings(
-            project_name
-        )["unreal"]["project_setup"]
+        preset = get_project_settings(project_name)["unreal"]["project_setup"]
 
         if dev_mode or preset["dev_mode"]:
             self.dev_mode = True
 
-        self.project_name = project_name
+        self.project_name = unreal_project_name
         self.engine_path = engine_path
 
     def run(self):

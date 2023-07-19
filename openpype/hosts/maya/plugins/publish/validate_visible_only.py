@@ -2,7 +2,10 @@ import pyblish.api
 
 from openpype.hosts.maya.api.lib import iter_visible_nodes_in_range
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin):
@@ -27,7 +30,7 @@ class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             start, end = self.get_frame_range(instance)
-            raise RuntimeError("No visible nodes found in "
+            raise PublishValidationError("No visible nodes found in "
                                "frame range {}-{}.".format(start, end))
 
     @classmethod

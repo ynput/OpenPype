@@ -42,8 +42,10 @@ from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
     get_current_project_name,
     discover_legacy_creator_plugins,
-    legacy_io,
     Anatomy,
+    get_current_host_name,
+    get_current_project_name,
+    get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
     get_current_project_asset,
@@ -553,7 +555,9 @@ def add_write_node_legacy(name, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(kwarg["file"])
 
@@ -589,7 +593,9 @@ def add_write_node(name, file_path, knobs, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(file_path)
 
@@ -966,7 +972,7 @@ def check_inventory_versions():
     if not repre_ids:
         return
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     # Find representations based on found containers
     repre_docs = get_representations(
         project_name,
@@ -1124,11 +1130,15 @@ def format_anatomy(data):
     anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    padding = int(
-        anatomy.templates["render"].get(
-            "frame_padding"
+    padding = None
+    if "frame_padding" in anatomy.templates.keys():
+        padding = int(anatomy.templates["frame_padding"])
+    elif "render" in anatomy.templates.keys():
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding"
+            )
         )
-    )
 
     version = data.get("version", None)
     if not version:
@@ -1138,7 +1148,7 @@ def format_anatomy(data):
     project_name = anatomy.project_name
     asset_name = data["asset"]
     task_name = data["task"]
-    host_name = os.environ["AVALON_APP"]
+    host_name = get_current_host_name()
     context_data = get_template_data_with_names(
         project_name, asset_name, task_name, host_name
     )
@@ -1192,8 +1202,10 @@ def create_prenodes(
 
         # create node
         now_node = nuke.createNode(
-            nodeclass, "name {}".format(name))
-        now_node.hideControlPanel()
+            nodeclass,
+            "name {}".format(name),
+            inpanel=False
+        )
 
         # add for dependency linking
         for_dependency[name] = {
@@ -1317,12 +1329,17 @@ def create_write_node(
             input_name = str(input.name()).replace(" ", "")
             # if connected input node was defined
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input_name))
+                "Input",
+                "name {}".format(input_name),
+                inpanel=False
+            )
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
 
         # creating pre-write nodes `prenodes`
         last_prenode = create_prenodes(
@@ -1342,15 +1359,13 @@ def create_write_node(
             imageio_writes["knobs"],
             **data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -1461,7 +1476,7 @@ def create_write_node_legacy(
         if knob["name"] == "file_type":
             representation = knob["value"]
 
-    host_name = os.environ.get("AVALON_APP")
+    host_name = get_current_host_name()
     try:
         data.update({
             "app": host_name,
@@ -1517,8 +1532,10 @@ def create_write_node_legacy(
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
         # creating pre-write nodes `prenodes`
         if prenodes:
             for node in prenodes:
@@ -1530,8 +1547,10 @@ def create_write_node_legacy(
 
                 # create node
                 now_node = nuke.createNode(
-                    klass, "name {}".format(pre_node_name))
-                now_node.hideControlPanel()
+                    klass,
+                    "name {}".format(pre_node_name),
+                    inpanel=False
+                )
 
                 # add data to knob
                 for _knob in knobs:
@@ -1561,14 +1580,18 @@ def create_write_node_legacy(
                     if isinstance(dependent, (tuple or list)):
                         for i, node_name in enumerate(dependent):
                             input_node = nuke.createNode(
-                                "Input", "name {}".format(node_name))
-                            input_node.hideControlPanel()
+                                "Input",
+                                "name {}".format(node_name),
+                                inpanel=False
+                            )
                             now_node.setInput(1, input_node)
 
                     elif isinstance(dependent, str):
                         input_node = nuke.createNode(
-                            "Input", "name {}".format(node_name))
-                        input_node.hideControlPanel()
+                            "Input",
+                            "name {}".format(node_name),
+                            inpanel=False
+                        )
                         now_node.setInput(0, input_node)
 
                 else:
@@ -1583,15 +1606,13 @@ def create_write_node_legacy(
             "inside_{}".format(name),
             **_data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -1914,15 +1935,18 @@ class WorkfileSettings(object):
     def __init__(self, root_node=None, nodes=None, **kwargs):
         project_doc = kwargs.get("project")
         if project_doc is None:
-            project_name = legacy_io.active_project()
+            project_name = get_current_project_name()
             project_doc = get_project(project_name)
+        else:
+            project_name = project_doc["name"]
 
         Context._project_doc = project_doc
+        self._project_name = project_name
         self._asset = (
             kwargs.get("asset_name")
-            or legacy_io.Session["AVALON_ASSET"]
+            or get_current_asset_name()
         )
-        self._asset_entity = get_current_project_asset(self._asset)
+        self._asset_entity = get_asset_by_name(project_name, self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
 
@@ -2315,7 +2339,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Resetting resolution")
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset_data = self._asset_entity["data"]
 
         format_data = {
@@ -2394,7 +2418,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         from .utils import set_context_favorites
 
         work_dir = os.getenv("AVALON_WORKDIR")
-        asset = os.getenv("AVALON_ASSET")
+        asset = get_current_asset_name()
         favorite_items = OrderedDict()
 
         # project
@@ -2817,7 +2841,8 @@ def add_scripts_menu():
         return
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     config = project_settings["nuke"]["scriptsmenu"]["definition"]
     _menu = project_settings["nuke"]["scriptsmenu"]["name"]
 
@@ -2835,7 +2860,8 @@ def add_scripts_menu():
 def add_scripts_gizmo():
 
     # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    project_name = get_current_project_name()
+    project_settings = get_project_settings(project_name)
     platform_name = platform.system().lower()
 
     for gizmo_settings in project_settings["nuke"]["gizmo"]:
