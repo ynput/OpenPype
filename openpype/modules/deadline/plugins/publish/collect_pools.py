@@ -36,11 +36,16 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
             instance.data["primaryPool"] = (
                 attr_values.get("primaryPool") or self.primary_pool or "none"
             )
+        if instance.data["primaryPool"] == "-":
+            instance.data["primaryPool"] = None
 
         if not instance.data.get("secondaryPool"):
             instance.data["secondaryPool"] = (
                 attr_values.get("secondaryPool") or self.secondary_pool or "none"  # noqa
             )
+
+        if instance.data["secondaryPool"] == "-":
+            instance.data["secondaryPool"] = None
 
     @classmethod
     def get_attribute_defs(cls):
