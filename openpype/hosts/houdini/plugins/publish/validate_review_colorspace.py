@@ -33,9 +33,10 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         import hou  # noqa
+        import os
 
         rop_node = hou.node(instance.data["instance_node"])
-        if hou.Color.ocio_defaultDisplay() == "default":
+        if os.getenv("OCIO") is None:
             cls.log.warning(
                 "Default Houdini colorspace is used, "
                 " skipping check.."
@@ -78,8 +79,8 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         display = hou.Color.ocio_defaultDisplay()
         view = hou.Color.ocio_defaultView()
 
-        default_view_space = config.getDisplayColorSpaceName(
-            display, view)
+        default_view_space = config.getDisplayViewColorSpaceName(
+            display, view) # works with PyOpenColorIO 2.2.1
 
         rop_node.setParms({"ociocolorspace": default_view_space})
         cls.log.debug(
