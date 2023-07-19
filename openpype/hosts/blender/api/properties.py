@@ -179,6 +179,7 @@ def register():
     bpy.types.Scene.openpype_instance_active_index = bpy.props.IntProperty(
         name="OpenPype Instance Active Index", options={"HIDDEN"}
     )
+    # Cannot store the containers in the scene, it overloads the RAM when rendering
     bpy.types.WindowManager.openpype_containers = bpy.props.CollectionProperty(
         name="OpenPype Containers", type=OpenpypeContainer, options={"HIDDEN"}
     )
