@@ -305,9 +305,10 @@ class CameraLoader(UnrealBaseLoader):
     def remove(self, container):
         root = self.root
         path = container["namespace"]
+        asset = container.get('asset')
 
         send_request(
             "remove_camera", params={
-                "root": root, "asset_dir": path})
+                "asset_dir": path, "asset": asset, "root": root})
 
-        send_request("remove_asset", params={"path": path})
+        super(CameraLoader, self).remove(container)
