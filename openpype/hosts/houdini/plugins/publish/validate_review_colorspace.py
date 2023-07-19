@@ -80,7 +80,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         view = hou.Color.ocio_defaultView()
 
         default_view_space = config.getDisplayViewColorSpaceName(
-            display, view) # works with PyOpenColorIO 2.2.1
+            display, view)  # works with PyOpenColorIO 2.2.1
 
         rop_node.setParms({"ociocolorspace": default_view_space})
         cls.log.debug(
