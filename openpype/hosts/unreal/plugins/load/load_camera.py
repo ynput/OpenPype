@@ -244,30 +244,63 @@ class CameraLoader(UnrealBaseLoader):
         return assets
 
     def update(self, container, representation):
-        context = representation.get("context")
+        sequence_path, curr_time, is_cam_lock, vp_loc, vp_rot = send_request(
+            "get_current_sequence_and_level_info")
+
+        self.log.info(f"curr_time: {curr_time}")
+
+        new_sequence = send_request(
+            "update_camera",
+            params={
+                "asset_dir": container.get('namespace'),
+                "asset": container.get('asset'),
+                "root": self.root})
+
+        send_request(
+            "import_camera",
+            params={
+                "sequence_path": new_sequence,
+                "import_filename": str(representation["data"]["path"])})
+
+        project_name = get_current_project_name()
         asset = container.get('asset')
-        asset_dir = container.get("namespace")
-        filename = representation["data"]["path"]
+        data = get_asset_by_name(project_name, asset)["data"]
 
-        root = self.root
-        hierarchy = context.get('hierarchy').split("/")
-        h_dir = f"{root}/{hierarchy[0]}"
-        h_asset = hierarchy[0]
-        master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+        send_request(
+            "set_sequences_range",
+            params={
+                "sequence": new_sequence,
+                "clip_in": data.get("clipIn"),
+                "clip_out": data.get("clipOut"),
+                "frame_start": data.get("frameStart")})
 
-        parent_sequence = send_request(
-            "remove_camera", params={
-                "root": root, "asset_dir": asset_dir})
-
-        sequences = [parent_sequence]
-        frame_ranges = []
-
-        self._process(sequences, frame_ranges, asset, asset_dir, filename)
-
-        super(UnrealBaseLoader, self).update(container, representation)
+        super(CameraLoader, self).update(container, representation)
 
         send_request("save_all_dirty_levels")
-        send_request("load_level", params={"level_path": master_level})
+
+        namespace = container.get('namespace').replace(f"{self.root}/", "")
+        ms_asset = namespace.split('/')[0]
+        asset_path = f"{self.root}/{ms_asset}"
+
+        assets = send_request(
+            "list_assets", params={
+                "directory_path": asset_path,
+                "recursive": True,
+                "include_folder": False})
+
+        send_request("save_listed_assets", params={"asset_list": assets})
+
+        send_request(
+            "get_and_load_master_level", params={"path": asset_path})
+
+        send_request(
+            "set_current_sequence_and_level_info",
+            params={
+                "sequence_path": sequence_path,
+                "curr_time": curr_time,
+                "is_cam_lock": is_cam_lock,
+                "vp_loc": vp_loc,
+                "vp_rot": vp_rot})
 
     def remove(self, container):
         root = self.root

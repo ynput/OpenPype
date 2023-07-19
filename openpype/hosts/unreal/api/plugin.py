@@ -236,7 +236,7 @@ class UnrealBaseLoader(LoaderPlugin):
             "parent": str(representation["parent"])
         }
 
-        containerise(asset_dir, container_name, data)
+        imprint(f"{asset_dir}/{container_name}", data)
 
     def remove(self, container):
         path = container["namespace"]
