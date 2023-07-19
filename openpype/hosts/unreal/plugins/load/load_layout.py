@@ -23,6 +23,7 @@ from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
     send_request,
     containerise,
+    imprint,
 )
 
 
@@ -592,77 +593,62 @@ class LayoutLoader(UnrealBaseLoader):
 
         return assets
 
-    @staticmethod
-    def _remove_bound_assets(asset_dir):
-        parent_path = Path(asset_dir).parent.as_posix()
-
-        layout_level = send_request(
-            "get_first_asset_of_class",
-            params={
-                "class_name": "World",
-                "path": parent_path,
-                "recursive": False})
-
-        send_request("load_level", params={"level_path": layout_level})
-
-        layout_sequence = send_request(
-            "get_first_asset_of_class",
-            params={
-                "class_name": "LevelSequence",
-                "path": asset_dir,
-                "recursive": False})
-
-        send_request(
-            "delete_all_bound_assets",
-            params={"level_sequence_path": layout_sequence})
-
     def update(self, container, representation):
-        root = self.root
         asset_dir = container.get('namespace')
-        container_name = container['objectName']
         context = representation.get("context")
+        hierarchy = context.get('hierarchy').split("/")
 
         data = get_current_project_settings()
-        create_sequences_option = data["unreal"]["level_sequences_for_layouts"]
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
-        master_level = None
-        layout_sequence = None
+        sequence_path, curr_time, is_cam_lock, vp_loc, vp_rot = send_request(
+            "get_current_sequence_and_level_info")
 
-        if create_sequences_option:
-            hierarchy = context.get('hierarchy').split("/")
-            h_dir = f"{root}/{hierarchy[0]}"
-            h_asset = hierarchy[0]
-            master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+        sequence, master_level, prev_level = send_request(
+            "update_layout", params={
+                "asset_dir": asset_dir,
+                "root": self.root,
+                "hierarchy": hierarchy,
+                "create_sequences": create_sequences})
 
-            self._remove_bound_assets(asset_dir)
-
-        prev_level = None if master_level else send_request(
-            "get_current_level")
         source_path = get_representation_path(representation)
 
-        loaded_assets = self._process(source_path, asset_dir, layout_sequence)
+        loaded_assets = self._process_assets(source_path, asset_dir, sequence)
 
         data = {
             "representation": str(representation["_id"]),
             "parent": str(representation["parent"]),
             "loaded_assets": loaded_assets
         }
-
-        containerise(asset_dir, container_name, data)
+        imprint(f"{asset_dir}/{container.get('objectName')}", data)
 
         send_request("save_current_level")
+
+        save_dir = (
+            f"{self.root}/{hierarchy[0]}" if create_sequences else asset_dir)
 
         if master_level:
             send_request("load_level", params={"level_path": master_level})
         elif prev_level:
             send_request("load_level", params={"level_path": prev_level})
 
-        if curr_level_sequence:
-            LevelSequenceLib.open_level_sequence(curr_level_sequence)
-            LevelSequenceLib.set_current_time(curr_time)
-            LevelSequenceLib.set_lock_camera_cut_to_viewport(is_cam_lock)
+        assets = send_request(
+            "list_assets", params={
+                "directory_path": save_dir,
+                "recursive": True,
+                "include_folder": False})
 
-        editor_subsystem.set_level_viewport_camera_info(vp_loc, vp_rot)
+        send_request("save_listed_assets", params={"asset_list": assets})
+
+        send_request(
+            "set_current_sequence_and_level_info",
+            params={
+                "sequence_path": sequence_path,
+                "curr_time": curr_time,
+                "is_cam_lock": is_cam_lock,
+                "vp_loc": vp_loc,
+                "vp_rot": vp_rot})
+
 
     def remove(self, container):
         """

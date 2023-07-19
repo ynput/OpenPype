@@ -247,8 +247,6 @@ class CameraLoader(UnrealBaseLoader):
         sequence_path, curr_time, is_cam_lock, vp_loc, vp_rot = send_request(
             "get_current_sequence_and_level_info")
 
-        self.log.info(f"curr_time: {curr_time}")
-
         new_sequence = send_request(
             "update_camera",
             params={
