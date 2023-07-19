@@ -216,6 +216,9 @@ class BlenderCreator(Creator):
                                     avalon_prop
                                 )
 
+            shared_data["blender_cached_subsets"] = cache
+            shared_data["blender_cached_legacy_subsets"] = cache_legacy
+
         return shared_data
 
 
@@ -257,14 +260,17 @@ class BlenderCreator(Creator):
         if not cached_subsets:
             return
 
-        for instance_data in cached_subsets:
+        for instance_data in cached_subsets.get(self.identifier, []):
             # Process only instances that were created by this creator
+            data = dict()
+            for key, value in instance_data.items():
+                data[key] = value
             creator_id = instance_data.get('creator_identifier')
 
             if creator_id == self.identifier:
                 # Create instance object from existing data
                 instance = CreatedInstance.from_existing(
-                    instance_data, self
+                    data, self
                 )
 
                 # Add instance to create context
