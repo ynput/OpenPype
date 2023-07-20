@@ -11,9 +11,11 @@ def get_python_home() -> Path:
 
 def get_python_executable(python_home):
     if platform.system() == "Windows":
-        python_executable = python_home / "python.exe"
+        python_executable = Path(os.path.join(python_home, "python.exe"))
     else:
-        python_executable = python_home.parent / "bin" / "python3"
+        python_executable = Path(
+            os.path.join(python_home.parent, "bin", "python3")
+        )
     if not python_executable.exists():
         print(f"No Python executable found at {python_home}")
         return
