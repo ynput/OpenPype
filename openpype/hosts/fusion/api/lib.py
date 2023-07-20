@@ -22,8 +22,14 @@ self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, comp=None, set_render_range=True,
-                       handle_start=0, handle_end=0):
+def update_frame_range(
+    start,
+    end,
+    comp=None,
+    set_render_range=True,
+    handle_start=0,
+    handle_end=0,
+):
     """Set Fusion comp's start and end frame range
 
     Args:
@@ -49,15 +55,17 @@ def update_frame_range(start, end, comp=None, set_render_range=True,
 
     attrs = {
         "COMPN_GlobalStart": start - handle_start,
-        "COMPN_GlobalEnd": end + handle_end
+        "COMPN_GlobalEnd": end + handle_end,
     }
 
     # set frame range
     if set_render_range:
-        attrs.update({
-            "COMPN_RenderStart": start,
-            "COMPN_RenderEnd": end
-        })
+        attrs.update(
+            {
+                "COMPN_RenderStart": start,
+                "COMPN_RenderEnd": end,
+            }
+        )
 
     with comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
@@ -70,9 +78,13 @@ def set_asset_framerange():
     end = asset_doc["data"]["frameEnd"]
     handle_start = asset_doc["data"]["handleStart"]
     handle_end = asset_doc["data"]["handleEnd"]
-    update_frame_range(start, end, set_render_range=True,
-                       handle_start=handle_start,
-                       handle_end=handle_end)
+    update_frame_range(
+        start,
+        end,
+        set_render_range=True,
+        handle_start=handle_start,
+        handle_end=handle_end,
+    )
 
 
 def set_asset_resolution():
@@ -82,12 +94,15 @@ def set_asset_resolution():
     height = asset_doc["data"]["resolutionHeight"]
     comp = get_current_comp()
 
-    print("Setting comp frame format resolution to {}x{}".format(width,
-                                                                 height))
-    comp.SetPrefs({
-        "Comp.FrameFormat.Width": width,
-        "Comp.FrameFormat.Height": height,
-    })
+    print(
+        "Setting comp frame format resolution to {}x{}".format(width, height)
+    )
+    comp.SetPrefs(
+        {
+            "Comp.FrameFormat.Width": width,
+            "Comp.FrameFormat.Height": height,
+        }
+    )
 
 
 def validate_comp_prefs(comp=None, force_repair=False):
@@ -108,7 +123,7 @@ def validate_comp_prefs(comp=None, force_repair=False):
         "data.fps",
         "data.resolutionWidth",
         "data.resolutionHeight",
-        "data.pixelAspect"
+        "data.pixelAspect",
     ]
     asset_doc = get_current_project_asset(fields=fields)
     asset_data = asset_doc["data"]
@@ -125,7 +140,7 @@ def validate_comp_prefs(comp=None, force_repair=False):
         ("resolutionWidth", "Width", "Resolution Width"),
         ("resolutionHeight", "Height", "Resolution Height"),
         ("pixelAspectX", "AspectX", "Pixel Aspect Ratio X"),
-        ("pixelAspectY", "AspectY", "Pixel Aspect Ratio Y")
+        ("pixelAspectY", "AspectY", "Pixel Aspect Ratio Y"),
     ]
 
     invalid = []
@@ -133,9 +148,9 @@ def validate_comp_prefs(comp=None, force_repair=False):
         asset_value = asset_data[key]
         comp_value = comp_frame_format_prefs.get(comp_key)
         if asset_value != comp_value:
-            invalid_msg = "{} {} should be {}".format(label,
-                                                      comp_value,
-                                                      asset_value)
+            invalid_msg = "{} {} should be {}".format(
+                label, comp_value, asset_value
+            )
             invalid.append(invalid_msg)
 
             if not force_repair:
@@ -146,7 +161,8 @@ def validate_comp_prefs(comp=None, force_repair=False):
                         pref=label,
                         value=comp_value,
                         asset_name=asset_doc["name"],
-                        asset_value=asset_value)
+                        asset_value=asset_value,
+                    )
                 )
 
     if invalid:
@@ -167,6 +183,7 @@ def validate_comp_prefs(comp=None, force_repair=False):
         from . import menu
         from openpype.widgets import popup
         from openpype.style import load_stylesheet
+
         dialog = popup.Popup(parent=menu.menu)
         dialog.setWindowTitle("Fusion comp has invalid configuration")
 
@@ -181,10 +198,12 @@ def validate_comp_prefs(comp=None, force_repair=False):
         dialog.setStyleSheet(load_stylesheet())
 
 
-def switch_item(container,
-                asset_name=None,
-                subset_name=None,
-                representation_name=None):
+def switch_item(
+    container,
+    asset_name=None,
+    subset_name=None,
+    representation_name=None,
+):
     """Switch container asset, subset or representation of a container by name.
 
     It'll always switch to the latest version - of course a different
@@ -211,7 +230,8 @@ def switch_item(container,
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
         repre_parent_docs = get_representation_parents(
-            project_name, representation)
+            project_name, representation
+        )
         if repre_parent_docs:
             version, subset, asset, _ = repre_parent_docs
         else:
@@ -228,14 +248,18 @@ def switch_item(container,
 
     # Find the new one
     asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
-    assert asset, ("Could not find asset in the database with the name "
-                   "'%s'" % asset_name)
+    assert asset, (
+        "Could not find asset in the database with the name "
+        "'%s'" % asset_name
+    )
 
     subset = get_subset_by_name(
         project_name, subset_name, asset["_id"], fields=["_id"]
     )
-    assert subset, ("Could not find subset in the database with the name "
-                    "'%s'" % subset_name)
+    assert subset, (
+        "Could not find subset in the database with the name "
+        "'%s'" % subset_name
+    )
 
     version = get_last_version_by_subset_id(
         project_name, subset["_id"], fields=["_id"]
@@ -247,8 +271,10 @@ def switch_item(container,
     representation = get_representation_by_name(
         project_name, representation_name, version["_id"]
     )
-    assert representation, ("Could not find representation in the database "
-                            "with the name '%s'" % representation_name)
+    assert representation, (
+        "Could not find representation in the database "
+        "with the name '%s'" % representation_name
+    )
 
     switch_container(container, representation)
 
@@ -273,11 +299,13 @@ def maintained_selection(comp=None):
 
 
 @contextlib.contextmanager
-def maintained_comp_range(comp=None,
-                          global_start=True,
-                          global_end=True,
-                          render_start=True,
-                          render_end=True):
+def maintained_comp_range(
+    comp=None,
+    global_start=True,
+    global_end=True,
+    render_start=True,
+    render_end=True,
+):
     """Reset comp frame ranges from before the context after the context"""
     if comp is None:
         comp = get_current_comp()
@@ -321,7 +349,7 @@ def get_frame_path(path):
     filename, ext = os.path.splitext(path)
 
     # Find a final number group
-    match = re.match('.*?([0-9]+)$', filename)
+    match = re.match(".*?([0-9]+)$", filename)
     if match:
         padding = len(match.group(1))
         # remove number from end since fusion
