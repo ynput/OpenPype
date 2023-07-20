@@ -1165,7 +1165,7 @@ class CreatedInstance:
         Args:
             instance_data (Dict[str, Any]): Data in a structure ready for
                 'CreatedInstance' object.
-            creator (Creator): Creator plugin which is creating the instance
+            creator (BaseCreator): Creator plugin which is creating the instance
                 of for which the instance belong.
         """
 
