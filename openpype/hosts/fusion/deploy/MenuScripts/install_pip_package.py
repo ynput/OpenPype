@@ -31,7 +31,9 @@ def run_installation_command(python_executable, package) -> None:
         package,
     ]
     print(f"running command: {command}")
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     while True:
         output = process.stdout.readline().decode()
         if output == "" or process.poll() is not None:
