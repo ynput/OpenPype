@@ -251,7 +251,7 @@ class CreateSaver(NewCreator):
         frame_range_options = {
             "asset_db": "Current asset context",
             "render_range": "From render in/out",
-            "comp_range": "From composition timeline"
+            "comp_range": "From composition timeline",
         }
 
         return EnumDef(
