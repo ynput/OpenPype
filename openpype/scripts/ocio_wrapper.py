@@ -173,6 +173,49 @@ def _get_views_data(config_path):
 
     return data
 
+def _get_display_view_colorspace_name(config_path, display, view):
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+    colorspace = config.getDisplayViewColorSpaceName(display, view)
+
+    return colorspace
+
+@config.command(
+    name="get_display_view_colorspace_name",
+    help=(
+        "return default view colorspace name "
+        "for the given display and view "
+        "--path input arg is required"
+    )
+)
+@click.option("--in_path", required=True,
+              help="path where to read ocio config file",
+              type=click.Path(exists=True))
+@click.option("--out_path", required=True,
+              help="path where to write output json file",
+              type=click.Path())
+@click.option("--display", required=True,
+              help="display",
+              type=click.STRING)
+@click.option("--view", required=True,
+              help="view",
+              type=click.STRING)
+def get_display_view_colorspace_name(in_path, out_path,
+                                     display, view):
+
+    json_path = Path(out_path)
+
+    out_data = _get_display_view_colorspace_name(in_path,
+                                                 display, view)
+
+    with open(json_path, "w") as f:
+        json.dump(out_data, f)
+
+    print(f"Viewer data are saved to '{json_path}'")
 
 if __name__ == '__main__':
     main()

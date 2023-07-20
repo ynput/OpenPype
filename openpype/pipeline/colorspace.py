@@ -589,3 +589,39 @@ def _get_imageio_settings(project_settings, host_name):
     imageio_host = project_settings.get(host_name, {}).get("imageio", {})
 
     return imageio_global, imageio_host
+
+def get_display_view_colorspace_name(config_path, display, view):
+
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        return get_display_view_colorspace_subprocess(config_path,
+                                                      display, view)
+
+    from openpype.scripts.ocio_wrapper import _get_display_view_colorspace_name #noqa
+
+    return _get_display_view_colorspace_name(config_path, display, view)
+
+def get_display_view_colorspace_subprocess(config_path, display, view):
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_display_view_colorspace_name",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path,
+            "--display", display,
+            "--view", view
+
+        ]
+        log.info("Executing: {}".format(" ".join(args)))
+
+        process_kwargs = {
+            "logger": log
+        }
+
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)

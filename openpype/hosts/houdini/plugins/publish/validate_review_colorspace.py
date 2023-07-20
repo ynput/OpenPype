@@ -71,19 +71,24 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         """
 
         import hou
-        import PyOpenColorIO as OCIO
+        from openpype.pipeline.colorspace import get_display_view_colorspace_name
+        from openpype.hosts.houdini.api.lib import get_color_management_preferences #noqa
 
         rop_node = hou.node(instance.data["instance_node"])
 
-        config = OCIO.GetCurrentConfig()
-        display = hou.Color.ocio_defaultDisplay()
-        view = hou.Color.ocio_defaultView()
+        data =  get_color_management_preferences()
+        config_path = data.get("config")
+        display =  data.get("display")
+        view =  data.get("view")
 
-        default_view_space = config.getDisplayViewColorSpaceName(
-            display, view)  # works with PyOpenColorIO 2.2.1
+        cls.log.debug("Get default view colorspace name..")
+
+        default_view_space = get_display_view_colorspace_name(config_path,
+                                                              display, view)
 
         rop_node.setParms({"ociocolorspace": default_view_space})
         cls.log.debug(
-            "'OCIO Colorspace' parm on '%s' has been set to '%s'",
+            "'OCIO Colorspace' parm on '%s' has been set to "
+            "the default view color space '%s'",
             default_view_space, rop_node
         )
