@@ -25,16 +25,13 @@ class FusionRenderInstance(RenderInstance):
 
 
 class CollectFusionRender(
-    publish.AbstractCollectRender,
-    publish.ColormanagedPyblishPluginMixin
+    publish.AbstractCollectRender, publish.ColormanagedPyblishPluginMixin
 ):
-
     order = pyblish.api.CollectorOrder + 0.09
     label = "Collect Fusion Render"
     hosts = ["fusion"]
 
     def get_instances(self, context):
-
         comp = context.data.get("currentComp")
         comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
         aspect_x = comp_frame_format_prefs["AspectX"]
@@ -74,7 +71,7 @@ class CollectFusionRender(
                 asset=inst.data["asset"],
                 task=task_name,
                 attachTo=False,
-                setMembers='',
+                setMembers="",
                 publish=True,
                 name=subset_name,
                 resolutionWidth=comp_frame_format_prefs.get("Width"),
@@ -93,7 +90,7 @@ class CollectFusionRender(
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,
-                publish_attributes=inst.data.get("publish_attributes", {})
+                publish_attributes=inst.data.get("publish_attributes", {}),
             )
 
             render_target = inst.data["creator_attributes"]["render_target"]
@@ -166,8 +163,7 @@ class CollectFusionRender(
         for frame in range(start, end + 1):
             expected_files.append(
                 os.path.join(
-                    output_dir,
-                    f"{head}{str(frame).zfill(padding)}{ext}"
+                    output_dir, f"{head}{str(frame).zfill(padding)}{ext}"
                 )
             )
 
