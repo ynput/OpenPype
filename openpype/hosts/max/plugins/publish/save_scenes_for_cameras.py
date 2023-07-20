@@ -74,27 +74,27 @@ rt.saveMaxFile(new_filepath)
             scripts.append(script)
 
         max_version = get_max_version()
-        maxBatch_exe = os.path.join(os.getenv(f"ADSK_3DSMAX_x64_{max_version}"), "3dsmaxbatch")
+        maxBatch_exe = os.path.join(
+            os.getenv(f"ADSK_3DSMAX_x64_{max_version}"), "3dsmaxbatch")
         maxBatch_exe = maxBatch_exe.replace("\\", "/")
         if sys.platform == "windows":
             maxBatch_exe += ".exe"
             maxBatch_exe = os.path.normpath(maxBatch_exe)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
-            tmp_script_path = os.path.join(tmp_dir_name, "extract_scene_files.py")
-            log_file =os.path.join(tmp_dir_name, "fatal.log")
+            tmp_script_path = os.path.join(
+                tmp_dir_name, "extract_scene_files.py")
             self.log.info("Using script file: {}".format(tmp_script_path))
 
             with open(tmp_script_path, "wt") as tmp:
                 for script in scripts:
-                    tmp.write(script+"\n")
-                tmp.write("rt.quitMax(quiet=True)"+"\n")
-                tmp.write("import time"+"\n")
+                    tmp.write(script + "\n")
+                tmp.write("rt.quitMax(quiet=True)" + "\n")
+                tmp.write("import time" + "\n")
                 tmp.write("time.sleep(3)")
 
             try:
-                current_filepath = current_filepath.replace("\\","/")
-                log_file = log_file.replace("\\", "/")
-                tmp_script_path = tmp_script_path.replace("\\","/")
+                current_filepath = current_filepath.replace("\\", "/")
+                tmp_script_path = tmp_script_path.replace("\\", "/")
                 run_subprocess([maxBatch_exe, tmp_script_path,
                                 "-sceneFile", current_filepath])
             except RuntimeError:
