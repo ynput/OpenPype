@@ -28,10 +28,15 @@ class CreatePointcache(plugin.BlenderCreator):
         )
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
-        instance_data['task'] = get_current_task_name()
-        instance_data['id'] = 'pyblish.avalon.instance'
-        instance_data['creator_identifier'] = self.identifier
-        instance_data['label'] = self.label
+        instance_data.update(
+            {
+                "id": "pyblish.avalon.instance",
+                "creator_identifier": self.identifier,
+                "label": self.label,
+                "task": get_current_task_name(),
+                "subset": subset_name,
+            }
+        )
         lib.imprint(collection, instance_data)
 
         if pre_create_data.get("useSelection"):
