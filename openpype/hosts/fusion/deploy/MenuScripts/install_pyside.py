@@ -1,8 +1,6 @@
 # This is just a quick hack for users running Py3 locally but having no
 # Qt library installed
 import os
-import sys
-import subprocess
 import importlib
 import platform
 from install_pip_package import pip_install
