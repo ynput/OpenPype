@@ -9,7 +9,7 @@ def get_python_home() -> Path:
     return python_home
 
 
-def get_python_executable(python_home) -> str:
+def get_python_executable(python_home):
     if platform.system() == "Windows":
         python_executable = python_home / "python.exe"
     else:
