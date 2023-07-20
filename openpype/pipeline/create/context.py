@@ -1165,8 +1165,8 @@ class CreatedInstance:
         Args:
             instance_data (Dict[str, Any]): Data in a structure ready for
                 'CreatedInstance' object.
-            creator (BaseCreator): Creator plugin which is creating the instance
-                of for which the instance belong.
+            creator (BaseCreator): Creator plugin which is creating the
+                instance of for which the instance belong.
         """
 
         instance_data = copy.deepcopy(instance_data)
