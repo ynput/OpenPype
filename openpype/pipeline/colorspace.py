@@ -591,6 +591,16 @@ def _get_imageio_settings(project_settings, host_name):
     return imageio_global, imageio_host
 
 def get_display_view_colorspace_name(config_path, display, view):
+    """get view colorspace name for the given display and view.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
 
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
@@ -603,6 +613,18 @@ def get_display_view_colorspace_name(config_path, display, view):
     return _get_display_view_colorspace_name(config_path, display, view)
 
 def get_display_view_colorspace_subprocess(config_path, display, view):
+    """get view colorspace name for the given display and view
+        via subprocess.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
     with _make_temp_json_file() as tmp_json_path:
         # Prepare subprocess arguments
         args = [

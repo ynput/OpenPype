@@ -71,7 +71,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         """
 
         import hou
-        from openpype.pipeline.colorspace import get_display_view_colorspace_name
+        from openpype.pipeline.colorspace import get_display_view_colorspace_name #noqa
         from openpype.hosts.houdini.api.lib import get_color_management_preferences #noqa
 
         rop_node = hou.node(instance.data["instance_node"])

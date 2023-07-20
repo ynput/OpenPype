@@ -174,6 +174,21 @@ def _get_views_data(config_path):
     return data
 
 def _get_display_view_colorspace_name(config_path, display, view):
+    """get view colorspace name for the given display and view.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+
+    Raises:
+        IOError: Input config does not exist.
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
     config_path = Path(config_path)
 
     if not config_path.is_file():
@@ -199,13 +214,28 @@ def _get_display_view_colorspace_name(config_path, display, view):
               help="path where to write output json file",
               type=click.Path())
 @click.option("--display", required=True,
-              help="display",
+              help="display name",
               type=click.STRING)
 @click.option("--view", required=True,
-              help="view",
+              help="view name",
               type=click.STRING)
 def get_display_view_colorspace_name(in_path, out_path,
                                      display, view):
+    """Aggregate view colorspace name to file.
+
+    Python 2 wrapped console command
+
+    Args:
+        in_path (str): config file path string
+        out_path (str): temp json file path string
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py config \
+        get_display_view_colorspace_name --in_path=<path> \
+        --out_path=<path> --display=<display> --view=<view>
+    """
 
     json_path = Path(out_path)
 
