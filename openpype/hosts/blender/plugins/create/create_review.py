@@ -43,6 +43,9 @@ class CreateReview(plugin.BlenderCreator):
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
         instance_data['task'] = get_current_task_name()
+        instance_data['id'] = 'pyblish.avalon.instance'
+        instance_data['creator_identifier'] = self.identifier
+        instance_data['label'] = self.label
         lib.imprint(asset_group, instance_data)
 
         if pre_create_data.get("useSelection"):

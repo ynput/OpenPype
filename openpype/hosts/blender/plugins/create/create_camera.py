@@ -45,6 +45,9 @@ class CreateCamera(plugin.BlenderCreator):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
         instance_data['task'] = get_current_task_name()
+        instance_data['id'] = 'pyblish.avalon.instance'
+        instance_data['creator_identifier'] = self.identifier
+        instance_data['label'] = self.label
         lib.imprint(asset_group, instance_data)
 
         if pre_create_data.get("useSelection"):
