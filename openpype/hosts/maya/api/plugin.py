@@ -177,6 +177,36 @@ class MayaCreatorBase(object):
 
         return node_data
 
+    def _default_collect_instances(self):
+        self.cache_subsets(self.collection_shared_data)
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
+
+    def _default_update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            data = created_inst.data_to_store()
+            node = data.get("instance_node")
+
+            self.imprint_instance_node(node, data)
+
+    def _default_remove_instances(self, instances):
+        """Remove specified instance from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        for instance in instances:
+            node = instance.data.get("instance_node")
+            if node:
+                cmds.delete(node)
+
+            self._remove_instance_from_context(instance)
+
 
 @six.add_metaclass(ABCMeta)
 class MayaCreator(NewCreator, MayaCreatorBase):
@@ -202,34 +232,13 @@ class MayaCreator(NewCreator, MayaCreatorBase):
             return instance
 
     def collect_instances(self):
-        self.cache_subsets(self.collection_shared_data)
-        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
-        for node in cached_subsets.get(self.identifier, []):
-            node_data = self.read_instance_node(node)
-
-            created_instance = CreatedInstance.from_existing(node_data, self)
-            self._add_instance_to_context(created_instance)
+        return self._default_collect_instances()
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
-            data = created_inst.data_to_store()
-            node = data.get("instance_node")
-
-            self.imprint_instance_node(node, data)
+        return self._default_update_instances(update_list)
 
     def remove_instances(self, instances):
-        """Remove specified instance from the scene.
-
-        This is only removing `id` parameter so instance is no longer
-        instance, because it might contain valuable data for artist.
-
-        """
-        for instance in instances:
-            node = instance.data.get("instance_node")
-            if node:
-                cmds.delete(node)
-
-            self._remove_instance_from_context(instance)
+        return self._default_remove_instances(instances)
 
     def get_pre_create_attr_defs(self):
         return [
