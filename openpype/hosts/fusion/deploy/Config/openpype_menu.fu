@@ -22,16 +22,16 @@
     },
     Action
     {
-        ID = "OpenPype_Install_PySide2",
+        ID = "OpenPype_Install_PySide",
         Category = "OpenPype",
-        Name = "Install PySide2",
+        Name = "Install PySide",
 
         Targets =
         {
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("OpenPype:MenuScripts/install_pyside2.py")
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/install_pyside.py")
                     if bmd.fileexists(scriptPath) == false then
                         print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else
