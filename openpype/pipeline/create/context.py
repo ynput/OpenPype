@@ -2121,7 +2121,7 @@ class CreateContext:
 
     def reset_instances(self):
         """Reload instances"""
-        self._instances_by_id = {}
+        self._instances_by_id = collections.OrderedDict()
 
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"
