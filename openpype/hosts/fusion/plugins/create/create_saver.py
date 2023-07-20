@@ -166,7 +166,8 @@ class CreateSaver(NewCreator):
         filepath = self.temp_rendering_path_template.format(
             **formatting_data)
 
-        tool["Clip"] = os.path.normpath(filepath)
+        comp = get_current_comp()
+        tool["Clip"] = comp.ReverseMapPath(os.path.normpath(filepath))
 
         # Rename tool
         if tool.Name != subset:

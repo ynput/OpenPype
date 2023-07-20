@@ -4,7 +4,10 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.pipeline.publish import RenderInstance
-from openpype.hosts.fusion.api.lib import get_frame_path
+from openpype.hosts.fusion.api.lib import (
+    get_frame_path,
+    get_current_comp,
+)
 
 
 @attr.s
@@ -146,9 +149,11 @@ class CollectFusionRender(
         start = render_instance.frameStart - render_instance.handleStart
         end = render_instance.frameEnd + render_instance.handleEnd
 
-        path = (
-            render_instance.tool["Clip"]
-            [render_instance.workfileComp.TIME_UNDEFINED]
+        comp = get_current_comp()
+        path = comp.MapPath(
+            render_instance.tool["Clip"][
+                render_instance.workfileComp.TIME_UNDEFINED
+            ]
         )
         output_dir = os.path.dirname(path)
         render_instance.outputDir = output_dir
