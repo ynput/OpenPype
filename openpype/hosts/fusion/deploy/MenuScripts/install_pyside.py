@@ -26,10 +26,8 @@ try:
 except Exception:
     fusion_version = int(app.Version)
     fusion_python_home, _ = FUSION_VERSIONS_DICT.get(fusion_version)
+    fusion_python_home = os.environ.get(fusion_python_home)
     print("Assuming no Qt library is installed..")
-    print(
-        "Installing PySide package for "
-        f"{os.environ.get(fusion_python_home)}"
-    )
+    print("Installing PySide package for " f"{fusion_python_home}")
     pyside_version = get_pyside_version()
     pip_install(pyside_version, fusion_python_home)
