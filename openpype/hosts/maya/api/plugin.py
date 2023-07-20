@@ -8,13 +8,24 @@ from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
 from openpype.lib import BoolDef, Logger
-from openpype.pipeline import AVALON_CONTAINER_ID, Anatomy, CreatedInstance
-from openpype.pipeline import Creator as NewCreator
-from openpype.pipeline import (
-    CreatorError, LegacyCreator, LoaderPlugin, get_representation_path,
-    legacy_io)
-from openpype.pipeline.load import LoadError
 from openpype.settings import get_project_settings
+from openpype.pipeline import (
+    AVALON_CONTAINER_ID,
+    Anatomy,
+
+    CreatedInstance,
+    Creator as NewCreator,
+    AutoCreator,
+    HiddenCreator,
+
+    CreatorError,
+    LegacyCreator,
+    LoaderPlugin,
+    get_representation_path,
+
+    legacy_io,
+)
+from openpype.pipeline.load import LoadError
 
 from . import lib
 from .lib import imprint, read
@@ -246,6 +257,40 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     label="Use selection",
                     default=True)
         ]
+
+
+class MayaAutoCreator(AutoCreator, MayaCreatorBase):
+    """Automatically triggered creator for Maya.
+
+    The plugin is not visible in UI, and 'create' method does not expect
+        any arguments.
+    """
+
+    def collect_instances(self):
+        return self._default_collect_instances()
+
+    def update_instances(self, update_list):
+        return self._default_update_instances(update_list)
+
+    def remove_instances(self, instances):
+        return self._default_remove_instances(instances)
+
+
+class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
+    """Hidden creator for Maya.
+
+    The plugin is not visible in UI, and it does not have strictly defined
+        arguments for 'create' method.
+    """
+
+    def collect_instances(self):
+        return self._default_collect_instances()
+
+    def update_instances(self, update_list):
+        return self._default_update_instances(update_list)
+
+    def remove_instances(self, instances):
+        return self._default_remove_instances(instances)
 
 
 def ensure_namespace(namespace):
