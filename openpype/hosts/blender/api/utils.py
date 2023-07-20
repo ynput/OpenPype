@@ -372,10 +372,6 @@ def get_datablocks_with_filepath(
                 and datablock.filepath != ""
                 and not datablock.library
                 and not datablock.is_library_indirect
-                and not (
-                    isinstance(datablock, bpy.types.Library)
-                    and datablock.parent
-                )
             ):
                 if relative and datablock.filepath.startswith("//"):
                     datablocks.add(datablock)
