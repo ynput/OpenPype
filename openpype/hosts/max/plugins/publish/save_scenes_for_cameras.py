@@ -64,7 +64,7 @@ if render_elem_num > 0:
     for i in range(render_elem_num):
         renderlayer_name = render_elem.GetRenderElement(i)
         target, renderpass = str(renderlayer_name).split(":")
-        aov_name = directory + "_" + camera + "_" + renderpass + "." + "." + ext
+        aov_name = directory + "_" + camera + "_" + renderpass + "." + "." + ext        # noqa
         render_elem.SetRenderElementFileName(i, aov_name)
 rt.saveMaxFile(new_filepath)
         """).format(new_filepath=new_filepath,
