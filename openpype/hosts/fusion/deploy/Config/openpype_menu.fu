@@ -52,7 +52,7 @@
                 "OpenPype_Menu{}",
                 "_",
                 Sub "Admin" {
-                    "OpenPype_Install_PySide2{}"
+                    "OpenPype_Install_PySide{}"
                 }
             }
         },
