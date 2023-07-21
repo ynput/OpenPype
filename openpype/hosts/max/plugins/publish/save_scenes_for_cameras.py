@@ -5,7 +5,6 @@ import tempfile
 
 from pymxs import runtime as rt
 from openpype.lib import run_subprocess
-from openpype.hosts.max.api.lib import get_max_version
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 
@@ -69,9 +68,8 @@ rt.saveMaxFile(new_filepath)
                     ext=fmt)
             scripts.append(script)
 
-        max_version = get_max_version()
         maxBatch_exe = os.path.join(
-            os.getenv(f"ADSK_3DSMAX_x64_{max_version}"), "3dsmaxbatch")
+            os.path.dirname(sys.executable), "3dsmaxbatch")
         maxBatch_exe = maxBatch_exe.replace("\\", "/")
         if sys.platform == "windows":
             maxBatch_exe += ".exe"
