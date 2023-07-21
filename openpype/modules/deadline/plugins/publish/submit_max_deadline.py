@@ -350,7 +350,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
 
-        if instance.data["multiCamera"] == True:
+        if instance.data.get("multiCamera"):
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
         return replace_in_path
