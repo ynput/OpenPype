@@ -29,7 +29,6 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
         current_filename = rt.maxFileName
         current_filepath = os.path.join(current_folder, current_filename)
         camera_scene_files = []
-        repres_list = []
         scripts = []
         filename, ext = os.path.splitext(current_filename)
         fmt = RenderProducts().image_format()
@@ -88,9 +87,6 @@ rt.saveMaxFile(new_filepath)
             with open(tmp_script_path, "wt") as tmp:
                 for script in scripts:
                     tmp.write(script + "\n")
-                tmp.write("rt.quitMax(quiet=True)" + "\n")
-                tmp.write("import time" + "\n")
-                tmp.write("time.sleep(3)")
 
             try:
                 current_filepath = current_filepath.replace("\\", "/")
@@ -100,11 +96,23 @@ rt.saveMaxFile(new_filepath)
             except RuntimeError:
                 self.log.debug("Checking the scene files existing or not")
 
-        for camera_scene in camera_scene_files:
+        for camera_scene, camera in zip(camera_scene_files, cameras):
             if not os.path.exists(camera_scene):
                 self.log.error("Camera scene files not existed yet!")
                 raise RuntimeError("MaxBatch.exe doesn't run as expected")
             self.log.debug(f"Found Camera scene:{camera_scene}")
+            instance.context.data["currentFile"] = camera_scene
+            representation = {
+            "name": "max",
+            "ext": "max",
+            "files": os.path.basename(camera_scene),
+            "stagingDir": new_folder,
+            "outputName": camera
+            }
+            self.log.debug(f"representation: {representation}")
+            if instance.data.get("representations") is None:
+                instance.data["representations"] = []
+            instance.data["representations"].append(representation)
 
         if "sceneFiles" not in instance.data:
             instance.data["sceneFiles"] = camera_scene_files
