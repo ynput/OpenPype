@@ -113,22 +113,21 @@ def message_window(title, message):
     _process_app_events()
 
 
-def set_start_end_frames():
+def _get_asset_data():
     project_name = get_current_project_name()
     asset_name = get_current_asset_name()
     asset_doc = get_asset_by_name(project_name, asset_name)
 
+    return asset_doc.get("data")
+
+
+def set_start_end_frames(data):
     scene = bpy.context.scene
 
     # Default scene settings
     frameStart = scene.frame_start
     frameEnd = scene.frame_end
     fps = scene.render.fps / scene.render.fps_base
-    resolution_x = scene.render.resolution_x
-    resolution_y = scene.render.resolution_y
-
-    # Check if settings are set
-    data = asset_doc.get("data")
 
     if not data:
         return
@@ -139,26 +138,47 @@ def set_start_end_frames():
         frameEnd = data.get("frameEnd")
     if data.get("fps"):
         fps = data.get("fps")
-    if data.get("resolutionWidth"):
-        resolution_x = data.get("resolutionWidth")
-    if data.get("resolutionHeight"):
-        resolution_y = data.get("resolutionHeight")
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
     scene.render.fps = round(fps)
     scene.render.fps_base = round(fps) / fps
+
+
+def set_resolution(data):
+    scene = bpy.context.scene
+
+    # Default scene settings
+    resolution_x = scene.render.resolution_x
+    resolution_y = scene.render.resolution_y
+
+    if not data:
+        return
+
+    if data.get("resolutionWidth"):
+        resolution_x = data.get("resolutionWidth")
+    if data.get("resolutionHeight"):
+        resolution_y = data.get("resolutionHeight")
+
     scene.render.resolution_x = resolution_x
     scene.render.resolution_y = resolution_y
 
 
 def on_new():
-    set_start_end_frames()
-
     project = os.environ.get("AVALON_PROJECT")
-    settings = get_project_settings(project)
+    settings = get_project_settings(project).get("blender")
 
-    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    set_resolution_startup = settings.get("set_resolution_startup")
+    set_frames_startup = settings.get("set_frames_startup")
+
+    data = _get_asset_data()
+
+    if set_resolution_startup:
+        set_resolution(data)
+    if set_frames_startup:
+        set_start_end_frames(data)
+
+    unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
     if unit_scale_enabled:
         unit_scale = unit_scale_settings.get("base_file_unit_scale")
@@ -166,12 +186,20 @@ def on_new():
 
 
 def on_open():
-    set_start_end_frames()
-
     project = os.environ.get("AVALON_PROJECT")
-    settings = get_project_settings(project)
+    settings = get_project_settings(project).get("blender")
 
-    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    set_resolution_startup = settings.get("set_resolution_startup")
+    set_frames_startup = settings.get("set_frames_startup")
+
+    data = _get_asset_data()
+
+    if set_resolution_startup:
+        set_resolution(data)
+    if set_frames_startup:
+        set_start_end_frames(data)
+
+    unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
     apply_on_opening = unit_scale_settings.get("apply_on_opening")
     if unit_scale_enabled and apply_on_opening:
