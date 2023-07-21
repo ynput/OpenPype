@@ -113,4 +113,4 @@ rt.saveMaxFile(new_filepath)
 
         if instance.data.get("representations") is None:
             instance.data["representations"] = []
-        instance.data["representations"] = (repres_list)
+        instance.data["representations"]= repres_list
