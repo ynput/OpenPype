@@ -671,5 +671,5 @@ class LayoutLoader(UnrealBaseLoader):
                 "asset": asset,
                 "asset_dir": asset_dir,
                 "asset_name": asset_name,
-                "loaded_asset": loaded_assets,
+                "loaded_assets": loaded_assets,
                 "create_sequences": create_sequences_option})
