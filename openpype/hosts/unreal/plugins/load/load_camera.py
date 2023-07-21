@@ -6,6 +6,7 @@ from openpype.client import get_assets, get_asset_by_name
 from openpype.pipeline import (
     AYON_CONTAINER_ID,
     get_current_project_name,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (

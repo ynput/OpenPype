@@ -61,7 +61,7 @@ class SkeletalMeshFBXLoader(UnrealBaseLoader):
     def load(self, context, name=None, namespace=None, options=None):
         """Load and containerise representation into Content Browser.
 
-        This is two step process. First, import FBX to temporary path and
+        This is a two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
         directory and then it will create AssetContainer there and imprint it
         with metadata. This will mark this path as container.

@@ -10,7 +10,7 @@ from openpype.pipeline import (
     load_container,
     get_representation_path,
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api.plugin import UnrealBaseLoader
 from openpype.hosts.unreal.api.pipeline import (
@@ -303,7 +303,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
             raise AssertionError("Current level not saved")
 
         project_name = context["project"]["name"]
-        containers = self._process(self.fname, project_name)
+        path = self.filepath_from_context(context)
+        containers = self._process(path, project_name)
 
         curr_level_path = Path(curr_level).parent.as_posix()
 
@@ -328,7 +329,7 @@ class ExistingLayoutLoader(UnrealBaseLoader):
         container_name = container['objectName']
 
         source_path = get_representation_path(representation)
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         containers = self._process(source_path, project_name)
 
         data = {

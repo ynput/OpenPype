@@ -48,7 +48,8 @@ class LoadVDBtoArnold(load.LoaderPlugin):
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
 
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = context["project"]["name"]
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)
@@ -65,8 +66,9 @@ class LoadVDBtoArnold(load.LoaderPlugin):
                                     name="{}Shape".format(root),
                                     parent=root)
 
+        path = self.filepath_from_context(context)
         self._set_path(grid_node,
-                       path=self.fname,
+                       path=path,
                        representation=context["representation"])
 
         # Lock the shape node so the user can't delete the transform/shape
