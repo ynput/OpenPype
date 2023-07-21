@@ -35,6 +35,29 @@ LOG_WARNING = 1
 LOG_ERROR = 3
 
 
+def sanitize_long_path(path):
+    """Sanitize long paths (260 characters) when on Windows.
+
+    Long paths are not capatible with ZipFile or reading a file, so we can
+    shorten the path to use.
+
+    Args:
+        path (str): path to either directory or file.
+
+    Returns:
+        str: sanitized path
+    """
+    if platform.system().lower() != "windows":
+        return path
+    path = os.path.abspath(path)
+
+    if path.startswith("\\\\"):
+        path = "\\\\?\\UNC\\" + path[2:]
+    else:
+        path = "\\\\?\\" + path
+    return path
+
+
 def sha256sum(filename):
     """Calculate sha256 for content of the file.
 
@@ -52,6 +75,13 @@ def sha256sum(filename):
         for n in iter(lambda: f.readinto(mv), 0):
             h.update(mv[:n])
     return h.hexdigest()
+
+
+class ZipFileLongPaths(ZipFile):
+    def _extract_member(self, member, targetpath, pwd):
+        return ZipFile._extract_member(
+            self, member, sanitize_long_path(targetpath), pwd
+        )
 
 
 class OpenPypeVersion(semver.VersionInfo):
@@ -780,7 +810,7 @@ class BootstrapRepos:
     def _create_openpype_zip(self, zip_path: Path, openpype_path: Path) -> None:
         """Pack repositories and OpenPype into zip.
 
-        We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
+        We are using :mod:`ZipFile` instead :meth:`shutil.make_archive`
         because we need to decide what file and directories to include in zip
         and what not. They are determined by :attr:`zip_filter` on file level
         and :attr:`openpype_filter` on top level directory in OpenPype
@@ -834,7 +864,7 @@ class BootstrapRepos:
 
                 checksums.append(
                     (
-                        sha256sum(file.as_posix()),
+                        sha256sum(sanitize_long_path(file.as_posix())),
                         file.resolve().relative_to(openpype_root)
                     )
                 )
@@ -958,7 +988,9 @@ class BootstrapRepos:
             if platform.system().lower() == "windows":
                 file_name = file_name.replace("/", "\\")
             try:
-                current = sha256sum((path / file_name).as_posix())
+                current = sha256sum(
+                    sanitize_long_path((path / file_name).as_posix())
+                )
             except FileNotFoundError:
                 return False, f"Missing file [ {file_name} ]"
 
@@ -1270,7 +1302,7 @@ class BootstrapRepos:
 
         # extract zip there
         self._print("Extracting zip to destination ...")
-        with ZipFile(version.path, "r") as zip_ref:
+        with ZipFileLongPaths(version.path, "r") as zip_ref:
             zip_ref.extractall(destination)
 
         self._print(f"Installed as {version.path.stem}")
@@ -1386,7 +1418,7 @@ class BootstrapRepos:
 
         # extract zip there
         self._print("extracting zip to destination ...")
-        with ZipFile(openpype_version.path, "r") as zip_ref:
+        with ZipFileLongPaths(openpype_version.path, "r") as zip_ref:
             self._progress_callback(75)
             zip_ref.extractall(destination)
             self._progress_callback(100)

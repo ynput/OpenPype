@@ -14,7 +14,7 @@ import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 from openpype.widgets.message_window import ScrollMessageBox
 
-from openpype.hosts.maya.api.plugin import get_reference_node
+from openpype.hosts.maya.api.lib import get_reference_node
 
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):

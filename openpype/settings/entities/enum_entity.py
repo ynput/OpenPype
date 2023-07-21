@@ -1,3 +1,5 @@
+import abc
+import six
 import copy
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
@@ -477,8 +479,8 @@ class TaskTypeEnumEntity(BaseEnumEntity):
                 self.set(value_on_not_set)
 
 
-class DeadlineUrlEnumEntity(BaseEnumEntity):
-    schema_types = ["deadline_url-enum"]
+class DynamicEnumEntity(BaseEnumEntity):
+    schema_types = []
 
     def _item_initialization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
@@ -496,22 +498,8 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
 
-    def _get_enum_values(self):
-        deadline_urls_entity = self.get_entity_from_path(
-            "system_settings/modules/deadline/deadline_urls"
-        )
-
-        valid_keys = set()
-        enum_items_list = []
-        for server_name, url_entity in deadline_urls_entity.items():
-            enum_items_list.append(
-                {server_name: "{}: {}".format(server_name, url_entity.value)}
-            )
-            valid_keys.add(server_name)
-        return enum_items_list, valid_keys
-
     def set_override_state(self, *args, **kwargs):
-        super(DeadlineUrlEnumEntity, self).set_override_state(*args, **kwargs)
+        super(DynamicEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
         if self.multiselection:
@@ -528,21 +516,49 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
             elif self._current_value not in self.valid_keys:
                 self._current_value = tuple(self.valid_keys)[0]
 
+    @abc.abstractmethod
+    def _get_enum_values(self):
+        pass
 
-class ShotgridUrlEnumEntity(BaseEnumEntity):
+
+class DeadlineUrlEnumEntity(DynamicEnumEntity):
+    schema_types = ["deadline_url-enum"]
+
+    def _get_enum_values(self):
+        deadline_urls_entity = self.get_entity_from_path(
+            "system_settings/modules/deadline/deadline_urls"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+        for server_name, url_entity in deadline_urls_entity.items():
+            enum_items_list.append(
+                {server_name: "{}: {}".format(server_name, url_entity.value)}
+            )
+            valid_keys.add(server_name)
+        return enum_items_list, valid_keys
+
+
+class RoyalRenderRootEnumEntity(DynamicEnumEntity):
+    schema_types = ["rr_root-enum"]
+
+    def _get_enum_values(self):
+        rr_root_entity = self.get_entity_from_path(
+            "system_settings/modules/royalrender/rr_paths"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+        for server_name, url_entity in rr_root_entity.items():
+            enum_items_list.append(
+                {server_name: "{}: {}".format(server_name, url_entity.value)}
+            )
+            valid_keys.add(server_name)
+        return enum_items_list, valid_keys
+
+
+class ShotgridUrlEnumEntity(DynamicEnumEntity):
     schema_types = ["shotgrid_url-enum"]
-
-    def _item_initialization(self):
-        self.multiselection = False
-
-        self.enum_items = []
-        self.valid_keys = set()
-
-        self.valid_value_types = (STRING_TYPE,)
-        self.value_on_not_set = ""
-
-        # GUI attribute
-        self.placeholder = self.schema_data.get("placeholder")
 
     def _get_enum_values(self):
         shotgrid_settings = self.get_entity_from_path(
@@ -561,16 +577,6 @@ class ShotgridUrlEnumEntity(BaseEnumEntity):
             )
             valid_keys.add(server_name)
         return enum_items_list, valid_keys
-
-    def set_override_state(self, *args, **kwargs):
-        super(ShotgridUrlEnumEntity, self).set_override_state(*args, **kwargs)
-
-        self.enum_items, self.valid_keys = self._get_enum_values()
-        if not self.valid_keys:
-            self._current_value = ""
-
-        elif self._current_value not in self.valid_keys:
-            self._current_value = tuple(self.valid_keys)[0]
 
 
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):

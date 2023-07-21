@@ -89,7 +89,6 @@ install_requires = [
     "keyring",
     "clique",
     "jsonschema",
-    "opentimelineio",
     "pathlib2",
     "pkg_resources",
     "PIL",
