@@ -349,7 +349,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if instance.data["renderer"] == "Redshift_Renderer":
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
-            return replace_in_path
+
+        if instance.data["multiCamera"] == True:
+            self.log.debug("Using Redshift...published scene wont be used..")
+            replace_in_path = False
+        return replace_in_path
 
     @staticmethod
     def _iter_expected_files(exp):
