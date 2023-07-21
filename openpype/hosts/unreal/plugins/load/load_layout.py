@@ -67,9 +67,9 @@ class LayoutLoader(UnrealBaseLoader):
 
             if master_level:
                 send_request("load_level",
-                                params={"level_path": master_level})
+                             params={"level_path": master_level})
                 send_request("add_level_to_world",
-                                params={"level_path": level})
+                             params={"level_path": level})
                 send_request("save_all_dirty_levels")
                 send_request("load_level", params={"level_path": level})
 
@@ -648,7 +648,6 @@ class LayoutLoader(UnrealBaseLoader):
                 "is_cam_lock": is_cam_lock,
                 "vp_loc": vp_loc,
                 "vp_rot": vp_rot})
-
 
     def remove(self, container):
         """
