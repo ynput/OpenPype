@@ -8,6 +8,10 @@ from openpype import AYON_SERVER_ENABLED
 log = logging.getLogger("Vendor utils")
 
 
+class ToolNotFoundError(Exception):
+    """Raised when tool arguments are not found."""
+
+
 class CachedToolPaths:
     """Cache already used and discovered tools and their executables.
 
@@ -373,7 +377,9 @@ def get_oiio_tools_args(tool_name="oiiotool"):
     path = get_oiio_tools_path(tool_name)
     if path:
         return [path]
-    return []
+    raise ToolNotFoundError(
+        "OIIO '{}' tool not found.".format(tool_name)
+    )
 
 
 def _ffmpeg_executable_validation(args):
@@ -496,7 +502,9 @@ def get_ffmpeg_tool_args(tool_name="ffmpeg"):
     executable_path = get_ffmpeg_tool_path(tool_name)
     if executable_path:
         return [executable_path]
-    return []
+    raise ToolNotFoundError(
+        "FFmpeg '{}' tool not found.".format(tool_name)
+    )
 
 
 def is_oiio_supported():
@@ -506,7 +514,10 @@ def is_oiio_supported():
         bool: OIIO tool executable is available.
     """
 
-    args = get_oiio_tools_args()
+    try:
+        args = get_oiio_tools_args()
+    except ToolNotFoundError:
+        args = None
     if not args:
         log.debug("OIIOTool is not configured or not present.")
         return False
