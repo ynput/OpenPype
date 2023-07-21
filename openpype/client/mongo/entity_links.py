@@ -212,14 +212,12 @@ def _process_referenced_pipeline_result(result, link_type):
             continue
 
         for output in sorted(outputs_recursive, key=lambda o: o["depth"]):
-            output_links = output.get("data", {}).get("inputLinks")
-
             # Leaf
             if output["_id"] not in correctly_linked_ids:
                 continue
 
             _filter_input_links(
-                output_links,
+                output.get("data", {}).get("inputLinks"),
                 link_type,
                 correctly_linked_ids
             )
