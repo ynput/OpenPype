@@ -5,7 +5,12 @@ import shutil
 
 import pyblish.api
 
-from openpype.lib import run_subprocess, get_oiio_tools_args
+from openpype.lib import (
+    run_subprocess,
+    get_oiio_tools_args,
+    ToolNotFoundError,
+)
+from openpype.pipeline import KnownPublishError
 
 
 class ExtractScanlineExr(pyblish.api.InstancePlugin):
@@ -45,10 +50,11 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
-            oiio_tool_args = get_oiio_tools_args()
-            if not oiio_tool_args:
+            try:
+                oiio_tool_args = get_oiio_tools_args()
+            except ToolNotFoundError:
                 self.log.error("OIIO tool not found.")
-                raise AssertionError("OIIO tool not found")
+                raise KnownPublishError("OIIO tool not found")
 
             for file in input_files:
 

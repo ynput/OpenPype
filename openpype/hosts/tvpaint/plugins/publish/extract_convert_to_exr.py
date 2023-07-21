@@ -10,6 +10,7 @@ import json
 import pyblish.api
 from openpype.lib import (
     get_oiio_tools_args,
+    ToolNotFoundError,
     run_subprocess,
 )
 from openpype.pipeline import KnownPublishError
@@ -34,11 +35,12 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
         if not repres:
             return
 
-        oiio_args = get_oiio_tools_args()
-        # Raise an exception when oiiotool is not available
-        # - this can currently happen on MacOS machines
-        if not oiio_args:
-            KnownPublishError(
+        try:
+            oiio_args = get_oiio_tools_args()
+        except ToolNotFoundError:
+            # Raise an exception when oiiotool is not available
+            # - this can currently happen on MacOS machines
+            raise KnownPublishError(
                 "OpenImageIO tool is not available on this machine."
             )
 

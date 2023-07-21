@@ -15,8 +15,14 @@ import pyblish.api
 
 from maya import cmds  # noqa
 
-from openpype.lib.vendor_bin_utils import find_executable
-from openpype.lib import source_hash, run_subprocess, get_oiio_tools_args
+from openpype.lib import (
+    find_executable,
+    source_hash,
+    run_subprocess,
+    get_oiio_tools_args,
+    ToolNotFoundError,
+)
+
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 
@@ -267,11 +273,11 @@ class MakeTX(TextureProcessor):
 
         """
 
-        maketx_args = get_oiio_tools_args("maketx")
-        if not maketx_args:
-            raise AssertionError(
-                "OIIO 'maketx' tool not found."
-            )
+        try:
+            maketx_args = get_oiio_tools_args("maketx")
+        except ToolNotFoundError:
+            raise KnownPublishError(
+                "OpenImageIO is not available on the machine")
 
         # Define .tx filepath in staging if source file is not .tx
         fname, ext = os.path.splitext(os.path.basename(source))
