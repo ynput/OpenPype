@@ -6,10 +6,9 @@ from openpype.lib import (
     BoolDef,
     TextDef
 )
-from openpype.pipeline.create import HiddenCreator
 
 
-class CreateAnimation(plugin.MayaCreator, HiddenCreator):
+class CreateAnimation(plugin.MayaHiddenCreator):
     """Animation output for character rigs
 
     We hide the animation creator from the UI since the creation of it is
