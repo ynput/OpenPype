@@ -307,11 +307,12 @@ class ExtractReviewSlate(publish.Extractor):
                     "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
                     "-map", '[v]'
                 ]
-            concat_args = get_ffmpeg_tool_args("ffmpeg") + [
+            concat_args = get_ffmpeg_tool_args(
+                "ffmpeg",
                 "-y",
                 "-i", slate_v_path,
                 "-i", input_path,
-            ]
+            )
             concat_args.extend(fmap)
             if offset_timecode:
                 concat_args.extend(["-timecode", offset_timecode])
@@ -511,7 +512,8 @@ class ExtractReviewSlate(publish.Extractor):
             one_frame_duration = str(int(one_frame_duration)) + "us"
         self.log.debug("One frame duration is {}".format(one_frame_duration))
 
-        slate_silent_args = get_ffmpeg_tool_args("ffmpeg") + [
+        slate_silent_args = get_ffmpeg_tool_args(
+            "ffmpeg",
             "-i", src_path,
             "-f", "lavfi", "-i",
             "anullsrc=r={}:cl={}:d={}".format(
@@ -526,7 +528,7 @@ class ExtractReviewSlate(publish.Extractor):
             "-shortest",
             "-y",
             dst_path
-        ]
+        )
         # run slate generation subprocess
         self.log.debug("Silent Slate Executing: {}".format(
             " ".join(slate_silent_args)

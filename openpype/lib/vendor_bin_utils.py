@@ -358,25 +358,27 @@ def get_oiio_tools_path(tool="oiiotool"):
     return tool_executable_path
 
 
-def get_oiio_tools_args(tool_name="oiiotool"):
+def get_oiio_tools_args(tool_name, *extra_args):
     """Arguments to launch OpenImageIO tool.
 
     Args:
         tool_name (str): Tool name 'oiiotool', 'maketx', etc.
-            Default is "oiiotool".
+        *extra_args (str): Extra arguments to add to after tool arguments.
 
     Returns:
         list[str]: List of arguments.
     """
 
+    extra_args = list(extra_args)
+
     if AYON_SERVER_ENABLED:
         args = _get_ayon_oiio_tool_args(tool_name)
         if args:
-            return args
+            return args + extra_args
 
     path = get_oiio_tools_path(tool_name)
     if path:
-        return [path]
+        return [path] + extra_args
     raise ToolNotFoundError(
         "OIIO '{}' tool not found.".format(tool_name)
     )
@@ -483,25 +485,27 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     return tool_executable_path
 
 
-def get_ffmpeg_tool_args(tool_name="ffmpeg"):
+def get_ffmpeg_tool_args(tool_name, *extra_args):
     """Arguments to launch FFmpeg tool.
 
     Args:
         tool_name (str): Tool name 'ffmpeg', 'ffprobe', exc.
-            Default is "ffmpeg".
+        *extra_args (str): Extra arguments to add to after tool arguments.
 
     Returns:
         list[str]: List of arguments.
     """
 
+    extra_args = list(extra_args)
+
     if AYON_SERVER_ENABLED:
         args = _get_ayon_ffmpeg_tool_args(tool_name)
         if args:
-            return args
+            return args + new_extra_args
 
     executable_path = get_ffmpeg_tool_path(tool_name)
     if executable_path:
-        return [executable_path]
+        return [executable_path] + new_extra_args
     raise ToolNotFoundError(
         "FFmpeg '{}' tool not found.".format(tool_name)
     )
@@ -515,7 +519,7 @@ def is_oiio_supported():
     """
 
     try:
-        args = get_oiio_tools_args()
+        args = get_oiio_tools_args("oiiotool")
     except ToolNotFoundError:
         args = None
     if not args:

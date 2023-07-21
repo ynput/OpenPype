@@ -40,13 +40,14 @@ def _get_ffprobe_data(source):
     :param str source: source media file
     :rtype: [{}, ...]
     """
-    command = get_ffmpeg_tool_args("ffprobe") + [
+    command = get_ffmpeg_tool_args(
+        "ffprobe",
         "-v", "quiet",
         "-print_format", "json",
         "-show_format",
         "-show_streams",
         source
-    ]
+    )
     kwargs = {
         "stdout": subprocess.PIPE,
     }

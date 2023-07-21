@@ -83,10 +83,11 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
 
     Stdout should contain xml format string.
     """
-    args = get_oiio_tools_args() + [
+    args = get_oiio_tools_args(
+        "oiiotool",
         "--info",
         "-v"
-    ]
+    )
     if subimages:
         args.append("-a")
 
@@ -485,10 +486,11 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = get_oiio_tools_args() + [
+    oiio_cmd = get_oiio_tools_args(
+        "oiiotool",
         # Don't add any additional attributes
         "--nosoftwareattrib",
-    ]
+    )
     # Add input compression if available
     if compression:
         oiio_cmd.extend(["--compression", compression])
@@ -653,10 +655,11 @@ def convert_input_paths_for_ffmpeg(
 
     for input_path in input_paths:
         # Prepare subprocess arguments
-        oiio_cmd = get_oiio_tools_args() + [
+        oiio_cmd = get_oiio_tools_args(
+            "oiiotool",
             # Don't add any additional attributes
             "--nosoftwareattrib",
-        ]
+        )
         # Add input compression if available
         if compression:
             oiio_cmd.extend(["--compression", compression])
@@ -1079,12 +1082,13 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    oiio_cmd = get_oiio_tools_args() + [
+    oiio_cmd = get_oiio_tools_args(
+        "oiiotool",
         input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path
-    ]
+    )
 
     if all([target_colorspace, view, display]):
         raise ValueError("Colorspace and both screen and display"

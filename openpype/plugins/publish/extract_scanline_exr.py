@@ -51,7 +51,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
             try:
-                oiio_tool_args = get_oiio_tools_args()
+                oiio_tool_args = get_oiio_tools_args("oiiotool")
             except ToolNotFoundError:
                 self.log.error("OIIO tool not found.")
                 raise KnownPublishError("OIIO tool not found")

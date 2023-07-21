@@ -36,7 +36,7 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
             return
 
         try:
-            oiio_args = get_oiio_tools_args()
+            oiio_args = get_oiio_tools_args("oiiotool")
         except ToolNotFoundError:
             # Raise an exception when oiiotool is not available
             # - this can currently happen on MacOS machines

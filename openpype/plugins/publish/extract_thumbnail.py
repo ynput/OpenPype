@@ -175,10 +175,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def create_thumbnail_oiio(self, src_path, dst_path):
         self.log.info("Extracting thumbnail {}".format(dst_path))
-        oiio_cmd = get_oiio_tools_args() + [
+        oiio_cmd = get_oiio_tools_args(
+            "oiiotool",
             "-a", src_path,
             "-o", dst_path
-        ]
+        )
         self.log.debug("running: {}".format(" ".join(oiio_cmd)))
         try:
             run_subprocess(oiio_cmd, logger=self.log)

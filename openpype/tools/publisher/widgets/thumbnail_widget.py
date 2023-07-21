@@ -481,11 +481,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
     if not is_oiio_supported():
         return None
 
-    oiio_cmd = get_oiio_tools_args() + [
+    oiio_cmd = get_oiio_tools_args(
+        "oiiotool",
         "-i", src_path,
         "--subimage", "0",
         "-o", dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(oiio_cmd)
     except Exception:
@@ -494,14 +495,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
 
 
 def _convert_thumbnail_ffmpeg(src_path, dst_path):
-    ffmpeg_args = get_ffmpeg_tool_args()
-    if not ffmpeg_args:
-        return None
-    ffmpeg_cmd = ffmpeg_args + [
+    ffmpeg_cmd = get_ffmpeg_tool_args(
+        "ffmpeg",
         "-y",
         "-i", src_path,
         dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(ffmpeg_cmd)
     except Exception:

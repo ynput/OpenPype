@@ -88,12 +88,13 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
                 # temp audio file
                 audio_fpath = self.create_temp_file(name)
 
-                cmd = get_ffmpeg_tool_args("ffmpeg") + [
+                cmd = get_ffmpeg_tool_args(
+                    "ffmpeg",
                     "-ss", str(start_sec),
                     "-t", str(duration_sec),
                     "-i", audio_file,
                     audio_fpath
-                ]
+                )
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(" ".join(cmd)))
@@ -206,13 +207,13 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         max_duration_sec = max(end_secs)
 
         # create empty cmd
-        cmd = [
-            get_ffmpeg_tool_args("ffmpeg"),
+        cmd = get_ffmpeg_tool_args(
+            "ffmpeg",
             "-f", "lavfi",
             "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
             "-t", str(max_duration_sec),
             empty_fpath
-        ]
+        )
 
         # generate empty with ffmpeg
         # run subprocess
