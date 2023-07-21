@@ -296,7 +296,7 @@ def _oiio_executable_validation(args):
 
 def _get_ayon_oiio_tool_args(tool_name):
     try:
-        # Use 'ayon-third-party' addon to get ffmpeg arguments
+        # Use 'ayon-third-party' addon to get oiio arguments
         from ayon_third_party import get_oiio_arguments
     except Exception:
         print("!!! Failed to import 'ayon_third_party' addon.")
