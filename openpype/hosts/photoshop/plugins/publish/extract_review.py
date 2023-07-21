@@ -84,7 +84,7 @@ class ExtractReview(publish.Extractor):
             instance.data["representations"].append(repre_skeleton)
             processed_img_names = [img_list]
 
-        ffmpeg_path = get_ffmpeg_tool_args("ffmpeg")
+        ffmpeg_args = get_ffmpeg_tool_args("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -94,7 +94,7 @@ class ExtractReview(publish.Extractor):
                                                       source_files_pattern,
                                                       staging_dir)
         self._generate_thumbnail(
-            list(ffmpeg_path),
+            list(ffmpeg_args),
             instance,
             source_files_pattern,
             staging_dir)
@@ -102,7 +102,7 @@ class ExtractReview(publish.Extractor):
         no_of_frames = len(processed_img_names)
         if no_of_frames > 1:
             self._generate_mov(
-                list(ffmpeg_path),
+                list(ffmpeg_args),
                 instance,
                 fps,
                 no_of_frames,
