@@ -93,7 +93,7 @@ rt.saveMaxFile(new_filepath)
             except RuntimeError:
                 self.log.debug("Checking the scene files existing")
 
-        for camera_scene, camera in zip(camera_scene_files, cameras):
+        for camera_scene in camera_scene_files:
             if not os.path.exists(camera_scene):
                 self.log.error("Camera scene files not existed yet!")
                 raise RuntimeError("MaxBatch.exe doesn't run as expected")
