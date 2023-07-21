@@ -501,11 +501,11 @@ def get_ffmpeg_tool_args(tool_name, *extra_args):
     if AYON_SERVER_ENABLED:
         args = _get_ayon_ffmpeg_tool_args(tool_name)
         if args:
-            return args + new_extra_args
+            return args + extra_args
 
     executable_path = get_ffmpeg_tool_path(tool_name)
     if executable_path:
-        return [executable_path] + new_extra_args
+        return [executable_path] + extra_args
     raise ToolNotFoundError(
         "FFmpeg '{}' tool not found.".format(tool_name)
     )
