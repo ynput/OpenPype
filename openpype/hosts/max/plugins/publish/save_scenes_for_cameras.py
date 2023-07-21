@@ -11,8 +11,8 @@ from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 
 
 class SaveScenesForCamera(pyblish.api.InstancePlugin):
-    """Save scene files for multiple cameras before
-    deadline submission
+    """Save scene files for multiple cameras without
+    editing the original scene before deadline submission
 
     """
 
@@ -26,7 +26,6 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
         current_filename = rt.maxFileName
         current_filepath = os.path.join(current_folder, current_filename)
         camera_scene_files = []
-        repres_list = []
         scripts = []
         filename, ext = os.path.splitext(current_filename)
         fmt = RenderProducts().image_format()
@@ -99,18 +98,6 @@ rt.saveMaxFile(new_filepath)
                 self.log.error("Camera scene files not existed yet!")
                 raise RuntimeError("MaxBatch.exe doesn't run as expected")
             self.log.debug(f"Found Camera scene:{camera_scene}")
-            representation = {
-                "name": camera,
-                "ext": "max",
-                "files": os.path.basename(camera_scene),
-                "stagingDir": os.path.dirname(camera_scene),
-                "outputName": camera
-            }
-            repres_list.append(representation)
 
         if "sceneFiles" not in instance.data:
             instance.data["sceneFiles"] = camera_scene_files
-
-        if instance.data.get("representations") is None:
-            instance.data["representations"] = []
-        instance.data["representations"]= repres_list
