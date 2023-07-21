@@ -785,10 +785,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     arg = arg.replace(identifier, "").strip()
                     audio_filters.append(arg)
 
-        all_args = []
-        all_args.append(
+        all_args = [
             subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg"))
-        )
+        ]
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v")
