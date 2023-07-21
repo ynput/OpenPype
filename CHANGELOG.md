@@ -1,6 +1,156 @@
 # Changelog
 
 
+## [3.16.1](https://github.com/ynput/OpenPype/tree/3.16.1)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.0...3.16.1)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Royal Render: Maya and Nuke support <a href="https://github.com/ynput/OpenPype/pull/5191">#5191</a></summary>
+
+Basic working implementation of Royal Render support in Maya.It expects New publisher implemented in Maya.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Blend File Family <a href="https://github.com/ynput/OpenPype/pull/4321">#4321</a></summary>
+
+<strong>Implementation of the Blend File family analogue to the Maya Scene one.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: simple bgeo publishing <a href="https://github.com/ynput/OpenPype/pull/4588">#4588</a></summary>
+
+<strong>Support for simple publishing of bgeo files.
+
+</strong>This is adding basic support for bgeo publishing in Houdini. It will allow publishing bgeo in all supported formats (selectable in the creator options).  If selected node has `output` on sop level, it will be used automatically as path in file node.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>General: delivery action add renamed frame number in Loader <a href="https://github.com/ynput/OpenPype/pull/5024">#5024</a></summary>
+
+Frame Offset options for delivery in Openpype loader
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement/houdini add path action for abc validator <a href="https://github.com/ynput/OpenPype/pull/5237">#5237</a></summary>
+
+Add a default path attribute Action.it's a helper action more than a repair action, which used to add a default single value.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: auto apply all settings after template build <a href="https://github.com/ynput/OpenPype/pull/5277">#5277</a></summary>
+
+Adding auto run of Apply All Settings after template is builder is finishing its process. This will apply Frame-range, Image size, Colorspace found in context of a task shot.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Harmony:Removed loader settings for Harmony <a href="https://github.com/ynput/OpenPype/pull/5289">#5289</a></summary>
+
+It shouldn't be configurable, it is internal logic. By adding additional extension it wouldn't start to work magically.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>AYON: Make appdirs case sensitive <a href="https://github.com/ynput/OpenPype/pull/5298">#5298</a></summary>
+
+Appdirs for AYON are case sensitive for linux and mac so we needed to change them to match ayon launcher. Changed 'ayon' to 'AYON' and 'ynput' to 'Ynput'.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher: Fix plugin order <a href="https://github.com/ynput/OpenPype/pull/5299">#5299</a></summary>
+
+Frame range collector for traypublisher was moved to traypublisher plugins and changed order to make sure `assetEntity` is filled in `instance.data`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: removing OPENPYPE_VERSION from some host submitters <a href="https://github.com/ynput/OpenPype/pull/5302">#5302</a></summary>
+
+Removing deprecated method of adding OPENPYPE_VERSION to job environment. It was leftover and other hosts have already been cleared.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix args for workfile conversion util <a href="https://github.com/ynput/OpenPype/pull/5308">#5308</a></summary>
+
+Workfile update conversion util function have right expected arguments.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Maya: Refactor imports to `lib.get_reference_node` since the other function… <a href="https://github.com/ynput/OpenPype/pull/5258">#5258</a></summary>
+
+Refactor imports to `lib.get_reference_node` since the other function is deprecated.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.0](https://github.com/ynput/OpenPype/tree/3.16.0)
 
 

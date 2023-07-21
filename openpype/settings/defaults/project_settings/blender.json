@@ -54,7 +54,8 @@
                 "camera",
                 "rig",
                 "action",
-                "layout"
+                "layout",
+                "blendScene"
             ]
         },
         "ExtractFBX": {
