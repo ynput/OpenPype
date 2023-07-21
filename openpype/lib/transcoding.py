@@ -12,7 +12,7 @@ import xml.etree.ElementTree
 from .execute import run_subprocess
 from .vendor_bin_utils import (
     get_ffmpeg_tool_args,
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     is_oiio_supported,
 )
 
@@ -83,7 +83,7 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
 
     Stdout should contain xml format string.
     """
-    args = get_oiio_tools_args(
+    args = get_oiio_tool_args(
         "oiiotool",
         "--info",
         "-v"
@@ -486,7 +486,7 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = get_oiio_tools_args(
+    oiio_cmd = get_oiio_tool_args(
         "oiiotool",
         # Don't add any additional attributes
         "--nosoftwareattrib",
@@ -655,7 +655,7 @@ def convert_input_paths_for_ffmpeg(
 
     for input_path in input_paths:
         # Prepare subprocess arguments
-        oiio_cmd = get_oiio_tools_args(
+        oiio_cmd = get_oiio_tool_args(
             "oiiotool",
             # Don't add any additional attributes
             "--nosoftwareattrib",
@@ -1082,7 +1082,7 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    oiio_cmd = get_oiio_tools_args(
+    oiio_cmd = get_oiio_tool_args(
         "oiiotool",
         input_path,
         # Don't add any additional attributes

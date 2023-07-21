@@ -19,7 +19,7 @@ from openpype.lib import (
     find_executable,
     source_hash,
     run_subprocess,
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     ToolNotFoundError,
 )
 
@@ -274,7 +274,7 @@ class MakeTX(TextureProcessor):
         """
 
         try:
-            maketx_args = get_oiio_tools_args("maketx")
+            maketx_args = get_oiio_tool_args("maketx")
         except ToolNotFoundError:
             raise KnownPublishError(
                 "OpenImageIO is not available on the machine")

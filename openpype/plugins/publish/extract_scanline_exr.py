@@ -7,7 +7,7 @@ import pyblish.api
 
 from openpype.lib import (
     run_subprocess,
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     ToolNotFoundError,
 )
 from openpype.pipeline import KnownPublishError
@@ -51,7 +51,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
             try:
-                oiio_tool_args = get_oiio_tools_args("oiiotool")
+                oiio_tool_args = get_oiio_tool_args("oiiotool")
             except ToolNotFoundError:
                 self.log.error("OIIO tool not found.")
                 raise KnownPublishError("OIIO tool not found")

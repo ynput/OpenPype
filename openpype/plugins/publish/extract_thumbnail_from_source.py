@@ -18,7 +18,7 @@ import tempfile
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     is_oiio_supported,
 
     run_subprocess,
@@ -144,7 +144,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
 
     def create_thumbnail_oiio(self, src_path, dst_path):
         self.log.info("outputting {}".format(dst_path))
-        oiio_cmd = get_oiio_tools_args(
+        oiio_cmd = get_oiio_tool_args(
             "oiiotool",
             "-a", src_path,
             "-o", dst_path

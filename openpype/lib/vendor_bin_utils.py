@@ -358,7 +358,7 @@ def get_oiio_tools_path(tool="oiiotool"):
     return tool_executable_path
 
 
-def get_oiio_tools_args(tool_name, *extra_args):
+def get_oiio_tool_args(tool_name, *extra_args):
     """Arguments to launch OpenImageIO tool.
 
     Args:
@@ -519,7 +519,7 @@ def is_oiio_supported():
     """
 
     try:
-        args = get_oiio_tools_args("oiiotool")
+        args = get_oiio_tool_args("oiiotool")
     except ToolNotFoundError:
         args = None
     if not args:

@@ -9,7 +9,7 @@ import json
 
 import pyblish.api
 from openpype.lib import (
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     ToolNotFoundError,
     run_subprocess,
 )
@@ -36,7 +36,7 @@ class ExtractConvertToEXR(pyblish.api.InstancePlugin):
             return
 
         try:
-            oiio_args = get_oiio_tools_args("oiiotool")
+            oiio_args = get_oiio_tool_args("oiiotool")
         except ToolNotFoundError:
             # Raise an exception when oiiotool is not available
             # - this can currently happen on MacOS machines

@@ -2,7 +2,7 @@ import os
 import pyblish.api
 
 from openpype.lib import (
-    get_oiio_tools_args,
+    get_oiio_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
@@ -18,7 +18,7 @@ class ExtractFrames(publish.Extractor):
     movie_extensions = ["mov", "mp4"]
 
     def process(self, instance):
-        oiio_tool_args = get_oiio_tools_args("oiiotool")
+        oiio_tool_args = get_oiio_tool_args("oiiotool")
         staging_dir = self.staging_dir(instance)
         output_template = os.path.join(staging_dir, instance.data["name"])
         sequence = instance.context.data["activeTimeline"]
