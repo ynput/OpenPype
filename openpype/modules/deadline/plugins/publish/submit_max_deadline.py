@@ -12,7 +12,6 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
-from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
     get_multipass_setting
@@ -272,8 +271,12 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         instance = self._instance
         # set the target camera
         plugin_info = copy.deepcopy(self.plugin_info)
+
         plugin_data = {}
         # set the output filepath with the relative camera
+        for camera_scene_path in instance.data.get("sceneFiles"):
+            if camera in camera_scene_path:
+                plugin_data["SceneFile"] = camera_scene_path
         files = instance.data.get("expectedFiles")
         if not files:
             raise RuntimeError("No render elements found")

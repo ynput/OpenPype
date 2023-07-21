@@ -18,7 +18,7 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
     label = "Save Scene files for cameras"
     order = pyblish.api.ExtractorOrder - 0.48
     hosts = ["max"]
-    families = ["maxrender", "workfile"]
+    families = ["maxrender"]
 
     def process(self, instance):
         current_folder = rt.maxFilePath
@@ -47,11 +47,13 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
             script = ("""
 from pymxs import runtime as rt
 import os
+filename = "{filename}"
 new_filepath = "{new_filepath}"
 new_output = "{new_output}"
 camera = "{camera}"
 rt.rendOutputFilename = new_output
-directory = os.path.dirname(new_output)
+directory = os.path.dirname(rt.rendOutputFilename)
+directory = os.path.join(directory, filename)
 render_elem = rt.maxOps.GetCurRenderElementMgr()
 render_elem_num = render_elem.NumRenderElements()
 if render_elem_num > 0:
@@ -62,18 +64,19 @@ if render_elem_num > 0:
         aov_name = directory + "_" + camera + "_" + renderpass + "." + "." + ext        # noqa
         render_elem.SetRenderElementFileName(i, aov_name)
 rt.saveMaxFile(new_filepath)
-        """).format(new_filepath=new_filepath,
+        """).format(filename=filename,
+                    new_filepath=new_filepath,
                     new_output=new_output,
                     camera=camera,
                     ext=fmt)
             scripts.append(script)
 
-        maxBatch_exe = os.path.join(
+        maxbatch_exe = os.path.join(
             os.path.dirname(sys.executable), "3dsmaxbatch")
-        maxBatch_exe = maxBatch_exe.replace("\\", "/")
+        maxbatch_exe = maxbatch_exe.replace("\\", "/")
         if sys.platform == "windows":
-            maxBatch_exe += ".exe"
-            maxBatch_exe = os.path.normpath(maxBatch_exe)
+            maxbatch_exe += ".exe"
+            maxbatch_exe = os.path.normpath(maxbatch_exe)
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             tmp_script_path = os.path.join(
                 tmp_dir_name, "extract_scene_files.py")
@@ -86,7 +89,7 @@ rt.saveMaxFile(new_filepath)
             try:
                 current_filepath = current_filepath.replace("\\", "/")
                 tmp_script_path = tmp_script_path.replace("\\", "/")
-                run_subprocess([maxBatch_exe, tmp_script_path,
+                run_subprocess([maxbatch_exe, tmp_script_path,
                                 "-sceneFile", current_filepath])
             except RuntimeError:
                 self.log.debug("Checking the scene files existing")
