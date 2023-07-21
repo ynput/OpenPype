@@ -22,13 +22,11 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
     families = ["maxrender", "workfile"]
 
     def process(self, instance):
-        if not instance.data.get("multiCamera"):
-            self.log.debug("Skipping instance...")
-            return
         current_folder = rt.maxFilePath
         current_filename = rt.maxFileName
         current_filepath = os.path.join(current_folder, current_filename)
         camera_scene_files = []
+        repres_list = []
         scripts = []
         filename, ext = os.path.splitext(current_filename)
         fmt = RenderProducts().image_format()
@@ -94,25 +92,25 @@ rt.saveMaxFile(new_filepath)
                 run_subprocess([maxBatch_exe, tmp_script_path,
                                 "-sceneFile", current_filepath])
             except RuntimeError:
-                self.log.debug("Checking the scene files existing or not")
+                self.log.debug("Checking the scene files existing")
 
         for camera_scene, camera in zip(camera_scene_files, cameras):
             if not os.path.exists(camera_scene):
                 self.log.error("Camera scene files not existed yet!")
                 raise RuntimeError("MaxBatch.exe doesn't run as expected")
             self.log.debug(f"Found Camera scene:{camera_scene}")
-            instance.context.data["currentFile"] = camera_scene
             representation = {
-            "name": "max",
-            "ext": "max",
-            "files": os.path.basename(camera_scene),
-            "stagingDir": new_folder,
-            "outputName": camera
+                "name": camera,
+                "ext": "max",
+                "files": os.path.basename(camera_scene),
+                "stagingDir": os.path.dirname(camera_scene),
+                "outputName": camera
             }
-            self.log.debug(f"representation: {representation}")
-            if instance.data.get("representations") is None:
-                instance.data["representations"] = []
-            instance.data["representations"].append(representation)
+            repres_list.append(representation)
 
         if "sceneFiles" not in instance.data:
             instance.data["sceneFiles"] = camera_scene_files
+
+        if instance.data.get("representations") is None:
+            instance.data["representations"] = []
+        instance.data["representations"] = (repres_list)
