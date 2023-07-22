@@ -295,9 +295,6 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
     def remove_instances(self, instances):
         return self._default_remove_instances(instances)
 
-    def get_pre_create_attr_defs(self):
-        pass
-
 
 def ensure_namespace(namespace):
     """Make sure the namespace exists.
