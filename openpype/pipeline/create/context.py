@@ -1981,7 +1981,7 @@ class CreateContext:
 
         precreate_attr_defs = []
         # Hidden creators do not have or need the pre-create attributes.
-        if hasattr(creator, "get_pre_create_attr_defs"):
+        if isinstance(creator, Creator):
             precreate_attr_defs = creator.get_pre_create_attr_defs()
 
         # Create default values of precreate data
