@@ -113,7 +113,7 @@ def message_window(title, message):
     _process_app_events()
 
 
-def _get_asset_data():
+def get_asset_data():
     project_name = get_current_project_name()
     asset_name = get_current_asset_name()
     asset_doc = get_asset_by_name(project_name, asset_name)
@@ -121,7 +121,7 @@ def _get_asset_data():
     return asset_doc.get("data")
 
 
-def set_start_end_frames(data):
+def set_frame_range(data):
     scene = bpy.context.scene
 
     # Default scene settings
@@ -171,12 +171,12 @@ def on_new():
     set_resolution_startup = settings.get("set_resolution_startup")
     set_frames_startup = settings.get("set_frames_startup")
 
-    data = _get_asset_data()
+    data = get_asset_data()
 
     if set_resolution_startup:
         set_resolution(data)
     if set_frames_startup:
-        set_start_end_frames(data)
+        set_frame_range(data)
 
     unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
@@ -192,12 +192,12 @@ def on_open():
     set_resolution_startup = settings.get("set_resolution_startup")
     set_frames_startup = settings.get("set_frames_startup")
 
-    data = _get_asset_data()
+    data = get_asset_data()
 
     if set_resolution_startup:
         set_resolution(data)
     if set_frames_startup:
-        set_start_end_frames(data)
+        set_frame_range(data)
 
     unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
