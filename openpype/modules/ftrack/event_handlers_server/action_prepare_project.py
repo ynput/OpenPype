@@ -10,13 +10,14 @@ from openpype_modules.ftrack.lib import (
     CUST_ATTR_AUTO_SYNC
 )
 
-
+from openpype.pipeline.project_folders import (
+    create_project_folders
+)
 class PrepareProjectServer(ServerAction):
     """Prepare project attributes in Anatomy."""
 
     identifier = "prepare.project.server"
-    label = "OpenPype Admin"
-    variant = "- Prepare Project (Server)"
+    label = "Hornet - Prepare Project and Folders"
     description = "Set basic attributes on the project"
 
     settings_key = "prepare_project"
@@ -24,7 +25,10 @@ class PrepareProjectServer(ServerAction):
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     settings_key = "prepare_project"
-
+    
+    # Key to store info about triggering create folder structure
+    create_project_structure_key = "create_folder_structure"
+    create_project_structure_identifier = "create.project.structure.server"
     item_splitter = {"type": "label", "value": "---"}
     _keys_order = (
         "fps",
@@ -40,6 +44,7 @@ class PrepareProjectServer(ServerAction):
         "applications",
         "tools_env",
         "library_project",
+        'create_folder_structure'
     )
 
     def discover(self, session, entities, event):
@@ -87,6 +92,10 @@ class PrepareProjectServer(ServerAction):
             "type": "label",
             "value": "<h3>Set basic Attributes:</h3>"
         })
+        items.append({
+            "type": "label",
+            "value": "<h3>Hornet example</h3>"
+        })
 
         items.extend(ca_items)
 
@@ -103,7 +112,26 @@ class PrepareProjectServer(ServerAction):
         }
         # Add autosync attribute
         items.append(auto_sync_item)
-
+        # This item will be last before enumerators
+        # Ask if want to trigger Action Create Folder Structure
+        create_project_structure_checked = (
+            project_settings
+            ["project_settings"]
+            ["ftrack"]
+            ["user_handlers"]
+            ["prepare_project"]
+            ["create_project_structure_checked"]
+        ).value
+       # items.append({
+        #    "type": "label",
+         #   "value": "<h3>Want to create basic Folder Structure?</h3>"
+        #})
+        #items.append({
+         #   "name": 'create_folder_structure',
+          #  "type": "boolean",
+           # "value": True,
+            #"label": "Check if Yes"
+        #})
         # Add enumerator items at the end
         for item in multiselect_enumerators:
             items.append(item)
@@ -126,6 +154,7 @@ class PrepareProjectServer(ServerAction):
             "value": (
                 "<p><i>NOTE: Roots are <b>crucial</b> for path filling"
                 " (and creating folder structure).</i></p>"
+                "Folders will be automatically created at the end of the process"
             )
         })
         root_items.append({
@@ -311,7 +340,10 @@ class PrepareProjectServer(ServerAction):
         in_data = event["data"].get("values")
         if not in_data:
             return
-
+        #create_project_structure_checked = in_data.pop(
+        #    self.create_project_structure_key
+        #)
+        create_project_structure_checked = True
         root_values = {}
         root_key = "__root__"
         for key in tuple(in_data.keys()):
@@ -402,14 +434,25 @@ class PrepareProjectServer(ServerAction):
                 project_entity["custom_attributes"][key] = value
                 self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
             session.commit()
-
+        # Trigger second action to make the structure
+        if 'linux' in root_data['work'].keys():
+            self.log.debug("creating root")
+            try:
+                import os
+                os.makedirs(root_data['work']['linux'])
+            except Exception as e:
+                self.log.debug("root fail")
+                self.log.debug(e)
         event_data = copy.deepcopy(in_data)
         event_data["project_name"] = project_name
+        in_data["project_name"] = project_name
+        create_project_folders(project_name)
+
         self.trigger_event("openpype.project.prepared", event_data)
 
         return True
 
 
 def register(session):
-    '''Register plugin. Called when used as an plugin.'''
+    '''Register plugin. Called                        when used as an plugin.'''
     PrepareProjectServer(session).register()
