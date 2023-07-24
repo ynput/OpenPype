@@ -64,7 +64,7 @@ if render_elem_num > 0:
         aov_name = directory + "_" + camera + "_" + renderpass + "." + "." + ext        # noqa
         render_elem.SetRenderElementFileName(i, aov_name)
 rt.saveMaxFile(new_filepath)
-        """).format(filename=filename,
+        """).format(filename=instance.name,
                     new_filepath=new_filepath,
                     new_output=new_output,
                     camera=camera,

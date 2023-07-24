@@ -303,10 +303,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 instance.name, old_output_dir, camera
             )
             for i, element in enumerate(render_elem_list):
-                elem_bname = os.path.basename(element)
-                new_elem = f"{dir}/{elem_bname}"
-                new_elem = new_elem.replace("/", "\\")
-                plugin_info["RenderElementOutputFilename%d" % i] = new_elem   # noqa
+                if camera in element:
+                    elem_bname = os.path.basename(element)
+                    new_elem = f"{dir}/{elem_bname}"
+                    new_elem = new_elem.replace("/", "\\")
+                    plugin_info["RenderElementOutputFilename%d" % i] = new_elem   # noqa
 
         if camera:
             # set the default camera and target camera
@@ -347,10 +348,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     def from_published_scene(self, replace_in_path=True):
         instance = self._instance
         if instance.data["renderer"] == "Redshift_Renderer":
-            self.log.debug("Using Redshift...published scene wont be used..")
-            replace_in_path = False
-
-        if instance.data.get("multiCamera"):
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
         return replace_in_path
