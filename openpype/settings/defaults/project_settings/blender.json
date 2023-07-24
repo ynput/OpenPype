@@ -85,6 +85,11 @@
             "optional": true,
             "active": true
         },
+        "ExtractCameraABC": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ExtractLayout": {
             "enabled": true,
             "optional": true,

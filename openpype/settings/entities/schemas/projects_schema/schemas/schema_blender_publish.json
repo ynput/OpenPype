@@ -108,6 +108,10 @@
                     "label": "Extract FBX Camera as FBX"
                 },
                 {
+                    "key": "ExtractCameraABC",
+                    "label": "Extract Camera as ABC"
+                },
+                {
                     "key": "ExtractLayout",
                     "label": "Extract Layout as JSON"
                 }
