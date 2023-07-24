@@ -101,6 +101,7 @@
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
+            "template_name": "render",
             "deadline_department": "",
             "deadline_pool": "",
             "deadline_group": "",
