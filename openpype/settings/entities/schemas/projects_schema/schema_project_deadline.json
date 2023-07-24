@@ -546,11 +546,6 @@
                         },
                         {
                             "type": "text",
-                            "key": "template_name",
-                            "label": "Publish template name"
-                        },
-                        {
-                            "type": "text",
                             "key": "deadline_department",
                             "label": "Deadline department"
                         },
