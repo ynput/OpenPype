@@ -12,7 +12,7 @@ class ExtractABC(publish.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model", "pointcache"]
+    families = ["model", "pointcache", "camera"]
     optional = True
 
     def process(self, instance):
@@ -22,8 +22,6 @@ class ExtractABC(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
-        scene = context.scene
-        view_layer = context.view_layer
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -31,24 +29,46 @@ class ExtractABC(publish.Extractor):
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
+        active = None
 
-        for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
+        flatten = False
+
+        family = instance.data.get("family")
+
+        if family == "camera":
+            asset_group = None
+            for obj in instance:
+                if obj.get(AVALON_PROPERTY):
+                    asset_group = obj
+                    break
+            assert asset_group, "No asset group found"
+
+            # Need to cast to list because children is a tuple
+            selected = list(asset_group.children)
+            active = selected[0]
+
+            for obj in selected:
+                obj.select_set(True)
+
+            flatten = True
+        else:
+            for obj in instance:
+                obj.select_set(True)
+                selected.append(obj)
+                # Set as active the asset group
+                if obj.get(AVALON_PROPERTY):
+                    active = obj
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=active, selected=selected)
 
-        # We export the abc
-        bpy.ops.wm.alembic_export(
-            context,
-            filepath=filepath,
-            selected=True,
-            flatten=False
-        )
+        with bpy.context.temp_override(**context):
+            # We export the abc
+            bpy.ops.wm.alembic_export(
+                filepath=filepath,
+                selected=True,
+                flatten=flatten
+            )
 
         plugin.deselect_all()
 
