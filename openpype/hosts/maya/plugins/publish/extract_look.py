@@ -6,7 +6,6 @@ import contextlib
 import json
 import logging
 import os
-import platform
 import tempfile
 import six
 import attr
@@ -585,14 +584,12 @@ class ExtractLook(publish.Extractor):
         resources = instance.data["resources"]
         color_management = lib.get_color_management_preferences()
 
-        # Temporary fix to NOT create hardlinks on windows machines
-        if platform.system().lower() == "windows":
-            self.log.info(
-                "Forcing copy instead of hardlink due to issues on Windows..."
-            )
-            force_copy = True
-        else:
-            force_copy = instance.data.get("forceCopy", False)
+        # Temporary disable all hardlinking, due to the feature not being used
+        # or properly working.
+        self.log.info(
+            "Forcing copy instead of hardlink."
+        )
+        force_copy = True
 
         destinations_cache = {}
 
