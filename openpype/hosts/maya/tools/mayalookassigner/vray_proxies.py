@@ -8,9 +8,17 @@ from maya import cmds
 from openpype.client import get_last_version_by_subset_name
 from openpype.pipeline import legacy_io
 import openpype.hosts.maya.lib as maya_lib
-from . import lib
-from .alembic import get_alembic_ids_cache
 
+# NOTE hornet update for lib module clash in python 2.7
+try:
+    import lib
+except:
+    from . import lib
+try:
+    from .h_alembic import get_alembic_ids_cache
+except:
+    from .alembic import get_alembic_ids_cache
+# END
 
 log = logging.getLogger(__name__)
 

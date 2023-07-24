@@ -19,9 +19,14 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
 
         ue_version = app.name.replace("-", ".")
+        # NOTE hornet fix for python 2.7
+        # unreal_plugin_path = os.path.join(
+        #     UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
+        # )
         unreal_plugin_path = os.path.join(
-            UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
+            UNREAL_ROOT_DIR, "integration", "UE_{}".format(ue_version), "Ayon"
         )
+        # END
         if not Path(unreal_plugin_path).exists():
             compatible_versions = get_compatible_integration(
                 ue_version, Path(UNREAL_ROOT_DIR) / "integration"
