@@ -52,7 +52,8 @@ class ExtractBurnin(publish.Extractor):
         "photoshop",
         "flame",
         "houdini",
-        "max"
+        "max",
+        "blender"
         # "resolve"
     ]
 
