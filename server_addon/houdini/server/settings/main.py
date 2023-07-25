@@ -1,7 +1,6 @@
-from pydantic import Field, validator
+from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
-    ensure_unique_names,
     MultiplatformPathModel,
     MultiplatformPathListModel,
 )

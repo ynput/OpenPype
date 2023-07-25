@@ -1,7 +1,6 @@
 from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
-    MultiplatformPathListModel,
 )
 
 from .imageio import FusionImageIOModel

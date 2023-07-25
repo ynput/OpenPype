@@ -4,7 +4,7 @@ from .main import (
 )
 
 
-__all__= (
+__all__ = (
     "NukeSettings",
     "DEFAULT_VALUES",
 )

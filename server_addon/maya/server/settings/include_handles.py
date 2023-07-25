@@ -15,7 +15,9 @@ class IncludeByTaskTypeModel(BaseSettingsModel):
 class IncludeHandlesModel(BaseSettingsModel):
     """Maya dirmap settings."""
     # _layout = "expanded"
-    include_handles_default: bool = Field(True, title="Include handles by default")
+    include_handles_default: bool = Field(
+        True, title="Include handles by default"
+    )
     per_task_type: list[IncludeByTaskTypeModel] = Field(
         default_factory=list,
         title="Include/exclude handles by task type"

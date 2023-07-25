@@ -122,7 +122,7 @@ class TraypublisherEditorialCreatorPlugins(BaseSettingsModel):
     )
 
 
-DEFAULT_EDITORIAL_CREATORS= {
+DEFAULT_EDITORIAL_CREATORS = {
     "editorial_simple": {
         "default_variants": [
             "Main"

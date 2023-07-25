@@ -7,8 +7,9 @@ class CreateLookModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     make_tx: bool = Field(title="Make tx files")
     rs_tex: bool = Field(title="Make Redshift texture files")
-    defaults: list[str] = Field(default_factory=["Main"], title="Default Products")
-
+    defaults: list[str] = Field(
+        default_factory=["Main"], title="Default Products"
+    )
 
 
 class BasicCreatorModel(BaseSettingsModel):
@@ -34,7 +35,7 @@ class CreateUnrealStaticMeshModel(BaseSettingsModel):
 
 class CreateUnrealSkeletalMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(default_factory=[],title="Default Products")
+    defaults: list[str] = Field(default_factory=[], title="Default Products")
     joint_hints: str = Field("jnt_org", title="Joint root hint")
 
 
@@ -101,7 +102,7 @@ class CreateAssModel(BasicCreatorModel):
     maskShape: bool = Field(title="Mask Shape")
     maskShader: bool = Field(title="Mask Shader")
     maskOverride: bool = Field(title="Mask Override")
-    maskDriver:  bool = Field(title="Mask Driver")
+    maskDriver: bool = Field(title="Mask Driver")
     maskFilter: bool = Field(title="Mask Filter")
     maskColor_manager: bool = Field(title="Mask Color Manager")
     maskOperator: bool = Field(title="Mask Operator")
@@ -157,7 +158,7 @@ class CreatorsModel(BaseSettingsModel):
         default_factory=CreateProxyAlembicModel,
         title="Create Proxy Alembic"
     )
-    CreateMultiverseUsd : BasicCreatorModel = Field(
+    CreateMultiverseUsd: BasicCreatorModel = Field(
         default_factory=BasicCreatorModel,
         title="Create Multiverse USD"
     )
@@ -220,188 +221,188 @@ class CreatorsModel(BaseSettingsModel):
 
 
 DEFAULT_CREATORS_SETTINGS = {
-        "CreateLook": {
-            "enabled": True,
-            "make_tx": True,
-            "rs_tex": False,
-            "defaults": [
-                "Main"
-            ]
-        },
-         "CreateRender": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateUnrealStaticMesh": {
-            "enabled": True,
-            "defaults": [
-                "",
-                "_Main"
-            ],
-            "static_mesh_prefix": "S",
-            "collision_prefixes": [
-                "UBX",
-                "UCP",
-                "USP",
-                "UCX"
-            ]
-        },
-        "CreateUnrealSkeletalMesh": {
-            "enabled": True,
-            "defaults": [],
-            "joint_hints": "jnt_org"
-        },
-        "CreateMultiverseLook": {
-            "enabled": True,
-            "publish_mip_map": True
-        },
-        "CreateAnimation": {
-            "enabled": False,
-            "write_color_sets": False,
-            "write_face_sets": False,
-            "include_parent_hierarchy": False,
-            "include_user_defined_attributes": False,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateModel": {
-            "enabled": True,
-            "write_color_sets": False,
-            "write_face_sets": False,
-            "defaults": [
-                "Main",
-                "Proxy",
-                "Sculpt"
-            ]
-        },
-        "CreatePointCache": {
-            "enabled": True,
-            "write_color_sets": False,
-            "write_face_sets": False,
-            "include_user_defined_attributes": False,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateProxyAlembic": {
-            "enabled": True,
-            "write_color_sets": False,
-            "write_face_sets": False,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsd": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdComp": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdOver": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateAss": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ],
-            "expandProcedurals": False,
-            "motionBlur": True,
-            "motionBlurKeys": 2,
-            "motionBlurLength": 0.5,
-            "maskOptions": False,
-            "maskCamera": False,
-            "maskLight": False,
-            "maskShape": False,
-            "maskShader": False,
-            "maskOverride": False,
-            "maskDriver": False,
-            "maskFilter": False,
-            "maskColor_manager": False,
-            "maskOperator": False
-        },
-        "CreateAssembly": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateCamera": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateLayout": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMayaScene": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateRenderSetup": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateReview": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ],
-            "useMayaTimeline": True
-        },
-        "CreateRig": {
-            "enabled": True,
-            "defaults": [
-                "Main",
-                "Sim",
-                "Cloth"
-            ]
-        },
-        "CreateSetDress": {
-            "enabled": True,
-            "defaults": [
-                "Main",
-                "Anim"
-            ]
-        },
-        "CreateVrayProxy": {
-            "enabled": True,
-            "vrmesh": True,
-            "alembic": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateVRayScene": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateYetiRig": {
-            "enabled": True,
-            "defaults": [
-                "Main"
-            ]
-        }
+    "CreateLook": {
+        "enabled": True,
+        "make_tx": True,
+        "rs_tex": False,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateRender": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateUnrealStaticMesh": {
+        "enabled": True,
+        "defaults": [
+            "",
+            "_Main"
+        ],
+        "static_mesh_prefix": "S",
+        "collision_prefixes": [
+            "UBX",
+            "UCP",
+            "USP",
+            "UCX"
+        ]
+    },
+    "CreateUnrealSkeletalMesh": {
+        "enabled": True,
+        "defaults": [],
+        "joint_hints": "jnt_org"
+    },
+    "CreateMultiverseLook": {
+        "enabled": True,
+        "publish_mip_map": True
+    },
+    "CreateAnimation": {
+        "enabled": False,
+        "write_color_sets": False,
+        "write_face_sets": False,
+        "include_parent_hierarchy": False,
+        "include_user_defined_attributes": False,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateModel": {
+        "enabled": True,
+        "write_color_sets": False,
+        "write_face_sets": False,
+        "defaults": [
+            "Main",
+            "Proxy",
+            "Sculpt"
+        ]
+    },
+    "CreatePointCache": {
+        "enabled": True,
+        "write_color_sets": False,
+        "write_face_sets": False,
+        "include_user_defined_attributes": False,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateProxyAlembic": {
+        "enabled": True,
+        "write_color_sets": False,
+        "write_face_sets": False,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateMultiverseUsd": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateMultiverseUsdComp": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateMultiverseUsdOver": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateAss": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ],
+        "expandProcedurals": False,
+        "motionBlur": True,
+        "motionBlurKeys": 2,
+        "motionBlurLength": 0.5,
+        "maskOptions": False,
+        "maskCamera": False,
+        "maskLight": False,
+        "maskShape": False,
+        "maskShader": False,
+        "maskOverride": False,
+        "maskDriver": False,
+        "maskFilter": False,
+        "maskColor_manager": False,
+        "maskOperator": False
+    },
+    "CreateAssembly": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateCamera": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateLayout": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateMayaScene": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateRenderSetup": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateReview": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ],
+        "useMayaTimeline": True
+    },
+    "CreateRig": {
+        "enabled": True,
+        "defaults": [
+            "Main",
+            "Sim",
+            "Cloth"
+        ]
+    },
+    "CreateSetDress": {
+        "enabled": True,
+        "defaults": [
+            "Main",
+            "Anim"
+        ]
+    },
+    "CreateVrayProxy": {
+        "enabled": True,
+        "vrmesh": True,
+        "alembic": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateVRayScene": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
+    },
+    "CreateYetiRig": {
+        "enabled": True,
+        "defaults": [
+            "Main"
+        ]
     }
+}

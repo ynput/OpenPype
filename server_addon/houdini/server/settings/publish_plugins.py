@@ -1,13 +1,13 @@
-from pydantic import Field, validator
+from pydantic import Field
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from ayon_server.settings import BaseSettingsModel
 
 
 # Creator Plugins
-
 class CreatorModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     defaults: list[str] = Field(title="Default Products")
+
 
 class CreateArnoldAssModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
@@ -99,10 +99,9 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
     }
 }
 
+
 # Publish Plugins
-
 class ValidateWorkfilePathsModel(BaseSettingsModel):
-
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     node_types: list[str] = Field(
@@ -116,7 +115,6 @@ class ValidateWorkfilePathsModel(BaseSettingsModel):
 
 
 class ValidateContainersModel(BaseSettingsModel):
-
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")

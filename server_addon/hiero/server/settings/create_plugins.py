@@ -74,6 +74,7 @@ class CreatorPluginsSettings(BaseSettingsModel):
         title="Create Shot Clip"
     )
 
+
 DEFAULT_CREATE_SETTINGS = {
     "create": {
         "CreateShotClip": {

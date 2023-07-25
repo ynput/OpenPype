@@ -15,7 +15,7 @@ class ServerListSubmodel(BaseSettingsModel):
 
 
 class DeadlineSettings(BaseSettingsModel):
-    deadline_urls:  list[ServerListSubmodel] = Field(
+    deadline_urls: list[ServerListSubmodel] = Field(
         default_factory=list,
         title="System Deadline Webservice URLs",
     )
@@ -42,6 +42,7 @@ DEFAULT_VALUES = {
             "value": "http://127.0.0.1:8082"
         }
     ],
-    "deadline_servers": [], #TODO: this needs to be dynamic from "deadline_urls"
+    # TODO: this needs to be dynamic from "deadline_urls"
+    "deadline_servers": [],
     "publish": DEFAULT_DEADLINE_PLUGINS_SETTINGS
 }

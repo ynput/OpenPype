@@ -180,12 +180,94 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
-        "presets": "{\n    \"model\": {\n        \"image_settings\": {\n            \"file_format\": \"JPEG\",\n            \"color_mode\": \"RGB\",\n            \"quality\": 100\n        },\n        \"display_options\": {\n            \"shading\": {\n                \"light\": \"STUDIO\",\n                \"studio_light\": \"Default\",\n                \"type\": \"SOLID\",\n                \"color_type\": \"OBJECT\",\n                \"show_xray\": false,\n                \"show_shadows\": false,\n                \"show_cavity\": true\n            },\n            \"overlay\": {\n                \"show_overlays\": false\n            }\n        }\n    },\n    \"rig\": {\n        \"image_settings\": {\n            \"file_format\": \"JPEG\",\n            \"color_mode\": \"RGB\",\n            \"quality\": 100\n        },\n        \"display_options\": {\n            \"shading\": {\n                \"light\": \"STUDIO\",\n                \"studio_light\": \"Default\",\n                \"type\": \"SOLID\",\n                \"color_type\": \"OBJECT\",\n                \"show_xray\": true,\n                \"show_shadows\": false,\n                \"show_cavity\": false\n            },\n            \"overlay\": {\n                \"show_overlays\": true,\n                \"show_ortho_grid\": false,\n                \"show_floor\": false,\n                \"show_axis_x\": false,\n                \"show_axis_y\": false,\n                \"show_axis_z\": false,\n                \"show_text\": false,\n                \"show_stats\": false,\n                \"show_cursor\": false,\n                \"show_annotation\": false,\n                \"show_extras\": false,\n                \"show_relationship_lines\": false,\n                \"show_outline_selected\": false,\n                \"show_motion_paths\": false,\n                \"show_object_origins\": false,\n                \"show_bones\": true\n            }\n        }\n    }\n}"
+        "presets": json.dumps(
+            {
+                "model": {
+                    "image_settings": {
+                        "file_format": "JPEG",
+                        "color_mode": "RGB",
+                        "quality": 100
+                    },
+                    "display_options": {
+                        "shading": {
+                            "light": "STUDIO",
+                            "studio_light": "Default",
+                            "type": "SOLID",
+                            "color_type": "OBJECT",
+                            "show_xray": False,
+                            "show_shadows": False,
+                            "show_cavity": True
+                        },
+                        "overlay": {
+                            "show_overlays": False
+                        }
+                    }
+                },
+                "rig": {
+                    "image_settings": {
+                        "file_format": "JPEG",
+                        "color_mode": "RGB",
+                        "quality": 100
+                    },
+                    "display_options": {
+                        "shading": {
+                            "light": "STUDIO",
+                            "studio_light": "Default",
+                            "type": "SOLID",
+                            "color_type": "OBJECT",
+                            "show_xray": True,
+                            "show_shadows": False,
+                            "show_cavity": False
+                        },
+                        "overlay": {
+                            "show_overlays": True,
+                            "show_ortho_grid": False,
+                            "show_floor": False,
+                            "show_axis_x": False,
+                            "show_axis_y": False,
+                            "show_axis_z": False,
+                            "show_text": False,
+                            "show_stats": False,
+                            "show_cursor": False,
+                            "show_annotation": False,
+                            "show_extras": False,
+                            "show_relationship_lines": False,
+                            "show_outline_selected": False,
+                            "show_motion_paths": False,
+                            "show_object_origins": False,
+                            "show_bones": True
+                        }
+                    }
+                }
+            },
+            indent=4,
+        )
     },
     "ExtractPlayblast": {
         "enabled": True,
         "optional": True,
         "active": True,
-        "presets": "{\n    \"default\": {\n        \"image_settings\": {\n            \"file_format\": \"PNG\",\n            \"color_mode\": \"RGB\",\n            \"color_depth\": \"8\",\n            \"compression\": 15\n        },\n        \"display_options\": {\n            \"shading\": {\n                \"type\": \"MATERIAL\",\n                \"render_pass\": \"COMBINED\"\n            },\n            \"overlay\": {\n                \"show_overlays\": false\n            }\n        }\n    }\n}"
+        "presets": json.dumps(
+            {
+                "default": {
+                    "image_settings": {
+                        "file_format": "PNG",
+                        "color_mode": "RGB",
+                        "color_depth": "8",
+                        "compression": 15
+                    },
+                    "display_options": {
+                        "shading": {
+                            "type": "MATERIAL",
+                            "render_pass": "COMBINED"
+                        },
+                        "overlay": {
+                            "show_overlays": False
+                        }
+                    }
+                }
+            },
+            indent=4
+        )
     }
 }

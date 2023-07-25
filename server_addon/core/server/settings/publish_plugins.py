@@ -155,7 +155,10 @@ class ExtractOIIOTranscodeProfileModel(BaseSettingsModel):
         default_factory=list,
         title="Product names"
     )
-    delete_original: bool = Field(True, title="Delete Original Representation")
+    delete_original: bool = Field(
+        True,
+        title="Delete Original Representation"
+    )
     outputs: list[ExtractOIIOTranscodeOutputModel] = Field(
         default_factory=list,
         title="Output Definitions",
@@ -208,7 +211,8 @@ def extract_review_filter_enum():
 
 class ExtractReviewFilterModel(BaseSettingsModel):
     families: list[str] = Field(default_factory=list, title="Families")
-    product_names: list[str] = Field(default_factory=list, title="Product names")
+    product_names: list[str] = Field(
+        default_factory=list, title="Product names")
     custom_tags: list[str] = Field(default_factory=list, title="Custom Tags")
     single_frame_filter: str = Field(
         "everytime",
@@ -474,7 +478,8 @@ class PreIntegrateThumbnailsProfile(BaseSettingsModel):
 class PreIntegrateThumbnailsModel(BaseSettingsModel):
     """Explicitly set if Thumbnail representation should be integrated.
 
-    If no matching profile set, existing state from Host implementation is kept.
+    If no matching profile set, existing state from Host implementation
+    is kept.
     """
 
     _isGroup = True
@@ -486,7 +491,10 @@ class PreIntegrateThumbnailsModel(BaseSettingsModel):
 
 
 class IntegrateProductGroupProfile(BaseSettingsModel):
-    product_types: list[str] = Field(default_factory=list, title="Product types")
+    product_types: list[str] = Field(
+        default_factory=list,
+        title="Product types"
+    )
     hosts: list[str] = Field(default_factory=list, title="Hosts")
     task_types: list[str] = Field(
         default_factory=list,

@@ -2,24 +2,24 @@ from pydantic import Field, validator
 
 from ayon_server.settings import (
     BaseSettingsModel,
-    MultiplatformPathListModel,
     ensure_unique_names,
 )
 
 
-ocio_configs_switcher_enum = [
-    {"value": "nuke-default", "label": "nuke-default"},
-    {"value": "spi-vfx", "label": "spi-vfx"},
-    {"value": "spi-anim", "label": "spi-anim"},
-    {"value": "aces_0.1.1", "label": "aces_0.1.1"},
-    {"value": "aces_0.7.1" , "label": "aces_0.7.1"},
-    {"value": "aces_1.0.1", "label": "aces_1.0.1"},
-    {"value": "aces_1.0.3", "label": "aces_1.0.3"},
-    {"value": "aces_1.1", "label": "aces_1.1"},
-    {"value": "aces_1.2", "label": "aces_1.2"},
-    {"value": "aces_1.3", "label": "aces_1.3"},
-    {"value": "custom", "label": "custom"}
-]
+def ocio_configs_switcher_enum():
+    return [
+        {"value": "nuke-default", "label": "nuke-default"},
+        {"value": "spi-vfx", "label": "spi-vfx"},
+        {"value": "spi-anim", "label": "spi-anim"},
+        {"value": "aces_0.1.1", "label": "aces_0.1.1"},
+        {"value": "aces_0.7.1", "label": "aces_0.7.1"},
+        {"value": "aces_1.0.1", "label": "aces_1.0.1"},
+        {"value": "aces_1.0.3", "label": "aces_1.0.3"},
+        {"value": "aces_1.1", "label": "aces_1.1"},
+        {"value": "aces_1.2", "label": "aces_1.2"},
+        {"value": "aces_1.3", "label": "aces_1.3"},
+        {"value": "custom", "label": "custom"}
+    ]
 
 
 class WorkfileColorspaceSettings(BaseSettingsModel):
@@ -42,7 +42,7 @@ class WorkfileColorspaceSettings(BaseSettingsModel):
     ocioConfigName: str = Field(
         title="OpenColorIO Config",
         description="Switch between OCIO configs",
-        enum_resolver=lambda: ocio_configs_switcher_enum,
+        enum_resolver=ocio_configs_switcher_enum,
         conditionalEnum=True
     )
     workingSpace: str = Field(
@@ -140,7 +140,7 @@ class ImageIOSettings(BaseSettingsModel):
     - no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
-    regexInputs:  RegexInputsModel = Field(
+    regexInputs: RegexInputsModel = Field(
         default_factory=RegexInputsModel,
         title="Assign colorspace to clips via rules"
     )

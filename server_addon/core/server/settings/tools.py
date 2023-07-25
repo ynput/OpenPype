@@ -19,7 +19,9 @@ class ProductTypeSmartSelectModel(BaseSettingsModel):
 
 class ProductNameProfile(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(default_factory=list, title="Product types")
+    product_types: list[str] = Field(
+        default_factory=list, title="Product types"
+    )
     hosts: list[str] = Field(default_factory=list, title="Hosts")
     task_types: list[str] = Field(
         default_factory=list,
@@ -195,7 +197,10 @@ class LoaderToolModel(BaseSettingsModel):
 
 class PublishTemplateNameProfile(BaseSettingsModel):
     _layout = "expanded"
-    product_types: list[str] = Field(default_factory=list, title="Product types")
+    product_types: list[str] = Field(
+        default_factory=list,
+        title="Product types"
+    )
     # TODO this should use hosts enum
     hosts: list[str] = Field(default_factory=list, title="Hosts")
     task_types: list[str] = Field(
@@ -215,9 +220,15 @@ class CustomStagingDirProfileModel(BaseSettingsModel):
         title="Task types",
         enum_resolver=task_types_enum
     )
-    task_names: list[str] = Field(default_factory=list, title="Task names")
-    product_types: list[str] = Field(default_factory=list, title="Product types")
-    product_names: list[str] = Field(default_factory=list, title="Product names")
+    task_names: list[str] = Field(
+        default_factory=list, title="Task names"
+    )
+    product_types: list[str] = Field(
+        default_factory=list, title="Product types"
+    )
+    product_names: list[str] = Field(
+        default_factory=list, title="Product names"
+    )
     custom_staging_dir_persistent: bool = Field(
         False, title="Custom Staging Folder Persistent"
     )

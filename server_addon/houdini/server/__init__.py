@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Type
 
 from ayon_server.addons import BaseServerAddon
 

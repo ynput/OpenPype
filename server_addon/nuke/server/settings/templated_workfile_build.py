@@ -2,7 +2,6 @@ from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
     task_types_enum,
-    MultiplatformPathModel,
 )
 
 

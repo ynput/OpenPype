@@ -133,7 +133,7 @@ def create_addon_zip(
     keep_source: bool
 ):
     zip_filepath = output_dir / f"{addon_name}.zip"
-    addon_output_dir = output_dir / addon_name /addon_version
+    addon_output_dir = output_dir / addon_name / addon_version
     with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.writestr(
             "manifest.json",
@@ -144,11 +144,11 @@ def create_addon_zip(
         )
         # Add client code content to zip
         src_root = os.path.normpath(str(addon_output_dir.absolute()))
-        src_root_len = len(src_root)
+        src_root_offset = len(src_root) + 1
         for root, _, filenames in os.walk(str(addon_output_dir)):
             rel_root = ""
             if root != src_root:
-                rel_root = root[src_root_len+1:]
+                rel_root = root[src_root_offset:]
 
             for filename in filenames:
                 src_path = os.path.join(root, filename)
@@ -220,11 +220,11 @@ def create_addon_package(
 
     # Copy server content
     src_root = os.path.normpath(str(server_dir.absolute()))
-    src_root_len = len(src_root)
+    src_root_offset = len(src_root) + 1
     for root, _, filenames in os.walk(str(server_dir)):
         dst_root = addon_output_dir
         if root != src_root:
-            rel_root = root[src_root_len+1:]
+            rel_root = root[src_root_offset:]
             dst_root = dst_root / rel_root
 
         dst_root.mkdir(parents=True, exist_ok=True)

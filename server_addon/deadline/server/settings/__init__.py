@@ -4,7 +4,7 @@ from .main import (
 )
 
 
-__all__= (
+__all__ = (
     "DeadlineSettings",
     "DEFAULT_VALUES",
 )

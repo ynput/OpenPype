@@ -25,6 +25,7 @@ def linear_unit_enum():
         {"label": "mi", "value": "mile"}
     ]
 
+
 def angular_unit_enum():
     """Get angular units enumerator."""
     return [
@@ -61,19 +62,25 @@ class ValidateModelNameModel(BaseSettingsModel):
     material_file: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
         title="Material File",
-        description=("Path to material file defining list of material names to check.")
+        description=(
+            "Path to material file defining list of material names to check."
+        )
     )
     regex: str = Field(
         "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
         title="Validation regex",
         description=(
-            "Regex for validating name of top level group name.You can use named capturing groups:(?P<asset>.*) for Asset name"
+            "Regex for validating name of top level group name. You can use"
+            " named capturing groups:(?P<asset>.*) for Asset name"
         )
     )
     top_level_regex: str = Field(
         ".*_GRP",
         title="Top level group name regex",
-        description=("To check for asset in name so *_some_asset_name_GRP is valid, use:.*?_(?P<asset>.*)_GEO")
+        description=(
+            "To check for asset in name so *_some_asset_name_GRP"
+            " is valid, use:.*?_(?P<asset>.*)_GEO"
+        )
     )
 
 
@@ -90,7 +97,10 @@ class ValidateTransformNamingSuffixModel(BaseSettingsModel):
         "{}",
         title="Suffix Naming Tables",
         widget="textarea",
-        description=("Validates transform suffix based on the type of its children shapes.")
+        description=(
+            "Validates transform suffix based on"
+            " the type of its children shapes."
+        )
     )
 
     @validator("SUFFIX_NAMING_TABLE")
@@ -108,11 +118,15 @@ class ValidateTransformNamingSuffixModel(BaseSettingsModel):
                 "The text can't be parsed as json object"
             )
         return value
-    ALLOW_IF_NOT_IN_SUFFIX_TABLE: bool = Field(title="Allow if suffix not in table")
+    ALLOW_IF_NOT_IN_SUFFIX_TABLE: bool = Field(
+        title="Allow if suffix not in table"
+    )
 
 
 class CollectMayaRenderModel(BaseSettingsModel):
-    sync_workfile_version: bool = Field(title = "Sync render version with workfile")
+    sync_workfile_version: bool = Field(
+        title="Sync render version with workfile"
+    )
 
 
 class CollectFbxCameraModel(BaseSettingsModel):
@@ -131,6 +145,7 @@ class ValidateFrameRangeModel(BaseSettingsModel):
         default_factory=list,
         title="Exclude product types"
     )
+
 
 class ValidateShaderNameModel(BaseSettingsModel):
     """
@@ -167,17 +182,25 @@ class ValidateAttributesModel(BaseSettingsModel):
 class ValidateLoadedPluginModel(BaseSettingsModel):
     enabled: bool = Field(title="ValidateLoadedPlugin")
     optional: bool = Field(title="Optional")
-    whitelist_native_plugins : bool = Field(title="Whitelist Maya Native Plugins")
-    authorized_plugins: list[str] = Field(default_factory=list, title="Authorized plugins")
+    whitelist_native_plugins: bool = Field(
+        title="Whitelist Maya Native Plugins"
+    )
+    authorized_plugins: list[str] = Field(
+        default_factory=list, title="Authorized plugins"
+    )
 
 
 class ValidateMayaUnitsModel(BaseSettingsModel):
     enabled: bool = Field(title="ValidateMayaUnits")
     optional: bool = Field(title="Optional")
     validate_linear_units: bool = Field(title="Validate linear units")
-    linear_units: str = Field(enum_resolver=linear_unit_enum, title="Linear Units")
-    validate_angular_units:  bool = Field(title="Validate angular units")
-    angular_units: str = Field(enum_resolver=angular_unit_enum, title="Angular units")
+    linear_units: str = Field(
+        enum_resolver=linear_unit_enum, title="Linear Units"
+    )
+    validate_angular_units: bool = Field(title="Validate angular units")
+    angular_units: str = Field(
+        enum_resolver=angular_unit_enum, title="Angular units"
+    )
     validate_fps: bool = Field(title="Validate fps")
 
 
@@ -282,7 +305,9 @@ class ExtractCameraAlembicModel(BaseSettingsModel):
     enabled: bool = Field(title="ExtractCameraAlembic")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")
-    bake_attributes: str = Field("[]", title="Base Attributes", widget="textarea")
+    bake_attributes: str = Field(
+        "[]", title="Base Attributes", widget="textarea"
+    )
 
     @validator("bake_attributes")
     def validate_json_list(cls, value):
@@ -430,7 +455,7 @@ class PublishersModel(BaseSettingsModel):
         title="Validate Render Passes/AOVs Are Registered"
     )
     ValidateStepSize: BasicValidateModel = Field(
-        default_factory= BasicValidateModel,
+        default_factory=BasicValidateModel,
         title="Validate Step Size"
     )
     ValidateVRayDistributedRendering: BasicValidateModel = Field(
@@ -712,15 +737,22 @@ class PublishersModel(BaseSettingsModel):
     )
 
 
-DEFAULT_SUFFIX_NAMING = "{\n    \"mesh\": [\n        \"_GEO\",\n        \"_GES\",\n        \"_GEP\",\n        \"_OSD\"\n    ],\n    \"nurbsCurve\": [\n        \"_CRV\"\n    ],\n    \"nurbsSurface\": [\n        \"_NRB\"\n    ],\n    \"locator\": [\n        \"_LOC\"\n    ],\n    \"group\": [\n        \"_GRP\"\n    ]\n}"
+DEFAULT_SUFFIX_NAMING = {
+    "mesh": ["_GEO", "_GES", "_GEP", "_OSD"],
+    "nurbsCurve": ["_CRV"],
+    "nurbsSurface": ["_NRB"],
+    "locator": ["_LOC"],
+    "group": ["_GRP"]
+}
+
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectMayaRender": {
         "sync_workfile_version": False
     },
-    "CollectFbxCamera":{
+    "CollectFbxCamera": {
         "enabled": False
     },
-    "CollectGLTF":{
+    "CollectGLTF": {
         "enabled": False
     },
     "ValidateInstanceInContext": {
@@ -940,7 +972,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateTransformNamingSuffix": {
         "enabled": True,
         "optional": True,
-        "SUFFIX_NAMING_TABLE": DEFAULT_SUFFIX_NAMING,
+        "SUFFIX_NAMING_TABLE": json.dumps(DEFAULT_SUFFIX_NAMING, indent=4),
         "ALLOW_IF_NOT_IN_SUFFIX_TABLE": True
     },
     "ValidateColorSets": {

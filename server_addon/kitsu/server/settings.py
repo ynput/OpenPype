@@ -87,7 +87,6 @@ class KitsuSettings(BaseSettingsModel):
         )
 
 
-
 DEFAULT_VALUES = {
     "entities_naming_pattern": {
         "episode": "E##",

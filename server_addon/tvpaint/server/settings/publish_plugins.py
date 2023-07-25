@@ -1,11 +1,13 @@
-from pydantic import Field, validator
+from pydantic import Field
 
-from ayon_server.settings import BaseSettingsModel, ensure_unique_names
+from ayon_server.settings import BaseSettingsModel
 from ayon_server.types import ColorRGBA_uint8
 
 
 class CollectRenderInstancesModel(BaseSettingsModel):
-    ignore_render_pass_transparency: bool = Field(title="Ignore Render Pass opacity")
+    ignore_render_pass_transparency: bool = Field(
+        title="Ignore Render Pass opacity"
+    )
 
 
 class ExtractSequenceModel(BaseSettingsModel):

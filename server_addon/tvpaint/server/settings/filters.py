@@ -1,5 +1,4 @@
 from pydantic import Field
-from pathlib import Path
 
 from ayon_server.settings import BaseSettingsModel
 

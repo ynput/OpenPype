@@ -20,7 +20,10 @@ class ScriptsmenuSettings(BaseSettingsModel):
     # TODO: in api rename key `name` to `menu_name`
     name: str = Field(title="Menu Name")
     definition: list[ScriptsmenuSubmodel] = Field(
-        default_factory=list, title="Definition", description="Scriptmenu Items Definition")
+        default_factory=list,
+        title="Definition",
+        description="Scriptmenu Items Definition"
+    )
 
 
 DEFAULT_SCRIPTSMENU_SETTINGS = {

@@ -38,7 +38,6 @@ class ImageIOFileRulesModel(BaseSettingsModel):
         return value
 
 
-
 class ColorManagementPreferenceV2Model(BaseSettingsModel):
     """Color Management Preference v2 (Maya 2022+)."""
     _layout = "expanded"

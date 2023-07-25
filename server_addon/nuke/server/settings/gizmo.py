@@ -50,7 +50,6 @@ class GizmoItem(BaseSettingsModel):
         default_factory=list, title="Gizmo Definition")
 
 
-
 DEFAULT_GIZMO_ITEM = {
     "toolbar_menu_name": "OpenPype Gizmo",
     "gizmo_source_dir": {

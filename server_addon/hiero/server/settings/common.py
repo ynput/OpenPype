@@ -21,13 +21,16 @@ class Vector3d(BaseSettingsModel):
     z: float = Field(1.0, title="Z")
 
 
-formatable_knob_type_enum = [
-    {"value": "text", "label": "Text"},
-    {"value": "number", "label": "Number"},
-    {"value": "decimal_number", "label": "Decimal number"},
-    {"value": "2d_vector", "label": "2D vector"},
-    # "3D vector"
-]
+def formatable_knob_type_enum():
+    return [
+        {"value": "text", "label": "Text"},
+        {"value": "number", "label": "Number"},
+        {"value": "decimal_number", "label": "Decimal number"},
+        {"value": "2d_vector", "label": "2D vector"},
+        # "3D vector"
+    ]
+
+
 class Formatable(BaseSettingsModel):
     _layout = "compact"
 
@@ -39,7 +42,7 @@ class Formatable(BaseSettingsModel):
     to_type: str = Field(
         "Text",
         title="To Knob type",
-        enum_resolver=lambda: formatable_knob_type_enum,
+        enum_resolver=formatable_knob_type_enum,
     )
 
 
@@ -48,7 +51,7 @@ knob_types_enum = [
     {"value": "formatable", "label": "Formate from template"},
     {"value": "color_gui", "label": "Color GUI"},
     {"value": "boolean", "label": "Boolean"},
-    {"value": "number" , "label": "Number"},
+    {"value": "number", "label": "Number"},
     {"value": "decimal_number", "label": "Decimal number"},
     {"value": "vector_2d", "label": "2D vector"},
     {"value": "vector_3d", "label": "3D vector"},

@@ -3,7 +3,6 @@ from pydantic import Field, validator
 from ayon_server.settings import BaseSettingsModel, ensure_unique_names
 
 
-
 class CollectDefaultDeadlineServerModel(BaseSettingsModel):
     """Settings for event handlers running in ftrack service."""
 
@@ -21,7 +20,9 @@ class CollectDeadlinePoolsModel(BaseSettingsModel):
 class ValidateExpectedFilesModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
     active: bool = Field(True, title="Active")
-    allow_user_override: bool = Field(True, title="Allow user change frame range")
+    allow_user_override: bool = Field(
+        True, title="Allow user change frame range"
+    )
     families: list[str] = Field(
         default_factory=list, title="Trigger on families"
     )
@@ -73,7 +74,7 @@ class MayaSubmitDeadlineModel(BaseSettingsModel):
     )
     tile_assembler_plugin: str = Field(
         title="Tile Assembler Plugin",
-        enum_resolver= tile_assembler_enum,
+        enum_resolver=tile_assembler_enum,
     )
     jobInfo: str = Field(
         title="Additional JobInfo data",
@@ -173,7 +174,7 @@ class HarmonySubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")
-    use_published: bool =  Field(title="Use Published scene")
+    use_published: bool = Field(title="Use Published scene")
     priority: int = Field(title="Priority")
     chunk_size: int = Field(title="Chunk Size")
     group: str = Field(title="Group")
@@ -186,7 +187,7 @@ class AfterEffectsSubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")
-    use_published: bool =  Field(title="Use Published scene")
+    use_published: bool = Field(title="Use Published scene")
     priority: int = Field(title="Priority")
     chunk_size: int = Field(title="Chunk Size")
     group: str = Field(title="Group")
@@ -283,7 +284,7 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
-    "CollectDefaultDeadlineServer":  {
+    "CollectDefaultDeadlineServer": {
         "pass_mongo_url": True
     },
     "CollectDeadlinePools": {
@@ -314,8 +315,10 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "tile_priority": 50,
         "group": "none",
         "limit": [],
-        "jobInfo": "", #TODO: this used to be empty dict
-        "pluginInfo": "", #TODO: this used to be empty dict
+        # this used to be empty dict
+        "jobInfo": "",
+        # this used to be empty dict
+        "pluginInfo": "",
         "scene_patches": []
     },
     "MaxSubmitDeadline": {
@@ -347,8 +350,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "department": "",
         "use_gpu": True,
         "env_allowed_keys": [],
-        "env_search_replace_values": [], #TODO: this used to be dictionary
-        "limit_groups": [] #TODO: this used to be dictionary
+        "env_search_replace_values": [],
+        "limit_groups": []
     },
     "HarmonySubmitDeadline": {
         "enabled": True,
@@ -390,7 +393,7 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "deadline_priority": 50,
         "publishing_script": "",
         "skip_integration_repre_list": [],
-        "aov_filter": [  # TODO: this used to be DICT
+        "aov_filter": [
             {
                 "name": "maya",
                 "value": [
