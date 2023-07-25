@@ -1,5 +1,10 @@
+import os
+import re
+
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
+from tests.integration.hosts.maya.lib import (
+    MayaLocalPublishTestClass, LOG_PATH
+)
 
 
 class TestPublishInMaya(MayaLocalPublishTestClass):
@@ -35,8 +40,26 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
     TIMEOUT = 120  # publish timeout
 
-    def test_db_asserts(self, dbcon, publish_finished):
+    def test_publish(self, dbcon, publish_finished, download_test_data):
+        logging_path = os.path.join(download_test_data, LOG_PATH)
+        with open(logging_path, "r") as f:
+            logging_output = f.read()
+
+        error_regex = r"pyblish \(ERROR\)((.|\n)*)"
+        matches = re.findall(error_regex, logging_output)
+        assert not matches, ("ERROR" + matches[0][0])
+
+    def test_db_asserts(
+        self,
+        dbcon,
+        publish_finished,
+        setup_only,
+        dump_database
+    ):
         """Host and input data dependent expected results in DB."""
+        if setup_only or dump_database:
+            return
+
         print("test_db_asserts")
         failures = []
         failures.append(DBAssert.count_of_types(dbcon, "version", 2))

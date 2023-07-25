@@ -268,8 +268,20 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout, setup_only):
+    def run_tests(
+        self,
+        folder,
+        mark,
+        pyargs,
+        test_openpype_mongo,
+        test_data_folder,
+        keep_app_open,
+        persist,
+        app_variant,
+        timeout,
+        setup_only,
+        dump_database
+    ):
         """
             Runs tests from 'folder'
 
@@ -305,11 +317,17 @@ class PypeCommands:
         if pyargs:
             args.extend(["--pyargs", pyargs])
 
+        if test_openpype_mongo:
+            args.extend(["--test_openpype_mongo", test_openpype_mongo])
+
         if test_data_folder:
             args.extend(["--test_data_folder", test_data_folder])
 
+        if keep_app_open:
+            args.extend(["--keep_app_open"])
+
         if persist:
-            args.extend(["--persist", persist])
+            args.extend(["--persist"])
 
         if app_variant:
             args.extend(["--app_variant", app_variant])
@@ -318,7 +336,10 @@ class PypeCommands:
             args.extend(["--timeout", timeout])
 
         if setup_only:
-            args.extend(["--setup_only", setup_only])
+            args.extend(["--setup_only"])
+
+        if dump_database:
+            args.extend(["--dump_database"])
 
         print("run_tests args: {}".format(args))
         import pytest

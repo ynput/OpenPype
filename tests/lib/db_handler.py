@@ -114,8 +114,11 @@ class DBHandler:
         db_name_out = db_name_out or db_name
         if self._db_exists(db_name_out):
             if not overwrite:
-                raise RuntimeError("DB {} already exists".format(db_name_out) +
-                                   "Run with overwrite=True")
+                raise RuntimeError(
+                    "DB {} already exists run with overwrite=True".format(
+                        db_name_out
+                    )
+                )
             else:
                 if collection:
                     if collection in self.client[db_name_out].list_collection_names():  # noqa
@@ -157,11 +160,14 @@ class DBHandler:
 
         dir_path = os.path.join(dump_dir, db_name)
         if os.path.exists(dir_path) and not overwrite:
-            raise RuntimeError("Backup already exists, "
-                               "run with overwrite=True")
+            raise RuntimeError(
+                "Backup already exists. Remove existing database dumps in "
+                "\"{}\" or run with overwrite=True".format(dir_path)
+            )
 
-        query = self._dump_query(self.uri, dump_dir,
-                                 db_name=db_name, collection=collection)
+        query = self._dump_query(
+            self.uri, dump_dir, db_name=db_name, collection=collection
+        )
         print("Mongodump query:: {}".format(query))
         subprocess.run(query)
 

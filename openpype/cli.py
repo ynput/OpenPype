@@ -289,14 +289,22 @@ def run(script):
               "--pyargs",
               help="Run tests from package",
               default=None)
+@click.option("--test_openpype_mongo",
+              help="MongoDB for testing.",
+              default=None)
 @click.option("-t",
               "--test_data_folder",
-              help="Unzipped directory path of test file",
+              help="Unzipped directory path of test file.",
               default=None)
+@click.option("--keep_app_open",
+              help="Keep launched application open for interaction.",
+              is_flag=True,
+              default=False)
 @click.option("-s",
               "--persist",
               help="Persist test DB and published files after test end",
-              default=None)
+              is_flag=True,
+              default=False)
 @click.option("-a",
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
@@ -308,12 +316,39 @@ def run(script):
 @click.option("-so",
               "--setup_only",
               help="Only create dbs, do not run tests",
-              default=None)
-def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only):
+              is_flag=True,
+              default=False)
+@click.option("--dump_database",
+              help="Dump database to data folder.",
+              is_flag=True,
+              default=False)
+def runtests(
+    folder,
+    mark,
+    pyargs,
+    test_openpype_mongo,
+    test_data_folder,
+    keep_app_open,
+    persist,
+    app_variant,
+    timeout,
+    setup_only,
+    dump_database
+):
     """Run all automatic tests after proper initialization via start.py"""
-    PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout, setup_only)
+    PypeCommands().run_tests(
+        folder,
+        mark,
+        pyargs,
+        test_openpype_mongo,
+        test_data_folder,
+        keep_app_open,
+        persist,
+        app_variant,
+        timeout,
+        setup_only,
+        dump_database
+    )
 
 
 @main.command()

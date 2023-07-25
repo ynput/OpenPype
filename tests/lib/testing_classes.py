@@ -105,13 +105,30 @@ class ModuleUnitTest(BaseTest):
         yield path
 
     @pytest.fixture(scope="module")
-    def env_var(self, monkeypatch_session, download_test_data):
+    def env_var(
+        self, monkeypatch_session, download_test_data, test_openpype_mongo
+    ):
         """Sets temporary env vars from json file."""
-        env_url = os.path.join(download_test_data, "input",
-                               "env_vars", "env_var.json")
+        # Collect openpype mongo.
+        if test_openpype_mongo:
+            self.TEST_OPENPYPE_MONGO = test_openpype_mongo
+
+        # Get class attributes for environment.
+        attributes = {}
+        for attribute in ModuleUnitTest.__dict__.keys():
+            if attribute[:2] != '__':
+                value = getattr(self, attribute)
+                if not callable(value):
+                    attributes[attribute] = value
+
+        # Set environment variables from input json and class attributes.
+        env_url = os.path.join(
+            download_test_data, "input", "env_vars", "env_var.json"
+        )
         if not os.path.exists(env_url):
-            raise ValueError("Env variable file {} doesn't exist".
-                             format(env_url))
+            raise ValueError(
+                "Env variable file {} doesn't exist".format(env_url)
+            )
 
         env_dict = {}
         try:
@@ -122,13 +139,11 @@ class ModuleUnitTest(BaseTest):
             six.reraise(*sys.exc_info())
 
         for key, value in env_dict.items():
-            all_vars = globals()
-            all_vars.update(vars(ModuleUnitTest))  # TODO check
-            value = value.format(**all_vars)
+            value = value.format(**attributes)
             print("Setting {}:{}".format(key, value))
             monkeypatch_session.setenv(key, str(value))
 
-        #reset connection to openpype DB with new env var
+        # Reset connection to openpype DB with new env var.
         import openpype.settings.lib as sett_lib
         sett_lib._SETTINGS_HANDLER = None
         sett_lib._LOCAL_SETTINGS_HANDLER = None
@@ -138,28 +153,44 @@ class ModuleUnitTest(BaseTest):
         import openpype
         openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))
 
-        # ?? why 2 of those
-        monkeypatch_session.setenv("OPENPYPE_ROOT", openpype_root)
         monkeypatch_session.setenv("OPENPYPE_REPOS_ROOT", openpype_root)
 
         # for remapping purposes (currently in Nuke)
         monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
 
     @pytest.fixture(scope="module")
-    def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request):
+    def db_setup(
+        self,
+        download_test_data,
+        env_var,
+        monkeypatch_session,
+        request,
+        dump_database
+    ):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
         uri = os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
-        db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
-                                   overwrite=True,
-                                   db_name_out=self.TEST_DB_NAME)
 
-        db_handler.setup_from_dump(self.TEST_OPENPYPE_NAME, backup_dir,
-                                   overwrite=True,
-                                   db_name_out=self.TEST_OPENPYPE_NAME)
+        if dump_database:
+            db_handler.backup_to_dump(
+                self.TEST_DB_NAME,
+                backup_dir
+            )
+        else:
+            db_handler.setup_from_dump(
+                self.TEST_DB_NAME,
+                backup_dir,
+                overwrite=True,
+                db_name_out=self.TEST_DB_NAME
+            )
+            db_handler.setup_from_dump(
+                self.TEST_OPENPYPE_NAME,
+                backup_dir,
+                overwrite=True,
+                db_name_out=self.TEST_OPENPYPE_NAME
+            )
 
         yield db_handler
 
@@ -287,12 +318,22 @@ class PublishTest(ModuleUnitTest):
         yield app_args
 
     @pytest.fixture(scope="module")
-    def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts, app_args, app_name, output_folder_url,
-                     setup_only):
+    def launched_app(
+        self,
+        dbcon,
+        download_test_data,
+        last_workfile_path,
+        startup_scripts,
+        app_args,
+        app_name,
+        output_folder_url,
+        setup_only,
+        keep_app_open,
+        dump_database
+    ):
         """Launch host app"""
-        if setup_only or self.SETUP_ONLY:
-            print("Creating only setup for test, not launching app")
+        if setup_only or self.SETUP_ONLY or dump_database:
+            print("Not launching app")
             yield
             return
         # set schema - for integrate_new
@@ -305,6 +346,10 @@ class PublishTest(ModuleUnitTest):
         os.environ["AVALON_SCHEMA"] = schema_path
 
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
+
+        if keep_app_open:
+            os.environ["KEEP_APP_OPEN"] = "1"
+
         from openpype.lib import ApplicationManager
 
         application_manager = ApplicationManager()
@@ -322,16 +367,28 @@ class PublishTest(ModuleUnitTest):
         yield app_process
 
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout, setup_only):
+    def publish_finished(
+        self,
+        dbcon,
+        launched_app,
+        download_test_data,
+        timeout,
+        setup_only,
+        keep_app_open,
+        dump_database
+    ):
         """Dummy fixture waiting for publish to finish"""
-        if setup_only or self.SETUP_ONLY:
-            print("Creating only setup for test, not launching app")
+        if setup_only or self.SETUP_ONLY or dump_database:
+            print("Not launching app")
             yield False
             return
         import time
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
+
+        if keep_app_open:
+            timeout = 100000
+
         timeout = float(timeout)
         while launched_app.poll() is None:
             time.sleep(0.5)
@@ -343,16 +400,22 @@ class PublishTest(ModuleUnitTest):
         print("Publish finished")
         yield True
 
-    def test_folder_structure_same(self, dbcon, publish_finished,
-                                   download_test_data, output_folder_url,
-                                   skip_compare_folders,
-                                   setup_only):
+    def test_folder_structure_same(
+        self,
+        dbcon,
+        publish_finished,
+        download_test_data,
+        output_folder_url,
+        skip_compare_folders,
+        setup_only,
+        dump_database
+    ):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
-        if setup_only or self.SETUP_ONLY:
-            print("Creating only setup for test, not launching app")
+        if setup_only or self.SETUP_ONLY or dump_database:
+            print("Not launching app")
             return
 
         published_dir_base = output_folder_url

@@ -5,13 +5,23 @@ import pytest
 
 def pytest_addoption(parser):
     parser.addoption(
+        "--test_openpype_mongo", action="store", default=None,
+        help="Provide url of the Mongo database."
+    )
+
+    parser.addoption(
         "--test_data_folder", action="store", default=None,
         help="Provide url of a folder of unzipped test file"
     )
 
     parser.addoption(
-        "--persist", action="store", default=None,
-        help="True - keep test_db, test_openpype, outputted test files"
+        "--keep_app_open", action="store_true", default=None,
+        help="Keeps the launched app open for interaction."
+    )
+
+    parser.addoption(
+        "--persist", action="store_true", default=None,
+        help="Keep test_db, test_openpype, outputted test files"
     )
 
     parser.addoption(
@@ -25,14 +35,29 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--setup_only", action="store", default=None,
-        help="True - only setup test, do not run any tests"
+        "--setup_only", action="store_true", default=None,
+        help="Only setup test, do not run any tests"
     )
+
+    parser.addoption(
+        "--dump_database", action="store_true", default=None,
+        help="Dump database to data folder."
+    )
+
+
+@pytest.fixture(scope="module")
+def test_openpype_mongo(request):
+    return request.config.getoption("--test_openpype_mongo")
 
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
     return request.config.getoption("--test_data_folder")
+
+
+@pytest.fixture(scope="module")
+def keep_app_open(request):
+    return request.config.getoption("--keep_app_open")
 
 
 @pytest.fixture(scope="module")
@@ -53,6 +78,11 @@ def timeout(request):
 @pytest.fixture(scope="module")
 def setup_only(request):
     return request.config.getoption("--setup_only")
+
+
+@pytest.fixture(scope="module")
+def dump_database(request):
+    return request.config.getoption("--dump_database")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
