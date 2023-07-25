@@ -435,7 +435,7 @@ def check_built_plugin_existance(plugin_path) -> bool:
 
     integration_plugin_path = Path(plugin_path)
 
-    if not os.path.isdir(integration_plugin_path):
+    if not integration_plugin_path.is_dir():
         raise RuntimeError("Path to the integration plugin is null!")
 
     if not (integration_plugin_path / "Binaries").is_dir() \
