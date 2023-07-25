@@ -17,6 +17,42 @@ from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
 
+def download_test_data(data_folder, files):
+    if data_folder:
+        print("Using existing folder {}".format(data_folder))
+        return data_folder
+
+    data_folder = tempfile.mkdtemp()
+    print("Temporary folder created:: {}".format(data_folder))
+    for test_file in files:
+        file_id, file_name, md5 = test_file
+
+        f_name, ext = os.path.splitext(file_name)
+
+        RemoteFileHandler.download_file_from_google_drive(
+            file_id, str(data_folder), file_name
+        )
+
+        if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
+            RemoteFileHandler.unzip(os.path.join(data_folder, file_name))
+
+    return data_folder
+
+
+def output_folder_url(data_folder):
+    path = os.path.join(data_folder, "output")
+    if os.path.exists(path):
+        print("Purging {}".format(path))
+        shutil.rmtree(path)
+    return path
+
+
+def setup(data_folder, files):
+    download_test_data(data_folder, files)
+    output_folder_url(data_folder)
+    #db_setup
+
+
 class BaseTest:
     """Empty base test class"""
 
@@ -68,39 +104,21 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def download_test_data(self, data_folder, persist, request):
-        data_folder = data_folder or self.DATA_FOLDER
-        if data_folder:
-            print("Using existing folder {}".format(data_folder))
-            yield data_folder
-        else:
-            tmpdir = tempfile.mkdtemp()
-            print("Temporary folder created:: {}".format(tmpdir))
-            for test_file in self.FILES:
-                file_id, file_name, md5 = test_file
+        data_folder = download_test_data(
+            data_folder or self.DATA_FOLDER, self.FILES
+        )
 
-                f_name, ext = os.path.splitext(file_name)
+        yield data_folder
 
-                RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                                  str(tmpdir),
-                                                                  file_name)
-
-                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
-                    RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-                yield tmpdir
-
-                persist = (persist or self.PERSIST or
-                           self.is_test_failed(request))
-                if not persist:
-                    print("Removing {}".format(tmpdir))
-                    shutil.rmtree(tmpdir)
+        persist = (persist or self.PERSIST or self.is_test_failed(request))
+        if not persist:
+            print("Removing {}".format(data_folder))
+            shutil.rmtree(data_folder)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
         """Returns location of published data, cleans it first if exists."""
-        path = os.path.join(download_test_data, "output")
-        if os.path.exists(path):
-            print("Purging {}".format(path))
-            shutil.rmtree(path)
+        path = output_folder_url(download_test_data)
         yield path
 
     @pytest.fixture(scope="module")
@@ -170,7 +188,6 @@ class ModuleUnitTest(BaseTest):
         self,
         download_test_data,
         env_var,
-        monkeypatch_session,
         request,
         dump_database
     ):
