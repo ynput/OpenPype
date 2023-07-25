@@ -1,5 +1,5 @@
-# OpenPype addon for AYON server
-Convert openpype into AYON addon which can be installed on AYON server. The versioning of the addon is following versioning of OpenPype.
+# Addons for AYON server
+Preparation of AYON addons based on OpenPype codebase. The output is a bunch of zip files in `./packages` directory that can be uploaded to AYON server. One of the packages is `openpype` which is OpenPype code converted to AYON addon. The addon is must have requirement to be able to use `ayon-launcher`. The versioning of `openpype` addon is following versioning of OpenPype. The other addons contain only settings models.
 
 ## Intro
 OpenPype is transitioning to AYON, a dedicated server with its own database, moving away from MongoDB. During this transition period, OpenPype will remain compatible with both MongoDB and AYON. However, we will gradually update the codebase to align with AYON's data structure and separate individual components into addons.
@@ -11,11 +11,11 @@ Since the implementation of the AYON Launcher is not yet fully completed, we wil
 During this transitional period, the AYON Launcher addon will be a requirement as the entry point for using the AYON Launcher.
 
 ## How to start
-There is a `create_ayon_addon.py` python file which contains logic how to create server addon from OpenPype codebase. Just run the code.
+There is a `create_ayon_addons.py` python file which contains logic how to create server addon from OpenPype codebase. Just run the code.
 ```shell
-./.poetry/bin/poetry run python ./server_addon/create_ayon_addon.py
+./.poetry/bin/poetry run python ./server_addon/create_ayon_addons.py
 ```
 
-It will create directory `./package/openpype/<OpenPype version>/*` folder with all files necessary for AYON server. You can then copy `./package/openpype/` to server addons, or zip the folder and upload it to AYON server. Restart server to update addons information, add the addon version to server bundle and set the bundle for production or staging usage.
+It will create directory `./packages/<addon name>.zip` files for AYON server. You can then copy upload the zip files to AYON server. Restart server to update addons information, add the addon version to server bundle and set the bundle for production or staging usage.
 
 Once addon is on server and is enabled, you can just run AYON launcher. Content will be downloaded and used automatically.
