@@ -48,7 +48,7 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
     PERSIST = False  # True - keep test_db, test_openpype, outputted test files
-    TEST_DATA_FOLDER = None
+    DATA_FOLDER = None
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""

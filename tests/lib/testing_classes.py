@@ -40,7 +40,7 @@ class ModuleUnitTest(BaseTest):
     """
     PERSIST = False  # True to not purge temporary folder nor test DB
 
-    TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
+    OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "avalon_tests"
     TEST_PROJECT_NAME = "test_project"
     TEST_OPENPYPE_NAME = "openpype_tests"
@@ -51,7 +51,7 @@ class ModuleUnitTest(BaseTest):
     ASSET = "test_asset"
     TASK = "test_task"
 
-    TEST_DATA_FOLDER = None
+    DATA_FOLDER = None
 
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
@@ -68,11 +68,11 @@ class ModuleUnitTest(BaseTest):
         )
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder, persist, request):
-        test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
-        if test_data_folder:
-            print("Using existing folder {}".format(test_data_folder))
-            yield test_data_folder
+    def download_test_data(self, data_folder, persist, request):
+        data_folder = data_folder or self.DATA_FOLDER
+        if data_folder:
+            print("Using existing folder {}".format(data_folder))
+            yield data_folder
         else:
             tmpdir = tempfile.mkdtemp()
             print("Temporary folder created:: {}".format(tmpdir))
@@ -106,12 +106,12 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def env_var(
-        self, monkeypatch_session, download_test_data, test_openpype_mongo
+        self, monkeypatch_session, download_test_data, openpype_mongo
     ):
         """Sets temporary env vars from json file."""
         # Collect openpype mongo.
-        if test_openpype_mongo:
-            self.TEST_OPENPYPE_MONGO = test_openpype_mongo
+        if openpype_mongo:
+            self.OPENPYPE_MONGO = openpype_mongo
 
         # Get class attributes for environment.
         attributes = {}
@@ -272,7 +272,7 @@ class PublishTest(ModuleUnitTest):
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
-    TEST_DATA_FOLDER = None  # use specific folder of unzipped test file
+    data_folder = None  # use specific folder of unzipped test file
 
     SETUP_ONLY = False
 

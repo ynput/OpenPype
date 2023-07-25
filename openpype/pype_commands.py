@@ -273,8 +273,8 @@ class PypeCommands:
         folder,
         mark,
         pyargs,
-        test_openpype_mongo,
-        test_data_folder,
+        openpype_mongo,
+        data_folder,
         keep_app_open,
         persist,
         app_variant,
@@ -289,7 +289,7 @@ class PypeCommands:
                  folder (str): relative path to folder with tests
                  mark (str): label to run tests marked by it (slow etc)
                  pyargs (str): package path to test
-                 test_data_folder (str): url to unzipped folder of test data
+                 data_folder (str): url to unzipped folder of test data
                  persist (bool): True if keep test db and published after test
                     end
                 app_variant (str): variant (eg 2020 for AE), empty if use
@@ -317,11 +317,11 @@ class PypeCommands:
         if pyargs:
             args.extend(["--pyargs", pyargs])
 
-        if test_openpype_mongo:
-            args.extend(["--test_openpype_mongo", test_openpype_mongo])
+        if openpype_mongo:
+            args.extend(["--openpype_mongo", openpype_mongo])
 
-        if test_data_folder:
-            args.extend(["--test_data_folder", test_data_folder])
+        if data_folder:
+            args.extend(["--data_folder", data_folder])
 
         if keep_app_open:
             args.extend(["--keep_app_open"])

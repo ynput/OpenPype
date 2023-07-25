@@ -5,12 +5,12 @@ import pytest
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--test_openpype_mongo", action="store", default=None,
+        "--openpype_mongo", action="store", default=None,
         help="Provide url of the Mongo database."
     )
 
     parser.addoption(
-        "--test_data_folder", action="store", default=None,
+        "--data_folder", action="store", default=None,
         help="Provide url of a folder of unzipped test file"
     )
 
@@ -46,13 +46,13 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="module")
-def test_openpype_mongo(request):
-    return request.config.getoption("--test_openpype_mongo")
+def openpype_mongo(request):
+    return request.config.getoption("--openpype_mongo")
 
 
 @pytest.fixture(scope="module")
-def test_data_folder(request):
-    return request.config.getoption("--test_data_folder")
+def data_folder(request):
+    return request.config.getoption("--data_folder")
 
 
 @pytest.fixture(scope="module")
