@@ -20,17 +20,16 @@ class MayaHostFixtures(HostFixtures):
             Maya expects workfile in proper folder, so copy is done first.
         """
         src_path = os.path.join(
-            download_test_data,
-            "input",
-            "workfile",
-            "test_project_test_asset_test_task_v001.mb"
+            os.path.dirname(__file__),
+            "resources",
+            "test_project_test_asset_test_task_v001.ma"
         )
         dest_folder = os.path.join(
             output_folder_url, self.PROJECT, self.ASSET, "work", self.TASK
         )
         os.makedirs(dest_folder)
         dest_path = os.path.join(
-            dest_folder, "test_project_test_asset_test_task_v001.mb"
+            dest_folder, "test_project_test_asset_test_task_v001.ma"
         )
         shutil.copy(src_path, dest_path)
 
@@ -39,24 +38,22 @@ class MayaHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
-        source_startup_path = os.path.join(
-            os.path.dirname(__file__), "startup_scripts"
+        user_setup_path = os.path.join(
+            os.path.dirname(__file__), "resources", "userSetup.py"
         )
-        destination_startup_path = os.path.join(
+        startup_path = os.path.join(
             download_test_data, "input", "startup"
         )
 
-        for f in os.listdir(source_startup_path):
-            shutil.copyfile(
-                os.path.join(source_startup_path, f),
-                os.path.join(destination_startup_path, f)
-            )
+        shutil.copyfile(
+            user_setup_path, os.path.join(startup_path, "userSetup.py")
+        )
 
         original_pythonpath = os.environ.get("PYTHONPATH")
         monkeypatch_session.setenv(
             "PYTHONPATH",
             "{}{}{}".format(
-                destination_startup_path, os.pathsep, original_pythonpath
+                startup_path, os.pathsep, original_pythonpath
             )
         )
 
