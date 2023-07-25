@@ -104,8 +104,20 @@ class ModuleUnitTest(BaseTest):
         yield path
 
     @pytest.fixture(scope="module")
+    def environment_json(self, download_test_data):
+        # Set environment variables from input json and class attributes.
+        environment_path = os.path.join(
+            download_test_data, "input", "env_vars", "env_var.json"
+        )
+        yield environment_path
+
+    @pytest.fixture(scope="module")
     def env_var(
-        self, monkeypatch_session, download_test_data, openpype_mongo
+        self,
+        monkeypatch_session,
+        download_test_data,
+        openpype_mongo,
+        environment_json
     ):
         """Sets temporary env vars from json file."""
         # Collect openpype mongo.
@@ -120,18 +132,14 @@ class ModuleUnitTest(BaseTest):
                 if not callable(value):
                     attributes[attribute] = value
 
-        # Set environment variables from input json and class attributes.
-        env_url = os.path.join(
-            download_test_data, "input", "env_vars", "env_var.json"
-        )
-        if not os.path.exists(env_url):
+        if not os.path.exists(environment_json):
             raise ValueError(
-                "Env variable file {} doesn't exist".format(env_url)
+                "Env variable file {} doesn't exist".format(environment_json)
             )
 
         env_dict = {}
         try:
-            with open(env_url) as json_file:
+            with open(environment_json) as json_file:
                 env_dict = json.load(json_file)
         except ValueError:
             print("{} doesn't contain valid JSON")

@@ -1,6 +1,8 @@
 import os
 import re
 
+import pytest
+
 from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.maya.lib import (
     MayaLocalPublishTestClass, LOG_PATH
@@ -39,6 +41,14 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
+
+    @pytest.fixture(scope="module")
+    def environment_json(self, download_test_data):
+        # Set environment variables from input json and class attributes.
+        environment_path = os.path.join(
+            os.path.dirname(__file__), "resources", "environment.json"
+        )
+        yield environment_path
 
     def test_publish(self, dbcon, publish_finished, download_test_data):
         logging_path = os.path.join(download_test_data, LOG_PATH)
