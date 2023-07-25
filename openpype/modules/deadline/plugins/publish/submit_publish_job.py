@@ -16,9 +16,8 @@ from openpype.pipeline import (
     legacy_io,
 )
 from openpype.pipeline import publish
-from openpype.lib import EnumDef
+from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
 
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
@@ -185,7 +184,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             instance.data.get("asset"),
             instances[0]["subset"],
             instance.context,
-            'render',
+            instances[0]["family"],
             override_version
         )
 
@@ -571,15 +570,20 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             else:
                 version = 1
 
+        host_name = context.data["hostName"]
+        task_info = template_data.get("task") or {}
+
+        template_name = publish.get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_info.get("name"),
+            task_info.get("type"),
+        )
+
         template_data["subset"] = subset
         template_data["family"] = family
         template_data["version"] = version
-
-        # temporary fix, Ayon Settings don't have 'render' template, but they
-        # have "publish" TODO!!!
-        template_name = "render"
-        if os.environ.get("USE_AYON_SERVER") == '1':
-            template_name = "publish"
 
         render_templates = anatomy.templates_obj[template_name]
         if "folder" in render_templates:
