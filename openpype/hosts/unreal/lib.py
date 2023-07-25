@@ -429,6 +429,36 @@ def get_build_id(engine_path: Path, ue_version: str) -> str:
             return "{" + loaded_modules.get("BuildId") + "}"
 
 
+def check_built_plugin_existance(plugin_path) -> bool:
+    if not plugin_path:
+        return False
+
+    integration_plugin_path = Path(plugin_path)
+
+    if not os.path.isdir(integration_plugin_path):
+        raise RuntimeError("Path to the integration plugin is null!")
+
+    if not (integration_plugin_path / "Binaries").is_dir() \
+            or not (integration_plugin_path / "Intermediate").is_dir():
+        return False
+
+    return True
+
+
+def move_built_plugin(engine_path: Path, plugin_path: Path) -> None:
+    ayon_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
+
+    if not ayon_plugin_path.is_dir():
+        ayon_plugin_path.mkdir(parents=True, exist_ok=True)
+
+        engine_plugin_config_path: Path = ayon_plugin_path / "Config"
+        engine_plugin_config_path.mkdir(exist_ok=True)
+
+        dir_util._path_created = {}
+
+    dir_util.copy_tree(plugin_path.as_posix(), ayon_plugin_path.as_posix())
+
+
 def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
     env = env or os.environ
     integration_plugin_path: Path = Path(env.get("AYON_UNREAL_PLUGIN", ""))
