@@ -47,10 +47,54 @@ def output_folder_url(data_folder):
     return path
 
 
-def setup(data_folder, files):
+def db_setup(
+    backup_directory,
+    openpype_mongo,
+    database_production_name,
+    database_settings_name
+):
+    db_handler = DBHandler(openpype_mongo)
+
+    db_handler.setup_from_dump(
+        database_production_name,
+        backup_directory,
+        overwrite=True,
+        db_name_out=database_production_name
+    )
+    db_handler.setup_from_dump(
+        database_settings_name,
+        backup_directory,
+        overwrite=True,
+        db_name_out=database_settings_name
+    )
+
+    return db_handler
+
+
+def dump_database(openpype_mongo, database_name, backup_directory):
+    db_handler = DBHandler(openpype_mongo)
+    db_handler.backup_to_dump(
+        database_name,
+        backup_directory
+    )
+
+
+def setup(
+    data_folder,
+    files,
+    backup_directory,
+    openpype_mongo,
+    database_production_name,
+    database_settings_name
+):
     download_test_data(data_folder, files)
     output_folder_url(data_folder)
-    #db_setup
+    db_setup(
+        backup_directory,
+        openpype_mongo,
+        database_production_name,
+        database_settings_name
+    )
 
 
 class BaseTest:
@@ -130,7 +174,7 @@ class ModuleUnitTest(BaseTest):
         yield environment_path
 
     @pytest.fixture(scope="module")
-    def env_var(
+    def environment_setup(
         self,
         monkeypatch_session,
         download_test_data,
@@ -187,34 +231,20 @@ class ModuleUnitTest(BaseTest):
     def db_setup(
         self,
         download_test_data,
-        env_var,
-        request,
-        dump_database
+        openpype_mongo,
+        request
     ):
         """Restore prepared MongoDB dumps into selected DB."""
-        backup_dir = os.path.join(download_test_data, "input", "dumps")
 
-        uri = os.environ.get("OPENPYPE_MONGO")
-        db_handler = DBHandler(uri)
+        if openpype_mongo:
+            self.OPENPYPE_MONGO = openpype_mongo
 
-        if dump_database:
-            db_handler.backup_to_dump(
-                self.DATABASE_PRODUCTION_NAME,
-                backup_dir
-            )
-        else:
-            db_handler.setup_from_dump(
-                self.DATABASE_PRODUCTION_NAME,
-                backup_dir,
-                overwrite=True,
-                db_name_out=self.DATABASE_PRODUCTION_NAME
-            )
-            db_handler.setup_from_dump(
-                self.DATABASE_SETTINGS_NAME,
-                backup_dir,
-                overwrite=True,
-                db_name_out=self.DATABASE_SETTINGS_NAME
-            )
+        db_handler = db_setup(
+            os.path.join(download_test_data, "input", "dumps"),
+            self.OPENPYPE_MONGO,
+            self.DATABASE_PRODUCTION_NAME,
+            self.DATABASE_SETTINGS_NAME
+        )
 
         yield db_handler
 
@@ -224,7 +254,7 @@ class ModuleUnitTest(BaseTest):
             db_handler.teardown(self.DATABASE_SETTINGS_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, db_setup, output_folder_url):
+    def dbcon(self, environment_setup, db_setup, output_folder_url):
         """Provide test database connection.
 
             Database prepared from dumps with 'db_setup' fixture.
@@ -248,7 +278,7 @@ class ModuleUnitTest(BaseTest):
         yield dbcon
 
     @pytest.fixture(scope="module")
-    def dbcon_openpype(self, db_setup):
+    def dbcon_openpype(self, environment_setup, db_setup):
         """Provide test database connection for OP settings.
 
             Database prepared from dumps with 'db_setup' fixture.
@@ -301,7 +331,7 @@ class PublishTest(ModuleUnitTest):
     SETUP_ONLY = False
 
     @pytest.fixture(scope="module")
-    def app_name(self, app_variant):
+    def app_name(self, environment_setup, app_variant):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
         from openpype.lib import ApplicationManager
         app_variant = app_variant or self.APP_VARIANT
