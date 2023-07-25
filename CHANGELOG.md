@@ -1,6 +1,336 @@
 # Changelog
 
 
+## [3.16.2](https://github.com/ynput/OpenPype/tree/3.16.2)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.1...3.16.2)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Fusion - Set selected tool to active <a href="https://github.com/ynput/OpenPype/pull/5327">#5327</a></summary>
+
+When you run the action to select a node, this PR makes the node-flow show the selected node + you'll see the nodes controls in the inspector.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: All base create plugins <a href="https://github.com/ynput/OpenPype/pull/5326">#5326</a></summary>
+
+Prepared base classes for each creator type in Maya. Extended `MayaCreatorBase` to have default implementations of common logic with instances which is used in each type of plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Windows: Support long paths on zip updates. <a href="https://github.com/ynput/OpenPype/pull/5265">#5265</a></summary>
+
+Support long paths for version extract on Windows.Use case is when having long paths in for example an addon. You can install to the C drive but because the zip files are extracted in the local users folder, it'll add additional sub directories to the paths and quickly get too long paths for Windows to handle the zip updates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Added setting to set resolution and start/end frames at startup <a href="https://github.com/ynput/OpenPype/pull/5338">#5338</a></summary>
+
+This PR adds `set_resolution_startup`and `set_frames_startup` settings. They automatically set respectively the resolution and start/end frames and FPS in Blender when opening a file or creating a new one.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Support for ExtractBurnin <a href="https://github.com/ynput/OpenPype/pull/5339">#5339</a></summary>
+
+This PR adds support for ExtractBurnin for Blender, when publishing a Review.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Extract Camera as Alembic <a href="https://github.com/ynput/OpenPype/pull/5343">#5343</a></summary>
+
+Added support to extract Alembic Cameras in Blender.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Validate Instance In Context <a href="https://github.com/ynput/OpenPype/pull/5335">#5335</a></summary>
+
+Missing new publisher error so the repair action shows up.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings: Fix default settings <a href="https://github.com/ynput/OpenPype/pull/5311">#5311</a></summary>
+
+Fixed defautl settings for shotgrid. Renamed `FarmRootEnumEntity` to `DynamicEnumEntity` and removed doubled ABC metaclass definition (all settings entities have abstract metaclass).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: missing context argument <a href="https://github.com/ynput/OpenPype/pull/5312">#5312</a></summary>
+
+Updated function arguments
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Qt UI: Multiselection combobox PySide6 compatibility <a href="https://github.com/ynput/OpenPype/pull/5314">#5314</a></summary>
+
+- The check states are replaced with the values for PySide6
+- `QtCore.Qt.ItemIsUserTristate` is used instead of `QtCore.Qt.ItemIsTristate` to avoid crashes on PySide6
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Docker: handle openssl 1.1.1 for centos 7 docker build <a href="https://github.com/ynput/OpenPype/pull/5319">#5319</a></summary>
+
+Move to python 3.9 has added need to use openssl 1.1.x - but it is not by default available on centos 7 image. This is fixing it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>houdini: fix typo in redshift proxy <a href="https://github.com/ynput/OpenPype/pull/5320">#5320</a></summary>
+
+I believe there's a typo in `create_redshift_proxy.py`   ( extra ` )  in filename, and I made this PR to suggest a fix
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: fix wrong creator identifier in pointCache workflow <a href="https://github.com/ynput/OpenPype/pull/5324">#5324</a></summary>
+
+FIxing a bug in publishing alembics, were invalid creator identifier caused missing family association.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix colorspace compatibility check <a href="https://github.com/ynput/OpenPype/pull/5334">#5334</a></summary>
+
+for some reason a user may have `PyOpenColorIO` installed to his machine,  _in my case it came with renderman._it can trick the compatibility check as `import PyOpenColorIO` won't raise an error however it may be an old version _like my case_Beforecompatibility check was true and It used wrapper directly After Fix It will use wrapper via subprocess instead
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Remove forgotten dev logging <a href="https://github.com/ynput/OpenPype/pull/5315">#5315</a></summary>
+
+
+___
+
+</details>
+
+
+
+
+## [3.16.1](https://github.com/ynput/OpenPype/tree/3.16.1)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.0...3.16.1)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Royal Render: Maya and Nuke support <a href="https://github.com/ynput/OpenPype/pull/5191">#5191</a></summary>
+
+Basic working implementation of Royal Render support in Maya.It expects New publisher implemented in Maya.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Blend File Family <a href="https://github.com/ynput/OpenPype/pull/4321">#4321</a></summary>
+
+<strong>Implementation of the Blend File family analogue to the Maya Scene one.
+
+</strong>
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: simple bgeo publishing <a href="https://github.com/ynput/OpenPype/pull/4588">#4588</a></summary>
+
+<strong>Support for simple publishing of bgeo files.
+
+</strong>This is adding basic support for bgeo publishing in Houdini. It will allow publishing bgeo in all supported formats (selectable in the creator options).  If selected node has `output` on sop level, it will be used automatically as path in file node.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>General: delivery action add renamed frame number in Loader <a href="https://github.com/ynput/OpenPype/pull/5024">#5024</a></summary>
+
+Frame Offset options for delivery in Openpype loader
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement/houdini add path action for abc validator <a href="https://github.com/ynput/OpenPype/pull/5237">#5237</a></summary>
+
+Add a default path attribute Action.it's a helper action more than a repair action, which used to add a default single value.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: auto apply all settings after template build <a href="https://github.com/ynput/OpenPype/pull/5277">#5277</a></summary>
+
+Adding auto run of Apply All Settings after template is builder is finishing its process. This will apply Frame-range, Image size, Colorspace found in context of a task shot.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Harmony:Removed loader settings for Harmony <a href="https://github.com/ynput/OpenPype/pull/5289">#5289</a></summary>
+
+It shouldn't be configurable, it is internal logic. By adding additional extension it wouldn't start to work magically.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>AYON: Make appdirs case sensitive <a href="https://github.com/ynput/OpenPype/pull/5298">#5298</a></summary>
+
+Appdirs for AYON are case sensitive for linux and mac so we needed to change them to match ayon launcher. Changed 'ayon' to 'AYON' and 'ynput' to 'Ynput'.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher: Fix plugin order <a href="https://github.com/ynput/OpenPype/pull/5299">#5299</a></summary>
+
+Frame range collector for traypublisher was moved to traypublisher plugins and changed order to make sure `assetEntity` is filled in `instance.data`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: removing OPENPYPE_VERSION from some host submitters <a href="https://github.com/ynput/OpenPype/pull/5302">#5302</a></summary>
+
+Removing deprecated method of adding OPENPYPE_VERSION to job environment. It was leftover and other hosts have already been cleared.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix args for workfile conversion util <a href="https://github.com/ynput/OpenPype/pull/5308">#5308</a></summary>
+
+Workfile update conversion util function have right expected arguments.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Maya: Refactor imports to `lib.get_reference_node` since the other function… <a href="https://github.com/ynput/OpenPype/pull/5258">#5258</a></summary>
+
+Refactor imports to `lib.get_reference_node` since the other function is deprecated.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.0](https://github.com/ynput/OpenPype/tree/3.16.0)
 
 
