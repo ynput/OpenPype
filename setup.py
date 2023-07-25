@@ -170,22 +170,7 @@ executables = [
         target_name="openpype_console",
         icon=icon_path.as_posix()
     ),
-    Executable(
-        "ayon_start.py",
-        base=base,
-        target_name="ayon",
-        icon=icon_path.as_posix()
-    ),
 ]
-if IS_WINDOWS:
-    executables.append(
-        Executable(
-            "ayon_start.py",
-            base=None,
-            target_name="ayon_console",
-            icon=icon_path.as_posix()
-        )
-    )
 
 if IS_LINUX:
     executables.append(
