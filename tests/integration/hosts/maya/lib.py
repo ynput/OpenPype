@@ -20,9 +20,7 @@ class MayaHostFixtures(HostFixtures):
             Maya expects workfile in proper folder, so copy is done first.
         """
         src_path = os.path.join(
-            os.path.dirname(__file__),
-            "resources",
-            "test_project_test_asset_test_task_v001.ma"
+            os.path.dirname(__file__), "resources", "workfile.ma"
         )
         dest_folder = os.path.join(
             output_folder_url, self.PROJECT, self.ASSET, "work", self.TASK
