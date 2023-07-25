@@ -11,7 +11,7 @@ import platform
 import requests
 import re
 
-from tests.lib.db_handler import DBHandler
+from tests.lib.database_handler import DataBaseHandler
 from common.ayon_common.distribution.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
@@ -47,33 +47,33 @@ def output_folder_url(data_folder):
     return path
 
 
-def db_setup(
+def database_setup(
     backup_directory,
     openpype_mongo,
     database_production_name,
     database_settings_name
 ):
-    db_handler = DBHandler(openpype_mongo)
+    database_handler = DataBaseHandler(openpype_mongo)
 
-    db_handler.setup_from_dump(
+    database_handler.setup_from_dump(
         database_production_name,
         backup_directory,
         overwrite=True,
-        db_name_out=database_production_name
+        database_name_out=database_production_name
     )
-    db_handler.setup_from_dump(
+    database_handler.setup_from_dump(
         database_settings_name,
         backup_directory,
         overwrite=True,
-        db_name_out=database_settings_name
+        database_name_out=database_settings_name
     )
 
-    return db_handler
+    return database_handler
 
 
 def dump_database(openpype_mongo, database_name, backup_directory):
-    db_handler = DBHandler(openpype_mongo)
-    db_handler.backup_to_dump(
+    database_handler = DataBaseHandler(openpype_mongo)
+    database_handler.backup_to_dump(
         database_name,
         backup_directory
     )
@@ -89,7 +89,7 @@ def setup(
 ):
     download_test_data(data_folder, files)
     output_folder_url(data_folder)
-    db_setup(
+    database_setup(
         backup_directory,
         openpype_mongo,
         database_production_name,
@@ -112,7 +112,7 @@ class ModuleUnitTest(BaseTest):
             project_settings - fixture for project settings with session scope
             download_test_data - tmp folder with extracted data from GDrive
             env_var - sets env vars from input file
-            db_setup - prepares avalon AND openpype DBs for testing from
+            database_setup - prepares avalon AND openpype DBs for testing from
                         binary dumps from input data
             dbcon - returns DBConnection to AvalonDB
             dbcon_openpype - returns DBConnection for OpenpypeMongoDB
@@ -228,7 +228,7 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
 
     @pytest.fixture(scope="module")
-    def db_setup(
+    def database_setup(
         self,
         download_test_data,
         openpype_mongo,
@@ -239,25 +239,25 @@ class ModuleUnitTest(BaseTest):
         if openpype_mongo:
             self.OPENPYPE_MONGO = openpype_mongo
 
-        db_handler = db_setup(
+        database_handler = database_setup(
             os.path.join(download_test_data, "input", "dumps"),
             self.OPENPYPE_MONGO,
             self.DATABASE_PRODUCTION_NAME,
             self.DATABASE_SETTINGS_NAME
         )
 
-        yield db_handler
+        yield database_handler
 
         persist = self.PERSIST or self.is_test_failed(request)
         if not persist:
-            db_handler.teardown(self.DATABASE_PRODUCTION_NAME)
-            db_handler.teardown(self.DATABASE_SETTINGS_NAME)
+            database_handler.teardown(self.DATABASE_PRODUCTION_NAME)
+            database_handler.teardown(self.DATABASE_SETTINGS_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, environment_setup, db_setup, output_folder_url):
+    def dbcon(self, environment_setup, database_setup, output_folder_url):
         """Provide test database connection.
 
-            Database prepared from dumps with 'db_setup' fixture.
+            Database prepared from dumps with 'database_setup' fixture.
         """
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
@@ -278,10 +278,10 @@ class ModuleUnitTest(BaseTest):
         yield dbcon
 
     @pytest.fixture(scope="module")
-    def dbcon_openpype(self, environment_setup, db_setup):
+    def dbcon_openpype(self, environment_setup, database_setup):
         """Provide test database connection for OP settings.
 
-            Database prepared from dumps with 'db_setup' fixture.
+            Database prepared from dumps with 'database_setup' fixture.
         """
         from openpype.lib import OpenPypeMongoConnection
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
