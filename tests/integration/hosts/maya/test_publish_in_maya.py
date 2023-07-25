@@ -30,7 +30,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     """
     PERSIST = False
 
-    TEST_FILES = [
+    FILES = [
         ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
     ]
 

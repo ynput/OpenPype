@@ -23,7 +23,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     """
     PERSIST = True
 
-    TEST_FILES = [
+    FILES = [
         ("1dDY7CbdFXfRksGVoiuwjhnPoTRCCf5ea",
          "test_maya_deadline_publish.zip", "")
     ]

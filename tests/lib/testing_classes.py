@@ -41,15 +41,14 @@ class ModuleUnitTest(BaseTest):
     PERSIST = False  # True to not purge temporary folder nor test DB
 
     OPENPYPE_MONGO = "mongodb://localhost:27017"
-    TEST_DB_NAME = "avalon_tests"
-    TEST_PROJECT_NAME = "test_project"
-    TEST_OPENPYPE_NAME = "openpype_tests"
+    DATABASE_PRODUCTION_NAME = "avalon_tests"
+    DATABASE_SETTINGS_NAME = "openpype_tests"
 
-    TEST_FILES = []
+    FILES = []
 
-    PROJECT = "test_project"
-    ASSET = "test_asset"
-    TASK = "test_task"
+    PROJECT_NAME = "test_project"
+    ASSET_NAME = "test_asset"
+    TASK_NAME = "test_task"
 
     DATA_FOLDER = None
 
@@ -64,7 +63,7 @@ class ModuleUnitTest(BaseTest):
     @pytest.fixture(scope='module')
     def project_settings(self):
         yield get_project_settings(
-            self.PROJECT
+            self.PROJECT_NAME
         )
 
     @pytest.fixture(scope="module")
@@ -76,7 +75,7 @@ class ModuleUnitTest(BaseTest):
         else:
             tmpdir = tempfile.mkdtemp()
             print("Temporary folder created:: {}".format(tmpdir))
-            for test_file in self.TEST_FILES:
+            for test_file in self.FILES:
                 file_id, file_name, md5 = test_file
 
                 f_name, ext = os.path.splitext(file_name)
@@ -175,29 +174,29 @@ class ModuleUnitTest(BaseTest):
 
         if dump_database:
             db_handler.backup_to_dump(
-                self.TEST_DB_NAME,
+                self.DATABASE_PRODUCTION_NAME,
                 backup_dir
             )
         else:
             db_handler.setup_from_dump(
-                self.TEST_DB_NAME,
+                self.DATABASE_PRODUCTION_NAME,
                 backup_dir,
                 overwrite=True,
-                db_name_out=self.TEST_DB_NAME
+                db_name_out=self.DATABASE_PRODUCTION_NAME
             )
             db_handler.setup_from_dump(
-                self.TEST_OPENPYPE_NAME,
+                self.DATABASE_SETTINGS_NAME,
                 backup_dir,
                 overwrite=True,
-                db_name_out=self.TEST_OPENPYPE_NAME
+                db_name_out=self.DATABASE_SETTINGS_NAME
             )
 
         yield db_handler
 
         persist = self.PERSIST or self.is_test_failed(request)
         if not persist:
-            db_handler.teardown(self.TEST_DB_NAME)
-            db_handler.teardown(self.TEST_OPENPYPE_NAME)
+            db_handler.teardown(self.DATABASE_PRODUCTION_NAME)
+            db_handler.teardown(self.DATABASE_SETTINGS_NAME)
 
     @pytest.fixture(scope="module")
     def dbcon(self, db_setup, output_folder_url):
@@ -207,9 +206,9 @@ class ModuleUnitTest(BaseTest):
         """
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = self.PROJECT
-        dbcon.Session["AVALON_ASSET"] = self.ASSET
-        dbcon.Session["AVALON_TASK"] = self.TASK
+        dbcon.Session["AVALON_PROJECT"] = self.PROJECT_NAME
+        dbcon.Session["AVALON_ASSET"] = self.ASSET_NAME
+        dbcon.Session["AVALON_TASK"] = self.TASK_NAME
 
         # set project root to temp folder
         platform_str = platform.system().lower()
@@ -231,7 +230,7 @@ class ModuleUnitTest(BaseTest):
         """
         from openpype.lib import OpenPypeMongoConnection
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
+        yield mongo_client[self.DATABASE_SETTINGS_NAME]["settings"]
 
     def is_test_failed(self, request):
         # if request.node doesn't have rep_call, something failed
@@ -272,7 +271,7 @@ class PublishTest(ModuleUnitTest):
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
-    data_folder = None  # use specific folder of unzipped test file
+    DATA_FOLDER = None  # use specific folder of unzipped test file
 
     SETUP_ONLY = False
 
@@ -356,9 +355,9 @@ class PublishTest(ModuleUnitTest):
         data = {
             "last_workfile_path": last_workfile_path,
             "start_last_workfile": True,
-            "project_name": self.PROJECT,
-            "asset_name": self.ASSET,
-            "task_name": self.TASK
+            "project_name": self.PROJECT_NAME,
+            "asset_name": self.ASSET_NAME,
+            "task_name": self.TASK_NAME
         }
         if app_args:
             data["app_args"] = app_args

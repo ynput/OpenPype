@@ -23,7 +23,11 @@ class MayaHostFixtures(HostFixtures):
             os.path.dirname(__file__), "resources", "workfile.ma"
         )
         dest_folder = os.path.join(
-            output_folder_url, self.PROJECT, self.ASSET, "work", self.TASK
+            output_folder_url,
+            self.PROJECT_NAME,
+            self.ASSET_NAME,
+            "work",
+            self.TASK_NAME
         )
         os.makedirs(dest_folder)
         dest_path = os.path.join(
