@@ -1682,7 +1682,7 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
 
     data["env"]["AVALON_APP"] = app.host_name
 
-    if not not asset_doc or not task_name:
+    if not asset_doc or not task_name:
         # QUESTION replace with log.info and skip workfile discovery?
         # - technically it should be possible to launch host without context
         raise ApplicationLaunchFailed(
