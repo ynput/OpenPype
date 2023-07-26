@@ -46,6 +46,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
+    # NOTE hornet updated for suspend_publish default on
+    suspend_publish = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -79,7 +81,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             BoolDef(
                 "suspend_publish",
-                default=False,
+                default=cls.suspend_publish,
                 label="Suspend publish"
             )
         ]

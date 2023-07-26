@@ -8,7 +8,7 @@ class ValidateVersion(pyblish.api.InstancePlugin):
     OpenPype does not allow overwriting previously published versions.
     """
 
-    order = pyblish.api.ValidatorOrder
+    order = pyblish.api.ValidatorOrder - 0.09
 
     label = "Validate Version"
     hosts = ["nuke", "maya", "houdini", "blender", "standalonepublisher",

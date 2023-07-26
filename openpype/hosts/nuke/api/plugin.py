@@ -253,7 +253,8 @@ class NukeCreator(NewCreator):
         return [
             BoolDef(
                 "use_selection",
-                default=not self.create_context.headless,
+                default= False, # NOTE hornet updated for use_selection default off
+                # default=not self.create_context.headless,
                 label="Use selection"
             )
         ]
@@ -305,7 +306,9 @@ class NukeWriteCreator(NukeCreator):
 
     def get_pre_create_attr_defs(self):
         attr_defs = [
-            BoolDef("use_selection", label="Use selection"),
+            # NOTE hornet updated for review default off
+            BoolDef("use_selection",default=False,label="Use selection"),
+            # BoolDef("use_selection", label="Use selection"),
             self._get_render_target_enum()
         ]
         return attr_defs
@@ -337,7 +340,8 @@ class NukeWriteCreator(NukeCreator):
     def _get_reviewable_bool(self):
         return BoolDef(
             "review",
-            default=True,
+            default=False, # NOTE hornet updated for review default off
+            # default=True,
             label="Review"
         )
 
@@ -1301,7 +1305,6 @@ def _remove_old_knobs(node):
         "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
         "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
     ]
-    print(node.name())
 
     # remove all old knobs
     for knob in node.allKnobs():
