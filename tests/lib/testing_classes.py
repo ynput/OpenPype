@@ -144,7 +144,8 @@ class ModuleUnitTest(BaseTest):
     TASK_NAME = "test_task"
 
     DATA_FOLDER = None
-    DATABASE_DUMPS = None
+    INPUT_DUMPS = None
+    INPUT_ENVIRONMENT_JSON = None
 
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
@@ -180,12 +181,13 @@ class ModuleUnitTest(BaseTest):
         yield path
 
     @pytest.fixture(scope="module")
-    def environment_json(self, download_test_data):
-        # Set environment variables from input json and class attributes.
-        environment_path = os.path.join(
-            download_test_data, "input", "env_vars", "env_var.json"
-        )
-        yield environment_path
+    def input_environment_json(self, download_test_data):
+        path = self.INPUT_ENVIRONMENT_JSON
+        if path is None:
+            path = os.path.join(
+                download_test_data, "input", "env_vars", "env_var.json"
+            )
+        yield path
 
     @pytest.fixture(scope="module")
     def environment_setup(
@@ -193,7 +195,7 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session,
         download_test_data,
         openpype_mongo,
-        environment_json
+        input_environment_json
     ):
         """Sets temporary env vars from json file."""
         # Collect openpype mongo.
@@ -212,14 +214,14 @@ class ModuleUnitTest(BaseTest):
         attributes["DATABASE_PRODUCTION_NAME"] = DATABASE_PRODUCTION_NAME
         attributes["DATABASE_SETTINGS_NAME"] = DATABASE_SETTINGS_NAME
 
-        if not os.path.exists(environment_json):
+        if not os.path.exists(input_environment_json):
             raise ValueError(
-                "Env variable file {} doesn't exist".format(environment_json)
+                "Env variable file {} doesn't exist".format(input_environment_json)
             )
 
         env_dict = {}
         try:
-            with open(environment_json) as json_file:
+            with open(input_environment_json) as json_file:
                 env_dict = json.load(json_file)
         except ValueError:
             print("{} doesn't contain valid JSON")
@@ -247,7 +249,11 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def database_dumps(self, download_test_data):
-        yield self.DATABASE_DUMPS or get_backup_directory(download_test_data)
+        path = (
+            self.INPUT_DUMPS or
+            get_backup_directory(download_test_data)
+        )
+        yield path
 
     @pytest.fixture(scope="module")
     def database_setup(

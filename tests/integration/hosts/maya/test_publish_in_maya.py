@@ -38,16 +38,12 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
     TIMEOUT = 120  # publish timeout
 
-    INPUT_DATA_FOLDER = None
-    DATABASE_DUMPS = os.path.join(os.path.dirname(__file__), "input", "dumps")
-
-    @pytest.fixture(scope="module")
-    def environment_json(self, download_test_data):
-        # Set environment variables from input json and class attributes.
-        environment_path = os.path.join(
-            os.path.dirname(__file__), "input", "env_vars", "env_var.json"
-        )
-        yield environment_path
+    INPUT_DUMPS = os.path.join(
+        os.path.dirname(__file__), "input", "dumps"
+    )
+    INPUT_ENVIRONMENT_JSON = os.path.join(
+        os.path.dirname(__file__), "input", "env_vars", "env_var.json"
+    )
 
     def test_publish(self, dbcon, publish_finished, download_test_data):
         logging_path = os.path.join(download_test_data, LOG_PATH)
