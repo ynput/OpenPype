@@ -322,7 +322,7 @@ def run(script):
               help="Specific test class to setup.",
               multiple=True)
 @click.option("--dump_database",
-              help="Dump database to data folder.",
+              help="Dump database url to data folder.",
               multiple=True)
 def runtests(
     folder,

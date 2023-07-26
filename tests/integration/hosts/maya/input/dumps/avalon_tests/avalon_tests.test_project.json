@@ -1,0 +1,325 @@
+[{
+	"_id": {
+		"$oid": "60df31bcbe2b48bd3695c055"
+	},
+	"type": "project",
+	"name": "test_project",
+	"data": {
+		"code": "test_project",
+		"library_project": false,
+		"clipIn": 1,
+		"clipOut": 1,
+		"fps": 25.0,
+		"frameEnd": 1001,
+		"frameStart": 1001,
+		"handleEnd": 0,
+		"handleStart": 0,
+		"pixelAspect": 1.0,
+		"resolutionHeight": 1080,
+		"resolutionWidth": 1920,
+		"tools_env": []
+	},
+	"schema": "openpype:project-3.0",
+	"config": {
+		"apps": [
+			{
+				"name": "maya/2020"
+			},
+			{
+				"name": "nuke/12-2"
+			},
+			{
+				"name": "nukex/12-2"
+			},
+			{
+				"name": "hiero/12-2"
+			},
+			{
+				"name": "resolve/stable"
+			},
+			{
+				"name": "houdini/18-5"
+			},
+			{
+				"name": "blender/2-91"
+			},
+			{
+				"name": "harmony/20"
+			},
+			{
+				"name": "photoshop/2020"
+			},
+			{
+				"name": "aftereffects/2021"
+			},
+			{
+				"name": "unreal/4-26"
+			}
+		],
+		"imageio": {
+			"hiero": {
+				"workfile": {
+					"ocioConfigName": "nuke-default",
+					"ocioconfigpath": {
+						"windows": [],
+						"darwin": [],
+						"linux": []
+					},
+					"workingSpace": "linear",
+					"sixteenBitLut": "sRGB",
+					"eightBitLut": "sRGB",
+					"floatLut": "linear",
+					"logLut": "Cineon",
+					"viewerLut": "sRGB",
+					"thumbnailLut": "sRGB"
+				},
+				"regexInputs": {
+					"inputs": [
+						{
+							"regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
+							"colorspace": "sRGB"
+						}
+					]
+				},
+				"__overriden_keys__": [
+					"workfile",
+					"regexInputs"
+				]
+			},
+			"nuke": {
+				"viewer": {
+					"viewerProcess": "sRGB"
+				},
+				"workfile": {
+					"colorManagement": "Nuke",
+					"OCIO_config": "nuke-default",
+					"customOCIOConfigPath": {
+						"windows": [],
+						"darwin": [],
+						"linux": []
+					},
+					"workingSpaceLUT": "linear",
+					"monitorLut": "sRGB",
+					"int8Lut": "sRGB",
+					"int16Lut": "sRGB",
+					"logLut": "Cineon",
+					"floatLut": "linear"
+				},
+				"nodes": {
+					"requiredNodes": [
+						{
+							"plugins": [
+								"CreateWriteRender"
+							],
+							"nukeNodeClass": "Write",
+							"knobs": [
+								{
+									"name": "file_type",
+									"value": "exr"
+								},
+								{
+									"name": "datatype",
+									"value": "16 bit half"
+								},
+								{
+									"name": "compression",
+									"value": "Zip (1 scanline)"
+								},
+								{
+									"name": "autocrop",
+									"value": "True"
+								},
+								{
+									"name": "tile_color",
+									"value": "0xff0000ff"
+								},
+								{
+									"name": "channels",
+									"value": "rgb"
+								},
+								{
+									"name": "colorspace",
+									"value": "linear"
+								},
+								{
+									"name": "create_directories",
+									"value": "True"
+								}
+							]
+						},
+						{
+							"plugins": [
+								"CreateWritePrerender"
+							],
+							"nukeNodeClass": "Write",
+							"knobs": [
+								{
+									"name": "file_type",
+									"value": "exr"
+								},
+								{
+									"name": "datatype",
+									"value": "16 bit half"
+								},
+								{
+									"name": "compression",
+									"value": "Zip (1 scanline)"
+								},
+								{
+									"name": "autocrop",
+									"value": "False"
+								},
+								{
+									"name": "tile_color",
+									"value": "0xadab1dff"
+								},
+								{
+									"name": "channels",
+									"value": "rgb"
+								},
+								{
+									"name": "colorspace",
+									"value": "linear"
+								},
+								{
+									"name": "create_directories",
+									"value": "True"
+								}
+							]
+						}
+					],
+					"customNodes": []
+				},
+				"regexInputs": {
+					"inputs": [
+						{
+							"regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+							"colorspace": "linear"
+						}
+					]
+				},
+				"__overriden_keys__": [
+					"viewer",
+					"workfile",
+					"nodes",
+					"regexInputs"
+				]
+			}
+		},
+		"roots": {
+			"work": {
+				"windows": "C:/projects",
+				"darwin": "/Volumes/path",
+				"linux": "/mnt/share/projects"
+			}
+		},
+		"tasks": {
+			"Generic": {
+				"short_name": "gener"
+			},
+			"Art": {
+				"short_name": "art"
+			},
+			"Modeling": {
+				"short_name": "mdl"
+			},
+			"Texture": {
+				"short_name": "tex"
+			},
+			"Lookdev": {
+				"short_name": "look"
+			},
+			"Rigging": {
+				"short_name": "rig"
+			},
+			"Edit": {
+				"short_name": "edit"
+			},
+			"Layout": {
+				"short_name": "lay"
+			},
+			"Setdress": {
+				"short_name": "dress"
+			},
+			"Animation": {
+				"short_name": "anim"
+			},
+			"FX": {
+				"short_name": "fx"
+			},
+			"Lighting": {
+				"short_name": "lgt"
+			},
+			"Paint": {
+				"short_name": "paint"
+			},
+			"Compositing": {
+				"short_name": "comp"
+			}
+		},
+		"templates": {
+			"defaults": {
+				"version_padding": 3,
+				"version": "v{version:0>{@version_padding}}",
+				"frame_padding": 4,
+				"frame": "{frame:0>{@frame_padding}}"
+			},
+			"work": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
+				"file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"render": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+				"file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"publish": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+				"file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+				"path": "{@folder}/{@file}",
+				"thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
+			},
+			"hero": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
+				"file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"delivery": {
+				"test_delivery": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}/{project[code]}_{asset}_{subset}_{@version}<_{output}><.{frame}>.{ext}"
+			},
+			"others": {}
+		}
+	}
+},
+{
+	"_id": {
+		"$oid": "60df31e2be2b48bd3695c056"
+	},
+	"name": "test_asset",
+	"type": "asset",
+	"schema": "openpype:asset-3.0",
+	"data": {
+		"parents": [],
+		"visualParent": null,
+		"tasks": {
+			"test_task": {
+				"type": "Generic"
+			}
+		},
+		"fps": 25.0,
+		"resolutionWidth": 1920,
+		"resolutionHeight": 1080,
+		"pixelAspect": 1.0,
+		"frameStart": 1001,
+		"handleStart": 0,
+		"frameEnd": 1001,
+		"clipOut": 1,
+		"clipIn": 1,
+		"tools_env": [],
+		"handleEnd": 0
+	},
+	"parent": {
+		"$oid": "60df31bcbe2b48bd3695c055"
+	}
+}]

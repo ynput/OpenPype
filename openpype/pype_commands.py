@@ -281,7 +281,7 @@ class PypeCommands:
         timeout,
         setup_only,
         class_names,
-        database_names
+        database_urls
     ):
         """
             Runs tests from 'folder'
@@ -343,12 +343,12 @@ class PypeCommands:
             setup(class_names, data_folder, openpype_mongo)
             return
 
-        if database_names:
+        if database_urls:
             assert data_folder, "No data_folder provided."
             assert openpype_mongo, "No openpype_mongo provided"
 
             from tests.lib.testing_classes import dump_databases
-            dump_databases(database_names, data_folder, openpype_mongo)
+            dump_databases(database_urls, data_folder, openpype_mongo)
             return
 
         print("run_tests args: {}".format(args))

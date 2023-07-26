@@ -131,19 +131,32 @@ class DataBaseHandler:
             raise RuntimeError(
                 "Backup folder {} doesn't exist".format(dir_path))
 
-        query = self._restore_query(
-            self.uri,
-            dump_dir,
-            database_name=database_name,
-            database_name_out=database_name_out,
-            collection=collection
-        )
-        print("mongorestore query:: {}".format(query))
-        try:
-            subprocess.run(query)
-        except FileNotFoundError:
-            raise RuntimeError("'mongorestore' utility must be on path."
-                               "Please install it.")
+        # Finf bson files to determine how to restore the database dump.
+        bson_files = [x for x in os.listdir(dir_path) if x.endswith(".bson")]
+
+        queries = []
+        if bson_files:
+            queries.apend(
+                self._restore_query(
+                    self.uri,
+                    dump_dir,
+                    database_name=database_name,
+                    database_name_out=database_name_out,
+                    collection=collection
+                )
+            )
+        else:
+            queries = self._restore_queries_json(self.uri, dir_path)
+
+        for query in queries:
+            print("mongorestore query:: {}".format(query))
+            try:
+                subprocess.run(query)
+            except FileNotFoundError:
+                raise RuntimeError(
+                    "'mongorestore' or 'mongoimport' utility must be on path. "
+                    "Please install it."
+                )
 
     def teardown(self, database_name):
         """Drops 'database_name' if exists."""
@@ -154,8 +167,14 @@ class DataBaseHandler:
         print("Dropping {} database".format(database_name))
         self.client.drop_database(database_name)
 
-    def backup_to_dump(self, database_name, dump_dir, overwrite=False,
-                       collection=None):
+    def backup_to_dump(
+        self,
+        database_name,
+        dump_dir,
+        overwrite=False,
+        collection=None,
+        json=False
+    ):
         """
             Helper method for running mongodump for specific 'database_name'
         """
@@ -169,17 +188,52 @@ class DataBaseHandler:
                 "\"{}\" or run with overwrite=True".format(dir_path)
             )
 
-        query = self._dump_query(
-            self.uri,
-            dump_dir,
-            database_name=database_name,
-            collection=collection
-        )
+        if json:
+            query = self._dump_query_json(
+                self.uri,
+                dump_dir,
+                database_name=database_name,
+                collection=collection
+            )
+        else:
+            query = self._dump_query(
+                self.uri,
+                dump_dir,
+                database_name=database_name,
+                collection=collection
+            )
         print("Mongodump query:: {}".format(query))
         subprocess.run(query)
 
     def _database_exists(self, database_name):
         return database_name in self.client.list_database_names()
+
+    def _dump_query_json(
+        self,
+        uri,
+        output_path,
+        database_name=None,
+        collection=None
+    ):
+        """Prepares dump query based on 'database_name' or 'collection'."""
+        database_part = coll_part = ""
+        if database_name:
+            database_part = "--db={}".format(database_name)
+        if collection:
+            if not database_name:
+                raise ValueError("database_name must be present")
+            coll_part = "--collection={}".format(collection)
+        filename = "{}.{}.json".format(database_name, collection)
+        query = (
+            "mongoexport --uri=\"{}\" --jsonArray --pretty"
+            " --out={} {} {}".format(
+                uri,
+                os.path.join(output_path, filename),
+                database_part,
+                coll_part
+            )
+        )
+        return query
 
     def _dump_query(
         self,
@@ -199,6 +253,51 @@ class DataBaseHandler:
         query = "\"{}\" --uri=\"{}\" --out={} {} {}".format(
             "mongodump", uri, output_path, database_part, coll_part
         )
+
+        return query
+
+    def _restore_queries_json(
+        self,
+        uri,
+        dump_dir
+    ):
+        """Prepares query for mongorestore base on arguments"""
+        queries = []
+
+        for json_file in os.listdir(dump_dir):
+            database_name, collection, ext = json_file.split(".")
+            queries.append(
+                self._restore_query_json(
+                    uri,
+                    os.path.join(dump_dir, json_file),
+                    database_name,
+                    collection,
+                    True
+                )
+            )
+
+        return queries
+
+    def _restore_query_json(
+        self,
+        uri,
+        json_file,
+        database_name=None,
+        collection=None,
+        drop=True
+    ):
+        """Prepares query for mongorestore base on arguments"""
+        query = "mongoimport --jsonArray --uri=\"{}\" --file=\"{}\"".format(
+            uri, json_file
+        )
+
+        if database_name:
+            query += " --db " + database_name
+        if collection:
+            assert database_name, "Must provide db name too"
+            query += " --collection " + collection
+        if drop:
+            query += " --drop"
 
         return query
 

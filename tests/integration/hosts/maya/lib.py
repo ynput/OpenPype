@@ -14,16 +14,19 @@ LOG_PATH = os.path.join("output.log")
 
 class MayaHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data, output_folder_url):
+    def last_workfile_path(self, download_test_data, output_folder):
         """Get last_workfile_path from source data.
 
             Maya expects workfile in proper folder, so copy is done first.
         """
         src_path = os.path.join(
-            os.path.dirname(__file__), "resources", "workfile.ma"
+            os.path.dirname(__file__),
+            "input",
+            "workfile",
+            "test_project_test_asset_test_task_v001.ma"
         )
         dest_folder = os.path.join(
-            output_folder_url,
+            output_folder,
             self.PROJECT_NAME,
             self.ASSET_NAME,
             "work",
@@ -40,7 +43,9 @@ class MayaHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
-        user_setup_path = os.path.join(os.path.dirname(__file__), "resources")
+        user_setup_path = os.path.join(
+            os.path.dirname(__file__), "input", "startup"
+        )
         original_pythonpath = os.environ.get("PYTHONPATH")
         monkeypatch_session.setenv(
             "PYTHONPATH",
