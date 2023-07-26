@@ -243,6 +243,7 @@ def main(create_zip=True, keep_source=False):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
     output_dir = current_dir / "packages"
+    print("Package creation started...")
 
     # Make sure package dir is empty
     if output_dir.exists():
@@ -267,6 +268,9 @@ def main(create_zip=True, keep_source=False):
             create_addon_package(
                 addon_dir, output_dir, create_zip, keep_source
             )
+
+        print(f"- package '{addon_dir.name}' created")
+    print(f"Package creation finished. Output directory: {output_dir}")
 
 
 if __name__ == "__main__":
