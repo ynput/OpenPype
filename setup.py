@@ -126,7 +126,6 @@ include_files = [
     "igniter",
     "openpype",
     "common",
-    "schema",
     "LICENSE",
     "README.md"
 ]
