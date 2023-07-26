@@ -19,3 +19,16 @@ There is a `create_ayon_addons.py` python file which contains logic how to creat
 It will create directory `./packages/<addon name>.zip` files for AYON server. You can then copy upload the zip files to AYON server. Restart server to update addons information, add the addon version to server bundle and set the bundle for production or staging usage.
 
 Once addon is on server and is enabled, you can just run AYON launcher. Content will be downloaded and used automatically.
+
+### Additional arguments
+Additional arguments are useful for development purposes.
+
+To skip zip creation to keep only server ready folder structure, pass `--skip-zip` argument.
+```shell
+./.poetry/bin/poetry run python ./server_addon/create_ayon_addons.py --skip-zip
+```
+
+To create both zips and keep folder structure, pass `--keep-sources` argument.
+```shell
+./.poetry/bin/poetry run python ./server_addon/create_ayon_addons.py --keep-sources
+```

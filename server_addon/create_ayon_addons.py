@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import json
 import shutil
@@ -238,7 +239,7 @@ def create_addon_package(
         )
 
 
-def main():
+def main(create_zip=True, keep_source=False):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
     output_dir = current_dir / "packages"
@@ -248,9 +249,6 @@ def main():
         shutil.rmtree(str(output_dir))
     # Make sure output dir is created
     output_dir.mkdir(parents=True)
-
-    create_zip = True
-    keep_source = False
 
     for addon_dir in current_dir.iterdir():
         if not addon_dir.is_dir():
@@ -272,4 +270,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    create_zip = "--skip-zip" not in sys.argv
+    keep_sources = "--keep-sources" in sys.argv
+    main(create_zip, keep_sources)
