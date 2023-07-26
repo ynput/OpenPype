@@ -296,18 +296,6 @@ def path_to_subprocess_arg(path):
     return subprocess.list2cmdline([path])
 
 
-def get_pype_execute_args(*args):
-    """Backwards compatible function for 'get_openpype_execute_args'."""
-    import traceback
-
-    log = Logger.get_logger("get_pype_execute_args")
-    stack = "\n".join(traceback.format_stack())
-    log.warning((
-        "Using deprecated function 'get_pype_execute_args'. Called from:\n{}"
-    ).format(stack))
-    return get_openpype_execute_args(*args)
-
-
 def get_openpype_execute_args(*args):
     """Arguments to run pype command.
 
