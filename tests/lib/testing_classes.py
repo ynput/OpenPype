@@ -25,7 +25,7 @@ FILES = {
 DATABASE_PRODUCTION_NAME = "avalon_tests"
 DATABASE_SETTINGS_NAME = "openpype_tests"
 
-
+#needs testing
 def download_test_data(data_folder, files):
     if data_folder:
         print("Using existing folder {}".format(data_folder))
@@ -47,8 +47,8 @@ def download_test_data(data_folder, files):
 
     return data_folder
 
-#rename to purge_folder
-def output_folder_url(data_folder):
+#needs testing
+def purge_folder(data_folder):
     path = os.path.join(data_folder, "output")
     if os.path.exists(path):
         print("Purging {}".format(path))
@@ -56,9 +56,13 @@ def output_folder_url(data_folder):
     return path
 
 
+def get_backup_directory(data_folder):
+    return os.path.join(data_folder, "input", "dumps")
+
+#needs testing
 def database_setup(data_folder, openpype_mongo):
     database_handler = DataBaseHandler(openpype_mongo)
-    backup_directory = os.path.join(data_folder, "input", "dumps")
+    backup_directory = get_backup_directory(data_folder)
     database_handler.setup_from_dump(
         DATABASE_PRODUCTION_NAME,
         backup_directory,
@@ -74,13 +78,38 @@ def database_setup(data_folder, openpype_mongo):
 
     return database_handler
 
+#needs testing
+def dump_databases(database_names, data_folder, openpype_mongo,):
+    for database_name in database_names:
+        dump_database(database_name, data_folder, openpype_mongo)
 
-def dump_database(openpype_mongo, database_name, backup_directory):
+#needs testing
+def dump_database(database_name, data_folder, openpype_mongo,):
     database_handler = DataBaseHandler(openpype_mongo)
     database_handler.backup_to_dump(
         database_name,
-        backup_directory
+        get_backup_directory(data_folder)
     )
+
+#needs testing
+def setup(class_names, data_folder, openpype_mongo):
+    # Collect files to setup.
+    files = {}
+    for name in class_names:
+        files[name] = FILES[name]
+
+    if not class_names:
+        files = FILES
+
+    data_folders = []
+    for class_name, class_files in files.items():
+        data_folder = download_test_data(data_folder, class_files)
+        data_folders.append(data_folder)
+        purge_folder(data_folder)
+        database_setup(data_folder, openpype_mongo)
+
+    # Feedback to user about data folders.
+    print("Setup in folders:\n" + "\n".join(data_folders))
 
 
 class BaseTest:
@@ -142,9 +171,9 @@ class ModuleUnitTest(BaseTest):
             shutil.rmtree(data_folder)
 
     @pytest.fixture(scope="module")
-    def output_folder_url(self, download_test_data):
+    def purge_folder(self, download_test_data):
         """Returns location of published data, cleans it first if exists."""
-        path = output_folder_url(download_test_data)
+        path = purge_folder(download_test_data)
         yield path
 
     @pytest.fixture(scope="module")
@@ -238,7 +267,7 @@ class ModuleUnitTest(BaseTest):
             database_handler.teardown(DATABASE_SETTINGS_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, environment_setup, database_setup, output_folder_url):
+    def dbcon(self, environment_setup, database_setup, purge_folder):
         """Provide test database connection.
 
             Database prepared from dumps with 'database_setup' fixture.
@@ -256,7 +285,7 @@ class ModuleUnitTest(BaseTest):
             {"type": "project"},
             {"$set":
                 {
-                    root_key: output_folder_url
+                    root_key: purge_folder
                 }}
         )
         yield dbcon
@@ -364,7 +393,7 @@ class PublishTest(ModuleUnitTest):
         startup_scripts,
         app_args,
         app_name,
-        output_folder_url,
+        purge_folder,
         keep_app_open
     ):
         """Launch host app"""
@@ -431,14 +460,14 @@ class PublishTest(ModuleUnitTest):
         dbcon,
         publish_finished,
         download_test_data,
-        output_folder_url,
+        purge_folder,
         skip_compare_folders
     ):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = output_folder_url
+        published_dir_base = purge_folder
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
@@ -543,7 +572,7 @@ class DeadlinePublishTest(PublishTest):
 class HostFixtures():
     """Host specific fixtures. Should be implemented once per host."""
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data, output_folder_url):
+    def last_workfile_path(self, download_test_data, purge_folder):
         """Returns url of workfile"""
         raise NotImplementedError
 

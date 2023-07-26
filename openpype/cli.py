@@ -323,8 +323,7 @@ def run(script):
               multiple=True)
 @click.option("--dump_database",
               help="Dump database to data folder.",
-              is_flag=True,
-              default=False)
+              multiple=True)
 def runtests(
     folder,
     mark,
