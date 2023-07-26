@@ -280,6 +280,7 @@ class PypeCommands:
         app_variant,
         timeout,
         setup_only,
+        class_names,
         dump_database
     ):
         """
@@ -336,7 +337,29 @@ class PypeCommands:
             args.extend(["--timeout", timeout])
 
         if setup_only:
-            args.extend(["--setup_only"])
+            from tests.lib.testing_classes import (
+                FILES, download_test_data, output_folder_url, database_setup
+            )
+
+            # Collect files to setup.
+            files = {}
+            for name in class_names:
+                files[name] = FILES[name]
+
+            if not class_names:
+                files = FILES
+
+            data_folders = []
+            for class_name, class_files in files.items():
+                data_folder = download_test_data(data_folder, class_files)
+                data_folders.append(data_folder)
+                output_folder_url(data_folder)
+                database_setup(data_folder, openpype_mongo)
+
+            # Feedback to user about data folders.
+            print("Setup in folders:\n" + "\n".join(data_folders))
+
+            return
 
         if dump_database:
             args.extend(["--dump_database"])

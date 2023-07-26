@@ -35,11 +35,6 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--setup_only", action="store_true", default=None,
-        help="Only setup test, do not run any tests"
-    )
-
-    parser.addoption(
         "--dump_database", action="store_true", default=None,
         help="Dump database to data folder."
     )
@@ -73,11 +68,6 @@ def app_variant(request):
 @pytest.fixture(scope="module")
 def timeout(request):
     return request.config.getoption("--timeout")
-
-
-@pytest.fixture(scope="module")
-def setup_only(request):
-    return request.config.getoption("--setup_only")
 
 
 @pytest.fixture(scope="module")

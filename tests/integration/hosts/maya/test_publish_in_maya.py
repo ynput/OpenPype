@@ -32,10 +32,6 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     """
     PERSIST = False
 
-    FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
-    ]
-
     APP_GROUP = "maya"
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
@@ -62,14 +58,9 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     def test_db_asserts(
         self,
         dbcon,
-        publish_finished,
-        setup_only,
-        dump_database
+        publish_finished
     ):
         """Host and input data dependent expected results in DB."""
-        if setup_only or dump_database:
-            return
-
         print("test_db_asserts")
         failures = []
         failures.append(DBAssert.count_of_types(dbcon, "version", 2))

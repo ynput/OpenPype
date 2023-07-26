@@ -17,6 +17,15 @@ from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
 
+FILES = {
+    "TestPublishInMaya": [
+        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+    ]
+}
+DATABASE_PRODUCTION_NAME = "avalon_tests"
+DATABASE_SETTINGS_NAME = "openpype_tests"
+
+
 def download_test_data(data_folder, files):
     if data_folder:
         print("Using existing folder {}".format(data_folder))
@@ -38,7 +47,7 @@ def download_test_data(data_folder, files):
 
     return data_folder
 
-
+#rename to purge_folder
 def output_folder_url(data_folder):
     path = os.path.join(data_folder, "output")
     if os.path.exists(path):
@@ -47,25 +56,20 @@ def output_folder_url(data_folder):
     return path
 
 
-def database_setup(
-    backup_directory,
-    openpype_mongo,
-    database_production_name,
-    database_settings_name
-):
+def database_setup(data_folder, openpype_mongo):
     database_handler = DataBaseHandler(openpype_mongo)
-
+    backup_directory = os.path.join(data_folder, "input", "dumps")
     database_handler.setup_from_dump(
-        database_production_name,
+        DATABASE_PRODUCTION_NAME,
         backup_directory,
         overwrite=True,
-        database_name_out=database_production_name
+        database_name_out=DATABASE_PRODUCTION_NAME
     )
     database_handler.setup_from_dump(
-        database_settings_name,
+        DATABASE_SETTINGS_NAME,
         backup_directory,
         overwrite=True,
-        database_name_out=database_settings_name
+        database_name_out=DATABASE_SETTINGS_NAME
     )
 
     return database_handler
@@ -76,24 +80,6 @@ def dump_database(openpype_mongo, database_name, backup_directory):
     database_handler.backup_to_dump(
         database_name,
         backup_directory
-    )
-
-
-def setup(
-    data_folder,
-    files,
-    backup_directory,
-    openpype_mongo,
-    database_production_name,
-    database_settings_name
-):
-    download_test_data(data_folder, files)
-    output_folder_url(data_folder)
-    database_setup(
-        backup_directory,
-        openpype_mongo,
-        database_production_name,
-        database_settings_name
     )
 
 
@@ -111,7 +97,7 @@ class ModuleUnitTest(BaseTest):
             monkeypatch_session - fixture for env vars with session scope
             project_settings - fixture for project settings with session scope
             download_test_data - tmp folder with extracted data from GDrive
-            env_var - sets env vars from input file
+            environment_setup - sets env vars from input file
             database_setup - prepares avalon AND openpype DBs for testing from
                         binary dumps from input data
             dbcon - returns DBConnection to AvalonDB
@@ -121,10 +107,6 @@ class ModuleUnitTest(BaseTest):
     PERSIST = False  # True to not purge temporary folder nor test DB
 
     OPENPYPE_MONGO = "mongodb://localhost:27017"
-    DATABASE_PRODUCTION_NAME = "avalon_tests"
-    DATABASE_SETTINGS_NAME = "openpype_tests"
-
-    FILES = []
 
     PROJECT_NAME = "test_project"
     ASSET_NAME = "test_asset"
@@ -149,7 +131,7 @@ class ModuleUnitTest(BaseTest):
     @pytest.fixture(scope="module")
     def download_test_data(self, data_folder, persist, request):
         data_folder = download_test_data(
-            data_folder or self.DATA_FOLDER, self.FILES
+            data_folder or self.DATA_FOLDER, FILES[self.__class__.__name__]
         )
 
         yield data_folder
@@ -193,6 +175,10 @@ class ModuleUnitTest(BaseTest):
                 value = getattr(self, attribute)
                 if not callable(value):
                     attributes[attribute] = value
+
+        # Module attributes.
+        attributes["DATABASE_PRODUCTION_NAME"] = DATABASE_PRODUCTION_NAME
+        attributes["DATABASE_SETTINGS_NAME"] = DATABASE_SETTINGS_NAME
 
         if not os.path.exists(environment_json):
             raise ValueError(
@@ -240,18 +226,16 @@ class ModuleUnitTest(BaseTest):
             self.OPENPYPE_MONGO = openpype_mongo
 
         database_handler = database_setup(
-            os.path.join(download_test_data, "input", "dumps"),
-            self.OPENPYPE_MONGO,
-            self.DATABASE_PRODUCTION_NAME,
-            self.DATABASE_SETTINGS_NAME
+            download_test_data,
+            self.OPENPYPE_MONGO
         )
 
         yield database_handler
 
         persist = self.PERSIST or self.is_test_failed(request)
         if not persist:
-            database_handler.teardown(self.DATABASE_PRODUCTION_NAME)
-            database_handler.teardown(self.DATABASE_SETTINGS_NAME)
+            database_handler.teardown(DATABASE_PRODUCTION_NAME)
+            database_handler.teardown(DATABASE_SETTINGS_NAME)
 
     @pytest.fixture(scope="module")
     def dbcon(self, environment_setup, database_setup, output_folder_url):
@@ -381,15 +365,9 @@ class PublishTest(ModuleUnitTest):
         app_args,
         app_name,
         output_folder_url,
-        setup_only,
-        keep_app_open,
-        dump_database
+        keep_app_open
     ):
         """Launch host app"""
-        if setup_only or self.SETUP_ONLY or dump_database:
-            print("Not launching app")
-            yield
-            return
         # set schema - for integrate_new
         from openpype import PACKAGE_DIR
         # Path to OpenPype's schema
@@ -427,15 +405,9 @@ class PublishTest(ModuleUnitTest):
         launched_app,
         download_test_data,
         timeout,
-        setup_only,
-        keep_app_open,
-        dump_database
+        keep_app_open
     ):
         """Dummy fixture waiting for publish to finish"""
-        if setup_only or self.SETUP_ONLY or dump_database:
-            print("Not launching app")
-            yield False
-            return
         import time
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
@@ -460,18 +432,12 @@ class PublishTest(ModuleUnitTest):
         publish_finished,
         download_test_data,
         output_folder_url,
-        skip_compare_folders,
-        setup_only,
-        dump_database
+        skip_compare_folders
     ):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
-        if setup_only or self.SETUP_ONLY or dump_database:
-            print("Not launching app")
-            return
-
         published_dir_base = output_folder_url
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
