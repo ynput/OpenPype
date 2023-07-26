@@ -6,16 +6,23 @@ class ContextItemModel(BaseSettingsModel):
     _layout = "expanded"
     product_name_filters: list[str] = Field(
         default_factory=list, title="Product name Filters")
-    product_types: list[str] = Field(default_factory=list, title="Product types")
-    repre_names: list[str] = Field(default_factory=list, title="Repre Names")
-    loaders: list[str] = Field(default_factory=list, title="Loaders")
+    product_types: list[str] = Field(
+        default_factory=list, title="Product types")
+    repre_names: list[str] = Field(
+        default_factory=list, title="Repre Names")
+    loaders: list[str] = Field(
+        default_factory=list, title="Loaders")
 
 
 class WorkfileSettingModel(BaseSettingsModel):
     _layout = "expanded"
-    task_types: list[str] = Field(default_factory=list,
-        enum_resolver=task_types_enum, title="Task types")
-    tasks: list[str] = Field(default_factory=list, title="Task names")
+    task_types: list[str] = Field(
+        default_factory=list,
+        enum_resolver=task_types_enum,
+        title="Task types")
+    tasks: list[str] = Field(
+        default_factory=list,
+        title="Task names")
     current_context: list[ContextItemModel] = Field(
         default_factory=list,
         title="Current Context")

@@ -14,8 +14,10 @@ class WorkfileBuildProfilesModel(BaseSettingsModel):
 
 
 class TemplatedProfilesModel(BaseSettingsModel):
-    profiles: list[WorkfileBuildProfilesModel]=Field(default_factory=list,
-    title="Profiles")
+    profiles: list[WorkfileBuildProfilesModel] = Field(
+        default_factory=list,
+        title="Profiles"
+    )
 
 
 DEFAULT_TEMPLATED_WORKFILE_SETTINGS = {

@@ -19,7 +19,10 @@ class ScriptsmenuModel(BaseSettingsModel):
 
     name: str = Field(title="Menu Name")
     definition: list[ScriptsmenuSubmodel] = Field(
-        default_factory=list, title="Menu Definition", description="Scriptmenu Items Definition")
+        default_factory=list,
+        title="Menu Definition",
+        description="Scriptmenu Items Definition"
+    )
 
 
 DEFAULT_SCRIPTSMENU_SETTINGS = {

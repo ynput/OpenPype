@@ -80,11 +80,12 @@ class KitsuSettings(BaseSettingsModel):
     )
     entities_naming_pattern: EntityPattern = Field(
         default_factory=EntityPattern,
-        title="Entities naming pattern")
+        title="Entities naming pattern"
+    )
     publish: PublishPlugins = Field(
         default_factory=PublishPlugins,
         title="Publish plugins"
-        )
+    )
 
 
 DEFAULT_VALUES = {

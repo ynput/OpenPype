@@ -20,7 +20,7 @@ class CreateReviewModel(BaseSettingsModel):
 class CreateRenderSceneModel(BaseSettingsModel):
     enabled: bool = Field(True)
     active_on_create: bool = Field(True, title="Active by default")
-    mark_for_review: bool  = Field(True, title="Review by default")
+    mark_for_review: bool = Field(True, title="Review by default")
     default_pass_name: str = Field(title="Default beauty pass")
     default_variant: str = Field(title="Default variant")
     default_variants: list[str] = Field(

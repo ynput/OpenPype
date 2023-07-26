@@ -326,11 +326,10 @@ class ExtractCameraAlembicModel(BaseSettingsModel):
         return value
 
 
-
 class ExtractGLBModel(BaseSettingsModel):
     enabled: bool = True
     active: bool = Field(title="Active")
-    ogsfx_path: str= Field(title="GLSL Shader Directory")
+    ogsfx_path: str = Field(title="GLSL Shader Directory")
 
 
 class ExtractLookArgsModel(BaseSettingsModel):
@@ -361,7 +360,7 @@ class ExtractGPUCacheModel(BaseSettingsModel):
 
 class PublishersModel(BaseSettingsModel):
     CollectMayaRender: CollectMayaRenderModel = Field(
-        default_factory = CollectMayaRenderModel,
+        default_factory=CollectMayaRenderModel,
         title="Collect Render Layers",
         section="Collectors"
     )
@@ -374,7 +373,7 @@ class PublishersModel(BaseSettingsModel):
         title="Collect Assets for GLB/GLTF export"
     )
     ValidateInstanceInContext: BasicValidateModel = Field(
-        default_factory = BasicValidateModel,
+        default_factory=BasicValidateModel,
         title="Validate Instance In Context",
         section="Validators"
     )
