@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Setup info for building OpenPype 3.0."""
 import os
-import sys
 import re
 import platform
 import distutils.spawn
@@ -125,7 +124,6 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "common",
     "schema",
     "LICENSE",
     "README.md"
