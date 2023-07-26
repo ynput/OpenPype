@@ -122,16 +122,14 @@ def _precache():
     """Store available schemas in-memory for reduced disk access"""
     global _CACHED
 
-    schema_dir = os.path.join(CURRENT_DIR, "schema")
-
-    for schema in os.listdir(schema_dir):
+    for schema in os.listdir(CURRENT_DIR):
         if schema.startswith(("_", ".")):
             continue
         if not schema.endswith(".json"):
             continue
-        if not os.path.isfile(os.path.join(schema_dir, schema)):
+        if not os.path.isfile(os.path.join(CURRENT_DIR, schema)):
             continue
-        with open(os.path.join(schema_dir, schema)) as f:
+        with open(os.path.join(CURRENT_DIR, schema)) as f:
             log_.debug("Installing schema '%s'.." % schema)
             _cache[schema] = json.load(f)
     _CACHED = True
