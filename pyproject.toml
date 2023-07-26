@@ -72,6 +72,7 @@ dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 Unidecode = "1.2.0"
 cryptography = "39.0.0"
+p4python = "2022.1.2405607"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"

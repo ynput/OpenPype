@@ -17,6 +17,7 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AYON_CONTAINER_ID,
     legacy_io,
+    get_current_project_name,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
@@ -129,6 +130,7 @@ def install():
     register_creator_plugin_path(str(CREATE_PATH))
     _register_callbacks()
     _register_events()
+    _init_perforce()
 
 
 def uninstall():
@@ -151,6 +153,12 @@ def _register_events():
     """
     pass
 
+
+def _init_perforce():
+    from openpype.hosts.unreal.api.p4_integrate import P4Integrate
+    p4_connector = P4Integrate(get_current_project_name())
+    p4_connector.p4_create_or_load_openpype_changelist(
+        "DO NOT EDIT THIS CHANGELIST", None)
 
 def ls():
     """List all containers.

@@ -200,6 +200,9 @@
     "project_manager": {
         "enabled": true
     },
+    "perforce": {
+        "enabled": false
+    },
     "slack": {
         "enabled": false
     },

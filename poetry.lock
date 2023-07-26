@@ -1895,6 +1895,35 @@ files = [
 setuptools = "*"
 
 [[package]]
+name = "p4python"
+version = "2022.1.2405607"
+description = "P4Python - Python interface to Perforce API"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "p4python-2022.1.2405607-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:2dc43f6c6d8c2b6fa039944983e443fd1131b380748f592249429e59ed21b1ae"},
+    {file = "p4python-2022.1.2405607-cp310-cp310-manylinux_2_24_x86_64.whl", hash = "sha256:bf28976f03b442e7237f4d468713b6f89eda643e81fd695ff2893f0deaaa4ac4"},
+    {file = "p4python-2022.1.2405607-cp310-cp310-win32.whl", hash = "sha256:273e1c55a8c453162ef56e9eba13602e4546947a0538abd82624d5a4c6e7a13d"},
+    {file = "p4python-2022.1.2405607-cp310-cp310-win_amd64.whl", hash = "sha256:5108e2d8747382d2a2dbc911cc0d0fd88b60c8b6ae2f09ba1405ca85d159a098"},
+    {file = "p4python-2022.1.2405607-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:2652a84cc7a449b6156b4b9d2f4de89e1cef30860ad8c9e6353ea8642ee89e56"},
+    {file = "p4python-2022.1.2405607-cp36-cp36m-manylinux_2_24_x86_64.whl", hash = "sha256:5e5d03ae41c9b9a1358f24e199c2bdc535f40235337e853c238e0220f479c12f"},
+    {file = "p4python-2022.1.2405607-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:92df135ac40b1a5438a4dea590fee9197909c1b6d61663cd90d9acaa45a023a9"},
+    {file = "p4python-2022.1.2405607-cp37-cp37m-manylinux_2_24_x86_64.whl", hash = "sha256:4922abbe7efedd5ea8ded41abd69ee8e006cb0167c16668901d68178c4a084f6"},
+    {file = "p4python-2022.1.2405607-cp37-cp37m-win32.whl", hash = "sha256:58702948e34c08224dd9326ef66615c7590011c5b05f15bfde18c900e88c6464"},
+    {file = "p4python-2022.1.2405607-cp37-cp37m-win_amd64.whl", hash = "sha256:7496c1c32b9001641cf3ea9def22499654bfa160f091860daf5731341482d431"},
+    {file = "p4python-2022.1.2405607-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:733a1ccc082d7fed0158f816cdb96f0e1d8a77f30c72e9c2f12c6595dccb6674"},
+    {file = "p4python-2022.1.2405607-cp38-cp38-manylinux_2_24_x86_64.whl", hash = "sha256:d42c29dce8f22dd0a1bafdd29350812ed36aceb49631daaef17016ca301c69fa"},
+    {file = "p4python-2022.1.2405607-cp38-cp38-win32.whl", hash = "sha256:473b2fd36201cfcece007c4a599de7e84b0a1b3467aa167d6b9667e24bf01618"},
+    {file = "p4python-2022.1.2405607-cp38-cp38-win_amd64.whl", hash = "sha256:fd29a85dd63bc3fd6b296121a206f72013ca5299a73ee13b5bedefb2ab5f1cdb"},
+    {file = "p4python-2022.1.2405607-cp39-cp39-macosx_10_12_universal2.whl", hash = "sha256:1f8fe87f7ee0dcce4490d9a996e7f2319183107d604c484e5569ae2e99c8fa49"},
+    {file = "p4python-2022.1.2405607-cp39-cp39-manylinux_2_24_x86_64.whl", hash = "sha256:445dc7debe8cf1bb8a21f3f1280558dd6f23b37678196270f3a747b8decd39da"},
+    {file = "p4python-2022.1.2405607-cp39-cp39-win32.whl", hash = "sha256:a328e98e827368da951a7de1a5ae8e3bb4131ce47967c0e663b237ed62828b45"},
+    {file = "p4python-2022.1.2405607-cp39-cp39-win_amd64.whl", hash = "sha256:dbc0d8d707da8280af5634852c628b55341cc4d892cbb7f7efeda6111d86a910"},
+    {file = "p4python-2022.1.2405607.tar.gz", hash = "sha256:6ba24ed665b457b2ca4d020b97cc051bc4477fe8c30fedec79915b2584197fcd"},
+]
+
+[[package]]
 name = "packaging"
 version = "23.1"
 description = "Core utilities for Python packages"
@@ -3667,4 +3696,8 @@ docs = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.1,<3.10"
+<<<<<<< HEAD
 content-hash = "d2b8da22dcd11e0b03f19b9b79e51f205156c5ce75e41cc0225392e9afd8803b"
+=======
+content-hash = "60bc5a68f63b9bcc45183d463a5ec20c5eee213e2878382870a7a07d4be7125e"
+>>>>>>> feature/OP-5038_perforce-changlists

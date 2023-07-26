@@ -1,0 +1,32 @@
+{
+    "type": "dict",
+    "key": "p4v",
+    "label": "P4 (Helix Core)",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+      {
+            "type": "dict",
+            "collapsible": true,
+            "key": "general",
+            "label": "General",
+            "children": [
+              {
+                "type": "text",
+                "key": "client",
+                "label": "Client Workspace"
+              },
+              {
+                "type": "text",
+                "key": "port",
+                "label": "Port (URL)"
+              },
+              {
+                "type": "text",
+                "key": "user",
+                "label": "User"
+              }
+            ]
+      }
+    ]
+}
