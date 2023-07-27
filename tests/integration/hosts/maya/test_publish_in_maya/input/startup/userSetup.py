@@ -1,11 +1,22 @@
+import sys
 import os
-
 import logging
 
-from maya import cmds
+sys.stderr = sys.stdout
+
+MAYA_STANDALONE = False
+try:
+    import maya.standalone
+    maya.standalone.initialize()
+    MAYA_STANDALONE = True
+    print("maya standalone initialized")
+except RuntimeError:
+    pass
+
+from maya import cmds  # noqa: E402
 
 
-def setup_logging():
+def setup_pyblish_logging():
     # Fetch the logger Pyblish uses for all of its messages
     log = logging.getLogger("pyblish")
 
@@ -20,12 +31,25 @@ def setup_logging():
     log.addHandler(hnd)
 
 
-print("starting OpenPype usersetup for testing")
-cmds.evalDeferred("setup_logging()", evaluateNext=True)
-cmds.evalDeferred(
-    "import pyblish.util;pyblish.util.publish()", lowestPriority=True
-)
+def main():
+    if MAYA_STANDALONE:
+        setup_pyblish_logging()
 
-print("finished OpenPype usersetup for testing")
-if not os.environ.get("KEEP_APP_OPEN"):
-    cmds.evalDeferred("cmds.quit(force=True)", lowestPriority=True)
+        cmds.file(os.environ["AVALON_LAST_WORKFILE"], open=True, force=True)
+
+        import pyblish.util
+        pyblish.util.publish()
+
+        return
+
+    cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
+    cmds.evalDeferred(
+        "import pyblish.util;pyblish.util.publish()", lowestPriority=True
+    )
+
+    print("finished OpenPype usersetup for testing")
+    if not os.environ.get("KEEP_APP_OPEN") or not MAYA_STANDALONE:
+        cmds.evalDeferred("cmds.quit(force=True)", lowestPriority=True)
+
+
+main()

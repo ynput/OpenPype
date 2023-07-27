@@ -10,6 +10,7 @@ import glob
 import platform
 import requests
 import re
+import subprocess
 
 from tests.lib.database_handler import DataBaseHandler
 from common.ayon_common.distribution.file_handler import RemoteFileHandler
@@ -398,11 +399,17 @@ class PublishTest(ModuleUnitTest):
         yield app_args
 
     @pytest.fixture(scope="module")
+    def start_last_workfile(self):
+        """Returns url of workfile"""
+        return True
+
+    @pytest.fixture(scope="module")
     def launched_app(
         self,
         dbcon,
         download_test_data,
         last_workfile_path,
+        start_last_workfile,
         startup_scripts,
         app_args,
         app_name,
@@ -420,7 +427,7 @@ class PublishTest(ModuleUnitTest):
         os.environ["AVALON_SCHEMA"] = schema_path
 
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
-        print(os.environ["PYTHONPATH"])
+
         if keep_app_open:
             os.environ["KEEP_APP_OPEN"] = "1"
 
@@ -429,10 +436,11 @@ class PublishTest(ModuleUnitTest):
         application_manager = ApplicationManager()
         data = {
             "last_workfile_path": last_workfile_path,
-            "start_last_workfile": True,
+            "start_last_workfile": start_last_workfile,
             "project_name": self.PROJECT_NAME,
             "asset_name": self.ASSET_NAME,
-            "task_name": self.TASK_NAME
+            "task_name": self.TASK_NAME,
+            "stdout": subprocess.PIPE
         }
         if app_args:
             data["app_args"] = app_args
@@ -460,6 +468,7 @@ class PublishTest(ModuleUnitTest):
 
         timeout = float(timeout)
         while launched_app.poll() is None:
+            out, err = launched_app.communicate()
             time.sleep(0.5)
             if time.time() - time_start > timeout:
                 launched_app.terminate()
@@ -467,7 +476,7 @@ class PublishTest(ModuleUnitTest):
 
         # some clean exit test possible?
         print("Publish finished")
-        yield True
+        yield out.decode("utf-8")
 
     def test_folder_structure_same(
         self,

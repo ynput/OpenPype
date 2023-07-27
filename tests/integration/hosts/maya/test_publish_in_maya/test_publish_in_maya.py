@@ -34,8 +34,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     APP_GROUP = "maya"
-    # keep empty to locate latest installed variant or explicit
-    APP_VARIANT = ""
+
+    # By default run through mayapy. For interactive mode, change to 2023 or
+    # input `--app_variant 2023` in cli.
+    APP_VARIANT = "py2023"
 
     TIMEOUT = 120  # publish timeout
 
@@ -45,6 +47,34 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     INPUT_ENVIRONMENT_JSON = os.path.join(
         os.path.dirname(__file__), "input", "env_vars", "env_var.json"
     )
+
+    def running_in_mayapy(self, app_variant):
+        app_variant = app_variant or self.APP_VARIANT
+
+        # Running in mayapy.
+        if app_variant.startswith("py"):
+            return True
+
+        # Running in maya.
+        return False
+
+    def get_usersetup_path(self):
+        return os.path.join(
+            os.path.dirname(__file__), "input", "startup", "userSetup.py"
+        )
+
+    @pytest.fixture(scope="module")
+    def app_args(self, app_variant):
+        args = []
+        if self.running_in_mayapy(app_variant):
+            args = ["-I", self.get_usersetup_path()]
+
+        yield args
+
+    @pytest.fixture(scope="module")
+    def start_last_workfile(self, app_variant):
+        """Returns url of workfile"""
+        return not self.running_in_mayapy(app_variant)
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder):
@@ -74,18 +104,22 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         yield dest_path
 
     @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session, download_test_data):
+    def startup_scripts(
+        self, monkeypatch_session, download_test_data, app_variant
+    ):
         """Points Maya to userSetup file from input data"""
-        user_setup_path = os.path.join(
-            os.path.dirname(__file__), "input", "startup"
-        )
-        original_pythonpath = os.environ.get("PYTHONPATH")
-        monkeypatch_session.setenv(
-            "PYTHONPATH",
-            "{}{}{}".format(
-                user_setup_path, os.pathsep, original_pythonpath
+        if not self.running_in_mayapy(app_variant):
+            # Not needed for running MayaPy since the testing userSetup.py will
+            # be passed in directly to the executable.
+            original_pythonpath = os.environ.get("PYTHONPATH")
+            monkeypatch_session.setenv(
+                "PYTHONPATH",
+                "{}{}{}".format(
+                    os.path.dirname(self.get_usersetup_path()),
+                    os.pathsep,
+                    original_pythonpath
+                )
             )
-        )
 
         monkeypatch_session.setenv(
             "MAYA_CMD_FILE_OUTPUT", os.path.join(download_test_data, LOG_PATH)
@@ -100,9 +134,18 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         with open(logging_path, "r") as f:
             logging_output = f.read()
 
+        # Check for pyblish errors.
         error_regex = r"pyblish \(ERROR\)((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
-        assert not matches, ("ERROR" + matches[0][0])
+        assert not matches, logging_output
+
+        matches = re.findall(error_regex, publish_finished)
+        assert not matches, publish_finished
+
+        # Check for python errors.
+        error_regex = r"// Error((.|\n)*)"
+        matches = re.findall(error_regex, logging_output)
+        assert not matches, logging_output
 
     def test_db_asserts(
         self,

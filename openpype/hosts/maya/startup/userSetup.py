@@ -7,10 +7,10 @@ from openpype.hosts.maya.api import MayaHost
 from maya import cmds
 
 
+print("Starting OpenPype usersetup...")
+
 host = MayaHost()
 install_host(host)
-
-print("Starting OpenPype usersetup...")
 
 project_name = get_current_project_name()
 settings = get_project_settings(project_name)

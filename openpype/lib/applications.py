@@ -900,6 +900,9 @@ class ApplicationLaunchContext:
 
         self.env_group = env_group
 
+        stdout = data.pop("stdout", None)
+        stderr = data.pop("stderr", None)
+
         self.data = dict(data)
 
         # subprocess.Popen launch arguments (first argument in constructor)
@@ -940,6 +943,12 @@ class ApplicationLaunchContext:
         if not sys.stdout:
             self.kwargs["stdout"] = subprocess.DEVNULL
             self.kwargs["stderr"] = subprocess.DEVNULL
+
+        if stdout:
+            self.kwargs["stdout"] = stdout
+
+        if stderr:
+            self.kwargs["stderr"] = stderr
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None

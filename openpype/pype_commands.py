@@ -296,7 +296,8 @@ class PypeCommands:
                 app_variant (str): variant (eg 2020 for AE), empty if use
                     latest installed version
         """
-        print("run_tests")
+        start_time = time.time()
+        end_time_msg = "\"run_test\" took {} seconds to execute."
         if folder:
             folder = " ".join(list(folder))
         else:
@@ -341,6 +342,7 @@ class PypeCommands:
 
             from tests.lib.testing_classes import setup
             setup(class_names, data_folder, openpype_mongo)
+            print(end_time_msg.format(time.time() - start_time))
             return
 
         if database_urls:
@@ -349,6 +351,7 @@ class PypeCommands:
 
             from tests.lib.testing_classes import dump_databases
             dump_databases(database_urls, data_folder, openpype_mongo)
+            print(end_time_msg.format(time.time() - start_time))
             return
 
         print("run_tests args: {}".format(args))
