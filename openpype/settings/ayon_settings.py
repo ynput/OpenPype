@@ -975,8 +975,11 @@ def _convert_royalrender_project_settings(ayon_settings, output):
     if "royalrender" not in ayon_settings:
         return
     ayon_royalrender = ayon_settings["royalrender"]
+    rr_paths = ayon_royalrender.get("selected_rr_paths", [])
+
     output["royalrender"] = {
-        "publish": ayon_royalrender["publish"]
+        "publish": ayon_royalrender["publish"],
+        "rr_paths": rr_paths,
     }
 
 
