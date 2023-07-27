@@ -94,6 +94,10 @@ class PublishPuginsModel(BaseSettingsModel):
         default_factory=ValidatePluginModel,
         title="Extract Camera"
     )
+    ExtractCameraABC: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Extract Camera as ABC"
+    )
     ExtractLayout: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Extract Layout"
@@ -138,12 +142,13 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
-        "families": [
+        "families":  [
             "model",
             "camera",
             "rig",
             "action",
-            "layout"
+            "layout",
+            "blendScene"
         ]
     },
     "ExtractFBX": {
@@ -167,6 +172,11 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": False
     },
     "ExtractCamera": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ExtractCameraABC": {
         "enabled": True,
         "optional": True,
         "active": True
