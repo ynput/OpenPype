@@ -1,10 +1,9 @@
 import os
-import shutil
 from PIL import Image
 
 from openpype.lib import (
     run_subprocess,
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
 )
 from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
@@ -85,7 +84,7 @@ class ExtractReview(publish.Extractor):
             instance.data["representations"].append(repre_skeleton)
             processed_img_names = [img_list]
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_args = get_ffmpeg_tool_args("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -94,13 +93,21 @@ class ExtractReview(publish.Extractor):
         source_files_pattern = self._check_and_resize(processed_img_names,
                                                       source_files_pattern,
                                                       staging_dir)
-        self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
-                                 staging_dir)
+        self._generate_thumbnail(
+            list(ffmpeg_args),
+            instance,
+            source_files_pattern,
+            staging_dir)
 
         no_of_frames = len(processed_img_names)
         if no_of_frames > 1:
-            self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
-                               source_files_pattern, staging_dir)
+            self._generate_mov(
+                list(ffmpeg_args),
+                instance,
+                fps,
+                no_of_frames,
+                source_files_pattern,
+                staging_dir)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
@@ -142,8 +149,9 @@ class ExtractReview(publish.Extractor):
             "tags": self.mov_options['tags']
         })
 
-    def _generate_thumbnail(self, ffmpeg_path, instance, source_files_pattern,
-                            staging_dir):
+    def _generate_thumbnail(
+        self, ffmpeg_args, instance, source_files_pattern, staging_dir
+    ):
         """Generates scaled down thumbnail and adds it as representation.
 
         Args:
@@ -157,8 +165,7 @@ class ExtractReview(publish.Extractor):
         # Generate thumbnail
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         self.log.info(f"Generate thumbnail {thumbnail_path}")
-        args = [
-            ffmpeg_path,
+        args = ffmpeg_args + [
             "-y",
             "-i", source_files_pattern,
             "-vf", "scale=300:-1",
