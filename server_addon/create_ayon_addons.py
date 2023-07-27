@@ -7,10 +7,10 @@ import zipfile
 import platform
 import collections
 from pathlib import Path
-from typing import Any, Optional, Iterable, Pattern
+from typing import Any, Optional, Iterable, Pattern, List, Tuple
 
 # Patterns of directories to be skipped for server part of addon
-IGNORE_DIR_PATTERNS: list[Pattern] = [
+IGNORE_DIR_PATTERNS: List[Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip directories starting with '.'
@@ -21,7 +21,7 @@ IGNORE_DIR_PATTERNS: list[Pattern] = [
 ]
 
 # Patterns of files to be skipped for server part of addon
-IGNORE_FILE_PATTERNS: list[Pattern] = [
+IGNORE_FILE_PATTERNS: List[Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip files starting with '.'
@@ -65,9 +65,9 @@ def _value_match_regexes(value: str, regexes: Iterable[Pattern]) -> bool:
 
 def find_files_in_subdir(
     src_path: str,
-    ignore_file_patterns: Optional[list[Pattern]] = None,
-    ignore_dir_patterns: Optional[list[Pattern]] = None,
-    ignore_subdirs: Optional[Iterable[tuple[str]]] = None
+    ignore_file_patterns: Optional[List[Pattern]] = None,
+    ignore_dir_patterns: Optional[List[Pattern]] = None,
+    ignore_subdirs: Optional[Iterable[Tuple[str]]] = None
 ):
     """Find all files to copy in subdirectories of given path.
 
@@ -77,15 +77,15 @@ def find_files_in_subdir(
 
     Args:
         src_path (str): Path to directory to search in.
-        ignore_file_patterns (Optional[list[Pattern]]): List of regexes
+        ignore_file_patterns (Optional[List[Pattern]]): List of regexes
             to match files to ignore.
-        ignore_dir_patterns (Optional[list[Pattern]]): List of regexes
+        ignore_dir_patterns (Optional[List[Pattern]]): List of regexes
             to match directories to ignore.
-        ignore_subdirs (Optional[Iterable[tuple[str]]]): List of
+        ignore_subdirs (Optional[Iterable[Tuple[str]]]): List of
             subdirectories to ignore.
 
     Returns:
-        list[tuple[str, str]]: List of tuples with path to file and parent
+        List[Tuple[str, str]]: List of tuples with path to file and parent
             directories relative to 'src_path'.
     """
 
