@@ -55,7 +55,6 @@ class BasicExportMeshModel(BaseSettingsModel):
 
 
 class CreateAnimationModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
     write_color_sets: bool = Field(title="Write Color Sets")
     write_face_sets: bool = Field(title="Write Face Sets")
     include_parent_hierarchy: bool = Field(
@@ -259,7 +258,6 @@ DEFAULT_CREATORS_SETTINGS = {
         "publish_mip_map": True
     },
     "CreateAnimation": {
-        "enabled": False,
         "write_color_sets": False,
         "write_face_sets": False,
         "include_parent_hierarchy": False,
