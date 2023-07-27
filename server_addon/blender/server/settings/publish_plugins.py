@@ -142,7 +142,7 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
-        "families":  [
+        "families": [
             "model",
             "camera",
             "rig",
