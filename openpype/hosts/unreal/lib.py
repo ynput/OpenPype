@@ -445,7 +445,7 @@ def check_built_plugin_existance(plugin_path) -> bool:
     return True
 
 
-def move_built_plugin(engine_path: Path, plugin_path: Path) -> None:
+def copy_built_plugin(engine_path: Path, plugin_path: Path) -> None:
     ayon_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
 
     if not ayon_plugin_path.is_dir():
