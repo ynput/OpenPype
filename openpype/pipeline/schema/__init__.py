@@ -24,6 +24,7 @@ log_ = logging.getLogger(__name__)
 
 ValidationError = jsonschema.ValidationError
 SchemaError = jsonschema.SchemaError
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _CACHED = False
 
@@ -121,17 +122,14 @@ def _precache():
     """Store available schemas in-memory for reduced disk access"""
     global _CACHED
 
-    repos_root = os.environ["OPENPYPE_REPOS_ROOT"]
-    schema_dir = os.path.join(repos_root, "schema")
-
-    for schema in os.listdir(schema_dir):
+    for schema in os.listdir(CURRENT_DIR):
         if schema.startswith(("_", ".")):
             continue
         if not schema.endswith(".json"):
             continue
-        if not os.path.isfile(os.path.join(schema_dir, schema)):
+        if not os.path.isfile(os.path.join(CURRENT_DIR, schema)):
             continue
-        with open(os.path.join(schema_dir, schema)) as f:
+        with open(os.path.join(CURRENT_DIR, schema)) as f:
             log_.debug("Installing schema '%s'.." % schema)
             _cache[schema] = json.load(f)
     _CACHED = True
