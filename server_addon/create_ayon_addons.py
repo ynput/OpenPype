@@ -67,6 +67,7 @@ def find_files_in_subdir(
     src_path: str,
     ignore_file_patterns: Optional[list[Pattern]] = None,
     ignore_dir_patterns: Optional[list[Pattern]] = None,
+    ignore_subdirs: Optional[Iterable[tuple[str]]] = None
 ):
     """Find all files to copy in subdirectories of given path.
 
@@ -80,6 +81,8 @@ def find_files_in_subdir(
             to match files to ignore.
         ignore_dir_patterns (Optional[list[Pattern]]): List of regexes
             to match directories to ignore.
+        ignore_subdirs (Optional[Iterable[tuple[str]]]): List of
+            subdirectories to ignore.
 
     Returns:
         list[tuple[str, str]]: List of tuples with path to file and parent
@@ -98,6 +101,8 @@ def find_files_in_subdir(
     while hierarchy_queue:
         item: tuple[str, str] = hierarchy_queue.popleft()
         dirpath, parents = item
+        if ignore_subdirs and parents in ignore_subdirs:
+            continue
         for name in os.listdir(dirpath):
             path = os.path.join(dirpath, name)
             if os.path.isfile(path):
@@ -194,11 +199,35 @@ def create_openpype_package(
         (private_dir / pyproject_path.name)
     )
 
+    ignored_hosts = []
+    ignored_modules = [
+        "ftrack",
+        "shotgrid",
+        "sync_server",
+        "example_addons",
+        "slack"
+    ]
+    # Subdirs that won't be added to output zip file
+    ignored_subpaths = [
+        ["addons"],
+        ["vendor", "common", "ayon_api"],
+    ]
+    ignored_subpaths.extend(
+        ["hosts", host_name]
+        for host_name in ignored_hosts
+    )
+    ignored_subpaths.extend(
+        ["modules", module_name]
+        for module_name in ignored_modules
+    )
+
     # Zip client
     zip_filepath = private_dir / "client.zip"
     with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         # Add client code content to zip
-        for path, sub_path in find_files_in_subdir(str(openpype_dir)):
+        for path, sub_path in find_files_in_subdir(
+            str(openpype_dir), ignore_subdirs=ignored_subpaths
+        ):
             zipf.write(path, f"{openpype_dir.name}/{sub_path}")
 
     if create_zip:
