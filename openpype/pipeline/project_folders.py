@@ -56,7 +56,21 @@ def make_link(link_item,path_items, anatomy):
         'producers': '//fs.hellohornet.lan/producers/',
         'resources': '//fs.hellohornet.lan/resources/'
     }
+    if sys.platform == 'darwin':
+        DRIVES = {
+            'edit': '/Volumes/edit/',
+            'producers': '/Volumes/producers/',
+            'resources': '/Volumes/resources/'
+        }
+    if 'linux' in sys.platform:
+        DRIVES = {
+            'edit': '/mnt/edit/',
+            'producers': '/mnt/producers/',
+            'resources': '/mnt/resources/'
+        }
     drive_letter_pattern = r"[A-Z]:[\\\/]"
+    mac_volume_pattern = r"^/Volumes/(production|edit|producers|resources)/"
+    lnx_volume_pattern = r"^/mnt/(prod|edit|producers|resources)/"
     unc_pattern = r"(\\\\[\w\s.$_-]+[\\/](?:[\w\s.$_-]+[\\/])+[\w\s.$_-]+)"
     pattern_symlink = re.compile(r"symlink\.[^.,\],\s,]*")
 
@@ -70,13 +84,19 @@ def make_link(link_item,path_items, anatomy):
                     continue
                 clean_items = ["{{root[{}]}}".format(root),
                                r"{project[name]}"] + clean_items[1:]
-
+    
     stack = fill_paths(clean_items,anatomy)
     link_drive = link_item.split('.')[1].strip('[]')
     # create the paths on the corresponding drive before we link
     clean_stack = [item for item in stack if not 'symlink' in item]
-    clean_stack = re.sub(drive_letter_pattern, DRIVES[link_drive],'/'.join(clean_stack)).replace('\\','/')
-    clean_stack = re.sub(unc_pattern, DRIVES[link_drive],clean_stack).replace('\\','/')
+    if 'linux' in sys.platform:
+        clean_stack = re.sub(lnx_volume_pattern, DRIVES[link_drive],'/'.join(clean_stack)).replace('\\','/')
+    elif sys.platform == 'win32':
+        clean_stack = re.sub(drive_letter_pattern, DRIVES[link_drive],'/'.join(clean_stack)).replace('\\','/')
+    elif sys.platform == 'darwin':
+        clean_stack = re.sub(mac_volume_pattern, DRIVES[link_drive],'/'.join(clean_stack)).replace('\\','/')
+    else:
+        clean_stack = re.sub(unc_pattern, DRIVES[link_drive],clean_stack).replace('\\','/')
 
     link_alias = link_item.split('[')[0]
     link_loc = stack[:stack.index(link_item)]
@@ -84,11 +104,15 @@ def make_link(link_item,path_items, anatomy):
     link_path = '/'.join(link_loc)
     link_target = re.sub(drive_letter_pattern, DRIVES[link_drive],link_path)
     link_target = re.sub(unc_pattern, DRIVES[link_drive],link_target).replace('\\','/')
-    try:
+    try: 
+        log.debug(clean_stack)
         os.makedirs(clean_stack)
+    except Exception as e:
+        log.debug(e)
+    try:
         if sys.platform == 'darwin':
-            print(f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_at}"\'')
-            subprocess.Popen( f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_at}"\'',shell=True)
+            print(f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_path}"\'')
+            #subprocess.Popen( f'osascript -e \'tell application "Finder" to make alias file to POSIX file "{link_target}" at POSIX file "{link_path}"\'',shell=True)
         elif sys.platform == 'win32':
             pass
             #import win32file
