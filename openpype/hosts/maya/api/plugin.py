@@ -303,6 +303,9 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
         arguments for 'create' method.
     """
 
+    def create(self, *args, **kwargs):
+        return MayaCreator.create(self, *args, **kwargs)
+
     def collect_instances(self):
         return self._default_collect_instances()
 
