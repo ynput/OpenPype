@@ -21,7 +21,7 @@ class CreateKarmaROP(plugin.HoudiniCreator):
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
         # Submit for job publishing
-        instance_data["farm"] = True
+        instance_data["farm"] = pre_create_data.get("farm")
 
         instance = super(CreateKarmaROP, self).create(
             subset_name,
@@ -96,6 +96,9 @@ class CreateKarmaROP(plugin.HoudiniCreator):
         ]
 
         return attrs + [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=True),
             EnumDef("image_format",
                     image_format_enum,
                     default="exr",
