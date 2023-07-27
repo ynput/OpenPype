@@ -6,6 +6,7 @@ from .settings import CoreSettings, DEFAULT_VALUES
 
 class CoreAddon(BaseServerAddon):
     name = "core"
+    title = "Core"
     version = __version__
     settings_model = CoreSettings
 

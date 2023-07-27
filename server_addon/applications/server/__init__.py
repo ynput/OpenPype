@@ -32,6 +32,7 @@ def get_enum_items_from_groups(groups):
 
 class ApplicationsAddon(BaseServerAddon):
     name = "applications"
+    title = "Applications"
     version = __version__
     settings_model = ApplicationsAddonSettings
 
