@@ -31,11 +31,12 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # get the created node
         instance_node = hou.node(instance.get("instance_node"))
 
-        # get output path
+        # Get this node specific parms
+        # 1. get output path
         output_path = hou.text.expandString(
             "$HIP/pyblish/{}.fbx".format(subset_name))
 
-        # get selection
+        # 2. get selection
         selection = self.get_selection()
 
         # parms dictionary
