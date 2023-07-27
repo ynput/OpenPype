@@ -187,24 +187,36 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         project_path.mkdir(parents=True, exist_ok=True)
 
-        # Set "AYON_UNREAL_PLUGIN" to current process environment for
-        # execution of `create_unreal_project`
-
-        if self.launch_context.env.get("AYON_UNREAL_PLUGIN"):
-            self.log.info((
-                f"{self.signature} using Ayon plugin from "
-                f"{self.launch_context.env.get('AYON_UNREAL_PLUGIN')}"
-            ))
-        env_key = "AYON_UNREAL_PLUGIN"
-        if self.launch_context.env.get(env_key):
-            os.environ[env_key] = self.launch_context.env[env_key]
-
         # engine_path points to the specific Unreal Engine root
         # so, we are going up from the executable itself 3 levels.
         engine_path: Path = Path(executable).parents[3]
 
-        if not unreal_lib.check_plugin_existence(engine_path):
-            self.exec_plugin_install(engine_path)
+        # Check if new env variable exists, and if it does, if the path
+        # actually contains the plugin. If not, install it.
+
+        built_plugin_path = self.launch_context.env.get(
+            "AYON_BUILT_UNREAL_PLUGIN", None)
+
+        if unreal_lib.check_built_plugin_existance(built_plugin_path):
+            self.log.info((
+                f"{self.signature} using existing built Ayon plugin from "
+                f"{built_plugin_path}"
+            ))
+            unreal_lib.copy_built_plugin(engine_path, Path(built_plugin_path))
+        else:
+            # Set "AYON_UNREAL_PLUGIN" to current process environment for
+            # execution of `create_unreal_project`
+            env_key = "AYON_UNREAL_PLUGIN"
+            if self.launch_context.env.get(env_key):
+                self.log.info((
+                    f"{self.signature} using Ayon plugin from "
+                    f"{self.launch_context.env.get(env_key)}"
+                ))
+            if self.launch_context.env.get(env_key):
+                os.environ[env_key] = self.launch_context.env[env_key]
+
+            if not unreal_lib.check_plugin_existence(engine_path):
+                self.exec_plugin_install(engine_path)
 
         project_file = project_path / unreal_project_filename
 
