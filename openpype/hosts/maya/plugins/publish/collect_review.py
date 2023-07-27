@@ -107,10 +107,8 @@ class CollectReview(pyblish.api.InstancePlugin):
             data["displayLights"] = display_lights
             data["burninDataMembers"] = burninDataMembers
 
-            publish_attributes = data.setdefault("publish_attributes", {})
             for key, value in instance.data["publish_attributes"].items():
-                if key not in publish_attributes:
-                    publish_attributes[key] = value
+                data["publish_attributes"][key] = value
 
             # The review instance must be active
             cmds.setAttr(str(instance) + '.active', 1)
