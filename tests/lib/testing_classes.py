@@ -420,7 +420,7 @@ class PublishTest(ModuleUnitTest):
         os.environ["AVALON_SCHEMA"] = schema_path
 
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
-
+        print(os.environ["PYTHONPATH"])
         if keep_app_open:
             os.environ["KEEP_APP_OPEN"] = "1"
 
@@ -437,6 +437,7 @@ class PublishTest(ModuleUnitTest):
         if app_args:
             data["app_args"] = app_args
 
+        print("Launching {} with {}".format(app_name, data))
         app_process = application_manager.launch(app_name, **data)
         yield app_process
 
