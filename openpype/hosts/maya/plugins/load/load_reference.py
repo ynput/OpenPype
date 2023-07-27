@@ -119,7 +119,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             family = "model"
 
         # True by default to keep legacy behaviours
-        attach_to_root = options.get("attach_to_root", True)
+        attach_to_root = options.get("attach_to_root", False)
         group_name = options["group_name"]
 
         with maintained_selection():
@@ -183,22 +183,29 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 cmds.setAttr(
                     "{}.displayHandle".format(group_name), display_handle
                 )
+
+                # Hornet: [HPIPE-317] use evalDeferred after referencing, because continuously
+                #         running after referencing will detach curves from the rig
+                set_selectHandle_commands = [
+                'group_name = "{}"'.format(group_name),
                 # get bounding box
-                bbox = cmds.exactWorldBoundingBox(group_name)
+                'bbox = cmds.exactWorldBoundingBox(group_name)',
                 # get pivot position on world space
-                pivot = cmds.xform(group_name, q=True, sp=True, ws=True)
+                'pivot = cmds.xform(group_name, q=True, sp=True, ws=True)',
                 # center of bounding box
-                cx = (bbox[0] + bbox[3]) / 2
-                cy = (bbox[1] + bbox[4]) / 2
-                cz = (bbox[2] + bbox[5]) / 2
+                'cx = (bbox[0] + bbox[3]) / 2',
+                'cy = (bbox[1] + bbox[4]) / 2',
+                'cz = (bbox[2] + bbox[5]) / 2',
                 # add pivot position to calculate offset
-                cx = cx + pivot[0]
-                cy = cy + pivot[1]
-                cz = cz + pivot[2]
+                'cx = cx + pivot[0]',
+                'cy = cy + pivot[1]',
+                'cz = cz + pivot[2]',
                 # set selection handle offset to center of bounding box
-                cmds.setAttr("{}.selectHandleX".format(group_name), cx)
-                cmds.setAttr("{}.selectHandleY".format(group_name), cy)
-                cmds.setAttr("{}.selectHandleZ".format(group_name), cz)
+                'cmds.setAttr(group_name + ".selectHandleX", cx)',
+                'cmds.setAttr(group_name + ".selectHandleY", cy)',
+                'cmds.setAttr(group_name + ".selectHandleZ", cz)'
+                ]
+                cmds.evalDeferred("\n".join(set_selectHandle_commands))
 
             if family == "rig":
                 self._post_process_rig(name, namespace, context, options)
