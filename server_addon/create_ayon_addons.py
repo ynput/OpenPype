@@ -133,7 +133,7 @@ def create_addon_zip(
     addon_version: str,
     keep_source: bool
 ):
-    zip_filepath = output_dir / f"{addon_name}.zip"
+    zip_filepath = output_dir / f"{addon_name}-{addon_version}.zip"
     addon_output_dir = output_dir / addon_name / addon_version
     with ZipFileLongPaths(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         zipf.writestr(
