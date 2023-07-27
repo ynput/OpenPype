@@ -202,7 +202,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"{self.signature} using existing built Ayon plugin from "
                 f"{built_plugin_path}"
             ))
-            unreal_lib.move_built_plugin(engine_path, Path(built_plugin_path))
+            unreal_lib.copy_built_plugin(engine_path, Path(built_plugin_path))
         else:
             # Set "AYON_UNREAL_PLUGIN" to current process environment for
             # execution of `create_unreal_project`
