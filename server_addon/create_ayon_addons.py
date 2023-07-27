@@ -7,10 +7,10 @@ import zipfile
 import platform
 import collections
 from pathlib import Path
-from typing import Any, Optional, Iterable
+from typing import Any, Optional, Iterable, Pattern
 
 # Patterns of directories to be skipped for server part of addon
-IGNORE_DIR_PATTERNS: list[re.Pattern] = [
+IGNORE_DIR_PATTERNS: list[Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip directories starting with '.'
@@ -21,7 +21,7 @@ IGNORE_DIR_PATTERNS: list[re.Pattern] = [
 ]
 
 # Patterns of files to be skipped for server part of addon
-IGNORE_FILE_PATTERNS: list[re.Pattern] = [
+IGNORE_FILE_PATTERNS: list[Pattern] = [
     re.compile(pattern)
     for pattern in {
         # Skip files starting with '.'
@@ -56,7 +56,7 @@ class ZipFileLongPaths(zipfile.ZipFile):
         )
 
 
-def _value_match_regexes(value: str, regexes: Iterable[re.Pattern]) -> bool:
+def _value_match_regexes(value: str, regexes: Iterable[Pattern]) -> bool:
     return any(
         regex.search(value)
         for regex in regexes
@@ -65,8 +65,8 @@ def _value_match_regexes(value: str, regexes: Iterable[re.Pattern]) -> bool:
 
 def find_files_in_subdir(
     src_path: str,
-    ignore_file_patterns: Optional[list[re.Pattern]] = None,
-    ignore_dir_patterns: Optional[list[re.Pattern]] = None
+    ignore_file_patterns: Optional[list[Pattern]] = None,
+    ignore_dir_patterns: Optional[list[Pattern]] = None,
 ):
     """Find all files to copy in subdirectories of given path.
 
@@ -76,9 +76,9 @@ def find_files_in_subdir(
 
     Args:
         src_path (str): Path to directory to search in.
-        ignore_file_patterns (Optional[list[re.Pattern]]): List of regexes
+        ignore_file_patterns (Optional[list[Pattern]]): List of regexes
             to match files to ignore.
-        ignore_dir_patterns (Optional[list[re.Pattern]]): List of regexes
+        ignore_dir_patterns (Optional[list[Pattern]]): List of regexes
             to match directories to ignore.
 
     Returns:
