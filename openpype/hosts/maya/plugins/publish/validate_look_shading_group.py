@@ -41,12 +41,15 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
                 shape, destination=True, type="shadingEngine"
             ) or []
             for shading_engine in shading_engines:
-                name = (
-                    cmds.listConnections(shading_engine + ".surfaceShader")[0]
-                    + "SG"
-                )
-                if shading_engine != name:
-                    invalid.append(shading_engine)
+                # Hornet HPIPE-335
+                shader_name = cmds.listConnections(shading_engine + ".surfaceShader")
+                if shader_name:     # in case there's an orphan shading engine node
+                    shader_name = shader_name[0]
+                    name = (
+                        shader_name + "SG"
+                    )
+                    if shading_engine != name:
+                        invalid.append(shading_engine)
 
         return list(set(invalid))
 
