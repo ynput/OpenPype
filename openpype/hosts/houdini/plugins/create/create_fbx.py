@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Creator plugin for creating fbx."""
+"""Creator plugin for creating fbx.
+
+It was made to pratice publish process.
+"""
 from openpype.hosts.houdini.api import plugin
 
 import hou
