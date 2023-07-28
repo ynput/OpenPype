@@ -311,17 +311,21 @@ def get_openpype_execute_args(*args):
     It is possible to pass any arguments that will be added after pype
     executables.
     """
-    executable = os.environ["OPENPYPE_EXECUTABLE"]
+
+    if AYON_SERVER_ENABLED:
+        executable = os.environ["AYON_EXECUTABLE"]
+    else:
+        executable = os.environ["OPENPYPE_EXECUTABLE"]
     launch_args = [executable]
 
     executable_filename = os.path.basename(executable)
     if "python" in executable_filename.lower():
-        filename = "start.py"
         if AYON_SERVER_ENABLED:
-            filename = "ayon_start.py"
-        launch_args.append(
-            os.path.join(os.environ["OPENPYPE_ROOT"], filename)
-        )
+            root = os.environ["AYON_ROOT"]
+        else:
+            root = os.environ["OPENPYPE_ROOT"]
+        filepath = os.path.join(root, "start.py")
+        launch_args.append(filepath)
 
     if args:
         launch_args.extend(args)
