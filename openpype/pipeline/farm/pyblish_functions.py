@@ -212,7 +212,7 @@ def create_skeleton_instance(
                      "This may cause issues.").format(source))
 
     family = ("render"
-              if "prerender" not in instance.data["families"]
+              if "prerender.farm" not in instance.data["families"]
               else "prerender")
     families = [family]
 
