@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
+from openpype import PACKAGE_DIR
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -1435,10 +1436,8 @@ def _add_python_version_paths(app, env, logger, modules_manager):
         return
 
     # Add Python 2/3 modules
-    openpype_root = os.getenv("OPENPYPE_REPOS_ROOT")
     python_vendor_dir = os.path.join(
-        openpype_root,
-        "openpype",
+        PACKAGE_DIR,
         "vendor",
         "python"
     )

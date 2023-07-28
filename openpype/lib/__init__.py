@@ -5,11 +5,11 @@
 import sys
 import os
 import site
+from openpype import PACKAGE_DIR
 
 # Add Python version specific vendor folder
 python_version_dir = os.path.join(
-    os.getenv("OPENPYPE_REPOS_ROOT", ""),
-    "openpype", "vendor", "python", "python_{}".format(sys.version[0])
+    PACKAGE_DIR, "vendor", "python", "python_{}".format(sys.version[0])
 )
 # Prepend path in sys paths
 sys.path.insert(0, python_version_dir)
