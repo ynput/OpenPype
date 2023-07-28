@@ -203,7 +203,8 @@ def create_openpype_package(
     ignored_modules = [
         "ftrack",
         "shotgrid",
-        "sync_server",
+        # Sync server is expected as always available at multuple places
+        # "sync_server",
         "example_addons",
         "slack"
     ]
