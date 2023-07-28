@@ -46,11 +46,15 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # 3. get Vertex Cache Format
         vcformat = pre_create_data.get("vcformat")
 
+        # 3. get Valid Frame Range
+        trange = pre_create_data.get("trange")
+
         # parms dictionary
         parms = {
             "startnode" : selection,
             "sopoutput": output_path,
-            "vcformat" : vcformat
+            "vcformat" : vcformat,
+            "trange" : trange
         }
 
         # set parms
@@ -77,8 +81,15 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
                             },
                             default=0,
                             label="Vertex Cache Format")
+        trange = EnumDef("trange",
+                            items={
+                                0: "Render Current Frame",
+                                1: "Render Frame Range"
+                            },
+                            default=0,
+                            label="Valid Frame Range")
 
-        return attrs + [vcformat]
+        return attrs + [vcformat, trange]
 
     def get_selection(self):
         """Selection Logic.
