@@ -4,6 +4,7 @@
 It was made to pratice publish process.
 """
 from openpype.hosts.houdini.api import plugin
+from openpype.lib import EnumDef
 
 import hou
 
@@ -42,10 +43,14 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # 2. get selection
         selection = self.get_selection()
 
+        # 3. get Vertex Cache Format
+        vcformat = pre_create_data.get("vcformat")
+
         # parms dictionary
         parms = {
             "startnode" : selection,
-            "sopoutput": output_path
+            "sopoutput": output_path,
+            "vcformat" : vcformat
         }
 
         # set parms
@@ -61,6 +66,19 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
             hou.ropNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
+
+    # Overrides HoudiniCreator.get_pre_create_attr_defs()
+    def get_pre_create_attr_defs(self):
+        attrs = super().get_pre_create_attr_defs()
+        vcformat = EnumDef("vcformat",
+                            items={
+                                0: "Maya Compatible (MC)",
+                                1: "3DS MAX Compatible (PC2)"
+                            },
+                            default=0,
+                            label="Vertex Cache Format")
+
+        return attrs + [vcformat]
 
     def get_selection(self):
         """Selection Logic.
