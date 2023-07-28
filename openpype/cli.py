@@ -305,6 +305,9 @@ def run(script):
               help="Persist test DB and published files after test end",
               is_flag=True,
               default=False)
+@click.option("--app_group",
+              help="Optional override of app_group.",
+              default=None)
 @click.option("-a",
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
@@ -332,6 +335,7 @@ def runtests(
     data_folder,
     keep_app_open,
     persist,
+    app_group,
     app_variant,
     timeout,
     setup_only,
@@ -347,6 +351,7 @@ def runtests(
         data_folder,
         keep_app_open,
         persist,
+        app_group,
         app_variant,
         timeout,
         setup_only,

@@ -277,6 +277,7 @@ class PypeCommands:
         data_folder,
         keep_app_open,
         persist,
+        app_group,
         app_variant,
         timeout,
         setup_only,
@@ -330,6 +331,9 @@ class PypeCommands:
 
         if persist:
             args.extend(["--persist"])
+
+        if app_group:
+            args.extend(["--app_group", app_group])
 
         if app_variant:
             args.extend(["--app_variant", app_variant])

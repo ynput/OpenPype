@@ -1,4 +1,119 @@
 {
+    "mayapy": {
+        "enabled": true,
+        "label": "Maya",
+        "icon": "{}/app_icons/maya.png",
+        "host_name": "maya",
+        "environment": {
+            "MAYA_DISABLE_CLIC_IPM": "Yes",
+            "MAYA_DISABLE_CIP": "Yes",
+            "MAYA_DISABLE_CER": "Yes",
+            "PYMEL_SKIP_MEL_INIT": "Yes",
+            "LC_ALL": "C"
+        },
+        "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\mayapy.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2023/bin/mayapy"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2023"
+                }
+            },
+            "2022": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2022\\bin\\mayapy.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2022/bin/mayapy"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2022"
+                }
+            },
+            "2020": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayapy.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2020/bin/mayapy"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2020"
+                }
+            },
+            "2019": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayapy.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2019/bin/mayapy"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2019"
+                }
+            },
+            "2018": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayapy.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2018/bin/mayapy"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2018"
+                }
+            }
+        }
+    },
     "maya": {
         "enabled": true,
         "label": "Maya",
@@ -17,26 +132,6 @@
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2023\\bin\\maya.exe"
-                    ],
-                    "darwin": [],
-                    "linux": [
-                        "/usr/autodesk/maya2023/bin/maya"
-                    ]
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2023"
-                }
-            },
-            "py2023": {
-                "use_python_2": false,
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\mayapy.exe"
                     ],
                     "darwin": [],
                     "linux": [

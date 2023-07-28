@@ -33,11 +33,12 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     """
     PERSIST = False
 
-    APP_GROUP = "maya"
+    # By default run through mayapy. For interactive mode, change to "maya" or
+    # input `--app_group maya` in cli.
+    APP_GROUP = "mayapy"
 
-    # By default run through mayapy. For interactive mode, change to 2023 or
-    # input `--app_variant 2023` in cli.
-    APP_VARIANT = "py2023"
+    # By default running latest version of Maya.
+    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 
@@ -48,11 +49,11 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         os.path.dirname(__file__), "input", "env_vars", "env_var.json"
     )
 
-    def running_in_mayapy(self, app_variant):
-        app_variant = app_variant or self.APP_VARIANT
+    def running_in_mayapy(self, app_group):
+        app_group = app_group or self.APP_GROUP
 
         # Running in mayapy.
-        if app_variant.startswith("py"):
+        if app_group == "mayapy":
             return True
 
         # Running in maya.
@@ -64,17 +65,17 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         )
 
     @pytest.fixture(scope="module")
-    def app_args(self, app_variant):
+    def app_args(self, app_group):
         args = []
-        if self.running_in_mayapy(app_variant):
+        if self.running_in_mayapy(app_group):
             args = ["-I", self.get_usersetup_path()]
 
         yield args
 
     @pytest.fixture(scope="module")
-    def start_last_workfile(self, app_variant):
+    def start_last_workfile(self, app_group):
         """Returns url of workfile"""
-        return not self.running_in_mayapy(app_variant)
+        return not self.running_in_mayapy(app_group)
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder):
@@ -105,10 +106,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
     @pytest.fixture(scope="module")
     def startup_scripts(
-        self, monkeypatch_session, download_test_data, app_variant
+        self, monkeypatch_session, download_test_data, app_group
     ):
         """Points Maya to userSetup file from input data"""
-        if not self.running_in_mayapy(app_variant):
+        if not self.running_in_mayapy(app_group):
             # Not needed for running MayaPy since the testing userSetup.py will
             # be passed in directly to the executable.
             original_pythonpath = os.environ.get("PYTHONPATH")
