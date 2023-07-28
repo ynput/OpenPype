@@ -66,6 +66,7 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             # we will use as render camera
             camera = None
             for node in self.selected_nodes:
+                camera = node.path()
                 if node.type().name() == "cam":
                     has_camera = pre_create_data.get("cam_res")
                     if has_camera:
