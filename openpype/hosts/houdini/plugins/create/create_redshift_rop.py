@@ -13,7 +13,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
     label = "Redshift ROP"
     family = "redshift_rop"
     icon = "magic"
-    default_variants = ["master"]
+    default_variants = ["Master"]
     ext = "exr"
 
     def create(self, subset_name, instance_data, pre_create_data):
