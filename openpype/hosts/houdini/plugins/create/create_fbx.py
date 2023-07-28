@@ -15,6 +15,9 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
     family = "filmboxfbx"
     icon = "fa5s.cubes"
 
+    default_variant = "FBX"
+    default_variants = ["FBX", "Main", "Test"]
+
     # Overrides HoudiniCreator.create()
     def create(self, subset_name, instance_data, pre_create_data):
         # instance_data.pop("active", None)
