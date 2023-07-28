@@ -209,7 +209,7 @@ def clean_envs_for_openpype_process(env=None):
     return env
 
 
-def run_ayon_process(*args, **kwargs):
+def run_ayon_launcher_process(*args, **kwargs):
     """Execute OpenPype process with passed arguments and wait.
 
     Wrapper for 'run_process' which prepends OpenPype executable arguments
@@ -231,7 +231,7 @@ def run_ayon_process(*args, **kwargs):
         str: Full output of subprocess concatenated stdout and stderr.
     """
 
-    args = get_ayon_execute_args(*args)
+    args = get_ayon_launcher_args(*args)
     env = kwargs.pop("env", None)
     # Keep env untouched if are passed and not empty
     if not env:
@@ -264,7 +264,7 @@ def run_openpype_process(*args, **kwargs):
     """
 
     if AYON_SERVER_ENABLED:
-        return run_ayon_process(*args, **kwargs)
+        return run_ayon_launcher_process(*args, **kwargs)
 
     args = get_openpype_execute_args(*args)
     env = kwargs.pop("env", None)
@@ -363,7 +363,7 @@ def path_to_subprocess_arg(path):
     return subprocess.list2cmdline([path])
 
 
-def get_ayon_execute_args(*args):
+def get_ayon_launcher_args(*args):
     """Arguments to run ayon-launcher process.
 
     Arguments for subprocess when need to spawn new pype process. Which may be
@@ -413,7 +413,7 @@ def get_openpype_execute_args(*args):
     """
 
     if AYON_SERVER_ENABLED:
-        return get_ayon_execute_args(*args)
+        return get_ayon_launcher_args(*args)
 
     executable = os.environ["OPENPYPE_EXECUTABLE"]
     launch_args = [executable]

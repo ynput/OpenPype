@@ -55,13 +55,13 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
-    get_ayon_execute_args,
+    get_ayon_launcher_args,
     get_openpype_execute_args,
     get_linux_launcher_args,
     execute,
     run_subprocess,
     run_detached_process,
-    run_ayon_process,
+    run_ayon_launcher_process,
     run_openpype_process,
     clean_envs_for_openpype_process,
     path_to_subprocess_arg,
@@ -177,13 +177,13 @@ __all__ = [
     "emit_event",
     "register_event_callback",
 
-    "get_ayon_execute_args",
+    "get_ayon_launcher_args",
     "get_openpype_execute_args",
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
     "run_detached_process",
-    "run_ayon_process",
+    "run_ayon_launcher_process",
     "run_openpype_process",
     "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
