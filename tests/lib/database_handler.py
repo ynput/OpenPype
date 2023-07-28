@@ -96,8 +96,15 @@ class DataBaseHandler:
         print("mongoimport query:: {}".format(query))
         subprocess.run(query)
 
-    def setup_from_dump(self, database_name, dump_dir, overwrite=False,
-                        collection=None, database_name_out=None):
+    def setup_from_dump(
+        self,
+        database_name,
+        dump_dir,
+        database_suffix,
+        overwrite=False,
+        collection=None,
+        database_name_out=None
+    ):
         """
         Restores 'database_name' from 'dump_dir'.
 
@@ -141,12 +148,14 @@ class DataBaseHandler:
                     self.uri,
                     dump_dir,
                     database_name=database_name,
-                    database_name_out=database_name_out,
+                    database_name_out=database_name_out + database_suffix,
                     collection=collection
                 )
             )
         else:
-            queries = self._restore_queries_json(self.uri, dir_path)
+            queries = self._restore_queries_json(
+                self.uri, dir_path, database_suffix
+            )
 
         for query in queries:
             print("mongorestore query:: {}".format(query))
@@ -256,11 +265,7 @@ class DataBaseHandler:
 
         return query
 
-    def _restore_queries_json(
-        self,
-        uri,
-        dump_dir
-    ):
+    def _restore_queries_json(self, uri, dump_dir, database_suffix):
         """Prepares query for mongorestore base on arguments"""
         queries = []
 
@@ -270,7 +275,7 @@ class DataBaseHandler:
                 self._restore_query_json(
                     uri,
                     os.path.join(dump_dir, json_file),
-                    database_name,
+                    database_name + database_suffix,
                     collection,
                     True
                 )

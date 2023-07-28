@@ -5,9 +5,7 @@ import shutil
 import pytest
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.maya.lib import (
-    MayaLocalPublishTestClass, LOG_PATH
-)
+from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
 
 
 class TestPublishInMaya(MayaLocalPublishTestClass):
@@ -104,9 +102,14 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
         yield dest_path
 
+    def get_log_path(self, dirpath, app_variant):
+        return os.path.join(
+            dirpath, "output_{}.log".format(app_variant)
+        )
+
     @pytest.fixture(scope="module")
     def startup_scripts(
-        self, monkeypatch_session, download_test_data, app_group
+        self, monkeypatch_session, download_test_data, app_group, app_variant
     ):
         """Points Maya to userSetup file from input data"""
         if not self.running_in_mayapy(app_group):
@@ -123,15 +126,23 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
             )
 
         monkeypatch_session.setenv(
-            "MAYA_CMD_FILE_OUTPUT", os.path.join(download_test_data, LOG_PATH)
+            "MAYA_CMD_FILE_OUTPUT",
+            self.get_log_path(download_test_data, app_variant)
         )
 
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
         pass
 
-    def test_publish(self, dbcon, publish_finished, download_test_data):
-        logging_path = os.path.join(download_test_data, LOG_PATH)
+    def test_publish(
+        self,
+        dbcon,
+        publish_finished,
+        download_test_data,
+        output_folder,
+        app_variant
+    ):
+        logging_path = self.get_log_path(download_test_data, app_variant)
         with open(logging_path, "r") as f:
             logging_output = f.read()
 

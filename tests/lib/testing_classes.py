@@ -23,8 +23,21 @@ FILES = {
         ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
     ]
 }
-DATABASE_PRODUCTION_NAME = "avalon_tests"
-DATABASE_SETTINGS_NAME = "openpype_tests"
+
+
+def get_database_names():
+    return {
+        "production": "avalon_tests",
+        "settings": "openpype_tests"
+    }
+
+
+def get_database_sufficed(suffix):
+    result = {}
+    for key, value in get_database_names().items():
+        result[key] = "{}_{}".format(value, suffix)
+    return result
+
 
 #needs testing
 def download_test_data(data_folder, files):
@@ -49,8 +62,8 @@ def download_test_data(data_folder, files):
     return data_folder
 
 #needs testing
-def output_folder(data_folder):
-    path = os.path.join(data_folder, "output")
+def output_folder(data_folder, app_variant):
+    path = os.path.join(data_folder, "output_" + app_variant)
     if os.path.exists(path):
         print("Purging {}".format(path))
         shutil.rmtree(path)
@@ -61,19 +74,23 @@ def get_backup_directory(data_folder):
     return os.path.join(data_folder, "input", "dumps")
 
 #needs testing
-def database_setup(backup_directory, openpype_mongo):
+def database_setup(backup_directory, openpype_mongo, suffix):
     database_handler = DataBaseHandler(openpype_mongo)
+    database_names = get_database_names()
+
     database_handler.setup_from_dump(
-        DATABASE_PRODUCTION_NAME,
+        database_names["production"],
         backup_directory,
+        suffix,
         overwrite=True,
-        database_name_out=DATABASE_PRODUCTION_NAME
+        database_name_out=database_names["production"]
     )
     database_handler.setup_from_dump(
-        DATABASE_SETTINGS_NAME,
+        database_names["settings"],
         backup_directory,
+        suffix,
         overwrite=True,
-        database_name_out=DATABASE_SETTINGS_NAME
+        database_name_out=database_names["settings"]
     )
 
     return database_handler
@@ -176,9 +193,9 @@ class ModuleUnitTest(BaseTest):
             shutil.rmtree(data_folder)
 
     @pytest.fixture(scope="module")
-    def output_folder(self, download_test_data):
+    def output_folder(self, download_test_data, app_variant):
         """Returns location of published data, cleans it first if exists."""
-        path = output_folder(download_test_data)
+        path = output_folder(download_test_data, app_variant)
         yield path
 
     @pytest.fixture(scope="module")
@@ -196,7 +213,8 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session,
         download_test_data,
         openpype_mongo,
-        input_environment_json
+        input_environment_json,
+        app_variant
     ):
         """Sets temporary env vars from json file."""
         # Collect openpype mongo.
@@ -212,12 +230,15 @@ class ModuleUnitTest(BaseTest):
                     attributes[attribute] = value
 
         # Module attributes.
-        attributes["DATABASE_PRODUCTION_NAME"] = DATABASE_PRODUCTION_NAME
-        attributes["DATABASE_SETTINGS_NAME"] = DATABASE_SETTINGS_NAME
+        database_names = get_database_sufficed(app_variant)
+        attributes["DATABASE_PRODUCTION_NAME"] = database_names["production"]
+        attributes["DATABASE_SETTINGS_NAME"] = database_names["settings"]
 
         if not os.path.exists(input_environment_json):
             raise ValueError(
-                "Env variable file {} doesn't exist".format(input_environment_json)
+                "Env variable file {} doesn't exist".format(
+                    input_environment_json
+                )
             )
 
         env_dict = {}
@@ -261,7 +282,8 @@ class ModuleUnitTest(BaseTest):
         self,
         database_dumps,
         openpype_mongo,
-        request
+        request,
+        app_variant
     ):
         """Restore prepared MongoDB dumps into selected DB."""
 
@@ -270,15 +292,17 @@ class ModuleUnitTest(BaseTest):
 
         database_handler = database_setup(
             database_dumps,
-            self.OPENPYPE_MONGO
+            self.OPENPYPE_MONGO,
+            "_" + app_variant
         )
 
         yield database_handler
 
         persist = self.PERSIST or self.is_test_failed(request)
         if not persist:
-            database_handler.teardown(DATABASE_PRODUCTION_NAME)
-            database_handler.teardown(DATABASE_SETTINGS_NAME)
+            database_names = get_database_sufficed(app_variant)
+            database_handler.teardown(database_names["production"])
+            database_handler.teardown(database_names["settings"])
 
     @pytest.fixture(scope="module")
     def dbcon(self, environment_setup, database_setup, output_folder):
@@ -305,14 +329,15 @@ class ModuleUnitTest(BaseTest):
         yield dbcon
 
     @pytest.fixture(scope="module")
-    def dbcon_openpype(self, environment_setup, database_setup):
+    def dbcon_openpype(self, environment_setup, database_setup, app_variant):
         """Provide test database connection for OP settings.
 
             Database prepared from dumps with 'database_setup' fixture.
         """
         from openpype.lib import OpenPypeMongoConnection
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        yield mongo_client[self.DATABASE_SETTINGS_NAME]["settings"]
+        database_names = get_database_sufficed(app_variant)
+        yield mongo_client[database_names["settings"]]["settings"]
 
     def is_test_failed(self, request):
         # if request.node doesn't have rep_call, something failed
@@ -357,16 +382,30 @@ class PublishTest(ModuleUnitTest):
 
     SETUP_ONLY = False
 
-    def app_variants(self, app_group):
+    def app_variants(self, app_group, app_variant):
+        app_variants = []
+
         from openpype.lib import ApplicationManager
         app_group = app_group or self.APP_GROUP
 
         application_manager = ApplicationManager()
-        variants = application_manager.find_all_available_variants_for_group(
-            app_group
-        )
 
-        return [x.name for x in variants]
+        if app_variant == "*":
+            variants = application_manager.find_all_available_variants_for_group(
+                app_group
+            )
+
+            app_variants = [x.name for x in variants]
+
+        if app_variant is None or not app_variant:
+            variant = (
+                application_manager.find_latest_available_variant_for_group(
+                    app_group
+                )
+            )
+            app_variants.append(variant.name)
+
+        return app_variants
 
     @pytest.fixture(scope="module")
     def app_name(self, environment_setup, app_variant, app_group):
