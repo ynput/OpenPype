@@ -5,6 +5,7 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -27,7 +28,7 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Found shading engines with incorrect naming:"
                 "\n{}".format(invalid)
             )

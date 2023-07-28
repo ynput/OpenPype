@@ -12,7 +12,7 @@ import requests
 import re
 
 from tests.lib.db_handler import DBHandler
-from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 

@@ -34,7 +34,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        libpath = self.fname
+        libpath = self.filepath_from_context(context)
 
         with bpy.data.libraries.load(
             libpath, link=True, relative=False

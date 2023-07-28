@@ -1,0 +1,55 @@
+{
+    "tool_groups": [
+        {
+            "environment": "{\n    \"MTOA\": \"{STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}\",\n    \"MAYA_RENDER_DESC_PATH\": \"{MTOA}\",\n    \"MAYA_MODULE_PATH\": \"{MTOA}\",\n    \"ARNOLD_PLUGIN_PATH\": \"{MTOA}/shaders\",\n    \"MTOA_EXTENSIONS_PATH\": {\n        \"darwin\": \"{MTOA}/extensions\",\n        \"linux\": \"{MTOA}/extensions\",\n        \"windows\": \"{MTOA}/extensions\"\n    },\n    \"MTOA_EXTENSIONS\": {\n        \"darwin\": \"{MTOA}/extensions\",\n        \"linux\": \"{MTOA}/extensions\",\n        \"windows\": \"{MTOA}/extensions\"\n    },\n    \"DYLD_LIBRARY_PATH\": {\n        \"darwin\": \"{MTOA}/bin\"\n    },\n    \"PATH\": {\n        \"windows\": \"{PATH};{MTOA}/bin\"\n    }\n}",
+            "name": "mtoa",
+            "label": "Autodesk Arnold",
+            "variants": [
+                {
+                    "host_names": [],
+                    "app_variants": [],
+                    "environment": "{\n    \"MTOA_VERSION\": \"3.2\"\n}",
+                    "name": "3-2",
+                    "label": "3.2"
+                },
+                {
+                    "host_names": [],
+                    "app_variants": [],
+                    "environment": "{\n    \"MTOA_VERSION\": \"3.1\"\n}",
+                    "name": "3-1",
+                    "label": "3.1"
+                }
+            ]
+        },
+        {
+            "environment": "{}",
+            "name": "vray",
+            "label": "Chaos Group Vray",
+            "variants": []
+        },
+        {
+            "environment": "{}",
+            "name": "yeti",
+            "label": "Peregrine Labs Yeti",
+            "variants": []
+        },
+        {
+            "environment": "{}",
+            "name": "renderman",
+            "label": "Pixar Renderman",
+            "variants": [
+                {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [
+                        "maya/2022"
+                    ],
+                    "environment": "{\n    \"RFMTREE\": {\n        \"windows\": \"C:\\\\Program Files\\\\Pixar\\\\RenderManForMaya-24.3\",\n        \"darwin\": \"/Applications/Pixar/RenderManForMaya-24.3\",\n        \"linux\": \"/opt/pixar/RenderManForMaya-24.3\"\n    },\n    \"RMANTREE\": {\n        \"windows\": \"C:\\\\Program Files\\\\Pixar\\\\RenderManProServer-24.3\",\n        \"darwin\": \"/Applications/Pixar/RenderManProServer-24.3\",\n        \"linux\": \"/opt/pixar/RenderManProServer-24.3\"\n    }\n}",
+                    "name": "24-3-maya",
+                    "label": "24.3 RFM"
+                }
+            ]
+        }
+    ]
+}

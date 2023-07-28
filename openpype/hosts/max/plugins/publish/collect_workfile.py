@@ -4,7 +4,6 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.pipeline import legacy_io
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -26,7 +25,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         filename, ext = os.path.splitext(file)
 
-        task = legacy_io.Session["AVALON_TASK"]
+        task = context.data["task"]
 
         data = {}
 
@@ -36,7 +35,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         data.update({
             "subset": subset,
-            "asset": os.getenv("AVALON_ASSET", None),
+            "asset": context.data["asset"],
             "label": subset,
             "publish": True,
             "family": 'workfile',
