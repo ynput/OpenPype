@@ -95,3 +95,16 @@ def pytest_runtest_makereport(item, call):
     # be "setup", "call", "teardown"
 
     setattr(item, "rep_" + rep.when, rep)
+
+
+def pytest_generate_tests(metafunc):
+    if "app_variant" not in metafunc.fixturenames:
+        return
+
+    if metafunc.config.getoption("app_variant") != "*":
+        return
+
+    app_variants = metafunc.cls.app_variants(
+        metafunc.cls, metafunc.config.getoption("app_group")
+    )
+    metafunc.parametrize("app_variant", app_variants, scope="module")

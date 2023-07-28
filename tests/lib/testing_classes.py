@@ -357,6 +357,17 @@ class PublishTest(ModuleUnitTest):
 
     SETUP_ONLY = False
 
+    def app_variants(self, app_group):
+        from openpype.lib import ApplicationManager
+        app_group = app_group or self.APP_GROUP
+
+        application_manager = ApplicationManager()
+        variants = application_manager.find_all_available_variants_for_group(
+            app_group
+        )
+
+        return [x.name for x in variants]
+
     @pytest.fixture(scope="module")
     def app_name(self, environment_setup, app_variant, app_group):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""

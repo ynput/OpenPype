@@ -482,6 +482,19 @@ class ApplicationManager:
                 break
         return output
 
+    def find_all_available_variants_for_group(self, group_name):
+        group = self.app_groups.get(group_name)
+        if group is None or not group.enabled:
+            return None
+
+        result = []
+        for _, variant in reversed(sorted(group.variants.items())):
+            executable = variant.find_executable()
+            if executable:
+                result.append(variant)
+
+        return result
+
     def launch(self, app_name, **data):
         """Launch procedure.
 
