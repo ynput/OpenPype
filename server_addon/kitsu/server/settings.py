@@ -76,15 +76,16 @@ class PublishPlugins(BaseSettingsModel):
 class KitsuSettings(BaseSettingsModel):
     server: str = Field(
         "",
-        title="Kitsu Server"
+        title="Kitsu Server",
+        scope=["studio"],
     )
     entities_naming_pattern: EntityPattern = Field(
         default_factory=EntityPattern,
-        title="Entities naming pattern"
+        title="Entities naming pattern",
     )
     publish: PublishPlugins = Field(
         default_factory=PublishPlugins,
-        title="Publish plugins"
+        title="Publish plugins",
     )
 
 

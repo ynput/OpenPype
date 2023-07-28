@@ -6,6 +6,7 @@ from .version import __version__
 
 class Photoshop(BaseServerAddon):
     name = "photoshop"
+    title = "Photoshop"
     version = __version__
 
     settings_model = PhotoshopSettings
