@@ -6,6 +6,7 @@ from .settings import TraypublisherSettings, DEFAULT_TRAYPUBLISHER_SETTING
 
 class Traypublisher(BaseServerAddon):
     name = "traypublisher"
+    title = "TrayPublisher"
     version = __version__
 
     settings_model = TraypublisherSettings
