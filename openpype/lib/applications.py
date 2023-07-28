@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from openpype import PACKAGE_DIR
+from openpype import AYON_SERVER_ENABLED, PACKAGE_DIR
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -1949,17 +1949,28 @@ def get_non_python_host_kwargs(kwargs, allow_console=True):
         allow_console (bool): use False for inner Popen opening app itself or
            it will open additional console (at least for Harmony)
     """
+
     if kwargs is None:
         kwargs = {}
 
     if platform.system().lower() != "windows":
         return kwargs
 
-    executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
+    if AYON_SERVER_ENABLED:
+        executable_path = os.environ.get("AYON_EXECUTABLE")
+    else:
+        executable_path = os.environ.get("OPENPYPE_EXECUTABLE")
+
     executable_filename = ""
     if executable_path:
         executable_filename = os.path.basename(executable_path)
-    if "openpype_gui" in executable_filename:
+
+    if AYON_SERVER_ENABLED:
+        is_gui_executable = "ayon_console" not in executable_filename
+    else:
+        is_gui_executable = "openpype_gui" in executable_filename
+
+    if is_gui_executable:
         kwargs.update({
             "creationflags": subprocess.CREATE_NO_WINDOW,
             "stdout": subprocess.DEVNULL,
