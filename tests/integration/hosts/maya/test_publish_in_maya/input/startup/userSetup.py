@@ -48,7 +48,7 @@ def main():
     )
 
     print("finished OpenPype usersetup for testing")
-    if not os.environ.get("KEEP_APP_OPEN") or not MAYA_STANDALONE:
+    if not bool(os.environ.get("KEEP_APP_OPEN")) and not MAYA_STANDALONE:
         cmds.evalDeferred("cmds.quit(force=True)", lowestPriority=True)
 
 

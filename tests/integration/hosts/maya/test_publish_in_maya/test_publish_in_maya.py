@@ -134,18 +134,21 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         with open(logging_path, "r") as f:
             logging_output = f.read()
 
+        print(logging_output)
+        print(publish_finished)
+
         # Check for pyblish errors.
         error_regex = r"pyblish \(ERROR\)((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
-        assert not matches, logging_output
+        assert not matches, matches[0][0]
 
         matches = re.findall(error_regex, publish_finished)
-        assert not matches, publish_finished
+        assert not matches, matches[0][0]
 
         # Check for python errors.
         error_regex = r"// Error((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
-        assert not matches, logging_output
+        assert not matches, matches[0][0]
 
     def test_db_asserts(
         self,
