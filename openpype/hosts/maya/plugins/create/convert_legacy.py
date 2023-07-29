@@ -51,7 +51,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # From all current new style manual creators find the mapping
         # from family to identifier
         family_to_id = {}
-        for identifier, creator in self.create_context.manual_creators.items():
+        for identifier, creator in self.create_context.creators.items():
             family = getattr(creator, "family", None)
             if not family:
                 continue
@@ -70,7 +70,6 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # logic was thus to be live to the current task to begin with.
         data = dict()
         data["task"] = self.create_context.get_current_task_name()
-
         for family, instance_nodes in legacy.items():
             if family not in family_to_id:
                 self.log.warning(
@@ -81,7 +80,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
                 continue
 
             creator_id = family_to_id[family]
-            creator = self.create_context.manual_creators[creator_id]
+            creator = self.create_context.creators[creator_id]
             data["creator_identifier"] = creator_id
 
             if isinstance(creator, plugin.RenderlayerCreator):
