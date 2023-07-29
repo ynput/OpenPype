@@ -80,11 +80,13 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         return not self.running_in_mayapy(app_group)
 
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data, output_folder):
+    def last_workfile_path(self, setup_fixture):
         """Get last_workfile_path from source data.
 
             Maya expects workfile in proper folder, so copy is done first.
         """
+        _, output_folder, _ = setup_fixture
+
         src_path = os.path.join(
             os.path.dirname(__file__),
             "input",
@@ -113,8 +115,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
     @pytest.fixture(scope="module")
     def startup_scripts(
-        self, monkeypatch_session, download_test_data, app_group, app_variant
+        self, monkeypatch_session, setup_fixture, app_group, app_variant
     ):
+        data_folder, _, _ = setup_fixture
+
         """Points Maya to userSetup file from input data"""
         if not self.running_in_mayapy(app_group):
             # Not needed for running MayaPy since the testing userSetup.py will
@@ -131,7 +135,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
         monkeypatch_session.setenv(
             "MAYA_CMD_FILE_OUTPUT",
-            self.get_log_path(download_test_data, app_variant)
+            self.get_log_path(data_folder, app_variant)
         )
 
     @pytest.fixture(scope="module")
@@ -142,11 +146,12 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         self,
         dbcon,
         publish_finished,
-        download_test_data,
-        output_folder,
+        setup_fixture,
         app_variant
     ):
-        logging_path = self.get_log_path(download_test_data, app_variant)
+        data_folder, _, _ = setup_fixture
+
+        logging_path = self.get_log_path(data_folder, app_variant)
         with open(logging_path, "r") as f:
             logging_output = f.read()
 

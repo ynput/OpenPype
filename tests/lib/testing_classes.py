@@ -33,7 +33,7 @@ def get_database_sufficed(suffix):
 
 
 #needs testing
-def download_test_data(data_folder, files):
+def setup_data_folder(data_folder, files):
     if data_folder:
         print("Using existing folder {}".format(data_folder))
         return data_folder
@@ -55,7 +55,7 @@ def download_test_data(data_folder, files):
     return data_folder
 
 #needs testing
-def output_folder(data_folder, app_variant):
+def setup_output_folder(data_folder, app_variant):
     path = os.path.join(data_folder, "output_" + app_variant)
     if os.path.exists(path):
         print("Purging {}".format(path))
@@ -67,7 +67,7 @@ def get_backup_directory(data_folder):
     return os.path.join(data_folder, "input", "dumps")
 
 #needs testing
-def database_setup(backup_directory, openpype_mongo, suffix):
+def setup_database(backup_directory, openpype_mongo, suffix):
     database_handler = DataBaseHandler(openpype_mongo)
     database_names = get_database_names()
 
@@ -118,7 +118,7 @@ class ModuleUnitTest(BaseTest):
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
             project_settings - fixture for project settings with session scope
-            download_test_data - tmp folder with extracted data from GDrive
+            setup_fixture - tmp folder with extracted data from GDrive
             environment_setup - sets env vars from input file
             database_setup - prepares avalon AND openpype DBs for testing from
                         binary dumps from input data
@@ -138,6 +138,33 @@ class ModuleUnitTest(BaseTest):
     INPUT_DUMPS = None
     INPUT_ENVIRONMENT_JSON = None
 
+    #needs testing.
+    def setup_only(self, data_folder, openpype_mongo, app_variant):
+        data_folder = setup_data_folder(data_folder, self.FILES)
+        output_folder = setup_output_folder(data_folder, app_variant)
+        database_handler = setup_database(
+            self.INPUT_DUMPS or get_backup_directory(data_folder),
+            openpype_mongo,
+            app_variant
+        )
+
+        return data_folder, output_folder, database_handler
+
+    @pytest.fixture(scope="module")
+    def setup_fixture(
+        self, data_folder, openpype_mongo, app_variant, persist, request
+    ):
+        data_folder, output_folder, database_handler = self.setup_only(
+            data_folder, openpype_mongo, app_variant
+        )
+
+        yield data_folder, output_folder, database_handler
+
+        persist = (persist or self.PERSIST or self.is_test_failed(request))
+        if not persist:
+            print("Removing {}".format(data_folder))
+            shutil.rmtree(data_folder)
+
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
@@ -153,30 +180,12 @@ class ModuleUnitTest(BaseTest):
         )
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, data_folder, persist, request):
-        data_folder = download_test_data(
-            data_folder or self.DATA_FOLDER, self.FILES
-        )
-
-        yield data_folder
-
-        persist = (persist or self.PERSIST or self.is_test_failed(request))
-        if not persist:
-            print("Removing {}".format(data_folder))
-            shutil.rmtree(data_folder)
-
-    @pytest.fixture(scope="module")
-    def output_folder(self, download_test_data, app_variant):
-        """Returns location of published data, cleans it first if exists."""
-        path = output_folder(download_test_data, app_variant)
-        yield path
-
-    @pytest.fixture(scope="module")
-    def input_environment_json(self, download_test_data):
+    def input_environment_json(self, setup_fixture):
+        data_folder, _, _ = setup_fixture
         path = self.INPUT_ENVIRONMENT_JSON
         if path is None:
             path = os.path.join(
-                download_test_data, "input", "env_vars", "env_var.json"
+                data_folder, "input", "env_vars", "env_var.json"
             )
         yield path
 
@@ -184,12 +193,14 @@ class ModuleUnitTest(BaseTest):
     def environment_setup(
         self,
         monkeypatch_session,
-        download_test_data,
+        setup_fixture,
         openpype_mongo,
         input_environment_json,
         app_variant
     ):
         """Sets temporary env vars from json file."""
+        data_folder, _, _ = setup_fixture
+
         # Collect openpype mongo.
         if openpype_mongo:
             self.OPENPYPE_MONGO = openpype_mongo
@@ -240,47 +251,24 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session.setenv("OPENPYPE_REPOS_ROOT", openpype_root)
 
         # for remapping purposes (currently in Nuke)
-        monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
+        monkeypatch_session.setenv("TEST_SOURCE_FOLDER", data_folder)
 
     @pytest.fixture(scope="module")
-    def database_dumps(self, download_test_data):
+    def database_dumps(self, setup_fixture):
         path = (
             self.INPUT_DUMPS or
-            get_backup_directory(download_test_data)
+            get_backup_directory(setup_fixture)
         )
         yield path
 
     @pytest.fixture(scope="module")
-    def database_setup(
-        self,
-        database_dumps,
-        openpype_mongo,
-        request,
-        app_variant
-    ):
-        """Restore prepared MongoDB dumps into selected DB."""
-
-        if openpype_mongo:
-            self.OPENPYPE_MONGO = openpype_mongo
-
-        database_handler = database_setup(
-            database_dumps, self.OPENPYPE_MONGO, app_variant
-        )
-
-        yield database_handler
-
-        persist = self.PERSIST or self.is_test_failed(request)
-        if not persist:
-            database_names = get_database_sufficed(app_variant)
-            database_handler.teardown(database_names["production"])
-            database_handler.teardown(database_names["settings"])
-
-    @pytest.fixture(scope="module")
-    def dbcon(self, environment_setup, database_setup, output_folder):
+    def dbcon(self, environment_setup, setup_fixture):
         """Provide test database connection.
 
             Database prepared from dumps with 'database_setup' fixture.
         """
+        _, output_folder, _ = setup_fixture
+
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = self.PROJECT_NAME
@@ -300,7 +288,7 @@ class ModuleUnitTest(BaseTest):
         yield dbcon
 
     @pytest.fixture(scope="module")
-    def dbcon_openpype(self, environment_setup, database_setup, app_variant):
+    def dbcon_openpype(self, environment_setup, setup_fixture, app_variant):
         """Provide test database connection for OP settings.
 
             Database prepared from dumps with 'database_setup' fixture.
@@ -376,16 +364,6 @@ class PublishTest(ModuleUnitTest):
 
         return app_variants
 
-    #refactor to use same code for fixtures as here.
-    def setup_only(self, data_folder, openpype_mongo, app_variant):
-        data_folder = download_test_data(data_folder, self.FILES)
-        output_folder(data_folder, app_variant)
-        database_setup(
-            self.INPUT_DUMPS or get_backup_directory(data_folder),
-            openpype_mongo,
-            app_variant
-        )
-
     @pytest.fixture(scope="module")
     def app_name(self, environment_setup, app_variant, app_group):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
@@ -405,16 +383,18 @@ class PublishTest(ModuleUnitTest):
         yield "{}/{}".format(app_group, app_variant)
 
     @pytest.fixture(scope="module")
-    def app_args(self, download_test_data):
+    def app_args(self, setup_fixture):
         """Returns additional application arguments from a test file.
 
             Test zip file should contain file at:
                 FOLDER_DIR/input/app_args/app_args.json
             containing a list of command line arguments (like '-x' etc.)
         """
+        data_folder, _, _ = setup_fixture
         app_args = []
-        args_url = os.path.join(download_test_data, "input",
-                                "app_args", "app_args.json")
+        args_url = os.path.join(
+            data_folder, "input", "app_args", "app_args.json"
+        )
         if not os.path.exists(args_url):
             print("App argument file {} doesn't exist".format(args_url))
         else:
@@ -439,13 +419,12 @@ class PublishTest(ModuleUnitTest):
     def launched_app(
         self,
         dbcon,
-        download_test_data,
+        setup_fixture,
         last_workfile_path,
         start_last_workfile,
         startup_scripts,
         app_args,
         app_name,
-        output_folder,
         keep_app_open
     ):
         """Launch host app"""
@@ -486,7 +465,7 @@ class PublishTest(ModuleUnitTest):
         self,
         dbcon,
         launched_app,
-        download_test_data,
+        setup_fixture,
         timeout,
         keep_app_open
     ):
@@ -514,23 +493,21 @@ class PublishTest(ModuleUnitTest):
         self,
         dbcon,
         publish_finished,
-        download_test_data,
-        output_folder,
+        setup_fixture,
         skip_compare_folders
     ):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = output_folder
-        expected_dir_base = os.path.join(download_test_data,
-                                         "expected")
+        data_folder, output_folder, _ = setup_fixture
+        expected_dir_base = os.path.join(data_folder, "expected")
 
         print("Comparing published:'{}' : expected:'{}'".format(
-            published_dir_base, expected_dir_base))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir_base + "\\**", recursive=True)
-                        if f != published_dir_base and os.path.exists(f))
+            output_folder, expected_dir_base))
+        published = set(f.replace(output_folder, '') for f in
+                        glob.glob(output_folder + "\\**", recursive=True)
+                        if f != output_folder and os.path.exists(f))
         expected = set(f.replace(expected_dir_base, '') for f in
                        glob.glob(expected_dir_base + "\\**", recursive=True)
                        if f != expected_dir_base and os.path.exists(f))
@@ -560,13 +537,10 @@ class PublishTest(ModuleUnitTest):
 
         return filtered
 
-    def setup_only(self):
-        print("setup only")
-
 
 class DeadlinePublishTest(PublishTest):
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app, download_test_data,
+    def publish_finished(self, dbcon, launched_app, setup_fixture,
                          timeout):
         """Dummy fixture waiting for publish to finish"""
         import time
@@ -579,7 +553,7 @@ class DeadlinePublishTest(PublishTest):
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
-        metadata_json = glob.glob(os.path.join(download_test_data,
+        metadata_json = glob.glob(os.path.join(setup_fixture,
                                                "output",
                                                "**/*_metadata.json"),
                                   recursive=True)
@@ -630,12 +604,12 @@ class DeadlinePublishTest(PublishTest):
 class HostFixtures():
     """Host specific fixtures. Should be implemented once per host."""
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, download_test_data, output_folder):
+    def last_workfile_path(self, setup_fixture, output_folder):
         """Returns url of workfile"""
         raise NotImplementedError
 
     @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session, download_test_data):
+    def startup_scripts(self, monkeypatch_session, setup_fixture):
         """"Adds init scripts (like userSetup) to expected location"""
         raise NotImplementedError
 

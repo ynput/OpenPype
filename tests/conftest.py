@@ -119,6 +119,7 @@ def pytest_generate_tests(metafunc):
         )
         metafunc.parametrize("app_variant", app_variants, scope="module")
 
+    # Run setup_only class method and skip testing.
     if metafunc.config.getoption("setup_only"):
         app_variants = metafunc.cls.app_variants(
             metafunc.cls,
