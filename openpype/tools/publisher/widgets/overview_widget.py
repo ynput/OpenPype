@@ -204,7 +204,7 @@ class OverviewWidget(QtWidgets.QFrame):
             subset_geo = self._subset_attributes_wrap.geometry()
             create_geo = QtCore.QRect(subset_geo)
             create_geo.moveTop(views_geo.top())
-            create_geo.moveRight(views_geo.left() - layout_spacing)
+            create_geo.moveRight(views_geo.left() - (layout_spacing + 1))
             self._create_widget.setVisible(True)
         else:
             self._change_anim.start()
@@ -304,28 +304,27 @@ class OverviewWidget(QtWidgets.QFrame):
         content_width = (
             self._subset_content_widget.width() - (layout_spacing * 2)
         )
+        content_height = self._subset_content_widget.height()
         views_width = max(
-            content_width * 0.3,
+            int(content_width * 0.3),
             self._subset_views_widget.minimumWidth()
         )
         width = content_width - views_width
+        # Visible widths of other widgets
         subset_attrs_width = int((float(width) / self.anim_end_value) * value)
-        if subset_attrs_width > width:
-            subset_attrs_width = width
-
         create_width = width - subset_attrs_width
 
-        views_geo = self._subset_views_widget.geometry()
-        views_geo.moveLeft(create_width + layout_spacing)
-        views_geo.setWidth(views_width)
-        self._subset_views_widget.setGeometry(views_geo)
-
-        create_geo = self._create_widget.geometry()
-        create_geo.moveRight(views_geo.left() - layout_spacing)
-        self._create_widget.setGeometry(create_geo)
-
-        subset_attrs_geo = self._subset_attributes_wrap.geometry()
+        views_geo = QtCore.QRect(
+            create_width + layout_spacing, 0,
+            views_width, content_height
+        )
+        create_geo = QtCore.QRect(0, 0, width, content_height)
+        subset_attrs_geo = QtCore.QRect(create_geo)
+        create_geo.moveRight(views_geo.left() - (layout_spacing + 1))
         subset_attrs_geo.moveLeft(views_geo.right() + layout_spacing)
+
+        self._subset_views_widget.setGeometry(views_geo)
+        self._create_widget.setGeometry(create_geo)
         self._subset_attributes_wrap.setGeometry(subset_attrs_geo)
 
     def _on_change_anim_finished(self):
