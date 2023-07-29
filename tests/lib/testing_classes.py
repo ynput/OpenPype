@@ -391,19 +391,17 @@ class PublishTest(ModuleUnitTest):
         application_manager = ApplicationManager()
 
         if app_variant == "*":
-            variants = application_manager.find_all_available_variants_for_group(
-                app_group
-            )
-
+            func = application_manager.find_all_available_variants_for_group
+            variants = func(app_group)
             app_variants = [x.name for x in variants]
 
         if app_variant is None or not app_variant:
-            variant = (
-                application_manager.find_latest_available_variant_for_group(
-                    app_group
-                )
-            )
+            func = application_manager.find_latest_available_variant_for_group
+            variant = func(app_group)
             app_variants.append(variant.name)
+
+        if app_variant:
+            app_variants.append(app_variant)
 
         return app_variants
 
