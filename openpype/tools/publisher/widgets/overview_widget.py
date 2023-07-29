@@ -28,12 +28,14 @@ class OverviewWidget(QtWidgets.QFrame):
         self._refreshing_instances = False
         self._controller = controller
 
-        create_widget = CreateWidget(controller, self)
+        subset_content_widget = QtWidgets.QWidget(self)
+
+        create_widget = CreateWidget(controller, subset_content_widget)
 
         # --- Created Subsets/Instances ---
         # Common widget for creation and overview
         subset_views_widget = BorderedLabelWidget(
-            "Subsets to publish", self
+            "Subsets to publish", subset_content_widget
         )
 
         subset_view_cards = InstanceCardView(controller, subset_views_widget)
@@ -45,14 +47,14 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_views_layout.setCurrentWidget(subset_view_cards)
 
         # Buttons at the bottom of subset view
-        create_btn = CreateInstanceBtn(self)
-        delete_btn = RemoveInstanceBtn(self)
-        change_view_btn = ChangeViewBtn(self)
+        create_btn = CreateInstanceBtn(subset_views_widget)
+        delete_btn = RemoveInstanceBtn(subset_views_widget)
+        change_view_btn = ChangeViewBtn(subset_views_widget)
 
         # --- Overview ---
         # Subset details widget
         subset_attributes_wrap = BorderedLabelWidget(
-            "Publish options", self
+            "Publish options", subset_content_widget
         )
         subset_attributes_widget = SubsetAttributesWidget(
             controller, subset_attributes_wrap
@@ -81,7 +83,6 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_views_widget.set_center_widget(subset_view_widget)
 
         # Whole subset layout with attributes and details
-        subset_content_widget = QtWidgets.QWidget(self)
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
         subset_content_layout.addWidget(create_widget, 7)
