@@ -47,6 +47,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         os.path.dirname(__file__), "input", "env_vars", "env_var.json"
     )
 
+    FILES = [
+        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+    ]
+
     def running_in_mayapy(self, app_group):
         app_group = app_group or self.APP_GROUP
 

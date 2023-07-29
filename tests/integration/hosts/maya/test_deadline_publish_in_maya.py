@@ -24,8 +24,11 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     PERSIST = True
 
     FILES = [
-        ("1dDY7CbdFXfRksGVoiuwjhnPoTRCCf5ea",
-         "test_maya_deadline_publish.zip", "")
+        (
+            "1dDY7CbdFXfRksGVoiuwjhnPoTRCCf5ea",
+            "test_maya_deadline_publish.zip",
+            ""
+        )
     ]
 
     APP_GROUP = "maya"

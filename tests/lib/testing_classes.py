@@ -18,13 +18,6 @@ from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
 
-FILES = {
-    "TestPublishInMaya": [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
-    ]
-}
-
-
 def get_database_names():
     return {
         "production": "avalon_tests",
@@ -81,14 +74,14 @@ def database_setup(backup_directory, openpype_mongo, suffix):
     database_handler.setup_from_dump(
         database_names["production"],
         backup_directory,
-        suffix,
+        "_" + suffix,
         overwrite=True,
         database_name_out=database_names["production"]
     )
     database_handler.setup_from_dump(
         database_names["settings"],
         backup_directory,
-        suffix,
+        "_" + suffix,
         overwrite=True,
         database_name_out=database_names["settings"]
     )
@@ -110,26 +103,6 @@ def dump_database(database_url, data_folder, openpype_mongo,):
         collection=database_collection,
         json=True
     )
-
-#needs testing
-def setup(class_names, data_folder, openpype_mongo):
-    # Collect files to setup.
-    files = {}
-    for name in class_names:
-        files[name] = FILES[name]
-
-    if not class_names:
-        files = FILES
-
-    data_folders = []
-    for class_name, class_files in files.items():
-        data_folder = download_test_data(data_folder, class_files)
-        data_folders.append(data_folder)
-        output_folder(data_folder)
-        database_setup(get_backup_directory(data_folder), openpype_mongo)
-
-    # Feedback to user about data folders.
-    print("Setup in folders:\n" + "\n".join(data_folders))
 
 
 class BaseTest:
@@ -182,7 +155,7 @@ class ModuleUnitTest(BaseTest):
     @pytest.fixture(scope="module")
     def download_test_data(self, data_folder, persist, request):
         data_folder = download_test_data(
-            data_folder or self.DATA_FOLDER, FILES[self.__class__.__name__]
+            data_folder or self.DATA_FOLDER, self.FILES
         )
 
         yield data_folder
@@ -291,9 +264,7 @@ class ModuleUnitTest(BaseTest):
             self.OPENPYPE_MONGO = openpype_mongo
 
         database_handler = database_setup(
-            database_dumps,
-            self.OPENPYPE_MONGO,
-            "_" + app_variant
+            database_dumps, self.OPENPYPE_MONGO, app_variant
         )
 
         yield database_handler
@@ -404,6 +375,16 @@ class PublishTest(ModuleUnitTest):
             app_variants.append(app_variant)
 
         return app_variants
+
+    #refactor to use same code for fixtures as here.
+    def setup_only(self, data_folder, openpype_mongo, app_variant):
+        data_folder = download_test_data(data_folder, self.FILES)
+        output_folder(data_folder, app_variant)
+        database_setup(
+            self.INPUT_DUMPS or get_backup_directory(data_folder),
+            openpype_mongo,
+            app_variant
+        )
 
     @pytest.fixture(scope="module")
     def app_name(self, environment_setup, app_variant, app_group):
@@ -578,6 +559,9 @@ class PublishTest(ModuleUnitTest):
                 filtered.add(file_path)
 
         return filtered
+
+    def setup_only(self):
+        print("setup only")
 
 
 class DeadlinePublishTest(PublishTest):

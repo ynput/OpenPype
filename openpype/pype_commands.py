@@ -327,10 +327,10 @@ class PypeCommands:
             args.extend(["--data_folder", data_folder])
 
         if keep_app_open:
-            args.extend(["--keep_app_open"])
+            args.append("--keep_app_open")
 
         if persist:
-            args.extend(["--persist"])
+            args.append("--persist")
 
         if app_group:
             args.extend(["--app_group", app_group])
@@ -342,12 +342,15 @@ class PypeCommands:
             args.extend(["--timeout", timeout])
 
         if setup_only:
+            """
             assert openpype_mongo, "No openpype_mongo provided"
 
             from tests.lib.testing_classes import setup
             setup(class_names, data_folder, openpype_mongo)
             print(end_time_msg.format(time.time() - start_time))
             return
+            """
+            args.append("--setup_only")
 
         if database_urls:
             assert data_folder, "No data_folder provided."

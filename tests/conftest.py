@@ -40,6 +40,11 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
+        "--setup_only", action="store_true", default=None,
+        help="Runs setup only and ignores tests."
+    )
+
+    parser.addoption(
         "--dump_database", action="store_true", default=None,
         help="Dump database to data folder."
     )
@@ -83,6 +88,11 @@ def timeout(request):
 
 
 @pytest.fixture(scope="module")
+def setup_only(request):
+    return request.config.getoption("--setup_only")
+
+
+@pytest.fixture(scope="module")
 def dump_database(request):
     return request.config.getoption("--dump_database")
 
@@ -100,6 +110,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def pytest_generate_tests(metafunc):
+    # Generate tests from app variants.
     if "app_variant" in metafunc.fixturenames:
         app_variants = metafunc.cls.app_variants(
             metafunc.cls,
@@ -107,3 +118,22 @@ def pytest_generate_tests(metafunc):
             metafunc.config.getoption("app_variant")
         )
         metafunc.parametrize("app_variant", app_variants, scope="module")
+
+    if metafunc.config.getoption("setup_only"):
+        app_variants = metafunc.cls.app_variants(
+            metafunc.cls,
+            metafunc.config.getoption("app_group"),
+            metafunc.config.getoption("app_variant")
+        )
+        openpype_mongo = (
+            metafunc.config.getoption("openpype_mongo") or
+            metafunc.cls.OPENPYPE_MONGO
+        )
+        for app_variant in app_variants:
+            metafunc.cls.setup_only(
+                metafunc.cls,
+                metafunc.config.getoption("data_folder"),
+                openpype_mongo,
+                app_variant
+            )
+        metafunc.parametrize("conf", pytest.skip("Setup only."))
