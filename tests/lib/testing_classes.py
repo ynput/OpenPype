@@ -18,75 +18,8 @@ from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
 
-def get_database_names():
-    return {
-        "production": "avalon_tests",
-        "settings": "openpype_tests"
-    }
-
-
-def get_database_sufficed(suffix):
-    result = {}
-    for key, value in get_database_names().items():
-        result[key] = "{}_{}".format(value, suffix)
-    return result
-
-
-#needs testing
-def setup_data_folder(data_folder, files):
-    if data_folder:
-        print("Using existing folder {}".format(data_folder))
-        return data_folder
-
-    data_folder = tempfile.mkdtemp()
-    print("Temporary folder created:: {}".format(data_folder))
-    for test_file in files:
-        file_id, file_name, md5 = test_file
-
-        f_name, ext = os.path.splitext(file_name)
-
-        RemoteFileHandler.download_file_from_google_drive(
-            file_id, str(data_folder), file_name
-        )
-
-        if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
-            RemoteFileHandler.unzip(os.path.join(data_folder, file_name))
-
-    return data_folder
-
-#needs testing
-def setup_output_folder(data_folder, app_variant):
-    path = os.path.join(data_folder, "output_" + app_variant)
-    if os.path.exists(path):
-        print("Purging {}".format(path))
-        shutil.rmtree(path)
-    return path
-
-
 def get_backup_directory(data_folder):
     return os.path.join(data_folder, "input", "dumps")
-
-#needs testing
-def setup_database(backup_directory, openpype_mongo, suffix):
-    database_handler = DataBaseHandler(openpype_mongo)
-    database_names = get_database_names()
-
-    database_handler.setup_from_dump(
-        database_names["production"],
-        backup_directory,
-        "_" + suffix,
-        overwrite=True,
-        database_name_out=database_names["production"]
-    )
-    database_handler.setup_from_dump(
-        database_names["settings"],
-        backup_directory,
-        "_" + suffix,
-        overwrite=True,
-        database_name_out=database_names["settings"]
-    )
-
-    return database_handler
 
 #needs testing
 def dump_databases(database_urls, data_folder, openpype_mongo,):
@@ -138,14 +71,87 @@ class ModuleUnitTest(BaseTest):
     INPUT_DUMPS = None
     INPUT_ENVIRONMENT_JSON = None
 
-    #needs testing.
-    def setup_only(self, data_folder, openpype_mongo, app_variant):
-        data_folder = setup_data_folder(data_folder, self.FILES)
-        output_folder = setup_output_folder(data_folder, app_variant)
-        database_handler = setup_database(
-            self.INPUT_DUMPS or get_backup_directory(data_folder),
-            openpype_mongo,
-            app_variant
+    FILES = []
+
+    DATABASE_NAMES = {
+        "production": "avalon_tests",
+        "settings": "openpype_tests"
+    }
+
+    #needs testing
+    @classmethod
+    def setup_database(cls, backup_directory, openpype_mongo, suffix):
+        database_handler = DataBaseHandler(openpype_mongo)
+
+        database_handler.setup_from_dump(
+            cls.DATABASE_NAMES["production"],
+            backup_directory,
+            "_" + suffix,
+            overwrite=True,
+            database_name_out=cls.DATABASE_NAMES["production"]
+        )
+        database_handler.setup_from_dump(
+            cls.DATABASE_NAMES["settings"],
+            backup_directory,
+            "_" + suffix,
+            overwrite=True,
+            database_name_out=cls.DATABASE_NAMES["settings"]
+        )
+
+        return database_handler
+
+    #needs testing
+    @classmethod
+    def get_database_sufficed(cls, suffix):
+        result = {}
+        for key, value in cls.DATABASE_NAMES.items():
+            result[key] = "{}_{}".format(value, suffix)
+        return result
+
+    #needs testing
+    @classmethod
+    def setup_only(cls, data_folder, openpype_mongo, app_variant):
+        if data_folder:
+            print("Using existing folder {}".format(data_folder))
+        else:
+            print("Temporary folder created: {}".format(data_folder))
+            data_folder = tempfile.mkdtemp()
+            for test_file in cls.FILES:
+                file_id, file_name, md5 = test_file
+
+                f_name, ext = os.path.splitext(file_name)
+
+                RemoteFileHandler.download_file_from_google_drive(
+                    file_id, str(data_folder), file_name
+                )
+
+                zip_formats = RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS
+                if ext.lstrip(".") in zip_formats:
+                    RemoteFileHandler.unzip(
+                        os.path.join(data_folder, file_name)
+                    )
+
+        output_folder = os.path.join(data_folder, "output_" + app_variant)
+        if os.path.exists(output_folder):
+            print("Purging {}".format(output_folder))
+            shutil.rmtree(output_folder)
+
+        database_handler = DataBaseHandler(openpype_mongo)
+        backup_directory = cls.INPUT_DUMPS or get_backup_directory(data_folder)
+
+        database_handler.setup_from_dump(
+            cls.DATABASE_NAMES["production"],
+            backup_directory,
+            "_" + app_variant,
+            overwrite=True,
+            database_name_out=cls.DATABASE_NAMES["production"]
+        )
+        database_handler.setup_from_dump(
+            cls.DATABASE_NAMES["settings"],
+            backup_directory,
+            "_" + app_variant,
+            overwrite=True,
+            database_name_out=cls.DATABASE_NAMES["settings"]
         )
 
         return data_folder, output_folder, database_handler
@@ -165,7 +171,7 @@ class ModuleUnitTest(BaseTest):
             print("Removing {}".format(data_folder))
             shutil.rmtree(data_folder)
 
-    @pytest.fixture(scope='session')
+    @pytest.fixture(scope="session")
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
         from _pytest.monkeypatch import MonkeyPatch
@@ -173,7 +179,7 @@ class ModuleUnitTest(BaseTest):
         yield m
         m.undo()
 
-    @pytest.fixture(scope='module')
+    @pytest.fixture(scope="module")
     def project_settings(self):
         yield get_project_settings(
             self.PROJECT_NAME
@@ -208,13 +214,13 @@ class ModuleUnitTest(BaseTest):
         # Get class attributes for environment.
         attributes = {}
         for attribute in ModuleUnitTest.__dict__.keys():
-            if attribute[:2] != '__':
+            if attribute[:2] != "__":
                 value = getattr(self, attribute)
                 if not callable(value):
                     attributes[attribute] = value
 
         # Module attributes.
-        database_names = get_database_sufficed(app_variant)
+        database_names = self.get_database_sufficed(app_variant)
         attributes["DATABASE_PRODUCTION_NAME"] = database_names["production"]
         attributes["DATABASE_SETTINGS_NAME"] = database_names["settings"]
 
@@ -265,7 +271,7 @@ class ModuleUnitTest(BaseTest):
     def dbcon(self, environment_setup, setup_fixture):
         """Provide test database connection.
 
-            Database prepared from dumps with 'database_setup' fixture.
+            Database prepared from dumps with "database_setup" fixture.
         """
         _, output_folder, _ = setup_fixture
 
@@ -291,11 +297,11 @@ class ModuleUnitTest(BaseTest):
     def dbcon_openpype(self, environment_setup, setup_fixture, app_variant):
         """Provide test database connection for OP settings.
 
-            Database prepared from dumps with 'database_setup' fixture.
+            Database prepared from dumps with "database_setup" fixture.
         """
         from openpype.lib import OpenPypeMongoConnection
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        database_names = get_database_sufficed(app_variant)
+        database_names = self.get_database_sufficed(app_variant)
         yield mongo_client[database_names["settings"]]["settings"]
 
     def is_test_failed(self, request):
@@ -388,7 +394,7 @@ class PublishTest(ModuleUnitTest):
 
             Test zip file should contain file at:
                 FOLDER_DIR/input/app_args/app_args.json
-            containing a list of command line arguments (like '-x' etc.)
+            containing a list of command line arguments (like "-x" etc.)
         """
         data_folder, _, _ = setup_fixture
         app_args = []
@@ -505,10 +511,10 @@ class PublishTest(ModuleUnitTest):
 
         print("Comparing published:'{}' : expected:'{}'".format(
             output_folder, expected_dir_base))
-        published = set(f.replace(output_folder, '') for f in
+        published = set(f.replace(output_folder, "") for f in
                         glob.glob(output_folder + "\\**", recursive=True)
                         if f != output_folder and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
+        expected = set(f.replace(expected_dir_base, "") for f in
                        glob.glob(expected_dir_base + "\\**", recursive=True)
                        if f != expected_dir_base and os.path.exists(f))
 
@@ -516,7 +522,7 @@ class PublishTest(ModuleUnitTest):
                                                 skip_compare_folders)
 
         # filter out temp files also in expected
-        # could be polluted by accident by copying 'output' to zip file
+        # could be polluted by accident by copying "output" to zip file
         filtered_expected = self._filter_files(expected, skip_compare_folders)
 
         not_mtched = filtered_expected.symmetric_difference(filtered_published)
@@ -593,7 +599,7 @@ class DeadlinePublishTest(PublishTest):
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
-            # '0001-...' returned until job is finished
+            # "0001-..." returned until job is finished
             valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
 
         # some clean exit test possible?

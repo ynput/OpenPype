@@ -132,7 +132,6 @@ def pytest_generate_tests(metafunc):
         )
         for app_variant in app_variants:
             metafunc.cls.setup_only(
-                metafunc.cls,
                 metafunc.config.getoption("data_folder"),
                 openpype_mongo,
                 app_variant
