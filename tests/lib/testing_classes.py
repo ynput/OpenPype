@@ -457,7 +457,8 @@ class PublishTest(ModuleUnitTest):
             "project_name": self.PROJECT_NAME,
             "asset_name": self.ASSET_NAME,
             "task_name": self.TASK_NAME,
-            "stdout": subprocess.PIPE
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE
         }
         if app_args:
             data["app_args"] = app_args
@@ -491,8 +492,11 @@ class PublishTest(ModuleUnitTest):
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
-        # some clean exit test possible?
         print("Publish finished")
+
+        msg = "Launched app errored:\n{}"
+        assert launched_app.returncode == 0, msg.format(err.decode("utf-8"))
+
         yield out.decode("utf-8")
 
     def test_folder_structure_same(
