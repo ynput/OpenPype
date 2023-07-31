@@ -153,7 +153,7 @@ class NukeCreator(NewCreator):
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
 
-                self.add_info_knob(created_node)
+                #self.add_info_knob(created_node)
 
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():

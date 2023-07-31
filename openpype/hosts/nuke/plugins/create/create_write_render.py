@@ -105,11 +105,11 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
+        #self.add_info_knob(created_node)
 
         self._add_frame_range_limit(created_node)
 
-        self.integrate_links(created_node, outputs=True)
+        #self.integrate_links(created_node, outputs=True)
 
         return created_node
 

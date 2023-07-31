@@ -23,8 +23,16 @@ from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
 
-
-
+knobMatrix = { 'exr': ['colorspace', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
+                'png': ['colorspace', 'datatype'],
+                'tiff': ['colorspace','datatype', 'compression'],
+                'mov': ['colorspace','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
+}
+presets = {
+    'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all') ],
+    'png' : [ ("colorspace", 'rec709'), ('channels', 'rgba') ],
+    'jpeg' : [ ("colorspace", 'sRGB'), ('channels', 'rgb') ]
+           }
 # fix ffmpeg settings on script
 
 # set checker for last versions on loaded containers
@@ -32,13 +40,19 @@ log = Logger.get_logger(__name__)
 log.info('Automatic syncing of write file knob to script version')
 
 
-
+def apply_format_presets():
+    node = nuke.thisNode()
+    knob = nuke.thisKnob()
+    if knob.name() == 'file_type':
+        if knob.value() in presets.keys():
+            for preset in presets[knob.value()]:
+                node.knob(preset[0]).setValue(preset[1])
 # Hornet- helper to switch file extension to filetype
 def writes_ver_sync():
     ''' Callback synchronizing version of publishable write nodes
     '''
     try:
-	print('Hornet- syncing version to write nodes')
+        print('Hornet- syncing version to write nodes')
         #rootVersion = pype.get_version_from_path(nuke.root().name())
         pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
         rootVersion = pattern.findall(nuke.root().name())[0]
@@ -52,9 +66,7 @@ def writes_ver_sync():
         return
     groupnodes = [node.nodes() for node in nuke.allNodes() if node.Class() == 'Group']
     allnodes = [node for group in groupnodes for node in group] + nuke.allNodes()
-    print(allnodes)
     for each in allnodes:
-        print('node')
         if each.Class() == 'Write':
             # check if the node is avalon tracked
             if each.name().startswith('inside_'):
@@ -101,23 +113,20 @@ def switchExtension():
         old = filek.value()
         pre,ext = os.path.splitext(old)
         filek.setValue(pre + '.' + knb.value())
-knobMatrix = { 'exr': ['colorspace', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
-		'png': ['colorspace', 'datatype'],
-		'tiff': ['colorspace','datatype', 'compression'],
-		'mov': ['colorspace','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
-}
+
 def embedOptions():
     nde = nuke.thisNode()
     knb = nuke.thisKnob()
     log.info(' knob of type' + str(knb.Class()))
     htab = nuke.Tab_Knob('htab','Hornet')
+    htab.setName('htab')
     if knb == nde.knob('file_type'):
         group = nuke.toNode('.'.join(['root'] + nde.fullName().split('.')[:-1]))
         ftype = knb.value()
     else:
         return
-	if ftype not in knobMatrix.keys():
-		return
+    if ftype not in knobMatrix.keys():
+        return
     allTrackedKnobs = [ value for sublist in knobMatrix.values() for value in sublist]
     allTrackedKnobs.append("file_type")
     allTrackedKnobs.append("file")
@@ -143,9 +152,9 @@ def embedOptions():
     for knob in allTextKnobs:
         if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div']:
             group.removeKnob(knob)
-    while group.knob('htab'):
-        group.removeKnob(group.knob('htab'))
-    group.addKnob(htab)
+    names = [knob.name() for knob in group.allKnobs()]
+    if not 'htab' in names:
+        group.addKnob(htab)
     beginGroup = nuke.Tab_Knob('beginoutput', 'Output', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
 
@@ -169,6 +178,7 @@ def embedOptions():
             link.setName(kname)
             link.setFlag(0x1000)
             group.addKnob(link)
+    log.info("links made")
     endGroup = nuke.Tab_Knob('endoutput', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
     beginGroup = nuke.Tab_Knob('beginpipeline', 'Rendering and Pipeline', nuke.TABBEGINGROUP)
@@ -199,4 +209,5 @@ def embedOptions():
 
 nuke.addKnobChanged(switchExtension, nodeClass='Write')
 nuke.addKnobChanged(embedOptions, nodeClass='Write')
+nuke.addKnobChanged(apply_format_presets, nodeClass='Write')
 nuke.addOnScriptSave(writes_ver_sync)
