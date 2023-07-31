@@ -1165,8 +1165,8 @@ class CreatedInstance:
         Args:
             instance_data (Dict[str, Any]): Data in a structure ready for
                 'CreatedInstance' object.
-            creator (Creator): Creator plugin which is creating the instance
-                of for which the instance belong.
+            creator (BaseCreator): Creator plugin which is creating the
+                instance of for which the instance belong.
         """
 
         instance_data = copy.deepcopy(instance_data)
@@ -1979,7 +1979,11 @@ class CreateContext:
         if pre_create_data is None:
             pre_create_data = {}
 
-        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        precreate_attr_defs = []
+        # Hidden creators do not have or need the pre-create attributes.
+        if isinstance(creator, Creator):
+            precreate_attr_defs = creator.get_pre_create_attr_defs()
+
         # Create default values of precreate data
         _pre_create_data = get_default_values(precreate_attr_defs)
         # Update passed precreate data to default values
