@@ -5,6 +5,8 @@ import platform
 import json
 import tempfile
 
+from openpype import AYON_SERVER_ENABLED
+
 from .log import Logger
 from .vendor_bin_utils import find_executable
 
@@ -294,18 +296,6 @@ def path_to_subprocess_arg(path):
     return subprocess.list2cmdline([path])
 
 
-def get_pype_execute_args(*args):
-    """Backwards compatible function for 'get_openpype_execute_args'."""
-    import traceback
-
-    log = Logger.get_logger("get_pype_execute_args")
-    stack = "\n".join(traceback.format_stack())
-    log.warning((
-        "Using deprecated function 'get_pype_execute_args'. Called from:\n{}"
-    ).format(stack))
-    return get_openpype_execute_args(*args)
-
-
 def get_openpype_execute_args(*args):
     """Arguments to run pype command.
 
@@ -321,19 +311,22 @@ def get_openpype_execute_args(*args):
     It is possible to pass any arguments that will be added after pype
     executables.
     """
-    pype_executable = os.environ["OPENPYPE_EXECUTABLE"]
-    pype_args = [pype_executable]
+    executable = os.environ["OPENPYPE_EXECUTABLE"]
+    launch_args = [executable]
 
-    executable_filename = os.path.basename(pype_executable)
+    executable_filename = os.path.basename(executable)
     if "python" in executable_filename.lower():
-        pype_args.append(
-            os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")
+        filename = "start.py"
+        if AYON_SERVER_ENABLED:
+            filename = "ayon_start.py"
+        launch_args.append(
+            os.path.join(os.environ["OPENPYPE_ROOT"], filename)
         )
 
     if args:
-        pype_args.extend(args)
+        launch_args.extend(args)
 
-    return pype_args
+    return launch_args
 
 
 def get_linux_launcher_args(*args):

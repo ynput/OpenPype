@@ -1371,13 +1371,8 @@ def get_app_environments_for_context(
     """
 
     from openpype.modules import ModulesManager
-    from openpype.pipeline import AvalonMongoDB, Anatomy
+    from openpype.pipeline import Anatomy
     from openpype.lib.openpype_version import is_running_staging
-
-    # Avalon database connection
-    dbcon = AvalonMongoDB()
-    dbcon.Session["AVALON_PROJECT"] = project_name
-    dbcon.install()
 
     # Project document
     project_doc = get_project(project_name)
@@ -1400,7 +1395,6 @@ def get_app_environments_for_context(
 
         "app": app,
 
-        "dbcon": dbcon,
         "project_doc": project_doc,
         "asset_doc": asset_doc,
 
@@ -1414,9 +1408,6 @@ def get_app_environments_for_context(
 
     prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group, modules_manager)
-
-    # Discard avalon connection
-    dbcon.uninstall()
 
     return data["env"]
 
@@ -1649,11 +1640,7 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     project_doc = data["project_doc"]
     asset_doc = data["asset_doc"]
     task_name = data["task_name"]
-    if (
-        not project_doc
-        or not asset_doc
-        or not task_name
-    ):
+    if not project_doc:
         log.info(
             "Skipping context environments preparation."
             " Launch context does not contain required data."
@@ -1666,18 +1653,16 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
     system_settings = get_system_settings()
     data["project_settings"] = project_settings
     data["system_settings"] = system_settings
-    # Apply project specific environments on current env value
-    apply_project_environments_value(
-        project_name, data["env"], project_settings, env_group
-    )
 
     app = data["app"]
     context_env = {
         "AVALON_PROJECT": project_doc["name"],
-        "AVALON_ASSET": asset_doc["name"],
-        "AVALON_TASK": task_name,
         "AVALON_APP_NAME": app.full_name
     }
+    if asset_doc:
+        context_env["AVALON_ASSET"] = asset_doc["name"]
+        if task_name:
+            context_env["AVALON_TASK"] = task_name
 
     log.debug(
         "Context environments set:\n{}".format(
@@ -1685,8 +1670,24 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         )
     )
     data["env"].update(context_env)
+
+    # Apply project specific environments on current env value
+    # - apply them once the context environments are set
+    apply_project_environments_value(
+        project_name, data["env"], project_settings, env_group
+    )
+
     if not app.is_host:
         return
+
+    data["env"]["AVALON_APP"] = app.host_name
+
+    if not asset_doc or not task_name:
+        # QUESTION replace with log.info and skip workfile discovery?
+        # - technically it should be possible to launch host without context
+        raise ApplicationLaunchFailed(
+            "Host launch require asset and task context."
+        )
 
     workdir_data = get_template_data(
         project_doc, asset_doc, task_name, app.host_name, system_settings
@@ -1725,7 +1726,6 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
                 "Couldn't create workdir because: {}".format(str(exc))
             )
 
-    data["env"]["AVALON_APP"] = app.host_name
     data["env"]["AVALON_WORKDIR"] = workdir
 
     _prepare_last_workfile(data, workdir, modules_manager)

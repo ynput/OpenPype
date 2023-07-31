@@ -102,6 +102,10 @@ workstation that should be submitting render jobs to muster via OpenPype.
 
 **`templates mapping`** - you can customize Muster templates to match your existing setup here.
 
+### Royal Render
+
+**`Royal Render Root Paths`** - multi platform paths to Royal Render installation.
+
 ### Clockify
 
 **`Workspace Name`** - name of the clockify workspace where you would like to be sending all the timelogs.

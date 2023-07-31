@@ -237,10 +237,17 @@ def get_data_subprocess(config_path, data_type):
 
 
 def compatibility_check():
-    """Making sure PyOpenColorIO is importable"""
+    """checking if user has a compatible PyOpenColorIO >= 2.
+
+    It's achieved by checking if PyOpenColorIO is importable
+    and calling any version 2 specific function
+    """
     try:
-        import PyOpenColorIO  # noqa: F401
-    except ImportError:
+        import PyOpenColorIO
+
+        # ocio versions lower than 2 will raise AttributeError
+        PyOpenColorIO.GetVersion()
+    except (ImportError, AttributeError):
         return False
     return True
 

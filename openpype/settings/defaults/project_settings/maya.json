@@ -555,7 +555,6 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
@@ -615,8 +614,8 @@
             "maskOverride": false,
             "maskDriver": false,
             "maskFilter": false,
-            "maskColor_manager": false,
-            "maskOperator": false
+            "maskOperator": false,
+            "maskColor_manager": false
         },
         "CreateVrayProxy": {
             "enabled": true,

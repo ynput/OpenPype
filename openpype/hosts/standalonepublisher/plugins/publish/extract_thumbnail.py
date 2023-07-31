@@ -1,8 +1,9 @@
 import os
+import subprocess
 import tempfile
 import pyblish.api
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     get_ffprobe_streams,
     path_to_subprocess_arg,
     run_subprocess,
@@ -62,12 +63,12 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         instance.context.data["cleanupFullPaths"].append(full_thumbnail_path)
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_executable_args = get_ffmpeg_tool_args("ffmpeg")
 
         ffmpeg_args = self.ffmpeg_args or {}
 
         jpeg_items = [
-            path_to_subprocess_arg(ffmpeg_path),
+            subprocess.list2cmdline(ffmpeg_executable_args),
             # override file if already exists
             "-y"
         ]

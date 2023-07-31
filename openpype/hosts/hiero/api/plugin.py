@@ -12,6 +12,7 @@ from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.load import get_representation_path_from_context
 from . import lib
 
 log = Logger.get_logger(__name__)
@@ -393,7 +394,7 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, **options):
+    def __init__(self, cls, context, path, **options):
         """ Initialize object
 
         Arguments:
@@ -406,6 +407,7 @@ class ClipLoader:
         self.__dict__.update(cls.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
+        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
         self.with_handles = options.get("handles") or bool(
@@ -467,7 +469,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
-        file = self.fname
+        file = get_representation_path_from_context(self.context)
         if not file:
             repr_id = repr["_id"]
             log.warning(
