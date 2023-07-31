@@ -11,6 +11,8 @@ import platform
 import requests
 import re
 import subprocess
+import zipfile
+import collections
 
 from tests.lib.database_handler import DataBaseHandler
 from common.ayon_common.distribution.file_handler import RemoteFileHandler
@@ -72,6 +74,26 @@ class ModuleUnitTest(BaseTest):
     def setup_only(cls, data_folder, openpype_mongo, app_variant):
         if data_folder:
             print("Using existing folder {}".format(data_folder))
+
+            # Check root folder exists else extract from zip. This allows for
+            # testing with WIP zips locally.
+            for _, file_name, _ in cls.FILES:
+                file_path = os.path.join(data_folder, file_name)
+                if os.path.exists(file_path):
+                    zip = zipfile.ZipFile(file_path)
+
+                    # Get all root folders and check against existing folders.
+                    root_folder_names = [
+                        x for x in zip.namelist() if len(x.split("/")) == 2
+                    ]
+                    for name in root_folder_names:
+                        path = os.path.join(data_folder, name[:-1])
+                        if os.path.exists(path):
+                            continue
+
+                        for zip_name in zip.namelist():
+                            if zip_name.startswith(name):
+                                zip.extract(zip_name, data_folder)
         else:
             print("Temporary folder created: {}".format(data_folder))
             data_folder = tempfile.mkdtemp()
