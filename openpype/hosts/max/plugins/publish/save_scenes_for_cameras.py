@@ -99,6 +99,3 @@ rt.saveMaxFile(new_filepath)
                 self.log.error("Camera scene files not existed yet!")
                 raise RuntimeError("MaxBatch.exe doesn't run as expected")
             self.log.debug(f"Found Camera scene:{camera_scene}")
-
-        if "sceneFiles" not in instance.data:
-            instance.data["sceneFiles"] = camera_scene_files

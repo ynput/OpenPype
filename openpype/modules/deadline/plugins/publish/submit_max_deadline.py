@@ -164,7 +164,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     def process_submission(self):
 
         instance = self._instance
-        filepath = self.scene_path
+        filepath = instance.context.data["currentFile"]
 
         files = instance.data["expectedFiles"]
         if not files:
@@ -184,6 +184,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         self.log.debug("Submitting 3dsMax render..")
         project_settings = instance.context.data["project_settings"]
         if instance.data.get("multiCamera"):
+            self.log.debug("Submitting jobs for multiple cameras..")
             payload = self._use_published_name_for_multiples(
                 payload_data, project_settings)
             job_infos, plugin_infos = payload
@@ -249,6 +250,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         return job_info, plugin_info
 
     def get_job_info_through_camera(self, camera):
+        """Get the job parameters for deadline submission when
+        multi-camera is enabled.
+        Args:
+            infos(dict): a dictionary with job info.
+        """
         instance = self._instance
         context = instance.context
         job_info = copy.deepcopy(self.job_info)
@@ -268,15 +274,27 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # set the output filepath with the relative camera
 
     def get_plugin_info_through_camera(self, camera):
+        """Get the plugin parameters for deadline submission when
+        multi-camera is enabled.
+        Args:
+            infos(dict): a dictionary with plugin info.
+        """
         instance = self._instance
         # set the target camera
         plugin_info = copy.deepcopy(self.plugin_info)
 
         plugin_data = {}
         # set the output filepath with the relative camera
-        for camera_scene_path in instance.data.get("sceneFiles"):
-            if camera in camera_scene_path:
-                plugin_data["SceneFile"] = camera_scene_path
+        if instance.data.get("multiCamera"):
+            scene_filepath = instance.context.data["currentFile"]
+            scene_filename = os.path.basename(scene_filepath)
+            scene_directory = os.path.dirname(scene_filepath)
+            current_filename, ext = os.path.splitext(scene_filename)
+            camera_scene_name = f"{current_filename}_{camera}{ext}"
+            camera_scene_filepath = os.path.join(
+                scene_directory, f"_{current_filename}", camera_scene_name)
+            plugin_data["SceneFile"] = camera_scene_filepath
+
         files = instance.data.get("expectedFiles")
         if not files:
             raise RuntimeError("No render elements found")
