@@ -16,7 +16,6 @@ Provides:
 
 import os
 import clique
-import opentimelineio as otio
 from pyblish import api
 
 from openpype.lib import (
@@ -24,13 +23,6 @@ from openpype.lib import (
     run_subprocess,
 )
 from openpype.pipeline import publish
-from openpype.pipeline.editorial import (
-    otio_range_to_frame_range,
-    trim_media_range,
-    range_from_frames,
-    frames_to_seconds,
-    make_sequence_collection
-)
 
 
 class ExtractOTIOReview(publish.Extractor):
@@ -62,6 +54,12 @@ class ExtractOTIOReview(publish.Extractor):
     output_ext = ".jpg"
 
     def process(self, instance):
+        import opentimelineio as otio
+        from openpype.pipeline.editorial import (
+            otio_range_to_frame_range,
+            make_sequence_collection
+        )
+
         # TODO: convert resulting image sequence to mp4
 
         # get otio clip and other time info from instance clip
@@ -281,6 +279,11 @@ class ExtractOTIOReview(publish.Extractor):
         Returns:
             otio.time.TimeRange: trimmed available range
         """
+        from openpype.pipeline.editorial import (
+            trim_media_range,
+            range_from_frames
+        )
+
         avl_start = int(avl_range.start_time.value)
         src_start = int(avl_start + start)
         avl_durtation = int(avl_range.duration.value)

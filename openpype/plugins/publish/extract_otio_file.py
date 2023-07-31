@@ -1,6 +1,5 @@
 import os
 import pyblish.api
-import opentimelineio as otio
 
 from openpype.pipeline import publish
 
@@ -16,6 +15,8 @@ class ExtractOTIOFile(publish.Extractor):
     hosts = ["resolve", "hiero", "traypublisher"]
 
     def process(self, instance):
+        import opentimelineio as otio
+
         if not instance.context.data.get("otioTimeline"):
             return
         # create representation data

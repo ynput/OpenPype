@@ -5,7 +5,6 @@ from openpype.lib import (
     run_subprocess
 )
 import tempfile
-import opentimelineio as otio
 
 
 class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
@@ -158,6 +157,8 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Returns:
             list: list of audio clip dictionaries
         """
+        import opentimelineio as otio
+
         output = []
         # go trough all audio tracks
         for otio_track in otio_timeline.tracks:

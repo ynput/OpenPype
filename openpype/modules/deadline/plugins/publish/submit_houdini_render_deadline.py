@@ -1,5 +1,3 @@
-import hou
-
 import os
 import attr
 import getpass
@@ -117,6 +115,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        import hou
 
         instance = self._instance
         context = instance.context

@@ -7,7 +7,6 @@ from datetime import datetime
 import requests
 import pyblish.api
 
-import nuke
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
@@ -204,7 +203,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         jobname = "%s - %s" % (batch_name, instance.name)
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-
 
         output_filename_0 = self.preview_fname(render_path)
 
@@ -453,6 +451,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         Returning:
             list: captured groups list
         """
+        import nuke
+
         captured_groups = []
         for lg_name, list_node_class in self.limit_groups.items():
             for node_class in list_node_class:

@@ -15,7 +15,6 @@ from openpype.lib import (
     run_subprocess,
 )
 from openpype.pipeline import publish
-from openpype.pipeline.editorial import frames_to_seconds
 
 
 class ExtractOTIOTrimmingVideo(publish.Extractor):
@@ -75,6 +74,8 @@ class ExtractOTIOTrimmingVideo(publish.Extractor):
             otio_range (opentime.TimeRange): range to trim to
 
         """
+        from openpype.pipeline.editorial import frames_to_seconds
+
         # get rendering app path
         ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 

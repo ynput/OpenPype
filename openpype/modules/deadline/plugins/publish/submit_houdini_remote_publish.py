@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 
 import requests
-import hou
 
 import pyblish.api
 
@@ -31,6 +30,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
     targets = ["deadline"]
 
     def process(self, context):
+        import hou
 
         # Ensure no errors so far
         assert all(

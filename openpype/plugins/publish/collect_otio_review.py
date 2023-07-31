@@ -10,8 +10,6 @@ Provides:
     instance -> otioReviewClips
     instance -> families (adding ["review", "ftrack"])
 """
-
-import opentimelineio as otio
 import pyblish.api
 from pprint import pformat
 
@@ -25,6 +23,8 @@ class CollectOtioReview(pyblish.api.InstancePlugin):
     hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
+        import opentimelineio as otio
+
         # get basic variables
         otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]

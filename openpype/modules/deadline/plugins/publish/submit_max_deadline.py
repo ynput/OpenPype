@@ -12,12 +12,6 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
-from openpype.settings import get_project_settings
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
-)
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
@@ -190,6 +184,12 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _use_published_name(self, data, project_settings):
+        from openpype.hosts.max.api.lib import (
+            get_current_renderer,
+            get_multipass_setting
+        )
+        from openpype.hosts.max.api.lib_rendersettings import RenderSettings
+
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
