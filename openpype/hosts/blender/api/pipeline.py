@@ -12,6 +12,7 @@ import pyblish.api
 
 from openpype.host import(
     HostBase,
+    IWorkfileHost,
     IPublishHost,
 )
 from openpype.client import get_asset_by_name
@@ -33,6 +34,14 @@ from openpype.lib import (
 )
 import openpype.hosts.blender
 from openpype.settings import get_project_settings
+from .workio import (
+    open_file,
+    save_file,
+    current_file,
+    has_unsaved_changes,
+    file_extensions,
+    work_root,
+)
 
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
@@ -51,7 +60,7 @@ IS_HEADLESS = bpy.app.background
 log = Logger.get_logger(__name__)
 
 
-class BlenderHost(HostBase, IPublishHost):
+class BlenderHost(HostBase, IWorkfileHost, IPublishHost):
     name = "blender"
 
     def install(self):
@@ -62,6 +71,65 @@ class BlenderHost(HostBase, IPublishHost):
     def ls(self) -> Iterator:
         """List containers from active Blender scene."""
         return ls()
+
+    def get_workfile_extensions(self) -> List[str]:
+        """Override get_workfile_extensions method from IWorkfileHost.
+        Get workfile possible extensions.
+
+        Returns:
+            List[str]: Workfile extensions.
+        """
+        return file_extensions()
+
+    def save_workfile(self, dst_path: str = None):
+        """Override save_workfile method from IWorkfileHost.
+        Save currently opened workfile.
+
+        Args:
+            dst_path (str): Where the current scene should be saved. Or use
+                current path if `None` is passed.
+        """
+        save_file(dst_path if dst_path else bpy.data.filepath)
+
+    def open_workfile(self, filepath: str):
+        """Override open_workfile method from IWorkfileHost.
+        Open workfile at specified filepath in the host.
+
+        Args:
+            filepath (str): Path to workfile.
+        """
+        open_file(filepath)
+
+    def get_current_workfile(self) -> str:
+        """Override get_current_workfile method from IWorkfileHost.
+        Retrieve currently opened workfile path.
+
+        Returns:
+            str: Path to currently opened workfile.
+        """
+        return current_file()
+
+    def workfile_has_unsaved_changes(self) -> bool:
+        """Override wokfile_has_unsaved_changes method from IWorkfileHost.
+        Returns True if opened workfile has no unsaved changes.
+
+        Returns:
+            bool: True if scene is saved and False if it has unsaved
+                modifications.
+        """
+        return has_unsaved_changes()
+
+    def work_root(self, session) -> str:
+        """Override work_root method from IWorkfileHost.
+        Modify workdir per host.
+
+        Args:
+            session (dict): Session context data.
+
+        Returns:
+            str: Path to new workdir.
+        """
+        return work_root(session)
 
     def get_context_data(self) -> dict:
         """Override abstract method from IPublishHost.
