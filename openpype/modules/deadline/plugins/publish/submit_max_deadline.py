@@ -12,6 +12,7 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
+from openpype.pipeline.publish import KnownPublishError
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
     get_multipass_setting
@@ -168,7 +169,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         files = instance.data["expectedFiles"]
         if not files:
-            raise RuntimeError("No Render Elements found!")
+            raise KnownPublishError("No Render Elements found!")
         first_file = next(self._iter_expected_files(files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
