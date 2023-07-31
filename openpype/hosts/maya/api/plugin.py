@@ -222,6 +222,8 @@ class MayaCreatorBase(object):
 @six.add_metaclass(ABCMeta)
 class MayaCreator(NewCreator, MayaCreatorBase):
 
+    settings_name = None
+
     def create(self, subset_name, instance_data, pre_create_data):
 
         members = list()
@@ -258,6 +260,24 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     default=True)
         ]
 
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        settings_name = self.settings_name
+        if settings_name is None:
+            settings_name = self.__class__.__name__
+
+        settings = project_settings["maya"]["create"]
+        settings = settings.get(settings_name)
+        if settings is None:
+            self.log.debug(
+                "No settings found for {}".format(self.__class__.__name__)
+            )
+            return
+
+        for key, value in settings.items():
+            setattr(self, key, value)
+
 
 class MayaAutoCreator(AutoCreator, MayaCreatorBase):
     """Automatically triggered creator for Maya.
@@ -282,6 +302,9 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
     The plugin is not visible in UI, and it does not have strictly defined
         arguments for 'create' method.
     """
+
+    def create(self, *args, **kwargs):
+        return MayaCreator.create(self, *args, **kwargs)
 
     def collect_instances(self):
         return self._default_collect_instances()

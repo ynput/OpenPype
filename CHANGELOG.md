@@ -1,6 +1,186 @@
 # Changelog
 
 
+## [3.16.2](https://github.com/ynput/OpenPype/tree/3.16.2)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.1...3.16.2)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Fusion - Set selected tool to active <a href="https://github.com/ynput/OpenPype/pull/5327">#5327</a></summary>
+
+When you run the action to select a node, this PR makes the node-flow show the selected node + you'll see the nodes controls in the inspector.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: All base create plugins <a href="https://github.com/ynput/OpenPype/pull/5326">#5326</a></summary>
+
+Prepared base classes for each creator type in Maya. Extended `MayaCreatorBase` to have default implementations of common logic with instances which is used in each type of plugin.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Windows: Support long paths on zip updates. <a href="https://github.com/ynput/OpenPype/pull/5265">#5265</a></summary>
+
+Support long paths for version extract on Windows.Use case is when having long paths in for example an addon. You can install to the C drive but because the zip files are extracted in the local users folder, it'll add additional sub directories to the paths and quickly get too long paths for Windows to handle the zip updates.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Added setting to set resolution and start/end frames at startup <a href="https://github.com/ynput/OpenPype/pull/5338">#5338</a></summary>
+
+This PR adds `set_resolution_startup`and `set_frames_startup` settings. They automatically set respectively the resolution and start/end frames and FPS in Blender when opening a file or creating a new one.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Support for ExtractBurnin <a href="https://github.com/ynput/OpenPype/pull/5339">#5339</a></summary>
+
+This PR adds support for ExtractBurnin for Blender, when publishing a Review.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Extract Camera as Alembic <a href="https://github.com/ynput/OpenPype/pull/5343">#5343</a></summary>
+
+Added support to extract Alembic Cameras in Blender.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Validate Instance In Context <a href="https://github.com/ynput/OpenPype/pull/5335">#5335</a></summary>
+
+Missing new publisher error so the repair action shows up.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Settings: Fix default settings <a href="https://github.com/ynput/OpenPype/pull/5311">#5311</a></summary>
+
+Fixed defautl settings for shotgrid. Renamed `FarmRootEnumEntity` to `DynamicEnumEntity` and removed doubled ABC metaclass definition (all settings entities have abstract metaclass).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: missing context argument <a href="https://github.com/ynput/OpenPype/pull/5312">#5312</a></summary>
+
+Updated function arguments
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Qt UI: Multiselection combobox PySide6 compatibility <a href="https://github.com/ynput/OpenPype/pull/5314">#5314</a></summary>
+
+- The check states are replaced with the values for PySide6
+- `QtCore.Qt.ItemIsUserTristate` is used instead of `QtCore.Qt.ItemIsTristate` to avoid crashes on PySide6
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Docker: handle openssl 1.1.1 for centos 7 docker build <a href="https://github.com/ynput/OpenPype/pull/5319">#5319</a></summary>
+
+Move to python 3.9 has added need to use openssl 1.1.x - but it is not by default available on centos 7 image. This is fixing it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>houdini: fix typo in redshift proxy <a href="https://github.com/ynput/OpenPype/pull/5320">#5320</a></summary>
+
+I believe there's a typo in `create_redshift_proxy.py`   ( extra ` )  in filename, and I made this PR to suggest a fix
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: fix wrong creator identifier in pointCache workflow <a href="https://github.com/ynput/OpenPype/pull/5324">#5324</a></summary>
+
+FIxing a bug in publishing alembics, were invalid creator identifier caused missing family association.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix colorspace compatibility check <a href="https://github.com/ynput/OpenPype/pull/5334">#5334</a></summary>
+
+for some reason a user may have `PyOpenColorIO` installed to his machine,  _in my case it came with renderman._it can trick the compatibility check as `import PyOpenColorIO` won't raise an error however it may be an old version _like my case_Beforecompatibility check was true and It used wrapper directly After Fix It will use wrapper via subprocess instead
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Remove forgotten dev logging <a href="https://github.com/ynput/OpenPype/pull/5315">#5315</a></summary>
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.1](https://github.com/ynput/OpenPype/tree/3.16.1)
 
 
