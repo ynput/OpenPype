@@ -69,6 +69,8 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     @pytest.fixture(scope="module")
     def app_args(self, app_group, app_variant):
         # We should try and support 2020?
+        # Current issue is "-I" argument does not exist for 2020 and start up
+        # issues with color management.
         msg = "Maya 2020 and below is not supported for testing."
         assert int(app_variant) > 2020, msg
 
