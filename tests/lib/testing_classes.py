@@ -18,26 +18,6 @@ from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
 
-def get_backup_directory(data_folder):
-    return os.path.join(data_folder, "input", "dumps")
-
-#needs testing
-def dump_databases(database_urls, data_folder, openpype_mongo,):
-    for database_url in database_urls:
-        dump_database(database_url, data_folder, openpype_mongo)
-
-#needs testing
-def dump_database(database_url, data_folder, openpype_mongo,):
-    database_handler = DataBaseHandler(openpype_mongo)
-    database_name, database_collection = database_url.split(".")
-    database_handler.backup_to_dump(
-        database_name,
-        os.path.join(get_backup_directory(data_folder), database_name),
-        collection=database_collection,
-        json=True
-    )
-
-
 class BaseTest:
     """Empty base test class"""
 
@@ -74,39 +54,18 @@ class ModuleUnitTest(BaseTest):
     FILES = []
 
     DATABASE_NAMES = {
-        "production": "avalon_tests",
-        "settings": "openpype_tests"
+        "production": {
+            "name": "avalon_tests",
+            "collections": [PROJECT_NAME]
+        },
+        "settings": {
+            "name": "openpype_tests",
+            "collections": ["logs"]
+        }
     }
 
-    #needs testing
-    @classmethod
-    def setup_database(cls, backup_directory, openpype_mongo, suffix):
-        database_handler = DataBaseHandler(openpype_mongo)
-
-        database_handler.setup_from_dump(
-            cls.DATABASE_NAMES["production"],
-            backup_directory,
-            "_" + suffix,
-            overwrite=True,
-            database_name_out=cls.DATABASE_NAMES["production"]
-        )
-        database_handler.setup_from_dump(
-            cls.DATABASE_NAMES["settings"],
-            backup_directory,
-            "_" + suffix,
-            overwrite=True,
-            database_name_out=cls.DATABASE_NAMES["settings"]
-        )
-
-        return database_handler
-
-    #needs testing
-    @classmethod
-    def get_database_sufficed(cls, suffix):
-        result = {}
-        for key, value in cls.DATABASE_NAMES.items():
-            result[key] = "{}_{}".format(value, suffix)
-        return result
+    def get_backup_directory(self, data_folder):
+        return os.path.join(data_folder, "input", "dumps")
 
     #needs testing
     @classmethod
@@ -137,24 +96,40 @@ class ModuleUnitTest(BaseTest):
             shutil.rmtree(output_folder)
 
         database_handler = DataBaseHandler(openpype_mongo)
-        backup_directory = cls.INPUT_DUMPS or get_backup_directory(data_folder)
+        backup_directory = (
+            cls.INPUT_DUMPS or cls.get_backup_directory(data_folder)
+        )
 
-        database_handler.setup_from_dump(
-            cls.DATABASE_NAMES["production"],
-            backup_directory,
-            "_" + app_variant,
-            overwrite=True,
-            database_name_out=cls.DATABASE_NAMES["production"]
-        )
-        database_handler.setup_from_dump(
-            cls.DATABASE_NAMES["settings"],
-            backup_directory,
-            "_" + app_variant,
-            overwrite=True,
-            database_name_out=cls.DATABASE_NAMES["settings"]
-        )
+        for _, data in cls.DATABASE_NAMES.items():
+            database_handler.setup_from_dump(
+                data["name"],
+                backup_directory,
+                "_" + app_variant,
+                overwrite=True,
+                database_name_out=data["name"]
+            )
 
         return data_folder, output_folder, database_handler
+
+    #needs testing
+    @classmethod
+    def dump_databases(cls, data_folder, openpype_mongo, app_variant):
+        database_handler = DataBaseHandler(openpype_mongo)
+        dumps_folder = (
+            cls.INPUT_DUMPS or
+            os.path.join(
+                cls.get_backup_directory(data_folder), "inputs", "dumps"
+            )
+        )
+        for _, data in cls.DATABASE_NAMES.items():
+            for collection in data["collections"]:
+                database_handler.backup_to_dump(
+                    "{}_{}".format(data["name"], app_variant),
+                    os.path.join(dumps_folder, data["name"]),
+                    collection=collection,
+                    json=True,
+                    filename="{}.{}.json".format(data["name"], collection)
+                )
 
     @pytest.fixture(scope="module")
     def setup_fixture(
@@ -220,9 +195,9 @@ class ModuleUnitTest(BaseTest):
                     attributes[attribute] = value
 
         # Module attributes.
-        database_names = self.get_database_sufficed(app_variant)
-        attributes["DATABASE_PRODUCTION_NAME"] = database_names["production"]
-        attributes["DATABASE_SETTINGS_NAME"] = database_names["settings"]
+        for database_type, data in self.DATABASE_NAMES.items():
+            attr = "DATABASE_{}_NAME".format(database_type.upper())
+            attributes[attr] = "{}_{}".format(data["name"], app_variant)
 
         if not os.path.exists(input_environment_json):
             raise ValueError(
@@ -263,7 +238,7 @@ class ModuleUnitTest(BaseTest):
     def database_dumps(self, setup_fixture):
         path = (
             self.INPUT_DUMPS or
-            get_backup_directory(setup_fixture)
+            self.get_backup_directory(setup_fixture)
         )
         yield path
 

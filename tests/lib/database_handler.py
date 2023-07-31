@@ -182,7 +182,8 @@ class DataBaseHandler:
         dump_dir,
         overwrite=False,
         collection=None,
-        json=False
+        json=False,
+        filename=None
     ):
         """
             Helper method for running mongodump for specific 'database_name'
@@ -202,7 +203,8 @@ class DataBaseHandler:
                 self.uri,
                 dump_dir,
                 database_name=database_name,
-                collection=collection
+                collection=collection,
+                filename=filename
             )
         else:
             query = self._dump_query(
@@ -222,7 +224,8 @@ class DataBaseHandler:
         uri,
         output_path,
         database_name=None,
-        collection=None
+        collection=None,
+        filename=None
     ):
         """Prepares dump query based on 'database_name' or 'collection'."""
         database_part = coll_part = ""
@@ -232,7 +235,10 @@ class DataBaseHandler:
             if not database_name:
                 raise ValueError("database_name must be present")
             coll_part = "--collection={}".format(collection)
-        filename = "{}.{}.json".format(database_name, collection)
+
+        if not filename:
+            filename = "{}.{}.json".format(database_name, collection)
+
         query = (
             "mongoexport --uri=\"{}\" --jsonArray --pretty"
             " --out={} {} {}".format(

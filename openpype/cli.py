@@ -324,9 +324,10 @@ def run(script):
 @click.option("--class_name",
               help="Specific test class to setup.",
               multiple=True)
-@click.option("--dump_database",
-              help="Dump database url to data folder.",
-              multiple=True)
+@click.option("--dump_databases",
+              help="Dump all databases to data folder.",
+              is_flag=True,
+              default=False)
 def runtests(
     folder,
     mark,
@@ -340,7 +341,7 @@ def runtests(
     timeout,
     setup_only,
     class_name,
-    dump_database
+    dump_databases
 ):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(
@@ -356,7 +357,7 @@ def runtests(
         timeout,
         setup_only,
         class_name,
-        dump_database
+        dump_databases
     )
 
 

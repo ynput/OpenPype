@@ -45,8 +45,8 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--dump_database", action="store_true", default=None,
-        help="Dump database to data folder."
+        "--dump_databases", action="store_true", default=None,
+        help="Dump databases to data folder."
     )
 
 
@@ -93,8 +93,8 @@ def setup_only(request):
 
 
 @pytest.fixture(scope="module")
-def dump_database(request):
-    return request.config.getoption("--dump_database")
+def dump_databases(request):
+    return request.config.getoption("--dump_databases")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -132,6 +132,25 @@ def pytest_generate_tests(metafunc):
         )
         for app_variant in app_variants:
             metafunc.cls.setup_only(
+                metafunc.config.getoption("data_folder"),
+                openpype_mongo,
+                app_variant
+            )
+        metafunc.parametrize("conf", pytest.skip("Setup only."))
+
+    # Run dump_databases class method and skip testing.
+    if metafunc.config.getoption("dump_databases"):
+        app_variants = metafunc.cls.app_variants(
+            metafunc.cls,
+            metafunc.config.getoption("app_group"),
+            metafunc.config.getoption("app_variant")
+        )
+        openpype_mongo = (
+            metafunc.config.getoption("openpype_mongo") or
+            metafunc.cls.OPENPYPE_MONGO
+        )
+        for app_variant in app_variants:
+            metafunc.cls.dump_databases(
                 metafunc.config.getoption("data_folder"),
                 openpype_mongo,
                 app_variant
