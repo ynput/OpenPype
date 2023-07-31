@@ -210,7 +210,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         files = instance.data.get("expectedFiles")
         if not files:
-            raise RuntimeError("No render elements found")
+            raise KnownPublishError("No render elements found")
         first_file = next(self._iter_expected_files(files))
         old_output_dir = os.path.dirname(first_file)
         output_beauty = RenderSettings().get_render_output(instance.name,
@@ -298,7 +298,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         files = instance.data.get("expectedFiles")
         if not files:
-            raise RuntimeError("No render elements found")
+            raise KnownPublishError("No render elements found")
         first_file = next(self._iter_expected_files(files))
         old_output_dir = os.path.dirname(first_file)
         rgb_output = RenderSettings().get_batch_render_output(camera)       # noqa
