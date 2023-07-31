@@ -158,19 +158,20 @@
         "enabled": false,
         "sites": {}
     },
-    "deadline": {
-        "enabled": true,
-        "deadline_urls": {
-            "default":"http://127.0.0.1:8082"
-        },
-        "deadline_paths": {
-            "default": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
+    "deadline": [
+        {
+            "default":{
+                "enabled": true,
+                "deadline_urls": "http://127.0.0.1:8082",
+                "deadline_paths": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
             }
         }
-    },
+    ],
     "muster": {
         "enabled": false,
         "MUSTER_REST_URL": "http://127.0.0.1:9890",

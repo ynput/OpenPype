@@ -49,6 +49,7 @@ class ListEntity(EndpointEntity):
         return False
 
     def __getitem__(self, idx):
+        print("ListEntity.__getitem__ : ", idx)
         if not isinstance(idx, int):
             idx = int(idx)
         return self.children[idx]

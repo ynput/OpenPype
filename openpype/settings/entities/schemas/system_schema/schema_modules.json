@@ -186,37 +186,40 @@
             ]
         },
         {
-            "type": "dict",
+            "type": "list",
             "key": "deadline",
             "label": "Deadline",
-            "require_restart": true,
-            "collapsible": true,
+            "is_group": true,
+            "use_label_wrap": true,
             "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "dict-modifiable",
-                    "key": "deadline_urls",
-                    "label": "Deadline Webservice URLs",
-                    "object_type": "text",
-                    "required_keys": ["default"]
-
-                },
-                {
-                    "type": "dict-modifiable",
-                    "key": "deadline_paths",
-                    "required_keys": ["default"],
-                    "label": "Deadline Paths",
-                    "object_type": {
+            "required_keys": ["default"],
+            "object_type":{
+                "type": "dict",
+                "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "type": "text",
+                        "key": "deadline_urls",
+                        "label": "Deadline Webservice URLs"
+                    },
+                    {
                         "type": "path",
+                        "key": "deadline_paths",
+                        "label": "Deadline Paths",
+                        "multipath": true,
                         "multiplatform": true
+                    },
+                    {
+                        "type":"raw-json",
+                        "key": "environment",
+                        "label": "Environment"
                     }
-                }
-            ]
+                ]
+            }
         },
         {
             "type": "dict",

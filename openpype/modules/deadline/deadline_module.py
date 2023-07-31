@@ -23,12 +23,13 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
     def initialize(self, modules_settings):
         # This module is always enabled
         deadline_settings = modules_settings[self.name]
-        self.enabled = deadline_settings["enabled"]
-        deadline_url = deadline_settings.get("DEADLINE_REST_URL")
+        self.enabled = deadline_settings[0]['enabled']
+        deadline_url = deadline_settings[0].get("DEADLINE_REST_URL")
+
         if deadline_url:
             self.deadline_urls = {"default": deadline_url}
         else:
-            self.deadline_urls = deadline_settings.get("deadline_urls")  # noqa: E501
+            self.deadline_urls = deadline_settings[0].get("deadline_urls")  # noqa: E501
 
         if not self.deadline_urls:
             self.enabled = False
@@ -40,7 +41,8 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         """Deadline plugin paths."""
         current_dir = os.path.dirname(os.path.abspath(__file__))
         return {
-            "publish": [os.path.join(current_dir, "plugins", "publish")]
+            "publish": [os.path.join(current_dir, "plugins", "publish")],
+            "actions": [os.path.join(current_dir, "actions")],
         }
 
     @staticmethod
