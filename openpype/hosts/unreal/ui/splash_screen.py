@@ -1,6 +1,5 @@
 from qtpy import QtWidgets, QtCore, QtGui
 from openpype import style, resources
-from igniter.nice_progress_bar import NiceProgressBar
 
 
 class SplashScreen(QtWidgets.QDialog):
@@ -143,7 +142,7 @@ class SplashScreen(QtWidgets.QDialog):
         button_layout.addWidget(self.close_btn)
 
         # Progress Bar
-        self.progress_bar = NiceProgressBar()
+        self.progress_bar = QtWidgets.QProgressBar()
         self.progress_bar.setValue(0)
         self.progress_bar.setAlignment(QtCore.Qt.AlignTop)
 
