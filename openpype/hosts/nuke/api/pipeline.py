@@ -2,7 +2,7 @@ import nuke
 
 import os
 import importlib
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import pyblish.api
 
@@ -537,7 +537,8 @@ def list_instances(creator_id=None):
     Returns:
         (list) of dictionaries matching instances format
     """
-    listed_instances = []
+    instances_by_order = defaultdict(list)
+    subset_instances = []
     for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
@@ -563,9 +564,29 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
-        listed_instances.append((node, instance_data))
+        if "render_order" not in node.knobs():
+            subset_instances.append((node, instance_data))
+            continue
 
-    return listed_instances
+        order = int(node["render_order"].value())
+        instances_by_order[order].append((node, instance_data))
+
+    # Sort instances based on order attribute or subset name.
+    ordered_instances = []
+    for key in sorted(instances_by_order.keys()):
+        instances_by_subset = {}
+        for node, data in instances_by_order[key]:
+            instances_by_subset[data["subset"]] = (node, data)
+        for subkey in sorted(instances_by_subset.keys()):
+            ordered_instances.append(instances_by_subset[subkey])
+
+    instances_by_subset = {}
+    for node, data in subset_instances:
+        instances_by_subset[data["subset"]] = (node, data)
+    for key in sorted(instances_by_subset.keys()):
+        ordered_instances.append(instances_by_subset[key])
+
+    return ordered_instances
 
 
 def remove_instance(instance):
