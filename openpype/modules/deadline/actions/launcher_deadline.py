@@ -10,7 +10,6 @@ from openpype.settings import (
     get_system_settings,
     get_general_environments
 )
-
 class LaunchDeadline(LauncherAction):
     name = "launchdeadline"
     label = "Launch Deadline"
@@ -30,18 +29,18 @@ class LaunchDeadline(LauncherAction):
 
     def process(self, session, **kwargs):
         print("Launching Deadline")
-        # # Get deadline settings
-        # deadline_settings = get_system_settings()["modules"]["deadline"]
-        # env_variables = deadline_settings[0]["environment"]
-        # deadline_paths = deadline_settings[0]["deadline_paths"]
-        # deadline_urls = deadline_settings[0]["deadline_urls"]
-        # print(deadline_urls)
+        # Get deadline settings
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        env_variables = deadline_settings[0]["environment"]
+        deadline_paths = deadline_settings[0]["deadline_paths"]
+        deadline_urls = deadline_settings[0]["deadline_urls"]
+        print(deadline_urls)
 
-        # merge_envs = acre.merge(env_variables, os.environ)
-        # parsed_env_variables = acre.compute(merge_envs, cleanup=False)
+        merge_envs = acre.merge(env_variables, os.environ)
+        parsed_env_variables = acre.compute(merge_envs, cleanup=False)
 
-        # for key, value in parsed_env_variables.items():
-        #     os.environ[key] = value
+        for key, value in parsed_env_variables.items():
+            os.environ[key] = value
 
-        # # Call the method to open the app
-        # process = subprocess.Popen(["xterm", "-e", deadline_paths["linux"][0]])
+        # Call the method to open the app
+        process = subprocess.Popen(["xterm", "-e", deadline_paths["linux"][0]])
