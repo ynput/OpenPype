@@ -10,12 +10,13 @@ import hou
 
 class ExtractRedshiftProxy(publish.Extractor):
 
+    # Usually you will use this value as default
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract FilmBox FBX"
     families = ["filmboxfbx"]
     hosts = ["houdini"]
 
-    # overrides InstancePlugin.process()
+    # overrides Extractor.process()
     def process(self, instance):
 
         ropnode = hou.node(instance.data.get("instance_node"))

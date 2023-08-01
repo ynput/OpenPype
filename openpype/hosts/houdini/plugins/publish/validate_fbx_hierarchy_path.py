@@ -40,7 +40,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     by default.
     """
 
-    # Usually you will this value by default
+    # Usually you will use this value as default
     order = ValidateContentsOrder + 0.1
     families = ["filmboxfbx"]
     hosts = ["houdini"]

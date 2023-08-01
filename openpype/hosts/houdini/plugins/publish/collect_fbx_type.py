@@ -12,6 +12,7 @@ import pyblish.api
 class CollectFilmboxfbxType(pyblish.api.InstancePlugin):
     """Collect data type for filmboxfbx instance."""
 
+    # Usually you will use this value as default
     order = pyblish.api.CollectorOrder
     hosts = ["houdini"]
     families = ["filmboxfbx"]
