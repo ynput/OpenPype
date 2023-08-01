@@ -303,7 +303,6 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
 
-
     for key, value in default_settings.items():
         if key not in output:
             output[key] = value
