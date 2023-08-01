@@ -15,7 +15,9 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.menu import OpenPypeMenu
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.plugin import MS_CUSTOM_ATTRIB
 from openpype.hosts.max import MAX_HOST_DIR
+
 
 from pymxs import runtime as rt  # noqa
 
@@ -170,3 +172,26 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     if not lib.imprint(container_name, data):
         print(f"imprinting of {container_name} failed.")
     return container
+
+
+def load_OpenpypeData(container, loaded_nodes):
+    """Function to load the OpenpypeData Parameter along with
+    the published objects
+
+    Args:
+        container (str): target container to set up
+            the custom attributes
+        loaded_nodes (list): list of nodes to be loaded
+    """
+    attrs = rt.Execute(MS_CUSTOM_ATTRIB)
+    if rt.custAttributes.get(container.baseObject, attrs):
+        rt.custAttributes.delete(container.baseObject, attrs)
+    rt.custAttributes.add(container.baseObject, attrs)
+    node_list = []
+    for i in loaded_nodes:
+        node_ref = rt.NodeTransformMonitor(node=i)
+        node_list.append(node_ref)
+
+    # Setting the property
+    rt.setProperty(
+        container.openPypeData, "all_handles", node_list)

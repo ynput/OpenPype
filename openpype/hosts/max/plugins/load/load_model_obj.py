@@ -2,7 +2,7 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 from openpype.pipeline import get_representation_path, load
 
 
@@ -25,9 +25,10 @@ class ObjLoader(load.LoaderPlugin):
         # create "missing" container for obj import
         container = rt.Container()
         container.name = name
-
+        selections = rt.GetCurrentSelection()
+        load_OpenpypeData(container, selections)
         # get current selection
-        for selection in rt.GetCurrentSelection():
+        for selection in selections:
             selection.Parent = container
 
         asset = rt.GetNodeByName(name)
@@ -49,9 +50,10 @@ class ObjLoader(load.LoaderPlugin):
 
         rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
         # get current selection
-        for selection in rt.GetCurrentSelection():
+        selections = rt.GetCurrentSelection()
+        for selection in selections:
             selection.Parent = container
-
+        load_OpenpypeData(container, container.Children)
         with maintained_selection():
             rt.Select(node)
 

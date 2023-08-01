@@ -7,7 +7,7 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -48,10 +48,14 @@ class AbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-
-        for abc in rt.GetCurrentSelection():
+        selections = rt.GetCurrentSelection()
+        abc_selections = [abc for abc in selections
+                          if abc.name != "Alembic"]
+        load_OpenpypeData(abc_container, abc_selections)
+        for abc in selections:
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
+
 
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
@@ -71,7 +75,7 @@ class AbcLoader(load.LoaderPlugin):
             container["instance_node"],
             {"representation": str(representation["_id"])},
         )
-
+        nodes_list = []
         with maintained_selection():
             rt.Select(node.Children)
 
@@ -85,6 +89,9 @@ class AbcLoader(load.LoaderPlugin):
                     for abc_obj in rt.Selection:
                         alembic_obj = rt.GetNodeByName(abc_obj.name)
                         alembic_obj.source = path
+                        nodes_list.append(alembic_obj)
+        abc_selections = [abc for abc in nodes_list if abc.name != "Alembic"]
+        load_OpenpypeData(node, abc_selections)
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -1,7 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 from openpype.pipeline import get_representation_path, load
 
 
@@ -32,8 +32,9 @@ class FbxLoader(load.LoaderPlugin):
         if not container:
             container = rt.Container()
             container.name = f"{name}"
-
-        for selection in rt.GetCurrentSelection():
+        selections = rt.GetCurrentSelection()
+        load_OpenpypeData(container, selections)
+        for selection in selections:
             selection.Parent = container
 
         return containerise(
@@ -45,18 +46,13 @@ class FbxLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
         rt.Select(node.Children)
-        fbx_reimport_cmd = (
-            f"""
-
-FBXImporterSetParam "Animation" true
-FBXImporterSetParam "Cameras" true
-FBXImporterSetParam "AxisConversionMethod" true
-FbxExporterSetParam "UpAxis" "Y"
-FbxExporterSetParam "Preserveinstances" true
-
-importFile @"{path}" #noPrompt using:FBXIMP
-        """)
-        rt.Execute(fbx_reimport_cmd)
+        rt.FBXImporterSetParam("Animation", True)
+        rt.FBXImporterSetParam("Camera", True)
+        rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.ImportFile(
+            path, rt.name("noPrompt"), using=rt.FBXIMP)
+        load_OpenpypeData(node, node.Children)
 
         with maintained_selection():
             rt.Select(node)

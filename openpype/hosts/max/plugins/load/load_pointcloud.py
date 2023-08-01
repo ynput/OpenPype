@@ -1,7 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 from openpype.pipeline import get_representation_path, load
 
 
@@ -21,8 +21,11 @@ class PointCloudLoader(load.LoaderPlugin):
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
-
         prt_container = rt.GetNodeByName(obj.name)
+        prt_container = rt.container()
+        prt_container.name = name
+        obj.Parent = prt_container
+        load_OpenpypeData(prt_container, [obj])
 
         return containerise(
             name, [prt_container], context, loader=self.__class__.__name__)
@@ -38,10 +41,10 @@ class PointCloudLoader(load.LoaderPlugin):
             for prt in rt.Selection:
                 prt_object = rt.GetNodeByName(prt.name)
                 prt_object.filename = path
-
-            lib.imprint(container["instance_node"], {
-                "representation": str(representation["_id"])
-            })
+        load_OpenpypeData(node, node.Children)
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -1,6 +1,6 @@
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
 
@@ -45,7 +45,10 @@ class ModelAbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-
+        selections = rt.GetCurrentSelection()
+        abc_selections = [abc for abc in selections
+                          if abc.name != "Alembic"]
+        load_OpenpypeData(abc_container, abc_selections)
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
         )
@@ -57,6 +60,10 @@ class ModelAbcLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(container["instance_node"])
         rt.Select(node.Children)
 
+        nodes_list = []
+        with maintained_selection():
+            rt.Select(node)
+
         for alembic in rt.Selection:
             abc = rt.GetNodeByName(alembic.name)
             rt.Select(abc.Children)
@@ -67,9 +74,10 @@ class ModelAbcLoader(load.LoaderPlugin):
                 for abc_obj in rt.Selection:
                     alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path
-
-        with maintained_selection():
-            rt.Select(node)
+                    nodes_list.append(alembic_obj)
+        abc_selections = [abc for abc in nodes_list
+                          if abc.name != "Alembic"]
+        load_OpenpypeData(node, abc_selections)
 
         lib.imprint(
             container["instance_node"],

@@ -1,6 +1,6 @@
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
 
@@ -28,7 +28,10 @@ class FbxModelLoader(load.LoaderPlugin):
             container = rt.Container()
             container.name = name
 
-        for selection in rt.GetCurrentSelection():
+        selections = rt.GetCurrentSelection()
+        load_OpenpypeData(container, selections)
+
+        for selection in selections:
             selection.Parent = container
 
         return containerise(
@@ -47,7 +50,7 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("UpAxis", "Y")
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
-
+        load_OpenpypeData(container, node.Children)
         with maintained_selection():
             rt.Select(node)
 
