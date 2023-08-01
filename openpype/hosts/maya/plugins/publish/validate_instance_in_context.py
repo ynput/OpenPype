@@ -3,7 +3,9 @@
 from __future__ import absolute_import
 
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder, PublishValidationError
+)
 
 from maya import cmds
 
@@ -108,4 +110,5 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
         msg = "{} has asset {}".format(instance.name, asset)
-        assert asset == context_asset, msg
+        if asset != context_asset:
+            raise PublishValidationError(msg)

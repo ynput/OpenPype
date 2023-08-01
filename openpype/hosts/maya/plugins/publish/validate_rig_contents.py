@@ -1,7 +1,8 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateRigContents(pyblish.api.InstancePlugin):
@@ -31,8 +32,9 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         # in the rig instance
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
-            raise RuntimeError("No dag nodes in the pointcache instance. "
-                               "(Empty instance?)")
+            raise PublishValidationError(
+                ("No dag nodes in the pointcache instance. "
+                 "(Empty instance?)"))
 
         # Ensure contents in sets and retrieve long path for all objects
         output_content = cmds.sets("out_SET", query=True) or []
@@ -79,7 +81,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             error = True
 
         if error:
-            raise RuntimeError("Invalid rig content. See log for details.")
+            raise PublishValidationError(
+                "Invalid rig content. See log for details.")
 
     def validate_geometry(self, set_members):
         """Check if the out set passes the validations

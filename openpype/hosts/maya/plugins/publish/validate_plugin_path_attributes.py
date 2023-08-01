@@ -4,7 +4,10 @@ from maya import cmds
 
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
@@ -48,5 +51,5 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
         """Process all directories Set as Filenames in Non-Maya Nodes"""
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Non-existent Path "
+            raise PublishValidationError("Non-existent Path "
                                "found: {0}".format(invalid))

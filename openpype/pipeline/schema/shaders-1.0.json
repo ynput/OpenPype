@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:shaders-1.0",
+    "description": "Relationships between shaders and Avalon IDs",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "shader"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string"
+        },
+        "shader": {
+            "description": "Name of directory",
+            "type": "array",
+            "items": {
+                "type": "str",
+                "description": "Avalon ID and optional face indexes, e.g. 'f9520572-ac1d-11e6-b39e-3085a99791c9.f[5002:5185]'"
+            }
+        }
+    },
+
+    "definitions": {}
+}

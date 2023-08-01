@@ -7,14 +7,14 @@ from qtpy import QtWidgets
 
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     get_representation_path,
 )
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 from openpype.widgets.message_window import ScrollMessageBox
 
-from openpype.hosts.maya.api.plugin import get_reference_node
+from openpype.hosts.maya.api.lib import get_reference_node
 
 
 class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -32,8 +32,10 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         from maya import cmds
 
         with lib.maintained_selection():
-            file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["name"])
+            file_url = self.prepare_root_value(
+                file_url=self.filepath_from_context(context),
+                project_name=context["project"]["name"]
+            )
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
@@ -76,7 +78,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         shader_nodes = cmds.ls(members, type='shadingEngine')
         nodes = set(self._get_nodes_with_shader(shader_nodes))
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         json_representation = get_representation_by_name(
             project_name, "json", representation["parent"]
         )

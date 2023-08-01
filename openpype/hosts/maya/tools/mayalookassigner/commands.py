@@ -1,14 +1,14 @@
-from collections import defaultdict
-import logging
 import os
+import logging
+from collections import defaultdict
 
 import maya.cmds as cmds
 
-from openpype.client import get_asset_by_id
+from openpype.client import get_assets
 from openpype.pipeline import (
-    legacy_io,
     remove_container,
     registered_host,
+    get_current_project_name,
 )
 from openpype.hosts.maya.api import lib
 
@@ -126,18 +126,24 @@ def create_items_from_nodes(nodes):
         log.warning("No id hashes")
         return asset_view_items
 
-    project_name = legacy_io.active_project()
-    for _id, id_nodes in id_hashes.items():
-        asset = get_asset_by_id(project_name, _id, fields=["name"])
+    project_name = get_current_project_name()
+    asset_ids = set(id_hashes.keys())
+    asset_docs = get_assets(project_name, asset_ids, fields=["name"])
+    asset_docs_by_id = {
+        str(asset_doc["_id"]): asset_doc
+        for asset_doc in asset_docs
+    }
 
+    for asset_id, id_nodes in id_hashes.items():
+        asset_doc = asset_docs_by_id.get(asset_id)
         # Skip if asset id is not found
-        if not asset:
+        if not asset_doc:
             log.warning("Id not found in the database, skipping '%s'." % _id)
             log.warning("Nodes: %s" % id_nodes)
             continue
 
         # Collect available look subsets for this asset
-        looks = lib.list_looks(asset["_id"])
+        looks = lib.list_looks(project_name, asset_doc["_id"])
 
         # Collect namespaces the asset is found in
         namespaces = set()
@@ -146,8 +152,8 @@ def create_items_from_nodes(nodes):
             namespaces.add(namespace)
 
         asset_view_items.append({
-            "label": asset["name"],
-            "asset": asset,
+            "label": asset_doc["name"],
+            "asset": asset_doc,
             "looks": looks,
             "namespaces": namespaces
         })

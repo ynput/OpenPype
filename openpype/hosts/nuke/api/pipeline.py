@@ -2,7 +2,7 @@ import nuke
 
 import os
 import importlib
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import pyblish.api
 
@@ -20,6 +20,8 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_inventory_action_path,
     AVALON_CONTAINER_ID,
+    get_current_asset_name,
+    get_current_task_name,
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
@@ -211,6 +213,13 @@ def _show_workfiles():
     host_tools.show_workfiles(parent=None, on_top=False)
 
 
+def get_context_label():
+    return "{0}, {1}".format(
+        get_current_asset_name(),
+        get_current_task_name()
+    )
+
+
 def _install_menu():
     """Install Avalon menu into Nuke's main menu bar."""
 
@@ -220,9 +229,7 @@ def _install_menu():
     menu = menubar.addMenu(MENU_LABEL)
 
     if not ASSIST:
-        label = "{0}, {1}".format(
-            os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
-        )
+        label = get_context_label()
         Context.context_label = label
         context_action = menu.addCommand(label)
         context_action.setEnabled(False)
@@ -338,9 +345,7 @@ def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 
-    label = "{0}, {1}".format(
-        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
-    )
+    label = get_context_label()
 
     rm_item = [
         (i, item) for i, item in enumerate(menu.items())
@@ -532,7 +537,8 @@ def list_instances(creator_id=None):
     Returns:
         (list) of dictionaries matching instances format
     """
-    listed_instances = []
+    instances_by_order = defaultdict(list)
+    subset_instances = []
     for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
@@ -558,9 +564,29 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
-        listed_instances.append((node, instance_data))
+        if "render_order" not in node.knobs():
+            subset_instances.append((node, instance_data))
+            continue
 
-    return listed_instances
+        order = int(node["render_order"].value())
+        instances_by_order[order].append((node, instance_data))
+
+    # Sort instances based on order attribute or subset name.
+    ordered_instances = []
+    for key in sorted(instances_by_order.keys()):
+        instances_by_subset = {}
+        for node, data in instances_by_order[key]:
+            instances_by_subset[data["subset"]] = (node, data)
+        for subkey in sorted(instances_by_subset.keys()):
+            ordered_instances.append(instances_by_subset[subkey])
+
+    instances_by_subset = {}
+    for node, data in subset_instances:
+        instances_by_subset[data["subset"]] = (node, data)
+    for key in sorted(instances_by_subset.keys()):
+        ordered_instances.append(instances_by_subset[key])
+
+    return ordered_instances
 
 
 def remove_instance(instance):
