@@ -17,22 +17,16 @@ import bpy.utils.previews
 
 from openpype import style
 from openpype.pipeline import get_current_asset_name, get_current_task_name
-from openpype.client.entities import (
-    match_subset_id,
-    get_representation_by_task,
-)
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.tools.utils import host_tools
 from openpype.modules.base import ModulesManager
 from .lib import download_last_workfile
-from .workio import OpenFileCacher
 from . import pipeline
 from openpype.tools.utils.lib import qt_app_context
 from .workio import (
     OpenFileCacher,
     check_workfile_up_to_date,
 )
-from .lib import download_last_workfile
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
