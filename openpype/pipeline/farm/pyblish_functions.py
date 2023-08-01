@@ -268,8 +268,8 @@ def create_skeleton_instance(
     instance_skeleton_data["representations"] = []
     instance_skeleton_data["representations"] += representations
 
-    if instance.data.get("stagingDir_persistent"):
-        instance_skeleton_data["stagingDir_persistent"] = True
+    persistent = instance.data.get("stagingDir_persistent") is True
+    instance_skeleton_data["stagingDir_persistent"] = persistent
 
     return instance_skeleton_data
 
