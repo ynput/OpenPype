@@ -70,7 +70,50 @@ class CreateProjectFolders(BaseAction):
 
         return True
 
+    def interface(self, session, entities, event):
+        if event['data'].get('values', {}):
+            return
+
+        self.log.info("interface")
+
+        title = "Create project structure"
+        items = [
+            {
+                "type": "boolean",
+                "name": "create_folder_structure",
+                "label": "Create Folders",
+                "value": True
+            },
+            {
+                "type": "boolean",
+                "name": "create_ftrack_structure",
+                "label": "Create On Ftrack",
+                "value": True
+            }
+        ]
+
+        return {
+            "items": items,
+            "title": title
+        }
+
     def launch(self, session, entities, event):
+        in_data = event["data"].get("values")
+        if not in_data:
+            return {
+                "success": False,
+                "message": "No data received.",
+                "type": "message"
+            }
+
+        if not in_data.get("create_folder_structure") and \
+                not in_data.get("create_ftrack_structure"):
+            return {
+                "success": False,
+                "message": "Nothing to do.",
+                "type": "message"
+            }
+
         # Get project entity
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
@@ -83,9 +126,11 @@ class CreateProjectFolders(BaseAction):
                     "message": "Project structure is not set."
                 }
 
-            # Invoking OpenPype API to create the project folders
-            create_project_folders(project_name, basic_paths)
-            self.create_ftrack_entities(basic_paths, project_entity)
+            if in_data.get("create_folder_structure"):
+                # Invoking OpenPype API to create the project folders
+                create_project_folders(project_name, basic_paths)
+            if in_data.get("create_ftrack_structure"):
+                self.create_ftrack_entities(basic_paths, project_entity)
 
             self.trigger_event(
                 "openpype.project.structure.created",
