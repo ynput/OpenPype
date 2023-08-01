@@ -25,7 +25,7 @@ class MayaFixtures(HostFixtures):
 
     def get_usersetup_path(self):
         return os.path.join(
-            os.path.dirname(__file__), "startup", "userSetup.py"
+            os.path.dirname(__file__), "input", "startup", "userSetup.py"
         )
 
     def get_log_path(self, dirpath, app_variant):
