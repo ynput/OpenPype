@@ -17,6 +17,7 @@ class CollectFilmboxfbxType(pyblish.api.InstancePlugin):
     families = ["filmboxfbx"]
     label = "Collect type of filmboxfbx"
 
+    # overrides InstancePlugin.process()
     def process(self, instance):
 
         if instance.data["creator_identifier"] == "io.openpype.creators.houdini.filmboxfbx":  # noqa: E501

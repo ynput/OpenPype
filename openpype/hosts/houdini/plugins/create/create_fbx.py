@@ -2,7 +2,14 @@
 """Creator plugin for creating fbx.
 
 It was made to pratice publish process.
+
+Filmbox by default expects an ObjNode
+it's by default selects the output sop with mimimum idx
+or the node with render flag isntead.
+
+to eleminate any confusion, we set the sop node explictly.
 """
+
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef
 
@@ -16,8 +23,8 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
     family = "filmboxfbx"
     icon = "fa5s.cubes"
 
-    default_variant = "FBX"
-    default_variants = ["FBX", "Main", "Test"]
+    default_variant = "Main"
+    default_variants = ["Main", "Test"]
 
     # Overrides HoudiniCreator.create()
     def create(self, subset_name, instance_data, pre_create_data):
