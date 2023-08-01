@@ -483,8 +483,6 @@ def inject_ayon_environment(deadlinePlugin):
                 " AVALON_TASK, AVALON_APP_NAME"
             ))
 
-        os.environ["AVALON_TIMEOUT"] = "5000"
-
         environment = {
             "AYON_SERVER_URL": ayon_server_url,
             "AYON_API_KEY": ayon_api_key,
