@@ -22,16 +22,19 @@ from openpype.hosts.nuke.api.lib import (
 from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
-
-knobMatrix = { 'exr': ['colorspace', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
+# dict mapping extension to list of exposed parameters from write node to top level group node
+knobMatrix = { 'exr': ['colorspace', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
                 'png': ['colorspace', 'datatype'],
+                'dpx': ['colorspace', 'datatype'],
                 'tiff': ['colorspace','datatype', 'compression'],
-                'mov': ['colorspace','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
+                'jpeg': ['colorspace','_jpeg_quality']
 }
+#list of key-value tuples for write node knob presets based on file extension
 presets = {
-    'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all') ],
-    'png' : [ ("colorspace", 'rec709'), ('channels', 'rgba') ],
-    'jpeg' : [ ("colorspace", 'sRGB'), ('channels', 'rgb') ]
+    'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all'), ('datatype', '16 bit half') ],
+    'png' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgba'), ('datatype','16 bit') ],
+    'dpx' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgba'), ('datatype','10 bit'), ('big endian', True) ],
+    'jpeg' : [ ("colorspace", 'Output - sRGB'), ('channels', 'rgb'), ('_jpeg_quality', 1) ]
            }
 # fix ffmpeg settings on script
 
@@ -205,7 +208,6 @@ def embedOptions():
     group.addKnob(dlinewarn)
     endGroup = nuke.Tab_Knob('endpipeline', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
-
 
 nuke.addKnobChanged(switchExtension, nodeClass='Write')
 nuke.addKnobChanged(embedOptions, nodeClass='Write')
