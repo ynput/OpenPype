@@ -6,6 +6,7 @@ from .version import __version__
 
 class AfterEffects(BaseServerAddon):
     name = "aftereffects"
+    title = "AfterEffects"
     version = __version__
 
     settings_model = AfterEffectsSettings

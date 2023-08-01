@@ -6,6 +6,7 @@ from .version import __version__
 
 class Harmony(BaseServerAddon):
     name = "harmony"
+    title = "Harmony"
     version = __version__
 
     settings_model = HarmonySettings

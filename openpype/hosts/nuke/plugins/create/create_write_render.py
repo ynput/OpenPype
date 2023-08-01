@@ -39,6 +39,10 @@ class CreateWriteRender(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
+        linked_knobs_ = [
+            "channels", "___", "first", "last", "use_limit", "render_order"
+        ]
+
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
@@ -61,6 +65,7 @@ class CreateWriteRender(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
+            linked_knobs=linked_knobs_,
             **{
                 "width": width,
                 "height": height

@@ -1,5 +1,5 @@
 from openpype.hosts.houdini.api import plugin
-from openpype.lib import EnumDef
+from openpype.lib import EnumDef, BoolDef
 
 
 class CreateArnoldRop(plugin.HoudiniCreator):
@@ -24,7 +24,7 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         # Add chunk size attribute
         instance_data["chunkSize"] = 1
         # Submit for job publishing
-        instance_data["farm"] = True
+        instance_data["farm"] = pre_create_data.get("farm")
 
         instance = super(CreateArnoldRop, self).create(
             subset_name,
@@ -64,6 +64,9 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         ]
 
         return attrs + [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=True),
             EnumDef("image_format",
                     image_format_enum,
                     default=self.ext,
