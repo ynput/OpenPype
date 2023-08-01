@@ -29,7 +29,6 @@ from openpype.lib import (
 )
 import openpype.hosts.blender
 from openpype.settings import get_project_settings
-from .workio import current_file
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")

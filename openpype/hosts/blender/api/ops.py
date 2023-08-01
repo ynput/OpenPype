@@ -17,12 +17,10 @@ import bpy.utils.previews
 
 from openpype import style
 from openpype.pipeline import get_current_asset_name, get_current_task_name
-from openpype.pipeline import legacy_io, Anatomy
 from openpype.tools.utils import host_tools
 from openpype.modules.base import ModulesManager
 from .lib import download_last_workfile
 from . import pipeline
-from openpype.tools.utils.lib import qt_app_context
 from .workio import (
     OpenFileCacher,
     check_workfile_up_to_date,
@@ -369,6 +367,7 @@ class SetResolution(bpy.types.Operator):
         data = pipeline.get_asset_data()
         pipeline.set_resolution(data)
         return {"FINISHED"}
+
 
 class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
     """Check if the current workfile is up to date.
