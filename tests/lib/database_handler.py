@@ -143,7 +143,7 @@ class DataBaseHandler:
 
         queries = []
         if bson_files:
-            queries.apend(
+            queries.append(
                 self._restore_query(
                     self.uri,
                     dump_dir,

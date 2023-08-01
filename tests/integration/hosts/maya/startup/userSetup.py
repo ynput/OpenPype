@@ -42,10 +42,11 @@ def main():
 
         return
 
-    cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
-    cmds.evalDeferred(
-        "import pyblish.util;pyblish.util.publish()", lowestPriority=True
-    )
+    if not bool(os.environ.get("KEEP_APP_OPEN")):
+        cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
+        cmds.evalDeferred(
+            "import pyblish.util;pyblish.util.publish()", lowestPriority=True
+        )
 
     print("finished OpenPype usersetup for testing")
     if not bool(os.environ.get("KEEP_APP_OPEN")) and not MAYA_STANDALONE:

@@ -1,3 +1,8 @@
+import os
+import shutil
+
+import pytest
+
 from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.maya.lib import MayaDeadlinePublishTestClass
 
@@ -30,10 +35,6 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
             ""
         )
     ]
-
-    APP_GROUP = "maya"
-    # keep empty to locate latest installed variant or explicit
-    APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
 

@@ -1,5 +1,36 @@
 [{
 	"_id": {
+		"$oid": "60df31e2be2b48bd3695c056"
+	},
+	"name": "test_asset",
+	"type": "asset",
+	"schema": "openpype:asset-3.0",
+	"data": {
+		"parents": [],
+		"visualParent": null,
+		"tasks": {
+			"test_task": {
+				"type": "Generic"
+			}
+		},
+		"fps": 25.0,
+		"resolutionWidth": 1920,
+		"resolutionHeight": 1080,
+		"pixelAspect": 1.0,
+		"frameStart": 1001,
+		"handleStart": 0,
+		"frameEnd": 1001,
+		"clipOut": 1,
+		"clipIn": 1,
+		"tools_env": [],
+		"handleEnd": 0
+	},
+	"parent": {
+		"$oid": "60df31bcbe2b48bd3695c055"
+	}
+},
+{
+	"_id": {
 		"$oid": "60df31bcbe2b48bd3695c055"
 	},
 	"type": "project",
@@ -291,35 +322,5 @@
 			"others": {}
 		}
 	}
-},
-{
-	"_id": {
-		"$oid": "60df31e2be2b48bd3695c056"
-	},
-	"name": "test_asset",
-	"type": "asset",
-	"schema": "openpype:asset-3.0",
-	"data": {
-		"parents": [],
-		"visualParent": null,
-		"tasks": {
-			"test_task": {
-				"type": "Generic"
-			}
-		},
-		"fps": 25.0,
-		"resolutionWidth": 1920,
-		"resolutionHeight": 1080,
-		"pixelAspect": 1.0,
-		"frameStart": 1001,
-		"handleStart": 0,
-		"frameEnd": 1001,
-		"clipOut": 1,
-		"clipIn": 1,
-		"tools_env": [],
-		"handleEnd": 0
-	},
-	"parent": {
-		"$oid": "60df31bcbe2b48bd3695c055"
-	}
 }]
+

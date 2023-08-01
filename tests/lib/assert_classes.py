@@ -33,17 +33,16 @@ class DBAssert:
             detail_str = " with '{}'".format(args)
 
         if expected != no_of_docs:
-            msg = "Not expected no of '{}'{}."\
-                  "Expected {}, found {}".format(queried_type,
-                                                 detail_str,
-                                                 expected, no_of_docs)
+            msg = "{}{}".format(queried_type, detail_str)
 
         status = "successful"
         if msg:
             status = "failed"
 
-        print("Comparing count of {}{} {}".format(queried_type,
-                                                  detail_str,
-                                                  status))
+        print(
+            "Comparing count of {}{} {}".format(
+                queried_type, detail_str, status
+            )
+        )
 
         return msg

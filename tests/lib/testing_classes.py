@@ -12,7 +12,7 @@ import requests
 import re
 import subprocess
 import zipfile
-import collections
+import time
 
 from tests.lib.database_handler import DataBaseHandler
 from common.ayon_common.distribution.file_handler import RemoteFileHandler
@@ -52,6 +52,7 @@ class ModuleUnitTest(BaseTest):
     DATA_FOLDER = None
     INPUT_DUMPS = None
     INPUT_ENVIRONMENT_JSON = None
+    INPUT_WORKFILE = None
 
     FILES = []
 
@@ -95,8 +96,8 @@ class ModuleUnitTest(BaseTest):
                             if zip_name.startswith(name):
                                 zip.extract(zip_name, data_folder)
         else:
-            print("Temporary folder created: {}".format(data_folder))
             data_folder = tempfile.mkdtemp()
+            print("Temporary folder created: {}".format(data_folder))
             for test_file in cls.FILES:
                 file_id, file_name, md5 = test_file
 
@@ -119,7 +120,7 @@ class ModuleUnitTest(BaseTest):
 
         database_handler = DataBaseHandler(openpype_mongo)
         backup_directory = (
-            cls.INPUT_DUMPS or cls.get_backup_directory(data_folder)
+            cls.INPUT_DUMPS or cls.get_backup_directory(cls, data_folder)
         )
 
         for _, data in cls.DATABASE_NAMES.items():
@@ -227,7 +228,7 @@ class ModuleUnitTest(BaseTest):
                     input_environment_json
                 )
             )
-
+        print("Loading " + input_environment_json)
         env_dict = {}
         try:
             with open(input_environment_json) as json_file:
@@ -332,7 +333,7 @@ class PublishTest(ModuleUnitTest):
 
     APP_GROUP = ""
 
-    TIMEOUT = 120  # publish timeout
+    TIMEOUT = 240  # publish timeout
 
     # could be overwritten by command line arguments
     # command line value takes precedence
@@ -341,8 +342,6 @@ class PublishTest(ModuleUnitTest):
     APP_VARIANT = ""
     PERSIST = True  # True - keep test_db, test_openpype, outputted test files
     DATA_FOLDER = None  # use specific folder of unzipped test file
-
-    SETUP_ONLY = False
 
     def app_variants(self, app_group, app_variant):
         app_variants = []
@@ -544,26 +543,24 @@ class PublishTest(ModuleUnitTest):
 
         return filtered
 
-
-class DeadlinePublishTest(PublishTest):
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app, setup_fixture,
-                         timeout):
+    def deadline_finished(
+        self,
+        dbcon,
+        launched_app,
+        setup_fixture,
+        timeout,
+        publish_finished,
+        app_variant
+    ):
         """Dummy fixture waiting for publish to finish"""
-        import time
-        time_start = time.time()
-        timeout = timeout or self.TIMEOUT
-        timeout = float(timeout)
-        while launched_app.poll() is None:
-            time.sleep(0.5)
-            if time.time() - time_start > timeout:
-                launched_app.terminate()
-                raise ValueError("Timeout reached")
 
-        metadata_json = glob.glob(os.path.join(setup_fixture,
-                                               "output",
-                                               "**/*_metadata.json"),
-                                  recursive=True)
+        data_folder, _, _ = setup_fixture
+
+        metadata_json = glob.glob(
+            os.path.join(data_folder, "output_" + app_variant, "**/*_metadata.json"),
+            recursive=True
+        )
         if not metadata_json:
             raise RuntimeError("No metadata file found. No job id.")
 
@@ -587,10 +584,11 @@ class DeadlinePublishTest(PublishTest):
         valid_date_finished = None
 
         time_start = time.time()
+        timeout = timeout or self.TIMEOUT
         while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                raise ValueError("Timeout for DL finish reached")
+                raise ValueError("Timeout for Deadline finish reached")
 
             response = requests.get(url, timeout=10)
             if not response.ok:
@@ -600,18 +598,35 @@ class DeadlinePublishTest(PublishTest):
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
+            errors = []
+            resp_error = requests.get(
+                "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
+                    deadline_url, deadline_job_id
+                ),
+                timeout=10
+            )
+            errors.extend(resp_error.json())
+            for dependency in response.json()[0]["Props"]["Dep"]:
+                resp_error = requests.get(
+                    "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
+                        deadline_url, dependency["JobID"]
+                    ),
+                    timeout=10
+                )
+                errors.extend(resp_error.json())
+
+            msg = "Errors in Deadline:\n"
+            msg += "\n".join(errors)
+            assert not errors, msg
+
             # "0001-..." returned until job is finished
             valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
-
-        # some clean exit test possible?
-        print("Publish finished")
-        yield True
 
 
 class HostFixtures():
     """Host specific fixtures. Should be implemented once per host."""
     @pytest.fixture(scope="module")
-    def last_workfile_path(self, setup_fixture, output_folder):
+    def last_workfile_path(self, setup_fixture):
         """Returns url of workfile"""
         raise NotImplementedError
 

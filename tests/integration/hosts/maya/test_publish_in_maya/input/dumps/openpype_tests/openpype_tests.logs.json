@@ -1,55 +1,5 @@
 [{
 	"_id": {
-		"$oid": "60e5c1db13f8c29e6b95ab2e"
-	},
-	"timestamp": {
-		"$date": "2021-07-07T17:01:47.021Z"
-	},
-	"level": "INFO",
-	"thread": 28316,
-	"threadName": "MainThread",
-	"message": "Please sign in to Ftrack",
-	"loggerName": "FtrackModule",
-	"fileName": "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\openpype\\modules\\ftrack\\tray\\ftrack_tray.py",
-	"module": "ftrack_tray",
-	"method": "validate",
-	"lineNumber": 72,
-	"process_id": {
-		"$oid": "60e5c1d213f8c29e6b95ab2b"
-	},
-	"hostname": "LAPTOP-UB778LHG",
-	"hostip": "10.28.18.11",
-	"username": "petrk",
-	"system_name": "Windows",
-	"process_name": "Tray"
-},
-{
-	"_id": {
-		"$oid": "60e5c1db13f8c29e6b95ab2f"
-	},
-	"timestamp": {
-		"$date": "2021-07-07T17:01:47.164Z"
-	},
-	"level": "INFO",
-	"thread": 28448,
-	"threadName": "Thread-2",
-	"message": "IdleManagerThread has started",
-	"loggerName": "IdleManagerThread",
-	"fileName": "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\openpype\\modules\\idle_manager\\idle_threads.py",
-	"module": "idle_threads",
-	"method": "run",
-	"lineNumber": 57,
-	"process_id": {
-		"$oid": "60e5c1d213f8c29e6b95ab2b"
-	},
-	"hostname": "LAPTOP-UB778LHG",
-	"hostip": "10.28.18.11",
-	"username": "petrk",
-	"system_name": "Windows",
-	"process_name": "Tray"
-},
-{
-	"_id": {
 		"$oid": "60e5c1db13f8c29e6b95ab30"
 	},
 	"timestamp": {
@@ -89,6 +39,31 @@
 	"module": "ftrack_tray",
 	"method": "stop_action_server",
 	"lineNumber": 241,
+	"process_id": {
+		"$oid": "60e5c1d213f8c29e6b95ab2b"
+	},
+	"hostname": "LAPTOP-UB778LHG",
+	"hostip": "10.28.18.11",
+	"username": "petrk",
+	"system_name": "Windows",
+	"process_name": "Tray"
+},
+{
+	"_id": {
+		"$oid": "60e5c1db13f8c29e6b95ab2e"
+	},
+	"timestamp": {
+		"$date": "2021-07-07T17:01:47.021Z"
+	},
+	"level": "INFO",
+	"thread": 28316,
+	"threadName": "MainThread",
+	"message": "Please sign in to Ftrack",
+	"loggerName": "FtrackModule",
+	"fileName": "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\openpype\\modules\\ftrack\\tray\\ftrack_tray.py",
+	"module": "ftrack_tray",
+	"method": "validate",
+	"lineNumber": 72,
 	"process_id": {
 		"$oid": "60e5c1d213f8c29e6b95ab2b"
 	},
@@ -147,4 +122,30 @@
 	"username": "petrk",
 	"system_name": "Windows",
 	"process_name": "Tray"
+},
+{
+	"_id": {
+		"$oid": "60e5c1db13f8c29e6b95ab2f"
+	},
+	"timestamp": {
+		"$date": "2021-07-07T17:01:47.164Z"
+	},
+	"level": "INFO",
+	"thread": 28448,
+	"threadName": "Thread-2",
+	"message": "IdleManagerThread has started",
+	"loggerName": "IdleManagerThread",
+	"fileName": "C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\openpype\\modules\\idle_manager\\idle_threads.py",
+	"module": "idle_threads",
+	"method": "run",
+	"lineNumber": 57,
+	"process_id": {
+		"$oid": "60e5c1d213f8c29e6b95ab2b"
+	},
+	"hostname": "LAPTOP-UB778LHG",
+	"hostip": "10.28.18.11",
+	"username": "petrk",
+	"system_name": "Windows",
+	"process_name": "Tray"
 }]
+
