@@ -1,6 +1,6 @@
 //Maya ASCII 2023 scene
 //Name: test_project_test_asset_test_task_v001.ma
-//Last modified: Mon, Jul 31, 2023 06:29:29 PM
+//Last modified: Tue, Aug 01, 2023 10:44:10 AM
 //Codeset: 1252
 requires maya "2023";
 requires -nodeType "simpleSelector" -nodeType "renderSetupLayer" -nodeType "renderSetup"
@@ -16,7 +16,7 @@ fileInfo "version" "2023";
 fileInfo "cutIdentifier" "202211021031-847a9f9623";
 fileInfo "osv" "Windows 10 Pro v2009 (Build: 19044)";
 fileInfo "license" "education";
-fileInfo "UUID" "9F823AB3-4E95-10BF-8730-7D8918BD74A0";
+fileInfo "UUID" "A0B86AAF-4E1E-8844-2654-41A821E4C70F";
 fileInfo "OpenPypeContext" "eyJwdWJsaXNoX2F0dHJpYnV0ZXMiOiB7IlZhbGlkYXRlQ29udGFpbmVycyI6IHsiYWN0aXZlIjogdHJ1ZX19fQ==";
 createNode transform -s -n "persp";
 	rename -uid "D52C935B-47C9-D868-A875-D799DD17B3A1";
@@ -142,20 +142,20 @@ createNode camera -n "perspShape1" -p "persp1";
 	setAttr ".hc" -type "string" "viewSet -p %camera";
 	setAttr ".dr" yes;
 createNode lightLinker -s -n "lightLinker1";
-	rename -uid "C7AABCC2-4C33-A7D1-69A5-19BD345F29E1";
+	rename -uid "E236C16A-42B0-F85A-B7BE-A596F5A748DC";
 	setAttr -s 2 ".lnk";
 	setAttr -s 2 ".slnk";
 createNode shapeEditorManager -n "shapeEditorManager";
-	rename -uid "E556CB28-4651-2D44-1457-A4844F1C933B";
+	rename -uid "8201187A-48E6-3A47-EF0D-3AAED03CC32D";
 createNode poseInterpolatorManager -n "poseInterpolatorManager";
-	rename -uid "E7EAA6F5-46CF-937D-9550-1B8D177A7C22";
+	rename -uid "CF4CB203-4161-09E2-4AF3-AD8D1EF249B6";
 createNode displayLayerManager -n "layerManager";
-	rename -uid "DE9B9703-49F6-94EB-CDAE-2F94ACD20661";
+	rename -uid "2850BE43-408B-946B-AB37-45BACBE06D23";
 createNode displayLayer -n "defaultLayer";
 	rename -uid "4A776D1B-401F-7069-1C74-A7AAE84CEE03";
 	setAttr ".ufem" -type "stringArray" 0  ;
 createNode renderLayerManager -n "renderLayerManager";
-	rename -uid "3922E54B-45E9-AB90-019E-24BA345A1303";
+	rename -uid "73C48059-4706-AE9C-9DF3-CBAEC08726E2";
 	setAttr -s 2 ".rlmi[1]"  1;
 	setAttr -s 2 ".rlmi";
 createNode renderLayer -n "defaultRenderLayer";
@@ -179,12 +179,12 @@ createNode objectSet -n "modelMain";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "writeColorSets" -ln "writeColorSets" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "writeFaceSets" -ln "writeFaceSets" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min
+	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min 
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "attr" -ln "attr" -dt "string";
 	addAttr -ci true -sn "attrPrefix" -ln "attrPrefix" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".cbId" -type "string" "60df31e2be2b48bd3695c056:7364ea6776c9";
@@ -283,7 +283,7 @@ createNode objectSet -n "workfileMain";
 	addAttr -ci true -sn "task" -ln "task" -dt "string";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".hio" yes;
@@ -334,17 +334,17 @@ createNode objectSet -n "_renderingMain:Main";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "review" -ln "review" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "extendFrames" -ln "extendFrames" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "overrideExistingFrame" -ln "overrideExistingFrame" -min 0
+	addAttr -ci true -sn "overrideExistingFrame" -ln "overrideExistingFrame" -min 0 
 		-max 1 -at "bool";
 	addAttr -ci true -sn "tileRendering" -ln "tileRendering" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "tilesX" -ln "tilesX" -at "long";
 	addAttr -ci true -sn "tilesY" -ln "tilesY" -at "long";
 	addAttr -ci true -sn "convertToScanline" -ln "convertToScanline" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "useReferencedAovs" -ln "useReferencedAovs" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "renderSetupIncludeLights" -ln "renderSetupIncludeLights" -min
+	addAttr -ci true -sn "renderSetupIncludeLights" -ln "renderSetupIncludeLights" -min 
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
 		-dt "string";
 	addAttr -ci true -sn "cbId" -ln "cbId" -dt "string";
 	setAttr ".ihi" 0;
@@ -416,10 +416,11 @@ select -ne :defaultRenderGlobals;
 	setAttr ".pom" -type "string" "";
 	setAttr ".dss" -type "string" "lambert1";
 select -ne :defaultResolution;
-	setAttr ".w" 1920;
-	setAttr ".h" 1080;
+	setAttr ".w" 10;
+	setAttr ".h" 6;
 	setAttr ".pa" 1;
-	setAttr ".dar" 1.7777777910232544;
+	setAttr ".al" yes;
+	setAttr ".dar" 1.6666666269302368;
 select -ne :defaultColorMgtGlobals;
 	setAttr ".cfe" yes;
 	setAttr ".cfp" -type "string" "<MAYA_RESOURCES>/OCIO-configs/Maya-legacy/config.ocio";

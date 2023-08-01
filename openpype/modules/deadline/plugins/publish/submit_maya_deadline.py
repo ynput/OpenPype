@@ -232,7 +232,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Adding file dependencies.
-        if self.asset_dependencies:
+        if not bool(os.environ.get("IS_TEST")) and self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
@@ -579,7 +579,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info = copy.deepcopy(self.job_info)
 
-        if self.asset_dependencies:
+        if not bool(os.environ.get("IS_TEST")) and self.asset_dependencies:
             # Asset dependency to wait for at least the scene file to sync.
             job_info.AssetDependency += self.scene_path
 

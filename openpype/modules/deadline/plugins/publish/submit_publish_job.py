@@ -295,7 +295,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
         else:
-            payload["JobInfo"]["JobDependency0"] = job["_id"]
+            if not bool(os.environ.get("IS_TEST")):
+                payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         for index, (key_, value_) in enumerate(environment.items()):
             payload["JobInfo"].update(
