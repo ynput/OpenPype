@@ -2070,8 +2070,14 @@ class WorkfileSettings(object):
                         str(workfile_settings["OCIO_config"]))
 
         else:
-            # set values to root
+            # OCIO config path is defined from prelaunch hook
             self._root_node["colorManagement"].setValue("OCIO")
+
+            # restart settings in case some were set previously
+            # linux is reversing order of preference to prefer what ever
+            # is set knobs before it apply it form environment variable
+            if self._root_node["customOCIOConfigPath"].value():
+                self._root_node["customOCIOConfigPath"].setValue("")
 
         # we dont need the key anymore
         workfile_settings.pop("customOCIOConfigPath", None)
