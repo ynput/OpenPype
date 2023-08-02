@@ -369,11 +369,11 @@ def get_compatible_integration(
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
     cmd_project = Path(
-        os.path.abspath(os.getenv("OPENPYPE_ROOT")))
+        os.path.abspath(os.getenv("AYON_UNREAL_ROOT")))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
-    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
+    cmd_project /= f"integration/UE_{ue_version}"
 
     # if the integration doesn't exist for current engine version
     # try to find the closest to it.
