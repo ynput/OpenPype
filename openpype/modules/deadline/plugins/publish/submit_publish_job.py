@@ -9,13 +9,11 @@ import clique
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_last_version_by_subset_name,
 )
-from openpype.pipeline import (
-    legacy_io,
-)
-from openpype.pipeline import publish
+from openpype.pipeline import publish, legacy_io
 from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
 

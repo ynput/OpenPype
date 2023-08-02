@@ -4,6 +4,7 @@ from datetime import datetime
 
 from maya import cmds
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
