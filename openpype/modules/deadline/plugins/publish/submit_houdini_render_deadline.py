@@ -88,7 +88,6 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OCIO",
         ]
 
         # Add OpenPype version if we are running from build.
