@@ -212,7 +212,7 @@ def create_skeleton_instance(
                      "This may cause issues.").format(source))
 
     family = ("render"
-              if "prerender" not in instance.data["families"]
+              if "prerender.farm" not in instance.data["families"]
               else "prerender")
     families = [family]
 
@@ -267,6 +267,9 @@ def create_skeleton_instance(
     representations = get_transferable_representations(instance)
     instance_skeleton_data["representations"] = []
     instance_skeleton_data["representations"] += representations
+
+    persistent = instance.data.get("stagingDir_persistent") is True
+    instance_skeleton_data["stagingDir_persistent"] = persistent
 
     return instance_skeleton_data
 

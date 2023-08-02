@@ -22,8 +22,6 @@ class ExtractABC(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
-        scene = context.scene
-        view_layer = context.view_layer
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -31,24 +29,25 @@ class ExtractABC(publish.Extractor):
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
+        active = None
 
         for obj in instance:
             obj.select_set(True)
             selected.append(obj)
+            # Set as active the asset group
             if obj.get(AVALON_PROPERTY):
-                asset_group = obj
+                active = obj
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=active, selected=selected)
 
-        # We export the abc
-        bpy.ops.wm.alembic_export(
-            context,
-            filepath=filepath,
-            selected=True,
-            flatten=False
-        )
+        with bpy.context.temp_override(**context):
+            # We export the abc
+            bpy.ops.wm.alembic_export(
+                filepath=filepath,
+                selected=True,
+                flatten=False
+            )
 
         plugin.deselect_all()
 
