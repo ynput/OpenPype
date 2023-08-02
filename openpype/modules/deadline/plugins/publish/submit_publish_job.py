@@ -202,7 +202,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "IS_TEST": str(int(is_in_tests()))
         }
 
-        if os.environ.get("USE_AYON_SERVER") == '1':
+        if AYON_SERVER_ENABLED:
             environment["AYON_PUBLISH_JOB"] = "1"
             environment["AYON_RENDER_JOB"] = "0"
             environment["AYON_REMOTE_PUBLISH"] = "0"
