@@ -25,6 +25,7 @@ from openpype.pipeline.publish import (
 from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
+from openpype import AYON_SERVER_ENABLED
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 

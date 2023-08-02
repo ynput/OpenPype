@@ -15,6 +15,7 @@ from openpype.client import (
 from openpype.pipeline import (
     legacy_io,
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import publish
 from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
