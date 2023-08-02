@@ -30,7 +30,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     shell script.
 
     """
-    hosts = {"unreal"}
+    app_groups = {"unreal"}
     launch_types = {LaunchTypes.local}
 
     def __init__(self, *args, **kwargs):
