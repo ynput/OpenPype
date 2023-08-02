@@ -131,18 +131,16 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         frameRegex = Regex(pattern)
         while True:
             frameMatch = frameRegex.Match(arguments)
-            if frameMatch.Success:
-                paddingSize = int(frameMatch.Groups[1].Value)
-                if paddingSize > 0:
-                    padding = StringUtils.ToZeroPaddedString(frame,
-                                                             paddingSize,
-                                                             False)
-                else:
-                    padding = str(frame)
-                arguments = arguments.replace(frameMatch.Groups[0].Value,
-                                              padding)
-            else:
+            if not frameMatch.Success:
                 break
+            paddingSize = int(frameMatch.Groups[1].Value)
+            if paddingSize > 0:
+                padding = StringUtils.ToZeroPaddedString(
+                    frame, paddingSize, False)
+            else:
+                padding = str(frame)
+            arguments = arguments.replace(
+                frameMatch.Groups[0].Value, padding)
 
         return arguments
 
