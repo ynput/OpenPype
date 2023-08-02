@@ -88,7 +88,10 @@ class PypeCommands:
         """
 
         from openpype.lib import Logger
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
         from openpype.modules import ModulesManager
         from openpype.pipeline import (
             install_openpype_plugins,
@@ -122,7 +125,8 @@ class PypeCommands:
                 context["project_name"],
                 context["asset_name"],
                 context["task_name"],
-                app_full_name
+                app_full_name,
+                launch_type=LaunchTypes.farm_publish,
             )
             os.environ.update(env)
 
@@ -237,11 +241,19 @@ class PypeCommands:
         Called by Deadline plugin to propagate environment into render jobs.
         """
 
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
 
         if all((project, asset, task, app)):
             env = get_app_environments_for_context(
-                project, asset, task, app, env_group
+                project,
+                asset,
+                task,
+                app,
+                env_group=env_group,
+                launch_type=LaunchTypes.farm_render,
             )
         else:
             env = os.environ.copy()
