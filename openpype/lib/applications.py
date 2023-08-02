@@ -787,7 +787,9 @@ class LaunchHook:
     # Set of platform availability
     platforms = set()
     # Set of launch types for which is available
-    launch_types = set()
+    # - if empty then is available for all launch types
+    # - by default has 'local' which is most common reason for launc hooks
+    launch_types = {LaunchTypes.local}
 
     def __init__(self, launch_context):
         """Constructor of launch hook.
