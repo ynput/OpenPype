@@ -43,6 +43,25 @@ CUSTOM_LAUNCH_APP_GROUPS = {
 }
 
 
+class LaunchTypes:
+    """Launch types are filters for pre/post-launch hooks.
+
+    Please use these variables in case they'll change values.
+    """
+
+    # Local launch - application is launched on local machine
+    local = "local"
+    # Farm render job - application is on farm
+    farm_render = "farm-render"
+    # Farm publish job - integration post-render job
+    farm_publish = "farm-publish"
+    # Remote launch - application is launched on remote machine from which
+    #     can be started publishing
+    remote = "remote"
+    # Automated launch - application is launched with automated publishing
+    automated = "automated"
+
+
 def parse_environments(env_data, env_group=None, platform_name=None):
     """Parse environment values from settings byt group and platform.
 
@@ -760,13 +779,15 @@ class LaunchHook:
     # Order of prelaunch hook, will be executed as last if set to None.
     order = None
     # List of host implementations, skipped if empty.
-    hosts = []
-    # List of application groups
-    app_groups = []
-    # List of specific application names
-    app_names = []
-    # List of platform availability, skipped if empty.
-    platforms = []
+    hosts = set()
+    # Set of application groups
+    app_groups = set()
+    # Set of specific application names
+    app_names = set()
+    # Set of platform availability
+    platforms = set()
+    # Set of launch types for which is available
+    launch_types = set()
 
     def __init__(self, launch_context):
         """Constructor of launch hook.
@@ -812,6 +833,10 @@ class LaunchHook:
 
         if cls.app_names:
             if launch_context.app_name not in cls.app_names:
+                return False
+
+        if cls.launch_types:
+            if launch_context.launch_type not in cls.launch_types:
                 return False
 
         return True
@@ -909,11 +934,19 @@ class ApplicationLaunchContext:
         executable (ApplicationExecutable): Object with path to executable.
         env_group (Optional[str]): Environment variable group. If not set
             'DEFAULT_ENV_SUBGROUP' is used.
+        launch_type (Optional[str]): Launch type. If not set 'local' is used.
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
 
-    def __init__(self, application, executable, env_group=None, **data):
+    def __init__(
+        self,
+        application,
+        executable,
+        env_group=None,
+        launch_type=None,
+        **data
+    ):
         from openpype.modules import ModulesManager
 
         # Application object
@@ -927,6 +960,10 @@ class ApplicationLaunchContext:
         self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
+
+        if launch_type is None:
+            launch_type = LaunchTypes.local
+        self.launch_type = launch_type
 
         if env_group is None:
             env_group = DEFAULT_ENV_SUBGROUP
@@ -1403,6 +1440,7 @@ def get_app_environments_for_context(
     task_name,
     app_name,
     env_group=None,
+    launch_type=None,
     env=None,
     modules_manager=None
 ):
@@ -1415,6 +1453,8 @@ def get_app_environments_for_context(
             by ApplicationManager.
         env_group (Optional[str]): Name of environment group. If not passed
             default group is used.
+        launch_type (Optional[str]): Type for which prelaunch hooks are
+            executed.
         env (Optional[dict[str, str]]): Initial environment variables.
             `os.environ` is used when not passed.
         modules_manager (Optional[ModulesManager]): Initialized modules
