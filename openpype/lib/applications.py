@@ -1470,11 +1470,11 @@ def get_app_environments_for_context(
     app_manager = ApplicationManager()
     context = app_manager.create_launch_context(
         app_name,
-        env_group=env_group,
-        launch_type=launch_type,
         project_name=project_name,
         asset_name=asset_name,
         task_name=task_name,
+        env_group=env_group,
+        launch_type=launch_type,
         env=env,
         modules_manager=modules_manager,
     )
