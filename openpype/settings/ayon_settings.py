@@ -267,6 +267,7 @@ def _convert_modules_system(
     ):
         func(ayon_settings, output, addon_versions, default_settings)
 
+    modules_settings = output["modules"]
     for module_name in (
         "sync_server",
         "log_viewer",
@@ -279,7 +280,16 @@ def _convert_modules_system(
         settings = default_settings["modules"][module_name]
         if "enabled" in settings:
             settings["enabled"] = False
-        output["modules"][module_name] = settings
+        modules_settings[module_name] = settings
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
+
+        # Make sure addons have access to settings in initialization
+        # - ModulesManager passes only modules settings into initialization
+        if key not in modules_settings:
+            modules_settings[key] = value
 
 
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
@@ -293,15 +303,16 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
 
+    for key, value in default_settings.items():
+        if key not in output:
+            output[key] = value
+
     _convert_modules_system(
         ayon_settings,
         output,
         addon_versions,
         default_settings
     )
-    for key, value in default_settings.items():
-        if key not in output:
-            output[key] = value
     return output
 
 
