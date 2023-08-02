@@ -256,6 +256,17 @@ class NukeWriteCreator(NukeCreator):
     family = "write"
     icon = "sign-out"
 
+    def get_linked_knobs(self):
+        linked_knobs = []
+        if "channels" in self.instance_attributes:
+            linked_knobs.append("channels")
+        if "ordered" in self.instance_attributes:
+            linked_knobs.append("render_order")
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs.extend(["___", "first", "last", "use_limit"])
+
+        return linked_knobs
+
     def integrate_links(self, node, outputs=True):
         # skip if no selection
         if not self.selected_node:

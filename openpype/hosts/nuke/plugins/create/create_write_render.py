@@ -39,10 +39,6 @@ class CreateWriteRender(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
-        linked_knobs_ = [
-            "channels", "___", "first", "last", "use_limit", "render_order"
-        ]
-
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
@@ -60,12 +56,15 @@ class CreateWriteRender(napi.NukeWriteCreator):
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
 
+        self.log.debug(">>>>>>> : {}".format(self.instance_attributes))
+        self.log.debug(">>>>>>> : {}".format(self.get_linked_knobs()))
+
         created_node = napi.create_write_node(
             subset_name,
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=linked_knobs_,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "width": width,
                 "height": height
