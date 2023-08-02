@@ -399,7 +399,7 @@ class DeadlineJobInfo(object):
 
     def add_render_job_env_var(self):
         """Check if in OP or AYON mode and use appropriate env var."""
-        if os.environ.get("USE_AYON_SERVER") == '1':
+        if AYON_SERVER_ENABLED:
             self.EnvironmentKeyValue["AYON_RENDER_JOB"] = "1"
             self.EnvironmentKeyValue["AYON_BUNDLE_NAME"] = (
                 os.environ["AYON_BUNDLE_NAME"])
