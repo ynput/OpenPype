@@ -340,9 +340,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 environment[_path] = os.environ[_path]
 
         # to recognize render jobs
-        render_job_label = (
-            "AYON_RENDER_JOB" if AYON_SERVER_ENABLED
-            else "OPENPYPE_RENDER_JOB")
+        if AYON_SERVER_ENABLED:
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            render_job_label = "AYON_RENDER_JOB"
+        else:
+            render_job_label = "OPENPYPE_RENDER_JOB"
+
         environment[render_job_label] = "1"
 
         # finally search replace in values of any key
