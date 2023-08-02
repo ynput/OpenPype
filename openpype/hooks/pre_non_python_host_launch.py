@@ -1,9 +1,7 @@
 import os
 
-from openpype.lib import (
-    PreLaunchHook,
-    get_openpype_execute_args
-)
+from openpype.lib import get_openpype_execute_args
+from openpype.lib import PreLaunchHook, LaunchTypes
 from openpype.lib.applications import get_non_python_host_kwargs
 
 from openpype import PACKAGE_DIR as OPENPYPE_DIR
@@ -19,6 +17,7 @@ class NonPythonHostHook(PreLaunchHook):
     app_groups = ["harmony", "photoshop", "aftereffects"]
 
     order = 20
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Pop executable
@@ -54,4 +53,3 @@ class NonPythonHostHook(PreLaunchHook):
 
         self.launch_context.kwargs = \
             get_non_python_host_kwargs(self.launch_context.kwargs)
-

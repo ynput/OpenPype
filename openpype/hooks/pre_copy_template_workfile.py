@@ -1,7 +1,7 @@
 import os
 import shutil
-from openpype.lib import PreLaunchHook
 from openpype.settings import get_project_settings
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.pipeline.workfile import (
     get_custom_workfile_template,
     get_custom_workfile_template_by_string_context
@@ -20,6 +20,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
     # Before `AddLastWorkfileToLaunchArgs`
     order = 0
     app_groups = ["blender", "photoshop", "tvpaint", "aftereffects"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         """Check if can copy template for context and do it if possible.

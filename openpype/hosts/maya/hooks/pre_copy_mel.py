@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts.maya.lib import create_workspace_mel
 
 
@@ -8,6 +8,7 @@ class PreCopyMel(PreLaunchHook):
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
     app_groups = ["maya"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         project_doc = self.data["project_doc"]

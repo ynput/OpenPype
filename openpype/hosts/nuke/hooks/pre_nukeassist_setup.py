@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook
 
 
 class PrelaunchNukeAssistHook(PreLaunchHook):

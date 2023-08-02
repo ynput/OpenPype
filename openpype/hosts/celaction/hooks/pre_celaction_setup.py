@@ -2,7 +2,8 @@ import os
 import shutil
 import winreg
 import subprocess
-from openpype.lib import PreLaunchHook, get_openpype_execute_args
+from openpype.lib import get_openpype_execute_args
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts.celaction import scripts
 
 CELACTION_SCRIPTS_DIR = os.path.dirname(
@@ -16,6 +17,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
     """
     app_groups = ["celaction"]
     platforms = ["windows"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         asset_doc = self.data["asset_doc"]
