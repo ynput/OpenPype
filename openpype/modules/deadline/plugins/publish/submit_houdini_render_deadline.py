@@ -123,12 +123,12 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Output driver to render
         driver = hou.node(instance.data["instance_node"])
-        hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
+        hou_major_minor_patch = hou.applicationVersionString()
 
         plugin_info = DeadlinePluginInfo(
             SceneFile=context.data["currentFile"],
             OutputDriver=driver.path(),
-            Version=hou_major_minor,
+            Version=hou_major_minor_patch,
             IgnoreInputs=True
         )
 

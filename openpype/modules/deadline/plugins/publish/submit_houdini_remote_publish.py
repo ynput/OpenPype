@@ -67,9 +67,8 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         deadline_user = "roy"  # todo: get deadline user dynamically
 
-        # Get only major.minor version of Houdini, ignore patch version
+        # Get major.minor.patch version of Houdini
         version = hou.applicationVersionString()
-        version = ".".join(version.split(".")[:2])
 
         # Generate the payload for Deadline submission
         payload = {
