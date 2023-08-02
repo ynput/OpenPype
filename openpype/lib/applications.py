@@ -12,10 +12,6 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from openpype import AYON_SERVER_ENABLED, PACKAGE_DIR
-from openpype.client import (
-    get_project,
-    get_asset_by_name,
-)
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
@@ -1417,54 +1413,31 @@ def get_app_environments_for_context(
         task_name (str): Name of task.
         app_name (str): Name of application that is launched and can be found
             by ApplicationManager.
-        env (dict): Initial environment variables. `os.environ` is used when
-            not passed.
-        modules_manager (ModulesManager): Initialized modules manager.
+        env_group (Optional[str]): Name of environment group. If not passed
+            default group is used.
+        env (Optional[dict[str, str]]): Initial environment variables.
+            `os.environ` is used when not passed.
+        modules_manager (Optional[ModulesManager]): Initialized modules
+            manager.
 
     Returns:
         dict: Environments for passed context and application.
     """
 
-    from openpype.modules import ModulesManager
-    from openpype.pipeline import Anatomy
-    from openpype.lib.openpype_version import is_running_staging
-
-    # Project document
-    project_doc = get_project(project_name)
-    asset_doc = get_asset_by_name(project_name, asset_name)
-
-    if modules_manager is None:
-        modules_manager = ModulesManager()
-
-    # Prepare app object which can be obtained only from ApplciationManager
+    # Prepare app object which can be obtained only from ApplicationManager
     app_manager = ApplicationManager()
-    app = app_manager.applications[app_name]
-
-    # Project's anatomy
-    anatomy = Anatomy(project_name)
-
-    data = EnvironmentPrepData({
-        "project_name": project_name,
-        "asset_name": asset_name,
-        "task_name": task_name,
-
-        "app": app,
-
-        "project_doc": project_doc,
-        "asset_doc": asset_doc,
-
-        "anatomy": anatomy,
-
-        "env": env
-    })
-    data["env"].update(anatomy.root_environments())
-    if is_running_staging():
-        data["env"]["OPENPYPE_IS_STAGING"] = "1"
-
-    prepare_app_environments(data, env_group, modules_manager)
-    prepare_context_environments(data, env_group, modules_manager)
-
-    return data["env"]
+    context = app_manager.create_launch_context(
+        app_name,
+        env_group=env_group,
+        launch_type=launch_type,
+        project_name=project_name,
+        asset_name=asset_name,
+        task_name=task_name,
+        env=env,
+        modules_manager=modules_manager,
+    )
+    context.run_prelaunch_hooks()
+    return context.env
 
 
 def _merge_env(env, current_env):
