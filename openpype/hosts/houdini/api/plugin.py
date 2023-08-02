@@ -170,6 +170,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
+            self.selected_nodes = []
+
             if pre_create_data.get("use_selection"):
                 self.selected_nodes = hou.selectedNodes()
 

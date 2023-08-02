@@ -91,14 +91,14 @@ class LoadClip(plugin.NukeLoader):
         # reset container id so it is always unique for each instance
         self.reset_container_id()
 
-        self.log.warning(self.extensions)
-
         is_sequence = len(representation["files"]) > 1
 
         if is_sequence:
-            representation = self._representation_with_hash_in_frame(
-                representation
+            context["representation"] = \
+                self._representation_with_hash_in_frame(
+                    representation
             )
+
         filepath = self.filepath_from_context(context)
         filepath = filepath.replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
@@ -260,6 +260,7 @@ class LoadClip(plugin.NukeLoader):
             representation = self._representation_with_hash_in_frame(
                 representation
             )
+
         filepath = get_representation_path(representation).replace("\\", "/")
         self.log.debug("_ filepath: {}".format(filepath))
 

@@ -369,11 +369,11 @@ def get_compatible_integration(
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
     cmd_project = Path(
-        os.path.abspath(os.getenv("OPENPYPE_ROOT")))
+        os.path.dirname(os.path.abspath(__file__)))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
-    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
+    cmd_project /= f"integration/UE_{ue_version}"
 
     # if the integration doesn't exist for current engine version
     # try to find the closest to it.
@@ -427,6 +427,36 @@ def get_build_id(engine_path: Path, ue_version: str) -> str:
 
         if loaded_modules.get("BuildId"):
             return "{" + loaded_modules.get("BuildId") + "}"
+
+
+def check_built_plugin_existance(plugin_path) -> bool:
+    if not plugin_path:
+        return False
+
+    integration_plugin_path = Path(plugin_path)
+
+    if not integration_plugin_path.is_dir():
+        raise RuntimeError("Path to the integration plugin is null!")
+
+    if not (integration_plugin_path / "Binaries").is_dir() \
+            or not (integration_plugin_path / "Intermediate").is_dir():
+        return False
+
+    return True
+
+
+def copy_built_plugin(engine_path: Path, plugin_path: Path) -> None:
+    ayon_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
+
+    if not ayon_plugin_path.is_dir():
+        ayon_plugin_path.mkdir(parents=True, exist_ok=True)
+
+        engine_plugin_config_path: Path = ayon_plugin_path / "Config"
+        engine_plugin_config_path.mkdir(exist_ok=True)
+
+        dir_util._path_created = {}
+
+    dir_util.copy_tree(plugin_path.as_posix(), ayon_plugin_path.as_posix())
 
 
 def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:
