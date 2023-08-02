@@ -483,6 +483,42 @@ class ApplicationManager:
                 break
         return output
 
+    def create_launch_context(self, app_name, **data):
+        """Prepare launch context for application.
+
+        Args:
+            app_name (str): Name of application that should be launched.
+            **data (Any): Any additional data. Data may be used during
+
+        Returns:
+            ApplicationLaunchContext: Launch context for application.
+
+        Raises:
+            ApplicationNotFound: Application was not found by entered name.
+        """
+
+        app = self.applications.get(app_name)
+        if not app:
+            raise ApplicationNotFound(app_name)
+
+        executable = app.find_executable()
+
+        return ApplicationLaunchContext(
+            app, executable, **data
+        )
+
+    def launch_with_context(self, launch_context):
+        """Launch application using existing launch context.
+
+        Args:
+            launch_context (ApplicationLaunchContext): Prepared launch
+                context.
+        """
+
+        if not launch_context.executable:
+            raise ApplictionExecutableNotFound(launch_context.application)
+        return launch_context.launch()
+
     def launch(self, app_name, **data):
         """Launch procedure.
 
@@ -503,18 +539,10 @@ class ApplicationManager:
                 failed. Exception should contain explanation message,
                 traceback should not be needed.
         """
-        app = self.applications.get(app_name)
-        if not app:
-            raise ApplicationNotFound(app_name)
 
-        executable = app.find_executable()
-        if not executable:
-            raise ApplictionExecutableNotFound(app)
+        context = self.create_launch_context(app_name, **data)
+        return self.launch_with_context(context)
 
-        context = ApplicationLaunchContext(
-            app, executable, **data
-        )
-        return context.launch()
 
 
 class EnvironmentToolGroup:
