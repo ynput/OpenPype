@@ -11,7 +11,6 @@ class CreateMantraROP(plugin.HoudiniCreator):
     label = "Mantra ROP"
     family = "mantra_rop"
     icon = "magic"
-    default_variants = ["Master"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa

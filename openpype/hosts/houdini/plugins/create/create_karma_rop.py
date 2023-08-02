@@ -11,7 +11,6 @@ class CreateKarmaROP(plugin.HoudiniCreator):
     label = "Karma ROP"
     family = "karma_rop"
     icon = "magic"
-    default_variants = ["Master"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa

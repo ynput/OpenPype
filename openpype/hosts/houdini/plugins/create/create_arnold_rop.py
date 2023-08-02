@@ -9,7 +9,6 @@ class CreateArnoldRop(plugin.HoudiniCreator):
     label = "Arnold ROP"
     family = "arnold_rop"
     icon = "magic"
-    default_variants = ["Master"]
 
     # Default extension
     ext = "exr"
