@@ -2073,11 +2073,12 @@ class WorkfileSettings(object):
             # OCIO config path is defined from prelaunch hook
             self._root_node["colorManagement"].setValue("OCIO")
 
-            # restart settings in case some were set previously
-            # linux is reversing order of preference to prefer what ever
-            # is set knobs before it apply it form environment variable
-            if self._root_node["customOCIOConfigPath"].value():
-                self._root_node["customOCIOConfigPath"].setValue("")
+            # print previous settings in case some were found in workfile
+            residual_path = self._root_node["customOCIOConfigPath"].value()
+            if residual_path:
+                log.info("Residual OCIO config path found: `{}`".format(
+                    residual_path
+                ))
 
         # we dont need the key anymore
         workfile_settings.pop("customOCIOConfigPath", None)
