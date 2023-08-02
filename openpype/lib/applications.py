@@ -887,9 +887,9 @@ class PostLaunchHook(LaunchHook):
 class ApplicationLaunchContext:
     """Context of launching application.
 
-    Main purpose of context is to prepare launch arguments and keyword arguments
-    for new process. Most important part of keyword arguments preparations
-    are environment variables.
+    Main purpose of context is to prepare launch arguments and keyword
+    arguments for new process. Most important part of keyword arguments
+    preparations are environment variables.
 
     During the whole process is possible to use `data` attribute to store
     object usable in multiple places.
@@ -902,9 +902,17 @@ class ApplicationLaunchContext:
     insert argument between `nuke.exe` and `--NukeX`. To keep them together
     it is better to wrap them in another list: `[["nuke.exe", "--NukeX"]]`.
 
+    Notes:
+        It is possible to use launch context only to prepare environment
+            variables. In that case `executable` may be None and can be used
+            'run_prelaunch_hooks' method to run prelaunch hooks which prepare
+            them.
+
     Args:
         application (Application): Application definition.
         executable (ApplicationExecutable): Object with path to executable.
+        env_group (Optional[str]): Environment variable group. If not set
+            'DEFAULT_ENV_SUBGROUP' is used.
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
@@ -977,6 +985,7 @@ class ApplicationLaunchContext:
         self.postlaunch_hooks = None
 
         self.process = None
+        self._prelaunch_hooks_executed = False
 
     @property
     def env(self):
@@ -1246,6 +1255,27 @@ class ApplicationLaunchContext:
         # Return process which is already terminated
         return process
 
+    def run_prelaunch_hooks(self):
+        """Run prelaunch hooks.
+
+        This method will be executed only once, any future calls will skip
+            the processing.
+        """
+
+        if self._prelaunch_hooks_executed:
+            self.log.warning("Prelaunch hooks were already executed.")
+            return
+        # Discover launch hooks
+        self.discover_launch_hooks()
+
+        # Execute prelaunch hooks
+        for prelaunch_hook in self.prelaunch_hooks:
+            self.log.debug("Executing prelaunch hook: {}".format(
+                str(prelaunch_hook.__class__.__name__)
+            ))
+            prelaunch_hook.execute()
+        self._prelaunch_hooks_executed = True
+
     def launch(self):
         """Collect data for new process and then create it.
 
@@ -1258,15 +1288,8 @@ class ApplicationLaunchContext:
             self.log.warning("Application was already launched.")
             return
 
-        # Discover launch hooks
-        self.discover_launch_hooks()
-
-        # Execute prelaunch hooks
-        for prelaunch_hook in self.prelaunch_hooks:
-            self.log.debug("Executing prelaunch hook: {}".format(
-                str(prelaunch_hook.__class__.__name__)
-            ))
-            prelaunch_hook.execute()
+        if not self._prelaunch_hooks_executed:
+            self.run_prelaunch_hooks()
 
         self.log.debug("All prelaunch hook executed. Starting new process.")
 
