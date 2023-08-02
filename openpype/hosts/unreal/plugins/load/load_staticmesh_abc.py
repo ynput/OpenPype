@@ -79,11 +79,12 @@ class StaticMeshAlembicLoader(plugin.Loader):
         root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
+        version = context.get('version')
+        if not version.get("name") and version.get('type') == "hero_version":
+            name_version = f"{name}_hero"
         else:
-            asset_name = "{}".format(name)
-        version = context.get('version').get('name')
+            name_version = f"{name}_v{version:03d}"
 
         default_conversion = False
         if options.get("default_conversion"):
@@ -91,7 +92,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+            f"{root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 
