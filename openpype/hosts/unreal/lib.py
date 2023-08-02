@@ -369,7 +369,7 @@ def get_compatible_integration(
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
     cmd_project = Path(
-        os.path.abspath(os.getenv("AYON_UNREAL_ROOT")))
+        os.path.dirname(os.path.abspath(__file__)))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
