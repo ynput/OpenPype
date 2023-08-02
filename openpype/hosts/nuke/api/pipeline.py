@@ -564,6 +564,9 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
+        # node name could change, so update subset name data
+        _update_subset_name_data(instance_data, node)
+
         if "render_order" not in node.knobs():
             subset_instances.append((node, instance_data))
             continue
@@ -587,6 +590,25 @@ def list_instances(creator_id=None):
         ordered_instances.append(instances_by_subset[key])
 
     return ordered_instances
+
+
+def _update_subset_name_data(instance_data, node):
+    """Update subset name data in instance data.
+
+    Args:
+        instance_data (dict): instance creator data
+        node (nuke.Node): nuke node
+    """
+    # make sure node name is subset name
+    old_subset_name = instance_data["subset"]
+    old_variant = instance_data["variant"]
+    subset_name_root = old_subset_name.replace(old_variant, "")
+
+    new_subset_name = node.name()
+    new_variant = new_subset_name.replace(subset_name_root, "")
+
+    instance_data["subset"] = new_subset_name
+    instance_data["variant"] = new_variant
 
 
 def remove_instance(instance):
