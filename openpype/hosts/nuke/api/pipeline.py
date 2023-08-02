@@ -539,6 +539,8 @@ def list_instances(creator_id=None):
     """
     instances_by_order = defaultdict(list)
     subset_instances = []
+    instance_ids = set()
+
     for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
@@ -564,6 +566,11 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
+        if instance_data["instance_id"] in instance_ids:
+            instance_data.pop("instance_id")
+        else:
+            instance_ids.add(instance_data["instance_id"])
+
         # node name could change, so update subset name data
         _update_subset_name_data(instance_data, node)
 
@@ -575,19 +582,20 @@ def list_instances(creator_id=None):
         instances_by_order[order].append((node, instance_data))
 
     # Sort instances based on order attribute or subset name.
+    # TODO: remove in future Publisher enhanced with sorting
     ordered_instances = []
     for key in sorted(instances_by_order.keys()):
-        instances_by_subset = {}
-        for node, data in instances_by_order[key]:
-            instances_by_subset[data["subset"]] = (node, data)
+        instances_by_subset = defaultdict(list)
+        for node, data_ in instances_by_order[key]:
+            instances_by_subset[data_["subset"]].append((node, data_))
         for subkey in sorted(instances_by_subset.keys()):
-            ordered_instances.append(instances_by_subset[subkey])
+            ordered_instances.extend(instances_by_subset[subkey])
 
-    instances_by_subset = {}
-    for node, data in subset_instances:
-        instances_by_subset[data["subset"]] = (node, data)
+    instances_by_subset = defaultdict(list)
+    for node, data_ in subset_instances:
+        instances_by_subset[data_["subset"]].append((node, data_))
     for key in sorted(instances_by_subset.keys()):
-        ordered_instances.append(instances_by_subset[key])
+        ordered_instances.extend(instances_by_subset[key])
 
     return ordered_instances
 
