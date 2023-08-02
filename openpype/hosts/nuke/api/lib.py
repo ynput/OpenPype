@@ -2101,9 +2101,29 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
-            current_ocio_path = os.getenv("OCIO")
-            if current_ocio_path != config_data["path"]:
-                message = """
+            log.info("OCIO config path found: `{}`".format(
+                config_data["path"]))
+
+            # check if there's a mismatch between environment and settings
+            wrong_environment = self._is_settings_different_from_environment(
+                config_data)
+
+            # if there's no mismatch between environment and settings
+            if not wrong_environment:
+                self._set_ocio_config_path_to_workfile(config_data)
+
+    def _is_settings_different_from_environment(self, config_data):
+        """ Check if OCIO config path is different from environment
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        Returns:
+            bool: True if there's a mismatch between environment and settings
+        """
+        current_ocio_path = os.getenv("OCIO")
+        if current_ocio_path != config_data["path"]:
+            message = """
 It seems like there's a mismatch between the OCIO config path set in your Nuke
 settings and the actual path set in your OCIO environment.
 
@@ -2121,12 +2141,87 @@ Please note the paths for your reference:
 
 Reopening Nuke should synchronize these paths and resolve any discrepancies.
 """
-                nuke.message(
-                    message.format(
-                        env_path=current_ocio_path,
-                        settings_path=config_data["path"]
-                    )
+            nuke.message(
+                message.format(
+                    env_path=current_ocio_path,
+                    settings_path=config_data["path"]
                 )
+            )
+            return True
+
+    def _set_ocio_config_path_to_workfile(self, config_data):
+        """ Set OCIO config path to workfile
+
+        Path set into nuke workfile. It is trying to replace path with
+        environment variable if possible. If not, it will set it as it is.
+        It also saves the script to apply the change, but only if it's not
+        empty Untitled script.
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        """
+        # replace path with env var if possible
+        ocio_path = self._replace_ocio_path_with_env_var(
+            config_data["path"]
+        )
+        log.info("Setting OCIO config path to: `{}`".format(
+            ocio_path))
+
+        self._root_node["customOCIOConfigPath"].setValue(
+            ocio_path
+        )
+        self._root_node["OCIO_config"].setValue("custom")
+
+        # only save script if it's not empty
+        if self._root_node["name"].value() != "":
+            log.info("Saving script to apply OCIO config path change.")
+            nuke.scriptSave()
+
+    def _replace_ocio_path_with_env_var(self, path):
+        """ Replace OCIO config path with environment variable
+
+        Environment variable is added as TCL expression to path. TCL expression
+        is also replacing backward slashes found in path for windows
+        formatted values.
+
+        Args:
+            path (str): OCIO config path
+
+        Returns:
+            str: OCIO config path with environment variable
+        """
+        # QUESTION: should we also include other names variants
+        included_vars = [
+            "BUILTIN_OCIO_ROOT",
+            "OPENPYPE_PROJECT_ROOT"
+        ]
+        for env_var, env_path in os.environ.items():
+            # first check if variable is whitelisted
+            if all(var_ not in env_var for var_ in included_vars):
+                # included vars not found in env_var name
+                continue
+
+            # it has to be directory current process can see
+            if not os.path.isdir(env_path):
+                continue
+
+            # make sure paths are in same format
+            env_path = env_path.replace("\\", "/")
+            path = path.replace("\\", "/")
+
+            # check if env_path is in path and replace to first found positive
+            if env_path in path:
+                # with regsub we make sure path format of slashes is correct
+                resub_expr = (
+                    "[regsub -all {{\\\\}} [getenv {}] \"/\"]").format(env_var)
+
+                new_path = path.replace(
+                    env_path, resub_expr
+                )
+                break
+
+        return new_path
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
@@ -2247,11 +2342,11 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         nuke_colorspace = get_nuke_imageio_settings()
 
         log.info("Setting colorspace to workfile...")
-        try:
-            self.set_root_colorspace(nuke_colorspace)
-        except AttributeError:
-            msg = "set_colorspace(): missing `workfile` settings in template"
-            nuke.message(msg)
+        # try:
+        self.set_root_colorspace(nuke_colorspace)
+        # except AttributeError:
+        #     msg = "set_colorspace(): missing `workfile` settings in template"
+        #     nuke.message(msg)
 
         log.info("Setting colorspace to viewers...")
         try:
