@@ -118,7 +118,7 @@ class MayaSubmitRemotePublishDeadline(
         environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
         environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
 
-        if os.environ.get("USE_AYON_SERVER") == '1':
+        if AYON_SERVER_ENABLED:
             environment["AYON_REMOTE_PUBLISH"] = "1"
         else:
             environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
