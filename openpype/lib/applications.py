@@ -931,8 +931,11 @@ class ApplicationLaunchContext:
 
         self.data = dict(data)
 
+        launch_args = []
+        if executable is not None:
+            launch_args = executable.as_args()
         # subprocess.Popen launch arguments (first argument in constructor)
-        self.launch_args = executable.as_args()
+        self.launch_args = launch_args
         self.launch_args.extend(application.arguments)
         if self.data.get("app_args"):
             self.launch_args.extend(self.data.pop("app_args"))
