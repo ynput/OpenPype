@@ -6,7 +6,10 @@ from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 
 
-class ExtractAnimationABC(publish.Extractor):
+class ExtractAnimationABC(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract as ABC."""
 
     label = "Extract Animation ABC"

@@ -11,7 +11,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractLayout(publish.Extractor):
+class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a layout."""
 
     label = "Extract Layout"

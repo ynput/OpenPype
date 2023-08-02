@@ -4,11 +4,17 @@ import bpy
 
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+)
 import openpype.hosts.blender.api.action
 
 
-class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
+class ValidateMeshHasUvs(
+        pyblish.api.InstancePlugin,
+        OptionalPyblishPluginMixin,
+):
     """Validate that the current mesh has UV's."""
 
     order = ValidateContentsOrder

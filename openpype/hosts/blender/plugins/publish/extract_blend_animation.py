@@ -5,7 +5,10 @@ import bpy
 from openpype.pipeline import publish
 
 
-class ExtractBlendAnimation(publish.Extractor):
+class ExtractBlendAnimation(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract a blend file."""
 
     label = "Extract Blend"

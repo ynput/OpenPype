@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractFBX(publish.Extractor):
+class ExtractFBX(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as FBX."""
 
     label = "Extract FBX"

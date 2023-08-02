@@ -1,9 +1,13 @@
 import json
 
 import pyblish.api
+from openpype.pipeline.publish import OptionalPyblishPluginMixin
 
 
-class IntegrateAnimation(pyblish.api.InstancePlugin):
+class IntegrateAnimation(
+        pyblish.api.InstancePlugin,
+        OptionalPyblishPluginMixin,
+):
     """Generate a JSON file for animation."""
 
     label = "Integrate Animation"

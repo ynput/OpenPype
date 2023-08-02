@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 
-class ExtractPlayblast(publish.Extractor):
+class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """
     Extract viewport playblast.
 

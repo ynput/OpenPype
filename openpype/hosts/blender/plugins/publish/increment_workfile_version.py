@@ -1,8 +1,12 @@
 import pyblish.api
+from openpype.pipeline.publish import OptionalPyblishPluginMixin
 from openpype.hosts.blender.api.workio import save_file
 
 
-class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
+class IncrementWorkfileVersion(
+        pyblish.api.ContextPlugin,
+        OptionalPyblishPluginMixin
+):
     """Increment current workfile version."""
 
     order = pyblish.api.IntegratorOrder + 0.9

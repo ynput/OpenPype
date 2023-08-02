@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractCameraABC(publish.Extractor):
+class ExtractCameraABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract camera as ABC."""
 
     label = "Extract Camera (ABC)"

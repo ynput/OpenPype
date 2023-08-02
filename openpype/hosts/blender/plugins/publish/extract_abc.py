@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractABC(publish.Extractor):
+class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as ABC."""
 
     label = "Extract ABC"

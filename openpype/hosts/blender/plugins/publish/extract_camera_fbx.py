@@ -6,7 +6,7 @@ from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 
 
-class ExtractCamera(publish.Extractor):
+class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as the camera as FBX."""
 
     label = "Extract Camera (FBX)"
