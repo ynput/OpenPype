@@ -981,7 +981,7 @@ def add_repre_files_for_cleanup(instance, repre):
     """
     files = repre["files"]
     staging_dir = repre.get("stagingDir")
-    if not staging_dir:
+    if not staging_dir or instance.data.get("stagingDir_persistent"):
         return
 
     if isinstance(files, str):
