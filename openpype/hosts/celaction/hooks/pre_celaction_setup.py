@@ -15,8 +15,8 @@ class CelactionPrelaunchHook(PreLaunchHook):
     """
     Bootstrap celacion with pype
     """
-    app_groups = ["celaction"]
-    platforms = ["windows"]
+    app_groups = {"celaction"}
+    platforms = {"windows"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):

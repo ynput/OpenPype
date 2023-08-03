@@ -5,7 +5,7 @@ class PrelaunchNukeAssistHook(PreLaunchHook):
     """
     Adding flag when nukeassist
     """
-    app_groups = ["nukeassist"]
+    app_groups = {"nukeassist"}
     launch_types = set()
 
     def execute(self):

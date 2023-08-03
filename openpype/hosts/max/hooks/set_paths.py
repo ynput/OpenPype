@@ -6,7 +6,7 @@ class SetPath(PreLaunchHook):
 
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
-    app_groups = ["max"]
+    app_groups = {"max"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):
