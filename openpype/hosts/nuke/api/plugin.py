@@ -216,7 +216,7 @@ class NukeCreator(NewCreator):
             instance_node = created_inst.transient_data["node"]
 
             # update instance node name if subset name changed
-            if "subset" in changes:
+            if "subset" in changes.changed_keys:
                 instance_node["name"].setValue(
                     changes["subset"].new_value
                 )
