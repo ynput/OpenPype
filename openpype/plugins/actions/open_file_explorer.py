@@ -1,5 +1,6 @@
 import os
 import platform
+import subprocess
 
 from openpype.client import (
     get_asset_by_name,
