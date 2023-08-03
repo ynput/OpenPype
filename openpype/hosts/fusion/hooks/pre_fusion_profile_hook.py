@@ -25,7 +25,7 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
     Master.prefs is defined in openpype/hosts/fusion/deploy/fusion_shared.prefs
     """
 
-    app_groups = ["fusion"]
+    app_groups = {"fusion"}
     order = 2
     launch_types = {LaunchTypes.local}
 

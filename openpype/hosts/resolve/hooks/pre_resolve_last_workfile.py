@@ -9,7 +9,7 @@ class PreLaunchResolveLastWorkfile(PreLaunchHook):
     workfile. This property is set explicitly in Launcher.
     """
     order = 10
-    app_groups = ["resolve"]
+    app_groups = {"resolve"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):
