@@ -103,6 +103,19 @@ class ApplicationsAddon(BaseServerAddon):
 
         return self.get_settings_model()(**default_values)
 
+    async def pre_setup(self):
+        """Make sure older version of addon use the new way of attributes."""
+
+        instance = AddonLibrary.getinstance()
+        app_defs = instance.data.get(self.name)
+        old_addon = app_defs.get("0.1.0")
+        if old_addon is not None:
+            # Override 'create_applications_attribute' for older versions
+            #   - avoid infinite server restart loop
+            old_addon.create_applications_attribute = (
+                self.create_applications_attribute
+            )
+
     async def setup(self):
         need_restart = await self.create_applications_attribute()
         if need_restart:
