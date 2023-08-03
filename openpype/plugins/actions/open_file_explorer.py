@@ -42,9 +42,14 @@ class OpenTaskPath(LauncherAction):
 
         path = f"{root}/{project_name}/{hierarchy}/{asset_name}"
 
-        if platform.system().lower() == "windows":
-            os.system(f"start {path}")
-        elif platform.system().lower() == "darwin":
-            os.system(f"open {path}")
-        elif platform.system().lower() == "linux":
-            os.system(f"xdg-open {path}")
+        platform_name = platform.system().lower()
+        if platform_name == "windows":
+            args = ["start", path]
+        elif platform_name == "darwin":
+            args = ["open", "-na", path]
+        elif platform_name == "linux":
+            args = ["xdg-open", path]
+        else:
+            raise Exception(f"Unknown platform {platform.system()}")
+        # Make sure path is converted correctly for 'os.system'
+        os.system(subprocess.list2cmdline(args))
