@@ -183,9 +183,11 @@ class MaxCreatorBase(object):
         """
         if isinstance(node, str):
             node = rt.Container(name=node)
-
         attrs = rt.Execute(MS_CUSTOM_ATTRIB)
-        rt.custAttributes.add(node.baseObject, attrs)
+        modifier = rt.EmptyModifier()
+        rt.addModifier(node, modifier)
+        node.modifiers[0].name = "OP Data"
+        rt.custAttributes.add(node.modifiers[0], attrs)
 
         return node
 
@@ -215,7 +217,7 @@ class MaxCreator(Creator, MaxCreatorBase):
 
             # Setting the property
             rt.setProperty(
-                instance_node.openPypeData, "all_handles", node_list)
+                instance_node.modifiers[0].openPypeData, "all_handles", node_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
