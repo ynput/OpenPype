@@ -168,7 +168,7 @@ def _recursive_collect_user_links(
     exclude: set,
     user_map: dict,
 ):
-    """Recursive function to collect all datablocks linked to the user datablock.
+    """Collect recursively all datablocks linked to the user datablock.
 
     Args:
         datablock (bpy.types.ID): Datablock currently tested.
