@@ -124,8 +124,6 @@ def _convert_applications_system_settings(
 
     # Applications settings
     ayon_apps = addon_settings["applications"]
-    if "adsk_3dsmax" in ayon_apps:
-        ayon_apps["3dsmax"] = copy.deepcopy(ayon_apps["adsk_3dsmax"])
 
     additional_apps = ayon_apps.pop("additional_apps")
     applications = _convert_applications_groups(
