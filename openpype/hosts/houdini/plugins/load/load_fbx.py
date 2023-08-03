@@ -8,7 +8,6 @@ however this one includes extra comments for demonstration.
 This plugin is part of publish process guide.
 """
 import os
-import re
 
 from openpype.pipeline import (
     load,
