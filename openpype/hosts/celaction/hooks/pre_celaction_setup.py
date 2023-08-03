@@ -4,11 +4,7 @@ import winreg
 import subprocess
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
-from openpype.hosts.celaction import scripts
-
-CELACTION_SCRIPTS_DIR = os.path.dirname(
-    os.path.abspath(scripts.__file__)
-)
+from openpype.hosts.celaction import CELACTION_ROOT_DIR
 
 
 class CelactionPrelaunchHook(PreLaunchHook):
@@ -39,7 +35,9 @@ class CelactionPrelaunchHook(PreLaunchHook):
             winreg.KEY_ALL_ACCESS
         )
 
-        path_to_cli = os.path.join(CELACTION_SCRIPTS_DIR, "publish_cli.py")
+        path_to_cli = os.path.join(
+            CELACTION_ROOT_DIR, "scripts", "publish_cli.py"
+        )
         subprocess_args = get_openpype_execute_args("run", path_to_cli)
         openpype_executable = subprocess_args.pop(0)
         workfile_settings = self.get_workfile_settings()
@@ -124,9 +122,8 @@ class CelactionPrelaunchHook(PreLaunchHook):
         if not os.path.exists(workfile_path):
             # TODO add ability to set different template workfile path via
             # settings
-            openpype_celaction_dir = os.path.dirname(CELACTION_SCRIPTS_DIR)
             template_path = os.path.join(
-                openpype_celaction_dir,
+                CELACTION_ROOT_DIR,
                 "resources",
                 "celaction_template_scene.scn"
             )
