@@ -212,8 +212,14 @@ class NukeCreator(NewCreator):
                 created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]
+
+            # update instance node name if subset name changed
+            if "subset" in changes.changed_keys:
+                instance_node["name"].setValue(
+                    changes["subset"].new_value
+                )
 
             # in case node is not existing anymore (user erased it manually)
             try:
