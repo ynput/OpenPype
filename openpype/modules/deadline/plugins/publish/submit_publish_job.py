@@ -1121,7 +1121,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "fps": context.data.get("fps", None),
             "source": source,
             "user": context.data["user"],
-            "version": context.data.get("version"),  # this is workfile version
+            "version": context.data["version"],  # this is workfile version
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job or None,
