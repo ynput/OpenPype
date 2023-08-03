@@ -53,6 +53,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
         else:
             asset_name = "{}".format(name)
         version = context.get('version')
+        # Check if version is hero version and use different name
         if not version.get("name") and version.get('type') == "hero_version":
             name_version = f"{name}_hero"
         else:

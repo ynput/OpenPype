@@ -81,6 +81,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
         version = context.get('version')
+        # Check if version is hero version and use different name
         if not version.get("name") and version.get('type') == "hero_version":
             name_version = f"{name}_hero"
         else:
