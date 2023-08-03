@@ -15,6 +15,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.max.api.menu import OpenPypeMenu
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.plugin import MS_CUSTOM_ATTRIB
 from openpype.hosts.max import MAX_HOST_DIR
 
 from pymxs import runtime as rt  # noqa
@@ -170,3 +171,6 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     if not lib.imprint(container_name, data):
         print(f"imprinting of {container_name} failed.")
     return container
+
+def loadOpenpypeData():
+    return rt.Execute(MS_CUSTOM_ATTRIB)

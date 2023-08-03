@@ -1,7 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import containerise, loadOpenpypeData
 from openpype.pipeline import get_representation_path, load
 
 
@@ -19,35 +19,37 @@ class MaxSceneLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-
+        # implement the OP attributes before load
+        loadOpenpypeData()
         path = self.filepath_from_context(context)
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
         rt.MergeMaxFile(path)
-        max_objects = rt.getLastMergedNodes()
-        max_container = rt.Container(name=f"{name}")
+        max_objects = [obj for obj in rt.getLastMergedNodes()
+                       if rt.classOf(obj) != rt.Container]
+        max_container = [obj for obj in rt.getLastMergedNodes()
+                         if rt.classOf(obj) == rt.Container]
         for max_object in max_objects:
-            max_object.Parent = max_container
+            max_object.Parent = max_container[0]
 
         return containerise(
-            name, [max_container], context, loader=self.__class__.__name__)
+            name, max_container, context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node_name = container["instance_node"]
 
-        rt.MergeMaxFile(path,
-                        rt.Name("noRedraw"),
-                        rt.Name("deleteOldDups"),
-                        rt.Name("useSceneMtlDups"))
+        rt.MergeMaxFile(path)
 
         max_objects = rt.getLastMergedNodes()
-        container_node = rt.GetNodeByName(node_name)
+        max_objects = [obj for obj in rt.getLastMergedNodes()
+                       if rt.classOf(obj) != rt.Container]
+        max_container = [obj for obj in rt.getLastMergedNodes()
+                         if rt.classOf(obj) == rt.Container]
         for max_object in max_objects:
-            max_object.Parent = container_node
+            max_object.Parent = max_container[0]
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
