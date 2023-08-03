@@ -1,5 +1,5 @@
 import os
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
 
@@ -14,6 +14,7 @@ class CreateWorkdirExtraFolders(PreLaunchHook):
 
     # Execute after workfile template copy
     order = 15
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         if not self.application.is_host:

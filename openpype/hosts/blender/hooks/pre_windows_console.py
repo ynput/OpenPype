@@ -1,5 +1,5 @@
 import subprocess
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class BlenderConsoleWindows(PreLaunchHook):
@@ -13,8 +13,9 @@ class BlenderConsoleWindows(PreLaunchHook):
 
     # Should be as last hook because must change launch arguments to string
     order = 1000
-    app_groups = ["blender"]
-    platforms = ["windows"]
+    app_groups = {"blender"}
+    platforms = {"windows"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Change `creationflags` to CREATE_NEW_CONSOLE
