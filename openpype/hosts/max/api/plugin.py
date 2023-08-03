@@ -183,6 +183,7 @@ class MaxCreatorBase(object):
         """
         if isinstance(node, str):
             node = rt.Container(name=node)
+
         attrs = rt.Execute(MS_CUSTOM_ATTRIB)
         modifier = rt.EmptyModifier()
         rt.addModifier(node, modifier)
@@ -257,8 +258,8 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.GetNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                count = rt.custAttributes.count(instance_node)
-                rt.custAttributes.delete(instance_node, count)
+                count = rt.custAttributes.count(instance_node.modifiers[0])
+                rt.custAttributes.delete(instance_node.modifiers[0], count)
                 rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
