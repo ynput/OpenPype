@@ -1,4 +1,5 @@
 import os
+import platform
 
 from openpype.client import (
     get_asset_by_name,
@@ -41,4 +42,9 @@ class OpenTaskPath(LauncherAction):
 
         path = f"{root}/{project_name}/{hierarchy}/{asset_name}"
 
-        os.system(f"start {path}")
+        if platform.system().lower() == "windows":
+            os.system(f"start {path}")
+        elif platform.system().lower() == "darwin":
+            os.system(f"open {path}")
+        elif platform.system().lower() == "linux":
+            os.system(f"xdg-open {path}")
