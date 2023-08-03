@@ -46,6 +46,16 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     targets = ["local"]
     use_published = True
 
+    submit_patch_version = False
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["HoudiniSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.submit_patch_version = settings.get(
+            "submit_patch_version", cls.submit_patch_version)
+
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="Houdini")
 
@@ -123,12 +133,17 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         # Output driver to render
         driver = hou.node(instance.data["instance_node"])
-        hou_major_minor_patch = hou.applicationVersionString()
+
+        # Get major.minor.patch version of Houdini
+        hou_version = hou.applicationVersionString()
+        if not self.submit_patch_version:
+            # Ignore patch version of Houdini
+            hou_version = ".".join(hou_version.split(".")[:2])
 
         plugin_info = DeadlinePluginInfo(
             SceneFile=context.data["currentFile"],
             OutputDriver=driver.path(),
-            Version=hou_major_minor_patch,
+            Version=hou_version,
             IgnoreInputs=True
         )
 

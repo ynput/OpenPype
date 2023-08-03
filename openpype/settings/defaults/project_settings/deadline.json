@@ -36,6 +36,12 @@
             "scene_patches": [],
             "strict_error_checking": true
         },
+        "HoudiniSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "submit_patch_version": false
+        },
         "MaxSubmitDeadline": {
             "enabled": true,
             "optional": false,

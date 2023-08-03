@@ -207,6 +207,35 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "HoudiniSubmitDeadline",
+                    "label": "Houdini Submit to Deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "submit_patch_version",
+                            "label": "Submit Patch Version"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "MaxSubmitDeadline",
                     "label": "3dsMax Submit to Deadline",
                     "checkbox_key": "enabled",
