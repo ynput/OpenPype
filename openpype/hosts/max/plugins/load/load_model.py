@@ -61,6 +61,7 @@ class ModelAbcLoader(load.LoaderPlugin):
         rt.Select(node.Children)
 
         nodes_list = []
+        abc_object = None
         with maintained_selection():
             rt.Select(node)
 
@@ -69,6 +70,7 @@ class ModelAbcLoader(load.LoaderPlugin):
             rt.Select(abc.Children)
             for abc_con in rt.Selection:
                 container = rt.GetNodeByName(abc_con.name)
+                abc_object = container
                 container.source = path
                 rt.Select(container.Children)
                 for abc_obj in rt.Selection:
@@ -77,7 +79,7 @@ class ModelAbcLoader(load.LoaderPlugin):
                     nodes_list.append(alembic_obj)
         abc_selections = [abc for abc in nodes_list
                           if abc.name != "Alembic"]
-        load_OpenpypeData(node, abc_selections)
+        load_OpenpypeData(abc_object, abc_selections)
 
         lib.imprint(
             container["instance_node"],

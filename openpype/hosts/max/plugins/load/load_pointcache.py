@@ -67,15 +67,12 @@ class AbcLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
-
         lib.imprint(
             container["instance_node"],
             {"representation": str(representation["_id"])},
         )
         nodes_list = []
+        abc_object = None
         with maintained_selection():
             rt.Select(node.Children)
 
@@ -84,6 +81,7 @@ class AbcLoader(load.LoaderPlugin):
                 rt.Select(abc.Children)
                 for abc_con in rt.Selection:
                     container = rt.GetNodeByName(abc_con.name)
+                    abc_object = container
                     container.source = path
                     rt.Select(container.Children)
                     for abc_obj in rt.Selection:
@@ -91,7 +89,7 @@ class AbcLoader(load.LoaderPlugin):
                         alembic_obj.source = path
                         nodes_list.append(alembic_obj)
         abc_selections = [abc for abc in nodes_list if abc.name != "Alembic"]
-        load_OpenpypeData(node, abc_selections)
+        load_OpenpypeData(abc_object, abc_selections)
 
     def switch(self, container, representation):
         self.update(container, representation)
