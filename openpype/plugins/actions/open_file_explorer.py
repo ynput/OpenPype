@@ -160,7 +160,7 @@ class OpenTaskPath(LauncherAction):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from Qt import QtCore, QtWidgets
+        from Qt import QtWidgets
 
         path = path.replace("\\", "/")
         print(f"Copied to clipboard: {path}")
