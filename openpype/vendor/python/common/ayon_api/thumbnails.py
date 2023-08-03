@@ -2,7 +2,7 @@ import os
 import time
 import collections
 
-import appdirs
+from openpype.lib.local_settings import get_ayon_appdirs
 
 FileInfo = collections.namedtuple(
     "FileInfo",
@@ -50,8 +50,7 @@ class ThumbnailCache:
         """
 
         if self._thumbnails_dir is None:
-            directory = appdirs.user_data_dir("ayon", "ynput")
-            self._thumbnails_dir = os.path.join(directory, "thumbnails")
+            self._thumbnails_dir = get_ayon_appdirs("thumbnails")
         return self._thumbnails_dir
 
     thumbnails_dir = property(get_thumbnails_dir)
