@@ -575,8 +575,8 @@ class ReferenceLoader(Loader):
             raise LoadError("No namespace specified in "
                             "Maya ReferenceLoader settings")
         elif not custom_naming['group_name']:
-            raise LoadError("No group name specified in "
-                            "Maya ReferenceLoader settings")
+            self.log.debug("No custom group_name, no group will be created.")
+            options["attach_to_root"] = False
 
         formatting_data = {
             "asset_name": asset['name'],
