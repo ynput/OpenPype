@@ -9,7 +9,8 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     get_container_members,
     parent_nodes,
-    create_rig_animation_instance
+    create_rig_animation_instance,
+    get_reference_node
 )
 
 
@@ -123,6 +124,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
+        # no group shall be created
+        if not attach_to_root:
+            group_name = namespace
+
         path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
@@ -148,11 +153,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
 
-            group_name = "|" + group_name
-
             self[:] = new_nodes
 
             if attach_to_root:
+                group_name = "|" + group_name
                 roots = cmds.listRelatives(group_name,
                                            children=True,
                                            fullPath=True) or []
@@ -205,6 +209,12 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 self._post_process_rig(name, namespace, context, options)
             else:
                 if "translate" in options:
+                    if not attach_to_root and new_nodes:
+                        reference_node = get_reference_node(new_nodes)
+                        for node in new_nodes:
+                            if node != reference_node:
+                                break
+                        group_name = node.lstrip("|")
                     cmds.setAttr("{}.translate".format(group_name),
                                  *options["translate"])
             return new_nodes
