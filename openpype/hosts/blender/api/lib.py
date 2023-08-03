@@ -1,10 +1,9 @@
 from itertools import chain
 import os
-from pathlib import Path
 import traceback
 import importlib
 import contextlib
-from typing import Dict, Iterator, List, Union
+from typing import Dict, Iterable, Iterator, List, Set, Tuple, Union
 
 import bpy
 import addon_utils
@@ -15,14 +14,11 @@ from openpype.hosts.blender.api.utils import (
     assign_loader_to_datablocks,
     build_op_basename,
     ensure_unique_name,
-    get_all_outliner_children,
     get_instanced_collections,
-    get_used_datablocks,
 )
 from openpype.lib import Logger
-from openpype.pipeline import legacy_io, schema
+from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
-from openpype.pipeline.load.utils import get_representation_path
 
 from . import pipeline
 
@@ -102,29 +98,113 @@ def parse_container(
     return data
 
 
-def update_scene_containers() -> List[OpenpypeContainer]:
-    """Update containers in scene from datablocks.
+def get_user_links(
+    users_datablocks: bpy.types.ID,
+    types: Union[bpy.types.ID, Iterable[bpy.types.ID]] = None,
+) -> Tuple[Set[bpy.types.ID], Set[bpy.types.ID]]:
+    """Return all datablocks linked to the user datablock recursively.
 
-    For example, if a loaded collection has been duplicated using the outliner
-    or an containerized action has been linked from a blend file,
-    a container will be created with this collection.
+    Args:
+        user_datablock (bpy.types.ID): Datablock to get links from
 
     Returns:
-        List[OpenpypeContainer]: Created containers
+        Tuple[Set[bpy.types.ID], Set[bpy.types.ID]]: Tuple of linked and not
     """
-    openpype_containers = bpy.context.window_manager.openpype_containers
+    # Put into iterable if not
+    if types is not None and not isinstance(types, Iterable):
+        types = (types,)
+
+    # Get all datablocks from blend file
+    all_datablocks = set()
+    for datacol in dir(bpy.data):
+        if not isinstance(
+            getattr(bpy.data, datacol),
+            bpy.types.bpy_prop_collection,
+        ):
+            continue
+        all_datablocks.update(getattr(bpy.data, datacol))
+
+    all_not_linked = set()
+    users_links = {}
+    user_map = bpy.data.user_map(subset=all_datablocks)
+    for datablock in user_map.keys():
+        for user in users_datablocks:
+            # Substitute scene collection with scene
+            if (
+                isinstance(datablock, bpy.types.Collection)
+                and datablock == bpy.context.scene.collection
+            ):
+                user = bpy.context.scene
+
+            # Recursive search
+            not_linked = set()
+            _recursive_collect_user_links(
+                datablock,
+                user,
+                users_links.setdefault(user, {user}),
+                not_linked,
+                user_map,
+            )
+            all_not_linked.update(not_linked)
+
+    # Filter datablocks by types
+    if types:
+        types = tuple(types)
+        users_links = {
+            user: {d for d in datablocks if isinstance(d, types)}
+            for user, datablocks in users_links.items()
+        }
+        not_linked = {d for d in not_linked if isinstance(d, types)}
+
+    return users_links, not_linked - set(
+        chain.from_iterable(users_links.values())
+    )
+
+
+def _recursive_collect_user_links(
+    datablock: bpy.types.ID,
+    target_user_datablock: bpy.types.ID,
+    links: set,
+    exclude: set,
+    user_map: dict,
+):
+    """Recursive function to collect all datablocks linked to the user datablock.
+
+    Args:
+        datablock (bpy.types.ID): Datablock currently tested.
+        target_user_datablock (bpy.types.ID): Datablock to get links from.
+        links (set): Set of datablocks linked to the user datablock.
+        exclude (set): Set of datablocks to exclude from search.
+        user_map (dict): User map of all datablocks in blend file.
+    """
+
+    for user in user_map.get(datablock, []):
+        # Check not self reference to avoid infinite loop
+        if user == datablock:
+            continue
+        elif user == target_user_datablock:
+            links.add(datablock)
+        elif user not in links | exclude:
+            _recursive_collect_user_links(
+                user, target_user_datablock, links, exclude, user_map
+            )
+
+        # Add datablock to links if user is linked to target datablock
+        if (
+            user.get(AVALON_PROPERTY, {}).get("id") != AVALON_CONTAINER_ID
+            and user in links
+        ):
+            links.add(datablock)
+        else:
+            exclude.add(datablock)
+
+
+def reset_scene_containers():
+    """Reset containers in scene."""
     scene_collection = bpy.context.scene.collection
 
-    # Prepare datablocks to skip for containers auto creation
-    # Datablocks already in containers are ignored
-    datablocks_to_skip = set(
-        chain.from_iterable(
-            [
-                op_container.get_datablocks(only_local=False)
-                for op_container in openpype_containers
-            ]
-        )
-    )
+    # Reset containers
+    bpy.context.window_manager.openpype_containers.clear()
 
     # Get container datablocks not already correctly created
     # (e.g collection duplication or linked by hand)
@@ -150,66 +230,10 @@ def update_scene_containers() -> List[OpenpypeContainer]:
         )
     ]
 
-    # Add children and objects of outliner entities to skip
-    datablocks_to_skip.update(
-        chain.from_iterable(
-            get_all_outliner_children(d)
-            for d in containerized_datablocks
-            if isinstance(d, tuple(BL_OUTLINER_TYPES))
-        )
-    )
+    containers_loaders = assign_loader_to_datablocks(containerized_datablocks)
+    containers_datablocks = get_user_links(containerized_datablocks)[0]
 
-    # Update loader type of containerized datablocks
-    assign_loader_to_datablocks(containerized_datablocks)
-
-    # Create containers from container datablocks
-    created_containers = {c.name: c for c in openpype_containers}
-    user_map = bpy.data.user_map(subset=containerized_datablocks)
-    for entity in containerized_datablocks:
-        if (
-            entity in datablocks_to_skip
-            or user_map.get(entity) <= datablocks_to_skip
-        ):
-            continue
-
-        # Find datablocks depending on type
-        if isinstance(entity, bpy.types.Collection):
-            container_datablocks = [
-                entity,
-                *entity.children_recursive,
-                *entity.all_objects,
-            ]
-        elif isinstance(entity, bpy.types.Object):
-            container_datablocks = [
-                entity,
-                entity.instance_collection,
-                *entity.children_recursive,
-            ]
-        else:
-            container_datablocks = [entity]
-
-        # Add mesh datablocks
-        container_datablocks.extend(
-            datablock.data
-            for datablock in container_datablocks
-            if datablock and isinstance(datablock, bpy.types.Object)
-        )
-
-        # Add library references of datablocks to avoid duplicates
-        container_datablocks.extend(
-            datablock.override_library.reference
-            for datablock in container_datablocks
-            if datablock and datablock.override_library
-        )
-
-        # Add datablocks used by the main datablocks
-        container_datablocks.extend(
-            get_used_datablocks(set(container_datablocks))
-        )
-
-        # Skip container datablocks later
-        datablocks_to_skip.update(container_datablocks)
-
+    for entity, datablocks in containers_datablocks.items():
         # Get container metadata
         container_metadata = (
             entity.instance_collection
@@ -218,20 +242,21 @@ def update_scene_containers() -> List[OpenpypeContainer]:
             else entity
         ).get(AVALON_PROPERTY)
 
-        # Get container if already created
-        container = None
-        representation_id = container_metadata.get("representation")
-        for c in openpype_containers:
-            if c[AVALON_PROPERTY]["representation"] == representation_id:
-                container = c
-                break
-
         # Create container and keep it
         container_name = build_op_basename(
             container_metadata.get("asset_name"),
             container_metadata.get("name"),
         )
-        create_container(container_name, container_datablocks)
+
+        # Filter datablocks by loader types
+        if loader := containers_loaders.get(entity):
+            containers_datablocks[entity] = {
+                datablock
+                for datablock in datablocks
+                if isinstance(datablock, tuple(loader.bl_types))
+            }
+
+        create_container(container_name, datablocks)
         # NOTE need to get it this way because memory could have changed
         # BUG: https://projects.blender.org/blender/blender/issues/105338
         container = bpy.context.window_manager.openpype_containers[-1]
@@ -246,16 +271,6 @@ def update_scene_containers() -> List[OpenpypeContainer]:
             else entity.library
         )
 
-    # Clear containers when data has been deleted from the outliner
-    for i, container in reversed(
-        list(enumerate(bpy.context.window_manager.openpype_containers))
-    ):
-        # In case all datablocks removed, remove container
-        if not any(container.get_datablocks(only_local=False)):
-            openpype_containers.remove(i)
-
-    return created_containers
-
 
 def ls() -> Iterator:
     """List containers from active Blender scene.
@@ -264,7 +279,7 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-    update_scene_containers()
+    reset_scene_containers()
 
     # Parse containers
     return [
