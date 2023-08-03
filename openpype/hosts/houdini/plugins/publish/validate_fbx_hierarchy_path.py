@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""It's almost the same as
+"""Validate path attribute for all primitives.
+
+It's almost the same as
 'validate_primitive_hierarchy_paths.py'
-however this one includes more comments for demonstration.
+however this one includes extra comments for demonstration.
 
 FYI, path for fbx behaves a little differently.
 In maya terms:
 in Filmbox FBX: it sets the name of the object
 in Alembic ROP: it sets the name of the shape
+
+This plugin is part of publish process guide.
 """
 
 import pyblish.api

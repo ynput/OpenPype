@@ -8,6 +8,8 @@ it's by default selects the output sop with mimimum idx
 or the node with render flag isntead.
 
 to eleminate any confusion, we set the sop node explictly.
+
+This plugin is part of publish process guide.
 """
 
 from openpype.hosts.houdini.api import plugin

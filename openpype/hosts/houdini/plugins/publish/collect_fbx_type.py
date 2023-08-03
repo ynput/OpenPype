@@ -5,6 +5,8 @@ It is used mainly to update instance.data
 
 P.S.
     There are some collectors that run by default for all types.
+
+This plugin is part of publish process guide.
 """
 import pyblish.api
 
