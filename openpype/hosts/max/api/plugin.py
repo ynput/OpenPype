@@ -217,7 +217,8 @@ class MaxCreator(Creator, MaxCreatorBase):
 
             # Setting the property
             rt.setProperty(
-                instance_node.modifiers[0].openPypeData, "all_handles", node_list)
+                instance_node.modifiers[0].openPypeData,
+                "all_handles", node_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
