@@ -199,7 +199,7 @@ def _recursive_collect_user_links(
             exclude.add(datablock)
 
 
-def reset_scene_containers():
+def update_scene_containers():
     """Reset containers in scene."""
     scene_collection = bpy.context.scene.collection
 
@@ -279,7 +279,7 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-    reset_scene_containers()
+    update_scene_containers()
 
     # Parse containers
     return [
