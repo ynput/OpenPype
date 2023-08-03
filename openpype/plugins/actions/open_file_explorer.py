@@ -11,6 +11,7 @@ from openpype.pipeline.template_data import (
     get_asset_template_data,
 )
 
+
 class OpenTaskPath(LauncherAction):
     name = "open_task_path"
     label = "Open in File Browser"
@@ -19,7 +20,7 @@ class OpenTaskPath(LauncherAction):
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
-        return "AVALON_TASK" in session
+        return "AVALON_ASSET" in session
 
     def process(self, session, **kwargs):
         print(session)
