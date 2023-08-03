@@ -12,6 +12,11 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
     def initialize(self, module_settings):
         self.enabled = True
 
+    def get_global_environments(self):
+        return {
+            "AYON_UNREAL_ROOT": UNREAL_ROOT_DIR,
+        }
+
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
