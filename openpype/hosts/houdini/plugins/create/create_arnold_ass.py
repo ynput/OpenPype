@@ -12,9 +12,6 @@ class CreateArnoldAss(plugin.HoudiniCreator):
     icon = "magic"
     defaults = ["Main"]
 
-    # Default extension: `.ass` or `.ass.gz`
-    ext = ".ass"
-
     def create(self, subset_name, instance_data, pre_create_data):
         import hou
 
@@ -34,6 +31,8 @@ class CreateArnoldAss(plugin.HoudiniCreator):
         parm_template_group.hideFolder("Properties", True)
         instance_node.setParmTemplateGroup(parm_template_group)
 
+        # self.ext value is read from project settings
+        # by HoudiniCreator.apply_settings()
         filepath = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/"),
             "{}.$F4{}".format(subset_name, self.ext)
