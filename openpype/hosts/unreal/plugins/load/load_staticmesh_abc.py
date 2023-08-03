@@ -84,7 +84,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
         if not version.get("name") and version.get('type') == "hero_version":
             name_version = f"{name}_hero"
         else:
-            name_version = f"{name}_v{version:03d}"
+            name_version = f"{name}_v{version.get('name'):03d}"
 
         default_conversion = False
         if options.get("default_conversion"):
