@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Fbx Loader for houdini.
 
-It's an exact copy of
-'load_bgeo.py'
+It's almost a copy of
+'load_bgeo.py'and 'load_alembic.py'
 however this one includes extra comments for demonstration.
 
 This plugin is part of publish process guide.
