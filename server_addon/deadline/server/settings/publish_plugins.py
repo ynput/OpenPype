@@ -321,6 +321,12 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "pluginInfo": "",
         "scene_patches": []
     },
+    "HoudiniSubmitDeadline": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "submit_patch_version": False
+    },
     "MaxSubmitDeadline": {
         "enabled": True,
         "optional": False,
