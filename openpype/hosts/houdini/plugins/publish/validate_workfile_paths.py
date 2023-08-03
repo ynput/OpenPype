@@ -24,16 +24,6 @@ class ValidateWorkfilePaths(
     node_types = ["file", "alembic"]
     prohibited_vars = ["$HIP", "$JOB"]
 
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        """Apply project settings to creator"""
-        settings = (
-            project_settings["houdini"]["publish"]["ValidateWorkfilePaths"]
-        )
-
-        cls.node_types = settings.get("node_types", cls.node_types)
-        cls.prohibited_vars = settings.get("prohibited_vars", cls.prohibited_vars)
-
     def process(self, instance):
         if not self.is_active(instance.data):
             return
