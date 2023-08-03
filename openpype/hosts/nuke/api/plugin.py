@@ -932,7 +932,11 @@ class ExporterReviewMov(ExporterReview):
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
 
-        write_node["mov64_write_timecode"].setValue(1)
+        try:
+            write_node["mov64_write_timecode"].setValue(1)
+        except Exception:
+            self.log.info("`mov64_write_timecode` knob was not found")
+
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
