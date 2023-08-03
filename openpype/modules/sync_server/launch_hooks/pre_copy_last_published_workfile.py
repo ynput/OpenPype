@@ -186,52 +186,70 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         # Keep source filepath for further path conformation
         self.data["source_filepath"] = last_published_workfile_path
 
-        # Get and make resources directory
+        # Get resources directory
         resources_dir = os.path.join(
             os.path.dirname(local_workfile_path), 'resources'
         )
+        # Make resource directory if it doesn't exist
         if not os.path.exists(resources_dir):
             os.mkdir(resources_dir)
 
         # Copy resources to the local resources directory
         for file in workfile_representation['files']:
+            # Get resource main path
             resource_main_path = file["path"].replace(
                 "{root[main]}", str(anatomy.roots["main"])
             )
 
             # Only copy if the resource file exists, and it's not the workfile
             if (
-                os.path.exists(resource_main_path)
-                and resource_main_path != last_published_workfile_path
+                not os.path.exists(resource_main_path)
+                and not resource_main_path != last_published_workfile_path
             ):
-                resource_basename = os.path.basename(resource_main_path)
-                resource_work_path = os.path.join(
-                    resources_dir, resource_basename
+                continue
+
+            # Get resource file basename
+            resource_basename = os.path.basename(resource_main_path)
+
+            # Get resource path in workfile folder
+            resource_work_path = os.path.join(
+                resources_dir, resource_basename
+            )
+            if not os.path.exists(resource_work_path):
+                continue
+
+            # Check if the resource file already exists
+            # in the workfile resources folder,
+            # and both files are the same.
+            if filecmp.cmp(resource_main_path, resource_work_path):
+                self.log.warning(
+                    'Resource "{}" already exists.'
+                    .format(resource_basename)
                 )
-                if os.path.exists(resource_work_path):
-                    if filecmp.cmp(resource_main_path, resource_work_path):
+                continue
+            else:
+                # Add `.old` to existing resource path
+                resource_path_old = resource_work_path + '.old'
+                if os.path.exists(resource_work_path + '.old'):
+                    for i in range(1, 100):
+                        p = resource_path_old + '%02d' % i
+                        if not os.path.exists(p):
+                            # Rename existing resource file to
+                            # `resource_name.old` + 2 digits
+                            shutil.move(resource_work_path, p)
+                            break
+                    else:
                         self.log.warning(
-                            'Resource "{}" already exists.'
+                            'There are a hundred old files for '
+                            'resource "{}". '
+                            'Perhaps is it time to clean up your '
+                            'resources folder'
                             .format(resource_basename)
                         )
                         continue
-                    else:
-                        resource_path_old = resource_work_path + '.old'
-                        if os.path.exists(resource_work_path + '.old'):
-                            for i in range(1, 100):
-                                p = resource_path_old + '%02d' % i
-                                if not os.path.exists(p):
-                                    shutil.move(resource_work_path, p)
-                                    break
-                            else:
-                                self.log.warning(
-                                    'There are a hundred old files for '
-                                    'resource "{}". '
-                                    'Perhaps is it time to clean up your '
-                                    'resources folder'
-                                    .format(resource_basename)
-                                )
-                                continue
-                        else:
-                            shutil.move(resource_work_path, resource_path_old)
-                shutil.copy(resource_main_path, resources_dir)
+                else:
+                    # Rename existing resource file to `resource_name.old`
+                    shutil.move(resource_work_path, resource_path_old)
+
+        # Copy resource file to workfile resources folder
+        shutil.copy(resource_main_path, resources_dir)
