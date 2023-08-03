@@ -1,5 +1,5 @@
 import os
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class LaunchWithTerminal(PreLaunchHook):
@@ -13,6 +13,7 @@ class LaunchWithTerminal(PreLaunchHook):
     order = 1000
 
     platforms = ["darwin"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         executable = str(self.launch_context.executable)

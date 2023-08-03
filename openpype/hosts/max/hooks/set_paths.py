@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class SetPath(PreLaunchHook):
@@ -7,6 +7,7 @@ class SetPath(PreLaunchHook):
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
     app_groups = ["max"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         workdir = self.launch_context.env.get("AVALON_WORKDIR", "")

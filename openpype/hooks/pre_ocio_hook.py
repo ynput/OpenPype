@@ -22,6 +22,7 @@ class OCIOEnvHook(PreLaunchHook):
         "hiero",
         "resolve"
     ]
+    launch_types = set()
 
     def execute(self):
         """Hook entry method."""

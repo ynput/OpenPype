@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pre-launch hook to inject python environment."""
-from openpype.lib import PreLaunchHook
 import os
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class InjectPythonPath(PreLaunchHook):
@@ -14,6 +14,7 @@ class InjectPythonPath(PreLaunchHook):
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
     app_groups = ["3dsmax"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         self.launch_context.env["MAX_PYTHONPATH"] = os.environ["PYTHONPATH"]
