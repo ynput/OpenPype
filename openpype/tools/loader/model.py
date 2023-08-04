@@ -64,6 +64,7 @@ class BaseRepresentationModel(object):
         """Sets/Resets sync server vars after every change (refresh.)"""
         repre_icons = {}
         sync_server = None
+        sync_server_enabled = False
         active_site = active_provider = None
         remote_site = remote_provider = None
 
@@ -75,6 +76,7 @@ class BaseRepresentationModel(object):
         if not project_name:
             self.repre_icons = repre_icons
             self.sync_server = sync_server
+            self.sync_server_enabled = sync_server_enabled
             self.active_site = active_site
             self.active_provider = active_provider
             self.remote_site = remote_site
@@ -100,8 +102,13 @@ class BaseRepresentationModel(object):
             self._modules_manager = ModulesManager()
             self._last_manager_cache = now_time
 
-        sync_server = self._modules_manager.modules_by_name["sync_server"]
-        if sync_server.is_project_enabled(project_name, single=True):
+        sync_server = self._modules_manager.modules_by_name.get("sync_server")
+        if (
+            sync_server is not None
+            and sync_server.enabled
+            and sync_server.is_project_enabled(project_name, single=True)
+        ):
+            sync_server_enabled = True
             active_site = sync_server.get_active_site(project_name)
             active_provider = sync_server.get_provider_for_site(
                 project_name, active_site)
@@ -118,6 +125,7 @@ class BaseRepresentationModel(object):
 
         self.repre_icons = repre_icons
         self.sync_server = sync_server
+        self.sync_server_enabled = sync_server_enabled
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
@@ -213,6 +221,7 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
 
         self.repre_icons = {}
         self.sync_server = None
+        self.sync_server_enabled = sync_server_enabled
         self.active_site = self.active_provider = None
 
         self.columns_index = dict(
@@ -282,7 +291,7 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
                 )
 
                 # update availability on active site when version changes
-                if self.sync_server.enabled and version_doc:
+                if self.sync_server_enabled and version_doc:
                     repres_info = list(
                         self.sync_server.get_repre_info_for_versions(
                             project_name,
@@ -507,7 +516,7 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
             return
 
         repre_info_by_version_id = {}
-        if self.sync_server.enabled:
+        if self.sync_server_enabled:
             versions_by_id = {}
             for _subset_id, doc in last_versions_by_subset_id.items():
                 versions_by_id[doc["_id"]] = doc
@@ -1033,12 +1042,16 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self._version_ids = []
 
         manager = ModulesManager()
-        sync_server = active_site = remote_site = None
+        active_site = remote_site = None
         active_provider = remote_provider = None
+        sync_server = manager.modules_by_name.get("sync_server")
+        sync_server_enabled = (
+            sync_server is not None
+            and sync_server.enabled
+        )
 
         project_name = dbcon.current_project()
-        if project_name:
-            sync_server = manager.modules_by_name["sync_server"]
+        if sync_server_enabled and project_name:
             active_site = sync_server.get_active_site(project_name)
             remote_site = sync_server.get_remote_site(project_name)
 
@@ -1057,6 +1070,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                 remote_provider = 'studio'
 
         self.sync_server = sync_server
+        self.sync_server_enabled = sync_server_enabled
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
@@ -1174,9 +1188,15 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                     repre_groups_items[doc["name"]] = 0
                     group = group_item
 
-            progress = self.sync_server.get_progress_for_repre(
-                doc,
-                self.active_site, self.remote_site)
+            progress = {
+                self.active_site: 0,
+                self.remote_site: 0,
+            }
+            if self.sync_server_enabled:
+                progress = self.sync_server.get_progress_for_repre(
+                    doc,
+                    self.active_site,
+                    self.remote_site)
 
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
