@@ -13,8 +13,8 @@ class BlenderConsoleWindows(PreLaunchHook):
 
     # Should be as last hook because must change launch arguments to string
     order = 1000
-    app_groups = ["blender"]
-    platforms = ["windows"]
+    app_groups = {"blender"}
+    platforms = {"windows"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):

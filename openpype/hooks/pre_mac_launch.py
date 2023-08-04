@@ -12,7 +12,7 @@ class LaunchWithTerminal(PreLaunchHook):
     """
     order = 1000
 
-    platforms = ["darwin"]
+    platforms = {"darwin"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):

@@ -14,7 +14,7 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "defaults": [],
+            "default_variants": [],
             "ext": ".ass"
         },
         "CreateAlembicCamera": {

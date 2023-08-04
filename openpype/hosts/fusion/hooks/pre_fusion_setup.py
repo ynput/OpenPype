@@ -21,7 +21,7 @@ class FusionPrelaunch(PreLaunchHook):
     Fusion 18        : Python 3.6 - 3.10
     """
 
-    app_groups = ["fusion"]
+    app_groups = {"fusion"}
     order = 1
     launch_types = {LaunchTypes.local}
 

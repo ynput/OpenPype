@@ -11,7 +11,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
     Existence of last workfile is checked. If workfile does not exists tries
     to copy templated workfile from predefined path.
     """
-    app_groups = ["tvpaint"]
+    app_groups = {"tvpaint"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):

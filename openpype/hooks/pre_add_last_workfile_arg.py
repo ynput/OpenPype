@@ -13,8 +13,8 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
 
     # Execute after workfile template copy
     order = 10
-    app_groups = [
-        "3dsmax",
+    app_groups = {
+        "3dsmax", "adsk_3dsmax",
         "maya",
         "nuke",
         "nukex",
@@ -26,8 +26,8 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "photoshop",
         "tvpaint",
         "substancepainter",
-        "aftereffects"
-    ]
+        "aftereffects",
+    }
     launch_types = {LaunchTypes.local}
 
     def execute(self):

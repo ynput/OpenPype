@@ -30,7 +30,7 @@ class PreLaunchResolveSetup(PreLaunchHook):
 
     """
 
-    app_groups = ["resolve"]
+    app_groups = {"resolve"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):
