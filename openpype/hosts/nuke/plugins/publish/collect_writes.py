@@ -330,8 +330,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["useSequenceForReview"] = False
 
         # Farm rendering
-        instance.data["transfer"] = False
-        instance.data["farm"] = True
+        instance.data.update({
+            "transfer": False,
+            "farm": True  # to skip integrate
+        })
         self.log.info("Farm rendering ON ...")
 
     def _get_collected_frames(self, instance):
