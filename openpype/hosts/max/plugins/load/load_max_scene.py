@@ -40,7 +40,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(node_name)
         # delete the old container with attribute
         # delete old duplicate
-        rt.MergeMaxFile(path)
+        rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
 
         max_objects = rt.getLastMergedNodes()
         for max_object in max_objects:
