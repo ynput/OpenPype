@@ -53,8 +53,10 @@ class InventoryModel(TreeModel):
         self._default_icon_color = get_default_entity_icon_color()
 
         manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-        self.sync_enabled = sync_server.enabled
+        sync_server = manager.modules_by_name.get("sync_server")
+        self.sync_enabled = (
+            sync_server is not None and sync_server.enabled
+        )
         self._site_icons = {}
         self.active_site = self.remote_site = None
         self.active_provider = self.remote_provider = None
