@@ -2170,9 +2170,8 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
         """
         # replace path with env var if possible
-        ocio_path = self._replace_ocio_path_with_env_var(
-            config_data["path"]
-        )
+        ocio_path = self._replace_ocio_path_with_env_var(config_data)
+
         log.info("Setting OCIO config path to: `{}`".format(
             ocio_path))
 
@@ -2186,7 +2185,35 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             log.info("Saving script to apply OCIO config path change.")
             nuke.scriptSave()
 
-    def _replace_ocio_path_with_env_var(self, path):
+    def _get_included_vars(self, config_template):
+        """ Get all environment variables included in template
+
+        Args:
+            config_template (str): OCIO config template from settings
+
+        Returns:
+            list: list of environment variables included in template
+        """
+        # resolve all environments for whitelist variables
+        included_vars = [
+            "BUILTIN_OCIO_ROOT",
+        ]
+
+        # include all project root related env vars
+        for env_var in os.environ:
+            if env_var.startswith("OPENPYPE_PROJECT_ROOT_"):
+                included_vars.append(env_var)
+
+        # use regex to find env var in template with format {ENV_VAR}
+        # this way we make sure only template used env vars are included
+        env_var_regex = r"\{([A-Z_]+)\}"
+        env_var = re.findall(env_var_regex, config_template)
+        if env_var:
+            included_vars.append(env_var[0])
+
+        return included_vars
+
+    def _replace_ocio_path_with_env_var(self, config_data):
         """ Replace OCIO config path with environment variable
 
         Environment variable is added as TCL expression to path. TCL expression
@@ -2194,19 +2221,22 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         formatted values.
 
         Args:
-            path (str): OCIO config path
+            config_data (str): OCIO config dict from settings
 
         Returns:
-            str: OCIO config path with environment variable
+            str: OCIO config path with environment variable TCL expression
         """
-        # QUESTION: should we also include other names variants
-        included_vars = [
-            "BUILTIN_OCIO_ROOT",
-            "OPENPYPE_PROJECT_ROOT"
-        ]
+        config_path = config_data["path"]
+        config_template = config_data["template"]
+
+        included_vars = self._get_included_vars(config_template)
+
+        # make sure we return original path if no env var is included
+        new_path = config_path
+
         for env_var, env_path in os.environ.items():
             # first check if variable is whitelisted
-            if all(var_ not in env_var for var_ in included_vars):
+            if env_var not in included_vars:
                 # included vars not found in env_var name
                 continue
 
@@ -2216,7 +2246,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
             # make sure paths are in same format
             env_path = env_path.replace("\\", "/")
-            path = path.replace("\\", "/")
+            path = config_path.replace("\\", "/")
 
             # check if env_path is in path and replace to first found positive
             if env_path in path:
