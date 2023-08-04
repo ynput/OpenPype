@@ -77,7 +77,7 @@ def _calculate_pre_behavior_copy(
         for frame_idx in range(range_start, layer_frame_start):
             output_idx_by_frame_idx[frame_idx] = first_exposure_frame
 
-    elif pre_beh in ("loop", "repeat"):
+    elif pre_beh == "repeat":
         # Loop backwards from last frame of layer
         for frame_idx in reversed(range(range_start, layer_frame_start)):
             eq_frame_idx_offset = (
@@ -141,7 +141,7 @@ def _calculate_post_behavior_copy(
         for frame_idx in range(layer_frame_end + 1, range_end + 1):
             output_idx_by_frame_idx[frame_idx] = last_exposure_frame
 
-    elif post_beh in ("loop", "repeat"):
+    elif post_beh == "repeat":
         # Loop backwards from last frame of layer
         for frame_idx in range(layer_frame_end + 1, range_end + 1):
             eq_frame_idx = layer_frame_start + (frame_idx % frame_count)
