@@ -28,7 +28,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -52,7 +52,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -84,7 +84,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -147,7 +147,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -177,7 +177,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -212,7 +212,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -242,7 +242,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -262,7 +262,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -287,7 +287,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -389,7 +389,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
