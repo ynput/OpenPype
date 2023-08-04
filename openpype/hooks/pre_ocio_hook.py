@@ -38,7 +38,8 @@ class OCIOEnvHook(PreLaunchHook):
             host_name=self.host_name,
             project_settings=self.data["project_settings"],
             anatomy_data=template_data,
-            anatomy=self.data["anatomy"]
+            anatomy=self.data["anatomy"],
+            environment=self.launch_context.env,
         )
 
         if config_data:
