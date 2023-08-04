@@ -25,10 +25,7 @@ def open_file(filepath):
 
     def read_script(nuke_script):
         nuke.scriptClear()
-        if int(nuke.NUKE_VERSION_MAJOR) > 12:
-            nuke.scriptReadFile(nuke_script)
-        else:
-            nuke.scriptOpen(nuke_script)
+        nuke.scriptReadFile(nuke_script)
         nuke.Root()["name"].setValue(nuke_script)
         nuke.Root()["project_directory"].setValue(os.path.dirname(nuke_script))
         nuke.Root().setModified(False)
