@@ -97,8 +97,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "render.farm_frames",
-                "prerender.farm", "prerender.farm_frames",
+    families = ["render.farm", "render.frames_farm",
+                "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
                 "arnold_rop", "mantra_rop",

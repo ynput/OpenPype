@@ -76,7 +76,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if render_target in ["frames", "farm_frames"]:
+        if render_target in ["frames", "frames_farm"]:
             representation = {
                 'name': ext,
                 'ext': ext,
@@ -145,7 +145,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
-            if render_target == "farm_frames":
+            if render_target == "frames_farm":
                 # Farm rendering
                 instance.data["toBeRenderedOn"] = "deadline"
                 instance.data["transfer"] = False
