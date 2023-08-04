@@ -221,7 +221,7 @@ class SubsetsModel(BaseRepresentationModel, TreeModel):
 
         self.repre_icons = {}
         self.sync_server = None
-        self.sync_server_enabled = sync_server_enabled
+        self.sync_server_enabled = False
         self.active_site = self.active_provider = None
 
         self.columns_index = dict(
