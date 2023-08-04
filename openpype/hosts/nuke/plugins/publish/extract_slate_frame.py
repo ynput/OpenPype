@@ -242,7 +242,7 @@ class ExtractSlateFrame(publish.Extractor):
 
         # render slate as sequence frame
         nuke.execute(
-            str(instance.data["name"]),
+            instance.data["name"],
             int(slate_first_frame),
             int(slate_first_frame)
         )
