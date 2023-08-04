@@ -424,9 +424,12 @@ def add_publish_knob(node):
     return node
 
 
-@deprecated
+@deprecated("openpype.hosts.nuke.api.lib.set_node_data")
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     """[DEPRECATED] Sets data into nodes's avalon knob
+
+    This function is still used but soon will be deprecated.
+    Use `set_node_data` instead.
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -487,9 +490,12 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
-@deprecated
+@deprecated("openpype.hosts.nuke.api.lib.get_node_data")
 def get_avalon_knob_data(node, prefix="avalon:", create=True):
     """[DEPRECATED]  Gets a data from nodes's avalon knob
+
+    This function is still used but soon will be deprecated.
+    Use `get_node_data` instead.
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -2204,7 +2210,6 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                     continue
                 preset_clrsp = input["colorspace"]
 
-            log.debug(preset_clrsp)
             if preset_clrsp is not None:
                 current = n["colorspace"].value()
                 future = str(preset_clrsp)
@@ -2686,7 +2691,15 @@ def _launch_workfile_app():
     host_tools.show_workfiles(parent=None, on_top=True)
 
 
+@deprecated("openpype.hosts.nuke.api.lib.start_workfile_template_builder")
 def process_workfile_builder():
+    """ [DEPRECATED] Process workfile builder on nuke start
+
+    This function is deprecated and will be removed in future versions.
+    Use settings for `project_settings/nuke/templated_workfile_build` which are
+    supported by api `start_workfile_template_builder()`.
+    """
+
     # to avoid looping of the callback, remove it!
     nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
@@ -2694,11 +2707,6 @@ def process_workfile_builder():
     project_settings = get_current_project_settings()
     workfile_builder = project_settings["nuke"].get(
         "workfile_builder", {})
-
-    # get all imortant settings
-    openlv_on = env_value_to_bool(
-        env_key="AVALON_OPEN_LAST_WORKFILE",
-        default=None)
 
     # get settings
     createfv_on = workfile_builder.get("create_first_version") or None
@@ -2740,19 +2748,14 @@ def process_workfile_builder():
         save_file(last_workfile_path)
         return
 
-    # skip opening of last version if it is not enabled
-    if not openlv_on or not os.path.exists(last_workfile_path):
-        return
-
-    log.info("Opening last workfile...")
-    # open workfile
-    open_file(last_workfile_path)
-
 
 def start_workfile_template_builder():
     from .workfile_template_builder import (
         build_workfile_template
     )
+
+    # remove callback since it would be duplicating the workfile
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
     # to avoid looping of the callback, remove it!
     log.info("Starting workfile template builder...")
@@ -2761,8 +2764,6 @@ def start_workfile_template_builder():
     except TemplateProfileNotFound:
         log.warning("Template profile not found. Skipping...")
 
-    # remove callback since it would be duplicating the workfile
-    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):
