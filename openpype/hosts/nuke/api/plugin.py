@@ -328,6 +328,7 @@ class NukeWriteCreator(NukeCreator):
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
+            rendering_targets["farm_frames"] = "Existing frames farm rendering"
 
         return EnumDef(
             "render_target",

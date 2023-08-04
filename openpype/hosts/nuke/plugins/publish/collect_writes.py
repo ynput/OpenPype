@@ -29,6 +29,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         instance.data["families"].append(
             "{}.{}".format(family, render_target)
         )
+        self.log.debug("Appending render target to families: {}.{}".format(
+            family, render_target)
+        )
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
@@ -73,7 +76,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if render_target == "frames":
+        if render_target in ["frames", "farm_frames"]:
             representation = {
                 'name': ext,
                 'ext': ext,
@@ -141,6 +144,24 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
+
+            if render_target == "farm_frames":
+                # Farm rendering
+                instance.data["toBeRenderedOn"] = "deadline"
+                instance.data["transfer"] = False
+                instance.data["farm"] = True  # to skip integrate
+                self.log.info("Farm rendering ON ...")
+
+                self.log.info(
+                    "Adding collected files %s to expectedFiles instance.data",
+                    collected_frames
+                )
+                if "expectedFiles" not in instance.data:
+                    instance.data["expectedFiles"] = list()
+                    for source_file in collected_frames:
+                        instance.data["expectedFiles"].append(
+                            os.path.join(output_dir, source_file)
+                        )
 
         elif render_target == "farm":
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
