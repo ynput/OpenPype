@@ -13,8 +13,8 @@ class LaunchFoundryAppsWindows(PreLaunchHook):
 
     # Should be as last hook because must change launch arguments to string
     order = 1000
-    app_groups = ["nuke", "nukeassist", "nukex", "hiero", "nukestudio"]
-    platforms = ["windows"]
+    app_groups = {"nuke", "nukeassist", "nukex", "hiero", "nukestudio"}
+    platforms = {"windows"}
     launch_types = {LaunchTypes.local}
 
     def execute(self):
