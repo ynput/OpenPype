@@ -212,8 +212,14 @@ class NukeCreator(NewCreator):
                 created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]
+
+            # update instance node name if subset name changed
+            if "subset" in changes.changed_keys:
+                instance_node["name"].setValue(
+                    changes["subset"].new_value
+                )
 
             # in case node is not existing anymore (user erased it manually)
             try:
@@ -255,6 +261,17 @@ class NukeWriteCreator(NukeCreator):
     label = "Create Write"
     family = "write"
     icon = "sign-out"
+
+    def get_linked_knobs(self):
+        linked_knobs = []
+        if "channels" in self.instance_attributes:
+            linked_knobs.append("channels")
+        if "ordered" in self.instance_attributes:
+            linked_knobs.append("render_order")
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs.extend(["___", "first", "last", "use_limit"])
+
+        return linked_knobs
 
     def integrate_links(self, node, outputs=True):
         # skip if no selection
@@ -921,7 +938,11 @@ class ExporterReviewMov(ExporterReview):
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
 
-        write_node["mov64_write_timecode"].setValue(1)
+        try:
+            write_node["mov64_write_timecode"].setValue(1)
+        except Exception:
+            self.log.info("`mov64_write_timecode` knob was not found")
+
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
